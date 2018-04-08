@@ -86,21 +86,13 @@ public abstract class CodeStyleFacade {
 
   public abstract int getRightMargin(Language language);
 
-  /**
-   * @return True if wrap on typing is enabled
-   * @deprecated Use isWrapOnTyping(language) instead
-   */
-  public abstract boolean isWrapWhenTypingReachesRightMargin();
-
-  @SuppressWarnings("deprecation")
-  public boolean isWrapOnTyping(@Nullable Language language) {
-    return isWrapWhenTypingReachesRightMargin();
-  }
-
   public abstract int getTabSize(final FileType fileType);
 
   public abstract boolean useTabCharacter(final FileType fileType);
 
+  /**
+   * @deprecated Use {@code CodeStyle.getDefaultLineSeparator()} or {@code CodeStyle.getLineSeparator(Project)}
+   */
   public abstract String getLineSeparator();
 
   public abstract boolean projectUsesOwnSettings();

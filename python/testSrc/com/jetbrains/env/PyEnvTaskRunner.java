@@ -15,12 +15,14 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -44,8 +46,17 @@ public class PyEnvTaskRunner {
     myLoggingRule = loggingRule;
   }
 
-  // todo: doc
-  public void runTask(PyTestTask testTask, String testName, @NotNull final String... tagsRequiredByTest) {
+  /**
+   * Runs test on all interpreters.
+   *
+   * @param skipOnFlavors optional array of flavors of interpreters to skip
+   *
+   * @param tagsRequiredByTest optional array of tags to run tests on interpreters with these tags only
+   */
+  public void runTask(@NotNull final PyTestTask testTask,
+                      @NotNull final String testName,
+                      @Nullable final Class<? extends PythonSdkFlavor>[] skipOnFlavors,
+                      @NotNull final String... tagsRequiredByTest) {
     boolean wasExecuted = false;
 
     List<String> passedRoots = Lists.newArrayList();
@@ -88,6 +99,13 @@ public class PyEnvTaskRunner {
         assert executable != null : "No executable in " + root;
 
         final Sdk sdk = getSdk(executable, testTask);
+        if (skipOnFlavors != null) {
+          final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+          if (Arrays.stream(skipOnFlavors).anyMatch((o) -> o.isInstance(flavor))) {
+            LOG.warn("Skipping flavor " + flavor.toString());
+            continue;
+          }
+        }
 
         /*
           Skipping test if {@link PyTestTask} reports it does not support this language level

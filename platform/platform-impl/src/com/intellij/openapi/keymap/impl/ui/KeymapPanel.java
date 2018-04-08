@@ -49,7 +49,8 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.mac.touchbar.TouchBarManager;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.SystemSettingsTouchBar;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -212,11 +213,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
 
-    if (TouchBarManager.isTouchBarAvailable()) {
-      final JCheckBox useFn = new JCheckBox("Always show FN-keys at TouchBar", TouchBarManager.isShowFnKeysEnabled());
+    if (TouchBarsManager.isTouchBarAvailable()) {
+      final JCheckBox useFn = new JCheckBox("Always show FN-keys at TouchBar", SystemSettingsTouchBar.isShowFnKeysEnabled());
       useFn.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          TouchBarManager.setShowFnKeysEnabled(useFn.isSelected());
+          SystemSettingsTouchBar.setShowFnKeysEnabled(useFn.isSelected());
         }
       });
       panel.add(useFn, BorderLayout.SOUTH);

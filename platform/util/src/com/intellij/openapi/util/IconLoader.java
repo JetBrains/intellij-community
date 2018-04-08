@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,18 +7,22 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
-import com.intellij.util.*;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ImageLoader;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.JBUI.RasterJBIcon;
 import com.intellij.util.ui.JBUI.BaseScaleContext.UpdateListener;
+import com.intellij.util.ui.JBUI.RasterJBIcon;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -458,6 +460,16 @@ public final class IconLoader {
       return getRealIcon(null);
     }
 
+    @Nullable
+    @TestOnly
+    public ImageIcon doGetRealIcon() {
+      Object icon = myRealIcon;
+      if (icon instanceof Reference) {
+        icon = ((Reference<ImageIcon>)icon).get();
+      }
+      return icon instanceof ImageIcon ? (ImageIcon)icon : null;
+    }
+
     @NotNull
     private synchronized ImageIcon getRealIcon(ScaleContext ctx) {
       if (!isValid()) {
@@ -503,10 +515,7 @@ public final class IconLoader {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      // Component is preferable to Graphics as a scale provider, as it lets the context stick
-      // to the comp's actual scale via the update method.
-      ScaleContext ctx = c != null ? ScaleContext.create(c) : ScaleContext.create((Graphics2D)g);
-      getRealIcon(ctx).paintIcon(c, g, x, y);
+      getRealIcon(ScaleContext.create(c, g)).paintIcon(c, g, x, y);
     }
 
     @Override

@@ -42,12 +42,12 @@ public class LambdaInliner implements CallInliner {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiParameter[] parameters = lambda.getParameterList().getParameters();
     if (args.length != parameters.length) return false;
-    EntryStream.zip(args, parameters).forKeyValue((arg, parameter) ->
-                                                    builder.pushVariable(parameter)
-                                                      .pushExpression(arg)
-                                                      .boxUnbox(arg, parameter.getType())
-                                                      .assign()
-                                                      .pop());
+    EntryStream.zip(args, parameters).forKeyValue(
+      (arg, parameter) -> builder.pushForWrite(builder.getFactory().getVarFactory().createVariableValue(parameter))
+                                 .pushExpression(arg)
+                                 .boxUnbox(arg, parameter.getType())
+                                 .assign()
+                                 .pop());
     builder.inlineLambda(lambda, Nullness.UNKNOWN);
     return true;
   }

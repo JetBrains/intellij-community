@@ -17,8 +17,8 @@ public class LightAdvHighlightingJdk11Test extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setLanguageLevel(LanguageLevel.JDK_X);
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_10, getModule(), getTestRootDisposable());//todo
+    setLanguageLevel(LanguageLevel.JDK_11);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_11, getModule(), getTestRootDisposable());//todo
   }
 
   private void doTest() {

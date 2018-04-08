@@ -231,9 +231,10 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isWrapWhenTypingReachesRightMargin(Project project) {
-    return myWrapWhenTypingReachesRightMargin != null ?
-           myWrapWhenTypingReachesRightMargin.booleanValue() :
-           CodeStyleFacade.getInstance(project).isWrapOnTyping(myLanguage);
+    if (myWrapWhenTypingReachesRightMargin != null) return myWrapWhenTypingReachesRightMargin.booleanValue();
+    return myEditor == null ?
+           CodeStyle.getDefaultSettings().isWrapOnTyping(myLanguage) :
+           CodeStyle.getSettings(myEditor).isWrapOnTyping(myLanguage);
   }
 
   @Override
@@ -333,7 +334,7 @@ public class SettingsImpl implements EditorSettings {
     PsiFile file = getPsiFile(project);
     return file != null
            ? CodeStyle.getIndentOptions(file).USE_TAB_CHARACTER
-           : CodeStyle.getSettings(project).getIndentOptions(null).USE_TAB_CHARACTER;
+           : CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER;
   }
 
   @Override

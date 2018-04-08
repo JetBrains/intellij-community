@@ -179,6 +179,18 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   @Nullable
   @Override
+  public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
+    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+    List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+    if (inlays.isEmpty()) return null;
+    VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
+    if (visualPosition.line != inlayStartPosition.line) return null;
+    int inlayIndex = visualPosition.column - inlayStartPosition.column;
+    return inlayIndex >= 0 && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
+  }
+
+  @Nullable
+  @Override
   public Inlay getElementAt(@NotNull Point point) {
     if (myInlayTree.size() == 0) return null;
 

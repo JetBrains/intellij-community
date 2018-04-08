@@ -84,6 +84,7 @@ public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
     return ToolWindowId.COMMANDER;
   }
 
+  @Override
   public String getMinorViewId() {
     return null;
   }

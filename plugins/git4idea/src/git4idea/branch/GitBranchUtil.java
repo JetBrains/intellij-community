@@ -15,8 +15,6 @@
  */
 package git4idea.branch;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -51,17 +49,10 @@ import java.util.HashMap;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitBranchUtil {
 
   private static final Logger LOG = Logger.getInstance(GitBranchUtil.class);
 
-  private static final Function<GitBranch,String> BRANCH_TO_NAME = input -> {
-    assert input != null;
-    return input.getName();
-  };
   // The name that specifies that git is on specific commit rather then on some branch ({@value})
  private static final String NO_BRANCH_NAME = "(no branch)";
 
@@ -103,7 +94,7 @@ public class GitBranchUtil {
 
   @NotNull
   public static Collection<String> convertBranchesToNames(@NotNull Collection<? extends GitBranch> branches) {
-    return Collections2.transform(branches, BRANCH_TO_NAME);
+    return ContainerUtil.map(branches, GitBranch::getName);
   }
 
   /**
@@ -141,14 +132,6 @@ public class GitBranchUtil {
       LOG.info("git rev-parse --abbrev-ref HEAD", e);
       return null;
     }
-  }
-
-  /**
-   * Get tracked remote for the branch
-   */
-  @Nullable
-  public static String getTrackedRemoteName(Project project, VirtualFile root, String branchName) throws VcsException {
-    return GitConfigUtil.getValue(project, root, trackedRemoteKey(branchName));
   }
 
   /**
@@ -217,10 +200,7 @@ public class GitBranchUtil {
    */
   @NotNull
   public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<GitRemoteBranch> remoteBranches) {
-    return Collections2.filter(convertBranchesToNames(remoteBranches), input -> {
-      assert input != null;
-      return !input.equals("HEAD");
-    });
+    return ContainerUtil.filter(convertBranchesToNames(remoteBranches), input -> !input.equals("HEAD"));
   }
 
   @NotNull

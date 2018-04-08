@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -36,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import java.io.File;
 import java.util.*;
+
+import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.
@@ -127,8 +127,9 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
     final List<UserDefinedJsonSchemaConfiguration> list = getStoredList();
     for (UserDefinedJsonSchemaConfiguration info : list) {
+      String pathToSchema = info.getRelativePathToSchema();
       final JsonSchemaConfigurable configurable =
-        new JsonSchemaConfigurable(myProject, new File(myProject.getBasePath(), info.getRelativePathToSchema()).getPath(),
+        new JsonSchemaConfigurable(myProject, isHttpPath(pathToSchema) ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
                                    info, myTreeUpdater);
       configurable.setError(myError);
       myRoot.add(new MyNode(configurable, info.isApplicationLevel()));

@@ -207,6 +207,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return list;
   }
 
+  @NotNull
   public List<HighlightSeverity> getAllSeverities() {
     return getOrderAsList(getOrderMap());
   }

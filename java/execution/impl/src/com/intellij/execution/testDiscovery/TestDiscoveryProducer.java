@@ -10,12 +10,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 @ApiStatus.Experimental
 public interface TestDiscoveryProducer {

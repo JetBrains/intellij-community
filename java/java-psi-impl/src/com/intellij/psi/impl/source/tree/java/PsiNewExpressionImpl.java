@@ -165,11 +165,13 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         return JavaResolveResult.EMPTY_ARRAY;
       }
 
+      @NotNull
       @Override
       public PsiElement getElement() {
         return PsiNewExpressionImpl.this;
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         return null;

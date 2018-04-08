@@ -27,12 +27,12 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExceptionUtils;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -561,7 +561,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     if (ignoreForAssertStatements && isArgOfAssertStatement(expression)) {
       return false;
     }
-    if (ignoreForExceptionConstructors && isArgOfExceptionConstructor(expression)) {
+    if (ignoreForExceptionConstructors && ExceptionUtils.isExceptionArgument(expression)) {
       return false;
     }
     if (ignoreForEnumConstants && isArgOfEnumConstant(expression)) {
@@ -870,41 +870,6 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass junitAssert = JavaPsiFacade.getInstance(project).findClass("junit.framework.Assert", scope);
     return junitAssert != null && !containingClass.isInheritor(junitAssert, true);
-  }
-
-  private static boolean isArgOfExceptionConstructor(PsiExpression expression) {
-    final PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, PsiClass.class);
-    if (!(parent instanceof PsiExpressionList)) {
-      return false;
-    }
-    final PsiElement grandparent = parent.getParent();
-    final PsiClass aClass;
-    if (RefactoringChangeUtil.isSuperOrThisMethodCall(grandparent)) {
-      final PsiMethod method = ((PsiMethodCallExpression)grandparent).resolveMethod();
-      if (method != null) {
-        aClass = method.getContainingClass();
-      } else {
-        return false;
-      }
-    } else {
-      if (!(grandparent instanceof PsiNewExpression)) {
-        return false;
-      }
-      final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)grandparent).getClassReference();
-      if (reference == null) {
-        return false;
-      }
-      final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiClass)) {
-        return false;
-      }
-
-      aClass = (PsiClass)referent;
-    }
-    final Project project = expression.getProject();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClass throwable = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_THROWABLE, scope);
-    return throwable != null && aClass.isInheritor(throwable, true);
   }
 
   private static boolean isArgOfSpecifiedExceptionConstructor(PsiExpression expression, String[] specifiedExceptions) {

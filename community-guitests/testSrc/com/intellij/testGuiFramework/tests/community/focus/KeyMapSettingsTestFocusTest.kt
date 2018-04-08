@@ -20,7 +20,7 @@ class KeyMapSettingsTestFocusTest : GuiTestCase() {
 
   @Test
   fun testKeyMapSettingsTestFocus() {
-    CommunityProjectCreator.createCommandLineProject()
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)
     ideFrame {
       waitForBackgroundTasksToFinish()

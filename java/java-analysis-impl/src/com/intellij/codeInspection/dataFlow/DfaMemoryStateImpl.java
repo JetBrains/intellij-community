@@ -103,11 +103,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public DfaMemoryStateImpl createClosureState() {
     DfaMemoryStateImpl copy = createCopy();
-    copy.flushFields();
-    Set<DfaVariableValue> vars = new HashSet<>(copy.myVariableStates.keySet());
-    for (DfaVariableValue value : vars) {
-      copy.flushDependencies(value);
+    for (DfaVariableValue value : new ArrayList<>(copy.myVariableStates.keySet())) {
+      copy.dropFact(value, DfaFactType.LOCALITY);
     }
+    copy.flushFields();
     copy.emptyStack();
     return copy;
   }
@@ -270,7 +269,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
-    if (value instanceof DfaVariableValue && (value == flushed || myFactory.getVarFactory().getAllQualifiedBy(flushed).contains(value))) {
+    if (value instanceof DfaVariableValue && (value == flushed || flushed.getDependentVariables().contains(value))) {
       Nullness nullability = isNotNull(value) ? Nullness.NOT_NULL :
                              isUnknownState(value) ? Nullness.UNKNOWN : ((DfaVariableValue)value).getInherentNullability();
       return myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), nullability);
@@ -320,14 +319,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!(dfaValue instanceof DfaVariableValue)) return classIndex;
     DfaVariableValue variableValue = (DfaVariableValue)dfaValue;
     DfaVariableValue qualifier = variableValue.getQualifier();
-    PsiModifierListOwner variable = variableValue.getPsiVariable();
     if (qualifier == null) return classIndex;
     Integer index = getOrCreateEqClassIndex(qualifier);
     if (index == null) return classIndex;
     for (DfaValue eqQualifier : myEqClasses.get(index).getMemberValues()) {
       if (eqQualifier != qualifier && eqQualifier instanceof DfaVariableValue) {
-        DfaVariableValue eqValue = getFactory().getVarFactory()
-          .createVariableValue(variable, variableValue.getVariableType(), variableValue.isNegated(), (DfaVariableValue)eqQualifier);
+        DfaVariableValue eqValue = variableValue.withQualifier((DfaVariableValue)eqQualifier);
         int i = getEqClassIndex(eqValue);
         if (i != -1) {
           uniteClasses(i, classIndex);
@@ -639,7 +636,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       getConstantValue(var) == null &&
       StreamEx.of(getEquivalentValues(var)).without(var).select(DfaVariableValue.class).findFirst().isPresent();
     List<DfaVariableValue> values = StreamEx.ofKeys(myVariableStates)
-      .filter(var -> ControlFlowAnalyzer.isTempVariable(var.getPsiVariable()))
+      .filter(ControlFlowAnalyzer::isTempVariable)
       .remove(sharesState)
       .toList();
     values.forEach(this::flushVariable);
@@ -876,16 +873,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.CAN_BE_NULL, true));
           return;
         }
-        PsiType psiType;
-        if (constValue instanceof PsiVariable) {
-          psiType = ((PsiVariable)constValue).getType();
-        }
-        else {
-          PsiModifierListOwner context = dfaVar.getPsiVariable();
-          psiType = JavaPsiFacade.getElementFactory(context.getProject())
-            .createTypeByFQClassName(constValue.getClass().getName(), context.getResolveScope());
-        }
-        DfaPsiType dfaType = myFactory.createDfaType(psiType);
+        DfaPsiType dfaType = myFactory.createDfaType(((DfaConstValue)value).getType());
         DfaVariableState state = getVariableState(dfaVar).withInstanceofValue(dfaType);
         if (state != null) {
           setVariableState(dfaVar, state);
@@ -1134,13 +1122,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (constValue != null) {
       return constValue;
     }
-    DfaVariableValue qualifier = var.getQualifier();
-    if (qualifier != null) {
-      return StreamEx.of(SpecialField.values())
-            .filter(sf -> sf.isMyAccessor(var.getPsiVariable()))
-            .map(sf -> sf.createValue(myFactory, qualifier))
-            .nonNull().findFirst().orElse(var);
-    }
     return var;
   }
 
@@ -1184,8 +1165,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (qualifierIndex == -1) return StreamEx.empty();
     return StreamEx.of(myEqClasses.get(qualifierIndex).getMemberValues())
       .without(qualifier).select(DfaVariableValue.class)
-      .map(eqQualifier -> getFactory().getVarFactory()
-        .createVariableValue(var.getPsiVariable(), var.getVariableType(), var.isNegated(), eqQualifier));
+      .map(var::withQualifier);
   }
 
   private DfaVariableState findVariableState(DfaVariableValue var) {
@@ -1260,11 +1240,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     EqClass eqClass = myEqClasses.get(eqClassIndex);
     if (eqClass == null) return false;
-    if (eqClass.findConstant(true) != null) return true;
+    DfaConstValue nullConst = myFactory.getConstFactory().getNull();
+    if (eqClass.findConstant(true) == nullConst) return true;
 
     for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs()) {
       EqClass otherClass = pair.getOtherClass(eqClassIndex);
-      if (otherClass != null && otherClass.findConstant(true) != null) {
+      if (otherClass != null && otherClass.findConstant(true) == nullConst) {
         return true;
       }
     }
@@ -1287,28 +1268,23 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     doFlush(variable, false);
     flushDependencies(variable);
     myUnknownVariables.remove(variable);
-    myUnknownVariables.removeAll(myFactory.getVarFactory().getAllQualifiedBy(variable));
+    myUnknownVariables.removeAll(variable.getDependentVariables());
     myCachedHash = null;
   }
 
   void flushDependencies(@NotNull DfaVariableValue variable) {
-    for (DfaVariableValue dependent : myFactory.getVarFactory().getAllQualifiedBy(variable)) {
+    for (DfaVariableValue dependent : variable.getDependentVariables()) {
       doFlush(dependent, false);
     }
   }
 
   private void flushQualifiedMethods(@NotNull DfaVariableValue variable) {
     PsiModifierListOwner psiVariable = variable.getPsiVariable();
-    if (psiVariable instanceof PsiField) {
-      StreamEx<DfaVariableValue> toFlush;
+    DfaVariableValue qualifier = variable.getQualifier();
+    if (psiVariable instanceof PsiField && qualifier != null) {
       // Flush method results on field write
-      if (variable.getQualifier() != null) {
-        toFlush = StreamEx.of(myFactory.getVarFactory().getAllQualifiedBy(variable.getQualifier()));
-      } else {
-        toFlush = StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class).without(variable)
-                          .filterBy(DfaVariableValue::getQualifier, null);
-      }
-      toFlush.filter(DfaVariableValue::containsCalls).forEach(val -> doFlush(val, shouldMarkUnknown(val)));
+      qualifier.getDependentVariables().stream().filter(DfaVariableValue::containsCalls)
+               .forEach(val -> doFlush(val, shouldMarkUnknown(val)));
     }
   }
 

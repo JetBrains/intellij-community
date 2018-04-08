@@ -9,9 +9,12 @@ import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +32,10 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
 
   @Override
   public boolean canSelect(PsiFileSystemItem fileSystemItem) {
-    if (!super.canSelect(fileSystemItem)) return false;
+    VirtualFile file = PsiUtilCore.getVirtualFile(fileSystemItem);
+    if (file == null || !file.isValid()) return false;
+    ProjectRootManager manager = myProject.isDisposed() ? null : ProjectRootManager.getInstance(myProject);
+    if (manager == null || null == manager.getFileIndex().getModuleForFile(file)) return false; // libraries are not supported yet
     if (!(fileSystemItem instanceof PsiFile)) return false;
     return getContainingFilter((PsiFile)fileSystemItem) != null;
   }

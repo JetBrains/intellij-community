@@ -303,7 +303,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers, true);
     }
 
-    if (PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr()) {
+    if (PlatformUtils.isDataGrip() || PlatformUtils.isCidr()) {
       // build scripts are correct, but it is required to run from sources
       return;
     }
@@ -779,7 +779,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (toLog()) {
         log("F: processFirstBytes(): inputStream.read() returned "+n+"; retrying with read action. stream="+ streamInfo(stream));
       }
-      n = ApplicationManager.getApplication().runReadAction((ThrowableComputable<Integer, IOException>)() -> stream.read(buffer, offset, length));
+      n = ReadAction.compute(() -> stream.read(buffer, offset, length));
       if (toLog()) {
         log("F: processFirstBytes(): under read action inputStream.read() returned "+n+"; stream="+ streamInfo(stream));
       }
@@ -1450,7 +1450,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
 
   @NotNull
-  FileTypeAssocTable getExtensionMap() {
+  FileTypeAssocTable<FileType> getExtensionMap() {
     return myPatternsTable;
   }
 

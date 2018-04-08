@@ -167,7 +167,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
-    myCopyPasteDelegator = createCopyPasteDelegator(myProject, myTree);
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myTree);
 
     setToolbar(createToolbar());
     setupTree();
@@ -176,17 +176,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public static void registerAutoExpandListener(@NotNull JTree tree, @NotNull StructureViewModel structureViewModel) {
     tree.getModel().addTreeModelListener(new MyExpandListener(
       tree, ObjectUtils.tryCast(structureViewModel, StructureViewModel.ExpandInfoProvider.class)));
-  }
-
-  @NotNull
-  public static CopyPasteDelegator createCopyPasteDelegator(@NotNull Project project, @NotNull JTree tree) {
-    return new CopyPasteDelegator(project, tree) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        return PsiUtilCore.toPsiElementArray(getSelectedValues(tree).filter(PsiElement.class).toList());
-      }
-    };
   }
 
   protected boolean showScrollToFromSourceActions() {
@@ -379,7 +368,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   public Promise<AbstractTreeNode> expandPathToElement(Object element) {
     return expandSelectFocusInner(element, false, false)
-      .then(p -> ObjectUtils.tryCast(TreeUtil.getUserObject(p.getLastPathComponent()), AbstractTreeNode.class));
+      .then(p -> TreeUtil.getUserObject(AbstractTreeNode.class, p.getLastPathComponent()));
   }
 
   @NotNull
@@ -681,8 +670,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     AsyncPromise<Void> result = new AsyncPromise<>();
     rebuild();
     TreeVisitor visitor = path -> {
-      Object o = TreeUtil.getUserObject(path.getLastPathComponent());
-      if (o instanceof AbstractTreeNode) ((AbstractTreeNode)o).update();
+      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
+      if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };
     myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null));
@@ -971,8 +960,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
       else {
         for (Object o : children) {
-          Object userObject = TreeUtil.getUserObject(o);
-          if (userObject instanceof NodeDescriptor && isAutoExpandNode((NodeDescriptor)userObject)) {
+          NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, o);
+          if (descriptor != null && isAutoExpandNode(descriptor)) {
             expandLater(parentPath, o);
           }
         }

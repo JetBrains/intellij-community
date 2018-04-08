@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.TestDiscoveryListener;
@@ -8,7 +9,6 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.JavaTestAgentUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -40,6 +40,7 @@ import java.nio.file.Path;
 
 public class TestDiscoveryExtension extends RunConfigurationExtension {
   public static final String TEST_DISCOVERY_REGISTRY_KEY = "testDiscovery.enabled";
+  private static final String TEST_DISCOVERY_AGENT_PATH = "test.discovery.agent.path";
 
   private static final boolean USE_SOCKET = SystemProperties.getBooleanProperty("test.discovery.use.socket", true);
   public static final Key<TestDiscoveryDataSocketListener> SOCKET_LISTENER_KEY = Key.create("test.discovery.socket.data.listener");
@@ -83,8 +84,9 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (runnerSettings != null || !isApplicableFor(configuration)) {
       return;
     }
-    params.getVMParametersList().add("-javaagent:" + JavaTestAgentUtil
-      .handleSpacesInAgentPath(PathUtil.getJarPathForClass(TestDiscoveryProjectData.class)));
+    String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(PathUtil.getJarPathForClass(TestDiscoveryProjectData.class), "testDiscovery", TEST_DISCOVERY_AGENT_PATH);
+    if (agentPath == null) return;
+    params.getVMParametersList().add("-javaagent:" + agentPath);
     TestDiscoveryDataSocketListener listener = tryInstallSocketListener(configuration);
     if (listener != null) {
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.PORT_PROP, Integer.toString(listener.getPort()));

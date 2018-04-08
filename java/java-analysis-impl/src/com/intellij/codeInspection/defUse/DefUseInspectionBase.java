@@ -140,6 +140,20 @@ public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
         final List<PsiAssignmentExpression> assignments = collectAssignments(field, classInitializer);
         if (!assignments.isEmpty()) {
           boolean isDefinitely = HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, classInitializer.getBody());
+          if (isDefinitely) {
+            try {
+              ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(classInitializer.getBody());
+              if (ControlFlowUtil.getReadBeforeWrite(flow)
+                                 .stream()
+                                 .anyMatch(read -> (isStatic || ExpressionUtil.isEffectivelyUnqualified(read)) &&
+                                                   read.isReferenceTo(field))) {
+                isDefinitely = false;
+              }
+            }
+            catch (AnalysisCanceledException e) {
+              // ignore
+            }
+          }
           fieldWrites.add(FieldWrite.createAssignments(isDefinitely, assignments));
         }
       }

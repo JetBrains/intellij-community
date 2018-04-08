@@ -38,10 +38,10 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SplitterWithSecondHideable;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -58,6 +58,7 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.escapeXml;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.ArrayUtil.toObjectArray;
@@ -70,6 +71,8 @@ import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
+import static com.intellij.util.ui.SwingHelper.buildHtml;
+import static com.intellij.util.ui.UIUtil.*;
 import static java.util.Collections.*;
 
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, DataProvider {
@@ -110,7 +113,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull private final Splitter mySplitter;
   @NotNull private final SplitterWithSecondHideable myDetailsSplitter;
-  @NotNull private final JLabel myWarningLabel;
+  @NotNull private final JBLabel myWarningLabel;
 
   @Nullable private final String myHelpId;
   @Nullable private final CommitAction myCommitAction;
@@ -364,8 +367,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     myHelpId = myCommitAction != null ? HELP_ID : getHelpId(executors);
 
-    myWarningLabel = new JLabel();
-    myWarningLabel.setUI(new MultiLineLabelUI());
+    myWarningLabel = new JBLabel();
     myWarningLabel.setForeground(JBColor.RED);
     myWarningLabel.setBorder(JBUI.Borders.empty(5, 5, 0, 5));
     updateWarning();
@@ -380,10 +382,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       mainPanel = mySplitter;
     }
 
-    JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(myWarningLabel, new GridBag().anchor(GridBagConstraints.NORTHWEST).weightx(1));
-
-    JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(panel);
+    JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(myWarningLabel);
 
     // TODO: there are no reason to use such heavy interface for a simple task.
     myDetailsSplitter = new SplitterWithSecondHideable(true, "Diff", rootPane,
@@ -518,7 +517,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       if (updateException != null) {
         String[] messages = updateException.getMessages();
         if (!isEmpty(messages)) {
-          myWarningLabel.setText("Warning: not all local changes may be shown due to an error: " + messages[0]);
+          String message = "Warning: not all local changes may be shown due to an error: " + messages[0];
+          String htmlMessage = buildHtml(getCssFontDeclaration(getLabelFont()), getHtmlBody(escapeXml(message)));
+
+          myWarningLabel.setText(htmlMessage);
           myWarningLabel.setVisible(true);
         }
       }

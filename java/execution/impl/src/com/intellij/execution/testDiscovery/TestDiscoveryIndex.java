@@ -16,7 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 
 public class TestDiscoveryIndex implements Disposable {
   static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
@@ -53,6 +54,12 @@ public class TestDiscoveryIndex implements Disposable {
       holder.removeTestTrace(testClassName, testMethodName, frameworkId);
       return null;
     });
+  }
+
+  @NotNull
+  public MultiMap<String, String> getTestsByClassName(@NotNull String classFQName, byte frameworkId) {
+    MultiMap<String, String> map = executeUnderLock(holder -> holder.getTestsByClassName(classFQName, frameworkId));
+    return map == null ? MultiMap.empty() : map;
   }
 
   @NotNull

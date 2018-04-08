@@ -20,6 +20,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -72,10 +75,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     myCommitsTable = new JBTable(myTableModel);
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     myCommitsTable.setIntercellSpacing(JBUI.emptySize());
-    PopupHandler.installRowSelectionTablePopup(myCommitsTable,
-                                               generateSelectRebaseActionActionGroup(),
-                                               ActionPlaces.EDITOR_POPUP,
-                                               ActionManager.getInstance());
     myCommitsTable.setDefaultRenderer(String.class, new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -88,6 +87,15 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
     actionColumn.setCellEditor(ComboBoxTableCellEditor.INSTANCE);
     actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
+
+    List<AnAction> actions = generateSelectRebaseActionActions();
+    for (AnAction action : actions) {
+      action.registerCustomShortcutSet(myCommitsTable, null);
+    }
+    PopupHandler.installRowSelectionTablePopup(myCommitsTable,
+                                               new DefaultActionGroup(actions),
+                                               ActionPlaces.EDITOR_POPUP,
+                                               ActionManager.getInstance());
 
     installSpeedSearch();
     myCopyProvider = new MyCopyProvider();
@@ -122,12 +130,12 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       return;
     }
     int i = 0;
-    while (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.skip) {
+    while (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.SKIP) {
       i++;
     }
     if (i < entries.size()) {
       GitRebaseEntry.Action action = entries.get(i).getAction();
-      if (action == GitRebaseEntry.Action.squash || action == GitRebaseEntry.Action.fixup) {
+      if (action == GitRebaseEntry.Action.SQUASH || action == GitRebaseEntry.Action.FIXUP) {
         setErrorText(GitBundle.message("rebase.editor.invalid.squash", StringUtil.toLowerCase(action.name())), myCommitsTable);
         setOKActionEnabled(false);
         return;
@@ -148,16 +156,8 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   }
 
   @NotNull
-  private ActionGroup generateSelectRebaseActionActionGroup() {
-    return new DefaultActionGroup(ContainerUtil.map(GitRebaseEntry.Action.values(), action -> new AnAction(action.toString()) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        int[] selectedRows = myCommitsTable.getSelectedRows();
-        for (int i : selectedRows) {
-          myTableModel.setValueAt(action, i, MyTableModel.ACTION_COLUMN);
-        }
-      }
-    }));
+  private List<AnAction> generateSelectRebaseActionActions() {
+    return ContainerUtil.map(GitRebaseEntry.Action.values(), SetActionAction::new);
   }
 
   @Override
@@ -400,6 +400,25 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     @Override
     public boolean isEnabled() {
       return super.isEnabled() && myCommitsTable.getSelectedRowCount() == 1;
+    }
+  }
+
+  private class SetActionAction extends DumbAwareAction {
+    private final GitRebaseEntry.Action myAction;
+
+    public SetActionAction(GitRebaseEntry.Action action) {
+      super(action.toString());
+      myAction = action;
+      KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.getExtendedKeyCodeForChar(action.getMnemonic()), InputEvent.ALT_MASK);
+      setShortcutSet(new CustomShortcutSet(new KeyboardShortcut(keyStroke, null)));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      int[] selectedRows = myCommitsTable.getSelectedRows();
+      for (int i : selectedRows) {
+        myTableModel.setValueAt(myAction, i, MyTableModel.ACTION_COLUMN);
+      }
     }
   }
 

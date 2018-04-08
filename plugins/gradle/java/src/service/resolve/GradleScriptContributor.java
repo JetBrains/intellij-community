@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,7 +39,7 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
-    if(!UtilKt.isResolvedInGradleScript(aClass)) return;
+    if (!UtilKt.isResolvedInGradleScript(aClass)) return;
 
     List<String> methodInfo = ContainerUtilRt.newArrayList();
     for (GrMethodCall current = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);

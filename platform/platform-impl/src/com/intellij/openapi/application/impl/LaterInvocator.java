@@ -455,10 +455,10 @@ public class LaterInvocator {
 
   @TestOnly
   public static Collection<RunnableInfo> getLaterInvocatorQueue() {
-    // used by leak hunter as root, so we must not copy it here to another list 
-    // to avoid walking over obsolete queue 
     synchronized (LOCK) {
-      return new ArrayList<>(ourQueue);
+      // used by leak hunter as root, so we must not copy it here to another list
+      // to avoid walking over obsolete queue
+      return Collections.unmodifiableCollection(ourQueue);
     }
   }
 

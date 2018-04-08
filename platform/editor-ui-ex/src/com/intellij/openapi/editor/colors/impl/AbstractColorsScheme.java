@@ -964,7 +964,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     String originalSchemeName = getMetaProperties().getProperty(META_INFO_ORIGINAL);
     if (originalSchemeName != null) {
       EditorColorsScheme originalScheme = EditorColorsManager.getInstance().getScheme(originalSchemeName);
-      if (originalScheme instanceof AbstractColorsScheme) return (AbstractColorsScheme)originalScheme;
+      if (originalScheme instanceof AbstractColorsScheme && originalScheme != this) return (AbstractColorsScheme)originalScheme;
     }
     return null;
   }

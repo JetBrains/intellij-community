@@ -1613,7 +1613,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
-    return formatFileSize(fileSize, "");
+    return formatFileSize(fileSize, " ");
   }
 
   @NotNull
@@ -1627,7 +1627,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration) {
-    return formatDuration(duration, "");
+    return formatDuration(duration, " ");
   }
 
   @NotNull

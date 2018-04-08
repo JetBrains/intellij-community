@@ -83,10 +83,10 @@ import static org.junit.Assert.assertNull;
 public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> {
   @NotNull private final File myProjectPath;
 
-  private FileEditorFixture myEditor;
   private MainToolbarFixture myToolbar;
   private NavigationBarFixture myNavBar;
   private RunConfigurationListFixture myRCList;
+  private GutterFixture myGutter;
 
   @NotNull
   public static IdeFrameFixture find(@NotNull final Robot robot,
@@ -222,11 +222,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public FileEditorFixture getEditor() {
-    if (myEditor == null) {
-      myEditor = new FileEditorFixture(robot(), this);
-    }
-
-    return myEditor;
+    return new FileEditorFixture(robot(), this);
   }
 
   @NotNull
@@ -253,6 +249,14 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       myRCList = new RunConfigurationListFixture(robot(), this);
     }
     return myRCList;
+  }
+
+  @NotNull
+  public GutterFixture getGutter() {
+    if (myGutter == null) {
+      myGutter = new GutterFixture( this);
+    }
+    return myGutter;
   }
 
   //@NotNull
@@ -340,6 +344,15 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
    */
   public void invokeMenuPath(@NotNull String... path) {
     getMenuFixture().invokeMenuPath(path);
+  }
+
+  /**
+   * Returns a JMenuItem for a corresponding path
+   *
+   * @param path the series of menu names, e.g. {@link invokeActionByMenuPath("Build", "Make Project")}
+   */
+  public MenuFixture.MenuItemFixture getMenuPath(@NotNull String... path) {
+    return getMenuFixture().getMenuItemFixture(path);
   }
 
   /**

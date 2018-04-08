@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -201,7 +201,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFindRootWithCrazySlashes() {
-    for (int i=0;i<10;i++) {
+    for (int i = 0; i < 10; i++) {
       String path = StringUtil.repeat("/", i);
       VirtualFile root = LocalFileSystem.getInstance().findFileByPathIfCached(path);
       assertTrue(path, root == null || !root.getPath().contains("//"));

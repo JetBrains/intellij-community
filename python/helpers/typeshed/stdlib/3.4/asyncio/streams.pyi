@@ -56,7 +56,7 @@ if sys.platform != 'win32':
         client_connected_cb: _ClientConnectedCallback,
         path: str = ...,
         *,
-        loop: int = ...,
+        loop: Optional[events.AbstractEventLoop] = ...,
         limit: int = ...,
         **kwds: Any) -> Generator[Any, None, events.AbstractServer]: ...
 

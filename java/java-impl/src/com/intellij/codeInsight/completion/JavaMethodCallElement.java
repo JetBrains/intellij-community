@@ -306,13 +306,15 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
 
+    int limit = getCompletionHintsLimit();
+
     CaretModel caretModel = editor.getCaretModel();
     int offset = caretModel.getOffset();
     int braceOffset = offset - 1;
-    int numberOfCommas = parametersCount - 1;
-    if (parametersCount > 1 && PsiImplUtil.isVarArgs(method)) numberOfCommas--;
+    int numberOfParametersToDisplay = parametersCount > 1 && PsiImplUtil.isVarArgs(method) ? parametersCount - 1 : parametersCount;
+    int numberOfCommas = Math.min(numberOfParametersToDisplay, limit) - 1;
     String commas = StringUtil.repeat(", ", numberOfCommas);
-    document.insertString(offset, commas);
+    editor.getDocument().insertString(offset, commas);
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
@@ -334,6 +336,10 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       ParameterHintsPass.syncUpdate(methodCall, editor);
       Disposer.register(controller, hintsDisposal);
     }
+  }
+
+  public static int getCompletionHintsLimit() {
+    return Math.max(1, Registry.intValue("editor.completion.hints.per.call.limit"));
   }
 
   public static void setCompletionModeIfNotSet(@NotNull PsiCall expression, @NotNull Disposable disposable) {

@@ -32,7 +32,8 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
     if (refElement instanceof PsiFileSystemItem && !(refElement instanceof SyntheticFileSystemItem)) {
       final VirtualFile vFile = ((PsiFileSystemItem)refElement).getVirtualFile();
       if (vFile != null) {
-        text = vFile.getNameWithoutExtension();
+        String fileNameWithoutExtension = vFile.getNameWithoutExtension();
+        text = fileNameWithoutExtension.isEmpty() ? vFile.getName() : fileNameWithoutExtension;
       }
       // We must not look for file references with the file language's case-sensitivity, 
       // since case-sensitivity of the references themselves depends either on file system 

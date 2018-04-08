@@ -634,7 +634,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     final CharSequence charsSequence = document.getCharsSequence();
     for (final TextRange indent : indents) {
       final String oldIndentStr = charsSequence.subSequence(indent.getStartOffset() + 1, indent.getEndOffset()).toString();
-      final int oldIndent = IndentHelperImpl.getIndent(file.getProject(), file.getFileType(), oldIndentStr, true);
+      final int oldIndent = IndentHelperImpl.getIndent(file, oldIndentStr, true);
       final String newIndentStr = IndentHelperImpl
         .fillIndent(CodeStyle.getIndentOptions(file), Math.max(oldIndent + indentAdjustment, 0));
       document.replaceString(indent.getStartOffset() + 1, indent.getEndOffset(), newIndentStr);
@@ -650,7 +650,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     //noinspection StatementWithEmptyBody
     while (Character.isWhitespace(charsSequence.charAt(endOffset++))) ;
     final String newIndentStr = charsSequence.subSequence(startOffset, endOffset - 1).toString();
-    return IndentHelperImpl.getIndent(psiFile.getProject(), psiFile.getFileType(), newIndentStr, true);
+    return IndentHelperImpl.getIndent(psiFile, newIndentStr, true);
   }
 
   public boolean isDisabled() {

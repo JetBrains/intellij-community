@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -40,6 +26,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open val componentManager: ComponentManager? = null
 
+  protected open val useVfs = true
+
   override final fun <T : Any, MutableT : T> create(directoryName: String,
                                                     processor: SchemeProcessor<T, MutableT>,
                                                     presentableName: String?,
@@ -56,7 +44,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     roamingType,
                                     presentableName,
                                     schemeNameToFileName,
-                                    componentManager?.messageBus)
+                                    componentManager?.messageBus,
+                                    useVfs)
     if (autoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
@@ -109,6 +98,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   @Suppress("unused")
   private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
+    override val useVfs = false
+
     override val componentManager: ComponentManager
       get() = ApplicationManager.getApplication()
 

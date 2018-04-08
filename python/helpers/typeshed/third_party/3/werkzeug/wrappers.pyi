@@ -1,12 +1,13 @@
+from datetime import datetime
 from typing import (
-    Any, Iterable, Mapping, Optional, Sequence, Tuple, Type, Union,
+    Any, Callable, Iterable, Iterator, Mapping, MutableMapping, Optional, Sequence, Text, Tuple, Type, TypeVar, Union,
 )
 
 from wsgiref.types import WSGIEnvironment
 
 from .datastructures import (
     CombinedMultiDict, EnvironHeaders, Headers, ImmutableMultiDict,
-    MultiDict, TypeConversionDict,
+    MultiDict, TypeConversionDict, HeaderSet,
 )
 
 class BaseRequest:
@@ -18,7 +19,7 @@ class BaseRequest:
     list_storage_class = ...  # type: Type
     dict_storage_class = ...  # type: Type
     form_data_parser_class = ...  # type: Type
-    trusted_hosts = ...  # type: Optional[Sequence[str]]
+    trusted_hosts = ...  # type: Optional[Sequence[Text]]
     disable_data_descriptor = ...  # type: Any
     environ: WSGIEnvironment = ...
     shallow = ...  # type: Any
@@ -46,26 +47,29 @@ class BaseRequest:
     files = ...  # type: MultiDict
     cookies = ...  # type: TypeConversionDict
     headers = ...  # type: EnvironHeaders
-    path = ...  # type: str
-    full_path = ...  # type: str
-    script_root = ...  # type: str
-    url = ...  # type: str
-    base_url = ...  # type: str
-    url_root = ...  # type: str
-    host_url = ...  # type: str
-    host = ...  # type: str
+    path = ...  # type: Text
+    full_path = ...  # type: Text
+    script_root = ...  # type: Text
+    url = ...  # type: Text
+    base_url = ...  # type: Text
+    url_root = ...  # type: Text
+    host_url = ...  # type: Text
+    host = ...  # type: Text
     query_string = ...  # type: bytes
-    method = ...  # type: str
+    method = ...  # type: Text
     def access_route(self): ...
     @property
     def remote_addr(self) -> str: ...
-    remote_user = ...  # type: str
+    remote_user = ...  # type: Text
     scheme = ...  # type: str
     is_xhr = ...  # type: bool
     is_secure = ...  # type: bool
     is_multithread = ...  # type: bool
     is_multiprocess = ...  # type: bool
     is_run_once = ...  # type: bool
+
+_OnCloseT = TypeVar('_OnCloseT', bound=Callable[[], Any])
+_SelfT = TypeVar('_SelfT', bound=BaseResponse)
 
 class BaseResponse:
     charset = ...  # type: str
@@ -80,24 +84,24 @@ class BaseResponse:
     direct_passthrough = ...  # type: bool
     response = ...  # type: Iterable[bytes]
     def __init__(self, response: Optional[Union[Iterable[bytes], bytes]] = ...,
-                 status: Optional[Union[str, int]] = ...,
+                 status: Optional[Union[Text, int]] = ...,
                  headers: Optional[Union[Headers,
-                                         Mapping[str, str],
-                                         Sequence[Tuple[str, str]]]]=None,
-                 mimetype: Optional[str] = ...,
-                 content_type: Optional[str] = ...,
+                                         Mapping[Text, Text],
+                                         Sequence[Tuple[Text, Text]]]] = ...,
+                 mimetype: Optional[Text] = ...,
+                 content_type: Optional[Text] = ...,
                  direct_passthrough: bool = ...) -> None: ...
-    def call_on_close(self, func): ...
+    def call_on_close(self, func: _OnCloseT) -> _OnCloseT: ...
     @classmethod
-    def force_type(cls, response, environ=None): ...
+    def force_type(cls: Type[_SelfT], response: object, environ: Optional[WSGIEnvironment] = ...) -> _SelfT: ...
     @classmethod
-    def from_app(cls, app, environ, buffered=False): ...
-    def get_data(self, as_text=False): ...
-    def set_data(self, value): ...
+    def from_app(cls: Type[_SelfT], app: Any, environ: WSGIEnvironment, buffered: bool = ...) -> _SelfT: ...
+    def get_data(self, as_text: bool = ...) -> Any: ...  # returns bytes if as_text is False (the default), else Text
+    def set_data(self, value: Union[bytes, Text]) -> None: ...
     data = ...  # type: Any
-    def calculate_content_length(self): ...
-    def make_sequence(self): ...
-    def iter_encoded(self): ...
+    def calculate_content_length(self) -> Optional[int]: ...
+    def make_sequence(self) -> None: ...
+    def iter_encoded(self) -> Iterator[bytes]: ...
     def set_cookie(self, key, value='', max_age=None, expires=None, path='', domain=None, secure=False, httponly=False): ...
     def delete_cookie(self, key, path='', domain=None): ...
     @property
@@ -167,36 +171,45 @@ class ResponseStreamMixin:
     def stream(self): ...
 
 class CommonRequestDescriptorsMixin:
-    content_type = ...  # type: Any
-    def content_length(self): ...
-    content_encoding = ...  # type: Any
-    content_md5 = ...  # type: Any
-    referrer = ...  # type: Any
-    date = ...  # type: Any
-    max_forwards = ...  # type: Any
     @property
-    def mimetype(self): ...
+    def content_type(self) -> Optional[str]: ...
     @property
-    def mimetype_params(self): ...
-    def pragma(self): ...
+    def content_length(self) -> Optional[int]: ...
+    @property
+    def content_encoding(self) -> Optional[str]: ...
+    @property
+    def content_md5(self) -> Optional[str]: ...
+    @property
+    def referrer(self) -> Optional[str]: ...
+    @property
+    def date(self) -> Optional[datetime]: ...
+    @property
+    def max_forwards(self) -> Optional[int]: ...
+    @property
+    def mimetype(self) -> str: ...
+    @property
+    def mimetype_params(self) -> Mapping[str, str]: ...
+    @property
+    def pragma(self) -> HeaderSet: ...
 
 class CommonResponseDescriptorsMixin:
-    mimetype = ...  # type: Any
-    mimetype_params = ...  # type: Any
-    location = ...  # type: Any
-    age = ...  # type: Any
-    content_type = ...  # type: Any
-    content_length = ...  # type: Any
-    content_location = ...  # type: Any
-    content_encoding = ...  # type: Any
-    content_md5 = ...  # type: Any
-    date = ...  # type: Any
-    expires = ...  # type: Any
-    last_modified = ...  # type: Any
-    retry_after = ...  # type: Any
-    vary = ...  # type: Any
-    content_language = ...  # type: Any
-    allow = ...  # type: Any
+    mimetype: Optional[str] = ...
+    @property
+    def mimetype_params(self) -> MutableMapping[str, str]: ...
+    location: Optional[str] = ...
+    age: Any = ...  # get: Optional[datetime.timedelta]
+    content_type: Optional[str] = ...
+    content_length: Optional[int] = ...
+    content_location: Optional[str] = ...
+    content_encoding: Optional[str] = ...
+    content_md5: Optional[str] = ...
+    date: Any = ...  # get: Optional[datetime.datetime]
+    expires: Any = ...  # get: Optional[datetime.datetime]
+    last_modified: Any = ...  # get: Optional[datetime.datetime]
+    retry_after: Any = ...  # get: Optional[datetime.datetime]
+    vary: Optional[str] = ...
+    content_language: Optional[str] = ...
+    allow: Optional[str] = ...
 
 class WWWAuthenticateMixin:
     @property

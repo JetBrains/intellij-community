@@ -20,6 +20,8 @@ import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.ui.ColorPanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -91,6 +93,12 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
     } finally {
       g2.dispose();
     }
+  }
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(1);
   }
 }
 

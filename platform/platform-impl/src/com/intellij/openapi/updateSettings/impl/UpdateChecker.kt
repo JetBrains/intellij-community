@@ -61,7 +61,10 @@ object UpdateChecker {
   private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
   private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
 
-  /** A special property for making users suffer by excluding some plugins from a normal update process. Better avoid. */
+  /**
+   * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
+   * Has no effect on non-bundled or "essential" (i.e. required for one of open projects) plugins.
+   */
   @Suppress("MemberVisibilityCanBePrivate")
   val excludedFromUpdateCheckPlugins = hashSetOf<String>()
 
@@ -260,11 +263,17 @@ object UpdateChecker {
     if (!excludedFromUpdateCheckPlugins.isEmpty()) {
       val required = ProjectManager.getInstance().openProjects
         .flatMap { ExternalDependenciesManager.getInstance(it).getDependencies(DependencyOnPlugin::class.java) }
-        .map { it.pluginId }
+        .map { PluginId.getId(it.pluginId) }
         .toSet()
-      excludedFromUpdateCheckPlugins
-        .filter { it !in required }
-        .forEach { updateable.remove(PluginId.getId(it)) }
+      excludedFromUpdateCheckPlugins.forEach {
+        val excluded = PluginId.getId(it)
+        if (excluded !in required) {
+          val plugin = updateable[excluded]
+          if (plugin != null && plugin.isBundled) {
+            updateable.remove(excluded)
+          }
+        }
+      }
     }
 
     return updateable

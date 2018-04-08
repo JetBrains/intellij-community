@@ -254,7 +254,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     });
 
     myTreeExpander = new DefaultTreeExpander(myTree);
-    myCopyPasteDelegator = createCopyPasteDelegator(myProject, myTree);
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myTree);
 
     myInitialElement = myTreeModel.getCurrentEditorElement();
     TreeUtil.installActions(myTree);
@@ -343,6 +343,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           filter = prefix;
           rebuild(true).processed(ignore -> UIUtil.invokeLaterIfNeeded(() -> {
             if (isDisposed()) return;
+            TreeUtil.promiseExpandAll(myTree);
             if (isBackspace && handleBackspace(filter)) {
               return;
             }
@@ -448,8 +449,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   public AsyncPromise<Void> rebuildAndUpdate() {
     AsyncPromise<Void> result = new AsyncPromise<>();
     TreeVisitor visitor = path -> {
-      Object o = TreeUtil.getUserObject(path.getLastPathComponent());
-      if (o instanceof AbstractTreeNode) ((AbstractTreeNode)o).update();
+      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
+      if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };
     rebuild(false).processed(ignore1 -> myAsyncTreeModel.accept(visitor).processed(ignore2 -> result.setResult(null)));
@@ -1052,10 +1053,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     ArrayList<SpeedSearchObjectWithWeight> cur = new ArrayList<>();
     int max = -1;
     for (SpeedSearchObjectWithWeight p : paths) {
-      Object object = TreeUtil.getUserObject(((TreePath)p.node).getLastPathComponent());
-      if (object instanceof FilteringTreeStructure.FilteringNode) {
+      Object component = ((TreePath)p.node).getLastPathComponent();
+      FilteringTreeStructure.FilteringNode node = TreeUtil.getUserObject(FilteringTreeStructure.FilteringNode.class, component);
+      if (node != null) {
         List<PsiElement> elements = new ArrayList<>();
-        FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)object;
         FilteringTreeStructure.FilteringNode candidate = node;
 
         while (node != null) {

@@ -27,6 +27,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.text.DecimalFormat;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -98,19 +99,12 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       myName.setOpaque(false);
       myCategory.clear();
       myCategory.setOpaque(false);
-      String pluginName = myPluginDescriptor.getName() + "  ";
       Object query = table.getClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY);
       SimpleTextAttributes attr = new SimpleTextAttributes(UIUtil.getListBackground(isSelected),
                                                            UIUtil.getListForeground(isSelected),
                                                            JBColor.RED,
                                                            SimpleTextAttributes.STYLE_PLAIN);
       Matcher matcher = NameUtil.buildMatcher("*" + query, NameUtil.MatchingCaseSensitivity.NONE);
-      if (query instanceof String) {
-        SpeedSearchUtil.appendColoredFragmentForMatcher(pluginName, myName, attr, matcher, UIUtil.getTableBackground(isSelected), true);
-      }
-      else {
-        myName.append(pluginName);
-      }
 
       String category = myPluginDescriptor.getCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getCategory());
       if (category != null) {
@@ -150,6 +144,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
 
       PluginId pluginId = myPluginDescriptor.getPluginId();
       IdeaPluginDescriptor installed = PluginManager.getPlugin(pluginId);
+      Color initialNameForeground = myName.getForeground();
 
       if (installed != null && ((IdeaPluginDescriptorImpl)installed).isDeleted()) {
         // existing plugin uninstalled (both views)
@@ -188,6 +183,16 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       else if (!myPluginDescriptor.isEnabled() && myPluginsView) {
         // a plugin is disabled (plugins view only)
         myStatus.setIcon(IconLoader.getDisabledIcon(myStatus.getIcon()));
+      }
+      String pluginName = myPluginDescriptor.getName() + "  ";
+      if (query instanceof String) {
+        if (!Objects.equals(initialNameForeground, myName.getForeground())) {
+          attr = attr.derive(attr.getStyle(), myName.getForeground(), attr.getBgColor(), attr.getWaveColor());
+        }
+        SpeedSearchUtil.appendColoredFragmentForMatcher(pluginName, myName, attr, matcher, UIUtil.getTableBackground(isSelected), true);
+      }
+      else {
+        myName.append(pluginName);
       }
     }
 

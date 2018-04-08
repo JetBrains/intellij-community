@@ -72,6 +72,11 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
     return getFileTypeByExtension(extension);
   }
 
+  @Override
+  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
+    return getFileTypeByFile(file) == type;
+  }
+
   @NotNull
   @Override
   public FileType getFileTypeByExtension(@NonNls @NotNull String extension) {

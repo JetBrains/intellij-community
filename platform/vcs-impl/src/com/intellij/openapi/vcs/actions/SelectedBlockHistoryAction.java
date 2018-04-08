@@ -97,7 +97,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
                                                            selection.getDialogTitle());
 
                            vcsHistoryDialog.show();
-                         }, VcsBackgroundableActions.HISTORY_FOR_SELECTION, false, null);
+                         }, VcsBackgroundableActions.HISTORY_FOR_SELECTION, false);
     }
     catch (Exception exception) {
       reportError(exception);

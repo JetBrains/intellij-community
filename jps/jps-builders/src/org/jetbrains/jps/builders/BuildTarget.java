@@ -38,6 +38,7 @@ import java.util.List;
  * When parallel compilation is enabled, build targets that don't have any dependencies on each other may be built at the same
  * time in different threads.
  *
+ * @see BuildTargetType
  * @author nik
  */
 public abstract class BuildTarget<R extends BuildRootDescriptor> {

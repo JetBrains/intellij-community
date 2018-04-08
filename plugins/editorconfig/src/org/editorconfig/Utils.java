@@ -1,6 +1,6 @@
 package org.editorconfig;
 
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -13,13 +13,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.LineSeparator;
-import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider;
 import org.editorconfig.configmanagement.DocumentSettingsManager;
+import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.core.EditorConfig.OutPair;
@@ -64,7 +63,7 @@ public class Utils {
   }
 
   public static void export(Project project) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final CodeStyleSettings settings = CodeStyle.getSettings(project);
     final CommonCodeStyleSettings.IndentOptions commonIndentOptions = settings.getIndentOptions();
     StringBuilder result = new StringBuilder();
     addIndentOptions(result, "*", commonIndentOptions, getEncoding(project) +
@@ -107,7 +106,7 @@ public class Utils {
   }
 
   private static String getLineEndings(Project project) {
-    final String separator = CodeStyleFacade.getInstance(project).getLineSeparator();
+    final String separator = CodeStyle.getSettings(project).getLineSeparator();
     for (LineSeparator s : LineSeparator.values()) {
       if (separator.equals(s.getSeparatorString())) {
         return LineEndingsManager.lineEndingsKey + "=" + s.name().toLowerCase(Locale.US) + "\n";

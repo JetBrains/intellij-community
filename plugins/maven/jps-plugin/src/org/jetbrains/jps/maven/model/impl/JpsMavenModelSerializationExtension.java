@@ -3,9 +3,13 @@ package org.jetbrains.jps.maven.model.impl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
+import org.jetbrains.jps.maven.model.JpsMavenModuleExtension;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+
+import static com.intellij.util.xmlb.XmlSerializer.deserialize;
 
 /**
  * @author nik
@@ -17,7 +21,12 @@ public class JpsMavenModelSerializationExtension extends JpsModelSerializerExten
   @Override
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
     if (Boolean.parseBoolean(rootElement.getAttributeValue(MAVEN_MODULE_ATTRIBUTE))) {
-      JpsMavenExtensionService.getInstance().getOrCreateExtension(module);
+      JpsMavenModuleExtension extension = JpsMavenExtensionService.getInstance().getOrCreateExtension(module);
+      Element component = JDomSerializationUtil.findComponent(rootElement, MavenAnnotationProcessorsModel.COMPONENT_NAME);
+      if (component != null) {
+        MavenAnnotationProcessorsModel annotationProcessorsModel = deserialize(component, MavenAnnotationProcessorsModel.class);
+        extension.getAnnotationProcessorModules().addAll(annotationProcessorsModel.annotationProcessorModules);
+      }
     }
   }
 

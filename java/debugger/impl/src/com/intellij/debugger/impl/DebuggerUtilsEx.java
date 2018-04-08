@@ -8,6 +8,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
@@ -438,6 +439,35 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
+    throws EvaluateException {
+    return computeAndKeep(() -> virtualMachineProxy.mirrorOf(s), context);
+  }
+
+  public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
+    throws EvaluateException {
+    return computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension), context);
+  }
+
+  public static <T extends Value> T computeAndKeep(EvaluatingComputable<T> computable, EvaluationContext context) throws EvaluateException {
+    T res;
+    int retries = 10;
+    do {
+      res = computable.compute();
+      try {
+        keep(res, context);
+      }
+      catch (ObjectCollectedException oce) {
+        if (--retries < 0) {
+          throw oce;
+        }
+        res = null; // collected already
+      }
+    }
+    while (res == null);
+    return res;
+  }
+
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
 
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
@@ -634,62 +664,83 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
-    if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.FLOAT.getPresentableText().equals(expectedType)) {
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
-    return createValue(vm, expectedType, (long)value);
+    if (PsiType.LONG.getName().equals(expectedType)) {
+      return vm.mirrorOf((long)value);
+    }
+    if (PsiType.INT.getName().equals(expectedType)) {
+      return vm.mirrorOf((int)value);
+    }
+    if (PsiType.SHORT.getName().equals(expectedType)) {
+      return vm.mirrorOf((short)value);
+    }
+    if (PsiType.BYTE.getName().equals(expectedType)) {
+      return vm.mirrorOf((byte)value);
+    }
+    if (PsiType.CHAR.getName().equals(expectedType)) {
+      return vm.mirrorOf((char)value);
+    }
+    return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, long value) {
-    if (PsiType.LONG.getPresentableText().equals(expectedType)) {
+    if (PsiType.LONG.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.INT.getPresentableText().equals(expectedType)) {
+    if (PsiType.INT.getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getPresentableText().equals(expectedType)) {
+    if (PsiType.SHORT.getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getPresentableText().equals(expectedType)) {
+    if (PsiType.BYTE.getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
-    if (PsiType.CHAR.getPresentableText().equals(expectedType)) {
+    if (PsiType.CHAR.getName().equals(expectedType)) {
       return vm.mirrorOf((char)value);
     }
-    if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
       return vm.mirrorOf((double)value);
     }
-    if (PsiType.FLOAT.getPresentableText().equals(expectedType)) {
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, boolean value) {
-    if (PsiType.BOOLEAN.getPresentableText().equals(expectedType)) {
+    if (PsiType.BOOLEAN.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, char value) {
-    if (PsiType.CHAR.getPresentableText().equals(expectedType)) {
+    if (PsiType.CHAR.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.LONG.getPresentableText().equals(expectedType)) {
+    if (PsiType.LONG.getName().equals(expectedType)) {
       return vm.mirrorOf((long)value);
     }
-    if (PsiType.INT.getPresentableText().equals(expectedType)) {
+    if (PsiType.INT.getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getPresentableText().equals(expectedType)) {
+    if (PsiType.SHORT.getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getPresentableText().equals(expectedType)) {
+    if (PsiType.BYTE.getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
+    }
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+      return vm.mirrorOf((double)value);
+    }
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
+      return vm.mirrorOf((float)value);
     }
     return null;
   }

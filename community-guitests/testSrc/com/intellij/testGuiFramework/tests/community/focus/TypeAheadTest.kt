@@ -15,7 +15,7 @@ class TypeAheadTest : GuiTestCase() {
 
   @Test
   fun testTypeAhead() {
-    CommunityProjectCreator.createCommandLineProject("type-ahead-problem")
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     ideFrame {
       waitForBackgroundTasksToFinish()
       configurationList {

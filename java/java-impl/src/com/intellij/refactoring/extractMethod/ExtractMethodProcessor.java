@@ -1369,13 +1369,52 @@ public class ExtractMethodProcessor implements MatchProvider {
         methodCallExpression.getArgumentList().add(myElementFactory.createExpressionFromText(data.variable.getName(), methodCallExpression));
       }
     }
+    List<String> reusedVariables = findReusedVariables(match, myOutputVariable);
     PsiElement replacedMatch = match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
 
-    addNotNullConditionalCheck(match, replacedMatch);
+    PsiElement appendLocation = addNotNullConditionalCheck(match, replacedMatch);
+    declareReusedVariables(appendLocation, reusedVariables);
     return replacedMatch;
   }
 
-  private void addNotNullConditionalCheck(Match match, PsiElement replacedMatch) {
+  @NotNull
+  private static List<String> findReusedVariables(@NotNull Match match, @Nullable PsiVariable outputVariable) {
+    Set<PsiLocalVariable> ignoreVariables = Collections.emptySet();
+    ReturnValue returnValue = match.getOutputVariableValue(outputVariable);
+    if (returnValue instanceof VariableReturnValue) {
+      PsiVariable returnedVariable = ((VariableReturnValue)returnValue).getVariable();
+      if (returnedVariable instanceof PsiLocalVariable) {
+        ignoreVariables = Collections.singleton((PsiLocalVariable)returnedVariable);
+      }
+    }
+    List<ReusedLocalVariable> reusedLocalVariables =
+      ReusedLocalVariablesFinder.findReusedLocalVariables(match.getMatchStart(), match.getMatchEnd(), ignoreVariables);
+    if (!reusedLocalVariables.isEmpty()) {
+      List<String> result = new ArrayList<>();
+      for (ReusedLocalVariable variable : reusedLocalVariables) {
+        if (!variable.reuseValue()) {
+          result.add(variable.getDeclarationText());
+        }
+      }
+      return result;
+    }
+
+    return Collections.emptyList();
+  }
+
+  private static void declareReusedVariables(@NotNull PsiElement appendLocation, @NotNull List<String> reusedVariables) {
+    if (reusedVariables.isEmpty()) {
+      return;
+    }
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(appendLocation.getProject());
+
+    for (String variable : reusedVariables) {
+      PsiStatement declaration = factory.createStatementFromText(variable, appendLocation);
+      appendLocation = appendLocation.getParent().addAfter(declaration, appendLocation);
+    }
+  }
+
+  private PsiElement addNotNullConditionalCheck(Match match, PsiElement replacedMatch) {
     if ((myNotNullConditionalCheck || myGenerateConditionalExit) && myOutputVariable != null) {
       ReturnValue returnValue = match.getOutputVariableValue(myOutputVariable);
       if (returnValue instanceof VariableReturnValue) {
@@ -1385,10 +1424,11 @@ public class ExtractMethodProcessor implements MatchProvider {
         if (statement != null) {
           PsiStatement conditionalExit = myNotNullConditionalCheck ?
                                          generateNotNullConditionalStatement(varName) : generateConditionalExitStatement(varName);
-          statement.getParent().addAfter(conditionalExit, statement);
+          return statement.getParent().addAfter(conditionalExit, statement);
         }
       }
     }
+    return replacedMatch;
   }
 
   @Nullable

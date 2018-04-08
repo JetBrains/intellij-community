@@ -18,9 +18,12 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,5 +39,11 @@ public class MacIntelliJRadioButtonUI extends DarculaRadioButtonUI {
   @Override
   public Icon getDefaultIcon() {
     return DEFAULT_ICON;
+  }
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(3, 3, 2, 0);
   }
 }

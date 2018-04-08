@@ -240,12 +240,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
                                               singleton = factory.isConfigurationSingletonByDefault)
   }
 
-  override fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {
-    settings.isShared = isShared
-    addConfiguration(settings)
+  override fun addConfiguration(settings: RunnerAndConfigurationSettings) {
+    doAddConfiguration(settings, isCheckRecentsLimit = true)
   }
 
-  override fun addConfiguration(settings: RunnerAndConfigurationSettings) {
+  private fun doAddConfiguration(settings: RunnerAndConfigurationSettings, isCheckRecentsLimit: Boolean) {
     val newId = settings.uniqueID
     var existingId: String? = null
     lock.write {
@@ -279,7 +278,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     if (existingId == null) {
-      if (settings.isTemporary) {
+      if (isCheckRecentsLimit && settings.isTemporary) {
         checkRecentsLimit()
       }
       eventPublisher.runConfigurationAdded(settings)
@@ -709,7 +708,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return settings
   }
 
-  internal fun addConfiguration(element: Element, settings: RunnerAndConfigurationSettingsImpl) {
+  internal fun addConfiguration(element: Element, settings: RunnerAndConfigurationSettingsImpl, isCheckRecentsLimit: Boolean = true) {
     if (settings.isTemplate) {
       val factory = settings.factory
       lock.write {
@@ -717,7 +716,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
     }
     else {
-      addConfiguration(settings)
+      doAddConfiguration(settings, isCheckRecentsLimit)
       if (element.getAttributeBooleanValue(SELECTED_ATTR)) {
         // to support old style
         selectedConfiguration = settings

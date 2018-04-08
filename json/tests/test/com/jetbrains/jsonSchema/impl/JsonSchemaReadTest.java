@@ -2,9 +2,6 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.json.JsonLanguage;
-import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
@@ -63,12 +60,10 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     assertNotNull(mainSchema);
     assertTrue(service.isSchemaFile(mainSchema));
 
-    final Annotator annotator = new JsonSchemaAnnotator();
-    LanguageAnnotators.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, annotator);
+    enableInspectionTool(new JsonSchemaComplianceInspection());
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
-        LanguageAnnotators.INSTANCE.removeExplicitExtension(JsonLanguage.INSTANCE, annotator);
         JsonSchemaTestServiceImpl.setProvider(null);
       }
     });
@@ -77,8 +72,8 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     final List<HighlightInfo> infos = doHighlighting();
     for (HighlightInfo info : infos) {
       if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
-        assertFalse(String.format("%s in: %s", info.getDescription(),
-                                  myEditor.getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))), true);
+        fail(String.format("%s in: %s", info.getDescription(),
+                           myEditor.getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))));
       }
     }
   }

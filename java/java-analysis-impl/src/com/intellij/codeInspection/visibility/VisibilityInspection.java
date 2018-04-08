@@ -157,15 +157,29 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (refElement instanceof RefParameter) return null;
     if (refElement.isSyntheticJSP()) return null;
 
-    //if (!SUGGEST_FOR_CONSTANTS && refEntity instanceof RefField && PsiUtil.isConstantField(refElement.getElement())) {
-    //  return null;
-    //}
+    if (!SUGGEST_FOR_CONSTANTS && refEntity instanceof RefField) {
+      RefField refField = (RefField)refEntity;
+      if (refField.isFinal() && refField.isStatic() && refField.isOnlyAssignedInInitializer()) {
+        return null;
+      }
+    }
 
     int minLevel = -1;
     //ignore entry points.
     if (refElement.isEntry()) {
       minLevel = getMinVisibilityLevel(refElement);
       if (minLevel <= 0) return null;
+    }
+
+    if (refElement instanceof RefField) {
+      Boolean implicitlyWritten = refElement.getUserData(RefField.IMPLICITLY_WRITTEN);
+      if (implicitlyWritten != null && implicitlyWritten) {
+        return null;
+      }
+      Boolean implicitlyRead = refElement.getUserData(RefField.IMPLICITLY_READ);
+      if (implicitlyRead != null && implicitlyRead) {
+        return null;
+      }
     }
 
     //ignore implicit constructors. User should not be able to see them.
@@ -482,7 +496,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                                                 @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     final EntryPointsManager entryPointsManager = globalContext.getEntryPointsManager(manager);
-    for (RefElement entryPoint : entryPointsManager.getEntryPoints()) {
+    for (RefElement entryPoint : entryPointsManager.getEntryPoints(manager)) {
       //don't ignore entry points with explicit visibility requirements
       if (entryPoint instanceof RefJavaElement && getMinVisibilityLevel((RefJavaElement)entryPoint) > 0) {
         continue;

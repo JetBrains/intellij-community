@@ -86,6 +86,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
 
 public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   public static final String TEMPORARILY_FOCUSABLE_COMPONENT_KEY = "ChooseByNameBase.TemporarilyFocusableComponent";
@@ -629,8 +630,11 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     }.installOn(myList);
 
+    ListCellRenderer modelRenderer = myModel.getListCellRenderer();
     //noinspection unchecked
-    myList.setCellRenderer(myModel.getListCellRenderer());
+    myList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> disableTreeLoading(
+      () -> modelRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+    ));
     myList.setVisibleRowCount(16);
     myList.setFont(editorFont);
 

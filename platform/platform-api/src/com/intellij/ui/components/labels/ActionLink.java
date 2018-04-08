@@ -57,7 +57,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
     setListener(new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        ActionUtil.invokeAction(myAction, myEvent, ActionLink.this, myPlace, onDone);
+        ActionUtil.invokeAction(myAction, ActionLink.this, myPlace, myEvent, onDone);
       }
     }, null);
     myAction = action;

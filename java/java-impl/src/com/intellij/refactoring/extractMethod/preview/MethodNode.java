@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiJavaFile;
@@ -28,21 +29,20 @@ class MethodNode extends FragmentNode {
     setAllowsChildren(false);
   }
 
+  @NotNull
   @Override
-  protected TextChunk[] createTextChunks(@NotNull PsiElement start, @NotNull PsiElement end) {
-    assert start == end && start instanceof PsiMethod;
-    Project project = start.getProject();
+  protected TextChunk[] createTextChunks(@NotNull PsiElement element) {
+    assert element instanceof PsiMethod;
+    Project project = element.getProject();
     PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText(
-      "A.java", JavaLanguage.INSTANCE, "class A{" + start.getText() + "}");
+      "A.java", JavaLanguage.INSTANCE, "class A{" + element.getText() + "}");
     PsiMethod psiMethod = file.getClasses()[0].getMethods()[0];
 
     UsageInfo2UsageAdapter usageAdapter = new UsageInfo2UsageAdapter(new UsageInfo(psiMethod));
-    String text = psiMethod.getText();
-    int endOffset = Math.min(text.length(),
-                             psiMethod.getParameterList().getStartOffsetInParent() +
-                             psiMethod.getParameterList().getTextRange().getLength());
-    return ChunkExtractor.getExtractor(psiMethod.getContainingFile())
-                         .createTextChunks(usageAdapter, text, 0, endOffset, true, new ArrayList<>());
+    TextRange range = psiMethod.getTextRange();
+    int endOffset = Math.min(psiMethod.getParameterList().getTextRange().getEndOffset(), range.getEndOffset());
+    return ChunkExtractor.getExtractor(file)
+                         .createTextChunks(usageAdapter, file.getText(), range.getStartOffset(), endOffset, false, new ArrayList<>());
   }
 
   public Icon getIcon() {

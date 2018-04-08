@@ -97,7 +97,8 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
     }
     else {
       val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
-      val domainObjectType = (qualifierType.superTypes.firstOrNull { it is PsiClassType } as? PsiClassType)?.parameters?.singleOrNull() ?: return
+      val domainObjectType = (qualifierType.superTypes.firstOrNull { it is PsiClassType } as? PsiClassType)?.parameters?.singleOrNull()
+                             ?: return
       if (!InheritanceUtil.isInheritor(qualifierType, GRADLE_API_NAMED_DOMAIN_OBJECT_CONTAINER)) return
 
       val classHint = processor.getHint(com.intellij.psi.scope.ElementClassHint.KEY)
@@ -126,12 +127,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       }
 
       if (!shouldProcessMethods && shouldProcessProperties && place is GrReferenceExpression && place.parent !is GrApplicationStatement) {
-        val variable = object : GrLightField(propCandidate, domainObjectFqn, place) {
-          override fun getNavigationElement(): PsiElement {
-            val navigationElement = super.getNavigationElement()
-            return navigationElement
-          }
-        }
+        val variable = GrLightField(propCandidate, domainObjectFqn, place)
         place.putUserData(RESOLVED_CODE, true)
         if (!processor.execute(variable, state)) return
       }

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +43,9 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     final PsiPolyadicExpression expression = SplitConditionUtil.findCondition(element);
     if (expression == null) return false;
 
-    if (!(expression.getParent() instanceof PsiIfStatement)) return false;
-    PsiIfStatement ifStatement = (PsiIfStatement)expression.getParent();
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (!(parent instanceof PsiIfStatement)) return false;
+    PsiIfStatement ifStatement = (PsiIfStatement)parent;
 
     if (!PsiTreeUtil.isAncestor(ifStatement.getCondition(), expression, false)) return false;
     if (ifStatement.getThenBranch() == null) return false;

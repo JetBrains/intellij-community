@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class JvmMetaLanguage extends MetaLanguage {
 
   protected JvmMetaLanguage() {
-    super("Jvm");
+    super("JVM");
   }
 
   @Override

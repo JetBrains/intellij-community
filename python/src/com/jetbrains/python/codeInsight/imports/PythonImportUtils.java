@@ -34,6 +34,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -254,9 +255,9 @@ public final class PythonImportUtils {
   public static boolean isImportableModule(PsiFile targetFile, @NotNull PsiFileSystemItem file) {
     PsiDirectory parent = (PsiDirectory)file.getParent();
     return parent != null && file != targetFile &&
-           (parent.findFile(PyNames.INIT_DOT_PY) != null ||
-            ImportFromExistingAction.isRoot(parent) ||
-            parent == targetFile.getParent());
+           (ImportFromExistingAction.isRoot(parent) ||
+            parent == targetFile.getParent() ||
+            PyUtil.isPackage(parent, false, null));
   }
 
   private static boolean isIndexableTopLevel(PsiElement symbol) {

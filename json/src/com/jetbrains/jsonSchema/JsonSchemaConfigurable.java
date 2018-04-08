@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
@@ -6,12 +7,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.util.UriUtil;
+import com.intellij.util.Urls;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
+import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,16 +105,49 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     mySchema.setRelativePathToSchema(myView.getSchemaSubPath());
   }
 
+  public static boolean isHttpPath(@NotNull String schemaFieldText) {
+    Couple<String> couple = UriUtil.splitScheme(schemaFieldText);
+    return couple.first.startsWith("http");
+  }
+
+  private static boolean isValidURL(@NotNull final String url) {
+    return isHttpPath(url) && Urls.parse(url, false) != null;
+  }
+
   private void doValidation() throws ConfigurationException {
-    final File file = new File(myProject.getBasePath(), myView.getSchemaSubPath());
+    String schemaSubPath = myView.getSchemaSubPath();
+
     VirtualFile vFile;
-    if (!file.exists() || (vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)) == null) {
-      throw new ConfigurationException((!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Schema file does not exist");
+    String filename;
+
+    if (isHttpPath(schemaSubPath)) {
+      filename = schemaSubPath;
+
+      if (!isValidURL(schemaSubPath)) {
+        throw new ConfigurationException(
+          (!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Invalid schema URL");
+      }
+
+      vFile = JsonFileResolver.urlToFile(schemaSubPath);
+      if (vFile == null) {
+        throw new ConfigurationException(
+          (!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Invalid URL resource");
+      }
     }
-    final String filename = file.getName();
+    else {
+      final File file = new File(myProject.getBasePath(), schemaSubPath);
+      if (!file.exists() || (vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)) == null) {
+        throw new ConfigurationException(
+          (!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Schema file does not exist");
+      }
+      filename = file.getName();
+    }
 
     if (StringUtil.isEmptyOrSpaces(myDisplayName)) throw new ConfigurationException(filename + ": Schema name is empty");
-    if (StringUtil.isEmptyOrSpaces(myView.getSchemaSubPath())) throw new ConfigurationException(filename + ": Schema path is empty");
+    if (StringUtil.isEmptyOrSpaces(schemaSubPath)) throw new ConfigurationException(filename + ": Schema path is empty");
+
+    // we don't validate remote schemas while in options dialog
+    if (vFile instanceof HttpVirtualFile) return;
 
     final String error = JsonSchemaReader.checkIfValidJsonSchema(myProject, vFile);
     if (error != null) {

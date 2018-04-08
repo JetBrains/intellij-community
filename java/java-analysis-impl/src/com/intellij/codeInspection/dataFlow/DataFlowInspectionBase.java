@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -31,6 +32,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -87,12 +89,46 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       @Override
       public void visitClass(PsiClass aClass) {
         if (aClass instanceof PsiTypeParameter) return;
-        analyzeCodeBlock(aClass, holder);
+        if (PsiUtil.isLocalOrAnonymousClass(aClass) && !(aClass instanceof PsiEnumConstantInitializer)) return;
+
+        final StandardDataFlowRunner runner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, aClass);
+        DataFlowInstructionVisitor visitor =
+          analyzeDfaWithNestedClosures(aClass, holder, runner, Collections.singletonList(runner.createMemoryState()));
+        List<DfaMemoryState> states = visitor.getEndOfInitializerStates();
+        for (PsiMethod method : aClass.getConstructors()) {
+          List<DfaMemoryState> initialStates;
+          PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+          if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && hasImplicitImpureSuperCall(aClass, method))) {
+            initialStates = Collections.singletonList(runner.createMemoryState());
+          } else {
+            initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();
+          }
+          analyzeMethod(method, runner, initialStates);
+        }
+      }
+
+      private boolean hasImplicitImpureSuperCall(PsiClass aClass, PsiMethod constructor) {
+        PsiClass superClass = aClass.getSuperClass();
+        if (superClass == null) return false;
+        PsiElement superCtor = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(constructor, constructor.getProject(), superClass);
+        if (!(superCtor instanceof PsiMethod)) return false;
+        return !ControlFlowAnalyzer.isPure((PsiMethod)superCtor);
       }
 
       @Override
       public void visitMethod(PsiMethod method) {
-        analyzeCodeBlock(method.getBody(), holder);
+        if (method.isConstructor()) return;
+        final StandardDataFlowRunner runner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, method.getBody());
+        analyzeMethod(method, runner, Collections.singletonList(runner.createMemoryState()));
+      }
+
+      private void analyzeMethod(PsiMethod method, StandardDataFlowRunner runner, List<DfaMemoryState> initialStates) {
+        PsiCodeBlock scope = method.getBody();
+        if (scope == null) return;
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
+        if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
+
+        analyzeDfaWithNestedClosures(scope, holder, runner, initialStates);
         analyzeNullLiteralMethodArguments(method, holder);
       }
 
@@ -160,20 +196,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     }
   }
 
-  private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder) {
-    if (scope == null) return;
-
-    PsiClass containingClass = PsiTreeUtil.getNonStrictParentOfType(scope, PsiClass.class);
-    if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
-
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, scope);
-    analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Collections.singletonList(dfaRunner.createMemoryState()));
-  }
-
-  private void analyzeDfaWithNestedClosures(PsiElement scope,
-                                            ProblemsHolder holder,
-                                            StandardDataFlowRunner dfaRunner,
-                                            Collection<? extends DfaMemoryState> initialStates) {
+  private DataFlowInstructionVisitor analyzeDfaWithNestedClosures(PsiElement scope,
+                                                                  ProblemsHolder holder,
+                                                                  StandardDataFlowRunner dfaRunner,
+                                                                  Collection<? extends DfaMemoryState> initialStates) {
     final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor();
     final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
     if (rc == RunnerResult.OK) {
@@ -194,6 +220,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         holder.registerProblem(name, message, ProblemHighlightType.WEAK_WARNING);
       }
     }
+    return visitor;
   }
 
   @NotNull
@@ -682,11 +709,21 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
                                              InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
       }
+      ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
       String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
                                                  "dataflow.message.constant.condition.when.reached" :
                                                  "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
       holder.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
+  }
+
+  private static LocalQuickFix createReplaceWithNullCheckFix(PsiElement psiAnchor, boolean evaluatesToTrue) {
+    if (evaluatesToTrue) return null;
+    if (!(psiAnchor instanceof PsiMethodCallExpression) || !MethodCallUtils.isEqualsCall((PsiMethodCallExpression)psiAnchor)) return null;
+    PsiExpression arg = ArrayUtil.getFirstElement(((PsiMethodCallExpression)psiAnchor).getArgumentList().getExpressions());
+    if (!ExpressionUtils.isNullLiteral(arg)) return null;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent());
+    return new EqualsToEqualityFix(parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent));
   }
 
   protected LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue, PsiAssignmentExpression parent, final boolean onTheFly) {

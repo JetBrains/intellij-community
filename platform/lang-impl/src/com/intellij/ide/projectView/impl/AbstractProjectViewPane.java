@@ -38,6 +38,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -664,17 +665,19 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected void enableDnD() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myDropTarget = new ProjectViewDropTarget(myTree, new Retriever() {
+      myDropTarget = new ProjectViewDropTarget(myTree, myProject) {
+        @Nullable
         @Override
-        public PsiElement getPsiElement(@Nullable TreeNode node) {
-          return getPSIElementFromNode(node);
+        protected PsiElement getPsiElement(@NotNull TreePath path) {
+          return getPSIElement(getElementFromTreeNode(path.getLastPathComponent()));
         }
 
+        @Nullable
         @Override
-        public Module getModule(TreeNode treeNode) {
-          return getNodeModule(getElementFromTreeNode(treeNode));
+        protected Module getModule(@NotNull PsiElement element) {
+          return getNodeModule(element);
         }
-      }, myProject) {
+
         @Override
         public void cleanUpOnLeave() {
           beforeDnDLeave();
@@ -728,7 +731,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Override
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
       final PsiElement[] psiElements = getSelectedPSIElements();
-      final TreeNode[] nodes = getSelectedTreeNodes();
+      TreePath[] paths = getSelectionPaths();
       return new DnDDragStartBean(new TransferableWrapper(){
 
         @Override
@@ -736,9 +739,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
           return PsiCopyPasteManager.asFileList(psiElements);
         }
 
+        @Nullable
+        @Override
+        public TreePath[] getTreePaths() {
+          return paths;
+        }
+
         @Override
         public TreeNode[] getTreeNodes() {
-          return nodes;
+          return TreePathUtil.toTreeNodes(getTreePaths());
         }
 
         @Override

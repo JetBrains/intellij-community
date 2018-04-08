@@ -215,6 +215,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       }
       if (collectedVariables.isEmpty()) return null;
       if (resourceVariablesUsedInFinally(finallyStatements, closedVariableStatementIndices, collectedVariables)) return null;
+      if (resourceVariableUsedInCatches(tryStatement, collectedVariables)) return null;
 
       List<ResourceVariable> resourceVariables = new ArrayList<>();
       List<PsiStatement> statementsToDelete = new ArrayList<>();
@@ -289,6 +290,17 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
           if (resourceVariables.contains(usedVariable)) {
             return true;
           }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean resourceVariableUsedInCatches(PsiTryStatement tryStatement, Set<PsiVariable> collectedVariables) {
+    for (PsiCatchSection catchSection : tryStatement.getCatchSections()) {
+      for (PsiVariable variable : collectedVariables) {
+        if (VariableAccessUtils.variableIsUsed(variable, catchSection)) {
+          return true;
         }
       }
     }

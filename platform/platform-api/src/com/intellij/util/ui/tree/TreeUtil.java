@@ -85,9 +85,10 @@ public final class TreeUtil {
 
   @Nullable
   public static <T> T findObjectInPath(@Nullable TreePath path, @NotNull Class<T> clazz) {
-    for (TreePath p = path; p != null; p = p.getParentPath()) {
-      Object o = getUserObject(p.getLastPathComponent());
-      if (clazz.isInstance(o)) return (T)o;
+    while (path != null) {
+      T object = getUserObject(clazz, path.getLastPathComponent());
+      if (object != null) return object;
+      path = path.getParentPath();
     }
     return null;
   }
@@ -1001,6 +1002,12 @@ public final class TreeUtil {
   @Nullable
   public static Object getUserObject(@Nullable Object node) {
     return node instanceof DefaultMutableTreeNode ? ((DefaultMutableTreeNode)node).getUserObject() : node;
+  }
+
+  @Nullable
+  public static <T> T getUserObject(@NotNull Class<T> type, @Nullable Object node) {
+    node = getUserObject(node);
+    return node != null && type.isInstance(node) ? type.cast(node) : null;
   }
 
   @Nullable

@@ -589,7 +589,7 @@ public class DeclarationParser {
   @Nullable
   public PsiBuilder.Marker parseLambdaParameter(PsiBuilder builder, boolean typed) {
     int flags = ReferenceParser.ELLIPSIS;
-    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X)) flags |= ReferenceParser.VAR_TYPE;
+    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_11)) flags |= ReferenceParser.VAR_TYPE;
     return parseListElement(builder, typed, flags, false);
   }
 

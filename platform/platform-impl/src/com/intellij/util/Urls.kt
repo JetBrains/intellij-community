@@ -60,10 +60,10 @@ object Urls {
   }
 
   @JvmStatic
-  fun newLocalFileUrl(path: String) = LocalFileUrl(FileUtilRt.toSystemIndependentName(path))
+  fun newLocalFileUrl(path: String): Url = LocalFileUrl(FileUtilRt.toSystemIndependentName(path))
 
   @JvmStatic
-  fun newLocalFileUrl(file: VirtualFile) = LocalFileUrl(file.path)
+  fun newLocalFileUrl(file: VirtualFile): Url = LocalFileUrl(file.path)
 
   @JvmStatic
   fun newFromEncoded(url: String): Url {
@@ -80,10 +80,12 @@ object Urls {
     return newUrl("http", authority, path)
   }
 
+  @JvmStatic
   fun newHttpUrl(authority: String, path: String?, parameters: String?): Url {
     return UrlImpl("http", authority, path, parameters)
   }
 
+  @JvmStatic
   fun newUrl(scheme: String, authority: String, path: String?): Url {
     return UrlImpl(scheme, authority, path)
   }

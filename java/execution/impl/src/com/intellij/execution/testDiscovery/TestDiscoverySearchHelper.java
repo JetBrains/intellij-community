@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.*;
 
 public class TestDiscoverySearchHelper {

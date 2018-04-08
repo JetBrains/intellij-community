@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +11,11 @@ import java.io.*;
 import static com.intellij.CommonBundle.message;
 
 /**
+ * Takes extra caution w.r.t. an existing content. Specifically, if the operation fails for whatever reason
+ * (like not enough disk space left), the prior content shall not be overwritten.
+ *
+ * The class is not thread-safe - use try-with-resources or equivalent try/finally statements to handle.
+ *
  * @author max
  */
 public class SafeFileOutputStream extends OutputStream {
@@ -39,6 +30,7 @@ public class SafeFileOutputStream extends OutputStream {
   private final boolean myPreserveAttributes;
   private final File myTempFile;
   private final FileOutputStream myOutputStream;
+  private boolean myClosed = false;
   private boolean myFailed = false;
 
   public SafeFileOutputStream(File target) throws FileNotFoundException {
@@ -96,6 +88,9 @@ public class SafeFileOutputStream extends OutputStream {
 
   @Override
   public void close() throws IOException {
+    if (myClosed) return;
+    myClosed = true;
+
     if (!myFailed && DO_SYNC) {
       try {
         myOutputStream.getFD().sync();

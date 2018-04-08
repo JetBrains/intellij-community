@@ -52,7 +52,7 @@ public abstract class InstructionVisitor {
       PsiExpression array = arrayAccess.getArrayExpression();
       DfaValue value = factory.createValue(array);
       if (value instanceof DfaVariableValue) {
-        for (DfaVariableValue qualified : factory.getVarFactory().getAllQualifiedBy((DfaVariableValue)value)) {
+        for (DfaVariableValue qualified : ((DfaVariableValue)value).getDependentVariables()) {
           if (qualified.isFlushableByCalls()) {
             memState.flushVariable(qualified);
           }
@@ -74,6 +74,14 @@ public abstract class InstructionVisitor {
     }
     return new ControlTransferHandler(state, runner, transferValue.getTarget()).iteration(transferValue.getTraps())
       .toArray(DfaInstructionState.EMPTY_ARRAY);
+  }
+
+  public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    return nextInstruction(instruction, runner, state);
+  }
+
+  public DfaInstructionState[] visitEscapeInstruction(EscapeInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    return nextInstruction(instruction, runner, state);
   }
 
   protected static DfaInstructionState[] nextInstruction(Instruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -162,12 +170,12 @@ public abstract class InstructionVisitor {
   }
 
   public DfaInstructionState[] visitFlushVariable(FlushVariableInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    final DfaVariableValue variable = instruction.getVariable();
-    if (variable != null) {
-      memState.flushVariable(variable);
-    } else {
-      memState.flushFields();
-    }
+    memState.flushVariable(instruction.getVariable());
+    return nextInstruction(instruction, runner, memState);
+  }
+
+  public DfaInstructionState[] visitFlushFields(FlushFieldsInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    memState.flushFields();
     return nextInstruction(instruction, runner, memState);
   }
 

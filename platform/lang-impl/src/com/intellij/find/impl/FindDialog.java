@@ -162,10 +162,14 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
   @Override
   public void doCancelAction() { // doCancel disposes fields and then calls dispose
+    saveSettings();
+    super.doCancelAction();
+  }
+
+  public void saveSettings() {
     FindSettings.getInstance().setDefaultScopeName(myScopeCombo.getSelectedScopeName());
     applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
     rememberResultsPreviewWasOpen();
-    super.doCancelAction();
   }
 
   private void rememberResultsPreviewWasOpen() {

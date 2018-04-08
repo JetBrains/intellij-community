@@ -78,6 +78,13 @@ public class ImageUtil {
     return bufferedImage;
   }
 
+  public static double getImageScale(BufferedImage image) {
+    if (image instanceof JBHiDPIScaledImage) {
+      return ((JBHiDPIScaledImage)image).getScale();
+    }
+    return 1;
+  }
+
   public static int getRealWidth(@NotNull Image image) {
     if (image instanceof JBHiDPIScaledImage) {
       Image img = ((JBHiDPIScaledImage)image).getDelegate();

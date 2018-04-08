@@ -6,16 +6,16 @@ import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
-// see com.intellij.uiDesigner.core.AbstractLayout.DEFAULT_HGAP and DEFAULT_VGAP
-// https://docs.google.com/document/d/1DKnLkO-7_onA7_NCw669aeMH5ltNvw-QMiQHnXu8k_Y/edit
-
+// https://jetbrains.github.io/ui/controls/input_field/#spacing
 @PublishedApi
-internal fun createLayoutBuilder() = LayoutBuilder(MigLayoutBuilder())
+internal fun createLayoutBuilder(): LayoutBuilder {
+  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
+}
 
 interface LayoutBuilderImpl {
   fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false): Row
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 
-  fun noteRow(text: String)
+  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null)
 }

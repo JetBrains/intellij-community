@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
@@ -67,6 +68,9 @@ class PartialLocalLineStatusTracker(project: Project,
   private val lstManager = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
   private val undoManager = UndoManager.getInstance(project)
 
+  private val undoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.undo")
+  private val redoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.redo")
+
   override val renderer = MyLineStatusMarkerRenderer(this)
 
   private var defaultMarker: ChangeListMarker
@@ -86,9 +90,11 @@ class PartialLocalLineStatusTracker(project: Project,
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
     affectedChangeLists.add(defaultMarker.changelistId)
 
-    document.addDocumentListener(MyUndoDocumentListener(), disposable)
-    CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
-    Disposer.register(disposable, Disposable { dropExistingUndoActions() })
+    if (undoStateRecordingEnabled) {
+      document.addDocumentListener(MyUndoDocumentListener(), disposable)
+      CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
+      Disposer.register(disposable, Disposable { dropExistingUndoActions() })
+    }
 
     assert(blocks.isEmpty())
   }
@@ -275,10 +281,41 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class MyUndoCommandListener : CommandListener {
-    override fun beforeCommandFinished(event: CommandEvent?) {
-      if (hasUndoInCommand) {
+    override fun commandStarted(event: CommandEvent?) {
+      if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress) {
         hasUndoInCommand = false
+      }
+    }
 
+    override fun commandFinished(event: CommandEvent?) {
+      if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress) {
+        hasUndoInCommand = false
+      }
+    }
+
+    override fun undoTransparentActionStarted() {
+      if (CommandProcessor.getInstance().currentCommand == null) {
+        hasUndoInCommand = false
+      }
+    }
+
+    override fun undoTransparentActionFinished() {
+      if (CommandProcessor.getInstance().currentCommand == null) {
+        hasUndoInCommand = false
+      }
+    }
+
+
+    override fun beforeCommandFinished(event: CommandEvent?) {
+      registerRedoAction()
+    }
+
+    override fun beforeUndoTransparentActionFinished() {
+      registerRedoAction()
+    }
+
+    private fun registerRedoAction() {
+      if (hasUndoInCommand && redoStateRecordingEnabled) {
         registerUndoAction(false)
       }
     }
@@ -489,8 +526,7 @@ class PartialLocalLineStatusTracker(project: Project,
       val group = DefaultActionGroup()
       if (changeLists.size > 1) {
         group.add(Separator("Changelists"))
-        val comparator = compareBy<LocalChangeList> { if (it.isDefault) 0 else 1 }.thenBy { it.name }
-        for (changeList in changeLists.sortedWith(comparator)) {
+        for (changeList in changeLists) {
           group.add(MoveToChangeListAction(editor, range, mousePosition, changeList))
         }
         group.add(Separator.getInstance())

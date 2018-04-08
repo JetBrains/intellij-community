@@ -17,6 +17,8 @@ package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -215,6 +217,10 @@ public interface Configurable extends UnnamedConfigurable {
 
   default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
     return toggleButton.isSelected() != value;
+  }
+
+  default <T> boolean isModified(@NotNull ComboBox<T> comboBox, T value) {
+    return !Comparing.equal(comboBox.getSelectedItem(), value);
   }
 
   interface TopComponentController {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -64,8 +64,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
     scopeEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
-    severityColumn.setCellRenderer(SeverityRenderer.create(tableSettings.getInspectionProfile(), null));
-    severityColumn.setCellEditor(SeverityRenderer.create(tableSettings.getInspectionProfile(), () -> tableSettings.onSettingsChanged()));
+    SeverityRenderer renderer = SeverityRenderer.create(tableSettings.getInspectionProfile(), () -> tableSettings.onSettingsChanged());
+    severityColumn.setCellRenderer(renderer);
+    severityColumn.setCellEditor(renderer);
 
     setColumnSelectionAllowed(false);
     setRowSelectionAllowed(true);
@@ -263,9 +264,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
       boolean disabled = Boolean.FALSE.equals(isEnabled(rowIndex));
       final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
       if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
-        return new SeverityState(MIXED_FAKE_SEVERITY, false, disabled);
+        return new SeverityState(MIXED_FAKE_SEVERITY, disabled);
       }
-      return new SeverityState(getSeverity(existedScopesStatesAndNonExistNames.getExistedStates()), !disabled, disabled);
+      return new SeverityState(getSeverity(existedScopesStatesAndNonExistNames.getExistedStates()), disabled);
     }
 
     @Nullable
@@ -396,9 +397,15 @@ public class ScopesAndSeveritiesTable extends JBTable {
       final List<Descriptor> descriptors = ContainerUtil.map(myTableSettings.getNodes(), inspectionConfigTreeNode -> inspectionConfigTreeNode.getDefaultDescriptor());
       final ScopesChooser scopesChooser = new ScopesChooser(descriptors, myInspectionProfile, myProject, myScopeNames) {
         @Override
-        protected void onScopeAdded() {
+        protected void onScopeAdded(@NotNull String scopeName) {
           myTableSettings.onScopeAdded();
           refreshAggregatedScopes();
+          for (int i = 0; i < getRowCount(); i++) {
+            if (getScopeName(i).equals(scopeName)) {
+              myTable.clearSelection();
+              myTable.setRowSelectionInterval(i, i);
+            }
+          }
         }
 
         @Override

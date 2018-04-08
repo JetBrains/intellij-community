@@ -35,6 +35,7 @@ public interface PsiReference extends ModelReference {
    *
    * @return the underlying element of the reference.
    */
+  @NotNull
   PsiElement getElement();
 
   /**
@@ -43,6 +44,7 @@ public interface PsiReference extends ModelReference {
    *
    * @return Relative range in element
    */
+  @NotNull
   TextRange getRangeInElement();
 
   /**

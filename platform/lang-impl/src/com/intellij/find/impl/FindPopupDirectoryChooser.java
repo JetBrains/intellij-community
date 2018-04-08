@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
@@ -87,12 +88,16 @@ public class FindPopupDirectoryChooser extends JPanel {
     mySelectDirectoryButton.addActionListener(__ -> {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       descriptor.setForcedToUseIdeaFileChooser(true);
+      if (!Registry.is("ide.find.as.popup.show.dialogs.above.popup")) {
+        myFindPopupPanel.setWindowVisible(false);
+      }
       myFindPopupPanel.getCanClose().set(false);
       FileChooser.chooseFiles(descriptor, myProject, null, null,
                               new FileChooser.FileChooserConsumer() {
         @Override
         public void consume(List<VirtualFile> files) {
           ApplicationManager.getApplication().invokeLater(() -> {
+            myFindPopupPanel.setWindowVisible(true);
             myFindPopupPanel.getCanClose().set(true);
             IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
             myHelper.getModel().setDirectoryName(files.get(0).getPresentableUrl());
@@ -103,6 +108,7 @@ public class FindPopupDirectoryChooser extends JPanel {
         @Override
         public void cancelled() {
           ApplicationManager.getApplication().invokeLater(() -> {
+            myFindPopupPanel.setWindowVisible(true);
             myFindPopupPanel.getCanClose().set(true);
             IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
           });

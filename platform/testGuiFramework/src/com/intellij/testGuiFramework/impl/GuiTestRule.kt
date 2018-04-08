@@ -288,14 +288,20 @@ class GuiTestRule : TestRule {
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
-
 //TODO: add wait to open project
-
     return findIdeFrame(projectPath)
   }
 
   fun importProject(projectDirName: String): File {
     val projectPath = setUpProject(projectDirName, false)
+    val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
+    Assert.assertNotNull(toSelect)
+    doImportProject(toSelect!!)
+    return projectPath
+  }
+
+  fun importProject(projectFile: File): File {
+    val projectPath = setUpProject(projectFile, false)
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
@@ -317,6 +323,13 @@ class GuiTestRule : TestRule {
     return projectPath
   }
 
+  private fun setUpProject(projectDirFile: File,
+                           forOpen: Boolean): File {
+    val projectPath = copyProjectBeforeOpening(projectDirFile)
+    Assert.assertNotNull(projectPath)
+    return projectPath
+  }
+
 
   fun copyProjectBeforeOpening(projectDirName: String): File {
     val masterProjectPath = getMasterProjectDirPath(projectDirName)
@@ -328,6 +341,18 @@ class GuiTestRule : TestRule {
     }
     FileUtil.copyDir(masterProjectPath, projectPath)
     println("Copied project '$projectDirName' to path '${projectPath.path}'")
+    return projectPath
+  }
+
+  fun copyProjectBeforeOpening(projectDirFile: File): File {
+
+    val projectPath = getTestProjectDirPath(projectDirFile.name)
+    if (projectPath.isDirectory) {
+      FileUtilRt.delete(projectPath)
+      println(String.format("Deleted project path '%1\$s'", projectPath.path))
+    }
+    FileUtil.copyDir(projectDirFile, projectPath)
+    println("Copied project '${projectDirFile.name}' to path '${projectPath.path}'")
     return projectPath
   }
 

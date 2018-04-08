@@ -19,5 +19,5 @@ package com.jetbrains.jsonSchema.extension;
  * @author Irina.Chernushina on 3/29/2016.
  */
 public enum SchemaType {
-  schema, embeddedSchema, userSchema
+  schema, embeddedSchema, userSchema, remoteSchema
 }

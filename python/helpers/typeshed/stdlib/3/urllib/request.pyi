@@ -47,6 +47,7 @@ class Request:
     origin_req_host = ...  # type: str
     selector = ...  # type: str
     data = ...  # type: Optional[bytes]
+    headers = ...  # type: Dict[str, str]
     unverifiable = ...  # type: bool
     method = ...  # type: Optional[str]
     def __init__(self, url: str, data: Optional[bytes] = ...,

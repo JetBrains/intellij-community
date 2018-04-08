@@ -68,7 +68,7 @@ public class ViewTextAction extends XFetchValueActionBase {
     if (selectedNodes.size() == 1) {
       XValueNodeImpl node = selectedNodes.get(0);
       XValue container = node.getValueContainer();
-      if (container instanceof JavaValue && ((JavaValue)container).getDescriptor().isString() && container.getModifier() != null) {
+      if (container instanceof JavaValue && container.getModifier() != null && ((JavaValue)container).getDescriptor().isString()) {
         return node;
       }
     }

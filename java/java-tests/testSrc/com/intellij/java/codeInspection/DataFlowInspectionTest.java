@@ -18,6 +18,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -548,6 +549,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
       public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
         return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
       }
+
+      @Override
+      public boolean isClassWithCustomizedInitialization(@NotNull PsiElement element) {
+        return element instanceof PsiClass && ((PsiClass)element).getName().equals("Instrumented");
+      }
     }, myFixture.getTestRootDisposable());
     doTest();
   }
@@ -591,4 +597,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     myFixture.addClass("package org.junit; public class Assume { public static void assumeNotNull(Object... objects) {}}");
     doTest();
   }
+  public void testMergedInitializerAndConstructor() { doTest(); }
 }

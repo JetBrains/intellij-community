@@ -686,7 +686,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @see FileBasedTestCaseHelperEx
    * @Parameterized.Parameter fields are injected on parameterized test creation.
    */
-  @Parameterized.Parameter(0)
+  @Parameterized.Parameter()
   public String myFileSuffix;
 
   /**
@@ -698,7 +698,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   public String myTestDataPath;
 
   @Parameterized.Parameters(name = "{0}")
-  public static List<Object[]> params() throws Throwable {
+  public static List<Object[]> params() {
     return Collections.emptyList();
   }
 

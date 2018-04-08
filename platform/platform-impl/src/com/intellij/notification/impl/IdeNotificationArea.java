@@ -63,7 +63,8 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     }.installOn(this);
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED,
-                                                                                () -> ApplicationManager.getApplication().invokeLater(() -> updateStatus()));
+                                                                                () -> ApplicationManager.getApplication()
+                                                                                                        .invokeLater(() -> updateStatus()));
   }
 
   @Override
@@ -132,7 +133,9 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     icon.setIcon(getPendingNotificationsIcon(AllIcons.Ide.Notification.NoEvents, type), 0);
     if (size > 0) {
       //noinspection UseJBColor
-      Color textColor = type == NotificationType.ERROR ? new JBColor(Color.white, new Color(0xF2F2F2)) : new Color(0x333333);
+      Color textColor = type == NotificationType.ERROR || type == NotificationType.INFORMATION
+                        ? new JBColor(Color.white, new Color(0xF2F2F2))
+                        : new Color(0x333333);
       icon.setIcon(new TextIcon(component, size < 10 ? String.valueOf(size) : "9+", textColor), 1);
     }
     return icon;
@@ -224,13 +227,9 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
       x += (getIconWidth() - myWidth) / 2;
       y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
 
-      if (SystemInfo.isLinux) {
-        if (myStr.length() == 1) {
-          x--;
-        }
-      }
-      else if (myStr.length() == 2) {
-        x++;
+      int length = myStr.length();
+      if ((SystemInfo.isMac && length == 1) || ((SystemInfo.isLinux || SystemInfo.isWindows) && length == 2)) {
+        x += JBUI.scale(1);
       }
 
       g.setColor(myTextColor);

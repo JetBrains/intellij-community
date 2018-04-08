@@ -36,6 +36,6 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
         doHighlighting();
       }
     });
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 20000, test).attempts(1).usesAllCPUCores().assertTiming();
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 12000, test).attempts(1).usesAllCPUCores().assertTiming();
   }
 }

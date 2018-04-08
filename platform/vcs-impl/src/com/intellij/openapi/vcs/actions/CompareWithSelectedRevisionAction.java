@@ -137,7 +137,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
                                          revision -> DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project,
                                                                                            VcsBackgroundableActions.COMPARE_WITH), true);
                          }
-                       }, VcsBackgroundableActions.COMPARE_WITH, false, null);
+                       }, VcsBackgroundableActions.COMPARE_WITH, false);
   }
 
   private static void showTreePopup(final List<TreeItem<VcsFileRevision>> roots, final VirtualFile file, final Project project, final DiffProvider diffProvider) {

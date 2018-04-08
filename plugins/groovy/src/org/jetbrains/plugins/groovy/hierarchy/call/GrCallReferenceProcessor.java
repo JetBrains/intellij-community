@@ -45,10 +45,9 @@ public class GrCallReferenceProcessor implements CallReferenceProcessor {
     if (reference instanceof GrReferenceExpression) {
       final GrExpression qualifier = ((GrReferenceExpression)reference).getQualifierExpression();
       if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isSuperReference(qualifier)) { // filter super.foo() call inside foo() and similar cases (bug 8411)
-        assert qualifier != null;
         final PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
-        if (originalClass == null || originalClass.isInheritor(superClass, true)) {
-          return true;
+        if (originalClass == null || superClass == null || originalClass.isInheritor(superClass, true)) {
+          return false;
         }
       }
       if (qualifier != null && !methodToFind.hasModifierProperty(PsiModifier.STATIC)) {
@@ -59,7 +58,7 @@ public class GrCallReferenceProcessor implements CallReferenceProcessor {
             final PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);
             if (callee != null && !methodsToFind.contains(callee)) {
               // skip sibling methods
-              return true;
+              return false;
             }
           }
         }

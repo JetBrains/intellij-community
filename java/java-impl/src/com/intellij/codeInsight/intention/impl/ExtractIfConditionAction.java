@@ -4,6 +4,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -13,10 +14,17 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
   @Override
@@ -149,15 +157,39 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
                                            @NotNull PsiExpression extract,
                                            @NotNull PsiExpression leave,
                                            CommentTracker tracker) {
-
-    return factory.createStatementFromText(
-      createIfString(extract,
-                     createIfString(leave, thenBranch, elseBranch, tracker),
-                     elseBranch,
-                     tracker
-      ),
-      thenBranch
-    );
+    List<String> elseChain = new ArrayList<>();
+    boolean chainFinished = false;
+    while (!chainFinished) {
+      PsiIfStatement nextIf = tryCast(ControlFlowUtils.stripBraces(elseBranch), PsiIfStatement.class);
+      if (nextIf == null) break;
+      PsiExpression nextCondition = PsiUtil.skipParenthesizedExprDown(nextIf.getCondition());
+      if (nextCondition == null) break;
+      if (PsiEquivalenceUtil.areElementsEquivalent(extract, nextCondition) && nextIf.getThenBranch() != null) {
+        elseChain.add(nextIf.getThenBranch().getText());
+        chainFinished = true;
+      } else {
+        if (!(nextCondition instanceof PsiPolyadicExpression)) break;
+        PsiPolyadicExpression nextPolyadic = (PsiPolyadicExpression)nextCondition;
+        if (!nextPolyadic.getOperationTokenType().equals(JavaTokenType.ANDAND)) break;
+        PsiExpression firstOperand = nextPolyadic.getOperands()[0];
+        if (!PsiEquivalenceUtil.areElementsEquivalent(extract, firstOperand)) break;
+        elseChain.add(
+          createIfString(removeOperand(factory, nextPolyadic, firstOperand, tracker), nextIf.getThenBranch(), (PsiStatement)null, tracker));
+      }
+      elseBranch = nextIf.getElseBranch();
+    }
+    if (!chainFinished && elseBranch != null) {
+      elseChain.add(elseBranch.getText());
+    }
+    String thenString;
+    if (elseChain.isEmpty()) {
+      thenString = createIfString(leave, thenBranch, (String)null, tracker);
+    }
+    else {
+      thenString = "{" + createIfString(leave, thenBranch, String.join(" else ", elseChain), tracker) + "}";
+    }
+    String ifString = createIfString(extract, thenString, elseBranch, tracker);
+    return factory.createStatementFromText(ifString, thenBranch);
   }
 
   @NotNull

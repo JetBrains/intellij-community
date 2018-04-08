@@ -1,14 +1,14 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
   <title>wsdlFile@2x</title>
   <g>
-    <rect x="2" y="18" width="30" height="14" fill="#40b6e0" opacity="0.6"/>
+    <rect x="2" y="18" width="30" height="14" fill="#40b6e0" opacity="0.7"/>
     <g>
-      <polygon points="12 0 4 8 12 8 12 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-      <polygon points="14 0 14 8 14 10 12 10 4 10 4 16 26 16 26 0 14 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+      <polygon points="14 2 6 10 14 10 14 2" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+      <polygon points="16 2 16 10 16 12 14 12 6 12 6 16 26 16 26 2 16 2" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
     </g>
-    <path d="M5,20H8.2992A4.68763,4.68763,0,0,1,13,24.9715v0.02908A4.71131,4.71131,0,0,1,8.2992,30H5V20Zm1.55493,1.60056v6.79888H8.2992A3.078,3.078,0,0,0,11.37,25.0285V25.00058a3.10281,3.10281,0,0,0-3.07075-3.4H6.55493Z" fill="#231f20" opacity="0.6"/>
-    <g opacity="0.6">
-      <path d="M14,20h1.75759v8.39944h5.25648V30H14V20Z" fill="#231f20"/>
+    <path d="M8.29883,20H5V30H8.29883q.14355,0,.28711-.00879A4.70413,4.70413,0,0,0,13,25.33341c.00094-.11037,0-.74845,0-.74845A4.60216,4.60216,0,0,0,8.29883,20Zm0,8.39941H6.55469V21.60059H8.29883c.09375,0,.1875.00488.28027.01367A3.104,3.104,0,0,1,11.37012,25v.02832c.00976.09961.01367.2002.01367.2998A3.07788,3.07788,0,0,1,8.29883,28.39941Z" fill="#231f20" opacity="0.7"/>
+    <g opacity="0.7">
+      <path d="M15,20h1.75758v8.39944H22.014V30H15Z" fill="#231f20"/>
     </g>
   </g>
 </svg>

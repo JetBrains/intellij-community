@@ -58,7 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass implements DumbAware {
+public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   private static final String PRESENTABLE_NAME = "Injected fragments";
 
   InjectedGeneralHighlightingPass(@NotNull Project project,

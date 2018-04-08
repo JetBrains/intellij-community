@@ -3,7 +3,6 @@
     <properties include-transitive-deps="false" maven-id="org.apache.xmlgraphics:batik-all:1.9.1" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-all/1.9.1/batik-all-1.9.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/batik-compat.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

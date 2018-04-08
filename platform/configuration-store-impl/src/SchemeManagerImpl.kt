@@ -54,7 +54,8 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         val roamingType: RoamingType = RoamingType.DEFAULT,
                                                         val presentableName: String? = null,
                                                         private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                        private val messageBus: MessageBus? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
+                                                        private val messageBus: MessageBus? = null,
+                                                        private val useVfs: Boolean = messageBus != null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
   private val isOldSchemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
 
   private val isLoadingSchemes = AtomicBoolean()
@@ -73,8 +74,6 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
 
   // scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
   internal val schemeToInfo = ConcurrentCollectionFactory.createMap<T, ExternalInfo>(ContainerUtil.identityStrategy())
-
-  private val useVfs = messageBus != null
 
   init {
     if (processor is SchemeExtensionProvider) {
@@ -411,8 +410,8 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
-    override fun updateDigest(data: Element) {
-      externalInfo.digest = data.digest()
+    override fun updateDigest(data: Element?) {
+      externalInfo.digest = data?.digest() ?: ArrayUtilRt.EMPTY_BYTE_ARRAY
     }
   }
 
@@ -614,8 +613,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
   private fun saveScheme(scheme: MUTABLE_SCHEME, nameGenerator: UniqueNameGenerator) {
     var externalInfo: ExternalInfo? = schemeToInfo.get(scheme)
     val currentFileNameWithoutExtension = externalInfo?.fileNameWithoutExtension
-    val parent = processor.writeScheme(scheme)
-    val element = parent as? Element ?: (parent as Document).detachRootElement()
+    val element = processor.writeScheme(scheme)?.let { it as? Element ?: (it as Document).detachRootElement() }
     if (element.isEmpty()) {
       externalInfo?.scheduleDelete()
       return

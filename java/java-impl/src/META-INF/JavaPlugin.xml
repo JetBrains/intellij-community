@@ -34,6 +34,9 @@
       <implementation-class>com.intellij.codeInsight.hints.AnnotationHintsPassFactory</implementation-class>
     </component>
     <component>
+      <implementation-class>com.intellij.codeInsight.hints.MethodChainHintsPassFactory</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
     </component>
   </project-components>
@@ -409,10 +412,11 @@
                                  key="javadoc.generate.message.title"
                                  bundle="messages.JavadocBundle"/>
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.AnnotationHintsConfigurable"/>
+    <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.MethodChainHintsConfigurable"/>
 
     <wordBoundaryFilter language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.JavaWordBoundaryFilter"/>
-    <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgPrevParameterHandler"/>
-    <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgNextParameterHandler"/>
+    <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaPrevParameterHandler"/>
+    <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaNextParameterHandler"/>
     <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartHandler"/>
     <editorActionHandler action="EditorLineStartWithSelection" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartWithSelectionHandler"/>
     <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.AutoFormatTypedHandler"/>
@@ -793,6 +797,8 @@
     <applicationService serviceInterface="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory"
                         serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
+    <applicationService serviceImplementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
+    <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
     <psi.treeChangePreprocessor implementation="com.intellij.psi.impl.JavaCodeBlockModificationListener"/>
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
@@ -904,6 +910,10 @@
     <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
     <projectService serviceImplementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
+                    serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
+    <projectExtension implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
+    <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
 
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 

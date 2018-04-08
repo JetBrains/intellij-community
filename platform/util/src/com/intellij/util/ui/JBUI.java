@@ -6,10 +6,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -41,6 +44,7 @@ public class JBUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
 
   public static final String USER_SCALE_FACTOR_PROPERTY = "JBUI.userScaleFactor";
+  public static final String COMPENSATE_VISUAL_PADDING_KEY = "compensate.visual.padding";
 
   private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new JBUI());
 
@@ -490,6 +494,7 @@ public class JBUI {
     return new JBDimension(size.width, size.height);
   }
 
+  @NotNull
   public static JBInsets insets(int top, int left, int bottom, int right) {
     return new JBInsets(top, left, bottom, right);
   }
@@ -558,7 +563,7 @@ public class JBUI {
    * An equivalent of {@code isHiDPI(scale(1f))}
    */
   public static boolean isUsrHiDPI() {
-      return isHiDPI(scale(1f));
+    return isHiDPI(scale(1f));
   }
 
   /**
@@ -624,9 +629,14 @@ public class JBUI {
     }
   }
 
+  private static final JBEmptyBorder SHARED_EMPTY_INSTANCE = new JBEmptyBorder(0);
+
   @SuppressWarnings("UseDPIAwareBorders")
   public static class Borders {
     public static JBEmptyBorder empty(int top, int left, int bottom, int right) {
+      if (top == 0 && left == 0 && bottom == 0 && right == 0) {
+        return SHARED_EMPTY_INSTANCE;
+      }
       return new JBEmptyBorder(top, left, bottom, right);
     }
 
@@ -955,9 +965,23 @@ public class JBUI {
     }
 
     /**
+     * Creates a context based on the component's (or graphics's) scale and sticks to it via the {@link #update()} method.
+     */
+    public static ScaleContext create(@Nullable Component component, @Nullable Graphics graphics) {
+      // Component is preferable to Graphics as a scale provider, as it lets the context stick
+      // to the comp's actual scale via the update method.
+      if (component == null || (component.getGraphicsConfiguration() == null && graphics instanceof Graphics2D)) {
+        return create((Graphics2D)graphics);
+      }
+      else {
+        return create(component);
+      }
+    }
+
+    /**
      * Creates a context based on the gc's system scale
      */
-    public static ScaleContext create(GraphicsConfiguration gc) {
+    public static ScaleContext create(@Nullable GraphicsConfiguration gc) {
       return new ScaleContext(SYS_SCALE.of(sysScale(gc)));
     }
 
@@ -1424,12 +1448,20 @@ public class JBUI {
     return getColor(propertyName, new Color(defaultColor));
   }
 
-  private static Color getColor(String propertyName, Color defaultColor) {
-    Color color = UIManager.getColor(propertyName);
-    return color == null ? defaultColor : color;
+  private static Color getColor(final String propertyName, final Color defaultColor) {
+    NotNullProducer<Color> function = new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        Color color = UIManager.getColor(propertyName);
+        return color == null ? defaultColor : color;
+      }
+    };
+
+    return new JBColor(function);
   }
 
-  private static int getInt(String propertyName, int defaultValue) {
+  public static int getInt(String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);
     return value instanceof Integer ? (Integer)value : defaultValue;
   }
@@ -1437,5 +1469,23 @@ public class JBUI {
   private static Icon getIcon(String propertyName, Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
+  }
+
+  /**
+   * Temp method to not break IDEA LaF until changes are not reviewed.
+   *
+   * Correct input size is used now only for UI DSL.
+   */
+  public static boolean isUseCorrectInputHeight(@NotNull Component component) {
+    if (SystemInfoRt.isLinux) {
+      return false;
+    }
+
+    Container parent = component.getParent();
+    return !isCompensateVisualPaddingOnComponentLevel(parent instanceof JComboBox ? parent.getParent() : parent);
+  }
+
+  public static boolean isCompensateVisualPaddingOnComponentLevel(@Nullable Component parent) {
+    return SystemInfoRt.isLinux || !(parent instanceof JPanel && ((JPanel)parent).getClientProperty(COMPENSATE_VISUAL_PADDING_KEY) == Boolean.FALSE);
   }
 }

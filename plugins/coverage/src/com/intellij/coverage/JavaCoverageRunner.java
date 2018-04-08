@@ -15,12 +15,14 @@
  */
 package com.intellij.coverage;
 
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.execution.testframework.JavaTestAgentUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.PathUtil;
+import com.vladium.emma.rt.RT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +33,8 @@ import java.io.IOException;
  * @author Roman.Chernyatchik
  */
 public abstract class JavaCoverageRunner extends CoverageRunner {
+  private static final String JAVA_COVERAGE_AGENT_AGENT_PATH = "java.test.agent.lib.path";
+
   public boolean isJdk7Compatible() {
     return true;
   }
@@ -53,7 +57,15 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     appendCoverageArgument(sessionDataFilePath, patterns, parameters, collectLineInfo, isSampling);
   }
 
-   protected static void write2file(File tempFile, String arg) throws IOException {
+
+  @Nullable
+  public static String handleSpacesInAgentPath(@NotNull String agentPath) {
+    String agentName = new File(agentPath).getName();
+    String containingDir = JavaExecutionUtil.handleSpacesInAgentPath(agentPath, "testAgent", JAVA_COVERAGE_AGENT_AGENT_PATH);
+    return containingDir == null ? null : FileUtil.join(containingDir, agentName);
+  }
+
+  protected static void write2file(File tempFile, String arg) throws IOException {
     FileUtil.writeToFile(tempFile, (arg + "\n").getBytes(CharsetToolkit.UTF8_CHARSET), true);
   }
 
@@ -62,7 +74,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     if (!SystemInfo.isWindows && tempFile.getAbsolutePath().contains(" ")) {
       tempFile = FileUtil.createTempFile(new File(PathManager.getSystemPath(), "coverage"), "coverage", "args", true);
       if (tempFile.getAbsolutePath().contains(" ")) {
-        final String userDefined = System.getProperty(JavaTestAgentUtil.JAVA_TEST_AGENT_AGENT_PATH);
+        final String userDefined = System.getProperty(JAVA_COVERAGE_AGENT_AGENT_PATH);
         if (userDefined != null && new File(userDefined).isDirectory()) {
           tempFile = FileUtil.createTempFile(new File(userDefined), "coverage", "args", true);
         }

@@ -51,7 +51,7 @@ class ContractChecker extends DataFlowRunner {
       DfaConstValue comparisonValue = constraint.getComparisonValue(factory);
       if (comparisonValue != null) {
         boolean negated = constraint.shouldUseNonEqComparison();
-        DfaVariableValue dfaParam = factory.getVarFactory().createVariableValue(parameters[i], false);
+        DfaVariableValue dfaParam = factory.getVarFactory().createVariableValue(parameters[i]);
         initialState.applyCondition(factory.createCondition(dfaParam, RelationType.equivalence(!negated), comparisonValue));
       }
     }

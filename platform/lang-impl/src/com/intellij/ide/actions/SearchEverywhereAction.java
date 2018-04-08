@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -205,7 +205,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     };
     panel.setOpaque(false);
 
-    final JLabel label = new JBLabel(AllIcons.Actions.FindPlain) {
+    final JLabel label = new JBLabel(AllIcons.Actions.Find) {
       {
         enableEvents(AWTEvent.MOUSE_EVENT_MASK);
         enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
@@ -239,7 +239,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public void mouseExited(MouseEvent e) {
         if (myBalloon == null || myBalloon.isDisposed()) {
-          label.setIcon(AllIcons.Actions.FindPlain);
+          label.setIcon(AllIcons.Actions.Find);
         }
       }
     });
@@ -2085,7 +2085,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                     if (component != null) {
                       final JLabel label = UIUtil.getParentOfType(JLabel.class, component);
                       if (label != null) {
-                        SwingUtilities.invokeLater(() -> label.setIcon(AllIcons.Actions.FindPlain));
+                        SwingUtilities.invokeLater(() -> label.setIcon(AllIcons.Actions.Find));
                       }
                     }
                   }

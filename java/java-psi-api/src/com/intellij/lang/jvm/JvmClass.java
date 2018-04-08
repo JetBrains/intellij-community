@@ -79,4 +79,9 @@ public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration {
    */
   @NotNull
   JvmClass[] getInnerClasses();
+
+  @Override
+  default <T> T accept(@NotNull JvmElementVisitor<T> visitor) {
+    return visitor.visitClass(this);
+  }
 }

@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -334,6 +335,11 @@ public class IdeaApplication {
 
       LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
       PluginManagerCore.dumpPluginClassStatistics();
+
+      // Temporary check until the jre implementation has been checked and bundled
+      if (Registry.is("ide.popup.enablePopupType")) {
+        System.setProperty("jbre.popupwindow.settype", "true");
+      }
 
       if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
         WelcomeFrame.showNow();

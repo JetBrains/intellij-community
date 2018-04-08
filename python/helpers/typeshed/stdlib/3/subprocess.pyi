@@ -5,6 +5,18 @@ import sys
 from typing import Sequence, Any, Mapping, Callable, Tuple, IO, Optional, Union, List, Type, Text
 from types import TracebackType
 
+# We prefer to annotate inputs to methods (eg subprocess.check_call) with these
+# union types. However, outputs (eg check_call return) and class attributes
+# (eg TimeoutError.cmd) we prefer to annotate with Any, so the caller does not
+# have to use an assertion to confirm which type.
+#
+# For example:
+#
+# try:
+#    x = subprocess.check_output(["ls", "-l"])
+#    reveal_type(x)  # Any, but morally is _TXT
+# except TimeoutError as e:
+#    reveal_type(e.cmd)  # Any, but morally is _CMD
 _FILE = Union[None, int, IO[Any]]
 _TXT = Union[bytes, Text]
 if sys.version_info >= (3, 6):
@@ -250,7 +262,14 @@ STDOUT = ...  # type: int
 if sys.version_info >= (3, 3):
     DEVNULL = ...  # type: int
     class SubprocessError(Exception): ...
-    class TimeoutExpired(SubprocessError): ...
+    class TimeoutExpired(SubprocessError):
+        # morally: _CMD
+        cmd = ...  # type: Any
+        timeout = ...  # type: float
+        # morally: Optional[_TXT]
+        output = ...  # type: Any
+        stdout = ...  # type: Any
+        stderr = ...  # type: Any
 
 
 class CalledProcessError(Exception):
@@ -349,5 +368,7 @@ class Popen:
 # The result really is always a str.
 def getstatusoutput(cmd: _TXT) -> Tuple[int, str]: ...
 def getoutput(cmd: _TXT) -> str: ...
+
+def list2cmdline(seq: Sequence[str]) -> str: ...  # undocumented
 
 # Windows-only: STARTUPINFO etc.

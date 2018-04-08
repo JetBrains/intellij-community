@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -108,6 +109,17 @@ public class UIUtil {
     if (Registry.is("ide.mac.allowDarkWindowDecorations")) {
       pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
     }
+  }
+
+  // Here we setup window to be checked in IdeEventQueue and reset typeahead state when the window finally appears and gets focus
+  public static void markAsTypeAheadAware(Window window) {
+    if (window instanceof RootPaneContainer) {
+      ((RootPaneContainer)window).getRootPane().putClientProperty("TypeAheadAwareWindow", Boolean.TRUE);
+    }
+  }
+
+  public static boolean isTypeAheadAware(Window window) {
+    return (window instanceof RootPaneContainer && isClientPropertyTrue(((RootPaneContainer)window).getRootPane(), "TypeAheadAwareWindow"));
   }
 
   private static void blockATKWrapper() {
@@ -505,7 +517,12 @@ public class UIUtil {
      * jdk is an Apple JDK or Oracle API has been changed.
      */
     private static boolean isMacRetina(Graphics2D g) {
-      GraphicsDevice device = g.getDeviceConfiguration().getDevice();
+      GraphicsConfiguration configuration = g.getDeviceConfiguration();
+      if (configuration == null) {
+        return false;
+      }
+
+      GraphicsDevice device = configuration.getDevice();
       return isOracleMacRetinaDevice(device);
     }
 
@@ -735,8 +752,12 @@ public class UIUtil {
     final Point point = new Point(0, 0);
     final Insets insets = label.getInsets();
     if (icon != null) {
-      point.x += label.getIconTextGap();
-      point.x += icon.getIconWidth();
+      if (label.getHorizontalTextPosition() == SwingConstants.TRAILING) {
+        point.x += label.getIconTextGap();
+        point.x += icon.getIconWidth();
+      } else if (label.getHorizontalTextPosition() == SwingConstants.LEADING) {
+        size.width -= icon.getIconWidth();
+      }
     }
     point.x += insets.left;
     point.y += insets.top;
@@ -1976,6 +1997,26 @@ public class UIUtil {
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, type);
+  }
+
+  /**
+   * Creates a HiDPI-aware BufferedImage in the graphics config scale.
+   *
+   * @param gc the graphics config
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   * @param rm the rounding mode to apply to width/height (for a HiDPI-aware image, the rounding is applied in the device space)
+   *
+   * @return a HiDPI-aware BufferedImage in the graphics scale
+   */
+  @NotNull
+  public static BufferedImage createImage(GraphicsConfiguration gc, double width, double height, int type, PaintUtil.RoundingMode rm) {
+    if (isJreHiDPI(gc)) {
+      return RetinaImage.create(gc, width, height, type, rm);
+    }
+    //noinspection UndesirableClassUsage
+    return new BufferedImage(rm.round(width), rm.round(height), type);
   }
 
   /**
@@ -4330,5 +4371,9 @@ public class UIUtil {
     catch (InvocationTargetException e) {
       LOG.debug(e);
     }
+  }
+
+  public static boolean isRetina(@NotNull GraphicsDevice device) {
+    return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(device);
   }
 }

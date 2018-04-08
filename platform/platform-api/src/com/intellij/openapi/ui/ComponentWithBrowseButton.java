@@ -56,7 +56,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   private final FixedSizeButton myBrowseButton;
   private boolean myButtonEnabled = true;
 
-  public ComponentWithBrowseButton(Comp component, @Nullable ActionListener browseActionListener) {
+  public ComponentWithBrowseButton(@NotNull Comp component, @Nullable ActionListener browseActionListener) {
     super(new BorderLayout(SystemInfo.isMac || UIUtil.isUnderDarcula() ? 0 : 2, 0));
 
     myComponent = component;
@@ -113,6 +113,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
   }
 
+  @NotNull
   public final Comp getChildComponent() {
     return myComponent;
   }

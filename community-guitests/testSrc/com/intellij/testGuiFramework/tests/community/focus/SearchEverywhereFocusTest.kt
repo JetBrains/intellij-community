@@ -24,7 +24,7 @@ class SearchEverywhereFocusTest : GuiTestCase() {
 
   @Test
   fun testSearchEverywhereFocus() {
-    CommunityProjectCreator.createCommandLineProject()
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)
     ideFrame {
       focusOnEditor()

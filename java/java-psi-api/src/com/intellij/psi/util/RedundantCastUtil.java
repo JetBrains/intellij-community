@@ -849,6 +849,9 @@ public class RedundantCastUtil {
         }
       }
     }
+    else if (parent instanceof PsiLocalVariable) {
+      return ((PsiLocalVariable)parent).getTypeElement().isInferredType();
+    }
     return false;
   }
 

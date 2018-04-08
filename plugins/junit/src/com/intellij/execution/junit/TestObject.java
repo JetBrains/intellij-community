@@ -414,6 +414,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   protected PsiElement retrievePsiElement(Object element) {
+    if (element instanceof String) {
+      SourceScope scope = getSourceScope();
+      Project project = getConfiguration().getProject();
+      String qName = (String)element;
+      int idx = qName.indexOf(',');
+      String className = idx > 0 ? qName.substring(0, idx) : qName;
+      return JavaPsiFacade.getInstance(project).findClass(className, scope != null
+                                                                     ? scope.getGlobalSearchScope() 
+                                                                     : GlobalSearchScope.projectScope(project));
+      
+    }
     return element instanceof PsiElement ? (PsiElement)element : null;
   }
 

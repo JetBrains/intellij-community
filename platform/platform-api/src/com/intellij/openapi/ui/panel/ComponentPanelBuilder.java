@@ -5,11 +5,13 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -84,7 +86,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder moveLabelOnTop() {
     myLabelOnTop = true;
-    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription);
+    valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -99,7 +101,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withComment(@NotNull String comment) {
     myCommentText = comment;
-    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription);
+    valid = StringUtil.isEmpty(comment) || StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -113,7 +115,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withTopRightComponent(@NotNull JComponent topRightComponent) {
     myTopRightComponent = topRightComponent;
-    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription);
+    valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -135,7 +137,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withTooltip(@NotNull String description) {
     myHTDescription = description;
-    valid = StringUtil.isEmpty(myCommentText) && StringUtil.isNotEmpty(description);
+    valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(description);
     return this;
   }
 
@@ -231,8 +233,10 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   @NotNull
-  public static JBLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow) {
-    JBLabel component = new JBLabel("").setCopyable(true).setAllowAutoWrapping(true);
+  public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow) {
+    // todo why our JBLabel cannot render html if render panel without frame (test only)
+    boolean isCopyable = SystemProperties.getBooleanProperty("idea.ui.comment.copyable", true);
+    JLabel component = new JBLabel("").setCopyable(isCopyable).setAllowAutoWrapping(true);
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
     component.setForeground(UIUtil.getContextHelpForeground());
@@ -243,25 +247,36 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       component.setFont(smallFont);
     }
 
-    setCommentText(component, commentText, isCommentBelow);
+    if (isCopyable) {
+      setCommentText(component, commentText, isCommentBelow);
+    }
+    else {
+      component.setText(commentText);
+    }
     return component;
   }
 
-  private static void setCommentText(@NotNull JBLabel component, @Nullable String commentText, boolean isCommentBelow) {
+  private static void setCommentText(@NotNull JLabel component, @Nullable String commentText, boolean isCommentBelow) {
     if (commentText != null) {
+      String css = "<head><style type=\"text/css\">\n" +
+                         "a, a:link {color:#" + ColorUtil.toHex(JBColor.link()) + ";}\n" +
+                         "a:visited {color:#" + ColorUtil.toHex(JBColor.linkVisited()) + ";}\n" +
+                         "a:hover {color:#" + ColorUtil.toHex(JBColor.linkHover()) + ";}\n" +
+                         "a:active {color:#" + ColorUtil.toHex(JBColor.linkPressed()) + ";}\n" +
+                         "</style>\n</head>";
       if (commentText.length() > 70 && isCommentBelow) {
         int width = component.getFontMetrics(component.getFont()).stringWidth(commentText.substring(0, 70));
-        component.setText(String.format("<html><div width=%d>%s</div></html>", width, commentText));
+        component.setText(String.format("<html>" + css + "<body><div width=%d>%s</div></body></html>", width, commentText));
       }
       else {
-        component.setText(String.format("<html><div>%s</div></html>", commentText));
+        component.setText(String.format("<html>" + css + "<body><div>%s</div></body></html>", commentText));
       }
     }
   }
 
   private class ComponentPanelImpl extends ComponentPanel {
     private final JLabel label;
-    private final JBLabel comment;
+    private final JLabel comment;
 
     private ComponentPanelImpl() {
       if ((StringUtil.isNotEmpty(myLabelText))) {
@@ -344,28 +359,30 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       gc.gridx += myLabelOnTop ? 0 : 1;
       gc.weightx = 1.0;
       gc.insets = JBUI.emptyInsets();
-
-      JPanel componentPanel = new NonOpaquePanel();
-      componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.X_AXIS));
-      componentPanel.add(myComponent);
-
-      myComponent.putClientProperty(DECORATED_PANEL_PROPERTY, this);
-
-      if (StringUtil.isNotEmpty(myHTDescription)) {
-        ContextHelpLabel lbl = StringUtil.isNotEmpty(myHTLinkText) && myHTAction != null ?
-                               ContextHelpLabel.createWithLink(null, myHTDescription, myHTLinkText, myHTAction) :
-                               ContextHelpLabel.create(myHTDescription);
-        componentPanel.add(Box.createRigidArea(JBUI.size(7, 0)));
-        componentPanel.add(lbl);
-      }
-      else if (!myCommentBelow) {
-        comment.setBorder(getCommentBorder());
-        componentPanel.add(comment);
-      }
-
       gc.fill = myResizeY ? GridBagConstraints.BOTH : myResizeX ? GridBagConstraints.HORIZONTAL: GridBagConstraints.NONE;
       gc.weighty = myResizeY ? 1.0 : 0.0;
-      panel.add(componentPanel, gc);
+
+      if (StringUtil.isNotEmpty(myHTDescription) || !myCommentBelow) {
+        JPanel componentPanel = new JPanel();
+        componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.X_AXIS));
+        componentPanel.add(myComponent);
+
+        if (StringUtil.isNotEmpty(myHTDescription)) {
+          ContextHelpLabel lbl = StringUtil.isNotEmpty(myHTLinkText) && myHTAction != null ?
+                                 ContextHelpLabel.createWithLink(null, myHTDescription, myHTLinkText, myHTAction) :
+                                 ContextHelpLabel.create(myHTDescription);
+          componentPanel.add(Box.createRigidArea(JBUI.size(7, 0)));
+          componentPanel.add(lbl);
+        }
+        else if (!myCommentBelow) {
+          comment.setBorder(getCommentBorder());
+          componentPanel.add(comment);
+        }
+
+        panel.add(componentPanel, gc);
+      } else {
+        panel.add(myComponent, gc);
+      }
 
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.weighty = 0.0;
@@ -380,6 +397,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         panel.add(comment, gc);
       }
 
+      myComponent.putClientProperty(DECORATED_PANEL_PROPERTY, this);
       gc.gridy++;
     }
   }

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.formatting.Indent;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
@@ -91,6 +92,16 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
   @Override
   protected boolean isInsideForLikeConstruction(SemanticEditorPosition position) {
     return position.isAfterOnSameLine(ForKeyword, TryKeyword);
+  }
+
+  @Override
+  protected boolean isInArray(@NotNull Editor editor, int offset) {
+    SemanticEditorPosition position = getPosition(editor, offset);
+    position.moveBefore();
+    if (position.isAt(JavaTokenType.LBRACE)) {
+      if (position.before().beforeOptional(Whitespace).isAt(JavaTokenType.RBRACKET)) return true;
+    }
+    return super.isInArray(editor, offset);
   }
 
   @Override

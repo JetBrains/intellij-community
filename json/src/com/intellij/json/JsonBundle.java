@@ -15,7 +15,7 @@ import java.util.ResourceBundle;
 public class JsonBundle {
 
   private static Reference<ResourceBundle> ourBundle;
-  @NonNls private static final String BUNDLE = "com.intellij.json.JsonBundle";
+  @NonNls public static final String BUNDLE = "com.intellij.json.JsonBundle";
 
   private JsonBundle() {
     // empty

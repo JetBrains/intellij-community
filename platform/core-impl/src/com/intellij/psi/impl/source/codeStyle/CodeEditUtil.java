@@ -119,7 +119,7 @@ public class CodeEditUtil {
     }
 
     PsiFile file = psiElement.getContainingFile();
-    setOldIndentation((TreeElement)first, IndentHelper.getInstance().getIndent(file.getProject(), file.getFileType(), first));
+    setOldIndentation((TreeElement)first, IndentHelper.getInstance().getIndent(file, first));
   }
 
   public static int getOldIndentation(ASTNode node) {

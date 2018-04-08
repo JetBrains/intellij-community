@@ -167,4 +167,31 @@ class AdvancedArrayAccess {
       System.out.println("Impossible");
     }
   }
+
+  void testNonInitializedShort() {
+    int[] x = new int[2];
+    if(<warning descr="Condition 'x[0] == 0' is always 'true'">x[0] == 0</warning>) {
+      System.out.println("Always");
+    }
+  }
+
+  void testFor2() {
+    String[] x = new String[2];
+    for (int i = 0; i < 2; i++) {
+      x[i] = String.valueOf(i);
+    }
+    for (int i = 0; i < 2; i++) {
+      System.out.println(x[i].trim());
+    }
+  }
+
+  void testFor3() {
+    int[] x = new int[3];
+    for (int i = 0; i < 3; i++) {
+      x[i] = i;
+    }
+    if(<warning descr="Condition 'x[2] == 2' is always 'true'">x[2] == 2</warning>) {
+      System.out.println("Always");
+    }
+  }
 }

@@ -192,7 +192,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
       if (expression.getType() instanceof PsiArrayType) {
         return;
       }
-      final PsiClass containingClass = getContainingContextClass(expression);
+      final PsiClass containingClass = ClassUtils.getContainingClass(expression);
       if (containingClass == null) {
         return;
       }
@@ -255,7 +255,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
       if (value != null) {
         return; // no synthetic accessor created, compile time constant will be inlined by javac
       }
-      final PsiElement containingClass = getContainingContextClass(expression);
+      final PsiElement containingClass = ClassUtils.getContainingClass(expression);
       if (containingClass == null) {
         return;
       }
@@ -264,19 +264,6 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
         return;
       }
       registerError(referenceNameElement, memberClass, member);
-    }
-
-    @Nullable
-    private static PsiClass getContainingContextClass(PsiElement element) {
-      final PsiClass aClass = ClassUtils.getContainingClass(element);
-      if (aClass instanceof PsiAnonymousClass) {
-        final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
-        final PsiExpressionList arguments = anonymousClass.getArgumentList();
-        if (arguments != null && PsiTreeUtil.isAncestor(arguments, element, true)) {
-          return ClassUtils.getContainingClass(aClass);
-        }
-      }
-      return aClass;
     }
   }
 }

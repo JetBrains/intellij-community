@@ -246,6 +246,9 @@
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.application.JavaApplicationRunConfigurationImporter"/>
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.remote.JavaRemoteDebugRunConfigurationImporter"/>
 
+    <runLineMarkerContributor language="JVM"
+                              order="before applicationRunLineMarkerProvider"
+                              implementationClass="com.intellij.execution.application.JvmApplicationRunLineMarkerContributor"/>
     <runLineMarkerContributor language="JAVA" id="applicationRunLineMarkerProvider"
                               implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
 

@@ -66,7 +66,6 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private static final int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
   private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "The application is running";
   private static final String EMPTY_TABLE_CONTENT_WHEN_STOPPED = "Classes are not available";
-  private static final String CLICKABLE_TABLE_CONTENT = "Click to load the classes list";
 
   private final Project myProject;
   private final SingleAlarmWithMutableDelay mySingleAlarm;
@@ -405,7 +404,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
   private void makeTableClickable() {
     ApplicationManager.getApplication().invokeLater(
-      () -> myTable.makeClickable(CLICKABLE_TABLE_CONTENT, () -> updateClassesAndCounts(true)));
+      () -> myTable.makeClickable(() -> updateClassesAndCounts(true)));
   }
 
   private void doPause() {

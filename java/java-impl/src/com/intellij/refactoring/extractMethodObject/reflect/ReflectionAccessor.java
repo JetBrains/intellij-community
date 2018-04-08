@@ -8,5 +8,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Vitaliy.Bibaev
  */
 public interface ReflectionAccessor {
+
+  /**
+   * Grants access to use of all inaccessible members inside the {@code element} through reflection
+   */
   void accessThroughReflection(@NotNull PsiElement element);
 }

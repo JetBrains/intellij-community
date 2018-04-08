@@ -39,6 +39,7 @@ public abstract class NullableNotNullManager {
     AnnotationUtil.NULLABLE,
     JAVAX_ANNOTATION_NULLABLE,
     "javax.annotation.CheckForNull",
+    "javax.validation.constraints.NotNull",
     "edu.umd.cs.findbugs.annotations.Nullable",
     "android.support.annotation.Nullable",
     "androidx.annotation.Nullable"

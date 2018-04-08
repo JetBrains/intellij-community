@@ -20,12 +20,15 @@ class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal va
     return row
   }
 
+  // linkHandler is not an optional for backward compatibility
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
    */
-  fun noteRow(text: String) {
-    builder.noteRow(text)
+  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
+    builder.noteRow(text, linkHandler)
   }
+
+  fun noteRow(text: String) = noteRow(text, null)
 
   inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
     LayoutBuilder(builder, ButtonGroup()).init()

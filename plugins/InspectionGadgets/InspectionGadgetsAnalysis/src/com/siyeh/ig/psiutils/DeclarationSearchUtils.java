@@ -89,7 +89,7 @@ public class DeclarationSearchUtils {
     final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(element.getProject());
     final SearchScope useScope = element.getUseScope();
     if (!(useScope instanceof GlobalSearchScope)) {
-      return zeroResult;
+      return false;
     }
     final PsiSearchHelper.SearchCostResult cost =
       searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, progressManager.getProgressIndicator());

@@ -20,15 +20,10 @@ import javax.swing.text.JTextComponent
 
 internal fun Array<out CCFlags>.create() = if (isEmpty()) null else CC().apply(this)
 
-private val SHORT_SHORT_TEXT_WIDTH = JBUI.scale(250)
-private val MAX_SHORT_TEXT_WIDTH = JBUI.scale(350)
-private val SHORT_TEXT_SIZE: BoundSize = ConstraintParser.parseBoundSize("${SHORT_SHORT_TEXT_WIDTH}px!", false, true)
-private val MEDIUM_TEXT_SIZE: BoundSize = ConstraintParser.parseBoundSize("${SHORT_SHORT_TEXT_WIDTH}px::${MAX_SHORT_TEXT_WIDTH}px", false, true)
-
 private fun CC.apply(flags: Array<out CCFlags>): CC {
   for (flag in flags) {
     when (flag) {
-      //CCFlags.wrap -> isWrap = true
+    //CCFlags.wrap -> isWrap = true
       CCFlags.grow -> grow()
       CCFlags.growX -> {
         growX()
@@ -39,90 +34,91 @@ private fun CC.apply(flags: Array<out CCFlags>): CC {
     // You can however accomplish the same thing by setting a gap before and/or after the components.
     // That gap may have a minimum size of 0 and a preferred size of a really large value to create a "pushing" gap.
     // There is even a keyword for this: "push". So "gapleft push" will be the same as "align right" and work for multi-component cells as well.
-      //CCFlags.right -> horizontal.gapBefore = BoundSize(null, null, null, true, null)
+    //CCFlags.right -> horizontal.gapBefore = BoundSize(null, null, null, true, null)
 
       CCFlags.push -> push()
       CCFlags.pushX -> pushX()
       CCFlags.pushY -> pushY()
-
-      //CCFlags.span -> span()
-      //CCFlags.spanX -> spanX()
-      //CCFlags.spanY -> spanY()
-
-      //CCFlags.split -> split()
-
-      //CCFlags.skip -> skip()
     }
   }
   return this
 }
 
-internal fun createComponentConstraints(cc: Lazy<CC>,
-                                       component: Component,
-                                       gapLeft: Int = 0,
-                                       gapAfter: Int = 0,
-                                       gapTop: Int = 0,
-                                       gapBottom: Int = 0,
-                                       split: Int = -1,
-                                       growPolicy: GrowPolicy?): CC? {
-  if (gapLeft != 0) {
-    cc.value.horizontal.gapBefore = gapToBoundSize(gapLeft, true)
-  }
-  if (gapAfter != 0) {
-    cc.value.horizontal.gapAfter = gapToBoundSize(gapAfter, true)
-  }
+internal class DefaultComponentConstraintCreator(private val spacing: SpacingConfiguration) {
+  private val shortTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px!", false, true)
+  private val mediumTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px::${spacing.maxShortTextWidth}px", false, true)
 
-  if (gapTop != 0) {
-    cc.value.vertical.gapBefore = gapToBoundSize(gapTop, false)
-  }
-  if (gapBottom != 0) {
-    cc.value.vertical.gapAfter = gapToBoundSize(gapBottom, false)
-  }
+  val vertical1pxGap: BoundSize = ConstraintParser.parseBoundSize("${JBUI.scale(1)}px!", true, false)
 
-  if (split != -1) {
-    cc.value.split = split
-  }
+  val horizontalUnitSizeGap = gapToBoundSize(spacing.unitSize, true)
 
-  if (growPolicy != null) {
-    applyGrowPolicy(cc.value, growPolicy)
-  }
-  else {
-    addGrowIfNeed(cc, component)
-  }
-
-  return if (cc.isInitialized()) cc.value else null
-}
-
-private fun addGrowIfNeed(cc: Lazy<CC>, component: Component) {
-  when {
-    component is TextFieldWithHistory || component is TextFieldWithHistoryWithBrowseButton -> {
-      // yes, no max width. approved by UI team (all path fields stretched to the width of the window)
-      cc.value.minWidth("${MAX_SHORT_TEXT_WIDTH}px")
-      cc.value.growX()
+  fun createComponentConstraints(cc: Lazy<CC>,
+                                 component: Component,
+                                 gapLeft: Int = 0,
+                                 gapAfter: Int = 0,
+                                 gapTop: Int = 0,
+                                 gapBottom: Int = 0,
+                                 split: Int = -1,
+                                 growPolicy: GrowPolicy?): CC? {
+    if (gapLeft != 0) {
+      cc.value.horizontal.gapBefore = gapToBoundSize(gapLeft, true)
+    }
+    if (gapAfter != 0) {
+      cc.value.horizontal.gapAfter = gapToBoundSize(gapAfter, true)
     }
 
-    component is JPasswordField -> {
-      applyGrowPolicy(cc.value, GrowPolicy.SHORT_TEXT)
+    if (gapTop != 0) {
+      cc.value.vertical.gapBefore = gapToBoundSize(gapTop, false)
+    }
+    if (gapBottom != 0) {
+      cc.value.vertical.gapAfter = gapToBoundSize(gapBottom, false)
     }
 
-    component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*> -> {
-      cc.value.growX()
+    if (split != -1) {
+      cc.value.split = split
     }
 
-    component is JScrollPane ||
-    (component is JPanel && component.componentCount == 1 && (component.getComponent(0) as? JComponent)?.getClientProperty(
-      ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null) -> {
-      // no need to use pushX - default pushX for cell is 100. avoid to configure more than need
-      cc.value
-        .grow()
-        .pushY()
+    if (growPolicy != null) {
+      applyGrowPolicy(cc.value, growPolicy)
+    }
+    else {
+      addGrowIfNeed(cc, component, spacing)
+    }
+
+    return if (cc.isInitialized()) cc.value else null
+  }
+
+  private fun addGrowIfNeed(cc: Lazy<CC>, component: Component, spacing: SpacingConfiguration) {
+    when {
+      component is TextFieldWithHistory || component is TextFieldWithHistoryWithBrowseButton -> {
+        // yes, no max width. approved by UI team (all path fields stretched to the width of the window)
+        cc.value.minWidth("${spacing.maxShortTextWidth}px")
+        cc.value.growX()
+      }
+
+      component is JPasswordField -> {
+        applyGrowPolicy(cc.value, GrowPolicy.SHORT_TEXT)
+      }
+
+      component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*> -> {
+        cc.value.growX()
+      }
+
+      component is JScrollPane ||
+      (component is JPanel && component.componentCount == 1 && (component.getComponent(0) as? JComponent)?.getClientProperty(
+        ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null) -> {
+        // no need to use pushX - default pushX for cell is 100. avoid to configure more than need
+        cc.value
+          .grow()
+          .pushY()
+      }
     }
   }
-}
 
-private fun applyGrowPolicy(cc: CC, growPolicy: GrowPolicy) {
-  cc.horizontal.size = when (growPolicy) {
-    GrowPolicy.SHORT_TEXT -> SHORT_TEXT_SIZE
-    GrowPolicy.MEDIUM_TEXT -> MEDIUM_TEXT_SIZE
+  private fun applyGrowPolicy(cc: CC, growPolicy: GrowPolicy) {
+    cc.horizontal.size = when (growPolicy) {
+      GrowPolicy.SHORT_TEXT -> shortTextSizeSpec
+      GrowPolicy.MEDIUM_TEXT -> mediumTextSizeSpec
+    }
   }
 }

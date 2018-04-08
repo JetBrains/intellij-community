@@ -141,6 +141,8 @@ class DistributionJARsBuilder {
       }
       withProjectLibrariesFromIncludedModules(buildContext)
       removeVersionFromProjectLibraryJarNames("Trove4j")
+      removeVersionFromProjectLibraryJarNames("Log4J")
+      removeVersionFromProjectLibraryJarNames("jna")
     }
   }
 
@@ -224,7 +226,15 @@ class DistributionJARsBuilder {
     def productProperties = buildContext.productProperties
     buildContext.messages.block("Generate table of licenses for used third-party libraries") {
       def generator = new LibraryLicensesListGenerator(buildContext.messages, buildContext.project, productProperties.allLibraryLicenses)
-      generator.generateLicensesTable("$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH", usedModules)
+
+      String thirdPartyLibrariesFilePath = "$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH"
+      generator.generateLicensesTable(thirdPartyLibrariesFilePath, usedModules)
+
+      if (productProperties.generateLibrariesLicensesTable) {
+        String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+        buildContext.ant.
+          copy(file: thirdPartyLibrariesFilePath, tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.html")
+      }
     }
 
     if (productProperties.scrambleMainJar) {
