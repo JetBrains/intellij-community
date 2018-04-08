@@ -120,7 +120,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                               @NotNull FilePath path,
                               @NotNull AbstractVcs vcs) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs);
-    refresher.run(false, true);
+    refresher.selectContent();
+    refresher.refresh(false, true);
   }
 
   public void showFileHistory(@NotNull VcsHistoryProviderEx historyProvider,
@@ -128,7 +129,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                               @NotNull AbstractVcs vcs,
                               @Nullable VcsRevisionNumber startingRevisionNumber) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs, startingRevisionNumber);
-    refresher.run(false, true);
+    refresher.selectContent();
+    refresher.refresh(false, true);
   }
 
   public void showRollbackChangesDialog(List<Change> changes) {

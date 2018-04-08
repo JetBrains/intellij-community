@@ -78,13 +78,19 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
     return refresher == null ? new FileHistoryRefresher(vcsHistoryProvider, path, startingRevisionNumber, vcs) : refresher;
   }
 
+  @Override
+  public void selectContent() {
+    mySessionPartner.createOrSelectContent();
+  }
+
   /**
    * @param canUseCache
    */
   @Override
-  public void run(boolean isRefresh, boolean canUseCache) {
+  public void refresh(boolean isRefresh, boolean canUseCache) {
     myIsRefresh = isRefresh;
     mySessionPartner.beforeRefresh();
+
     if (myVcsHistoryProvider instanceof VcsHistoryProviderEx && myStartingRevisionNumber != null) {
       VcsCachingHistory.collectInBackground(myVcs, myPath, myStartingRevisionNumber, mySessionPartner);
     }

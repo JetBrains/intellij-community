@@ -32,7 +32,6 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,10 +139,9 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   @Override
   public void beforeRefresh() {
     myLimitHistoryCheck.reset();
-    createOrSelectContentIfNeeded();
   }
 
-  private void createOrSelectContentIfNeeded() {
+  public void createOrSelectContent() {
     ToolWindow toolWindow = getToolWindow(myVcs.getProject());
     if (!myRefresherI.isRefresh()) {
       ContentManager manager = toolWindow.getContentManager();
