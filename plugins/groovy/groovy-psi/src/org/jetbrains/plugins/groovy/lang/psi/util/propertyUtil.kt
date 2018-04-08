@@ -3,10 +3,21 @@ package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.java.beans.PropertyKind.*
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiPrimitiveType.getUnboxedType
-import com.intellij.psi.PsiType
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmMethod
+import com.intellij.lang.jvm.types.JvmPrimitiveType
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind.BOOLEAN
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind.VOID
+import com.intellij.lang.jvm.types.JvmReferenceType
+import com.intellij.lang.jvm.types.JvmType
 import java.beans.Introspector
+
+fun getPropertyNameAndKind(method: JvmMethod): Pair<String, PropertyKind>? {
+  if (method.isConstructor) return null
+  val (name, kind) = getPropertyNameAndKind(method.name) ?: return null
+  return if (method.checkKind(kind)) name to kind else null
+}
 
 fun getPropertyNameAndKind(accessorName: String): Pair<String, PropertyKind>? {
   val propertyKind = getKindByPrefix(accessorName) ?: return null
@@ -28,19 +39,18 @@ private fun checkBaseName(accessorName: String, prefixLength: Int): Boolean {
 /**
  * This method doesn't check if method name is an accessor name
  */
-internal fun PsiMethod.checkKind(kind: PropertyKind): Boolean {
-  val expectedParamCount = if (kind === SETTER) 1 else 0
-  if (parameterList.parametersCount != expectedParamCount) return false
-
-  if (kind == GETTER && returnType == PsiType.VOID) return false
-  if (kind == BOOLEAN_GETTER && !returnType.isBooleanOrBoxed()) return false
-
-  return true
+internal fun JvmMethod.checkKind(kind: PropertyKind): Boolean {
+  return when (kind) {
+    GETTER -> parameters.isEmpty() && !returnType.isPrimitive(VOID)
+    BOOLEAN_GETTER -> parameters.isEmpty() && returnType.isPrimitiveOrBoxed(BOOLEAN)
+    SETTER -> parameters.size == 1
+  }
 }
 
-private fun PsiType?.isBooleanOrBoxed(): Boolean {
-  return this == PsiType.BOOLEAN || getUnboxedType(this) == PsiType.BOOLEAN
-}
+private fun JvmType?.isPrimitiveOrBoxed(kind: JvmPrimitiveTypeKind) = isPrimitive(kind) || isBoxed(kind)
+private fun JvmType?.isPrimitive(kind: JvmPrimitiveTypeKind) = this is JvmPrimitiveType && this.kind == kind
+private fun JvmType?.isBoxed(kind: JvmPrimitiveTypeKind) = resolveToClass()?.qualifiedName == kind.boxedFqn
+private fun JvmType?.resolveToClass() = (this as? JvmReferenceType)?.resolve() as? JvmClass
 
 internal fun String.isPropertyName(): Boolean {
   return GroovyPropertyUtils.isPropertyName(this)
