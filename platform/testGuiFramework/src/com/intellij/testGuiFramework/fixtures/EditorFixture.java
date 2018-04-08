@@ -196,7 +196,7 @@ public class EditorFixture {
     });
   }
 
-  private Editor getEditor() {
+  public Editor getEditor() {
     return myEditor;
   }
 

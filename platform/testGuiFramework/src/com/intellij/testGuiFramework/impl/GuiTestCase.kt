@@ -618,6 +618,10 @@ open class GuiTestCase {
     func(this.runConfigurationList)
   }
 
+  fun IdeFrameFixture.gutter(func: GutterFixture.() -> Unit) {
+    func(this.gutter)
+  }
+
   /**
    * Extension function for IDE to iterate through the menu.
    *
