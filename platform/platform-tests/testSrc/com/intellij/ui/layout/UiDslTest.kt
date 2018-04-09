@@ -47,8 +47,9 @@ class UiDslTest {
 
   @Before
   fun beforeMethod() {
-    assumeTrue("Not CI server or not Linux", !UsefulTestCase.IS_UNDER_TEAMCITY || !SystemInfoRt.isLinux)
-    assumeTrue("Not Windows or Windows 10", !SystemInfoRt.isWindows || SystemInfo.isWin10OrNewer)
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      assumeTrue("macOS or Windows 10 are required", SystemInfoRt.isMac || SystemInfo.isWin10OrNewer)
+    }
 
     System.setProperty("idea.ui.comment.copyable", "false")
     changeLafIfNeed(lafName)
