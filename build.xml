@@ -88,7 +88,7 @@
            config="release"/>
   </target>
 
-  <target name="uitest" depends="init">
+  <target name="uitest" depends="build-aswb">
     <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant"/>
   </target>
 
