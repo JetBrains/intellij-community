@@ -33,7 +33,7 @@ class PsiToModelSearchRequestor : SearchRequestor {
     collector.searchSubQuery(CustomProcessorQuery(psiQuery, ::adaptProcessor))
   }
 
-  private fun adaptProcessor(modelProcessor: Processor<ModelReference>) = Processor<PsiReference>(modelProcessor::process)
+  private fun adaptProcessor(modelProcessor: Processor<in ModelReference>) = Processor<PsiReference>(modelProcessor::process)
 
   internal class ModelToPsiParameters(
     target: PsiElement,
