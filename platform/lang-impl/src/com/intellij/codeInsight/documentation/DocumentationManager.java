@@ -736,6 +736,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       component.setData(element, myPrecalculatedDocumentation, clearHistory,
                         provider.getEffectiveExternalUrl(), provider.getRef());
       callback.setDone();
+      myPrecalculatedDocumentation = null;
       return callback;
     }
     boolean wasEmpty = component.isEmpty();
