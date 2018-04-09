@@ -57,7 +57,7 @@
       <text x="0" xml:space="preserve" y="13" clip-path="url(#clipPath6)" stroke="none">Master Password:</text>
     </g>
     <g fill="rgb(187,187,187)" font-size="13px" font-family="'.SF NS Text'" transform="translate(451,38)" stroke="rgb(187,187,187)">
-      <image x="0" y="0" clip-path="url(#clipPath7)" width="21" xlink:href="../../../../../../icons/general/gear.png" height="16" preserveAspectRatio="none"/>
+      <image x="0" y="0" clip-path="url(#clipPath7)" width="21" xlink:href="../../../../../../icons/src/general/gear.png" height="16" preserveAspectRatio="none"/>
     </g>
     <g fill="rgb(60,63,65)" font-size="13px" font-family="'.SF NS Text'" transform="translate(135,32)" stroke="rgb(60,63,65)">
       <rect x="0" width="314" height="28" y="0" clip-path="url(#clipPath8)" stroke="none"/>

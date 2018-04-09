@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -48,6 +49,7 @@ class UiDslTest {
   @Before
   fun beforeMethod() {
     assumeTrue("Not CI server or not Linux", !UsefulTestCase.IS_UNDER_TEAMCITY || !SystemInfoRt.isLinux)
+    assumeTrue("Not Windows or Windows 10", !SystemInfoRt.isWindows || SystemInfo.isWin10OrNewer)
 
     System.setProperty("idea.ui.comment.copyable", "false")
     changeLafIfNeed(lafName)

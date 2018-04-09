@@ -4,6 +4,7 @@ package com.intellij.ui.laf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -51,6 +52,7 @@ class LafTest {
   @Before
   fun beforeMethod() {
     assumeTrue("Not CI server or not Linux", !UsefulTestCase.IS_UNDER_TEAMCITY || !SystemInfoRt.isLinux)
+    assumeTrue("Not Windows or Windows 10", !SystemInfoRt.isWindows || SystemInfo.isWin10OrNewer)
 
     changeLafIfNeed(lafName)
   }
