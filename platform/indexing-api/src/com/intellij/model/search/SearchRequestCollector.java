@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface SearchRequestCollector {
 
-  void searchSubQuery(@NotNull Query<ModelReference> subQuery);
+  void searchSubQuery(@NotNull Query<? extends ModelReference> subQuery);
 
   @NotNull
   SearchWordRequestor searchWord(@NotNull String word, @NotNull SearchScope searchScope);

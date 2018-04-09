@@ -19,7 +19,7 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
 
   private final Object lock = new Object();
 
-  private final Set<Query<ModelReference>> mySubQueries = new LinkedHashSet<>();
+  private final Set<Query<? extends ModelReference>> mySubQueries = new LinkedHashSet<>();
   private final Set<ModelReferenceSearchParameters> mySubSearchParameters = new LinkedHashSet<>();
   /**
    * Requests that does not require Processor.<br/>
@@ -41,7 +41,7 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
   }
 
   @Override
-  public void searchSubQuery(@NotNull Query<ModelReference> subQuery) {
+  public void searchSubQuery(@NotNull Query<? extends ModelReference> subQuery) {
     synchronized (lock) {
       if (subQuery instanceof ModelReferenceSearchQuery) {
         // unwrap subQuery into current session
@@ -91,7 +91,7 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
   }
 
   @NotNull
-  Collection<Query<ModelReference>> takeSubQueries() {
+  Collection<Query<? extends ModelReference>> takeSubQueries() {
     synchronized (lock) {
       return take(mySubQueries);
     }

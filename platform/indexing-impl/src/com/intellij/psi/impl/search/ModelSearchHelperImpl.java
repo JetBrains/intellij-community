@@ -81,16 +81,20 @@ public class ModelSearchHelperImpl implements ModelSearchHelper {
   }
 
   private static boolean processSubQueries(@NotNull ProgressIndicator progress,
-                                           @NotNull Collection<Query<ModelReference>> subQueries,
+                                           @NotNull Collection<Query<? extends ModelReference>> subQueries,
                                            @NotNull Processor<ModelReference> processor) {
     if (subQueries.isEmpty()) {
       return true;
     }
-    for (Query<ModelReference> query : subQueries) {
+    for (Query<? extends ModelReference> query : subQueries) {
       progress.checkCanceled();
-      if (!query.forEach(processor)) return false;
+      if (!runSubQuery(query, processor)) return false;
     }
     return true;
+  }
+
+  private static <T extends ModelReference> boolean runSubQuery(Query<T> query, Processor<ModelReference> processor) {
+    return query.forEach((Processor<T>)processor::process);
   }
 
   private boolean processWordRequests(@NotNull ProgressIndicator progress,
