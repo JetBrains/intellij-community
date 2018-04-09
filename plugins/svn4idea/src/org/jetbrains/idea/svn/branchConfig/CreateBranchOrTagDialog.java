@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -34,6 +35,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
@@ -58,7 +60,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   private JRadioButton myBranchOrTagRadioButton;
   private JRadioButton myAnyLocationRadioButton;
   private JButton myProjectButton;
-  private JLabel myErrorLabel;
   private JLabel myUseThisVariantToLabel;
   private JBCheckBox mySwitchOnCreate;
 
@@ -132,8 +133,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myRevisionPanel.setRevisionText(String.valueOf(info.getRevision()));
     updateBranchTagBases();
 
-    myRevisionPanel.addChangeListener(e -> getOKAction().setEnabled(isOKActionEnabled()));
-
     init();
     ActionListener listener = e -> updateControls();
     myWorkingCopyRadioButton.addActionListener(listener);
@@ -202,8 +201,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myBranchTextField.setEnabled(myBranchOrTagRadioButton.isSelected());
     myToURLText.setEnabled(myAnyLocationRadioButton.isSelected());
     myUseThisVariantToLabel.setForeground(myWorkingCopyRadioButton.isSelected() ? UIUtil.getActiveTextColor() : UIUtil.getInactiveTextColor());
-
-    getOKAction().setEnabled(isOKActionEnabled());
   }
 
   @Nullable
@@ -259,27 +256,30 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return "svn.copyDialog";
   }
 
-  public boolean isOKActionEnabled() {
-    myErrorLabel.setText(" ");
-    if (myBranchOrTagRadioButton.isSelected() && myBranchTagBaseComboBox.getComboBox().getSelectedItem() == null) {
-      myErrorLabel.setText(message("create.branch.no.base.location.error"));
-      return false;
-    }
-    String url = getToURL();
-    if (url != null && url.trim().length() > 0) {
-      if (myRepositoryRadioButton.isSelected()) {
-        Revision revision = getRevision();
-        if (!revision.isValid() || revision.isLocal()) {
-          myErrorLabel.setText(message("create.branch.invalid.revision.error", myRevisionPanel.getRevisionText()));
-          return false;
-        }
-        return true;
-      }
-      else if (myWorkingCopyRadioButton.isSelected()) {
-        return true;
-      }
-    }
+  @Override
+  protected boolean postponeValidation() {
     return false;
+  }
+
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
+    if (myBranchOrTagRadioButton.isSelected() && myBranchTagBaseComboBox.getComboBox().getSelectedItem() == null) {
+      return new ValidationInfo(message("create.branch.no.base.location.error"), myBranchTagBaseComboBox.getComboBox());
+    }
+
+    String url = getToURL();
+    if (isEmptyOrSpaces(url)) {
+      return new ValidationInfo("Invalid branch url", myAnyLocationRadioButton.isSelected() ? myToURLText.getTextField() : null);
+    }
+    else if (myRepositoryRadioButton.isSelected()) {
+      Revision revision = getRevision();
+      if (!revision.isValid() || revision.isLocal()) {
+        return new ValidationInfo(message("create.branch.invalid.revision.error"), myRevisionPanel.getRevisionTextField());
+      }
+    }
+
+    return null;
   }
 
   public boolean isCopyFromWorkingCopy() {
