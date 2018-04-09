@@ -38,7 +38,9 @@ public class TargetOptionsComponent extends JPanel {
     targets.add("1.1");
     targets.add("1.2");
     for (LanguageLevel level : LanguageLevel.values()) {
-      targets.add(JpsJavaSdkType.complianceOption(level.toJavaVersion()));
+      if (level != LanguageLevel.JDK_X && !level.isPreview()) {
+        targets.add(JpsJavaSdkType.complianceOption(level.toJavaVersion()));
+      }
     }
     Collections.reverse(targets);
     KNOWN_TARGETS = ArrayUtil.toStringArray(targets);

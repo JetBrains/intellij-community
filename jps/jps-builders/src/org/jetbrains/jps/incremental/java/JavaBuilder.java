@@ -847,6 +847,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     addCrossCompilationOptions(compilerSdkVersion, options, context, chunk);
 
+    if (!options.contains("--enable-preview")) {
+      LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(chunk.representativeTarget().getModule());
+      if (level != null && level.isPreview()) {
+        options.add("--enable-preview");
+      }
+    }
+
     if (addAnnotationProcessingOptions(options, profile)) {
       final File srcOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(
         chunk.getModules().iterator().next(), chunk.containsTests(), profile
