@@ -74,6 +74,7 @@ public final class IconLoader {
   }
 
   @Deprecated
+  @NotNull
   public static Icon getIcon(@NotNull final Image image) {
     return new JBImageIcon(image);
   }
@@ -336,10 +337,12 @@ public final class IconLoader {
     return disabledIcon;
   }
 
+  @NotNull
   public static Icon getTransparentIcon(@NotNull final Icon icon) {
     return getTransparentIcon(icon, 0.5f);
   }
 
+  @NotNull 
   public static Icon getTransparentIcon(@NotNull final Icon icon, final float alpha) {
     return new RetrievableIcon() {
       @Override
@@ -447,10 +450,11 @@ public final class IconLoader {
       this.useCacheOnLoad = useCacheOnLoad;
     }
 
-    private void setGlobalFilter(ImageFilter globalFilter) {
+    private void setGlobalFilter(@NotNull ImageFilter globalFilter) {
       myFilters[0] = globalFilter;
     }
 
+    @NotNull
     private ImageFilter getGlobalFilter() {
       return myFilters[0];
     }
@@ -471,7 +475,7 @@ public final class IconLoader {
     }
 
     @NotNull
-    private synchronized ImageIcon getRealIcon(ScaleContext ctx) {
+    private synchronized ImageIcon getRealIcon(@Nullable ScaleContext ctx) {
       if (!isValid()) {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myRealIcon = null;
@@ -538,6 +542,7 @@ public final class IconLoader {
       return 1f;
     }
 
+    @NotNull
     @Override
     public Icon scale(float scale) {
       if (scale == 1f) return this;
@@ -551,13 +556,14 @@ public final class IconLoader {
       return this;
     }
 
+    @NotNull
     private Icon asDisabledIcon() {
       CachedImageIcon icon = new CachedImageIcon(this);
       icon.myFilters = new ImageFilter[] {getGlobalFilter(), UIUtil.getGrayFilter()};
       return icon;
     }
 
-    private Image loadFromUrl(ScaleContext ctx) {
+    private Image loadFromUrl(@NotNull ScaleContext ctx) {
       return ImageLoader.loadFromUrl(myUrl, true, useCacheOnLoad, myFilters, ctx);
     }
 
@@ -576,7 +582,7 @@ public final class IconLoader {
        * Retrieves the orig icon scaled by the provided scale.
        */
       ImageIcon getOrScaleIcon(final float scale) {
-        final ScaleContext ctx = (scale == 1 ? getScaleContext() : (ScaleContext)getScaleContext().copy()); // not modifying this scale context
+        final ScaleContext ctx = scale == 1 ? getScaleContext() : (ScaleContext)getScaleContext().copy(); // not modifying this scale context
         if (scale != 1) ctx.update(OBJ_SCALE.of(scale));
 
         ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(ctx.getScale(PIX_SCALE)));
@@ -672,7 +678,7 @@ public final class IconLoader {
   /**
    * Do something with the temporarily registry value.
    */
-  private static <T> T doWithTmpRegValue(String key, Boolean tempValue, Callable<T> action) {
+  private static <T> T doWithTmpRegValue(@NotNull String key, @NotNull Boolean tempValue, @NotNull Callable<T> action) {
     RegistryValue regVal = Registry.get(key);
     boolean regValOrig = regVal.asBoolean();
     regVal.setValue(tempValue);
