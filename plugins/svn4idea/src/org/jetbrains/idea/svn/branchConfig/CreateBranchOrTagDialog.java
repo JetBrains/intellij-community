@@ -252,7 +252,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myToURLText;
+    return myBranchTextField;
   }
 
   protected String getDimensionServiceKey() {
