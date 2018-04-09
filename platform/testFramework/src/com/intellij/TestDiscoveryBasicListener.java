@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
-import com.intellij.junit4.JUnit4ReflectionUtil;
 import com.intellij.util.ArrayUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -11,6 +10,8 @@ import org.junit.runner.Describable;
 import org.junit.runner.Description;
 
 import java.lang.reflect.Method;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SuppressWarnings({"unused", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class TestDiscoveryBasicListener implements TestListener {
@@ -61,7 +62,7 @@ public class TestDiscoveryBasicListener implements TestListener {
 
     if (test instanceof Describable) {
       Description description = ((Describable)test).getDescription();
-      String name = JUnit4ReflectionUtil.getMethodName(description);
+      String name = getMethodName(description);
       if (name != null) return name;
     }
 
@@ -73,9 +74,32 @@ public class TestDiscoveryBasicListener implements TestListener {
   private static String getClassName(Test test) {
     if (test instanceof Describable) {
       Description description = ((Describable)test).getDescription();
-      String name = JUnit4ReflectionUtil.getClassName(description);
+      String name = getClassName(description);
       if (name != null) return name;
     }
     return test.getClass().getName();
+  }
+
+  public static String getClassName(Description description) {
+    try {
+      return description.getClassName();
+    }
+    catch (NoSuchMethodError e) {
+      final String displayName = description.getDisplayName();
+      Matcher matcher = Pattern.compile("(.*)\\((.*)\\)").matcher(displayName);
+      return matcher.matches() ? matcher.group(2) : displayName;
+    }
+  }
+
+  public static String getMethodName(Description description) {
+    try {
+      return description.getMethodName();
+    }
+    catch (NoSuchMethodError e) {
+      final String displayName = description.getDisplayName();
+      Matcher matcher = Pattern.compile("(.*)\\((.*)\\)").matcher(displayName);
+      if (matcher.matches()) return matcher.group(1);
+      return null;
+    }
   }
 }
