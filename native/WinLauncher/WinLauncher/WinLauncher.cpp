@@ -1,5 +1,5 @@
 /*
-* Copyright 2000-2017 JetBrains s.r.o.
+* Copyright 2000-2018 JetBrains s.r.o.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -83,8 +83,10 @@ bool IsValidJRE(const char* path)
 bool Is64BitJRE(const char* path)
 {
   std::string cfgPath(path);
+  std::string cfgJava9Path(path);
   cfgPath += "\\lib\\amd64\\jvm.cfg";
-  return FileExists(cfgPath);
+  cfgJava9Path += "\\lib\\jvm.cfg";
+  return FileExists(cfgPath) || FileExists(cfgJava9Path);
 }
 
 bool FindValidJVM(const char* path)
