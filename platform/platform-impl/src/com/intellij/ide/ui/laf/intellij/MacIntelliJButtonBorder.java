@@ -33,7 +33,7 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!c.hasFocus() ||
-        c instanceof JComponent && UIUtil.isHelpButton((JComponent)c)) return;
+        c instanceof JComponent && UIUtil.isHelpButton(c)) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {

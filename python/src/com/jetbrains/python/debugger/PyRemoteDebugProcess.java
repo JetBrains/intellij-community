@@ -57,7 +57,7 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
   }
 
   @Override
-  protected boolean logConnectionException(Exception e) {
+  protected boolean shouldLogConnectionException(Exception e) {
     return !(isStopCalled && e.getMessage().contains("closed"));
   }
 

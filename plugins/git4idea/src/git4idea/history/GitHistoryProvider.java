@@ -48,6 +48,8 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+
 /**
  * Git history provider implementation
  */
@@ -103,7 +105,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   @Nullable
   public VcsAbstractHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     List<VcsFileRevision> revisions = GitFileHistory.collectHistory(myProject, filePath);
-    return createSession(filePath, revisions, null);
+    return createSession(filePath, revisions, revisions.isEmpty() ? null : getFirstItem(revisions).getRevisionNumber());
   }
 
   private VcsAbstractHistorySession createSession(final FilePath filePath, final List<VcsFileRevision> revisions,

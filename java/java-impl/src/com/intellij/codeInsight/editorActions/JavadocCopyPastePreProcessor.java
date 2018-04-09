@@ -31,6 +31,8 @@ public class JavadocCopyPastePreProcessor implements CopyPastePreProcessor {
     if (!settings.JD_LEADING_ASTERISKS_ARE_ENABLED) return text;
     
     int offset = editor.getSelectionModel().getSelectionStart();
+    if (DocumentUtil.isAtLineEnd(offset, editor.getDocument()) && text.startsWith("\n")) return text;
+
     PsiElement element = file.findElementAt(offset);
     PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false);
     if (docComment == null) return text;

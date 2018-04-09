@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -35,6 +37,12 @@ public interface PySubscriptionExpression extends PyQualifiedExpression, PyCallS
   @NotNull
   @Override
   default List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
+    if (AccessDirection.of(this) == AccessDirection.WRITE) {
+      final PsiElement parent = getParent();
+      if (parent instanceof PyAssignmentStatement) {
+        return Arrays.asList(getIndexExpression(), ((PyAssignmentStatement)parent).getAssignedValue());
+      }
+    }
     return Collections.singletonList(getIndexExpression());
   }
 

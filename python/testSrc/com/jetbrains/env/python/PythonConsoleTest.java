@@ -26,9 +26,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         exec("x = 96");
-        exec("print(2)");
         exec("x = x + 1");
-        exec("print(1)");
         exec("print(x)");
         waitForOutput("97");
       }
@@ -41,8 +39,8 @@ public class PythonConsoleTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         exec("if True:\n" +
-             "  x=1\n" +
-             "y=x+100\n" +
+             "  x = 1\n" +
+             "y = x + 100\n" +
              "for i in range(1):\n" +
              "  print(y)\n");
         waitForOutput("101");

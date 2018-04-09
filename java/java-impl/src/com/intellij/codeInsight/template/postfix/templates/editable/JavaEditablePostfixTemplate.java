@@ -138,9 +138,11 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
   @NotNull
   @Override
   protected PsiElement getElementToRemove(@NotNull PsiElement element) {
-    PsiElement parent = element.getParent();
-    if (parent instanceof PsiExpressionStatement) {
-      return parent;
+    if (myUseTopmostExpression) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiExpressionStatement) {
+        return parent;
+      }
     }
     return element;
   }

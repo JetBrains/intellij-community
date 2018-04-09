@@ -5,10 +5,10 @@ import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
-import com.intellij.psi.PsiClass
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
 internal abstract class CreateFieldActionBase(
-  target: PsiClass,
+  target: GrTypeDefinition,
   override val request: CreateFieldRequest
 ) : CreateMemberAction(target, request), JvmGroupIntentionAction {
 

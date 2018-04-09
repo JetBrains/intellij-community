@@ -304,7 +304,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           if (myProcessHandler != null) {
             myProcessHandler.destroyProcess();
           }
-          if (logConnectionException(e)) {
+          if (shouldLogConnectionException(e)) {
             LOG.error(e);
           }
         }
@@ -312,7 +312,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     });
   }
 
-  protected boolean logConnectionException(final Exception e) {
+  protected boolean shouldLogConnectionException(final Exception e) {
     return true;
   }
 

@@ -192,7 +192,7 @@ public class PluginHeaderPanel {
                                                    new JBColor(0x326529, 0x28462f));
           case RESTART:
           case UNINSTALL: return UIUtil.isUnderDarcula()
-                                 ? new JBGradientPaint(this, UIManager.getColor("Button.darcula.color1"), UIManager.getColor("Button.darcula.color2"))
+                                 ? new JBGradientPaint(this, UIManager.getColor("Button.darcula.startColor"), UIManager.getColor("Button.darcula.endColor"))
                                  : Gray._240;
         }
         return Gray._238;

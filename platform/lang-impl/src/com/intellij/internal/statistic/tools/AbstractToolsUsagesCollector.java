@@ -195,7 +195,13 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
         }
         else {
           // schedule plugins loading, will take them the next time
-          ApplicationManager.getApplication().executeOnPooledThread(() -> RepositoryHelper.loadPlugins(null));
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              RepositoryHelper.loadPlugins(null);
+            }
+            catch (final IOException ignored) {
+            }
+          });
         }
       }
       catch (final IOException ignored) {

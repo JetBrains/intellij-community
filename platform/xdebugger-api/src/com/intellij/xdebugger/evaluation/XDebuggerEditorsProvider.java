@@ -33,17 +33,25 @@ public abstract class XDebuggerEditorsProvider {
   @NotNull
   public abstract FileType getFileType();
 
+  /**
+   * @deprecated Use {@link #createDocument(com.intellij.openapi.project.Project, com.intellij.xdebugger.XExpression,
+   * com.intellij.xdebugger.XSourcePosition, com.intellij.xdebugger.evaluation.EvaluationMode)} instead
+   */
   @NotNull
-  public abstract Document createDocument(@NotNull Project project,
-                                          @NotNull String text,
-                                          @Nullable XSourcePosition sourcePosition,
-                                          @NotNull EvaluationMode mode);
+  @Deprecated
+  public Document createDocument(@NotNull Project project,
+                                 @NotNull String text,
+                                 @Nullable XSourcePosition sourcePosition,
+                                 @NotNull EvaluationMode mode) {
+    throw new AbstractMethodError();
+  }
 
   @NotNull
   public Document createDocument(@NotNull Project project,
                                           @NotNull XExpression expression,
                                           @Nullable XSourcePosition sourcePosition,
                                           @NotNull EvaluationMode mode) {
+    //noinspection deprecation
     return createDocument(project, expression.getExpression(), sourcePosition, mode);
   }
 

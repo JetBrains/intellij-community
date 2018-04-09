@@ -5,6 +5,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * Instance of {@link RunningApplicationUpdater} may be provided by {@link RunningApplicationUpdaterProvider}.
+ */
 public interface RunningApplicationUpdater {
   String getDescription();
 
@@ -17,5 +20,8 @@ public interface RunningApplicationUpdater {
     return true;
   }
 
+  /**
+   * The method is called on performing update running application action.
+   */
   void performUpdate();
 }

@@ -176,7 +176,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
           final String name = rwInstruction.getName();
           final PsiElement element = rwInstruction.getElement();
-          if (element != null && name != null && name.equals(nodeName) && instruction.num() != num) {
+          if (element != null && name != null && name.equals(nodeName) && instruction.num() < num) {
             try {
               if (scope.getDeclaredVariable(element, name) == null) {
                 final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();

@@ -992,4 +992,13 @@ public class PyStubsTest extends PyTestCase {
       }
     );
   }
+
+  // PY-28879
+  public void testVariableTypeCommentWithTupleType() {
+    final PyFile file = getTestFile();
+    final PyTargetExpression target = file.findTopLevelAttribute("var");
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(target.getProject());
+    context.getType(target);
+    assertNotParsed(file);
+  }
 }

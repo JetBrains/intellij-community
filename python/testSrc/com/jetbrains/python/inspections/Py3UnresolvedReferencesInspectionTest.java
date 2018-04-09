@@ -266,6 +266,11 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     doMultiFileTest("a.py", Arrays.asList("root1", "root2"));
   }
 
+  // PY-18629
+  public void testPreferImportedModuleOverNamespacePackage() {
+    doMultiFileTest();
+  }
+
   // PY-27964
   public void testUsingFunctoolsSingledispatch() {
     doTest();

@@ -28,6 +28,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -199,6 +200,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     for (PyRequirement req : requirements) {
       args.addAll(req.getInstallOptions());
     }
+
     try {
       getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, null);
     }
@@ -220,6 +222,20 @@ public class PyPackageManagerImpl extends PyPackageManager {
       refreshPackagesSynchronously();
       FileUtil.delete(buildDir);
     }
+  }
+
+  @NotNull
+  private String getWriteAccessAnchorPath() throws ExecutionException {
+    final VirtualFile sitePackagesDir = PythonSdkType.getSitePackagesDirectory(mySdk);
+    if (sitePackagesDir == null) {
+      // Perhaps a system interpreter on Linux that has only "dist-packages", use executable path as a fallback then
+      final String homePath = mySdk.getHomePath();
+      if (homePath == null) {
+        throw new ExecutionException("Cannot find Python interpreter for SDK " + mySdk.getName());
+      }
+      return homePath;
+    }
+    return sitePackagesDir.getPath();
   }
 
   @Override
@@ -299,7 +315,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
     final List<String> args = new ArrayList<>();
     final Sdk sdk = getSdk();
-    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+    final LanguageLevel languageLevel = getOrRequestLanguageLevelForSdk(sdk);
 
     if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
       throw new ExecutionException("Creating virtual environment for Python " + languageLevel + " is not supported. " +
@@ -347,6 +363,19 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
     }
     return path;
+  }
+
+  @NotNull
+  private static LanguageLevel getOrRequestLanguageLevelForSdk(@NotNull Sdk sdk) throws ExecutionException {
+    if (sdk instanceof PyDetectedSdk) {
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+      if (flavor != null && sdk.getHomePath() != null) {
+        return flavor.getLanguageLevel(sdk.getHomePath());
+      }
+      throw new ExecutionException("Cannot retrieve the version of the detected SDK: " + sdk.getHomePath());
+    }
+    // Use the cached version for an already configured SDK
+    return PythonSdkType.getLanguageLevelForSdk(sdk);
   }
 
   @Override
@@ -450,9 +479,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     cmdline.addAll(args);
     LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
 
-    final boolean canCreate = Files.isWritable(Paths.get(homePath));
-    final boolean useSudo = !canCreate && askForSudo;
-
     try {
       final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir);
       final Map<String, String> environment = commandLine.getEnvironment();
@@ -464,6 +490,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         flavor.commandLinePatcher().patchCommandLine(commandLine);
       }
       final Process process;
+      final boolean useSudo = askForSudo && !Files.isWritable(Paths.get(getWriteAccessAnchorPath()));
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
       }

@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -22,8 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.text.BlockSupportImpl;
-import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.ExceptionUtil;
@@ -32,7 +29,10 @@ import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.List;
@@ -676,17 +676,18 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
     }
 
-    Trinity<DiffLog, ASTNode, ASTNode> result =
-      BlockSupportImpl.reparse(file, oldFileNode, changedPsiRange, newDocumentText, task.indicator, task.myLastCommittedText);
-    DiffLog diffLog = result.getFirst();
-    ASTNode oldRoot = result.getSecond();
-    ASTNode newRoot = result.getThird();
+    DiffLog diffLog;
+    try (
+      BlockSupportImpl.ReparseResult result =
+        BlockSupportImpl.reparse(file, oldFileNode, changedPsiRange, newDocumentText, task.indicator, task.myLastCommittedText)) {
+      diffLog = result.log;
 
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(task.project);
+      PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(task.project);
 
-    List<BooleanRunnable> injectedRunnables =
-      documentManager.reparseChangedInjectedFragments(document, file, changedPsiRange, task.indicator, oldRoot, newRoot);
-    outReparseInjectedProcessors.addAll(injectedRunnables);
+      List<BooleanRunnable> injectedRunnables =
+        documentManager.reparseChangedInjectedFragments(document, file, changedPsiRange, task.indicator, result.oldRoot, result.newRoot);
+      outReparseInjectedProcessors.addAll(injectedRunnables);
+    }
 
     return () -> {
       FileViewProvider viewProvider = file.getViewProvider();

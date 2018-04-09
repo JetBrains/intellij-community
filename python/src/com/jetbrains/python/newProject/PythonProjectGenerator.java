@@ -271,6 +271,9 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     return null;
   }
 
+  public void afterProjectGenerated(@NotNull final Project project) {
+  }
+
   /**
    * @deprecated This method no longer has any effect. The standard interpreter chooser UI is always shown.
    */

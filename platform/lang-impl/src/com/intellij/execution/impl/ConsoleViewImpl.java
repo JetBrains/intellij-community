@@ -1556,12 +1556,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     @Override
-    public boolean shouldFoldLine(@NotNull String line) {
+    public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
       return false;
     }
 
     @Override
-    public String getPlaceholderText(@NotNull List<String> lines) {
+    public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
       // Is not expected to be called.
       return "<...>";
     }

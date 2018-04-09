@@ -681,6 +681,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-18629
+  public void testPreferImportedModuleOverNamespacePackage() {
+    doMultiFileTest();
+  }
+
   // PY-22221
   public void testFunctionInIgnoredIdentifiers() {
     myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
@@ -699,6 +704,14 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-23632
   public void testMockPatchObject() {
     doMultiFileTest();
+  }
+
+  // PY-20197
+  public void testClassLevelImportUsedInsideMethod() {
+    doTestByText("class DateParser:\n" +
+                 "    from datetime import datetime\n" +
+                 "    def __init__(self):\n" +
+                 "        self.value = self.datetime(2016, 1, 1)");
   }
 
   @NotNull

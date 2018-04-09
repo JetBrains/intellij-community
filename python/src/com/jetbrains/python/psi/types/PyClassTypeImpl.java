@@ -24,12 +24,10 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveProcessor;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,12 +47,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @NotNull protected final PyClass myClass;
   protected final boolean myIsDefinition;
 
-  private static final ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
-    @Override
-    protected Set<Pair<PyClass, String>> initialValue() {
-      return new HashSet<>();
-    }
-  };
+  private static final ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = ThreadLocal.withInitial(() -> new HashSet<>());
 
   /**
    * Describes a class-based type. Since everything in Python is an instance of some class, this type pretty much completes
@@ -417,6 +410,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       .of(methodNames)
       .map(name -> getParametersOfMethod(name, context))
       .findFirst(Objects::nonNull)
+      // If resolved parameters are empty, consider them as invalid and return null
+      .filter(parameters -> !parameters.isEmpty())
       // Skip "self" for __init__/__call__ and "cls" for __new__
       .map(parameters -> ContainerUtil.subList(parameters, 1))
       .orElse(null);
@@ -522,21 +517,29 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                                  @Nullable PyExpression location,
                                                                  @NotNull TypeEvalContext context) {
     final PyResolveProcessor processor = new PyResolveProcessor(name);
-    final Collection<PsiElement> result;
+    final Map<PsiElement, PyImportedNameDefiner> results;
 
     if (!isDefinition && !cls.processInstanceLevelDeclarations(processor, location)) {
-      result = processor.getElements();
+      results = processor.getResults();
     }
     else {
       cls.processClassLevelDeclarations(processor);
-      result = processor.getElements();
+      results = processor.getResults();
     }
 
-    return ContainerUtil.map(result, element -> new RatedResolveResult(PyReferenceImpl.getRate(element, context), element));
+    return EntryStream
+      .of(results)
+      .mapKeyValue(
+        (element, definer) -> {
+          final int rate = PyReferenceImpl.getRate(element, context);
+          return definer != null ? new ImportedResolveResult(element, rate, definer) : new RatedResolveResult(rate, element);
+        }
+      )
+      .toList();
   }
 
   private static final Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
-  public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
+  public static final Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
   @Override
   public Object[] getCompletionVariants(String prefix, PsiElement location, ProcessingContext context) {

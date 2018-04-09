@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.Collection;
 import java.util.EventListener;
 
@@ -23,7 +25,7 @@ import java.util.EventListener;
  * @author max
  *
  * @see com.intellij.openapi.vcs.changes.ChangeListManager#addChangeListListener(ChangeListListener)
- * @see com.intellij.openapi.vcs.changes.ChangeListManager#removeChangeListListener(ChangeListListener)  
+ * @see com.intellij.openapi.vcs.changes.ChangeListManager#removeChangeListListener(ChangeListListener)
  */
 public interface ChangeListListener extends EventListener {
   default void changeListAdded(ChangeList list) {}
@@ -34,7 +36,11 @@ public interface ChangeListListener extends EventListener {
   default void changeListRenamed(ChangeList list, String oldName) {}
   default void changeListCommentChanged(ChangeList list, String oldComment) {}
   default void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {}
-  default void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {}
+  default void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {}
+  @ApiStatus.Experimental
+  default void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
+    defaultListChanged(oldDefaultList, newDefaultList);
+  }
 
   default void unchangedFileStatusChanged() {}
   default void changeListUpdateDone() {}

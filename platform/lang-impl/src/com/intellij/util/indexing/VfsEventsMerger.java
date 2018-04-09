@@ -23,6 +23,7 @@ import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 /**
@@ -37,11 +38,21 @@ public class VfsEventsMerger {
     updateChange(fileId, file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
   }
 
+  private final AtomicInteger myPublishedEventIndex = new AtomicInteger();
+  
+  int getPublishedEventIndex() {
+    return myPublishedEventIndex.get();
+  }
+  
+  // NB: this code is executed not only during vfs events dispatch (in write action) but also during requestReindex (in read action)
   private void updateChange(int fileId, @NotNull VirtualFile file, short mask) {
     while (true) {
       ChangeInfo existingChangeInfo = myChangeInfos.get(fileId);
       ChangeInfo newChangeInfo = new ChangeInfo(file, mask, existingChangeInfo);
-      if(myChangeInfos.put(fileId, newChangeInfo) == existingChangeInfo) break;
+      if(myChangeInfos.put(fileId, newChangeInfo) == existingChangeInfo) {
+        myPublishedEventIndex.incrementAndGet();
+        break;
+      }
     }
   }
 

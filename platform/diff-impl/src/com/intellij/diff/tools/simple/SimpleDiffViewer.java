@@ -383,7 +383,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   @Override
-  protected JComponent getStatusPanel() {
+  protected StatusPanel getStatusPanel() {
     return myStatusPanel;
   }
 

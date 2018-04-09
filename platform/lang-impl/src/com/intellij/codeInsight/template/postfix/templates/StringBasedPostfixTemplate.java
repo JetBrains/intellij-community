@@ -29,6 +29,14 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
     super(null, name, example, selector, provider);
   }
 
+  public StringBasedPostfixTemplate(@NotNull String name,
+                                    @NotNull String key,
+                                    @NotNull String example,
+                                    @NotNull PostfixTemplateExpressionSelector selector,
+                                    @Nullable PostfixTemplateProvider provider) {
+    super(null, name, key, example, selector, provider);
+  }
+
   @Override
   public void expandForChooseExpression(@NotNull PsiElement expr, @NotNull Editor editor) {
     Project project = expr.getProject();

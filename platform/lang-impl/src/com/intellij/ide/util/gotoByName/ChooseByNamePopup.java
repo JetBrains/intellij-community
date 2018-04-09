@@ -199,8 +199,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       return;
     }
 
+    myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
     if (isOk) {
-      myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
 
       final List<Object> chosenElements = getChosenElements();
       if (chosenElements != null) {

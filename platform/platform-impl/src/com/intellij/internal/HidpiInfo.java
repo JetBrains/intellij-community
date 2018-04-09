@@ -53,10 +53,14 @@ public class HidpiInfo extends AnAction implements DumbAware {
 
   private final String USR_SCALE_TEXT = "User (IDE) scale";
   private final String USR_SCALE_DESC =
-    "<html><span style='font-size:x-small'>The global IDE scale factor, derived from the main font size: <code>$LABEL_FONT_SIZE" +
+    "<html><span style='font-size:x-small'>The global IDE scale factor" +
+    (JBUI.DEBUG_USER_SCALE_FACTOR != null ?
+    ", overridden by the debug property." :
+    ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
     (ENABLED ? "pt" : "px") + "</code><br>" +
     "<code>" + (SystemInfo.isMac ? "Preferences " : "Settings ") +
-    "> Appearance & Behaviour > Appearance > Override default font</code></span></html>";
+    "> Appearance & Behaviour > Appearance > Override default font") +
+    "</code></span></html>";
 
   @Override
   public void actionPerformed(AnActionEvent anActionEvent) {
@@ -86,11 +90,13 @@ public class HidpiInfo extends AnAction implements DumbAware {
 
     BiFunction<Integer, Integer, Dimension> size = (row, col) -> label(data[row][col]).getPreferredSize();
 
+    int maxDescColumnWidth = Math.max(size.apply(0, 2).width, Math.max(size.apply(1, 2).width, size.apply(2, 2).width));
+
     table.setColumnSelectionAllowed(true);
     TableColumnModel tcm = table.getColumnModel();
     tcm.getColumn(0).setPreferredWidth(size.apply(0, 0).width + JBUI.scale(10));
     tcm.getColumn(1).setPreferredWidth(size.apply(0, 1).width + JBUI.scale(10));
-    tcm.getColumn(2).setPreferredWidth(size.apply(2, 2).width + JBUI.scale(10));
+    tcm.getColumn(2).setPreferredWidth(maxDescColumnWidth + JBUI.scale(10));
     table.setRowHeight(0, size.apply(0, 2).height);
     table.setRowHeight(1, size.apply(0, 2).height);
     table.setRowHeight(2, size.apply(2, 2).height);

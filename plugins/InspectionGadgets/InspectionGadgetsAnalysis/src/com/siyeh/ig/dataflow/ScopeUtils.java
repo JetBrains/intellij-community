@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,11 +72,9 @@ class ScopeUtils {
       }
     }
 
-    if (commonParent instanceof PsiTryStatement) {
-      PsiElement referenceElement = referenceElements.get(0);
-      if (!PsiTreeUtil.isAncestor(((PsiTryStatement)commonParent).getResourceList(), referenceElement, false)) {
-        commonParent = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class, PsiForStatement.class);
-      }
+    // don't narrow inside resource variable, only resource expression
+    if (commonParent instanceof PsiTryStatement && !(referenceElements.get(0).getParent() instanceof PsiResourceExpression)) {
+      commonParent = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class, PsiForStatement.class);
     }
 
     // make common parent may only be for-statement if first reference is

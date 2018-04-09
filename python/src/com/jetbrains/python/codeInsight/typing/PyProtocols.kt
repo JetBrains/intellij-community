@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
-import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL_EXT
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyPossibleClassMember
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
@@ -35,7 +35,14 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
 
   protocol.toInstance().visitMembers(
     { e ->
-      if (e is PyTypedElement && FileUtil.getNameWithoutExtension(e.containingFile.name) != "typing_extensions") {
+      if (e is PyTypedElement) {
+        if (e is PyPossibleClassMember) {
+          val cls = e.containingClass
+          if (cls != null && !isProtocol(cls, context)) {
+            return@visitMembers true
+          }
+        }
+
         val name = e.name ?: return@visitMembers true
         val resolveResults = subclassAsInstance.resolveMember(name, null, AccessDirection.READ, resolveContext)
 

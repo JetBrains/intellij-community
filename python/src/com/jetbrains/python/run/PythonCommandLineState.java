@@ -101,7 +101,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * sys.argv[1:]</cite>, which are stored in {@link #GROUP_SCRIPT}.
    */
   public static final String GROUP_MODULE = "Module";
+  //TODO: DOC ParametersListUtil
   public static final String GROUP_SCRIPT = "Script";
+  public static final String MODULE_PARAMETER = "-m";
   private final AbstractPythonRunConfiguration myConfig;
 
   private Boolean myMultiprocessDebug = null;
@@ -269,9 +271,26 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return new PyRemoteProcessStarter();
   }
 
+  /**
+   * Generate command line and apply patchers
+   *
+   * @param patchers array of patchers
+   * @return generated command line changed by patchers
+   */
+  @NotNull
+  public final GeneralCommandLine generateCommandLine(@Nullable CommandLinePatcher[] patchers) {
+    return applyPatchers(generateCommandLine(), patchers);
+  }
 
-  public GeneralCommandLine generateCommandLine(CommandLinePatcher[] patchers) {
-    GeneralCommandLine commandLine = generateCommandLine();
+  /**
+   * Apply patchers to the given command line
+   *
+   * @param commandLine command line to change
+   * @param patchers    array of patchers
+   * @return command line changed by patchers
+   */
+  @NotNull
+  private static GeneralCommandLine applyPatchers(@NotNull GeneralCommandLine commandLine, @Nullable CommandLinePatcher[] patchers) {
     if (patchers != null) {
       for (CommandLinePatcher patcher : patchers) {
         if (patcher != null) patcher.patchCommandLine(commandLine);
@@ -284,6 +303,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return PythonProcessRunner.createProcess(commandLine);
   }
 
+  /**
+   * Generate command line from run configuration.
+   * It can be overridden if commandline shouldn't be based on the run configuration or when it requires some additional changes
+   * before patchers applying.
+   *
+   * @return generated command line
+   */
+  @NotNull
   public GeneralCommandLine generateCommandLine() {
     GeneralCommandLine commandLine = createPythonCommandLine(myConfig.getProject(), myConfig, isDebug(), myRunWithPty);
 

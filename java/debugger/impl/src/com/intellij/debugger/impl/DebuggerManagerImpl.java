@@ -52,7 +52,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
 import javax.swing.*;
 import java.io.File;
@@ -564,10 +563,12 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   private static String handleSpacesInPath(String agentPath) {
     if (agentPath.contains(" ")) {
       File targetDir = new File(PathManager.getSystemPath(), "captureAgent");
-      if (targetDir.getAbsolutePath().contains(" ")) {
+      String res = copyAgent(agentPath, targetDir);
+      if (res == null) {
         try {
           targetDir = FileUtil.createTempDirectory("capture", "jars");
-          if (targetDir.getAbsolutePath().contains(" ")) {
+          res = copyAgent(agentPath, targetDir);
+          if (res == null && targetDir.getAbsolutePath().contains(" ")) {
             LOG.info("Capture agent was not used since the agent path contained spaces: " + agentPath);
             return null;
           }
@@ -578,7 +579,16 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
         }
       }
 
+      return res;
+    }
+    return agentPath;
+  }
+
+  @Nullable
+  private static String copyAgent(String agentPath, File targetDir) {
+    if (!targetDir.getAbsolutePath().contains(" ")) {
       try {
+        //noinspection ResultOfMethodCallIgnored
         targetDir.mkdirs();
         Path source = Paths.get(agentPath);
         Path target = targetDir.toPath().resolve(AGENT_FILE_NAME);
@@ -589,15 +599,13 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       }
       catch (IOException e) {
         LOG.info(e);
-        return null;
       }
     }
-    return agentPath;
+    return null;
   }
 
   private static String generateAgentSettings() {
     Properties properties = new Properties();
-    properties.setProperty("asm-lib", PathUtil.getJarPathForClass(MethodVisitor.class));
     if (Registry.is("debugger.capture.points.agent.debug")) {
       properties.setProperty("debug", "true");
     }
@@ -606,13 +614,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       properties.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
                              point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
                              point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                             point.myMethodDesc + CaptureSettingsProvider.AgentPoint.SEPARATOR +
                              point.myKey.asString());
     }
     try {
       File file = FileUtil.createTempFile("capture", ".props");
       try (FileOutputStream out = new FileOutputStream(file)) {
         properties.store(out, null);
-        return file.getAbsolutePath();
+        return file.toURI().toASCIIString();
       }
     }
     catch (IOException e) {

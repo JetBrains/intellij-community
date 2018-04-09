@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -41,6 +42,8 @@ public class JBUI {
   private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new JBUI());
 
   private static final float DISCRETE_SCALE_RESOLUTION = 0.25f;
+
+  public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
 
   /**
    * The IDE supports two different HiDPI modes:
@@ -202,12 +205,33 @@ public class JBUI {
   private static final Float SYSTEM_SCALE_FACTOR = sysScale();
 
   /**
+   * For internal usage.
+   */
+  public static final @Nullable Float DEBUG_USER_SCALE_FACTOR = debugScale();
+
+  private static Float debugScale() {
+      String prop = System.getProperty("ide.ui.scale");
+      if (prop != null) {
+        try {
+          return Float.parseFloat(prop);
+        }
+        catch (NumberFormatException e) {
+          LOG.error("ide.ui.scale system property is not a float value: " + prop);
+        }
+      }
+      else if (Registry.is("ide.ui.scale.override")) {
+        return Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
+      }
+      return null;
+  }
+
+  /**
    * The user space scale factor.
    */
   private static float userScaleFactor;
 
   static {
-    setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR);
+    setUserScaleFactor(DEBUG_USER_SCALE_FACTOR != null ? DEBUG_USER_SCALE_FACTOR : UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR);
     LOG.info("System scale factor: " + SYSTEM_SCALE_FACTOR + " (" +
              (UIUtil.isJreHiDPIEnabled() ? "JRE-managed" : "IDE-managed") + " HiDPI)");
   }
@@ -234,7 +258,9 @@ public class JBUI {
     if (SYSTEM_SCALE_FACTOR != null) {
       return SYSTEM_SCALE_FACTOR;
     }
-
+    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+      return 1.0f;
+    }
     if (UIUtil.isJreHiDPIEnabled()) {
       GraphicsDevice gd = null;
       try {
@@ -243,10 +269,6 @@ public class JBUI {
       if (gd != null && gd.getDefaultConfiguration() != null) {
         return sysScale(gd.getDefaultConfiguration());
       }
-      return 1.0f;
-    }
-
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
       return 1.0f;
     }
 
@@ -365,6 +387,7 @@ public class JBUI {
   }
 
   private static void setUserScaleFactorProperty(float scale) {
+    if (userScaleFactor == scale) return;
     PCS.firePropertyChange(USER_SCALE_FACTOR_PROPERTY, userScaleFactor, userScaleFactor = scale);
     LOG.info("User scale factor: " + userScaleFactor);
   }
@@ -372,14 +395,25 @@ public class JBUI {
   /**
    * Sets the user scale factor.
    * The method is used by the IDE, it's not recommended to call the method directly from the client code.
-   * For debugging purposes, the following registry keys can be used:
+   * For debugging purposes, the following JVM system property can be used:
+   * ide.ui.scale=[float]
+   * or the IDE registry keys (for backward compatibility):
    * ide.ui.scale.override=[boolean]
    * ide.ui.scale=[float]
+   *
+   * @return the result
    */
-  public static void setUserScaleFactor(float scale) {
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      setUserScaleFactorProperty(1.0f);
-      return;
+  public static float setUserScaleFactor(float scale) {
+    if (DEBUG_USER_SCALE_FACTOR != null) {
+      if (scale == DEBUG_USER_SCALE_FACTOR) {
+        setUserScaleFactorProperty(DEBUG_USER_SCALE_FACTOR); // set the debug value as is, or otherwise ignore
+      }
+      return DEBUG_USER_SCALE_FACTOR;
+    }
+
+    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+      setUserScaleFactorProperty(1f);
+      return 1f;
     }
 
     scale = discreteScale(scale);
@@ -393,10 +427,8 @@ public class JBUI {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
-    if (userScaleFactor == scale) {
-      return;
-    }
     setUserScaleFactorProperty(scale);
+    return scale;
   }
 
   static float discreteScale(float scale) {

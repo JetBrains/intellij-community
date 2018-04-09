@@ -101,7 +101,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   @Override
   protected void createRequestForPreparedClass(final DebugProcessImpl debugProcess, final ReferenceType classType) {
-    if (!isInScopeOf(debugProcess, classType.name())) {
+    if (!ReadAction.compute(() -> isInScopeOf(debugProcess, classType.name()))) {
       if (LOG.isDebugEnabled()) {
         LOG.debug(classType.name() + " is out of debug-process scope, breakpoint request won't be created for line " + getLineIndex());
       }

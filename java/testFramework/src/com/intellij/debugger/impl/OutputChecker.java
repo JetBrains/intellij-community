@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -225,6 +223,7 @@ public class OutputChecker {
         result = result.replaceAll("\\((.*)\\:\\d+\\)", "($1:!LINE_NUMBER!)");
 
         result = fixSlashes(result, JDK_HOME_STR);
+        result = result.replaceAll("!JDK_HOME!\\\\bin\\\\java.exe", "!JDK_HOME!\\\\bin\\\\java");
 
         result = stripQuotesAroundClasspath(result);
 

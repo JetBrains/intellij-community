@@ -27,7 +27,7 @@ internal abstract class PropertyRenderer(
   nameKind: Pair<String, PropertyKind>
 ) {
 
-  protected val factory = JavaPsiFacade.getInstance(project).elementFactory
+  private val factory = JavaPsiFacade.getInstance(project).elementFactory
   private val codeStyleManager = JavaCodeStyleManager.getInstance(project)!!
   private val javaUsage = request as? CreateMethodFromJavaUsageRequest
   private val isStatic = JvmModifier.STATIC in request.modifiers
@@ -63,7 +63,8 @@ internal abstract class PropertyRenderer(
   fun doRender() {
     if (!navigate()) return
     val builder = TemplateBuilderImpl(target)
-    val typeExpression = fillTemplate(builder)
+    builder.setGreedyToRight(true)
+    val typeExpression = fillTemplate(builder) ?: return
     val template = builder.buildInlineTemplate().apply {
       isToShortenLongNames = true
     }
@@ -71,10 +72,11 @@ internal abstract class PropertyRenderer(
     TemplateManager.getInstance(project).startTemplate(targetEditor, template, listener)
   }
 
-  protected abstract fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression
+  protected abstract fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression?
 
-  protected fun insertAccessor(prototype: PsiMethod): PsiMethod {
-    return forcePsiPostprocessAndRestoreElement(target.add(prototype)) as PsiMethod
+  protected fun insertAccessor(prototype: PsiMethod): PsiMethod? {
+    val method = target.add(prototype) as PsiMethod
+    return forcePsiPostprocessAndRestoreElement(method)
   }
 
   private fun TemplateBuilderImpl.createTemplateContext(): TemplateContext {

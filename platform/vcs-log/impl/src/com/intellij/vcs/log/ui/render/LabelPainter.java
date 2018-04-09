@@ -340,8 +340,8 @@ public class LabelPainter {
 
       if (myGreyBackground != null && !myCompact) {
         g2.setColor(myGreyBackground);
-        g2.fill(new RoundRectangle2D.Double(x - LEFT_PADDING, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING,
-                                            icon.getIconWidth() + fontMetrics.stringWidth(text) + 3 * LEFT_PADDING,
+        g2.fill(new RoundRectangle2D.Double(x - MIDDLE_PADDING / 3, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING,
+                                            icon.getIconWidth() + fontMetrics.stringWidth(text) + 2 * MIDDLE_PADDING / 3,
                                             fontMetrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING, LABEL_ARC, LABEL_ARC));
       }
 

@@ -378,7 +378,7 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
 
     init {
       resetChangelists()
-      partialTracker.initChangeTracking(defaultChangeListIds(), changeListIds())
+      partialTracker.initChangeTracking(defaultChangeListIds(), changeListIds(), null)
     }
 
     override fun destroy() {

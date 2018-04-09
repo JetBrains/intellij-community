@@ -1420,7 +1420,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return null;
     }
 
-    if (LanguageLevel.forElement(this).isPython2() && getMetaClassQName() == null) {
+    if (LanguageLevel.forElement(this).isPython2() && getMetaClassQName() == null && !hasNewStyleMetaClass(this)) {
       final QualifiedName typesInstanceTypeQName = QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE);
       final PsiElement typesInstanceType = resolveTopLevelMember(typesInstanceTypeQName, fromFoothold(this));
 

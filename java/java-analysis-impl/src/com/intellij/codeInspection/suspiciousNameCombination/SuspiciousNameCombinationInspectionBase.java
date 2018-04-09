@@ -26,6 +26,7 @@ public class SuspiciousNameCombinationInspectionBase extends AbstractBaseJavaLoc
   @NonNls private static final String ELEMENT_IGNORED_METHODS = "ignored";
   protected final List<String> myNameGroups = new ArrayList<>();
   private final Map<String, String> myWordToGroupMap = new HashMap<>();
+  private int myLongestWord = 0;
   final MethodMatcher myIgnoredMethods = new MethodMatcher()
     // parameter name is 'x' which is completely unrelated to coordinates
     .add("java.io.PrintStream", "println")
@@ -59,13 +60,16 @@ public class SuspiciousNameCombinationInspectionBase extends AbstractBaseJavaLoc
   protected void clearNameGroups() {
     myNameGroups.clear();
     myWordToGroupMap.clear();
+    myLongestWord = 0;
   }
 
-  protected void addNameGroup(@NonNls final String group) {
+  public void addNameGroup(@NonNls final String group) {
     myNameGroups.add(group);
     List<String> words = StringUtil.split(group, ",");
     for(String word: words) {
-      myWordToGroupMap.put(canonicalize(word), group);
+      String canonicalized = canonicalize(word);
+      myLongestWord = Math.max(myLongestWord, canonicalized.length());
+      myWordToGroupMap.put(canonicalized, group);
     }
   }
 
@@ -196,16 +200,21 @@ public class SuspiciousNameCombinationInspectionBase extends AbstractBaseJavaLoc
         return null;
       }
       String[] words = NameUtil.splitNameIntoWords(name);
+      Arrays.asList(words).replaceAll(SuspiciousNameCombinationInspectionBase::canonicalize);
       String result = null;
-      for(String word: words) {
-        String group = myWordToGroupMap.get(canonicalize(word));
-        if (group != null) {
-          if (result == null) {
-            result = group;
-          }
-          else if (!result.equals(group)) {
-            result = null;
-            break;
+      for (int i = 0; i < words.length; i++) {
+        String word = "";
+        for (int j = i; j < words.length; j++) {
+          word += words[j];
+          if (word.length() > myLongestWord) break;
+          String group = myWordToGroupMap.get(word);
+          if (group != null) {
+            if (result == null) {
+              result = group;
+            }
+            else if (!result.equals(group)) {
+              return null;
+            }
           }
         }
       }

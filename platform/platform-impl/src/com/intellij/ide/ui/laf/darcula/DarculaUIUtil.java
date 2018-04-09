@@ -403,6 +403,10 @@ public class DarculaUIUtil {
     return JBUI.scale(5.0f);
   }
 
+  public static float buttonArc() {
+    return JBUI.scale(3.0f);
+  }
+
   public static Color getOutlineColor(boolean enabled) {
     if (UIUtil.isUnderDarcula()) {
       return enabled ? Gray._100 : Gray._83;

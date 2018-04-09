@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
@@ -54,6 +53,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer {
   private static final String LEFT = BorderLayout.WEST;
@@ -99,7 +100,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       else if (psiElement instanceof PsiDirectory) {
         file = ((PsiDirectory)psiElement).getVirtualFile();
       }
-      Color fileBgColor = file != null ? EditorTabbedContainer.calcTabColor(project, file) : null;
+      Color fileBgColor = file != null ? getFileBackgroundColor(project, file) : null;
       if (fileBgColor != null) {
         return fileBgColor;
       }
@@ -148,7 +149,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
             FileStatus status = FileStatusManager.getInstance(project).getStatus(vFile);
             color = status.getColor();
 
-            Color fileBgColor = EditorTabbedContainer.calcTabColor(project, vFile);
+            Color fileBgColor = getFileBackgroundColor(project, vFile);
             bgColor = fileBgColor == null ? bgColor : fileBgColor;
           }
         }

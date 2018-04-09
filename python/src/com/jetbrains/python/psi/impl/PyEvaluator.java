@@ -55,6 +55,11 @@ public class PyEvaluator {
    */
   private boolean myEvaluateKeys = true;
 
+  /**
+   * if true, references will be resolved
+   */
+  private boolean myEnableResolve = true;
+
   public void setNamespace(@Nullable Map<String, Object> namespace) {
     myNamespace = namespace;
   }
@@ -65,6 +70,10 @@ public class PyEvaluator {
 
   public void setEvaluateKeys(boolean evaluateKeys) {
     myEvaluateKeys = evaluateKeys;
+  }
+
+  public void enableResolve(boolean enableResolve) {
+    myEnableResolve = enableResolve;
   }
 
   @Nullable
@@ -242,6 +251,9 @@ public class PyEvaluator {
       if (myNamespace != null) {
         return myNamespace.get(expression.getReferencedName());
       }
+      if (!myEnableResolve) {
+        return null;
+      }
       final ResolveResult[] results = expression.getReference(PyResolveContext.noImplicits()).multiResolve(false);
       if (results.length != 1) {
         return null;
@@ -275,7 +287,7 @@ public class PyEvaluator {
     }
 
     // Support dict([("k", "v")]) syntax
-    if (expression.isCallee(PythonFQDNNames.DICT_CLASS)) {
+    if (myEnableResolve && expression.isCallee(PythonFQDNNames.DICT_CLASS)) {
       final Collection<PyTupleExpression> tuples = PsiTreeUtil.findChildrenOfType(expression, PyTupleExpression.class);
       if (!tuples.isEmpty()) {
         final Map<Object, Object> result = new HashMap<>();
@@ -332,14 +344,29 @@ public class PyEvaluator {
   /**
    * Shortcut that evaluates expression with default params and casts it to particular type (if possible)
    *
+   * @param <T>        expected type
    * @param expression expression to evaluate
    * @param resultType expected type
-   * @param <T>        expected type
    * @return value if expression is evaluated to this type, null otherwise
    */
   @Nullable
   public static <T> T evaluate(@Nullable PyExpression expression, @NotNull Class<T> resultType) {
     return PyUtil.as(new PyEvaluator().evaluate(expression), resultType);
+  }
+
+  /**
+   * Shortcut that evaluates expression with default params and disabled resolve and casts it to particular type (if possible)
+   *
+   * @param <T>        expected type
+   * @param expression expression to evaluate
+   * @param resultType expected type
+   * @return value if expression is evaluated to this type, null otherwise
+   */
+  @Nullable
+  public static <T> T evaluateNoResolve(@Nullable PyExpression expression, @NotNull Class<T> resultType) {
+    final PyEvaluator evaluator = new PyEvaluator();
+    evaluator.enableResolve(false);
+    return PyUtil.as(evaluator.evaluate(expression), resultType);
   }
 
   /**
@@ -350,10 +377,39 @@ public class PyEvaluator {
    */
   @Nullable
   public static Boolean evaluateAsBoolean(@Nullable PyExpression expression) {
+    return evaluateAsBoolean(prepareEvaluatorForBoolean(true), expression);
+  }
+
+  /**
+   * Shortcut that evaluates expression and tries to determine if `bool` will return true for it
+   *
+   * @param expression expression to evaluate
+   * @return true if expression is evaluated to value so `bool` returns true for it
+   */
+  @Nullable
+  public static Boolean evaluateAsBooleanNoResolve(@Nullable PyExpression expression) {
+    return evaluateAsBoolean(prepareEvaluatorForBoolean(false), expression);
+  }
+
+  public static boolean evaluateAsBoolean(@Nullable PyExpression expression, boolean defaultValue) {
+    return ObjectUtils.notNull(evaluateAsBoolean(expression), defaultValue);
+  }
+
+  public static boolean evaluateAsBooleanNoResolve(@Nullable PyExpression expression, boolean defaultValue) {
+    return ObjectUtils.notNull(evaluateAsBooleanNoResolve(expression), defaultValue);
+  }
+
+  @NotNull
+  private static PyEvaluator prepareEvaluatorForBoolean(boolean enableResolve) {
     final PyEvaluator evaluator = new PyEvaluator();
     evaluator.setEvaluateCollectionItems(false);
     evaluator.setEvaluateKeys(false);
+    evaluator.enableResolve(enableResolve);
+    return evaluator;
+  }
 
+  @Nullable
+  private static Boolean evaluateAsBoolean(@NotNull PyEvaluator evaluator, @Nullable PyExpression expression) {
     final Object result = evaluator.evaluate(expression);
 
     if (result instanceof Boolean) {
@@ -373,9 +429,5 @@ public class PyEvaluator {
     }
 
     return null;
-  }
-
-  public static boolean evaluateAsBoolean(@Nullable PyExpression expression, boolean defaultValue) {
-    return ObjectUtils.notNull(evaluateAsBoolean(expression), defaultValue);
   }
 }

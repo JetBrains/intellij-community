@@ -288,7 +288,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
   }
 
   public void updateComponent(){
-    if (!myKeepOnHintHidden && !myHint.isVisible()) {
+    if (!myKeepOnHintHidden && !myHint.isVisible() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) {
       Disposer.dispose(this);
       return;
     }

@@ -78,13 +78,13 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
   }
 
   @Override
-  public PsiField insertFieldImpl(@NotNull PsiClass targetClass, @NotNull PsiField field, @Nullable PsiElement place) {
+  public GrField insertFieldImpl(@NotNull PsiClass targetClass, @NotNull PsiField field, @Nullable PsiElement place) {
     if (targetClass instanceof GroovyScriptClass) {
       PsiElement added = targetClass.getContainingFile().add(field.getParent());
-      return (PsiField)((GrVariableDeclaration)added).getVariables()[0];
+      return (GrField)((GrVariableDeclaration)added).getVariables()[0];
     }
     else {
-      return (PsiField)targetClass.add(field);
+      return (GrField)targetClass.add(field);
     }
   }
 }

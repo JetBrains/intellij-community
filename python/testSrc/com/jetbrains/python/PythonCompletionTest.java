@@ -1245,6 +1245,14 @@ public class PythonCompletionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  // PY-28577
+  public void testBuiltinObjectMethodsInNewStyleClass() {
+    final List<String> suggested = doTestByText("class A(object):\n" +
+                                              "    def __<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "__init__(self)");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

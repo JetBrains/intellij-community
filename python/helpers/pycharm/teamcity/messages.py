@@ -24,7 +24,9 @@ def escape_value(value):
 
 
 class TeamcityServiceMessages(object):
-    def __init__(self, output=sys.stdout, now=_time, encoding='auto'):
+    def __init__(self, output=None, now=_time, encoding='auto'):
+        if output is None:
+            output = sys.stdout
         if sys.version_info < (3, ) or not hasattr(output, 'buffer'):
             self.output = output
         else:

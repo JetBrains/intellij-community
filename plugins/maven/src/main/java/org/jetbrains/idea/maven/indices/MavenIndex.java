@@ -173,7 +173,10 @@ public class MavenIndex {
             }
           }
           else if (host.endsWith(".bintray.com")) {
-            if (!path.isEmpty()) {
+            if (host.equals("jcenter.bintray.com")) {
+              return new BintrayIndexer("bintray", "jcenter");
+            }
+            else if (!path.isEmpty()) {
               return new BintrayIndexer(trimEnd(host, ".bintray.com"), path.get(0));
             }
           }

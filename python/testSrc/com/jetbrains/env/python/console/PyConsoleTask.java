@@ -22,6 +22,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -50,6 +51,8 @@ import java.util.concurrent.Semaphore;
  * @author traff
  */
 public class PyConsoleTask extends PyExecutionFixtureTestTask {
+  private static final Logger LOG = Logger.getInstance("com.jetbrains.env.python.console.PyConsoleTask");
+
   private boolean myProcessCanTerminate;
 
   protected PyConsoleProcessHandler myProcessHandler;
@@ -214,6 +217,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
       public void commandExecuted(boolean more) {
+        LOG.debug("Some command executed");
         myCommandSemaphore.release();
       }
 
@@ -357,25 +361,31 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   protected void exec(final String command) throws InterruptedException {
     waitForReady();
-    myCommandSemaphore.acquire(1);
-    myConsoleView.executeInConsole(command);
-    Assert.assertTrue(String.format("Command execution wasn't finished: `%s` \n" +
+    LOG.debug("Command " + command + " acquired lock");
+    Assert.assertTrue(String.format("Can't execute command: `%s`, because previous one wan't finished \n" +
                                     "Output: %s", command, output()), waitFor(myCommandSemaphore));
-    myCommandSemaphore.release();
+    LOG.debug("Command " + command + " got lock");
+    myConsoleView.executeInConsole(command);
   }
 
-  protected boolean hasValue(String varName, String value) throws PyDebuggerException {
+  protected boolean hasValue(String varName, String value) throws PyDebuggerException, InterruptedException {
     PyDebugValue val = getValue(varName);
     return val != null && value.equals(val.getValue());
   }
 
-  protected void setValue(String varName, String value) throws PyDebuggerException {
+  protected void setValue(String varName, String value) throws PyDebuggerException, InterruptedException {
     PyDebugValue val = getValue(varName);
+    Assert.assertTrue(String.format("Can't change variable's value: `%s` \n" +
+                                    "Output: %s", varName, output()), waitFor(myCommandSemaphore));
     myCommunication.changeVariable(val, value);
+    myCommandSemaphore.release();
   }
 
-  protected PyDebugValue getValue(String varName) throws PyDebuggerException {
+  protected PyDebugValue getValue(String varName) throws PyDebuggerException, InterruptedException {
+    Assert.assertTrue(String.format("Can't get value for variable: `%s` \n" +
+                                    "Output: %s", varName, output()), waitFor(myCommandSemaphore));
     XValueChildrenList l = myCommunication.loadFrame();
+    myCommandSemaphore.release();
 
     if (l == null) {
       return null;

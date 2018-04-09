@@ -47,7 +47,7 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
     }
 
     try {
-      String dataToSend = FUStatisticsStateService.create().getMergedDataToSend(allDataFromCollectors.asJsonString());
+      String dataToSend = FUStatisticsStateService.create().getMergedDataToSend(allDataFromCollectors.asJsonString(), approvedGroups);
       if (dataToSend == null) {
         throw new StatServiceException("There are no data from collectors to send");
       }

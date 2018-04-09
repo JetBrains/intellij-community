@@ -41,7 +41,7 @@ public class FinalUtils {
       return false;
     }
     PsiElement scope = variable instanceof PsiField
-                       ? ((PsiField)variable).getContainingClass()
+                       ? PsiUtil.getTopLevelClass(variable)
                        : PsiUtil.getVariableCodeBlock(variable, null);
     if (scope == null) return false;
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<>();

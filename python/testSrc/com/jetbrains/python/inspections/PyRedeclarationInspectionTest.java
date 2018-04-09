@@ -164,6 +164,25 @@ public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28593
+  public void testRedeclarationInExcept() {
+    doTest();
+  }
+
+  // PY-23003
+  public void testVariableUsedInElIf() {
+    doTestByText(
+      "for file in ['test_file']:\n" +
+      "    block = False\n" +
+      "    if a:\n" +
+      "        block = True\n" +
+      "    elif block and b:\n" +
+      "        block = False\n" +
+      "    else:\n" +
+      "        print(c)"
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

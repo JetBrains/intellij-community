@@ -82,6 +82,7 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
   }
 
   private void updateStatus() {
+    if (!myProject.isOpen()) return;
     final Editor editor = getFocusedEditor();
     if (editor == null || !editor.isColumnMode()) {
       myTextPanel.setBorder(null);

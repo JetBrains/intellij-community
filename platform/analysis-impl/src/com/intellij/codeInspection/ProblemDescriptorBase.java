@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,6 +43,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
   private ProblemGroup myProblemGroup;
+  @Nullable private final Throwable myCreationTrace;
 
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
@@ -94,6 +96,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
+    myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
   }
 
   @Nullable
@@ -108,6 +111,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       LOG.error("Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree: " +
                 element + "; file: " + element.getContainingFile());
     }
+  }
+
+  @Nullable
+  public Throwable getCreationTrace() {
+    return myCreationTrace;
   }
 
   @Override

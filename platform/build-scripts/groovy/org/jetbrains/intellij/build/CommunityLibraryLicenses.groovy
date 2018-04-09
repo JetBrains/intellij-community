@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -72,7 +72,8 @@ class CommunityLibraryLicenses {
                        license: "Apache 2.0", url: "http://xmlgraphics.apache.org/commons/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "ASM", version: "6.0 (with patches by JetBrains)",
-                       license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html"),
+                       license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html",
+                       additionalLibraryNames: ["asm-capture"]),
     new LibraryLicense(name: "ASM Tools", libraryName: "asm-tools",
                        license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html"),
     new LibraryLicense(name: "Automaton", libraryName: "automaton", version: "1.11", license: "BSD", url: "http://www.brics.dk/automaton/",
@@ -204,6 +205,9 @@ class CommunityLibraryLicenses {
                        url: "http://code.google.com/p/json-path/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "json-smart", libraryName: "json-smart-1.1.1.jar", version: "1.1.1", license: "Apache 2.0",
                        url: "http://code.google.com/p/json-smart/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "JSON Schema (schema.json)", attachedTo: "intellij.json", version: "draft-04", license: "Simplified BSD License",
+                       licenseUrl: "https://opensource.org/licenses/BSD-2-Clause",
+                       url: "http://json-schema.org/draft-04/schema#"),
     new LibraryLicense(name: "jsoup", libraryName: "jsoup", version: "1.10.3", license: "MIT",
                        url: "http://jsoup.org", licenseUrl: "http://jsoup.org/license"),
     new LibraryLicense(name: "jsr305", libraryName: "jsr305", version: "snapshot", license: "BSD", url: "http://code.google.com/p/jsr-305/",
@@ -218,8 +222,6 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/EsotericSoftware/kryo",
                        licenseUrl: "https://github.com/EsotericSoftware/kryo/blob/master/license.txt"),
     new LibraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/"),
-    new LibraryLicense(name: "Lobo evolution", libraryName: "Loboevolution.jar", version: "0.98.6 (with patches by JetBrains)", license: "MIT",
-                       url: "http://sourceforge.net/projects/loboevolution/", licenseUrl: "http://opensource.org/licenses/mit-license.php"),
     new LibraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2.17", license: "Apache 2.0",
                        url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Lombok AST", libraryName: "lombok-ast", version: "0.2.1", license: "MIT", url: "http://projectlombok.org/",

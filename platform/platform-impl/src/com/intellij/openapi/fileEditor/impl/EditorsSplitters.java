@@ -289,23 +289,19 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     mySplittersElement = element;
   }
 
-  @NotNull public VirtualFile[] getOpenFiles() {
-    final Set<VirtualFile> files = new ArrayListSet<>();
-    for (final EditorWindow myWindow : myWindows) {
-      final EditorWithProviderComposite[] editors = myWindow.getEditors();
-      for (final EditorWithProviderComposite editor : editors) {
-        VirtualFile file = editor.getFile();
-        // background thread may call this method when invalid file is being removed
-        // do not return it here as it will quietly drop out soon
-        if (file.isValid()) {
-          files.add(file);
-        }
+  @NotNull
+  public VirtualFile[] getOpenFiles() {
+    Set<VirtualFile> files = new ArrayListSet<>();
+    for (EditorWindow myWindow : myWindows) {
+      for (EditorWithProviderComposite editor : myWindow.getEditors()) {
+        files.add(editor.getFile());
       }
     }
     return VfsUtilCore.toVirtualFileArray(files);
   }
 
-  @NotNull public VirtualFile[] getSelectedFiles() {
+  @NotNull
+  public VirtualFile[] getSelectedFiles() {
     final Set<VirtualFile> files = new ArrayListSet<>();
     for (final EditorWindow window : myWindows) {
       final VirtualFile file = window.getSelectedFile();

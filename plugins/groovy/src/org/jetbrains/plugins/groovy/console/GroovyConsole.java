@@ -19,8 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -79,7 +77,6 @@ public class GroovyConsole {
 
   public void stop() {
     myProcessHandler.destroyProcess(); // use force
-    ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(defaultExecutor, myContentDescriptor);
   }
 
   private static void send(@NotNull ProcessHandler processHandler, @NotNull String command) {
@@ -159,15 +156,6 @@ public class GroovyConsole {
     ui.add(consoleViewComponent, BorderLayout.CENTER);
     ui.add(toolbar.getComponent(), BorderLayout.WEST);
 
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        if (file.equals(contentFile)) {
-          // if file was closed then kill process and hide console content
-          console.stop();
-        }
-      }
-    });
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {

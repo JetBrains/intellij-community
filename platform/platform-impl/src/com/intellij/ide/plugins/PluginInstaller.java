@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.ide.startup.StartupActionScriptManager.DeleteCommand;
-import com.intellij.ide.startup.StartupActionScriptManager.UnzipCommand;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -264,50 +248,43 @@ public class PluginInstaller {
   public static void prepareToUninstall(PluginId pluginId) throws IOException {
     synchronized (ourLock) {
       if (PluginManager.isPluginInstalled(pluginId)) {
-        // add command to delete the 'action script' file
         IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
-        if (pluginDescriptor != null) {
-          StartupActionScriptManager.ActionCommand deleteOld = new DeleteCommand(pluginDescriptor.getPath());
-          StartupActionScriptManager.addActionCommand(deleteOld);
-
-          fireState(pluginDescriptor, false);
+        if (pluginDescriptor == null) {
+          PluginManagerMain.LOG.error("Plugin not found: " + pluginId);
+        }
+        else if (pluginDescriptor.isBundled()) {
+          PluginManagerMain.LOG.error("Plugin is bundled: " + pluginId);
         }
         else {
-          PluginManagerMain.LOG.error("Plugin not found: " + pluginId);
+          StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
+
+          fireState(pluginDescriptor, false);
         }
       }
     }
   }
 
-  public static void install(@NotNull File fromFile,
-                             @NotNull String pluginName,
-                             boolean deleteFromFile,
+  public static void install(@NotNull File sourceFile,
+                             boolean deleteSourceFile,
+                             @Nullable File existingPlugin,
                              @NotNull IdeaPluginDescriptor descriptor) throws IOException {
     List<StartupActionScriptManager.ActionCommand> commands = new ArrayList<>();
 
-    if (fromFile.getName().endsWith(".jar")) {
-      // add command to copy file to the IDEA/plugins path
-      commands.add(new StartupActionScriptManager.CopyCommand(fromFile, new File(PathManager.getPluginsPath(), fromFile.getName())));
+    if (existingPlugin != null) {
+      commands.add(new StartupActionScriptManager.DeleteCommand(existingPlugin));
+    }
+
+    String pluginsPath = PathManager.getPluginsPath();
+    if (sourceFile.getName().endsWith(".jar")) {
+      commands.add(new StartupActionScriptManager.CopyCommand(sourceFile, new File(pluginsPath, sourceFile.getName())));
     }
     else {
-      // add command to unzip file to the IDEA/plugins path
-      String unzipPath;
-      String dir = findFirstTopLevelDirectoryName(fromFile);
-      if (dir != null) {
-        unzipPath = PathManager.getPluginsPath();
-        commands.add(new DeleteCommand(new File(unzipPath, dir)));
-      }
-      else {
-        unzipPath = PathManager.getPluginsPath() + File.separator + pluginName;
-        commands.add(new DeleteCommand(new File(unzipPath)));
-      }
-
-      commands.add(new UnzipCommand(fromFile, new File(unzipPath)));
+      commands.add(new StartupActionScriptManager.DeleteCommand(new File(pluginsPath, rootEntryName(sourceFile))));  // drops stale directory
+      commands.add(new StartupActionScriptManager.UnzipCommand(sourceFile, new File(pluginsPath)));
     }
 
-    // add command to remove temp plugin file
-    if (deleteFromFile) {
-      commands.add(new DeleteCommand(fromFile));
+    if (deleteSourceFile) {
+      commands.add(new StartupActionScriptManager.DeleteCommand(sourceFile));
     }
 
     StartupActionScriptManager.addActionCommands(commands);
@@ -315,30 +292,27 @@ public class PluginInstaller {
     fireState(descriptor, true);
   }
 
-  @Nullable
-  public static String findFirstTopLevelDirectoryName(@NotNull File zip) throws IOException {
+  private static String rootEntryName(File zip) throws IOException {
     try (ZipFile zipFile = new ZipFile(zip)) {
-      Enumeration en = zipFile.entries();
-      while (en.hasMoreElements()) {
-        ZipEntry zipEntry = (ZipEntry)en.nextElement();
+      Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry zipEntry = entries.nextElement();
         // we do not necessarily get a separate entry for the subdirectory when the file
         // in the ZIP archive is placed in a subdirectory, so we need to check if the slash
         // is found anywhere in the path
         String name = zipEntry.getName();
         int i = name.indexOf('/');
-        if (i >= 0) return name.substring(0, i);
+        if (i > 0) return name.substring(0, i);
       }
     }
-    return null;
+
+    throw new IOException("Corrupted archive (no file entries): " + zip);
   }
 
   private static List<PluginStateListener> myStateListeners;
 
   public static void addStateListener(@NotNull PluginStateListener listener) {
-    if (myStateListeners == null) {
-      myStateListeners = new ArrayList<>();
-    }
-    myStateListeners.add(listener);
+    (myStateListeners != null ? myStateListeners : (myStateListeners = new ArrayList<>())).add(listener);
   }
 
   public static void removeStateListener(@NotNull PluginStateListener listener) {

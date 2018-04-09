@@ -29,11 +29,8 @@ import java.net.URL;
 import java.util.*;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 16.04.2007
  * @noinspection UseOfSystemOutOrSystemErr,CallToPrintStackTrace
  */
-
 public class GroovycRunner {
 
   private GroovycRunner() {
@@ -127,13 +124,14 @@ public class GroovycRunner {
     }
     catch (Throwable e) {
       System.err.println(GroovyRtConstants.NO_GROOVY);
+      e.printStackTrace();
       return 1;
     }
 
     try {
       Class<?> aClass = Class.forName("org.jetbrains.groovy.compiler.rt.DependentGroovycRunner", true, loader);
       Method method = aClass.getDeclaredMethod("runGroovyc", boolean.class, String.class, String.class, Queue.class);
-      method.invoke(null, forStubs, argPath, configScript, mailbox);
+      method.invoke(null, Boolean.valueOf(forStubs), argPath, configScript, mailbox);
     }
     catch (Throwable e) {
       //noinspection InstanceofCatchParameter

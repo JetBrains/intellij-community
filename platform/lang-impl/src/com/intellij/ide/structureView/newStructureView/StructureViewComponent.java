@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -48,7 +49,6 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -58,14 +58,11 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -77,8 +74,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
+  private static final Key<Boolean> STRUCTURE_VIEW_STATE_RESTORED_KEY = Key.create("STRUCTURE_VIEW_STATE_RESTORED_KEY");
   private static final AtomicInteger ourSettingsModificationCount = new AtomicInteger();
-  private final boolean myUseATM = true; //todo inline & remove
 
   private FileEditor myFileEditor;
   private final TreeModelWrapper myTreeModelWrapper;
@@ -88,7 +85,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private final Tree myTree;
   private final SmartTreeStructure myTreeStructure;
-  private final StructureTreeBuilder myTreeBuilder;
 
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
@@ -96,7 +92,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private volatile AsyncPromise<TreePath> myCurrentFocusPromise;
 
-  private TreeState myStructureViewState;
   private boolean myAutoscrollFeedback;
   private boolean myDisposed;
 
@@ -142,35 +137,18 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
     };
 
-    if (myUseATM) {
-      myStructureTreeModel = new StructureTreeModel(true);
-      myStructureTreeModel.setStructure(myTreeStructure);
-      myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true);
-      myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
-      myTree = new MyTree(myAsyncTreeModel);
+    myStructureTreeModel = new StructureTreeModel(true);
+    myStructureTreeModel.setStructure(myTreeStructure);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true);
+    myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
+    myTree = new MyTree(myAsyncTreeModel);
 
-      Disposer.register(this, () -> myTreeModelWrapper.dispose());
-      Disposer.register(this, myAsyncTreeModel);
+    Disposer.register(this, () -> myTreeModelWrapper.dispose());
+    Disposer.register(this, myAsyncTreeModel);
 
-      registerAutoExpandListener(myTree, myTreeModel);
+    registerAutoExpandListener(myTree, myTreeModel);
 
-      myUpdateAlarm = new SingleAlarm(this::rebuild, 200, this);
-      myTreeBuilder = null;
-    }
-    else {
-      myStructureTreeModel = null;
-      myAsyncTreeModel = null;
-      myUpdateAlarm = null;
-      myTree = new MyTree(new DefaultTreeModel(new DefaultMutableTreeNode(myTreeStructure.getRootElement())));
-      myTreeBuilder = new StructureTreeBuilder(project, myTree, (DefaultTreeModel)myTree.getModel(),
-                                               myTreeStructure, myTreeModelWrapper) {
-        @Override
-        protected boolean validateNode(Object child) {
-          return !(child instanceof ValidateableNode) || ((ValidateableNode)child).isValid();
-        }
-      };
-      Disposer.register(this, myTreeBuilder);
-    }
+    myUpdateAlarm = new SingleAlarm(this::rebuild, 200, this);
     myTree.setRootVisible(showRootNode);
     myTree.getEmptyText().setText("Structure is empty");
 
@@ -270,24 +248,15 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public void queueUpdate() {
-    if (myUseATM) {
-      myUpdateAlarm.cancelAndRequest();
-    }
-    else {
-      myTreeBuilder.queueUpdate();
-    }
+    myUpdateAlarm.cancelAndRequest();
   }
 
   public void rebuild() {
-    if (myUseATM) {
-      myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
-        myTreeStructure.rebuildTree();
-        myStructureTreeModel.invalidate(null);
-      });
-    }
-    else {
-      myTreeBuilder.queueUpdate();
-    }
+    myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
+      UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
+      myTreeStructure.rebuildTree();
+      myStructureTreeModel.invalidate(null);
+    });
   }
 
   @NotNull
@@ -340,21 +309,24 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (isDisposed()) return;
     Object root = myTree.getModel().getRoot();
     if (root == null) return;
-    myStructureViewState = TreeState.createOn(myTree, new TreePath(root));
+    TreeState state = TreeState.createOn(myTree, new TreePath(root));
     if (myFileEditor != null) {
-      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, state);
     }
+    UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
   }
 
   @Override
   public void restoreState() {
-    myStructureViewState = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
-    if (myStructureViewState == null) {
-      TreeUtil.expand(getTree(), 2);
+    TreeState state = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
+    if (state == null) {
+      if (!Boolean.TRUE.equals(UIUtil.getClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) {
+        TreeUtil.expand(getTree(), 2);
+      }
     }
     else {
-      myStructureViewState.applyTo(myTree);
-      myStructureViewState = null;
+      UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, true);
+      state.applyTo(myTree);
       if (myFileEditor != null) {
         myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
       }
@@ -422,26 +394,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   @NotNull
   private Promise<TreePath> expandSelectFocusInner(Object element, boolean select, boolean requestFocus) {
     AsyncPromise<TreePath> result = myCurrentFocusPromise = new AsyncPromise<>();
-    if (!myUseATM) {
-      ArrayList<AbstractTreeNode> pathToElement = getPathToElement(element);
-      if (pathToElement.isEmpty()) return Promises.rejectedPromise();
-      TreePath path = new TreePath(pathToElement.toArray());
-      myTreeBuilder.expand(path.getLastPathComponent(), () -> {
-        if (myCurrentFocusPromise != result) {
-          result.setError("rejected");
-        }
-        else {
-          if (select) myTreeBuilder.select(path.getLastPathComponent());
-          if (requestFocus) {
-            IdeFocusManager.getInstance(myProject).requestFocus(myTree, false);
-          }
-          result.setResult(path);
-        }
-      });
-      return result;
-    }
-    int[] stage = { 1, 0 }; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
-    TreePath[] deepestPath = { null };
+    int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
+    TreePath[] deepestPath = {null};
     TreeVisitor visitor = path -> {
       if (myCurrentFocusPromise != result) {
         result.setError("rejected");
@@ -725,10 +679,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   @TestOnly
   public AsyncPromise<Void> rebuildAndUpdate() {
     AsyncPromise<Void> result = new AsyncPromise<>();
-    if (!myUseATM) {
-      myTreeBuilder.queueUpdate().doWhenDone(() -> result.setResult(null)).doWhenRejected(() -> result.setError("rejected"));
-      return result;
-    }
     rebuild();
     TreeVisitor visitor = path -> {
       Object o = TreeUtil.getUserObject(path.getLastPathComponent());
@@ -923,7 +873,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     private MyPsiTreeChangeListener(PsiModificationTracker modTracker, Runnable onChange) {
       this.modTracker = modTracker;
       this.onChange = onChange;
-      prevModCount = modTracker.getOutOfCodeBlockModificationCount();
+      prevModCount = modTracker.getModificationCount();
     }
 
     @Override
@@ -998,6 +948,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   private static class MyExpandListener extends TreeModelAdapter {
+    private static final RegistryValue autoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
+
     private final JTree tree;
     final StructureViewModel.ExpandInfoProvider provider;
     final boolean smartExpand;
@@ -1010,20 +962,28 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public void treeNodesInserted(TreeModelEvent e) {
+      TreePath parentPath = e.getTreePath();
+      if (Boolean.TRUE.equals(UIUtil.getClientProperty(tree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) return;
+      if (parentPath == null || parentPath.getPathCount() > autoExpandDepth.asInteger() - 1) return;
       Object[] children = e.getChildren();
       if (smartExpand && children.length == 1) {
-        ApplicationManager.getApplication().invokeLater(
-          () -> tree.expandPath(e.getTreePath().pathByAddingChild(children[0])));
+        expandLater(parentPath, children[0]);
       }
       else {
         for (Object o : children) {
           Object userObject = TreeUtil.getUserObject(o);
           if (userObject instanceof NodeDescriptor && isAutoExpandNode((NodeDescriptor)userObject)) {
-            ApplicationManager.getApplication().invokeLater(
-              () -> tree.expandPath(e.getTreePath().pathByAddingChild(o)));
+            expandLater(parentPath, o);
           }
         }
       }
+    }
+
+    void expandLater(@NotNull TreePath parentPath, @NotNull Object o) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!tree.isVisible(parentPath) || !tree.isExpanded(parentPath)) return;
+        tree.expandPath(parentPath.pathByAddingChild(o));
+      });
     }
 
     boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
@@ -1048,47 +1008,5 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       NodeDescriptor parent = nodeDescriptor.getParentDescriptor();
       return parent == null || parent.getParentDescriptor() == null;
     }
-  }
-
-  // todo remove ASAP ------------------------------------
-
-  @Deprecated
-  @Nullable
-  public AbstractTreeBuilder getTreeBuilder() {
-    return myTreeBuilder;
-  }
-
-  private ArrayList<AbstractTreeNode> getPathToElement(Object element) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<>();
-    final AbstractTreeStructure treeStructure = myTreeBuilder.getTreeStructure();
-    if (treeStructure != null) {
-      addToPath((AbstractTreeNode)treeStructure.getRootElement(), element, result, new THashSet<>());
-    }
-    return result;
-  }
-
-  private static boolean addToPath(AbstractTreeNode<?> rootElement, Object element, ArrayList<AbstractTreeNode> result, Collection<Object> processedElements) {
-    Object value = rootElement.getValue();
-    if (value instanceof StructureViewTreeElement) {
-      value = ((StructureViewTreeElement) value).getValue();
-    }
-    if (!processedElements.add(value)){
-        return false;
-    }
-
-    if (Comparing.equal(value, element)){
-      result.add(0, rootElement);
-      return true;
-    }
-
-    Collection<? extends AbstractTreeNode> children = rootElement.getChildren();
-    for (AbstractTreeNode child : children) {
-      if (addToPath(child, element, result, processedElements)) {
-        result.add(0, rootElement);
-        return true;
-      }
-    }
-
-    return false;
   }
 }

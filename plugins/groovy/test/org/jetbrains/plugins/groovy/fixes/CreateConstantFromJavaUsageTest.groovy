@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.fixes
 
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -46,9 +45,7 @@ class CreateConstantFromJavaUsageTest extends GrHighlightingTestBase {
     doTest()
   }
 
-  void testSuperInterfaceInheritor() {
-    doTest( "Create constant field 'bar' in 'I'", 0)
+  void testUppercaseInSuperInterface() {
+    doTest( "Create constant field 'BAR' in 'I'", 0)
   }
 }
-
-

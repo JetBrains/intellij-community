@@ -78,6 +78,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 /**
@@ -387,9 +388,14 @@ public class UIUtil {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
-  // accessed from com.intellij.util.ui.paint.AbstractPainter2D via reflect
-  private static Boolean jreHiDPI;
-  private static boolean jreHiDPI_earlierVersion;
+  private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<Boolean>();
+  private static volatile boolean jreHiDPI_earlierVersion;
+
+  @TestOnly
+  public static final AtomicReference<Boolean> test_jreHiDPI() {
+    if (jreHiDPI.get() == null) isJreHiDPIEnabled(); // force init
+    return jreHiDPI;
+  }
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled.
@@ -398,30 +404,36 @@ public class UIUtil {
    * @see JBUI.ScaleType
    */
   public static boolean isJreHiDPIEnabled() {
-    if (jreHiDPI != null) {
-      return jreHiDPI;
-    }
-    jreHiDPI = false;
-    jreHiDPI_earlierVersion = true;
-    if (SystemInfo.isLinux) {
-      return false; // pending support
-    }
-    if (SystemInfo.isJetBrainsJvm) {
-      try {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        if (ge instanceof SunGraphicsEnvironment) {
-          Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
-          jreHiDPI = (Boolean)m.invoke(ge);
-          jreHiDPI_earlierVersion = false;
+    if (jreHiDPI.get() != null) return jreHiDPI.get();
+
+    synchronized (jreHiDPI) {
+      if (jreHiDPI.get() != null) return jreHiDPI.get();
+
+      jreHiDPI.set(false);
+      if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+        return false;
+      }
+      jreHiDPI_earlierVersion = true;
+      if (SystemInfo.isLinux) {
+        return false; // pending support
+      }
+      if (SystemInfo.isJetBrainsJvm) {
+        try {
+          GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+          if (ge instanceof SunGraphicsEnvironment) {
+            Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
+            jreHiDPI.set(m != null && (Boolean)m.invoke(ge));
+            jreHiDPI_earlierVersion = false;
+          }
+        }
+        catch (Throwable ignore) {
         }
       }
-      catch (Throwable ignore) {
+      if (SystemInfo.isMac) {
+        jreHiDPI.set(true);
       }
+      return jreHiDPI.get();
     }
-    if (SystemInfo.isMac) {
-      jreHiDPI = true;
-    }
-    return jreHiDPI;
   }
 
   /**
@@ -966,6 +978,10 @@ public class UIUtil {
     final Color color = UIManager.getColor("Label.disabledForeground");
     if (color != null) return color;
     return UIManager.getColor("Label.disabledText");
+  }
+
+  public static Color getContextHelpForeground() {
+    return Gray.x78;
   }
 
   @NotNull
@@ -2728,7 +2744,9 @@ public class UIUtil {
   }
 
   public static FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
-    Font fontWithFallback = new StyleContext().getFont(familyName, style, size);
+    // On macOS font fallback is implemented in JDK by default
+    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
+    Font fontWithFallback = SystemInfo.isMac ? new Font(familyName, style, size) : new StyleContext().getFont(familyName, style, size);
     return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
   }
 
@@ -2985,13 +3003,11 @@ public class UIUtil {
 
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
+    verbose("Label font: %s, %d", font.getFontName(), font.getSize());
 
-    Float forcedScale = null;
-    if (Registry.is("ide.ui.scale.override")) {
-      forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
-    }
-    else if (SystemInfo.isLinux) {
+    if (SystemInfo.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
+      verbose("gnome.Xft/DPI: %s", value);
       if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
         // 1) it provides correct system scale
@@ -3000,9 +3016,13 @@ public class UIUtil {
         if (dpi < 50) dpi = 50;
         float scale = JBUI.discreteScale(dpi / 96f);
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
+        verbose("DEF_SYSTEM_FONT_SIZE: %.2f, %d", DEF_SYSTEM_FONT_SIZE, dpi);
       }
-      else if (!SystemInfo.isJetBrainsJvm){
-        forcedScale = Float.valueOf(getScreenScale()); // With Oracle JDK: derive scale from X server DPI
+      else if (!SystemInfo.isJetBrainsJvm) {
+        // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
+        float size = DEF_SYSTEM_FONT_SIZE * getScreenScale();
+        font = font.deriveFont(size);
+        verbose("(Not-JB JRE) reset font size: %.2f", size);
       }
     }
     else if (SystemInfo.isWindows) {
@@ -3010,14 +3030,15 @@ public class UIUtil {
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
       if (winFont != null) {
         font = winFont; // comes scaled
+        verbose("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize());
       }
     }
-    if (forcedScale != null) {
-      // With forced scale, we derive font from a hard-coded value as we cannot be sure
-      // the system font comes unscaled.
-      font = font.deriveFont(DEF_SYSTEM_FONT_SIZE * forcedScale.floatValue());
-    }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
+    verbose("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second);
+  }
+
+  private static void verbose(String msg, Object... args) {
+    if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, args));
   }
 
   @Nullable

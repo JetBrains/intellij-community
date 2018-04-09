@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.fixes
 
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -41,7 +40,7 @@ class CreateFieldFromJavaUsageTest extends GrHighlightingTestBase {
     doTest()
   }
 
-  void testConstant() {
+  void testUppercaseField() {
     doTest()
   }
 
@@ -72,7 +71,6 @@ class CreateFieldFromJavaUsageTest extends GrHighlightingTestBase {
   void testMultipleTypes2() {
     doTest()
   }
-
 
   void testParametricMethod() {
     doTest()

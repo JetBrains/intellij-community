@@ -33,8 +33,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.text.BlockSupportImpl;
-import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtilCore;
@@ -1005,7 +1003,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       WriteAction.run(() -> {
         ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
         if (indicator == null) indicator = new EmptyProgressIndicator();
-        DiffLog log = BlockSupportImpl.makeFullParse(file, node, text, indicator, text).getFirst();
+        DiffLog log = BlockSupportImpl.makeFullParse(file, node, text, indicator, text).log;
         log.doActualPsiChange(file);
         file.getViewProvider().contentsSynchronized();
       });

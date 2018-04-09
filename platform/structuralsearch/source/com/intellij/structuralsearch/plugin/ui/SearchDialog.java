@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -9,6 +9,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +25,8 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -115,7 +119,13 @@ public class SearchDialog extends DialogWrapper {
     myConfiguration = createConfiguration(null);
 
     init();
-    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myDisposable);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+    ProjectManager.getInstance().addProjectManagerListener(searchContext.getProject(), new ProjectManagerListener() {
+      @Override
+      public void projectClosing(Project project) {
+        close(CANCEL_EXIT_CODE);
+      }
+    });
   }
 
   public void setUseLastConfiguration(boolean useLastConfiguration) {
@@ -160,16 +170,20 @@ public class SearchDialog extends DialogWrapper {
   void initiateValidation() {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
-      try {
-        getOKAction().setEnabled(isValid());
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (RuntimeException e) {
-        Logger.getInstance(SearchDialog.class).error(e);
-      }
-    }, 500);
+      final boolean valid = ReadAction.compute(() -> {
+        try {
+          return Boolean.valueOf(isValid());
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (RuntimeException e) {
+          Logger.getInstance(SearchDialog.class).error(e);
+        }
+        return Boolean.FALSE;
+      }).booleanValue();
+      ApplicationManager.getApplication().invokeLater(() -> getOKAction().setEnabled(valid));
+    }, 250);
   }
 
   protected void buildOptions(JPanel searchOptions) {
@@ -704,6 +718,9 @@ public class SearchDialog extends DialogWrapper {
     return myConfiguration;
   }
 
+  /**
+   * Needs to be called on the event thread or while holding a read lock.
+   */
   protected boolean isValid() {
     try {
       Matcher.validate(searchContext.getProject(), getConfiguration().getMatchOptions());

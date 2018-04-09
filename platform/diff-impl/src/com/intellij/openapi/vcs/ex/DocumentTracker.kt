@@ -288,6 +288,11 @@ class DocumentTracker : Disposable {
     val lineOffset1 = content1.lineOffsets
     val lineOffset2 = content2.lineOffsets
 
+    if (lineRanges.any { !isValidLineRange(lineOffset1, it.start1, it.end1) ||
+                         !isValidLineRange(lineOffset2, it.start2, it.end2) }) {
+      return false
+    }
+
     val iterable = DiffIterableUtil.create(lineRanges, lineOffset1.lineCount, lineOffset2.lineCount)
     for (range in iterable.unchanged()) {
       val lines1 = DiffUtil.getLines(content1, lineOffset1, range.start1, range.end1)
@@ -297,6 +302,9 @@ class DocumentTracker : Disposable {
     return true
   }
 
+  private fun isValidLineRange(lineOffsets: LineOffsets, start: Int, end: Int): Boolean {
+    return start >= 0 && start <= end && end <= lineOffsets.lineCount
+  }
 
 
   private inner class MyDocumentBulkUpdateListener : DocumentBulkUpdateListener {

@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnchorableComponent;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -43,6 +44,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   private JEditorPane myEditorPane;
   private JLabel myIconLabel;
   private boolean myMultiline;
+  private boolean myAllowAutoWrapping = false;
 
   public JBLabel() {
   }
@@ -172,6 +174,14 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     }
   }
 
+  @Override
+  public void setFocusable(boolean focusable) {
+    super.setFocusable(focusable);
+    if (myEditorPane != null) {
+      myEditorPane.setFocusable(focusable);
+    }
+  }
+
   private void checkMultiline() {
     myMultiline = StringUtil.removeHtmlTags(getText()).contains(SystemProperties.getLineSeparator());
   }
@@ -230,6 +240,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   /**
    * In 'copyable' mode JBLabel has the same appearance but user can select text with mouse and copy it to clipboard with standard shortcut.
    * By default JBLabel is NOT copyable
+   * Also 'copyable' label supports web hyperlinks (e.g. opens browser on click)
    *
    * @return 'this' (the same instance)
    */
@@ -282,6 +293,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         myEditorPane.setEditable(false);
         myEditorPane.setBackground(UIUtil.TRANSPARENT_COLOR);
         myEditorPane.setOpaque(false);
+        myEditorPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
         UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
 
         myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
@@ -312,8 +324,17 @@ public class JBLabel extends JLabel implements AnchorableComponent {
                   "color:#" + ColorUtil.toHex(getForeground()) + ";" +
                   "font-family:" + getFont().getFamily() + ";" +
                   "font-size:" + getFont().getSize() + "pt;" +
-                  "white-space:nowrap;}");
+                  "white-space:" + (myAllowAutoWrapping ? "normal": "nowrap") +";}");
     }
+  }
+
+  /**
+   * In 'copyable' mode auto-wrapping is disabled by default.
+   * (In this case you have to markup your HTML with P or BR tags explicitly)
+   */
+  public JBLabel setAllowAutoWrapping(boolean allowAutoWrapping) {
+    myAllowAutoWrapping = allowAutoWrapping;
+    return this;
   }
 
   private void updateTextAlignment() {

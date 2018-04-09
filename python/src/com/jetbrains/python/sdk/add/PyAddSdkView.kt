@@ -15,6 +15,14 @@ interface PyAddSdkView {
 
   val icon: Icon
 
+  /**
+   * Returns the created sdk after closing [PyAddSdkDialog]. The method may
+   * return `null` if the dialog was closed or cancelled or if the creation
+   * failed.
+   *
+   * The creation of the sdk may occur either in this method or in the
+   * [complete] method a while back.
+   */
   fun getOrCreateSdk(): Sdk?
 
   fun onSelected()
@@ -42,14 +50,21 @@ interface PyAddSdkView {
   fun next()
 
   /**
-   * Creates SDK and returns it. The returned SDK could be later obtained by
-   * [getOrCreateSdk] method.
+   * Completes SDK creation.
    *
-   * If some error occurs an [Exception] is thrown.
+   * The method is called by [PyAddSdkDialog] when *OK* or *Finish* button is
+   * pressed.
+   *
+   * The method may attempt to create the SDK and throw an [Exception] if some
+   * error during the creation is occurred. The created SDK could be later
+   * obtained by [getOrCreateSdk] method.
+   *
+   * If the method throws an [Exception] the error message is shown to the user
+   * and [PyAddSdkDialog] is not closed.
    *
    * @throws Exception if SDK creation failed for some reason
    */
-  fun finish(): Sdk
+  fun complete()
 
   /**
    * Returns the list of validation errors. The returned list is empty if there
