@@ -22,6 +22,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -139,6 +140,52 @@ public class PyResolveUtil {
     scopeCrawlUp(processor, scopeOwner, name, null);
 
     return processor.getElements();
+  }
+
+  @NotNull
+  public static List<QualifiedName> resolveImportedElementQNameLocally(@NotNull PyReferenceExpression expression) {
+    // SUPPORTED CASES:
+
+    // import six
+    // six.with_metaclass(...)
+
+    // from six import metaclass
+    // with_metaclass(...)
+
+    // from six import with_metaclass as w_m
+    // w_m(...)
+
+    final PyExpression qualifier = expression.getQualifier();
+    if (qualifier instanceof PyReferenceExpression) {
+      final String name = expression.getName();
+
+      return name == null
+             ? Collections.emptyList()
+             : ContainerUtil.map(resolveImportedElementQNameLocally((PyReferenceExpression)qualifier), qn -> qn.append(name));
+    }
+    else {
+      return StreamEx
+        .of(resolveLocally(expression))
+        .select(PyImportElement.class)
+        .map(
+          element -> {
+            final PyStatement importStatement = element.getContainingImportStatement();
+
+            if (importStatement instanceof PyFromImportStatement) {
+              final QualifiedName importSourceQName = ((PyFromImportStatement)importStatement).getImportSourceQName();
+              final QualifiedName importedQName = element.getImportedQName();
+
+              if (importSourceQName != null && importedQName != null) {
+                return importSourceQName.append(importedQName);
+              }
+            }
+
+            return element.getImportedQName();
+          }
+        )
+        .nonNull()
+        .toList();
+    }
   }
 
   /**

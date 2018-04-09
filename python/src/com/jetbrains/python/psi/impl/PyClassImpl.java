@@ -190,38 +190,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   public static boolean isSixWithMetaclassCall(@NotNull PyExpression expression) {
     if (expression instanceof PyCallExpression){
-      final PyCallExpression call = (PyCallExpression)expression;
-      final PyExpression callee = call.getCallee();
-      if (callee != null && "with_metaclass".equals(callee.getName())) {
-        // SUPPORTED CASES:
-
-        // import six
-        // six.with_metaclass(...)
-
-        // from six import metaclass
-        // with_metaclass(...)
-        return true;
-      }
+      final PyExpression callee = ((PyCallExpression)expression).getCallee();
 
       if (callee instanceof PyReferenceExpression) {
-        // SUPPORTED CASES:
-
-        // from six import with_metaclass as w_m
-        // w_m(...)
-
-        final boolean importedWithMetaclass = StreamEx
-          .of(PyResolveUtil.resolveLocally((PyReferenceExpression)callee))
-          .select(PyImportElement.class)
-          .map(PyImportElement::getImportedQName)
-          .nonNull()
-          .map(QualifiedName::getLastComponent)
-          .nonNull()
-          .findAny("with_metaclass"::equals)
-          .isPresent();
-
-        if (importedWithMetaclass) {
-          return true;
-        }
+        final QualifiedName sixWithMetaclass = QualifiedName.fromComponents("six", "with_metaclass");
+        return PyResolveUtil.resolveImportedElementQNameLocally((PyReferenceExpression)callee).contains(sixWithMetaclass);
       }
     }
 
@@ -1638,36 +1611,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private static boolean isSixAddMetaclass(@NotNull PyDecorator decorator) {
     final PyExpression callee = decorator.getCallee();
-    if (callee != null && "add_metaclass".equals(callee.getName())) {
-      // SUPPORTED CASES:
-
-      // import six
-      // six.add_metaclass(...)
-
-      // from six import add_metaclass
-      // add_metaclass(...)
-      return true;
-    }
 
     if (callee instanceof PyReferenceExpression) {
-      // SUPPORTED CASES:
-
-      // from six import add_metaclass as a_m
-      // a_m(...)
-
-      final boolean importedAddMetaclass = StreamEx
-        .of(PyResolveUtil.resolveLocally((PyReferenceExpression)callee))
-        .select(PyImportElement.class)
-        .map(PyImportElement::getImportedQName)
-        .nonNull()
-        .map(QualifiedName::getLastComponent)
-        .nonNull()
-        .findAny("add_metaclass"::equals)
-        .isPresent();
-
-      if (importedAddMetaclass) {
-        return true;
-      }
+      final QualifiedName sixAddMetaclass = QualifiedName.fromComponents("six", "add_metaclass");
+      return PyResolveUtil.resolveImportedElementQNameLocally((PyReferenceExpression)callee).contains(sixAddMetaclass);
     }
 
     return false;
