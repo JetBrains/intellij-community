@@ -2,7 +2,7 @@
 package com.intellij.cvsSupport2;
 
 import com.intellij.CvsBundle;
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsInfo;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
@@ -258,7 +258,7 @@ public class CvsUtil {
   }
 
   private static String getLineSeparator() {
-    return CodeStyleFacade.getInstance().getLineSeparator();
+    return CodeStyle.getDefaultSettings().getLineSeparator();
   }
 
   public static boolean fileIsLocallyRemoved(File file) {

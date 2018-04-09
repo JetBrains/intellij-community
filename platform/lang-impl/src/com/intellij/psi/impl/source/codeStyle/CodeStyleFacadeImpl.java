@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -27,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
@@ -72,6 +74,11 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
     return indent != null ? indent : (allowDocCommit ? getLineIndent(editor.getDocument(), offset) : null);
   }
 
+  /**
+   * @deprecated Use {@code getLineSeparator()} method of {@link CodeStyle#getSettings(PsiFile)} or
+   *             {@link CodeStyle#getSettings(Project)} if there is no {@code PsiFile}
+   */
+  @Deprecated
   @Override
   public String getLineSeparator() {
     return CodeStyleSettingsManager.getSettings(myProject).getLineSeparator();
