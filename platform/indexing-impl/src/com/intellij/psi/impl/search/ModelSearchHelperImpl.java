@@ -5,6 +5,7 @@ import com.intellij.model.ModelReference;
 import com.intellij.model.search.ModelReferenceSearchParameters;
 import com.intellij.model.search.ModelReferenceSearchQuery;
 import com.intellij.model.search.ModelSearchHelper;
+import com.intellij.model.search.SearchRequestCollector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbService;
@@ -62,22 +63,21 @@ public class ModelSearchHelperImpl implements ModelSearchHelper {
     final SearchRequestCollectorImpl collector = new SearchRequestCollectorImpl(rootQuery);
     final ProgressIndicator progress = getIndicatorOrEmpty();
 
-    while (collectRequests(progress, collector, collector.takeSubSearchParameters())) {
+    while (true) {
+      collectRequests(progress, collector, collector.takeSubSearchParameters());
+      if (!collector.hasMoreRequests()) return true;
       if (!processSubQueries(progress, collector.takeSubQueries(), processor)) return false;
       if (!processWordRequests(progress, collector.takeWordRequests(), processor)) return false;
     }
-
-    return true;
   }
 
-  private static boolean collectRequests(@NotNull ProgressIndicator progress,
-                                         @NotNull SearchRequestCollectorImpl collector,
-                                         @NotNull Collection<ModelReferenceSearchParameters> subSearchParameters) {
+  private static void collectRequests(@NotNull ProgressIndicator progress,
+                                      @NotNull SearchRequestCollector collector,
+                                      @NotNull Collection<ModelReferenceSearchParameters> subSearchParameters) {
     for (ModelReferenceSearchParameters parameters : subSearchParameters) {
       progress.checkCanceled();
       SearchRequestors.collectSearchRequests(collector, parameters);
     }
-    return collector.hasMoreRequests();
   }
 
   private static boolean processSubQueries(@NotNull ProgressIndicator progress,
