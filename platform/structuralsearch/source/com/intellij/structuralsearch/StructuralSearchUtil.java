@@ -176,12 +176,4 @@ public class StructuralSearchUtil {
     final StructuralSearchProfile profile = getProfileByPsiElement(match);
     return profile != null && profile.isDocCommentOwner(match);
   }
-
-  public static Class getElementContextByPsi(@Nullable PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-    final StructuralSearchProfile profile = getProfileByPsiElement(element);
-    return profile == null ? element.getClass() : profile.getElementContextByPsi(element);
-  }
 }

@@ -69,19 +69,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public Class getElementContextByPsi(PsiElement element) {
-    if (element instanceof PsiIdentifier) {
-      element = element.getParent();
-    }
-
-    if (element instanceof PsiMember) {
-      return PsiMember.class;
-    } else {
-      return PsiExpression.class;
-    }
-  }
-
-  @Override
   @NotNull
   public String getTypedVarString(final PsiElement element) {
     String text;

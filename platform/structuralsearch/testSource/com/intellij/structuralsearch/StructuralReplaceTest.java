@@ -2035,7 +2035,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String replace = "class $TestCase$ implements $others$ {\n    $MyClassContent$\n}";
     String expectedResult = "import java.io.Externalizable;\n" +
                             "import java.io.Serializable;\n" +
-                            "abstract class MyClass implements Externalizable,Serializable {\n    \n}";
+                            "abstract class MyClass implements Serializable,Externalizable {\n    \n}";
 
     assertEquals(expectedResult, Replacer.testReplace(source, search, replace, options, getProject(), true));
   }
