@@ -16,7 +16,6 @@ import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
 import org.junit.Assume.assumeTrue
 import org.junit.Before
-import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -36,9 +35,7 @@ class LafTest {
     @Parameterized.Parameters(name = "{0}")
     fun lafNames() = listOf("Darcula", "IntelliJ")
 
-    @JvmField
-    @ClassRule
-    val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf"))
+    private val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf"))
   }
 
   @Suppress("MemberVisibilityCanBePrivate")

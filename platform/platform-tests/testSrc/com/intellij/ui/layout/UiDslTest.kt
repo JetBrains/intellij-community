@@ -30,8 +30,7 @@ class UiDslTest {
     @Parameterized.Parameters(name = "{0}")
     fun lafNames() = listOf("Darcula", "IntelliJ")
 
-    @JvmField
-    val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"))
+    private val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"))
 
     init {
       System.setProperty("idea.ui.set.password.echo.char", "true")
