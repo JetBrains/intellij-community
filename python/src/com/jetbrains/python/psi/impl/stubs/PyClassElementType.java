@@ -203,7 +203,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       sink.occurrence(PyClassNameIndexInsensitive.KEY, name.toLowerCase());
     }
 
-    for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(createPsi(stub))) {
+    for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(stub.getPsi())) {
       sink.occurrence(PyClassAttributesIndex.KEY, attribute);
     }
 
