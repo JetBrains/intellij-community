@@ -31,6 +31,10 @@ class UiDslTest {
 
     @JvmField
     val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"))
+
+    init {
+      System.setProperty("idea.ui.set.password.echo.char", "true")
+    }
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
@@ -43,7 +47,7 @@ class UiDslTest {
 
   @Before
   fun beforeMethod() {
-    assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY || !SystemInfoRt.isLinux)
+    assumeTrue("Not CI server or not Linux", !UsefulTestCase.IS_UNDER_TEAMCITY || !SystemInfoRt.isLinux)
 
     System.setProperty("idea.ui.comment.copyable", "false")
     changeLafIfNeed(lafName)

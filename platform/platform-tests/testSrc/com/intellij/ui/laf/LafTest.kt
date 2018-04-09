@@ -50,7 +50,7 @@ class LafTest {
 
   @Before
   fun beforeMethod() {
-    assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY || !SystemInfoRt.isLinux)
+    assumeTrue("Not CI server or not Linux", !UsefulTestCase.IS_UNDER_TEAMCITY || !SystemInfoRt.isLinux)
 
     changeLafIfNeed(lafName)
   }

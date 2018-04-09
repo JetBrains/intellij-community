@@ -60,14 +60,4 @@ public class MacIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
     Dimension size = super.getMinimumSize(c);
     return JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? size : new Dimension(size.width, JBUI.scale(MacIntelliJTextFieldUI.MACOS_LIGHT_INPUT_HEIGHT_TOTAL));
   }
-
-  @Override
-  protected void installDefaults() {
-    super.installDefaults();
-
-    JTextComponent component = getComponent();
-    if (JBUI.isUseCorrectInputHeight(component)) {
-      LookAndFeel.installProperty(component, "echoChar", '•');
-    }
-  }
 }
