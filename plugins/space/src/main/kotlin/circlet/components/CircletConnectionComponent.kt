@@ -1,6 +1,6 @@
 package circlet.components
 
-import circlet.client.*
+import circlet.app.*
 import circlet.client.api.*
 import circlet.platform.client.*
 import circlet.settings.*
