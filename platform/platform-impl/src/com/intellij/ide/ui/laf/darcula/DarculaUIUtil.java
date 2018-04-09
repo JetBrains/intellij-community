@@ -64,7 +64,11 @@ public class DarculaUIUtil {
   public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
   public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
 
-  private static final Color REGULAR_COLOR = new JBColor(() -> UIManager.getColor("Focus.Color"));
+  private static final Color REGULAR_COLOR = new JBColor(() -> {
+    Color c = UIManager.getColor("Focus.Color");
+    return c != null ? c : new JBColor(0x8ab2eb, 0x395d82); // TODO: move to JBUI. This is a temporary fix.
+  });
+
   private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
   public enum Outline {
