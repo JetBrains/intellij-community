@@ -1,41 +1,30 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import icons.SvnIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
-public class ConfigureBranchesAction extends AnAction implements DumbAware {
-  public void update(final AnActionEvent e) {
-    final Project project = e.getProject();
-    final Presentation presentation = e.getPresentation();
+import static com.intellij.util.ArrayUtil.isEmpty;
+
+public class ConfigureBranchesAction extends DumbAwareAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    Presentation presentation = e.getPresentation();
 
     if (project == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
@@ -44,22 +33,19 @@ public class ConfigureBranchesAction extends AnAction implements DumbAware {
     presentation.setIcon(SvnIcons.ConfigureBranches);
 
     presentation.setVisible(true);
-    
-    final ChangeList[] cls = e.getData(VcsDataKeys.CHANGE_LISTS);
-    presentation.setEnabled((cls != null) && (cls.length > 0) &&
-                            (SvnVcs.getInstance(project).getName().equals(((CommittedChangeList) cls[0]).getVcs().getName())) &&
-                            (((SvnChangeList) cls[0]).getRoot() != null));
+
+    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    presentation.setEnabled(!isEmpty(changeLists) &&
+                            SvnVcs.getInstance(project).getName().equals(((CommittedChangeList)changeLists[0]).getVcs().getName()) &&
+                            ((SvnChangeList)changeLists[0]).getRoot() != null);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getProject();
-    final ChangeList[] cls = e.getData(VcsDataKeys.CHANGE_LISTS);
-    if ((cls == null) || (cls.length == 0) ||
-        (! SvnVcs.getInstance(project).getName().equals(((CommittedChangeList) cls[0]).getVcs().getName())) ||
-        (((SvnChangeList) cls[0]).getRoot() == null)) {
-      return;
-    }
-    final SvnChangeList svnList = (SvnChangeList) cls[0];
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    ChangeList[] changeLists = e.getRequiredData(VcsDataKeys.CHANGE_LISTS);
+    SvnChangeList svnList = (SvnChangeList)changeLists[0];
+
     BranchConfigurationDialog.configureBranches(project, svnList.getRoot());
   }
 }
