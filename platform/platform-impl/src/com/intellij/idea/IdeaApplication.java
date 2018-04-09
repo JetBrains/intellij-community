@@ -217,7 +217,14 @@ public class IdeaApplication {
 
   @NotNull
   private static ApplicationStarter getStarter(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
+    // Android Studio: also allow using system property so that UI tests can be run on release bundle via a native launcher
+    String key;
     if (args.length > 0) {
+      key = args[0];
+    } else {
+      key = System.getProperty("idea.application.starter.command");
+    }
+    if (key != null) {
       if (pluginsLoaded == null) {
         PluginManagerCore.getPlugins();
       }
@@ -230,7 +237,7 @@ public class IdeaApplication {
         }
       }
 
-      ApplicationStarter starter = findStarter(args[0]);
+      ApplicationStarter starter = findStarter(key);  // Android Studio: use key computed above
       if (starter != null) {
         return starter;
       }
