@@ -1,11 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
+import com.intellij.junit4.JUnit4ReflectionUtil;
 import com.intellij.util.ArrayUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestListener;
+import org.junit.runner.Describable;
+import org.junit.runner.Description;
 
 import java.lang.reflect.Method;
 
@@ -55,12 +58,24 @@ public class TestDiscoveryBasicListener implements TestListener {
       String name = ((TestCase)test).getName();
       if (name != null) return name;
     }
+
+    if (test instanceof Describable) {
+      Description description = ((Describable)test).getDescription();
+      String name = JUnit4ReflectionUtil.getMethodName(description);
+      if (name != null) return name;
+    }
+
     String toString = test.toString();
     int braceIdx = toString.indexOf("(");
     return braceIdx > 0 ? toString.substring(0, braceIdx) : toString;
   }
 
   private static String getClassName(Test test) {
+    if (test instanceof Describable) {
+      Description description = ((Describable)test).getDescription();
+      String name = JUnit4ReflectionUtil.getClassName(description);
+      if (name != null) return name;
+    }
     return test.getClass().getName();
   }
 }
