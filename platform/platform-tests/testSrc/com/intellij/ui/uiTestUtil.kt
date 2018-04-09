@@ -16,7 +16,7 @@ import com.intellij.util.ui.TestScaleHelper
 import com.intellij.util.ui.UIUtil
 import io.netty.util.internal.SystemPropertyUtil
 import net.miginfocom.swing.MigLayout
-import org.junit.Assume
+import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.yaml.snakeyaml.DumperOptions
@@ -49,7 +49,7 @@ open class RequireHeadlessMode : ExternalResource() {
   override fun before() {
     // there is some difference if run as not headless (on retina monitor, at least), not yet clear why, so, just require to run in headless mode
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      Assume.assumeTrue(GraphicsEnvironment.isHeadless())
+      assumeTrue(GraphicsEnvironment.isHeadless())
     }
     else {
       System.setProperty("java.awt.headless", "true")
