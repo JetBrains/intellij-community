@@ -150,7 +150,11 @@ public class PsiDisjunctionType extends PsiType.Stub {
   }
 
   public static List<PsiType> flattenAndRemoveDuplicates(@NotNull List<PsiType> types) {
-    List<PsiType> disjunctions = new ArrayList<>(types);
+    Set<PsiType> disjunctionSet = new LinkedHashSet<>();
+    for (PsiType type : types) {
+      flatten(disjunctionSet, type);
+    }
+    ArrayList<PsiType> disjunctions = new ArrayList<>(disjunctionSet);
     for (Iterator<PsiType> iterator = disjunctions.iterator(); iterator.hasNext(); ) {
       PsiType d1 = iterator.next();
       for (PsiType d2 : disjunctions) {
@@ -161,5 +165,16 @@ public class PsiDisjunctionType extends PsiType.Stub {
       }
     }
     return disjunctions;
+  }
+
+  private static void flatten(Set<PsiType> disjunctions, PsiType type) {
+    if (type instanceof PsiDisjunctionType) {
+      for (PsiType child : ((PsiDisjunctionType)type).getDisjunctions()) {
+        flatten(disjunctions, child);
+      }
+    } else {
+      disjunctions.add(type);
+    }
+
   }
 }
