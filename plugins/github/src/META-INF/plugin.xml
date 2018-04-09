@@ -24,11 +24,12 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiTaskExecutor"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
                     serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
-    <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+    <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
