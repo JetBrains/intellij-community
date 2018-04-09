@@ -14,6 +14,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
@@ -105,7 +106,8 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       return;
     }
     try {
-      List<Location> locations = debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition());
+      List<Location> locations =
+        MethodBytecodeUtil.removeSameLineLocations(debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition()));
       if (!locations.isEmpty()) {
         for (Location loc : locations) {
           if (LOG.isDebugEnabled()) {
