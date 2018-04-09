@@ -22,18 +22,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
@@ -147,18 +149,16 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   protected void clearCache() {
-    clearInvalidFiles(null);
+    retainFiles(VirtualFile::isValid);
   }
 
-  protected void clearInvalidFiles(@Nullable List<VFileEvent> events) {
+  protected void retainFiles(@NotNull Condition<VirtualFile> c) {
     Iterator<Map.Entry<String, T>> it = myCachedFiles.entrySet().iterator();
     while (it.hasNext()) {
       Map.Entry<String, T> entry = it.next();
       T t = entry.getValue();
-      if (t != null && t.isValid()) continue;
-      it.remove();
-      if (events != null && t != null) {
-        events.add(new VFileDeleteEvent(this, t, false));
+      if (t == null || !c.value(t)) {
+        myCachedFiles.remove(entry.getKey(), entry.getValue());
       }
     }
   }
