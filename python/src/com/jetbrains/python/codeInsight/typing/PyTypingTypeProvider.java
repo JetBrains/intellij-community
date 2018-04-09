@@ -86,9 +86,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String CHAIN_MAP = "typing.ChainMap";
   private static final String UNION = "typing.Union";
   private static final String OPTIONAL = "typing.Optional";
-  private static final String CLASSVAR = "typing.ClassVar";
-
-  public static final String NAMEDTUPLE_SIMPLE = "NamedTuple";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
@@ -176,7 +173,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
 
-    return getNewTypeForReference(referenceExpression, context);
+    final PyType newType = getNewTypeForReference(referenceExpression, context);
+    if (newType != null) {
+      return newType;
+    }
+
+    return getTypeVarTypeForCallee(referenceExpression, context);
   }
 
   @Override
@@ -293,6 +295,32 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @NotNull
   public static PyType createTypingCallableType(@NotNull PsiElement anchor) {
     return new PyCustomType(CALLABLE, null, false, true, PyBuiltinCache.getInstance(anchor).getObjectType());
+  }
+
+  @Nullable
+  private static PyType getTypeVarTypeForCallee(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
+    if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null;
+
+    if (resolveToQualifiedNames(referenceExpression, context).contains(TYPE_VAR)) {
+      final List<PyCallableParameter> parameters = new ArrayList<>();
+
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(referenceExpression);
+      final LanguageLevel languageLevel = LanguageLevel.forElement(referenceExpression);
+      final PyElementGenerator generator = PyElementGenerator.getInstance(referenceExpression.getProject());
+
+      parameters.add(PyCallableParameterImpl.nonPsi("name", builtinCache.getStringType(languageLevel)));
+      parameters.add(PyCallableParameterImpl.positionalNonPsi("constraints", builtinCache.getTypeType()));
+      parameters.add(PyCallableParameterImpl.nonPsi("bound", builtinCache.getTypeType(), generator.createEllipsis()));
+
+      final PyClassType boolType = builtinCache.getBoolType();
+      final PyExpression falseValue = generator.createExpressionFromText(languageLevel, "False");
+      parameters.add(PyCallableParameterImpl.nonPsi("covariant", boolType, falseValue));
+      parameters.add(PyCallableParameterImpl.nonPsi("contravariant", boolType, falseValue));
+
+      return new PyCallableTypeImpl(parameters, null);
+    }
+
+    return null;
   }
 
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func, @NotNull PyFunctionTypeAnnotation annotation) {
