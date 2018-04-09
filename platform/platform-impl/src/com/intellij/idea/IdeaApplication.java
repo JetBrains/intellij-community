@@ -179,12 +179,18 @@ public class IdeaApplication {
 
   @NotNull
   public ApplicationStarter getStarter() {
+    // Android Studio: also allow using system property so that UI tests can be run on release bundle via a native launcher
+    String key;
     if (myArgs.length > 0) {
+      key = myArgs[0];
+    } else {
+      key = System.getProperty("idea.application.starter.command");
+    }
+    if (key != null) {
       PluginManagerCore.getPlugins();
 
       ExtensionPoint<ApplicationStarter> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER);
       ApplicationStarter[] starters = point.getExtensions();
-      String key = myArgs[0];
       for (ApplicationStarter o : starters) {
         if (Comparing.equal(o.getCommandName(), key)) return o;
       }
