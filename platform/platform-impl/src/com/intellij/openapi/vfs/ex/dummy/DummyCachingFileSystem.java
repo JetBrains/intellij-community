@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
@@ -153,12 +152,11 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   protected void retainFiles(@NotNull Condition<VirtualFile> c) {
-    Iterator<Map.Entry<String, T>> it = myCachedFiles.entrySet().iterator();
-    while (it.hasNext()) {
-      Map.Entry<String, T> entry = it.next();
+    for (Map.Entry<String, T> entry : myCachedFiles.entrySet()) {
       T t = entry.getValue();
       if (t == null || !c.value(t)) {
-        myCachedFiles.remove(entry.getKey(), entry.getValue());
+        //CFM::entrySet returns copy
+        myCachedFiles.remove(entry.getKey());
       }
     }
   }
