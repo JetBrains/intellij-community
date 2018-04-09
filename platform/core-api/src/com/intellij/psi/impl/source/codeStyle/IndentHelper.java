@@ -52,7 +52,7 @@ public abstract class IndentHelper {
     return element.getPsi().getContainingFile();
   }
 
-  public abstract int getIndent(@NotNull PsiFile file, ASTNode element);
+  public abstract int getIndent(@NotNull PsiFile file, @NotNull ASTNode element);
 
-  public abstract int getIndent(@NotNull PsiFile file, ASTNode element, boolean includeNonSpace);
+  public abstract int getIndent(@NotNull PsiFile file, @NotNull ASTNode element, boolean includeNonSpace);
 }
