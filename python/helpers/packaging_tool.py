@@ -138,10 +138,6 @@ def main():
             if len(sys.argv) != 2:
                 usage()
             do_list()
-        elif cmd == 'latestVersion':
-            if len(sys.argv) < 4:
-                usage()
-            do_get_latest_version(sys.argv[3:], sys.argv[2])
         elif cmd == 'install':
             if len(sys.argv) < 2:
                 usage()
