@@ -16,6 +16,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -195,7 +196,7 @@ public class GenerationUtil {
       }
 
       if (member != null) {
-        vc.put("java_version", PsiAdapter.getJavaVersion(member));
+        vc.put("java_version", PsiUtil.getLanguageLevel(member).toJavaVersion().feature);
         final Project project = member.getProject();
         vc.put("settings", CodeStyle.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class));
         vc.put("project", project);
