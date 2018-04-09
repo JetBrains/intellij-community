@@ -56,25 +56,23 @@ def do_list():
 
 
 def do_install(pkgs):
-    return pip_main(['install'] + pkgs)
+    return run_pip(['install'] + pkgs)
 
 
 def do_uninstall(pkgs):
-    return pip_main(['uninstall', '-y'] + pkgs)
+    return run_pip(['uninstall', '-y'] + pkgs)
 
 
-def pip_main(args):
+def run_pip(args):
+    import runpy
+    sys.argv[1:] = args
+    # pip.__main__ has been around since 2010 but support for executing it automatically
+    # was added in runpy.run_module only in Python 2.7/3.1
+    module_name = 'pip.__main__' if sys.version_info < (2, 7) else 'pip'
     try:
-        import pip
+        runpy.run_module(module_name, run_name='__main__', alter_sys=True)
     except ImportError:
         error_no_pip()
-
-    try:
-        func = pip.main
-    except AttributeError:
-        from pip._internal import main as func
-
-    func(args)
 
 
 def do_pyvenv(path, system_site_packages):
