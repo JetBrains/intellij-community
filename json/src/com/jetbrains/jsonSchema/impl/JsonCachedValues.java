@@ -85,7 +85,14 @@ public class JsonCachedValues {
 
   @Nullable
   private static String readId(@NotNull final JsonObject object) {
-    final JsonProperty property = object.findProperty("id");
+    String idPropertyV6 = readIdProperty(object, "$id");
+    if (idPropertyV6 != null) return idPropertyV6;
+    return readIdProperty(object, "id");
+  }
+
+  @Nullable
+  private static String readIdProperty(@NotNull JsonObject object, @NotNull String id) {
+    final JsonProperty property = object.findProperty(id);
     if (property != null && property.getValue() instanceof JsonStringLiteral) {
       return JsonSchemaService.normalizeId(StringUtil.unquoteString(property.getValue().getText()));
     }
