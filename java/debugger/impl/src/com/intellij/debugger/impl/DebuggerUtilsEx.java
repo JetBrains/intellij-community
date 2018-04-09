@@ -450,22 +450,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static <T extends Value> T computeAndKeep(EvaluatingComputable<T> computable, EvaluationContext context) throws EvaluateException {
-    T res;
     int retries = 10;
-    do {
-      res = computable.compute();
+    while (true) {
+      T res = computable.compute();
       try {
         keep(res, context);
+        return res;
       }
       catch (ObjectCollectedException oce) {
         if (--retries < 0) {
           throw oce;
         }
-        res = null; // collected already
       }
     }
-    while (res == null);
-    return res;
   }
 
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
