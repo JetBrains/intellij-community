@@ -2,7 +2,6 @@
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -17,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -39,11 +39,10 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class CreateBranchOrTagDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.CopyDialog");
-
-  private final File mySrcFile;
+  @NotNull private final File mySrcFile;
   private Url mySrcURL;
-  private final Project myProject;
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final Project myProject;
 
   private TextFieldWithBrowseButton myToURLText;
 
@@ -68,10 +67,11 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   private final VirtualFile mySrcVirtualFile;
   private final Url myWcRootUrl;
 
-  public CreateBranchOrTagDialog(final Project project, boolean canBeParent, File file) throws VcsException {
-    super(project, canBeParent);
+  public CreateBranchOrTagDialog(@NotNull SvnVcs vcs, @NotNull File file) throws VcsException {
+    super(vcs.getProject(), true);
     mySrcFile = file;
-    myProject = project;
+    myVcs = vcs;
+    myProject = vcs.getProject();
     setResizable(true);
     setTitle(message("dialog.title.branch"));
     myUseThisVariantToLabel.setBorder(JBUI.Borders.emptyBottom(10));
@@ -80,14 +80,14 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
                                                            myWorkingCopyField.getPreferredSize().height));
 
     myWorkingCopyField.addBrowseFolderListener("Select Working Copy Location", "Select Location to Copy From:",
-                                               project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+                                               myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         updateControls();
       }
     });
     myRepositoryField.addActionListener(e -> {
-      Url url = SelectLocationDialog.selectLocation(project, mySrcURL);
+      Url url = SelectLocationDialog.selectLocation(myProject, mySrcURL);
       if (url != null) {
         myRepositoryField.setText(url.toString());
       }
@@ -113,16 +113,11 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
 
-    VirtualFile srcVirtualFile;
-    RootUrlInfo root = SvnVcs.getInstance(myProject).getSvnFileUrlMapping().getWcRootForFilePath(file);
+    RootUrlInfo root = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(file);
     if (root == null) {
       throw new VcsException("Can not find working copy for file: " + file.getPath());
     }
-    srcVirtualFile = root.getVirtualFile();
-    if (srcVirtualFile == null) {
-      throw new VcsException("Can not find working copy for file: " + file.getPath());
-    }
-    this.mySrcVirtualFile = srcVirtualFile;
+    mySrcVirtualFile = root.getVirtualFile();
     myWcRootUrl = root.getUrl();
 
     myRevisionPanel.setRoot(mySrcVirtualFile);
@@ -147,7 +142,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     updateToURL();
     myProjectButton.addActionListener(e -> myRepositoryField.setText(myWcRootUrl.toString()));
     myBranchTagBaseComboBox.addActionListener(e -> {
-      BranchConfigurationDialog.configureBranches(project, mySrcVirtualFile);
+      BranchConfigurationDialog.configureBranches(myProject, mySrcVirtualFile);
       updateBranchTagBases();
       updateControls();
     });
@@ -212,9 +207,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
   protected void init() {
     super.init();
-    SvnVcs vcs = SvnVcs.getInstance(myProject);
     String revStr = "";
-    Info info = vcs.getInfo(mySrcFile);
+    Info info = myVcs.getInfo(mySrcFile);
     if (info != null) {
       mySrcURL = info.getURL();
       revStr = String.valueOf(info.getRevision());
@@ -264,10 +258,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return myToURLText;
   }
 
-  public boolean shouldCloseOnCross() {
-    return true;
-  }
-
   protected String getDimensionServiceKey() {
     return "svn.copyDialog";
   }
@@ -284,13 +274,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     String url = getToURL();
     if (url != null && url.trim().length() > 0) {
       if (myRepositoryRadioButton.isSelected()) {
-        Revision revision;
-        try {
-          revision = myRevisionPanel.getRevision();
-        }
-        catch (ConfigurationException e) {
-          revision = Revision.UNDEFINED;
-        }
+        Revision revision = getRevision();
         if (!revision.isValid() || revision.isLocal()) {
           myErrorLabel.setText(message("create.branch.invalid.revision.error", myRevisionPanel.getRevisionText()));
           return false;
@@ -298,7 +282,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
         return true;
       }
       else if (myWorkingCopyRadioButton.isSelected()) {
-        Info info = SvnVcs.getInstance(myProject).getInfo(mySrcFile);
+        Info info = myVcs.getInfo(mySrcFile);
         String srcUrl = info != null && info.getURL() != null ? info.getURL().toString() : null;
         if (srcUrl == null) {
           myErrorLabel.setText(message("create.branch.no.working.copy.error", myWorkingCopyField.getText()));
