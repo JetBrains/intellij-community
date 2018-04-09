@@ -12,10 +12,7 @@ import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
 import java.awt.Component
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.JPasswordField
-import javax.swing.JScrollPane
+import javax.swing.*
 import javax.swing.text.JTextComponent
 
 internal fun Array<out CCFlags>.create() = if (isEmpty()) null else CC().apply(this)
@@ -111,6 +108,14 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
         cc.value
           .grow()
           .pushY()
+      }
+    }
+
+    if (component is JScrollPane) {
+      val view = component.viewport.view
+      if (view is JTextArea && view.rows == 0) {
+        // set min size to 2 lines (yes, for some reasons it means that rows should be set to 3)
+        view.rows = 3
       }
     }
   }

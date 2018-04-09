@@ -40,7 +40,8 @@ private class DumpRepresenter : Representer() {
   }
 }
 
-internal fun compareFileContent(actual: Any, snapshotFile: Path) {
+@Throws(FileComparisonFailure::class)
+fun compareFileContent(actual: Any, snapshotFile: Path) {
   val expectedContent = StringUtilRt.convertLineSeparators(snapshotFile.readText())
   val actualContent = if (actual is String) actual else dumpData(actual)
   if (actualContent != expectedContent) {

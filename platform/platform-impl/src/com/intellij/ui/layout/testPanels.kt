@@ -49,6 +49,7 @@ fun makeSecondColumnSmaller(): JPanel {
   return panel
 }
 
+@Suppress("unused")
 fun visualPaddingsPanelOnlyComboBox(): JPanel {
   return panel {
     row("Combobox:") { JComboBox<String>(arrayOf("one", "two"))(growX) }
@@ -60,6 +61,7 @@ fun visualPaddingsPanelOnlyComboBox(): JPanel {
   }
 }
 
+@Suppress("unused")
 fun visualPaddingsPanelOnlyButton(): JPanel {
   return panel {
     row("Button:") { button("label", growX) {} }
