@@ -263,15 +263,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
                                                                                                       new TextRange(0, psiFile
                                                                                                         .getTextLength())));
         }
-      });
-      int oldOffset = getConsoleEditor().getCaretModel().getOffset();
-      getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
-      myExecuteActionHandler.runExecuteAction(this);
+        int oldOffset = getConsoleEditor().getCaretModel().getOffset();
+        getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
+        myExecuteActionHandler.runExecuteAction(this);
 
-      if (!StringUtil.isEmpty(oldText)) {
-        ApplicationManager.getApplication().runWriteAction(() -> setInputText(oldText));
-        getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
-      }
+        if (!StringUtil.isEmpty(oldText)) {
+          ApplicationManager.getApplication().runWriteAction(() -> setInputText(oldText));
+          getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
+        }
+      });
     });
   }
 

@@ -81,7 +81,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPydevTests_Debugger() {
-    unittests("tests_pydevd_python/test_debugger.py", null, true);
+    unittests("tests_pydevd_python/test_debugger.py", ImmutableSet.of("-iron"), true);
   }
 
   @Test
