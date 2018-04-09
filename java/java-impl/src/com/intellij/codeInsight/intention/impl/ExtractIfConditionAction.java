@@ -4,7 +4,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -14,17 +13,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
   @Override
@@ -100,15 +92,8 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
       return null;
     }
 
-
-    return create(
-      factory,
-      ifStatement.getThenBranch(), ifStatement.getElseBranch(),
-      operand,
-      removeOperand(factory, polyadicExpression, operand, tracker),
-      polyadicExpression.getOperationTokenType(),
-      tracker
-    );
+    PsiExpression leave = removeOperand(factory, polyadicExpression, operand, tracker);
+    return SplitConditionUtil.create(factory, ifStatement, operand, leave, polyadicExpression.getOperationTokenType(), tracker);
   }
 
   @NotNull
@@ -126,142 +111,6 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
       sb.append(tracker.text(e));
     }
     return factory.createExpressionFromText(sb.toString(), expression);
-  }
-
-  @Nullable
-  private static PsiStatement create(@NotNull PsiElementFactory factory,
-                                     @Nullable PsiStatement thenBranch,
-                                     @Nullable PsiStatement elseBranch,
-                                     @NotNull PsiExpression extract,
-                                     @NotNull PsiExpression leave,
-                                     @NotNull IElementType operation,
-                                     CommentTracker tracker) {
-    if (thenBranch == null) {
-      return null;
-    }
-
-    if (operation == JavaTokenType.OROR) {
-      return createOrOr(factory, thenBranch, elseBranch, extract, leave, tracker);
-    }
-    if (operation == JavaTokenType.ANDAND) {
-      return createAndAnd(factory, thenBranch, elseBranch, extract, leave, tracker);
-    }
-
-    return null;
-  }
-
-  @NotNull
-  private static PsiStatement createAndAnd(@NotNull PsiElementFactory factory,
-                                           @NotNull PsiStatement thenBranch,
-                                           @Nullable PsiStatement elseBranch,
-                                           @NotNull PsiExpression extract,
-                                           @NotNull PsiExpression leave,
-                                           CommentTracker tracker) {
-    List<String> elseChain = new ArrayList<>();
-    boolean chainFinished = false;
-    while (!chainFinished) {
-      PsiIfStatement nextIf = tryCast(ControlFlowUtils.stripBraces(elseBranch), PsiIfStatement.class);
-      if (nextIf == null) break;
-      PsiExpression nextCondition = PsiUtil.skipParenthesizedExprDown(nextIf.getCondition());
-      if (nextCondition == null) break;
-      if (PsiEquivalenceUtil.areElementsEquivalent(extract, nextCondition) && nextIf.getThenBranch() != null) {
-        elseChain.add(nextIf.getThenBranch().getText());
-        chainFinished = true;
-      } else {
-        if (!(nextCondition instanceof PsiPolyadicExpression)) break;
-        PsiPolyadicExpression nextPolyadic = (PsiPolyadicExpression)nextCondition;
-        if (!nextPolyadic.getOperationTokenType().equals(JavaTokenType.ANDAND)) break;
-        PsiExpression firstOperand = nextPolyadic.getOperands()[0];
-        if (!PsiEquivalenceUtil.areElementsEquivalent(extract, firstOperand)) break;
-        elseChain.add(
-          createIfString(removeOperand(factory, nextPolyadic, firstOperand, tracker), nextIf.getThenBranch(), (PsiStatement)null, tracker));
-      }
-      elseBranch = nextIf.getElseBranch();
-    }
-    if (!chainFinished && elseBranch != null) {
-      elseChain.add(elseBranch.getText());
-    }
-    String thenString;
-    if (elseChain.isEmpty()) {
-      thenString = createIfString(leave, thenBranch, (String)null, tracker);
-    }
-    else {
-      thenString = "{" + createIfString(leave, thenBranch, String.join(" else ", elseChain), tracker) + "}";
-    }
-    String ifString = createIfString(extract, thenString, elseBranch, tracker);
-    return factory.createStatementFromText(ifString, thenBranch);
-  }
-
-  @NotNull
-  private static PsiStatement createOrOr(@NotNull PsiElementFactory factory,
-                                         @NotNull PsiStatement thenBranch,
-                                         @Nullable PsiStatement elseBranch,
-                                         @NotNull PsiExpression extract,
-                                         @NotNull PsiExpression leave, CommentTracker tracker) {
-
-    return factory.createStatementFromText(
-      createIfString(extract, thenBranch,
-                     createIfString(leave, thenBranch, elseBranch, tracker),
-                     tracker
-      ),
-      thenBranch
-    );
-  }
-
-  @NotNull
-  private static String createIfString(@NotNull PsiExpression condition,
-                                       @NotNull PsiStatement thenBranch,
-                                       @Nullable PsiStatement elseBranch,
-                                       CommentTracker tracker) {
-    return createIfString(condition.getText(), toThenBranchString(tracker.markUnchanged(thenBranch)),
-                          toElseBranchString(elseBranch != null ? tracker.markUnchanged(elseBranch) : null, false));
-  }
-
-  @NotNull
-  private static String createIfString(@NotNull PsiExpression condition,
-                                       @NotNull PsiStatement thenBranch,
-                                       @Nullable String elseBranch,
-                                       CommentTracker tracker) {
-    return createIfString(tracker.text(condition), toThenBranchString(tracker.markUnchanged(thenBranch)), elseBranch);
-  }
-
-  @NotNull
-  private static String createIfString(@NotNull PsiExpression condition,
-                                       @NotNull String thenBranch,
-                                       @Nullable PsiStatement elseBranch,
-                                       CommentTracker tracker) {
-    return createIfString(tracker.text(condition), thenBranch,
-                          toElseBranchString(elseBranch != null ? tracker.markUnchanged(elseBranch) : null, true));
-  }
-
-  @NotNull
-  private static String createIfString(@NotNull String condition,
-                                       @NotNull String thenBranch,
-                                       @Nullable String elseBranch) {
-    final String elsePart = elseBranch != null ? "\n else " + elseBranch : "";
-    return "if (" + condition + ")\n" + thenBranch + elsePart;
-  }
-
-  @NotNull
-  private static String toThenBranchString(@NotNull PsiStatement statement) {
-    if (!(statement instanceof PsiBlockStatement)) {
-      return "{ " + statement.getText() + "\n }";
-    }
-
-    return statement.getText();
-  }
-
-  @Nullable
-  private static String toElseBranchString(@Nullable PsiStatement statement, boolean skipElse) {
-    if (statement == null) {
-      return null;
-    }
-
-    if (statement instanceof PsiBlockStatement || skipElse && statement instanceof PsiIfStatement) {
-      return statement.getText();
-    }
-
-    return "{ " + statement.getText() + "\n }";
   }
 
   @Nullable

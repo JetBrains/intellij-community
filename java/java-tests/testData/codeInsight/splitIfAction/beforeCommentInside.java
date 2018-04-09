@@ -1,6 +1,6 @@
 class C {
     void foo() {
-        if (a |<caret>| //comment
+        if (a /*inside*/ || c |<caret>| //comment
             b) {
             call();
         }
