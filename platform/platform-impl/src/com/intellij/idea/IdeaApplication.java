@@ -222,8 +222,14 @@ public final class IdeaApplication {
     LOG.assertTrue(!ApplicationManagerEx.isAppLoaded());
     LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
     StartupUtil.patchSystem(LOG);
-    if (args.length <= 0) {
-      return new IdeStarter();
+    // Android Studio: also allow using system property so that UI tests can be run on release bundle via a native launcher
+    String key = System.getProperty("idea.application.starter.command");
+    if (key == null) {
+      if (args.length == 0) {
+        return new IdeStarter();
+      } else {
+        key = args[0];
+      }
     }
 
     try {
@@ -233,7 +239,7 @@ public final class IdeaApplication {
       throw new CompletionException(e);
     }
 
-    ApplicationStarter starter = findStarter(args[0]);
+    ApplicationStarter starter = findStarter(key);  // Android Studio: use key computed above
     if (starter != null) {
       if (Main.isHeadless() && !starter.isHeadless()) {
         Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
