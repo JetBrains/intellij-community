@@ -12,6 +12,7 @@ import com.intellij.json.psi.JsonValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public class JsonSchemaComplianceInspection extends LocalInspectionTool {
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     PsiFile file = holder.getFile();
-    JsonValue root = file instanceof JsonFile ? (JsonValue)file.getFirstChild() : null;
+    JsonValue root = file instanceof JsonFile ? ObjectUtils.tryCast(file.getFirstChild(), JsonValue.class) : null;
     if (root == null) return PsiElementVisitor.EMPTY_VISITOR;
 
     final JsonSchemaObject rootSchema =
