@@ -478,6 +478,14 @@ public class JBUI {
     return fontSize / UIUtil.DEF_SYSTEM_FONT_SIZE;
   }
 
+  public static JBValue.Integer intValue(int value) {
+    return new JBValue.Integer(value);
+  }
+
+  public static JBValue.Float floatValue(float value) {
+    return new JBValue.Float(value);
+  }
+
   public static JBDimension size(int width, int height) {
     return new JBDimension(width, height);
   }
