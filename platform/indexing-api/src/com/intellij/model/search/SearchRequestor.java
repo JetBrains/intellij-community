@@ -5,5 +5,5 @@ import org.jetbrains.annotations.NotNull;
 
 public interface SearchRequestor {
 
-  void collectSearchRequests(@NotNull SearchSession session, @NotNull ModelReferenceSearchParameters parameters);
+  void collectSearchRequests(@NotNull SearchRequestCollector collector, @NotNull ModelReferenceSearchParameters parameters);
 }

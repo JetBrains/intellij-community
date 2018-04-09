@@ -6,8 +6,8 @@ import com.intellij.lang.jvm.JvmMethod
 import com.intellij.model.ModelElement
 import com.intellij.model.search.ModelReferenceSearchParameters
 import com.intellij.model.search.OccurenceSearchRequestor
+import com.intellij.model.search.SearchRequestCollector
 import com.intellij.model.search.SearchRequestor
-import com.intellij.model.search.SearchSession
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -21,23 +21,23 @@ import org.jetbrains.plugins.groovy.lang.psi.util.getPropertyNameAndKind
 
 class GrAliasedImportedElementSearchRequestor : SearchRequestor {
 
-  override fun collectSearchRequests(session: SearchSession, parameters: ModelReferenceSearchParameters) {
+  override fun collectSearchRequests(collector: SearchRequestCollector, parameters: ModelReferenceSearchParameters) {
     val target = parameters.target as? JvmMember ?: return
 
     val name = runReadAction { target.name }
     if (name == null || StringUtil.isEmptyOrSpaces(name)) return
 
     val groovyScope = restrictScopeToGroovyFiles(parameters.effectiveSearchScope)
-    session.searchWord(name, groovyScope).setTargetHint(target).searchRequests(MyProcessor(target, null))
+    collector.searchWord(name, groovyScope).setTargetHint(target).searchRequests(MyProcessor(target, null))
     if (target is JvmMethod) {
       val (propertyName, kind) = runReadAction { getPropertyNameAndKind(target) } ?: return
-      session.searchWord(propertyName, groovyScope).setTargetHint(target).searchRequests(MyProcessor(target, kind.prefix))
+      collector.searchWord(propertyName, groovyScope).setTargetHint(target).searchRequests(MyProcessor(target, kind.prefix))
     }
   }
 
   private class MyProcessor(private val myTarget: ModelElement, private val prefix: String?) : OccurenceSearchRequestor {
 
-    override fun collectRequests(session: SearchSession, element: PsiElement, offsetInElement: Int) {
+    override fun collectRequests(collector: SearchRequestCollector, element: PsiElement, offsetInElement: Int) {
       if (offsetInElement != 0) return
 
       val codeReference = element.parent as? GrCodeReferenceElement ?: return
@@ -51,9 +51,9 @@ class GrAliasedImportedElementSearchRequestor : SearchRequestor {
       if (!codeReference.references((myTarget as? GrAccessorMethod)?.property ?: myTarget)) return
 
       val scope = LocalSearchScope(element.containingFile)
-      session.searchWord(alias, scope).search(myTarget)
+      collector.searchWord(alias, scope).search(myTarget)
       if (prefix != null) {
-        session.searchWord(prefix + GroovyPropertyUtils.capitalize(alias), scope).search(myTarget)
+        collector.searchWord(prefix + GroovyPropertyUtils.capitalize(alias), scope).search(myTarget)
       }
     }
   }

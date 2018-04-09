@@ -2,8 +2,8 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.model.search.ModelReferenceSearchParameters;
+import com.intellij.model.search.SearchRequestCollector;
 import com.intellij.model.search.SearchRequestor;
-import com.intellij.model.search.SearchSession;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +14,7 @@ final class SearchRequestors {
 
   private SearchRequestors() {}
 
-  static void collectSearchRequests(@NotNull SearchSession session, @NotNull ModelReferenceSearchParameters parameters) {
+  static void collectSearchRequests(@NotNull SearchRequestCollector session, @NotNull ModelReferenceSearchParameters parameters) {
     for (SearchRequestor requestor : EP_NAME.getExtensions()) {
       ProgressManager.checkCanceled();
       requestor.collectSearchRequests(session, parameters);

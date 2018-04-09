@@ -59,25 +59,25 @@ public class ModelSearchHelperImpl implements ModelSearchHelper {
   public boolean runQuery(@NotNull Query<ModelReference> rootQuery, @NotNull Processor<ModelReference> processor) {
     if (!(rootQuery instanceof ModelReferenceSearchQuery)) return rootQuery.forEach(processor);
 
-    final SearchSessionImpl session = new SearchSessionImpl(rootQuery);
+    final SearchRequestCollectorImpl collector = new SearchRequestCollectorImpl(rootQuery);
     final ProgressIndicator progress = getIndicatorOrEmpty();
 
-    while (collectRequests(progress, session, session.takeSubSearchParameters())) {
-      if (!processSubQueries(progress, session.takeSubQueries(), processor)) return false;
-      if (!processWordRequests(progress, session.takeWordRequests(), processor)) return false;
+    while (collectRequests(progress, collector, collector.takeSubSearchParameters())) {
+      if (!processSubQueries(progress, collector.takeSubQueries(), processor)) return false;
+      if (!processWordRequests(progress, collector.takeWordRequests(), processor)) return false;
     }
 
     return true;
   }
 
   private static boolean collectRequests(@NotNull ProgressIndicator progress,
-                                         @NotNull SearchSessionImpl session,
+                                         @NotNull SearchRequestCollectorImpl collector,
                                          @NotNull Collection<ModelReferenceSearchParameters> subSearchParameters) {
     for (ModelReferenceSearchParameters parameters : subSearchParameters) {
       progress.checkCanceled();
-      SearchRequestors.collectSearchRequests(session, parameters);
+      SearchRequestors.collectSearchRequests(collector, parameters);
     }
-    return session.hasMoreRequests();
+    return collector.hasMoreRequests();
   }
 
   private static boolean processSubQueries(@NotNull ProgressIndicator progress,

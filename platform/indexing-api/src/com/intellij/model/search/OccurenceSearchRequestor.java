@@ -6,5 +6,5 @@ import org.jetbrains.annotations.NotNull;
 
 public interface OccurenceSearchRequestor {
 
-  void collectRequests(@NotNull SearchSession session, @NotNull PsiElement element, int offsetInElement);
+  void collectRequests(@NotNull SearchRequestCollector collector, @NotNull PsiElement element, int offsetInElement);
 }

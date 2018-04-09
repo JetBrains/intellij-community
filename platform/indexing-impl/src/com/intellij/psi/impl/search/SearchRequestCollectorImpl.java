@@ -15,7 +15,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
-final class SearchSessionImpl implements SearchSession {
+final class SearchRequestCollectorImpl implements SearchRequestCollector {
 
   private final Object lock = new Object();
 
@@ -36,7 +36,7 @@ final class SearchSessionImpl implements SearchSession {
    */
   private final Map<SearchWordRequest, List<TextOccurenceProcessorProvider>> myDeferredWordRequests = new LinkedHashMap<>();
 
-  SearchSessionImpl(@NotNull Query<ModelReference> rootQuery) {
+  SearchRequestCollectorImpl(@NotNull Query<ModelReference> rootQuery) {
     searchSubQuery(rootQuery);
   }
 

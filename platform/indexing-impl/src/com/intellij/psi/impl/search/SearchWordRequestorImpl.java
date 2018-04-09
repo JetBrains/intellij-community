@@ -20,14 +20,14 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 final class SearchWordRequestorImpl implements SearchWordRequestor {
 
-  private final @NotNull SearchSessionImpl mySession;
+  private final @NotNull SearchRequestCollectorImpl mySession;
   private final @NotNull String myWord;
   private final @NotNull SearchScope mySearchScope;
   private boolean myCaseSensitive = true;
   private Short mySearchContext;
   private ModelElement myTargetHint;
 
-  SearchWordRequestorImpl(@NotNull SearchSessionImpl session, @NotNull String word, @NotNull SearchScope scope) {
+  SearchWordRequestorImpl(@NotNull SearchRequestCollectorImpl session, @NotNull String word, @NotNull SearchScope scope) {
     mySession = session;
     myWord = word;
     mySearchScope = scope;

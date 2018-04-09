@@ -6,7 +6,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
-public interface SearchSession {
+public interface SearchRequestCollector {
 
   void searchSubQuery(@NotNull Query<ModelReference> subQuery);
 

@@ -4,8 +4,8 @@ package com.intellij.psi.impl.search
 import com.intellij.model.ModelReference
 import com.intellij.model.ModelService
 import com.intellij.model.search.ModelReferenceSearchParameters
+import com.intellij.model.search.SearchRequestCollector
 import com.intellij.model.search.SearchRequestor
-import com.intellij.model.search.SearchSession
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -20,7 +20,7 @@ import com.intellij.util.Query
  */
 class PsiToModelSearchRequestor : SearchRequestor {
 
-  override fun collectSearchRequests(session: SearchSession, parameters: ModelReferenceSearchParameters) {
+  override fun collectSearchRequests(collector: SearchRequestCollector, parameters: ModelReferenceSearchParameters) {
     if (parameters is ModelToPsiReferenceSearcher.PsiToModelParameters) {
       // search started from ReferencesSearch
       // -> ModelToPsiReferenceSearcher queries ModelReferenceSearch with PsiToModelParameters
@@ -30,7 +30,7 @@ class PsiToModelSearchRequestor : SearchRequestor {
     val psiElement = ModelService.getPsiElement(parameters.target) ?: return
     val psiSearchParameters = ModelToPsiParameters(psiElement, parameters)
     val psiQuery: Query<PsiReference> = ReferencesSearch.search(psiSearchParameters)
-    session.searchSubQuery(CustomProcessorQuery(psiQuery, ::adaptProcessor))
+    collector.searchSubQuery(CustomProcessorQuery(psiQuery, ::adaptProcessor))
   }
 
   private fun adaptProcessor(modelProcessor: Processor<ModelReference>) = Processor<PsiReference>(modelProcessor::process)
