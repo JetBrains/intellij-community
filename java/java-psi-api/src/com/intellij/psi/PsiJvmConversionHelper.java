@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmClassKind;
@@ -39,6 +39,17 @@ class PsiJvmConversionHelper {
   static PsiAnnotation[] getListAnnotations(@NotNull PsiModifierListOwner modifierListOwner) {
     PsiModifierList list = modifierListOwner.getModifierList();
     return list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
+  }
+
+  @Nullable
+  static PsiAnnotation getListAnnotation(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String fqn) {
+    PsiModifierList list = modifierListOwner.getModifierList();
+    return list == null ? null : list.findAnnotation(fqn);
+  }
+
+  static boolean hasListAnnotation(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String fqn) {
+    PsiModifierList list = modifierListOwner.getModifierList();
+    return list != null && list.hasAnnotation(fqn);
   }
 
   @NotNull
