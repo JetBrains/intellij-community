@@ -462,6 +462,16 @@ public class JBUI {
     return fontSize / UIUtil.DEF_SYSTEM_FONT_SIZE;
   }
 
+  @NotNull
+  public static JBValue value(float value) {
+    return new JBValue.Float(value);
+  }
+
+  @NotNull
+  public static JBValue uiIntValue(@NotNull String key, int defValue) {
+    return new JBValue.UIInteger(key, defValue);
+  }
+
   public static JBDimension size(int width, int height) {
     return new JBDimension(width, height);
   }
@@ -1412,7 +1422,7 @@ public class JBUI {
     return color == null ? defaultColor : color;
   }
 
-  private static int getInt(String propertyName, int defaultValue) {
+  public static int getInt(String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);
     return value instanceof Integer ? (Integer)value : defaultValue;
   }
