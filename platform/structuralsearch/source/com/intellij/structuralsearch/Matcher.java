@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -25,7 +25,6 @@ import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
-import com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -40,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.SoftReference;
 import java.util.*;
+
+import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
 
 /**
  * This class makes program structure tree matching:
@@ -180,7 +181,7 @@ public class Matcher {
       return false;
     }
     matchContext.setShouldRecursivelyMatch(false);
-    visitor.matchContext(new SingleNodeIterator(element));
+    visitor.matchContext(newSingleNodeIterator(element));
     return !sink.getMatches().isEmpty();
   }
 
@@ -507,12 +508,12 @@ public class Matcher {
    * Initiates the matching process for given element
    * @param element the current search tree element
    */
-  void match(PsiElement element, final Language language) {
+  void match(@NotNull PsiElement element, final Language language) {
     final MatchingStrategy strategy = matchContext.getPattern().getStrategy();
 
     final Language elementLanguage = element.getLanguage();
     if (strategy.continueMatching(element) && elementLanguage.isKindOf(language)) {
-      visitor.matchContext(new SingleNodeIterator(element));
+      visitor.matchContext(newSingleNodeIterator(element));
       return;
     }
     for(PsiElement el=element.getFirstChild();el!=null;el=el.getNextSibling()) {
@@ -583,7 +584,7 @@ public class Matcher {
 
     assert targetNode != null : "Could not match down up when no target node";
 
-    visitor.matchContext(new SingleNodeIterator(elementToStartMatching));
+    visitor.matchContext(newSingleNodeIterator(elementToStartMatching));
     matchContext.getSink().matchingFinished();
     return sink.getMatches();
   }
