@@ -61,6 +61,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
+      registrar.register(new CreateTypeParameterFromUsageFix(ref));
     }
 
     PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
