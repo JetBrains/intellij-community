@@ -88,7 +88,12 @@ public class GradleBuildClasspathManager {
       set.addAll(virtualFiles);
     }
     allFilesCache = ContainerUtil.newArrayList(set);
-    Extensions.findExtension(PsiElementFinder.EP_NAME, myProject, GradleClassFinder.class).clearCache();
+    for (PsiElementFinder finder : Extensions.getExtensions(PsiElementFinder.EP_NAME, myProject)) {
+      if (finder instanceof GradleClassFinder) {
+        ((GradleClassFinder)finder).clearCache();
+        break;
+      }
+    }
   }
 
   @NotNull
