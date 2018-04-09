@@ -530,9 +530,9 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
           theEnd--;
         }
 
-        int prefixPos = CharArrayUtil.indexOf(chars, suffix, startOffset + originalPrefixLength, theEnd);
-        if (prefixPos != -1) {
-          document.deleteString(prefixPos, prefixPos + suffix.length());
+        int suffixPos = CharArrayUtil.indexOf(chars, suffix, startOffset + originalPrefixLength, theEnd);
+        if (suffixPos != -1) {
+          document.deleteString(suffixPos, suffixPos + suffix.length());
         }
       }
 
