@@ -5,10 +5,12 @@ repositories {
     maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
   }
   maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
+  jcenter()
 }
 
 configurations {
   buildScriptsDeps
+  testDiscoveryDeps
 }
 
 List<String> projectLibraries = [
@@ -38,6 +40,9 @@ dependencies {
   ).each { properties ->
     buildScriptsDeps(properties.first, { transitive = properties.second })
   }
+  testDiscoveryDeps('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.1') {
+    exclude group: 'org.codehaus.groovy', module: 'groovy-all'
+  }
 }
 
 /**
@@ -46,6 +51,11 @@ dependencies {
 task setupBuildScriptsDeps(dependsOn: configurations.buildScriptsDeps, type: Sync) {
   from configurations.buildScriptsDeps.files
   into "${project.buildDir}/build-scripts-deps"
+}
+
+task setupTestDiscoveryDeps(dependsOn: configurations.testDiscoveryDeps, type: Sync) {
+  from configurations.testDiscoveryDeps.files
+  into "${project.buildDir}/test-discovery-deps"
 }
 
 private Tuple2<String, Boolean> loadProjectLibraryProperties(String libraryName) {
