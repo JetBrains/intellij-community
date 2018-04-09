@@ -6,6 +6,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.ui.IconCache
 import org.apache.batik.anim.dom.SVGDOMImplementation
 import org.apache.batik.dom.GenericDOMImplementation
@@ -72,13 +73,13 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
 
   private fun getIconRelativePath(iconWrapper: IconLoader.CachedImageIcon): String {
     val outputPath = iconWrapper.toString()
-    for ((moduleName, relativePath) in mapOf("intellij.platform.icons" to "platform/icons",
+    for ((moduleName, relativePath) in mapOf("intellij.platform.icons" to "platform/icons/src",
                                              "intellij.platform.ide.impl" to "platform/platform-impl/src")) {
       val index = outputPath.indexOf(moduleName)
       if (index > 0) {
-        return FileUtilRt.toSystemIndependentName(svgFileDir
-                                                    .relativize(Paths.get(PathManagerEx.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */)))
-                                                    .toString())
+        val iconPath = Paths.get(PathManagerEx.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */))
+        assertThat(iconPath).exists()
+        return FileUtilRt.toSystemIndependentName(svgFileDir.relativize(iconPath).toString())
       }
     }
 

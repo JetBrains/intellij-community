@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -29,8 +30,11 @@ class UiDslTest {
     @Parameterized.Parameters(name = "{0}")
     fun lafNames() = listOf("Darcula", "IntelliJ")
 
-    @JvmField
-    val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"))
+    private val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"))
+
+    init {
+      System.setProperty("idea.ui.set.password.echo.char", "true")
+    }
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
@@ -43,7 +47,9 @@ class UiDslTest {
 
   @Before
   fun beforeMethod() {
-    assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY || !SystemInfoRt.isLinux)
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      assumeTrue("macOS or Windows 10 are required", SystemInfoRt.isMac || SystemInfo.isWin10OrNewer)
+    }
 
     System.setProperty("idea.ui.comment.copyable", "false")
     changeLafIfNeed(lafName)

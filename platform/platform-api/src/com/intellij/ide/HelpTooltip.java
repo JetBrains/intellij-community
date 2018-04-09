@@ -143,6 +143,7 @@ public class HelpTooltip implements Disposable {
 
   private MouseAdapter myMouseListener;
   private PropertyChangeListener myFontChangeListener;
+  private PropertyChangeListener myAncestorChangeListener;
 
   /**
    * Location of the HelpTooltip relatively to the owner component.
@@ -278,16 +279,14 @@ public class HelpTooltip implements Disposable {
         initPopupBuilder();
       }
     };
-    UIManager.getDefaults().addPropertyChangeListener(myFontChangeListener);
 
-    component.addPropertyChangeListener("ancestor", evt -> {
-      if (evt.getNewValue() == null) {
-        hidePopup(true);
-        Disposer.dispose(this);
-      } else {
+    myAncestorChangeListener = evt -> {
+      hidePopup(true);
+      Disposer.dispose(this);
+      if (evt.getNewValue() != null) {
         registerOn((JComponent)evt.getSource());
       }
-    });
+    };
 
     registerOn(component);
   }
@@ -346,6 +345,9 @@ public class HelpTooltip implements Disposable {
     owner.putClientProperty(TOOLTIP_PROPERTY, this);
     owner.addMouseListener(myMouseListener);
     owner.addMouseMotionListener(myMouseListener);
+    owner.addPropertyChangeListener("ancestor", myAncestorChangeListener);
+
+    UIManager.getDefaults().addPropertyChangeListener(myFontChangeListener);
   }
 
   @Override
@@ -353,6 +355,8 @@ public class HelpTooltip implements Disposable {
     if (owner != null) {
       owner.removeMouseListener(myMouseListener);
       owner.removeMouseMotionListener(myMouseListener);
+      owner.removePropertyChangeListener("ancestor", myAncestorChangeListener);
+
       owner.putClientProperty(TOOLTIP_PROPERTY, null);
       owner = null;
       masterPopup = null;
@@ -364,7 +368,7 @@ public class HelpTooltip implements Disposable {
   }
 
   /**
-   * Hides and disposes the tooltip possibly installed on the mentioned component.Disposing means
+   * Hides and disposes the tooltip possibly installed on the mentioned component. Disposing means
    * unregistering all <code>HelpTooltip</code> specific listeners installed on the component.
    * If there is no tooltip installed on the component nothing happens.
    *
@@ -406,7 +410,7 @@ public class HelpTooltip implements Disposable {
   public static void setMasterPopup(@NotNull Component owner, JBPopup master) {
     if (owner instanceof JComponent) {
       HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
-      if (instance != null) {
+      if (instance != null && instance.myPopup != master) {
         instance.masterPopup = master;
       }
     }
@@ -414,15 +418,15 @@ public class HelpTooltip implements Disposable {
 
   private void scheduleShow(int delay) {
     popupAlarm.cancelAllRequests();
-      popupAlarm.addRequest(() -> {
-        if (canShow()) {
-          myPopup = myPopupBuilder.createPopup();
-          myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner)));
-          if (!neverHide) {
-            scheduleHide(true, myDismissDelay);
-          }
+    popupAlarm.addRequest(() -> {
+      if (canShow()) {
+        myPopup = myPopupBuilder.createPopup();
+        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner)));
+        if (!neverHide) {
+          scheduleHide(true, myDismissDelay);
         }
-      }, delay);
+      }
+    }, delay);
   }
 
   private boolean canShow() {

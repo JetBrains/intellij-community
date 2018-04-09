@@ -142,7 +142,7 @@ public class JUnitUtil {
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
     if (checkClass) {
-      PsiClass testCaseClass = getTestCaseClassOrNull(location);
+      PsiClass testCaseClass = getTestCaseClassOrNull(aClass);
       if (testCaseClass == null || !psiMethod.getContainingClass().isInheritor(testCaseClass, true)) return false;
     }
     return PsiType.VOID.equals(psiMethod.getReturnType());
@@ -150,8 +150,7 @@ public class JUnitUtil {
 
   public static boolean isTestCaseInheritor(final PsiClass aClass) {
     if (!aClass.isValid()) return false;
-    Location<PsiClass> location = PsiLocation.fromPsiElement(aClass);
-    PsiClass testCaseClass = getTestCaseClassOrNull(location);
+    PsiClass testCaseClass = getTestCaseClassOrNull(aClass);
     return testCaseClass != null && aClass.isInheritor(testCaseClass, true);
   }
 
@@ -307,11 +306,8 @@ public class JUnitUtil {
 
 
   @Nullable
-  private static PsiClass getTestCaseClassOrNull(final Location<?> location) {
-    final Location<PsiClass> ancestorOrSelf = location.getAncestorOrSelf(PsiClass.class);
-    if (ancestorOrSelf == null) return null;
-    final PsiClass aClass = ancestorOrSelf.getPsiElement();
-    Module module = JavaExecutionUtil.findModule(aClass);
+  private static PsiClass getTestCaseClassOrNull(final PsiClass psiClass) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (module == null) return null;
     GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(module, true);
     return getTestCaseClassOrNull(scope, module.getProject());

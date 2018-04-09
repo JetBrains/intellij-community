@@ -853,6 +853,11 @@ public class GenericsHighlightUtil {
         String description = JavaErrorMessages.message("generic.array.creation");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       }
+
+      if (element instanceof PsiNewExpression && ((PsiNewExpression)element).getTypeArguments().length > 0) {
+        String description = JavaErrorMessages.message("array.creation.with.type.arguments");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+      }
     }
 
     return null;

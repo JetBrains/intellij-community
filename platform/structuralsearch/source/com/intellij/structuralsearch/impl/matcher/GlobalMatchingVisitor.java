@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
+
 /**
  * Visitor class to manage pattern matching
  */
@@ -69,6 +71,11 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       elements2,
       matchContext
     );
+  }
+
+  public boolean matchSingle(@Nullable PsiElement patternNode, @Nullable PsiElement matchNode) {
+    return patternNode == null && isLeftLooseMatching() ||
+           matchSequentially(newSingleNodeIterator(patternNode), newSingleNodeIterator(matchNode));
   }
 
   @NotNull

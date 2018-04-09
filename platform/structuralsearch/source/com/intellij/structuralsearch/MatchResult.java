@@ -22,6 +22,8 @@ public abstract class MatchResult {
 
   public abstract List<MatchResult> getChildren();
   public abstract boolean hasChildren();
+  public abstract int size();
+
   public abstract boolean isScopeMatch();
   public abstract boolean isMultipleMatch();
 

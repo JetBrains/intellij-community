@@ -179,6 +179,13 @@ class JsonSchemaAnnotatorChecker {
     final Set<String> set = new HashSet<>();
     for (JsonPropertyAdapter property : propertyList) {
       final String name = StringUtil.notNullize(property.getName());
+      JsonSchemaObject propertyNamesSchema = schema.getPropertyNamesSchema();
+      if (propertyNamesSchema != null) {
+        JsonValueAdapter nameValueAdapter = property.getNameValueAdapter();
+        if (nameValueAdapter != null) {
+          checkByScheme(nameValueAdapter, propertyNamesSchema);
+        }
+      }
 
       final JsonSchemaVariantsTreeBuilder.Step step = JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(name);
       final Pair<ThreeState, JsonSchemaObject> pair = step.step(schema, true);
@@ -424,6 +431,19 @@ class JsonSchemaAnnotatorChecker {
         .flatMap(Collection::stream)
         .forEach(item -> error("Item is not unique", item.getDelegate()));
     }
+    if (schema.getContainsSchema() != null) {
+      boolean match = false;
+      for (JsonValueAdapter item: list) {
+        final JsonSchemaAnnotatorChecker checker = checkByMatchResult(item, new JsonSchemaResolver(schema.getContainsSchema()).detailedResolve());
+        if (checker == null || checker.myErrors.size() == 0 && !checker.myHadTypeError) {
+          match = true;
+          break;
+        }
+      }
+      if (!match) {
+        error("No match for 'contains' rule", array.getDelegate());
+      }
+    }
     if (schema.getItemsSchema() != null) {
       list.forEach(item -> checkObjectBySchemaRecordErrors(schema.getItemsSchema(), item));
     }
@@ -508,20 +528,35 @@ class JsonSchemaAnnotatorChecker {
         return;
       }
     }
-    if (schema.getMinimum() != null) {
-      checkMinimum(schema, value, propValue, schemaType);
-    }
-    if (schema.getMaximum() != null) {
-      checkMaximum(schema, value, propValue, schemaType);
-    }
+
+    checkMinimum(schema, value, propValue, schemaType);
+    checkMaximum(schema, value, propValue, schemaType);
   }
 
   private void checkMaximum(JsonSchemaObject schema, Number value, PsiElement propertyValue,
                             @NotNull JsonSchemaType propValueType) {
-    if (schema.getMaximum() == null) return;
+
+    Number exclusiveMaximumNumber = schema.getExclusiveMaximumNumber();
+    if (exclusiveMaximumNumber != null) {
+      if (JsonSchemaType._integer.equals(propValueType)) {
+        final int intValue = exclusiveMaximumNumber.intValue();
+        if (value.intValue() >= intValue) {
+          error("Greater than an exclusive maximum " + intValue, propertyValue);
+        }
+      }
+      else {
+        final double doubleValue = exclusiveMaximumNumber.doubleValue();
+        if (value.doubleValue() >= doubleValue) {
+          error("Greater than an exclusive maximum " + exclusiveMaximumNumber, propertyValue);
+        }
+      }
+    }
+    Number maximum = schema.getMaximum();
+    if (maximum == null) return;
+    boolean isExclusive = Boolean.TRUE.equals(schema.isExclusiveMaximum());
     if (JsonSchemaType._integer.equals(propValueType)) {
-      final int intValue = schema.getMaximum().intValue();
-      if (Boolean.TRUE.equals(schema.isExclusiveMaximum())) {
+      final int intValue = maximum.intValue();
+      if (isExclusive) {
         if (value.intValue() >= intValue) {
           error("Greater than an exclusive maximum " + intValue, propertyValue);
         }
@@ -533,15 +568,15 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     else {
-      final double doubleValue = schema.getMaximum().doubleValue();
-      if (Boolean.TRUE.equals(schema.isExclusiveMaximum())) {
+      final double doubleValue = maximum.doubleValue();
+      if (isExclusive) {
         if (value.doubleValue() >= doubleValue) {
-          error("Greater than an exclusive maximum " + schema.getMinimum(), propertyValue);
+          error("Greater than an exclusive maximum " + maximum, propertyValue);
         }
       }
       else {
         if (value.doubleValue() > doubleValue) {
-          error("Greater than a maximum " + schema.getMaximum(), propertyValue);
+          error("Greater than a maximum " + maximum, propertyValue);
         }
       }
     }
@@ -549,10 +584,29 @@ class JsonSchemaAnnotatorChecker {
 
   private void checkMinimum(JsonSchemaObject schema, Number value, PsiElement propertyValue,
                             @NotNull JsonSchemaType schemaType) {
-    if (schema.getMinimum() == null) return;
+    // schema v6 - exclusiveMinimum is numeric now
+    Number exclusiveMinimumNumber = schema.getExclusiveMinimumNumber();
+    if (exclusiveMinimumNumber != null) {
+      if (JsonSchemaType._integer.equals(schemaType)) {
+        final int intValue = exclusiveMinimumNumber.intValue();
+        if (value.intValue() <= intValue) {
+          error("Less than an exclusive minimum" + intValue, propertyValue);
+        }
+      }
+      else {
+        final double doubleValue = exclusiveMinimumNumber.doubleValue();
+        if (value.doubleValue() <= doubleValue) {
+          error("Less than an exclusive minimum " + exclusiveMinimumNumber, propertyValue);
+        }
+      }
+    }
+
+    Number minimum = schema.getMinimum();
+    if (minimum == null) return;
+    boolean isExclusive = Boolean.TRUE.equals(schema.isExclusiveMinimum());
     if (JsonSchemaType._integer.equals(schemaType)) {
-      final int intValue = schema.getMinimum().intValue();
-      if (Boolean.TRUE.equals(schema.isExclusiveMinimum())) {
+      final int intValue = minimum.intValue();
+      if (isExclusive) {
         if (value.intValue() <= intValue) {
           error("Less than an exclusive minimum " + intValue, propertyValue);
         }
@@ -564,15 +618,15 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     else {
-      final double doubleValue = schema.getMinimum().doubleValue();
-      if (Boolean.TRUE.equals(schema.isExclusiveMinimum())) {
+      final double doubleValue = minimum.doubleValue();
+      if (isExclusive) {
         if (value.doubleValue() <= doubleValue) {
-          error("Less than an exclusive minimum " + schema.getMinimum(), propertyValue);
+          error("Less than an exclusive minimum " + minimum, propertyValue);
         }
       }
       else {
         if (value.doubleValue() < doubleValue) {
-          error("Less than a minimum " + schema.getMinimum(), propertyValue);
+          error("Less than a minimum " + minimum, propertyValue);
         }
       }
     }

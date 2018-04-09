@@ -51,18 +51,22 @@ public class JsonSchemaObject {
   @Nullable private Number myMultipleOf;
   @Nullable private Number myMaximum;
   private boolean myExclusiveMaximum;
+  @Nullable private Number myExclusiveMaximumNumber;
   @Nullable private Number myMinimum;
   private boolean myExclusiveMinimum;
+  @Nullable private Number myExclusiveMinimumNumber;
   @Nullable private Integer myMaxLength;
   @Nullable private Integer myMinLength;
 
   @Nullable private Boolean myAdditionalPropertiesAllowed;
   @Nullable private JsonSchemaObject myAdditionalPropertiesSchema;
+  @Nullable private JsonSchemaObject myPropertyNamesSchema;
 
   @Nullable private Boolean myAdditionalItemsAllowed;
   @Nullable private JsonSchemaObject myAdditionalItemsSchema;
 
   @Nullable private JsonSchemaObject myItemsSchema;
+  @Nullable private JsonSchemaObject myContainsSchema;
   @Nullable private List<JsonSchemaObject> myItemsSchemaList;
 
   @Nullable private Integer myMaxItems;
@@ -117,17 +121,21 @@ public class JsonSchemaObject {
     myTypeVariants = copyList(myTypeVariants, other.myTypeVariants);
     if (other.myMultipleOf != null) myMultipleOf = other.myMultipleOf;
     if (other.myMaximum != null) myMaximum = other.myMaximum;
+    if (other.myExclusiveMaximumNumber != null) myExclusiveMaximumNumber = other.myExclusiveMaximumNumber;
     myExclusiveMaximum |= other.myExclusiveMaximum;
     if (other.myMinimum != null) myMinimum = other.myMinimum;
+    if (other.myExclusiveMinimumNumber != null) myExclusiveMinimumNumber = other.myExclusiveMinimumNumber;
     myExclusiveMinimum |= other.myExclusiveMinimum;
     if (other.myMaxLength != null) myMaxLength = other.myMaxLength;
     if (other.myMinLength != null) myMinLength = other.myMinLength;
     if (other.myPattern != null) myPattern = other.myPattern;
     if (other.myAdditionalPropertiesAllowed != null) myAdditionalPropertiesAllowed = other.myAdditionalPropertiesAllowed;
     if (other.myAdditionalPropertiesSchema != null) myAdditionalPropertiesSchema = other.myAdditionalPropertiesSchema;
+    if (other.myPropertyNamesSchema != null) myPropertyNamesSchema = other.myPropertyNamesSchema;
     if (other.myAdditionalItemsAllowed != null) myAdditionalItemsAllowed = other.myAdditionalItemsAllowed;
     if (other.myAdditionalItemsSchema != null) myAdditionalItemsSchema = other.myAdditionalItemsSchema;
     if (other.myItemsSchema != null) myItemsSchema = other.myItemsSchema;
+    if (other.myContainsSchema != null) myContainsSchema = other.myContainsSchema;
     myItemsSchemaList = copyList(myItemsSchemaList, other.myItemsSchemaList);
     if (other.myMaxItems != null) myMaxItems = other.myMaxItems;
     if (other.myMinItems != null) myMinItems = other.myMinItems;
@@ -232,6 +240,24 @@ public class JsonSchemaObject {
     return myExclusiveMaximum;
   }
 
+  @Nullable
+  public Number getExclusiveMaximumNumber() {
+    return myExclusiveMaximumNumber;
+  }
+
+  public void setExclusiveMaximumNumber(@Nullable Number exclusiveMaximumNumber) {
+    myExclusiveMaximumNumber = exclusiveMaximumNumber;
+  }
+
+  @Nullable
+  public Number getExclusiveMinimumNumber() {
+    return myExclusiveMinimumNumber;
+  }
+
+  public void setExclusiveMinimumNumber(@Nullable Number exclusiveMinimumNumber) {
+    myExclusiveMinimumNumber = exclusiveMinimumNumber;
+  }
+
   public void setExclusiveMaximum(boolean exclusiveMaximum) {
     myExclusiveMaximum = exclusiveMaximum;
   }
@@ -290,6 +316,15 @@ public class JsonSchemaObject {
   }
 
   @Nullable
+  public JsonSchemaObject getPropertyNamesSchema() {
+    return myPropertyNamesSchema;
+  }
+
+  public void setPropertyNamesSchema(@Nullable JsonSchemaObject propertyNamesSchema) {
+    myPropertyNamesSchema = propertyNamesSchema;
+  }
+
+  @Nullable
   public JsonSchemaObject getAdditionalPropertiesSchema() {
     return myAdditionalPropertiesSchema;
   }
@@ -323,6 +358,15 @@ public class JsonSchemaObject {
 
   public void setItemsSchema(@Nullable JsonSchemaObject itemsSchema) {
     myItemsSchema = itemsSchema;
+  }
+
+  @Nullable
+  public JsonSchemaObject getContainsSchema() {
+    return myContainsSchema;
+  }
+
+  public void setContainsSchema(@Nullable JsonSchemaObject containsSchema) {
+    myContainsSchema = containsSchema;
   }
 
   @Nullable

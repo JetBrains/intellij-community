@@ -15,13 +15,13 @@
  */
 package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Indent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
@@ -116,7 +116,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
           });
       }
       else if (getPosition(editor, offset).beforeOptional(Whitespace).isAt(BlockClosingBrace)) {
-        return myFactory.createIndentCalculator(getBlockIndentType(project, language), IndentCalculator.LINE_BEFORE);
+        return myFactory.createIndentCalculator(getBlockIndentType(editor, language), IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).before().isAt(Semicolon)) {
         SemanticEditorPosition beforeSemicolon = getPosition(editor, offset).before().beforeOptional(Semicolon);
@@ -147,7 +147,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
           return false;
         }
       )) {
-        SemanticEditorPosition position = getPosition(editor, offset).before();
+        SemanticEditorPosition position = getPosition(editor, offset).before().beforeOptionalMix(LineComment, BlockComment, Whitespace);
         return myFactory.createIndentCalculator(getIndentInBlock(project, language, position), this::getBlockStatementStartOffset);
       }
       else if (getPosition(editor, offset).before().matchesRule(
@@ -223,7 +223,19 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return position.isAfterOnSameLine(ForKeyword);
   }
 
-  private int getBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
+  /**
+   * Returns the start offset of the statement or new-line-'{' that owns the code block in {@code position}.
+   * 
+   * Custom implementation for language can overwrite the default behavior for multi-lines statements like
+   * <pre>{@code
+   *    template<class T>
+   *    class A {};
+   * }</pre>
+   * or check indentation after new-line-'{' vs the brace style.
+   * 
+   * @param position the position in the code block
+   */
+  protected int getBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
     moveBeforeEndLineComments(position);
     position.moveBeforeOptional(BlockOpeningBrace);
     if (position.isAt(Whitespace)) {
@@ -351,7 +363,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
                                     @Nullable Language language,
                                     @NotNull SemanticEditorPosition blockStartPosition) {
     if (language != null) {
-      CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+      CommonCodeStyleSettings settings = CodeStyle.getSettings(blockStartPosition.getEditor()).getCommonSettings(language);
       if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) {
         return getDefaultIndentFromType(settings.METHOD_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? NONE : null);
       }
@@ -360,9 +372,9 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   }
   
   @Contract("_, null -> null")
-  private static Type getBlockIndentType(@NotNull Project project, @Nullable Language language) {
+  private static Type getBlockIndentType(@NotNull Editor editor, @Nullable Language language) {
     if (language != null) {
-      CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+      CommonCodeStyleSettings settings = CodeStyle.getSettings(editor).getCommonSettings(language);
       if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE || settings.BRACE_STYLE == CommonCodeStyleSettings.END_OF_LINE) {
         return NONE;
       }

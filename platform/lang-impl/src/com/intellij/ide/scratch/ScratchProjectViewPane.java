@@ -43,7 +43,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +61,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   public static final String ID = "Scratches";
 
   public static boolean isScratchesMergedIntoProjectTab() {
-    return (Registry.is("ide.scratch.in.project.view") || PlatformUtils.isDataGrip()) &&
+    return Registry.is("ide.scratch.in.project.view") &&
            !ApplicationManager.getApplication().isUnitTestMode();
   }
 

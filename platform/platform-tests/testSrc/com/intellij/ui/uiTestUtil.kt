@@ -6,8 +6,8 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
@@ -16,14 +16,12 @@ import com.intellij.util.ui.TestScaleHelper
 import com.intellij.util.ui.UIUtil
 import io.netty.util.internal.SystemPropertyUtil
 import net.miginfocom.swing.MigLayout
-import org.junit.Assume
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import java.awt.Component
 import java.awt.Container
-import java.awt.GraphicsEnvironment
 import java.io.File
 import java.nio.file.Path
 import javax.swing.AbstractButton
@@ -31,7 +29,7 @@ import javax.swing.JLabel
 import javax.swing.UIManager
 import javax.swing.plaf.metal.MetalLookAndFeel
 
-private val isUpdateSnapshotsGlobal by lazy { SystemPropertyUtil.getBoolean("test.update.snapshots", false) }
+internal val isUpdateSnapshotsGlobal by lazy { SystemPropertyUtil.getBoolean("test.update.snapshots", false) }
 
 class NoScaleRule : ExternalResource() {
   private var scaleHelper = TestScaleHelper()
@@ -45,22 +43,9 @@ class NoScaleRule : ExternalResource() {
   }
 }
 
-open class RequireHeadlessMode : ExternalResource() {
-  override fun before() {
-    // there is some difference if run as not headless (on retina monitor, at least), not yet clear why, so, just require to run in headless mode
-    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      Assume.assumeTrue(GraphicsEnvironment.isHeadless())
-    }
-    else {
-      System.setProperty("java.awt.headless", "true")
-      if (!GraphicsEnvironment.isHeadless()) {
-        throw RuntimeException("must be headless")
-      }
-    }
-  }
-}
-
 fun changeLafIfNeed(lafName: String) {
+  System.setProperty("idea.ui.set.password.echo.char", "true")
+
   if (UIManager.getLookAndFeel().name == lafName) {
     return
   }
@@ -95,6 +80,7 @@ fun getSnapshotRelativePath(lafName: String): String {
   return result.toString()
 }
 
+@Throws(FileComparisonFailure::class)
 fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
   val actualSerializedLayout: String
   if (component.layout is MigLayout) {
@@ -111,7 +97,8 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
   compareSnapshot(snapshotDir.resolve("$snapshotName.yml"), actualSerializedLayout, isUpdateSnapshots)
 }
 
-private fun compareSnapshot(snapshotFile: Path, newData: String, isUpdateSnapshots: Boolean) {
+@Throws(FileComparisonFailure::class)
+internal fun compareSnapshot(snapshotFile: Path, newData: String, isUpdateSnapshots: Boolean) {
   if (!snapshotFile.exists()) {
     System.out.println("Write a new snapshot ${snapshotFile.fileName}")
     snapshotFile.write(newData)
@@ -119,9 +106,9 @@ private fun compareSnapshot(snapshotFile: Path, newData: String, isUpdateSnapsho
   }
 
   try {
-    assertThat(newData).isEqualTo(snapshotFile)
+    compareFileContent(newData, snapshotFile)
   }
-  catch (e: AssertionError) {
+  catch (e: FileComparisonFailure) {
     if (isUpdateSnapshots) {
       System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
       snapshotFile.write(newData)
@@ -130,10 +117,6 @@ private fun compareSnapshot(snapshotFile: Path, newData: String, isUpdateSnapsho
       throw e
     }
   }
-}
-
-internal fun validateUsingImage(component: Component, svgRenderer: SvgRenderer, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
-  compareSnapshot(svgRenderer.svgFileDir.resolve("$snapshotName.svg"), svgRenderer.render(component), isUpdateSnapshots)
 }
 
 val TestName.snapshotFileName: String

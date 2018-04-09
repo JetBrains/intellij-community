@@ -133,6 +133,9 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   @TestOnly
   class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase() {
+    override val useVfs: Boolean
+      get() = false
+
     override fun pathToFile(path: String) = basePath.resolve(path)!!
   }
 }

@@ -754,13 +754,21 @@ public class PyTypeChecker {
       for (PyClassType type : toPossibleClassTypes(qualifierType)) {
         for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
           final PyType genericType = provider.getGenericType(type.getPyClass(), context);
+          final Set<PyGenericType> providedTypeGenerics = new LinkedHashSet<>();
+
           if (genericType != null) {
             match(genericType, type, context, substitutions);
+            collectGenerics(genericType, context, providedTypeGenerics, new HashSet<>());
           }
+
           for (Map.Entry<PyType, PyType> entry : provider.getGenericSubstitutions(type.getPyClass(), context).entrySet()) {
             final PyGenericType genericKey = as(entry.getKey(), PyGenericType.class);
             final PyType value = entry.getValue();
-            if (genericKey != null && value != null && !substitutions.containsKey(genericKey)) {
+
+            if (genericKey != null &&
+                value != null &&
+                !substitutions.containsKey(genericKey) &&
+                !providedTypeGenerics.contains(genericKey)) {
               substitutions.put(genericKey, value);
             }
           }

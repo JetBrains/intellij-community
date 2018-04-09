@@ -36,6 +36,9 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
 
     pattern = "   <td>  name  </td>   ";
     assertEquals("Ignore surrounding whitespace", 1, findMatchesCount(content, pattern, StdFileTypes.HTML));
+
+    String in = "<img src=\"foobar.jpg\" alt=\"alt\" width=\"108\" height=\"71\" style=\"display:block\" >";
+    assertEquals(1, findMatchesCount(in, "<img alt '_other+ >", StdFileTypes.HTML));
   }
 
   public void testHtmlSearchCaseInsensitive() {

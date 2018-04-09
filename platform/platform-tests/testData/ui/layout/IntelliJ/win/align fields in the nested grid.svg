@@ -49,7 +49,7 @@
       <text x="0" xml:space="preserve" y="13" clip-path="url(#clipPath5)" stroke="none">Master Password:</text>
     </g>
     <g font-family="'Segoe UI'" transform="translate(451,35)">
-      <image x="0" y="0" clip-path="url(#clipPath6)" width="21" xlink:href="../../../../../../icons/general/gear.png" height="16" preserveAspectRatio="none"/>
+      <image x="0" y="0" clip-path="url(#clipPath6)" width="21" xlink:href="../../../../../../icons/src/general/gear.png" height="16" preserveAspectRatio="none"/>
     </g>
     <g fill="rgb(242,242,242)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(114,31)" stroke="rgb(242,242,242)">
       <rect x="0" width="334" height="24" y="0" clip-path="url(#clipPath7)" stroke="none"/>

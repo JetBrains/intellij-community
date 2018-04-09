@@ -33,18 +33,18 @@ public class IndentHelperImpl extends IndentHelper {
   public static final int INDENT_FACTOR = 10000; // "indent" is indent_level * INDENT_FACTOR + spaces
 
   @Override
-  public int getIndent(@NotNull PsiFile file, ASTNode element) {
+  public int getIndent(@NotNull PsiFile file, @NotNull ASTNode element) {
     return getIndent(file, element, false);
   }
 
   @Override
-  public int getIndent(@NotNull PsiFile file, final ASTNode element, boolean includeNonSpace) {
+  public int getIndent(@NotNull PsiFile file, @NotNull final ASTNode element, boolean includeNonSpace) {
     return getIndentInner(file, element, includeNonSpace, 0);
   }
   
   public static final int TOO_BIG_WALK_THRESHOLD = 450;
 
-  protected int getIndentInner(@NotNull PsiFile file, final ASTNode element, boolean includeNonSpace, int recursionLevel) {
+  protected int getIndentInner(@NotNull PsiFile file, @NotNull final ASTNode element, boolean includeNonSpace, int recursionLevel) {
     if (recursionLevel > TOO_BIG_WALK_THRESHOLD) return 0;
 
     if (element.getTreePrev() != null) {

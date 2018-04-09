@@ -162,10 +162,6 @@ public abstract class StructuralSearchProfile {
     return matchText.substring(start, end == -1 ? matchText.length() : end);
   }
 
-  public Class getElementContextByPsi(PsiElement element) {
-    return element.getClass();
-  }
-
   @NotNull
   public String getTypedVarString(PsiElement element) {
     if (element instanceof PsiNamedElement) {
