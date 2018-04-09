@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
@@ -45,6 +44,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
+
+import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
 
 /**
  * @author Eugene Zhuravlev
@@ -126,7 +127,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxIt
 
   @NotNull
   private static Condition<SdkTypeId> getCreationFilter(@Nullable Condition<SdkTypeId> creationFilter) {
-    return sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType) && (creationFilter == null || creationFilter.value(sdkTypeId));
+    return notSimpleJavaSdkType(creationFilter);
   }
 
   @Override

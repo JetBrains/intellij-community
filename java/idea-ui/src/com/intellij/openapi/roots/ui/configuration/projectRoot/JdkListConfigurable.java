@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
@@ -27,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.util.*;
+
+import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
 
 public class JdkListConfigurable extends BaseStructureConfigurable {
   @NotNull
@@ -164,8 +165,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
       @Override
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-        myJdksTreeModel.createAddActions(group, myTree, projectJdk -> addJdkNode(projectJdk, true),
-                                         sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType));
+        myJdksTreeModel.createAddActions(group, myTree, projectJdk -> addJdkNode(projectJdk, true), notSimpleJavaSdkType());
         return group.getChildren(null);
       }
     };
