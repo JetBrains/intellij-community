@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn.branchConfig;
@@ -50,7 +50,7 @@ public class CreateBranchOrTagAction extends BasicAction {
 
   @Override
   protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
-    CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(vcs.getProject(), true, virtualToIoFile(file));
+    CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(vcs, virtualToIoFile(file));
     if (dialog.showAndGet()) {
       String dstURL = dialog.getToURL();
       Revision revision = dialog.getRevision();
