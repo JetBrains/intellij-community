@@ -198,6 +198,64 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("\n1\n2\n", result.patchedText);
   }
 
+  public void testRemovedLastNewLine() {
+    final PatchHunk patchHunk = new PatchHunk(0, 2, 0, 2);
+    patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
+    patchHunk.addLine(new PatchLine(PatchLine.Type.REMOVE, "2"));
+    PatchLine line = new PatchLine(PatchLine.Type.ADD, "2");
+    line.setSuppressNewLine(true);
+    patchHunk.addLine(line);
+
+    AppliedPatch result = GenericPatchApplier.apply("1\n2\n", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("1\n2", result.patchedText);
+  }
+
+  public void testInvalidPatchApplicationRegression1() {
+    final PatchHunk patchHunk = new PatchHunk(0, 1, 0, 3);
+    patchHunk.addLine(new PatchLine(PatchLine.Type.ADD, "y"));
+    patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "x"));
+    PatchLine line = new PatchLine(PatchLine.Type.ADD, "z");
+    line.setSuppressNewLine(true);
+    patchHunk.addLine(line);
+
+    AppliedPatch result = GenericPatchApplier.apply("x\n", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("y\nx\nz", result.patchedText);
+  }
+
+  public void testInvalidPatchApplicationRegression2() { // IDEA-189699
+    final PatchHunk patchHunk = new PatchHunk(0, 4, 0, 7);
+    patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "X"));
+    patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, ""));
+    patchHunk.addLine(new PatchLine(PatchLine.Type.ADD, ""));
+    patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "Y"));
+    patchHunk.addLine(new PatchLine(PatchLine.Type.ADD, "a"));
+    patchHunk.addLine(new PatchLine(PatchLine.Type.ADD, "b"));
+    patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "Z"));
+
+    AppliedPatch result = GenericPatchApplier.apply("X\n\nY\nZ\n", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("X\n\n\nY\na\nb\nZ\n", result.patchedText);
+  }
+
+  public void testInsertedLastNewLine() {
+    final PatchHunk patchHunk = new PatchHunk(0, 2, 0, 2);
+    patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
+    patchHunk.addLine(new PatchLine(PatchLine.Type.ADD, "2"));
+    PatchLine line = new PatchLine(PatchLine.Type.REMOVE, "2");
+    line.setSuppressNewLine(true);
+    patchHunk.addLine(line);
+
+    AppliedPatch result = GenericPatchApplier.apply("1\n2", Collections.singletonList(patchHunk));
+    Assert.assertNotNull(result);
+    Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
+    Assert.assertEquals("1\n2\n", result.patchedText);
+  }
+
   public void testNewEmptyLine() {
     final PatchHunk patchHunk = new PatchHunk(1, 3, 1, 4);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "0"));

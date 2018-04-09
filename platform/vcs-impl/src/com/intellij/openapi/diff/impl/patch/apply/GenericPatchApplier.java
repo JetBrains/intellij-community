@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.ALREADY_APPLIED;
+import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.SUCCESS;
 
 public class GenericPatchApplier {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier");
@@ -73,6 +74,11 @@ public class GenericPatchApplier {
 
   @Nullable
   public static AppliedPatch apply(CharSequence text, List<PatchHunk> hunks) {
+    String patchedText = PlainSimplePatchApplier.apply(text, hunks);
+    if (patchedText != null) {
+      return new AppliedPatch(patchedText, SUCCESS);
+    }
+
     GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
     boolean success = applier.execute();
 
@@ -83,6 +89,11 @@ public class GenericPatchApplier {
 
   @NotNull
   public static AppliedSomehowPatch applySomehow(CharSequence text, List<PatchHunk> hunks) {
+    String patchedText = PlainSimplePatchApplier.apply(text, hunks);
+    if (patchedText != null) {
+      return new AppliedSomehowPatch(patchedText, SUCCESS, false);
+    }
+
     GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
     boolean success = applier.execute();
 
