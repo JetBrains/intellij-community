@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
+import java.util.*
 
 /**
  * @author Artem.Gainanov
@@ -26,25 +27,25 @@ class GutterFixture(private val myIde: IdeFrameFixture) {
 
   /**
    * Returns the list of lines with given gutterIcon
-   * @param gutterIcon - gutter icon class
+   * @param gutterIcon - gutter icon
    *
    * @see GutterFixture.GutterIcon
    */
-  fun getLinesWithGutterIcon(gutterIcon: GutterIcon): ArrayList<Int> {
-    getGutterIcons()
-    return gutterIcons[gutterIcon]!!
+  fun linesWithGutterIcon(gutterIcon: GutterIcon): List<Int> {
+    updateGutterIcons()
+    return gutterIcons[gutterIcon]?.toList() ?: throw Exception("Gutter icon $gutterIcon is not specified in GutterIcon enum")
   }
 
   /**
    * Returns true if the line has given gutterIcon
    * @param line - 1-based line number
-   * @param gutterIcon - gutter icon class
+   * @param gutterIcon - gutter icon
    *
    * @see GutterFixture.GutterIcon
    */
   fun containsGutterIcon(gutterIcon: GutterIcon, line: Int): Boolean {
-    getGutterIcons()
-    return gutterIcons[gutterIcon]!!.contains(line)
+    updateGutterIcons()
+    return gutterIcons[gutterIcon]?.contains(line) ?: throw Exception("Gutter icon $gutterIcon is not specified in GutterIcon enum")
   }
 
   /**
@@ -53,18 +54,16 @@ class GutterFixture(private val myIde: IdeFrameFixture) {
    * IMPLEMENTATION=[14, 16, 15], IMPLEMENTED=[2, 1, 4, 3], OVERRIDES=[17],
    * OVERRIDDEN=[7, 8]}
    */
-  fun getGutterIcons(): MutableMap<GutterIcon, ArrayList<Int>> {
-    for (icon in GutterIcon.values()) {
-      gutterIcons[icon] = ArrayList()
-    }
+  fun updateGutterIcons(): Map<GutterIcon, ArrayList<Int>> {
+    GutterIcon.values().forEach { gutterIcons[it] = ArrayList() }
     runOnEdt {
-      for (high in getMarkupModel().allHighlighters) {
-        val lineNumber = myIde.editor.editor.document.getLineNumber(high.startOffset) + 1
-        if (high.gutterIconRenderer?.icon != null) {
-          if (high.gutterIconRenderer?.icon.toString() == "com.intellij.xml.util.ColorIconCache\$ColorIcon 8x8") {
+      for (highlighter in getMarkupModel().allHighlighters) {
+        val lineNumber = myIde.editor.editor.document.getLineNumber(highlighter.startOffset) + 1
+        if (highlighter.gutterIconRenderer?.icon != null) {
+          if (highlighter.gutterIconRenderer?.javaClass?.name == "com.intellij.psi.css.browse.CssColorGutterRenderer") {
             gutterIcons[GutterIcon.CSS_COLOR]!!.add(lineNumber)
           }
-          when (high.gutterIconRenderer?.icon) {
+          when (highlighter.gutterIconRenderer?.icon) {
             AllIcons.Gutter.ImplementingMethod -> gutterIcons[GutterIcon.IMPLEMENTATION]!!.add(lineNumber)
             AllIcons.Gutter.OverridenMethod -> gutterIcons[GutterIcon.OVERRIDDEN]!!.add(lineNumber)
             AllIcons.Gutter.ImplementedMethod -> gutterIcons[GutterIcon.IMPLEMENTED]!!.add(lineNumber)
