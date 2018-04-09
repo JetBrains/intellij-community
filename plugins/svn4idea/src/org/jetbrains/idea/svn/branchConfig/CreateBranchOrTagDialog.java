@@ -40,7 +40,7 @@ import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class CreateBranchOrTagDialog extends DialogWrapper {
   @NotNull private final File mySrcFile;
-  private Url mySrcURL;
+  @NotNull private final Url mySrcURL;
   @NotNull private final SvnVcs myVcs;
   @NotNull private final Project myProject;
 
@@ -78,6 +78,12 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myProjectButton.setIcon(AllIcons.Nodes.IdeaProject);
     myBranchTagBaseComboBox.setPreferredSize(new Dimension(myBranchTagBaseComboBox.getPreferredSize().width,
                                                            myWorkingCopyField.getPreferredSize().height));
+
+    Info info = myVcs.getInfo(file);
+    if (info == null || info.getURL() == null) {
+      throw new VcsException("Can not find url for file: " + file.getPath());
+    }
+    mySrcURL = info.getURL();
 
     myWorkingCopyField.addBrowseFolderListener("Select Working Copy Location", "Select Location to Copy From:",
                                                myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
@@ -123,6 +129,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myRevisionPanel.setRoot(mySrcVirtualFile);
     myRevisionPanel.setProject(myProject);
     myRevisionPanel.setUrlProvider(() -> mySrcURL);
+    myRevisionPanel.setRevisionText(String.valueOf(info.getRevision()));
     updateBranchTagBases();
 
     myRevisionPanel.addChangeListener(e -> getOKAction().setEnabled(isOKActionEnabled()));
@@ -207,19 +214,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
   protected void init() {
     super.init();
-    String revStr = "";
-    Info info = myVcs.getInfo(mySrcFile);
-    if (info != null) {
-      mySrcURL = info.getURL();
-      revStr = String.valueOf(info.getRevision());
-    }
-    if (mySrcURL == null) {
-      return;
-    }
     myWorkingCopyField.setText(mySrcFile.toString());
     myRepositoryField.setText(mySrcURL.toString());
     myToURLText.setText(mySrcURL.toString());
-    myRevisionPanel.setRevisionText(revStr);
     updateControls();
 
     myWorkingCopyRadioButton.setSelected(true);
@@ -264,9 +261,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
   public boolean isOKActionEnabled() {
     myErrorLabel.setText(" ");
-    if (mySrcURL == null) {
-      return false;
-    }
     if (myBranchOrTagRadioButton.isSelected() && myBranchTagBaseComboBox.getComboBox().getSelectedItem() == null) {
       myErrorLabel.setText(message("create.branch.no.base.location.error"));
       return false;
