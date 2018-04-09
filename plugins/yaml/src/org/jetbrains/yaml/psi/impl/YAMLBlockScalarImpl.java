@@ -6,8 +6,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 
@@ -57,7 +59,7 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
       if (childType == YAMLTokenTypes.INDENT && isEol(child.getTreePrev())) {
         thisLineStart = child.getStartOffset() + Math.min(indent, child.getTextLength());
       }
-      else if (childType == YAMLTokenTypes.EOL) {
+      else if (childType == YAMLTokenTypes.SCALAR_EOL) {
         if (thisLineStart != -1) {
           result.add(TextRange.create(thisLineStart, child.getStartOffset()).shiftRight(-myStart));
         }
@@ -136,7 +138,11 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
     return IMPLICIT_INDENT;
   }
 
+  @Contract("null -> false")
   private static boolean isEol(@Nullable ASTNode node) {
-    return node != null && node.getElementType() == YAMLTokenTypes.EOL;
+    if (node == null) {
+      return false;
+    }
+    return YAMLElementTypes.EOL_ELEMENTS.contains(node.getElementType());
   }
 }

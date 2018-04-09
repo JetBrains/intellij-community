@@ -379,7 +379,9 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
 
 {EOL} {
           currentLineIndent = 0;
-          return EOL;
+          // First comment with ident less then block scalar ident should be after the end of this block.
+          // So another EOL type is used to recognize such situation from the parser.
+          return SCALAR_EOL;
       }
 
 {WHITE_SPACE} / {EOL}                    {
