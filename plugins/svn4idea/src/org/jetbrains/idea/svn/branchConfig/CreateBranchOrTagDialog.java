@@ -276,12 +276,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
         return true;
       }
       else if (myWorkingCopyRadioButton.isSelected()) {
-        Info info = myVcs.getInfo(mySrcFile);
-        String srcUrl = info != null && info.getURL() != null ? info.getURL().toString() : null;
-        if (srcUrl == null) {
-          myErrorLabel.setText(message("create.branch.no.working.copy.error", myWorkingCopyField.getText()));
-          return false;
-        }
         return true;
       }
     }
