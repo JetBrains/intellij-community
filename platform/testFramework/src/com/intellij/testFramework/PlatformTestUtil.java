@@ -762,7 +762,7 @@ public class PlatformTestUtil {
 
       if (textA != null && textB != null) {
         if (!StringUtil.equals(textA, textB)) {
-          throw new FileComparisonFailure("Text mismatch in file " + fileBefore.getName(), textA, textB, fileAfter.getPath());
+          throw new FileComparisonFailure("Text mismatch in file " + fileBefore.getName(), textB, textA, fileBefore.getPath());
         }
       }
       else {
