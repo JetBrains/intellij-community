@@ -64,6 +64,6 @@ public class SearchAgainAction extends AnAction implements DumbAware {
       return;
     }
     FileEditor editor = event.getData(PlatformDataKeys.FILE_EDITOR);
-    presentation.setEnabled(editor instanceof TextEditor);
+    presentation.setEnabled(editor instanceof TextEditor && !((TextEditor)editor).getEditor().isOneLineMode());
   }
 }
