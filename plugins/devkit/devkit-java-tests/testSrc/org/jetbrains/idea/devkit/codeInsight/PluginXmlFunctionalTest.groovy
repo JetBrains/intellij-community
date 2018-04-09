@@ -12,7 +12,6 @@ import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.diagnostic.ITNReporter
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
@@ -420,6 +419,14 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 public class MyErrorHandler extends ErrorReportSubmitter {}
 """)
     myFixture.testHighlighting("errorHandlerExtensionInJetBrainsPlugin.xml")
+  }
+
+  void testErrorHandlerExtensionInNonJetBrainsPlugin() {
+    myFixture.addClass("""
+import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
+public class MyErrorHandler extends ErrorReportSubmitter {}
+""")
+    myFixture.testHighlighting("errorHandlerExtensionInNonJetBrainsPlugin.xml")
   }
 
   void testExtensionPointPresentation() {
