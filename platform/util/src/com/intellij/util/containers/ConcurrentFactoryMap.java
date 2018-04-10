@@ -24,11 +24,8 @@ import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractMap;
-import java.util.Collection;
+import java.util.*;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -99,7 +96,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @Override
   public V remove(Object key) {
-    V v = myMap.remove(key);
+    V v = myMap.remove(notNull(key));
     return nullize(v);
   }
 
@@ -140,7 +137,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @Override
   public boolean containsValue(final Object value) {
-    return myMap.containsValue(value);
+    return myMap.containsValue(notNull(value));
   }
 
   @Override
@@ -179,12 +176,12 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @Override
   public V putIfAbsent(@NotNull K key, V value) {
-    return myMap.putIfAbsent(key, value);
+    return myMap.putIfAbsent(key, ConcurrentFactoryMap.<V>notNull(value));
   }
 
   @Override
   public boolean remove(@NotNull Object key, Object value) {
-    return myMap.remove(key, value);
+    return myMap.remove(key, notNull(value));
   }
 
   @Override
