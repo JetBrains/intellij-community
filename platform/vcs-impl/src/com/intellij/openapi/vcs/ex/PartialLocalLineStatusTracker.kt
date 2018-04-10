@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -542,12 +543,17 @@ class PartialLocalLineStatusTracker(project: Project,
 
       val link = ActionGroupLink(rangeList.name, null, group)
 
-      val moveChangesShortcut = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
+      val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
       object : DumbAwareAction() {
         override fun actionPerformed(e: AnActionEvent?) {
           link.linkLabel.doClick()
         }
-      }.registerCustomShortcutSet(moveChangesShortcut, editor.component, disposable)
+      }.registerCustomShortcutSet(moveChangesShortcutSet, editor.component, disposable)
+
+      val shortcuts = moveChangesShortcutSet.shortcuts
+      if (shortcuts.isNotEmpty()) {
+        link.linkLabel.toolTipText = "Move lines to another changelist (${KeymapUtil.getShortcutText(shortcuts.first())})"
+      }
 
       val panel = JPanel(BorderLayout())
       panel.add(link, BorderLayout.CENTER)
