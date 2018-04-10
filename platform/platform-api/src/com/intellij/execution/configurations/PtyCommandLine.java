@@ -70,10 +70,10 @@ public class PtyCommandLine extends GeneralCommandLine {
           logContent = "Unable to retrieve log: " + e.getMessage();
         }
 
-        LOG.error("Couldn't run process with PTY", t, logContent);
+        LOG.debug("Couldn't run process with PTY", t, logContent);
       }
       else {
-        LOG.error("Couldn't run process with PTY", t);
+        LOG.debug("Couldn't run process with PTY", t);
       }
     }
 

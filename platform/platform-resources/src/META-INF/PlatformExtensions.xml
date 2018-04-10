@@ -294,6 +294,8 @@
 
     <postStartupActivity implementation="com.intellij.internal.IconsLoadTime$StartupLoadTime"/>
 
+    <applicationService serviceImplementation="com.intellij.ui.ProjectUICustomization"/>
+
     <!-- General -->
     <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general"
                              instance="com.intellij.ide.GeneralSettingsConfigurable"/>

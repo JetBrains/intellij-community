@@ -991,6 +991,7 @@
     <elementPreviewProvider implementation="com.intellij.codeInsight.preview.ElementPreviewHintProvider"/>
 
     <actionPromoter implementation="com.intellij.ui.EditorTextFieldActionPromoter"/>
+    <actionPromoter implementation="com.intellij.codeInsight.editorActions.TabActionsPromoter"/>
 
     <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
 

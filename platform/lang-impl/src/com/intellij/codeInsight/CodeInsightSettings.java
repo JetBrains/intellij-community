@@ -149,6 +149,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean ADD_MEMBER_IMPORTS_ON_THE_FLY = true;
   public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
 
+  public boolean TAB_EXITS_BRACKETS_AND_QUOTES;
+
   /**
    * Names of classes and packages excluded from (Java) auto-import and completion. These are only IDE-specific settings
    * and don't take project-specific settings into account.

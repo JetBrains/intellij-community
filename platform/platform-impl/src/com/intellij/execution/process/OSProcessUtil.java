@@ -28,7 +28,9 @@ public class OSProcessUtil {
     if (SystemInfo.isWindows) {
       try {
         if (process instanceof WinPtyProcess) {
-          boolean res = WinProcessManager.kill(((WinPtyProcess)process).getChildProcessId(), true);
+          int pid = ((WinPtyProcess) process).getChildProcessId();
+          if (pid == -1) return true;
+          boolean res = WinProcessManager.kill(pid, true);
           process.destroy();
           return res;
         }

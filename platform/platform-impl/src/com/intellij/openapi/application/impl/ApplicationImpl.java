@@ -744,6 +744,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   public void exit(boolean force, boolean exitConfirmed, boolean restart, @NotNull String[] beforeRestart) {
+    exit(force, exitConfirmed, restart, false, beforeRestart);
+  }
+
+  public void exit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, @NotNull String[] beforeRestart) {
     if (!force) {
       if (myExitInProgress) return;
       if (!exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) return;
@@ -751,14 +755,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     myExitInProgress = true;
     if (isDispatchThread()) {
-      doExit(force, exitConfirmed, restart, beforeRestart);
+      doExit(force, exitConfirmed, restart, elevate, beforeRestart);
     }
     else {
-      invokeLater(() -> doExit(force, exitConfirmed, restart, beforeRestart), ModalityState.NON_MODAL);
+      invokeLater(() -> doExit(force, exitConfirmed, restart, elevate, beforeRestart), ModalityState.NON_MODAL);
     }
   }
 
-  private void doExit(boolean force, boolean exitConfirmed, boolean restart, String[] beforeRestart) {
+  private void doExit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, String[] beforeRestart) {
     try {
       if (!force && !confirmExitIfNeeded(exitConfirmed)) {
         return;
@@ -786,7 +790,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
-          Restarter.scheduleRestart(beforeRestart);
+          Restarter.scheduleRestart(elevate, beforeRestart);
         }
         catch (Throwable t) {
           LOG.error("Restart failed", t);

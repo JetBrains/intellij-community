@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
@@ -697,11 +698,11 @@ public class PsiTreeUtil {
     return aClass.cast(element);
   }
 
-  public static <T extends PsiElement> List<T> collectParentsOfType(PsiElement element, Class<T> parent, Class<? extends PsiElement>... stopClasses) {
+  public static <T extends PsiElement> List<T> collectParents(PsiElement element, Class<T> parent, Predicate<PsiElement> stopCondition) {
     element = element.getParent();
     List<T> parents = new SmartList<>();
     while (element != null) {
-      if (instanceOf(element, stopClasses)) break;
+      if (stopCondition.test(element)) break;
       if (parent.isInstance(element)) {
         parents.add(parent.cast(element));
       }

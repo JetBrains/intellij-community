@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ProjectUICustomization;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -68,12 +69,12 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
 
   @Override
   public String getCheckBoxName() {
-    return IdeBundle.message("checkbox.include.non.project.classes");
+    return ProjectUICustomization.replaceProjectConceptName(IdeBundle.message("checkbox.include.non.project.classes"));
   }
 
   @Override
   public String getNotInMessage() {
-    return IdeBundle.message("label.no.matches.found.in.project");
+    return ProjectUICustomization.replaceProjectConceptName(IdeBundle.message("label.no.matches.found.in.project"));
   }
 
   @Override

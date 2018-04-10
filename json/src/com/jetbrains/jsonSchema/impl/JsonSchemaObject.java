@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,8 @@ import java.util.stream.Collectors;
 public class JsonSchemaObject {
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
+  @NonNls public static final String ITEMS = "items";
+  @NonNls public static final String ADDITIONAL_ITEMS = "additionalItems";
   @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
   @NotNull private final JsonObject myJsonObject;
   @Nullable private Map<String, JsonSchemaObject> myDefinitionsMap;
@@ -641,10 +644,40 @@ public class JsonSchemaObject {
         current = current.getProperties().get(parts.get(++i));
         continue;
       }
-
+      if (ITEMS.equals(part)) {
+        if (i == (parts.size() - 1)) {
+          current = current.getItemsSchema();
+        }
+        else {
+          //noinspection AssignmentToForLoopParameter
+          Integer next = tryParseInt(parts.get(++i));
+          List<JsonSchemaObject> itemsSchemaList = current.getItemsSchemaList();
+          if (itemsSchemaList != null && next != null && next < itemsSchemaList.size()) {
+            current = itemsSchemaList.get(next);
+          }
+        }
+        continue;
+      }
+      if (ADDITIONAL_ITEMS.equals(part)) {
+        if (i == (parts.size() - 1)) {
+          current = current.getAdditionalItemsSchema();
+        }
+        continue;
+      }
+      
       current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(part);
     }
     return current;
+  }
+
+  @Nullable
+  private static Integer tryParseInt(String s) {
+    try {
+      return Integer.parseInt(s);
+    }
+    catch (Exception __) {
+      return null;
+    }
   }
 
   @Override
