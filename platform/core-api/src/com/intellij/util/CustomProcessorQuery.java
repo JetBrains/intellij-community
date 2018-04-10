@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.concurrency.AsyncFuture;
 import org.jetbrains.annotations.NotNull;
 
 public final class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
@@ -16,6 +17,12 @@ public final class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
   @Override
   protected boolean processResults(@NotNull Processor<R> consumer) {
     return myBaseQuery.forEach((Processor<B>)myPreprocessor.apply(consumer)::process);
+  }
+
+  @NotNull
+  @Override
+  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<R> consumer) {
+    return myBaseQuery.forEachAsync(myPreprocessor.apply(consumer)::process);
   }
 
   @Override
