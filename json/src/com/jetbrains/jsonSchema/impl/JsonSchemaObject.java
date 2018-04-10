@@ -600,42 +600,30 @@ public class JsonSchemaObject {
         current = current.getProperties().get(parts.get(++i));
         continue;
       }
-      Pair<JsonSchemaObject, Integer> arrayResult = ObjectUtils.coalesce(
-        handleArrayItem(ITEMS, parts, i, current.getItemsSchema(), current.getItemsSchemaList()),
-        handleArrayItem(ADDITIONAL_ITEMS, parts, i, current.getAdditionalItemsSchema(), ContainerUtil.emptyList()));
-      if (arrayResult != null) {
-        //noinspection AssignmentToForLoopParameter
-        i = arrayResult.second;
-        current = arrayResult.first;
+      if (ITEMS.equals(part)) {
+        if (i == (parts.size() - 1)) {
+          current = current.getItemsSchema();
+        }
+        else {
+          //noinspection AssignmentToForLoopParameter
+          Integer next = tryParseInt(parts.get(++i));
+          List<JsonSchemaObject> itemsSchemaList = current.getItemsSchemaList();
+          if (itemsSchemaList != null && next != null && next < itemsSchemaList.size()) {
+            current = itemsSchemaList.get(next);
+          }
+        }
         continue;
       }
+      if (ADDITIONAL_ITEMS.equals(part)) {
+        if (i == (parts.size() - 1)) {
+          current = current.getAdditionalItemsSchema();
+        }
+        continue;
+      }
+      
       current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(part);
     }
     return current;
-  }
-
-  @Nullable
-  private static Pair<JsonSchemaObject, Integer> handleArrayItem(@NotNull String name,
-                                                                 List<String> parts,
-                                                                 int i,
-                                                                 @Nullable JsonSchemaObject arraySchema,
-                                                                 @Nullable List<JsonSchemaObject> arraySchemaList) {
-    final String part = parts.get(i);
-    if (!name.equals(part)) {
-      return null;
-    }
-    if (i == (parts.size() - 1)) {
-      if (arraySchema != null) {
-        return Pair.create(arraySchema, i);
-      }
-    }
-    else {
-      Integer next = tryParseInt(parts.get(++i));
-      if (arraySchemaList != null && next != null && next >= 0 && next < arraySchemaList.size()) {
-        return Pair.create(arraySchemaList.get(next), i);
-      }
-    }
-    return null;
   }
 
   @Nullable
