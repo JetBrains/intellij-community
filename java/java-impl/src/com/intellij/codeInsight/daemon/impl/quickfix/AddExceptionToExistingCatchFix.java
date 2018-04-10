@@ -8,22 +8,14 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.components.JBList;
+import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -50,10 +41,9 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
     List<PsiCatchSection> catchSections = context.myCatches;
     List<PsiClassType> unhandledExceptions = context.myExceptions;
-    List<String> catchTexts = catchSections.stream()
-                                           .map(s -> s.getCatchType()).filter(Objects::nonNull)
-                                           .map(type -> type.getPresentableText())
-                                           .collect(Collectors.toList());
+    List<PsiCatchSection> catches = catchSections.stream()
+                                         .filter(s -> s.getCatchType() != null && s.getParameter() != null)
+                                         .collect(Collectors.toList());
 
     setText(context.getMessage());
 
@@ -64,57 +54,21 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       addTypeToCatch(unhandledExceptions, selectedSection);
     }
     else {
-      JBList<String> list = new JBList<>(catchTexts);
-      AtomicReference<RangeHighlighter> rangeHighlighter = new AtomicReference<>(); // to change in lambda
-      MarkupModel markupModel = editor.getMarkupModel();
-
-      list.addListSelectionListener(e -> {
-        dropHighlight(rangeHighlighter);
-        int selectedIndex = list.getSelectedIndex();
-        if (selectedIndex < 0) return;
-        PsiParameter elementToHighlight = catchSections.get(selectedIndex).getParameter();
-        assert elementToHighlight != null;
-        TextRange range = elementToHighlight.getTextRange();
-
-        final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(range.getStartOffset());
-        editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
-
-        TextAttributes attributes =
-          EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        RangeHighlighter highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                                       HighlighterLayer.SELECTION - 1, attributes,
-                                                                       HighlighterTargetArea.EXACT_RANGE);
-        rangeHighlighter.set(highlighter);
-      });
-
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
-                    .setTitle("Select catch block")
-                    .setMovable(false)
-                    .setResizable(false)
-                    .setRequestFocus(true)
-                    .setItemChoosenCallback(() -> {
-                      int selectedIndex = list.getSelectedIndex();
-                      PsiCatchSection selectedSection = catchSections.get(selectedIndex);
-                      addTypeToCatch(unhandledExceptions, selectedSection);
-                    })
-                    .addListener(new JBPopupAdapter() {
-                      @Override
-                      public void onClosed(LightweightWindowEvent event) {
-                        dropHighlight(rangeHighlighter);
-                      }
-                    })
-                    .createPopup()
-                    .showInBestPositionFor(editor);
+      IntroduceTargetChooser.showChooser(
+        editor,
+        catches,
+        new Pass<PsiCatchSection>() {
+          @Override
+          public void pass(PsiCatchSection section) {
+            addTypeToCatch(unhandledExceptions, section);
+          }
+        },
+        section -> Objects.requireNonNull(section.getCatchType()).getPresentableText(),
+        QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"),
+        dom -> Objects.requireNonNull(((PsiCatchSection)dom).getParameter()).getTextRange()
+      );
     }
   }
-
-  private static void dropHighlight(AtomicReference<RangeHighlighter> rangeHighlighter) {
-    RangeHighlighter old = rangeHighlighter.get();
-    if (old != null) {
-      old.dispose();
-    }
-  }
-
 
   private static void addTypeToCatch(@NotNull List<PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
     Project project = catchSection.getProject();
