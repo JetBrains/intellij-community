@@ -437,6 +437,9 @@ class JsonSchemaAnnotatorChecker {
           if (!Boolean.TRUE.equals(schema.getAdditionalItemsAllowed())) {
             error("Additional items are not allowed", arrayValue.getDelegate());
           }
+          else if (schema.getAdditionalItemsSchema() != null) {
+            checkObjectBySchemaRecordErrors(schema.getAdditionalItemsSchema(), arrayValue);
+          }
         }
       }
     }

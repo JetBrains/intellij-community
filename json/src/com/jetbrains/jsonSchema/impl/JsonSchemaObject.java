@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,8 @@ import java.util.stream.Collectors;
 public class JsonSchemaObject {
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
+  @NonNls public static final String ITEMS = "items";
+  @NonNls public static final String ADDITIONAL_ITEMS = "additionalItems";
   @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
   @NotNull private final JsonObject myJsonObject;
   @Nullable private Map<String, JsonSchemaObject> myDefinitionsMap;
@@ -597,10 +600,52 @@ public class JsonSchemaObject {
         current = current.getProperties().get(parts.get(++i));
         continue;
       }
-
+      Pair<JsonSchemaObject, Integer> arrayResult = ObjectUtils.coalesce(
+        handleArrayItem(ITEMS, parts, i, current.getItemsSchema(), current.getItemsSchemaList()),
+        handleArrayItem(ADDITIONAL_ITEMS, parts, i, current.getAdditionalItemsSchema(), ContainerUtil.emptyList()));
+      if (arrayResult != null) {
+        //noinspection AssignmentToForLoopParameter
+        i = arrayResult.second;
+        current = arrayResult.first;
+        continue;
+      }
       current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(part);
     }
     return current;
+  }
+
+  @Nullable
+  private static Pair<JsonSchemaObject, Integer> handleArrayItem(@NotNull String name,
+                                                                 List<String> parts,
+                                                                 int i,
+                                                                 @Nullable JsonSchemaObject arraySchema,
+                                                                 @Nullable List<JsonSchemaObject> arraySchemaList) {
+    final String part = parts.get(i);
+    if (!name.equals(part)) {
+      return null;
+    }
+    if (i == (parts.size() - 1)) {
+      if (arraySchema != null) {
+        return Pair.create(arraySchema, i);
+      }
+    }
+    else {
+      Integer next = tryParseInt(parts.get(++i));
+      if (arraySchemaList != null && next != null && next >= 0 && next < arraySchemaList.size()) {
+        return Pair.create(arraySchemaList.get(next), i);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Integer tryParseInt(String s) {
+    try {
+      return Integer.parseInt(s);
+    }
+    catch (Exception __) {
+      return null;
+    }
   }
 
   @Override

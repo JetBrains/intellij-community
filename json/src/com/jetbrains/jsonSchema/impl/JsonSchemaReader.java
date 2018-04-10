@@ -179,8 +179,8 @@ public class JsonSchemaReader {
     READERS_MAP.put("pattern", (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) object.setPattern(StringUtil.unquoteString(element.getText()));
     });
-    READERS_MAP.put("additionalItems", createAdditionalItems());
-    READERS_MAP.put("items", createItems());
+    READERS_MAP.put(JsonSchemaObject.ADDITIONAL_ITEMS, createAdditionalItems());
+    READERS_MAP.put(JsonSchemaObject.ITEMS, createItems());
     READERS_MAP.put("maxItems", (element, object, queue) -> {
       if (element instanceof JsonNumberLiteral) object.setMaxItems((int)((JsonNumberLiteral)element).getValue());
     });
