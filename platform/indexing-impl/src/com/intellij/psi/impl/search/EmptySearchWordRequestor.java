@@ -4,6 +4,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.model.ModelElement;
 import com.intellij.model.search.OccurenceSearchRequestor;
 import com.intellij.model.search.SearchWordRequestor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,12 @@ final class EmptySearchWordRequestor implements SearchWordRequestor {
   @NotNull
   @Override
   public SearchWordRequestor setSearchScope(@NotNull SearchScope searchScope) {
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public SearchWordRequestor restrictSearchScopeTo(@NotNull FileType... fileTypes) {
     return this;
   }
 

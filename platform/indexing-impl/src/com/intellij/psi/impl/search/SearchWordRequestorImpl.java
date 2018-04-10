@@ -5,8 +5,10 @@ import com.intellij.model.ModelElement;
 import com.intellij.model.search.OccurenceSearchRequestor;
 import com.intellij.model.search.SearchWordRequestor;
 import com.intellij.model.search.TextOccurenceProcessorProvider;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
   private final @NotNull String myWord;
 
   private SearchScope mySearchScope;
+  private FileType[] myFileTypes;
   private boolean myCaseSensitive = true;
   private Short mySearchContext;
   private ModelElement myTargetHint;
@@ -35,13 +38,26 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
 
   @NotNull
   private SearchScope getSearchScope() {
-    return mySearchScope != null ? mySearchScope : myCollector.getParameters().getEffectiveSearchScope();
+    SearchScope scope = mySearchScope != null ? mySearchScope : myCollector.getParameters().getEffectiveSearchScope();
+    if (myFileTypes != null && myFileTypes.length > 0) {
+      return PsiSearchScopeUtil.restrictScopeTo(scope, myFileTypes);
+    }
+    else {
+      return scope;
+    }
   }
 
   @NotNull
   @Override
   public SearchWordRequestor setSearchScope(@NotNull SearchScope searchScope) {
     mySearchScope = searchScope;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public SearchWordRequestor restrictSearchScopeTo(@NotNull FileType... fileTypes) {
+    myFileTypes = fileTypes;
     return this;
   }
 
