@@ -1081,4 +1081,8 @@
   <action id="RunDashboard.ShowConfigurations">
     <keyboard-shortcut first-keystroke="control shift T"/>
   </action>
+
+  <action id="BraceOrQuoteOut">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
 </keymap>
