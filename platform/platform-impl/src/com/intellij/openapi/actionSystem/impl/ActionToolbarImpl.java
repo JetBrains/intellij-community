@@ -26,6 +26,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -953,10 +954,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         g.setColor(UIUtil.getSeparatorColor());
         if (getParent() != null) {
           if (myOrientation == SwingConstants.HORIZONTAL) {
-            UIUtil.drawLine(g, offset, gap, offset, getParent().getSize().height - gap);
+            LinePainter2D.paint((Graphics2D)g, offset, gap, offset, getParent().getSize().height - gap);
           }
           else {
-            UIUtil.drawLine(g, gap, offset, getParent().getSize().width - gap, offset);
+            LinePainter2D.paint((Graphics2D)g, gap, offset, getParent().getSize().width - gap, offset);
           }
         }
       }
@@ -1335,7 +1336,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         setBorder(JBUI.Borders.empty(0));
         setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 22) : JBUI.size(25, 22));
       } else {
-        setBorder(JBUI.Borders.empty(2));
+        setBorder(JBUI.Borders.empty(3));
         setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       }
       setOpaque(true);

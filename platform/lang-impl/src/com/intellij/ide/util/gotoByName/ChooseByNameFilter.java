@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
@@ -80,7 +81,12 @@ public abstract class ChooseByNameFilter<T> {
                             @NotNull Project project) {
     myParentPopup = popup;
     DefaultActionGroup actionGroup = new DefaultActionGroup("go.to.file.filter", false);
-    ToggleAction action = new FilterAction();
+    ToggleAction action = new FilterAction() {
+      @Override
+      protected boolean isActive() {
+        return !filterConfiguration.getState().getFilteredOutFileTypeNames().isEmpty();
+      }
+    };
     actionGroup.add(action);
     myToolbar = ActionManager.getInstance().createActionToolbar("gotfile.filter", actionGroup, true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -238,5 +244,16 @@ public abstract class ChooseByNameFilter<T> {
         close();
       }
     }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Icon icon = getTemplatePresentation().getIcon();
+      e.getPresentation().setIcon(isActive() ? ExecutionUtil.getLiveIndicator(icon) : icon);
+    }
+    
+    protected boolean isActive() {
+      return false;
+    }
+    
   }
 }

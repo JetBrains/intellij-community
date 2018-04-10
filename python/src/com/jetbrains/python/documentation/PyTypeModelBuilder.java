@@ -51,6 +51,13 @@ public class PyTypeModelBuilder {
       accept(visitor);
       return visitor.getDescription();
     }
+
+    @NotNull
+    public String asPep484TypeHint() {
+      final TypeToStringVisitor visitor = new TypeToPep484TypeHintVisitor();
+      accept(visitor);
+      return visitor.getString();
+    }
   }
 
   static class OneOf extends TypeModel {
@@ -220,7 +227,17 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyNamedTupleType) {
+    if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
+      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
+      // Special case: render Type[type] as just type
+      if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
+        result = NamedType.nameOrAny(type);
+      }
+      else {
+        result = new ClassObjectType(build(instanceType, allowUnions));
+      }
+    }
+    else if (type instanceof PyNamedTupleType) {
       result = NamedType.nameOrAny(type);
     }
     else if (type instanceof PyTupleType) {
@@ -273,16 +290,6 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       result = buildCallable((PyCallableType)type);
-    }
-    else if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
-      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
-      // Special case: render Type[type] as just type
-      if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
-        result = NamedType.nameOrAny(type);
-      }
-      else {
-        result = new ClassObjectType(build(instanceType, allowUnions));
-      }
     }
     else if (type instanceof PyGenericType) {
       result = new GenericType(type.getName());
@@ -380,6 +387,40 @@ public class PyTypeModelBuilder {
     }
   }
 
+  private static class TypeToPep484TypeHintVisitor extends TypeToStringVisitor {
+    @Override
+    protected boolean maxDepthExceeded() {
+      return false;
+    }
+
+    @Override
+    public void function(FunctionType function) {
+      add("Callable[");
+      final Collection<TypeModel> parameters = function.parameters;
+      if (parameters != null) {
+        add("[");
+        processList(parameters);
+        add("]");
+      }
+      else {
+        add("...");
+      }
+      add(", ");
+      function.returnType.accept(this);
+      add("]");
+    }
+
+    @Override
+    public void param(ParamType param) {
+      if (param.type != null) {
+        param.type.accept(this);
+      }
+      else {
+        add("Any");
+      }
+    }
+  }
+
   private static class TypeToBodyWithLinksVisitor extends TypeNameVisitor {
     private ChainIterable<String> myBody;
     private PsiElement myAnchor;
@@ -429,7 +470,7 @@ public class PyTypeModelBuilder {
     @Override
     public void oneOf(OneOf oneOf) {
       myDepth++;
-      if (myDepth > MAX_DEPTH) {
+      if (maxDepthExceeded()) {
         add("...");
         return;
       }
@@ -439,7 +480,7 @@ public class PyTypeModelBuilder {
       myDepth--;
     }
 
-    private void processList(@NotNull Collection<TypeModel> list) {
+    protected void processList(@NotNull Collection<TypeModel> list) {
       boolean first = true;
       for (TypeModel t : list) {
         if (!first) {
@@ -458,7 +499,7 @@ public class PyTypeModelBuilder {
     @Override
     public void collectionOf(CollectionOf collectionOf) {
       myDepth++;
-      if (myDepth > MAX_DEPTH) {
+      if (maxDepthExceeded()) {
         add("...");
         return;
       }
@@ -481,7 +522,7 @@ public class PyTypeModelBuilder {
     @Override
     public void function(FunctionType function) {
       myDepth++;
-      if (myDepth > MAX_DEPTH) {
+      if (maxDepthExceeded()) {
         add("...");
         return;
       }
@@ -498,10 +539,14 @@ public class PyTypeModelBuilder {
       myDepth--;
     }
 
+    protected boolean maxDepthExceeded() {
+      return myDepth > MAX_DEPTH;
+    }
+
     @Override
     public void param(ParamType param) {
       myDepth++;
-      if (myDepth > MAX_DEPTH) {
+      if (maxDepthExceeded()) {
         add("...");
         return;
       }

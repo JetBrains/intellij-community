@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental;
 
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -26,6 +25,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,13 +71,18 @@ public class CompileScopeImpl extends CompileScope {
   }
 
   @Override
+  public boolean isAllTargetsOfTypeAffected(@NotNull BuildTargetType<?> type) {
+    return myTypes.contains(type) && myFiles.isEmpty();
+  }
+
+  @Override
   public boolean isBuildForced(@NotNull BuildTarget<?> target) {
     return myTypesToForceBuild.contains(target.getTargetType()) && myFiles.isEmpty() && isWholeTargetAffected(target);
   }
 
   @Override
   public boolean isBuildForcedForAllTargets(@NotNull BuildTargetType<?> targetType) {
-    return myTypesToForceBuild.contains(targetType) && myTypes.contains(targetType) && myFiles.isEmpty();
+    return myTypesToForceBuild.contains(targetType) && isAllTargetsOfTypeAffected(targetType);
   }
 
   @Override

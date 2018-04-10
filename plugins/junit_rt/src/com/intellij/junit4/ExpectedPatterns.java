@@ -17,7 +17,6 @@ package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.testFrameworks.AbstractExpectedPatterns;
-import junit.framework.ComparisonFailure;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +37,7 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
   };
 
   private static final String MESSAGE_LENGTH_FOR_PATTERN_MATCHING = "idea.junit.message.length.threshold";
-  private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = ComparisonFailure.class.getName();
+  private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = "junit.framework.ComparisonFailure";
   private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
 
   static {

@@ -15,6 +15,8 @@
  */
 package com.intellij.util.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.AlphaComposite;
 import java.awt.Composite;
 import java.awt.Graphics2D;
@@ -46,7 +48,7 @@ public interface RegionPainter<T> {
    * @param height height of the area to paint
    * @param object an optional configuration parameter
    */
-  void paint(Graphics2D g, int x, int y, int width, int height, T object);
+  void paint(Graphics2D g, int x, int y, int width, int height, @Nullable T object);
 
   /**
    * This class provides a base functionality to paint a region with the specified alpha.

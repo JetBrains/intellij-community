@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaDirectoryService
@@ -193,6 +194,36 @@ class FileTemplatesTest extends IdeaTestCase {
   }
 
   void testSaveLoadCustomTemplateDottedExt() {
-    doTestSaveLoadTemplate("name", "ext.has.dots")
+    if (checkFileWithUnicodeNameCanBeFound()) {
+      doTestSaveLoadTemplate("name", "ext.has.dots")
+    }
+  }
+
+  private boolean checkFileWithUnicodeNameCanBeFound() {
+    try {
+      //noinspection GroovyAccessibility
+      String name = FTManager.encodeFileName("test", "ext.has.dots")
+      File file = createTempFile(name, "test")
+      myFilesToDelete.add(file)
+      FileUtil.loadFile(new File(file.getAbsolutePath()), CharsetToolkit.UTF8_CHARSET)
+      LOG.debug("File loaded: " + file.getAbsolutePath())
+      File dir = new File(file.getParent())
+      File[] files = dir.listFiles()
+      assertNotNull(files)
+      List<String> nameList = new ArrayList<>()
+      for (File child : files) {
+        nameList.add(child.getName())
+      }
+      for (String listedName : nameList) {
+        if (listedName == name) {
+          return true
+        }
+      }
+      LOG.debug("No matching file found, locale: " + Locale.getDefault().displayName)
+      return false
+    }
+    catch (IOException ignored) {
+      return false
+    }
   }
 }

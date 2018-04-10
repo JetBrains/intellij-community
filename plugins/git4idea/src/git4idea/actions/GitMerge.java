@@ -44,9 +44,7 @@ public class GitMerge extends GitMergeAction {
     }
     catch (VcsException e) {
       GitVcs vcs = GitVcs.getInstance(project);
-      if (vcs.getExecutableValidator().checkExecutableAndShowMessageIfNeeded(null)) {
-        vcs.showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
-      }
+      vcs.showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
       return null;
     }
     if (!dialog.showAndGet()) {

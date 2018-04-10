@@ -10,6 +10,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -54,7 +55,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
   }
 
   @Override
-  public void runTestOn(final String sdkHome) throws InvalidSdkException, IOException {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException, IOException {
     // Set as default runner to check
     if (myTestRunnerName != null) {
       TestRunnerService.getInstance(myFixture.getModule()).setProjectConfiguration(myTestRunnerName);
@@ -153,7 +154,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
     }
 
     @Override
-    public void runTestOn(final String sdkHome) {
+    public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) {
       final T configuration =
         createFactory().createTemplateConfiguration(getProject());
       configuration.setModule(myFixture.getModule());
@@ -179,8 +180,8 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
    */
   abstract static class PyConfigurationValidationTask<T extends PyAbstractTestConfiguration> extends PyConfigurationCreationTask<T> {
     @Override
-    public void runTestOn(final String sdkHome) {
-      super.runTestOn(sdkHome);
+    public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) {
+      super.runTestOn(sdkHome, existingSdk);
       validateConfiguration();
     }
 

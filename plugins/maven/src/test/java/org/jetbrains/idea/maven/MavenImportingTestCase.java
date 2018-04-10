@@ -3,9 +3,8 @@
  */
 package org.jetbrains.idea.maven;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -324,15 +323,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected Module getModule(final String name) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
-      assertNotNull("Module " + name + " not found", m);
-      return m;
-    }
-    finally {
-      accessToken.finish();
-    }
+    Module m = ReadAction.compute(() -> ModuleManager.getInstance(myProject).findModuleByName(name));
+    assertNotNull("Module " + name + " not found", m);
+    return m;
   }
 
   private ContentEntry getContentRoot(String moduleName) {

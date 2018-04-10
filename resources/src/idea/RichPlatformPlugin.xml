@@ -324,6 +324,7 @@
 
     <statistics.usagesCollector implementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.compiler.CompilerSettingsUsageCollector"/>
+    <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
 
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
@@ -338,6 +339,7 @@
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.MakeProjectStepBeforeRun" id="makeProjectBeforeRun"/>
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck" id="compileBeforeRunNoErrorCheck" order="after compileBeforeRun"/>
     <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider" order="after compileBeforeRunNoErrorCheck"/>
+    <externalSystem.beforeRunTaskImporter implementation="com.intellij.compiler.options.CompileStepBeforeRunImporter"/>
     <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
     <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
 

@@ -57,6 +57,14 @@ public class ClassMayBeInterfaceInspectionTest extends LightInspectionTestCase {
            "}");
   }
 
+  public void testObjectMethods() {
+    doTest("abstract class X {\n" +
+           "  public boolean equals(Object o) { return false; }\n" +
+           "  public int hashCode() { return 1; }\n" +
+           "  public String toString() { return null; }\n" +
+           "}");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     final ClassMayBeInterfaceInspection inspection = new ClassMayBeInterfaceInspection();

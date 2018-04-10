@@ -100,6 +100,4 @@ val UAnnotation?.namePsiElement: PsiElement?
   }
 
 
-interface UAnnotationEx : UAnnotation {
-  val uastAnchor: UElement?
-}
+interface UAnnotationEx : UAnnotation, UAnchorOwner

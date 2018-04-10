@@ -163,15 +163,16 @@ public class JUnitUtil {
     if (isJUnit5(psiClass) && isJUnit5TestClass(psiClass, checkAbstract)) {
       return true;
     }
+    
+    if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
+    
     final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(psiClass, PsiClass.class);
     if (topLevelClass != null) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(topLevelClass, Collections.singleton(RUN_WITH));
-      if (annotation != null && !isInheritorOrSelfRunner(annotation, RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD)) {
+      if (annotation != null && !isInheritorOrSelfRunner(annotation, RUNNERS_UNAWARE_OF_INNER_CLASSES)) {
         return true;
       }
     }
-
-    if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, CHECK_HIERARCHY)) return true;
 

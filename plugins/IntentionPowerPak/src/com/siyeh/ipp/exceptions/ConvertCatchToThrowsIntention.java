@@ -15,12 +15,12 @@
  */
 package com.siyeh.ipp.exceptions;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.fixes.DeleteCatchSectionFix;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +69,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
         catchSection.delete();
       }
       else {
-        DeleteCatchSectionFix.unwrapTryBlock(tryStatement);
+        BlockUtils.unwrapTryBlock(tryStatement);
       }
     });
   }

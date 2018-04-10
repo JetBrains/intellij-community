@@ -74,7 +74,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
     if (function != null) {
-      if (LanguageLevel.forElement(function).isOlderThan(LanguageLevel.PYTHON30) && function.getParameterList().hasPositionalContainer()) {
+      if (LanguageLevel.forElement(function).isPython2() && function.getParameterList().hasPositionalContainer()) {
         return false;
       }
 

@@ -326,6 +326,12 @@ public abstract class DumbService {
   }
 
   /**
+   * Runs a heavy activity and suspends indexing (if any) for this time. The user still has the possibility to manually pause and resume the indexing. In that case, indexing won't be resumed automatically after the activity finishes.
+   * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused 
+   */
+  public abstract void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity);
+
+  /**
    * @see #DUMB_MODE
    */
   public interface DumbModeListener {

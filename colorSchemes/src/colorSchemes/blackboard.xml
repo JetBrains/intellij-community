@@ -420,11 +420,7 @@
         <option name="FOREGROUND" value="D8FA3C" />
       </value>
     </option>
-    <option name="DEFAULT_FUNCTION_CALL">
-      <value>
-        <option name="FOREGROUND" value="FF6400" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_IDENTIFIER" name="DEFAULT_FUNCTION_CALL" />
     <option name="DEFAULT_FUNCTION_DECLARATION">
       <value>
         <option name="FOREGROUND" value="FF6400" />
@@ -570,12 +566,6 @@
         <option name="EFFECT_TYPE" value="2" />
         <option name="EFFECT_COLOR" value="ff6767" />
         <option name="ERROR_STRIPE_COLOR" value="ff0000" />
-      </value>
-    </option>
-    <option name="EXECUTIONPOINT_ATTRIBUTES">
-      <value>
-        <option name="FOREGROUND" value="000101" />
-        <option name="BACKGROUND" value="c7c7ff" />
       </value>
     </option>
     <option name="FOLLOWED_HYPERLINK_ATTRIBUTES">

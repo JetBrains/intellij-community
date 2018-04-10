@@ -20,7 +20,6 @@ import com.intellij.compiler.impl.CompileScopeUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
@@ -40,12 +39,8 @@ import java.util.Set;
 public class ArtifactBuildTargetScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override
-  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull final CompileScope baseScope, @NotNull CompilerFilter filter,
+  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull final CompileScope baseScope,
                                                          @NotNull final Project project, final boolean forceBuild) {
-    final ArtifactsCompiler compiler = ArtifactsCompiler.getInstance(project);
-    if (compiler == null || !filter.acceptCompiler(compiler)) {
-      return Collections.emptyList();
-    }
     final List<TargetTypeBuildScope> scopes = new ArrayList<>();
     new ReadAction() {
       protected void run(@NotNull final Result result) {

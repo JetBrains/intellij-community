@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -117,7 +118,7 @@ public class PyCustomType implements PyClassLikeType {
     return Collections.emptyList();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public final List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                                 @Nullable final PyExpression location,
@@ -128,9 +129,8 @@ public class PyCustomType implements PyClassLikeType {
 
     // Delegate calls to classes, we mimic but filter if filter is set.
     for (final PyClassLikeType typeToMimic : myTypesToMimic) {
-      final List<? extends RatedResolveResult> results = typeToMimic.toInstance().resolveMember(
-        name, location, direction, resolveContext, inherited
-      );
+      final List<? extends RatedResolveResult> results =
+        typeToMimic.toInstance().resolveMember(name, location, direction, resolveContext, inherited);
 
       if (results != null) {
         globalResult.addAll(Collections2.filter(results, new ResolveFilter()));
@@ -158,7 +158,7 @@ public class PyCustomType implements PyClassLikeType {
 
   @Override
   public final boolean isCallable() {
-    if (!myInstanceType) {
+    if (!myInstanceType || PyTypingTypeProvider.CALLABLE.equals(myQualifiedName)) {
       return true; // Due to ctor
     }
     for (final PyClassLikeType typeToMimic : myTypesToMimic) {
@@ -182,7 +182,7 @@ public class PyCustomType implements PyClassLikeType {
     return getReturnType(context);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public final List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                                 @Nullable final PyExpression location,

@@ -315,13 +315,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
             compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink, compilingTool, hasModules);
           }
           finally {
-            // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
             filesWithErrors = diagnosticSink.getFilesWithErrors();
-            for (File file : filesWithErrors) {
-              if (!file.exists()) {
-                FSOperations.markDeleted(context, file);
-              }
-            }
+            // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
+            //for (File file : filesWithErrors) {
+            //  if (!file.exists()) {
+            //    FSOperations.markDeleted(context, file);
+            //  }
+            //}
           }
         }
 
@@ -563,9 +563,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return result;
   }
 
-  private static boolean shouldUseReleaseOption(CompileContext context, int compilerVersion, int chunkSdkVersion, int targetPlatformVersion) {
-    // -release option makes sense for javac only and is supported in java9+ and higher
-    if (compilerVersion >= 9 && chunkSdkVersion > 0 && targetPlatformVersion > 0 && isJavac(COMPILING_TOOL.get(context))) {
+  private static boolean shouldUseReleaseOption(JpsJavaCompilerConfiguration config, int compilerVersion, int chunkSdkVersion, int targetPlatformVersion) {
+    if (!config.useReleaseOption()) {
+      return false;
+    }
+    // --release option is supported in java9+ and higher
+    if (compilerVersion >= 9 && chunkSdkVersion > 0 && targetPlatformVersion > 0) {
       if (chunkSdkVersion < 9) {
         // target sdk is set explicitly and differs from compiler SDK, so for consistency we should link against it
         return false;
@@ -919,7 +922,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
+    if (shouldUseReleaseOption(compilerConfiguration, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
       options.add("--release");
       options.add(complianceOption(bytecodeTarget));
       return;

@@ -160,7 +160,7 @@ class InlineToAnonymousConstructorProcessor {
     superNewExpression = (PsiNewExpression)ChangeContextUtil.decodeContextInfo(superNewExpression, superNewExpression.getAnonymousClass(), null);
     PsiAnonymousClass newExpressionAnonymousClass = superNewExpression.getAnonymousClass();
     if (newExpressionAnonymousClass != null && 
-        AnonymousCanBeLambdaInspection.canBeConvertedToLambda(newExpressionAnonymousClass, false, Collections.emptySet())) {
+        AnonymousCanBeLambdaInspection.isLambdaForm(newExpressionAnonymousClass, false, Collections.emptySet())) {
       PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(superNewExpression, newExpressionAnonymousClass.getBaseClassType());
       JavaCodeStyleManager.getInstance(newExpressionAnonymousClass.getProject()).shortenClassReferences(superNewExpression.replace(lambda));
     }

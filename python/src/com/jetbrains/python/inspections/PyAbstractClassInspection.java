@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
+import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -43,7 +45,7 @@ public class PyAbstractClassInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass pyClass) {
-      if (isAbstract(pyClass)) {
+      if (isAbstract(pyClass) || PyProtocolsKt.isProtocol(pyClass, myTypeEvalContext)) {
         return;
       }
       final List<PyFunction> toImplement = PyOverrideImplementUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext);

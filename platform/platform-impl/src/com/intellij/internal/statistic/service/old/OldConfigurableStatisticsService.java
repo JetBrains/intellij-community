@@ -36,6 +36,7 @@ public class OldConfigurableStatisticsService extends
   private static final Logger LOG = Logger.getInstance(OldConfigurableStatisticsService.class);
   private final StatisticsConnectionService connectionService = new OldStatisticsConnectionService();
 
+  @NotNull
   @Override
   public String sendData() {
     String url = connectionService.getServiceUrl();

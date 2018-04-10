@@ -99,7 +99,7 @@ public class PyPackageUtilTest extends PyTestCase {
     checkRequirements(PyPackageUtil.getRequirementsFromTxt(module), 1);
 
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(),
-                                             () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "Markdown", LanguageLevel.PYTHON30));
+                                             () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "Markdown", LanguageLevel.PYTHON34));
 
     checkRequirements(PyPackageUtil.getRequirementsFromTxt(module));
   }
@@ -173,7 +173,7 @@ public class PyPackageUtilTest extends PyTestCase {
     assertNull(isRequirementsTxt ? PyPackageUtil.getRequirementsFromTxt(module) : PyPackageUtil.findSetupPyRequires(module));
 
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(),
-                                             () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "Markdown", LanguageLevel.PYTHON30));
+                                             () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "Markdown", LanguageLevel.PYTHON34));
 
     assertNull(isRequirementsTxt ? PyPackageUtil.getRequirementsFromTxt(module) : PyPackageUtil.findSetupPyRequires(module));
   }
@@ -193,13 +193,13 @@ public class PyPackageUtilTest extends PyTestCase {
     checkSetupArgumentText(module, keyword, null);
     checkRequirements(PyPackageUtil.findSetupPyRequires(module), 2);
 
-    final Runnable introduceRequires = () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "NewDjango==1.3.1", LanguageLevel.PYTHON30);
+    final Runnable introduceRequires = () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "NewDjango==1.3.1", LanguageLevel.PYTHON34);
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), introduceRequires);
 
     checkSetupArgumentText(module, keyword, "['NewDjango==1.3.1']");
     checkRequirements(PyPackageUtil.findSetupPyRequires(module), 1);
 
-    final Runnable updateRequires = () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "Markdown", LanguageLevel.PYTHON30);
+    final Runnable updateRequires = () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "Markdown", LanguageLevel.PYTHON34);
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), updateRequires);
 
     checkSetupArgumentText(module, keyword, "['NewDjango==1.3.1', 'Markdown']");

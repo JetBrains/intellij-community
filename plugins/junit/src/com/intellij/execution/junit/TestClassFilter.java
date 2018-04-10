@@ -16,6 +16,7 @@
 
 package com.intellij.execution.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.testframework.SourceScope;
@@ -27,7 +28,9 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -37,6 +40,8 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   private final @Nullable PsiClass myBase;
@@ -57,7 +62,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     return ReadAction.compute(() -> {
       if (aClass.getQualifiedName() != null &&
           (myBase != null && aClass.isInheritor(myBase, true) && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) ||
-           JUnitUtil.isTestClass(aClass))) {
+           isTopMostTestClass(aClass))) {
         final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
         final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
         if (virtualFile == null) return false;
@@ -68,6 +73,24 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
       return false;
     });
   }
+  
+  private static boolean isTopMostTestClass(PsiClass psiClass) {
+    if (psiClass.getQualifiedName() == null) return false;
+    
+    if (!PsiClassUtil.isRunnableClass(psiClass, true, true)) return false;
+    
+    if (AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, CHECK_HIERARCHY)) return true;
+
+    if (JUnitUtil.isTestCaseInheritor(psiClass)) return true;
+
+    for (final PsiMethod method : psiClass.getAllMethods()) {
+      if (JUnitUtil.isSuiteMethod(method)) return true;
+      if (JUnitUtil.isTestAnnotated(method)) return true;
+    }
+
+    return false;
+  }
+
 
   public TestClassFilter intersectionWith(final GlobalSearchScope scope) {
     return new TestClassFilter(myBase, myScope.intersectWith(scope));

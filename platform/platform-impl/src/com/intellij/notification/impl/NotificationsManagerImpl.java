@@ -701,7 +701,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
             if (isDarcula) {
               setBorder(new DarculaButtonPainter() {
                 @Override
-                public Color getBorderColor() {
+                public Color getBorderColor(Component button) {
                   return new ColorUIResource(0x616263);
                 }
               });

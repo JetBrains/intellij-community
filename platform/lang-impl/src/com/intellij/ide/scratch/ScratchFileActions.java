@@ -35,10 +35,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -158,6 +155,10 @@ public class ScratchFileActions {
   static ScratchFileCreationHelper.Context createContext(@NotNull Project project, @NotNull AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (file == null && editor != null) {
+      // see data provider in com.intellij.diff.tools.holders.TextEditorHolder
+      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    }
 
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
     context.text = StringUtil.notNullize(getSelectionText(editor));

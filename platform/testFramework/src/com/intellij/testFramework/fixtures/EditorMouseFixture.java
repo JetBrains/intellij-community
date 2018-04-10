@@ -6,6 +6,7 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.SystemInfo;
+import org.intellij.lang.annotations.MagicConstant;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -13,11 +14,11 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
-@SuppressWarnings("MagicConstant")
 public class EditorMouseFixture {
   private final EditorImpl myEditor;
   private int myX;
   private int myY;
+  @MagicConstant(flagsFromClass = InputEvent.class)
   private int myModifiers;
   private int myButton = MouseEvent.BUTTON1;
   private int myLastId;
@@ -164,6 +165,7 @@ public class EditorMouseFixture {
     return myEditor.visualPositionToXY(new VisualPosition(visualLine, visualColumn));
   }
 
+  @MagicConstant(flagsFromClass = InputEvent.class)
   private int getModifiers() {
     if (myButton == MouseEvent.BUTTON3) {
       return myModifiers | InputEvent.META_MASK;

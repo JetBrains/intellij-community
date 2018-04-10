@@ -32,7 +32,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // Checks if class explicitly extends object we shall move it even in Py3K (PY-19137)
   public void testPy3ParentHasObject() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doSimpleTest("Child", "Parent", null, true, false, ".spam"));
   }
 
@@ -64,7 +64,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
   // Extracts method as abstract and ensures that newly created class imports ABC in Py3
   public void testMoveAndMakeAbstractImportExistsPy3() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> {
         configureMultiFile("abc");
         multiFileTestHelper(".foo_method", true);

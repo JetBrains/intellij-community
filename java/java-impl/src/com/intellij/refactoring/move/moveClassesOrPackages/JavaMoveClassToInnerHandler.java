@@ -49,7 +49,7 @@ public class JavaMoveClassToInnerHandler implements MoveClassToInnerHandler {
     if (targetClass.isInterface()) {
       PsiUtil.setModifierProperty(newClass, PsiModifier.PACKAGE_LOCAL, true);
     }
-    else {
+    else if (!newClass.isEnum()) {
       PsiUtil.setModifierProperty(newClass, PsiModifier.STATIC, true);
     }
     return (PsiClass)ChangeContextUtil.decodeContextInfo(newClass, null, null);

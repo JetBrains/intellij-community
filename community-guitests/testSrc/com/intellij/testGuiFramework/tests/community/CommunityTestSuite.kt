@@ -26,5 +26,5 @@ import org.junit.runners.Suite
 @RunWith(GuiTestSuite::class)
 @RunWithIde(CommunityIde::class)
 @FirstStartWith(CommunityIdeFirstStart::class)
-@Suite.SuiteClasses(CommandLineProjectTest::class, TypeAheadTest::class)
+@Suite.SuiteClasses(CommandLineProjectTest::class)
 class CommunityTestSuite

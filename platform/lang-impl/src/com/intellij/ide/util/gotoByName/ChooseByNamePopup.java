@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -148,10 +134,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     bounds.y += layeredPane.getHeight();
 
     final Dimension preferredScrollPaneSize = myListScrollPane.getPreferredSize();
-    int lastVisibleRow = Math.min(myList.getVisibleRowCount(), myList.getModel().getSize()) - 1;
-    Rectangle visibleBounds = lastVisibleRow < 0 ? null : myList.getCellBounds(0, lastVisibleRow);
-    preferredScrollPaneSize.height = visibleBounds != null ? visibleBounds.height : UIManager.getFont("Label.font").getSize();
-
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
 
     // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced

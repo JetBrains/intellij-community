@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static org.jetbrains.jetCheck.Generator.*;
 
@@ -61,6 +62,33 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
                  "  insert A at 0\n" +
                  "  check",
                  minHistory.toString());
+  }
+
+  public void testImperativeCommandRechecking() {
+    AtomicInteger counter = new AtomicInteger();
+    Supplier<ImperativeCommand> command = () -> env -> {
+      List<Integer> list = env.generateValue(listsOf(integers()), "%s");
+      if (list.size() > 5 || counter.incrementAndGet() > 50) {
+        throw new AssertionError();
+      }
+    };
+    try {
+      ImperativeCommand.checkScenarios(command);
+      fail();
+    }
+    catch (PropertyFalsified e) {
+      assertFalse(e.getMessage(), e.getMessage().contains("rechecking"));
+      assertTrue(e.getMessage(), e.getMessage().contains("checkScenario"));
+
+      PropertyFailure<?> failure = e.getFailure();
+      try {
+        ImperativeCommand.checkScenario(failure.getIterationSeed(), failure.getSizeHint(), command);
+        fail();
+      }
+      catch (PropertyFalsified fromRecheck) {
+        assertEquals(e.getBreakingValue(), fromRecheck.getBreakingValue());
+      }
+    }
   }
 
   @NotNull

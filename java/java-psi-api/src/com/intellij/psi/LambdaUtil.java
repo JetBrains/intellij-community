@@ -1,10 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -17,7 +14,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -865,25 +861,32 @@ public class LambdaUtil {
     PsiElement body = lambda.getBody();
     if (body == null) return false;
     final PsiCall call = treeWalkUp(body);
-    PsiMethod oldTarget;
-    if (call != null && (oldTarget = call.resolveMethod()) != null) {
-      Object marker = new Object();
-      PsiTreeUtil.mark(lambda, marker);
-      PsiType origType = call instanceof PsiExpression ? ((PsiExpression)call).getType() : null;
-      PsiCall copyCall = copyTopLevelCall(call);
-      if (copyCall == null) return false;
-      PsiLambdaExpression lambdaCopy = ObjectUtils.tryCast(PsiTreeUtil.releaseMark(copyCall, marker), PsiLambdaExpression.class);
-      if (lambdaCopy == null) return false;
-      PsiExpression function = replacer.apply(lambdaCopy);
-      if (function == null) return false;
-      if (copyCall.resolveMethod() != oldTarget) return false;
-      if (function instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)function).getFunctionalInterfaceType() == null) {
-        return false;
-      }
-      PsiType newType = copyCall instanceof PsiExpression ? ((PsiExpression)copyCall).getType() : null;
-      if (origType instanceof PsiClassType && newType instanceof PsiClassType &&
-          ((PsiClassType)origType).isRaw() != ((PsiClassType)newType).isRaw()) {
-        return false;
+    if (call != null) {
+      JavaResolveResult result = call.resolveMethodGenerics();
+      PsiElement oldTarget = result.getElement();
+      if (oldTarget != null) {
+        String origErrorMessage = result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getInferenceErrorMessage() : null;
+        Object marker = new Object();
+        PsiTreeUtil.mark(lambda, marker);
+        PsiType origType = call instanceof PsiExpression ? ((PsiExpression)call).getType() : null;
+        PsiCall copyCall = copyTopLevelCall(call);
+        if (copyCall == null) return false;
+        PsiLambdaExpression lambdaCopy = ObjectUtils.tryCast(PsiTreeUtil.releaseMark(copyCall, marker), PsiLambdaExpression.class);
+        if (lambdaCopy == null) return false;
+        PsiExpression function = replacer.apply(lambdaCopy);
+        if (function == null) return false;
+        JavaResolveResult resultCopy = copyCall.resolveMethodGenerics();
+        if (resultCopy.getElement() != oldTarget) return false;
+        String copyMessage = resultCopy instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resultCopy).getInferenceErrorMessage() : null;
+        if (!Objects.equals(origErrorMessage, copyMessage)) return false;
+        if (function instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)function).getFunctionalInterfaceType() == null) {
+          return false;
+        }
+        PsiType newType = copyCall instanceof PsiExpression ? ((PsiExpression)copyCall).getType() : null;
+        if (origType instanceof PsiClassType && newType instanceof PsiClassType &&
+            ((PsiClassType)origType).isRaw() != ((PsiClassType)newType).isRaw()) {
+          return false;
+        }
       }
     }
     return true;
@@ -980,18 +983,29 @@ public class LambdaUtil {
   }
 
   public static PsiElement copyWithExpectedType(PsiElement expression, PsiType type) {
-    final String objectWithMethod = "new Object() { " + type.getCanonicalText() + " get(){ return x;}}";
-    final Project project = expression.getProject();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    PsiNewExpression newExpr = (PsiNewExpression)elementFactory.createExpressionFromText(objectWithMethod, expression);
+    String canonicalText = type.getCanonicalText();
+    if (!PsiUtil.isLanguageLevel8OrHigher(expression)) {
+      final String arrayInitializer = "new " + canonicalText + "[]{0}";
+      PsiNewExpression newExpr = (PsiNewExpression)createExpressionFromText(arrayInitializer, expression);
+      final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
+      LOG.assertTrue(initializer != null);
+      return initializer.getInitializers()[0].replace(expression);
+    }
+
+    final String callableWithExpectedType = "(java.util.concurrent.Callable<" + canonicalText + ">)() -> x";
+    PsiTypeCastExpression typeCastExpr = (PsiTypeCastExpression)createExpressionFromText(callableWithExpectedType, expression);
+    PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)typeCastExpr.getOperand();
+    LOG.assertTrue(lambdaExpression != null);
+    PsiElement body = lambdaExpression.getBody();
+    LOG.assertTrue(body instanceof PsiExpression);
+    return body.replace(expression);
+  }
+
+  private static PsiExpression createExpressionFromText(String exprText, PsiElement context) {
+    PsiExpression expr = JavaPsiFacade.getInstance(context.getProject())
+                                      .getElementFactory()
+                                      .createExpressionFromText(exprText, context);
     //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
-    newExpr = (PsiNewExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
-    PsiAnonymousClass anonymousClass = newExpr.getAnonymousClass();
-    LOG.assertTrue(anonymousClass != null);
-    PsiCodeBlock body = anonymousClass.getMethods()[0].getBody();
-    LOG.assertTrue(body != null);
-    PsiExpression returnValue = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
-    LOG.assertTrue(returnValue != null);
-    return returnValue.replace(expression);
+    return (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr);
   }
 }

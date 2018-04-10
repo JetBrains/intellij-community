@@ -177,10 +177,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
     for (VirtualFile vFile : myFile.getChildren()) {
       ProgressManager.checkCanceled();
-      if (!vFile.isValid()) {
-        LOG.warn("got invalid child file: " + vFile);
-        continue;
-      }
+      if (!vFile.isValid()) continue;
+
       boolean isDir = vFile.isDirectory();
       if (processor instanceof PsiFileSystemItemProcessor && !((PsiFileSystemItemProcessor)processor).acceptItem(vFile.getName(), isDir)) {
         continue;

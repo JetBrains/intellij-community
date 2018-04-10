@@ -24,9 +24,13 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   @Override
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<>(this);
-    return ReadAction.compute(() -> result.run());
+    return compute(() -> result.run());
   }
 
+  /**
+   * use {@link #run(ThrowableRunnable)}, {@link #run(Result)} or {@link #compute(ThrowableComputable)} instead
+   */
+  @Deprecated
   public static AccessToken start() {
     return ApplicationManager.getApplication().acquireReadActionLock();
   }

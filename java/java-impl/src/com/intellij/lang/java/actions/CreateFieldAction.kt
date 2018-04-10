@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
@@ -23,7 +9,7 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -34,47 +20,30 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 
 internal class CreateFieldAction(
-  targetClass: PsiClass,
+  target: PsiClass,
   request: CreateFieldRequest,
   private val constantField: Boolean
-) : CreateFieldActionBase(targetClass, request) {
+) : CreateFieldActionBase(target, request), JvmGroupIntentionAction {
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    val targetClass = myTargetClass.element ?: return false
-    if (!myRequest.isValid) return false
+  override fun getActionGroup(): JvmActionGroup = if (constantField) CreateConstantActionGroup else CreateFieldActionGroup
 
-    val fieldName = myRequest.fieldName
-
-    val canRender = run {
-      val requestedModifiers = myRequest.modifiers
-      val constantRequested = myRequest.constant || targetClass.isInterface || requestedModifiers.containsAll(constantModifiers)
-      if (constantField) {
-        constantRequested || fieldName.toUpperCase() == fieldName
-      }
-      else {
-        !constantRequested
-      }
-    }
-    if (!canRender) return false
-
-    val className = getNameForClass(targetClass, false)
-    text = if (constantField) {
-      message("create.constant.from.usage.full.text", fieldName, className)
+  override fun getText(): String {
+    val what = request.fieldName
+    val where = getNameForClass(target, false)
+    return if (constantField) {
+      message("create.constant.from.usage.full.text", what, where)
     }
     else {
-      message("create.field.from.usage.full.text", fieldName, className)
+      message("create.field.from.usage.full.text", what, where)
     }
-    return true
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    val targetClass = myTargetClass.element ?: return
-    assert(myRequest.isValid)
-    JavaFieldRenderer(project, constantField, targetClass, myRequest).doRender()
+    JavaFieldRenderer(project, constantField, target, request).doRender()
   }
 }
 
-private val constantModifiers = setOf(
+internal val constantModifiers = setOf(
   JvmModifier.STATIC,
   JvmModifier.FINAL
 )

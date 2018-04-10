@@ -137,7 +137,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     List<VirtualFile> unversionedFiles = ContainerUtil.newArrayList();
     final List<VirtualFile> changedFiles = ContainerUtil.newArrayList();
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (files != null) {
+    if (files != null && changesList.isEmpty()) {
       changesList.addAll(getChangesForSelectedFiles(project, files, unversionedFiles, changedFiles));
     }
 

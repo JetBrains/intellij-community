@@ -196,10 +196,10 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         }
         else {
           myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, myType, getListener());
-          if (myActions != null) {
-            for (String action : myActions) {
-              myNotification.addAction(new MyAnAction(action));
-            }
+        }
+        if (myActions != null) {
+          for (String action : myActions) {
+            myNotification.addAction(new MyAnAction(action));
           }
         }
       }

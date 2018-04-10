@@ -48,7 +48,7 @@ public class PyPackagingTest extends PyEnvTestCase {
   public void testGetPackages() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         List<PyPackage> packages = null;
         try {
@@ -71,7 +71,7 @@ public class PyPackagingTest extends PyEnvTestCase {
   public void testCreateVirtualEnv() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
@@ -106,7 +106,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     runPythonTest(new PyPackagingTestTask() {
 
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);

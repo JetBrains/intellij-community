@@ -44,18 +44,15 @@ public class DataInputOutputUtilRt {
   }
 
   public static void writeINT(@NotNull DataOutput record, int val) throws IOException {
-    if (0 <= val && val < 192) {
-      record.writeByte(val);
-    }
-    else {
+    if (0 > val || val >= 192) {
       record.writeByte(192 + (val & 0x3F));
       val >>>= 6;
       while (val >= 128) {
         record.writeByte((val & 0x7F) | 0x80);
         val >>>= 7;
       }
-      record.writeByte(val);
     }
+    record.writeByte(val);
   }
 
   /**

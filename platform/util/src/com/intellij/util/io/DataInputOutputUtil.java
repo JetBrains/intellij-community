@@ -69,18 +69,15 @@ public class DataInputOutputUtil extends DataInputOutputUtilRt {
   }
 
   public static void writeLONG(@NotNull DataOutput record, long val) throws IOException {
-    if (0 <= val && val < 192) {
-      record.writeByte((int)val);
-    }
-    else {
+    if (0 > val || val >= 192) {
       record.writeByte(192 + (int)(val & 0x3F));
       val >>>= 6;
       while (val >= 128) {
         record.writeByte((int)(val & 0x7F) | 0x80);
         val >>>= 7;
       }
-      record.writeByte((int)val);
     }
+    record.writeByte((int)val);
   }
 
   public static int readSINT(@NotNull DataInput record) throws IOException {

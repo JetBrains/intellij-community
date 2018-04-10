@@ -1,14 +1,14 @@
-class <warning descr="'async' and 'await' are not recommended to be used as variable, class, function or module names. They will become proper keywords in Python 3.7.">async</warning>(object):
+class <warning descr="'async' and 'await' are keywords in Python 3.7 and newer">async</warning>(object):
     pass
 
-class <warning descr="'async' and 'await' are not recommended to be used as variable, class, function or module names. They will become proper keywords in Python 3.7.">await</warning>(object):
+class <warning descr="'async' and 'await' are keywords in Python 3.7 and newer">await</warning>(object):
     pass
 
-def <warning descr="'async' and 'await' are not recommended to be used as variable, class, function or module names. They will become proper keywords in Python 3.7.">async</warning>():
+def <warning descr="'async' and 'await' are keywords in Python 3.7 and newer">async</warning>():
     pass
 
-def <warning descr="'async' and 'await' are not recommended to be used as variable, class, function or module names. They will become proper keywords in Python 3.7.">await</warning>():
+def <warning descr="'async' and 'await' are keywords in Python 3.7 and newer">await</warning>():
     pass
 
-<warning descr="'async' and 'await' are not recommended to be used as variable, class, function or module names. They will become proper keywords in Python 3.7.">async</warning> = 1
-<warning descr="'async' and 'await' are not recommended to be used as variable, class, function or module names. They will become proper keywords in Python 3.7.">await</warning> = 2
+<warning descr="'async' and 'await' are keywords in Python 3.7 and newer">async</warning> = 1
+<warning descr="'async' and 'await' are keywords in Python 3.7 and newer">await</warning> = 2

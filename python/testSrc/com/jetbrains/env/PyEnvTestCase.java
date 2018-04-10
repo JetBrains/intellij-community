@@ -91,6 +91,9 @@ public abstract class PyEnvTestCase {
 
   protected boolean isStaging(Description description) {
     try {
+      if (description.getTestClass().isAnnotationPresent(Staging.class)) {
+        return true;
+      }
       if (description.getTestClass().getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
         return true;
       }

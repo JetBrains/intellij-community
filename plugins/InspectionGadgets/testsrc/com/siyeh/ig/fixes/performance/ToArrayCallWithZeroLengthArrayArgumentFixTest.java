@@ -37,6 +37,10 @@ public class ToArrayCallWithZeroLengthArrayArgumentFixTest extends IGQuickFixesT
     doFixTest(PreferEmptyArray.ALWAYS, InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.zero"));
   }
 
+  public void testPresizedToZeroMap() {
+    doFixTest(PreferEmptyArray.ALWAYS, InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.zero"));
+  }
+
   private void doFixTest(PreferEmptyArray mode, String message) {
     myInspection.myMode = mode;
     doTest(getTestName(false), message);

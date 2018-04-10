@@ -15,5 +15,6 @@ public class YamlIntegerType extends YamlScalarType {
 
   public YamlIntegerType() {
     super("yaml:integer");
+    setDisplayName("integer");
   }
 }

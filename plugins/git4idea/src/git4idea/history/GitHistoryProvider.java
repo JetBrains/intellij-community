@@ -37,7 +37,6 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
-import git4idea.config.GitExecutableValidator;
 import git4idea.history.browser.SHAHash;
 import git4idea.log.GitShowCommitInLogAction;
 import git4idea.repo.GitRepository;
@@ -103,12 +102,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
 
   @Nullable
   public VcsAbstractHistorySession createSessionFor(final FilePath filePath) throws VcsException {
-    List<VcsFileRevision> revisions = null;
-    try {
-      revisions = GitFileHistory.collectHistory(myProject, filePath);
-    } catch (VcsException e) {
-      GitVcs.getInstance(myProject).getExecutableValidator().showNotificationOrThrow(e);
-    }
+    List<VcsFileRevision> revisions = GitFileHistory.collectHistory(myProject, filePath);
     return createSession(filePath, revisions, null);
   }
 
@@ -184,14 +178,9 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
                               new String[] { "--max-count=" + vcsConfiguration.MAXIMUM_HISTORY_ROWS } :
                               ArrayUtil.EMPTY_STRING_ARRAY;
 
-    final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
     GitFileHistory.loadHistory(myProject, refreshPath(path), null, startingRevision,
                            fileRevision -> partner.acceptRevision(fileRevision),
-                           exception -> {
-                             if (validator.checkExecutableAndNotifyIfNeeded()) {
-                               partner.reportException(exception);
-                             }
-                           },
+                           exception -> partner.reportException(exception),
                                additionalArgs);
   }
 

@@ -92,7 +92,10 @@ class OptionTagBinding extends BasePrimitiveBinding {
           assert myBinding != null;
           Object oldValue = myAccessor.read(context);
           Object newValue = Binding.deserializeList(myBinding, oldValue, children);
-          if (oldValue != newValue) {
+          if (myAccessor.isFinal()) {
+            LOG.assertTrue(oldValue == newValue);
+          }
+          else {
             myAccessor.set(context, newValue);
           }
         }

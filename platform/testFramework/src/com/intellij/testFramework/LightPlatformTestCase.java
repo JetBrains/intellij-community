@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -28,6 +29,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.lang.Language;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -79,6 +81,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -378,7 +381,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
-      () -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings(),
+      () -> CodeStyle.dropTemporarySettings(project),
       this::checkForSettingsDamage,
       () -> doTearDown(project, ourApplication),
       () -> checkEditorsReleased(),
@@ -395,7 +398,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     //noinspection Convert2MethodRef
     new RunAll().
       append(() -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue()).
-      append(() -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()).
+      append(() -> CodeStyle.dropTemporarySettings(project)).
       append(LightPlatformTestCase::checkJavaSwingTimersAreDisposed).
       append(() -> UsefulTestCase.doPostponedFormatting(project)).
       append(() -> LookupManager.getInstance(project).hideActiveLookup()).
@@ -625,7 +628,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @NotNull
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject());
+    return CodeStyle.getSettings(getProject());
   }
 
   protected static Document getDocument(@NotNull PsiFile file) {

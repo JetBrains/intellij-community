@@ -27,6 +27,7 @@ import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.InspectionTestCase;
+import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
 import com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +42,7 @@ public class RedundantSuppressTest extends InspectionTestCase {
       new LocalInspectionToolWrapper(new JavaDocReferenceInspection()),
       new LocalInspectionToolWrapper(new I18nInspection()),
       new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
+      new LocalInspectionToolWrapper(new UnnecessaryLocalVariableInspection()),
       new GlobalInspectionToolWrapper(new EmptyMethodInspection()),
       new GlobalInspectionToolWrapper(new UnusedDeclarationInspection())};
 
@@ -75,6 +77,8 @@ public class RedundantSuppressTest extends InspectionTestCase {
   public void testIgnoreUnused() {
     doTest();
   }
+
+  public void testIgnoreWithAnnotation() { doTest(); }
 
   public void testSuppressAll() {
     try {

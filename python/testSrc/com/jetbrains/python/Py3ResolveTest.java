@@ -46,7 +46,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON32);
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON34);
   }
 
   @Override

@@ -19,10 +19,22 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.application.JavaApplicationRunConfigurationImporter;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
@@ -55,7 +67,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
+    return Arrays.asList(new Object[][]{{"4.5"}});
   }
 
   @Before
@@ -79,6 +91,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   public void testInspectionSettingsImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
         "idea {\n" +
         "  project.settings {\n" +
         "    inspections {\n" +
@@ -95,11 +108,11 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   public void testCodeStyleSettingsImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
       "idea {\n" +
       "  project.settings {\n" +
       "    codeStyle {\n" +
-      "      indent 'tabs'\n" +
-      "      indentSize 3\n" +
+      "      hardWrapAt = 200\n" +
       "    }\n" +
       "  }\n" +
       "}")
@@ -111,8 +124,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertEquals("Gradle Imported", scheme.getName());
     assertFalse(scheme.isDefault());
 
-    assertTrue(settings.getIndentOptions().USE_TAB_CHARACTER);
-    assertEquals(3, settings.getIndentOptions().INDENT_SIZE);
+    assertEquals(200, settings.getDefaultRightMargin());
   }
 
   @Test
@@ -156,18 +168,21 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     ep.reset();
     ep.registerExtension(testExtension);
 
+    createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-      "import org.jetbrains.gradle.ext.runConfigurations.*\n" +
+      "import org.jetbrains.gradle.ext.*\n" +
       "idea {\n" +
-      "  module.settings {\n" +
+      "  project.settings {\n" +
       "    runConfigurations {\n" +
       "       app1(Application) {\n" +
       "           mainClass = 'my.app.Class'\n" +
       "           jvmArgs =   '-Xmx1g'\n" +
+      "           moduleName = 'moduleName'\n" +
       "       }\n" +
       "       app2(Application) {\n" +
       "           mainClass = 'my.app.Class2'\n" +
+      "           moduleName = 'moduleName'\n" +
       "       }\n" +
       "    }\n" +
       "  }\n" +
@@ -186,6 +201,117 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertNull(app2Settings.get("jvmArgs"));
   }
 
+
+  @Test
+  public void testDefaultRCSettingsImport() throws Exception {
+    RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
+    ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
+    ep.reset();
+    ep.registerExtension(appcConfigImporter);
+
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    runConfigurations {\n" +
+        "       defaults(Application) {\n" +
+        "           jvmArgs = '-DmyKey=myVal'\n" +
+        "       }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
+    );
+
+    final RunManager runManager = RunManager.getInstance(myProject);
+    final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(appcConfigImporter.getConfigurationFactory());
+    final String parameters = ((ApplicationConfiguration)template.getConfiguration()).getVMParameters();
+
+    assertNotNull(parameters);
+    assertTrue(parameters.contains("-DmyKey=myVal"));
+  }
+
+  @Test
+  public void testDefaultsAreUsedDuringImport() throws Exception {
+    RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
+    ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
+    ep.reset();
+    ep.registerExtension(appcConfigImporter);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    runConfigurations {\n" +
+        "       defaults(Application) {\n" +
+        "           jvmArgs = '-DmyKey=myVal'\n" +
+        "       }\n" +
+        "       'My Run'(Application) {\n" +
+        "           mainClass = 'my.app.Class'\n" +
+        "           moduleName = 'moduleName'\n" +
+        "       }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
+    );
+
+    final RunManager runManager = RunManager.getInstance(myProject);
+    final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(appcConfigImporter.getConfigurationFactory());
+    final String parameters = ((ApplicationConfiguration)template.getConfiguration()).getVMParameters();
+
+    assertNotNull(parameters);
+    assertTrue(parameters.contains("-DmyKey=myVal"));
+
+    final ApplicationConfiguration myRun = (ApplicationConfiguration)runManager.findConfigurationByName("My Run").getConfiguration();
+    assertNotNull(myRun);
+    final String actualParams = myRun.getVMParameters();
+    assertNotNull(actualParams);
+    assertTrue(actualParams.contains("-DmyKey=myVal"));
+    assertEquals("my.app.Class", myRun.getMainClassName());
+  }
+
+  @Test
+  public void testBeforeRunTaskImport() throws Exception {
+    RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
+    ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
+    ep.reset();
+    ep.registerExtension(appcConfigImporter);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    runConfigurations {\n" +
+        "       'My Run'(Application) {\n" +
+        "           mainClass = 'my.app.Class'\n" +
+        "           moduleName = 'moduleName'\n" +
+        "           beforeRun {\n" +
+        "               gradle(GradleTask) { task = tasks['projects'] }\n" +
+        "           }\n" +
+        "       }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
+    );
+
+    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    final ApplicationConfiguration myRun = (ApplicationConfiguration)runManager.findConfigurationByName("My Run").getConfiguration();
+    assertNotNull(myRun);
+
+    final List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(myRun);
+    assertSize(2, tasks);
+    final BeforeRunTask gradleBeforeRunTask = tasks.get(1);
+    assertInstanceOf(gradleBeforeRunTask, ExternalSystemBeforeRunTask.class);
+    final ExternalSystemTaskExecutionSettings settings = ((ExternalSystemBeforeRunTask)gradleBeforeRunTask).getTaskExecutionSettings();
+    assertContain(settings.getTaskNames(), "projects");
+    assertEquals(":", settings.getExternalProjectPath());
+  }
+
+
   @Test
   public void testFacetSettingsImport() throws Exception {
 
@@ -196,7 +322,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.facets.*\n" +
+        "import org.jetbrains.gradle.ext.*\n" +
       "idea {\n" +
       "  module.settings {\n" +
       "    facets {\n" +
@@ -244,8 +370,12 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @NotNull
   private String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
     return "buildscript {\n" +
+           "  repositories {\n" +
+           "    mavenLocal()\n" +
+           "  }\n" +
            "  dependencies {\n" +
            "     classpath files('" + getGradlePluginPath() + "')\n" +
+           "     classpath 'com.google.code.gson:gson:2+'\n" +
            "  }\n" +
            "}\n" +
            "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
@@ -265,18 +395,20 @@ class TestRunConfigurationImporter implements RunConfigurationImporter {
   }
 
   @Override
-  public void process(@NotNull Project project, @NotNull String name, @NotNull Map<String, Object> cfg) {
-    myConfigs.put(name, cfg);
+  public void process(@NotNull Project project, @NotNull RunConfiguration runConfig, @NotNull Map<String, Object> cfg,
+                      @NotNull IdeModifiableModelsProvider modelsProvider) {
+    myConfigs.put(runConfig.getName(), cfg);
   }
 
   @Override
-  public void process(@NotNull Module module, @NotNull String name, @NotNull Map<String, Object> cfg) {
-    myConfigs.put(name, cfg);
-  }
-
-  @Override
-  public boolean canHandle(@NotNull String typeName) {
+  public boolean canImport(@NotNull String typeName) {
     return myTypeName.equals(typeName);
+  }
+
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return UnknownConfigurationType.FACTORY;
   }
 
   public Map<String, Map<String, Object>> getConfigs() {

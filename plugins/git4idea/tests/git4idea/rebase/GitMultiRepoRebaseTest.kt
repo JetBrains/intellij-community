@@ -29,14 +29,13 @@ import git4idea.test.UNKNOWN_ERROR_TEXT
 import git4idea.test.git
 import git4idea.test.resolveConflicts
 import org.mockito.Mockito
-import kotlin.properties.Delegates
 
 class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
-  private var ultimate: GitRepository by Delegates.notNull()
-  private var community: GitRepository by Delegates.notNull()
-  private var contrib: GitRepository by Delegates.notNull()
-  private var allRepositories: List<GitRepository> by Delegates.notNull()
+  private lateinit var ultimate: GitRepository
+  private lateinit var community: GitRepository
+  private lateinit var contrib: GitRepository
+  private lateinit var allRepositories: List<GitRepository>
 
   override fun setUp() {
     super.setUp()

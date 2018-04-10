@@ -174,9 +174,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  private fun doSaveComponents(isForce: Boolean,
-                               externalizationSession: ExternalizationSession,
-                               _errors: MutableList<Throwable>?): MutableList<Throwable>? {
+  private fun doSaveComponents(isForce: Boolean, externalizationSession: ExternalizationSession, _errors: MutableList<Throwable>?): MutableList<Throwable>? {
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
     var errors = _errors
@@ -239,8 +237,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     return errors
   }
 
-  override @TestOnly
-  fun saveApplicationComponent(component: PersistentStateComponent<*>) {
+  @TestOnly
+  override fun saveApplicationComponent(component: PersistentStateComponent<*>) {
     val externalizationSession = storageManager.startExternalization() ?: return
 
     val stateSpec = StoreUtil.getStateSpec(component)

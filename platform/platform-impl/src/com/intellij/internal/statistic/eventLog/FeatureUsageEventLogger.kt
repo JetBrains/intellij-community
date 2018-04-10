@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationAdapter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PermanentInstallationID
+import com.intellij.openapi.util.registry.Registry
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
@@ -20,7 +21,7 @@ import java.util.*
 object FeatureUsageEventLogger {
   private val userId = PermanentInstallationID.get().shortedUUID()
   private val sessionId = UUID.randomUUID().toString().shortedUUID()
-  private val eventLogger = if (ApplicationManager.getApplication().isInternal) createLogger() else null
+  private val eventLogger = if (Registry.`is`("feature.usage.event.log.collect.and.upload")) createLogger() else null
 
   private var lastEvent: LogEvent? = null
   private var count: Int = 1

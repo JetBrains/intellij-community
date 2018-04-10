@@ -138,7 +138,6 @@ public class GuessManagerImpl extends GuessManager {
   @Nullable
   private static MultiMap<PsiExpression, PsiType> buildDataflowTypeMap(PsiExpression forPlace, boolean onlyForPlace) {
     PsiType type = forPlace.getType();
-    if (type == null) return null;
     PsiElement scope = DfaPsiUtil.getTopmostBlockInSameClass(forPlace);
     if (scope == null) {
       PsiFile file = forPlace.getContainingFile();
@@ -157,7 +156,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     };
 
-    TypeConstraint initial = TypeConstraint.EMPTY.withInstanceofValue(runner.getFactory().createDfaType(type));
+    TypeConstraint initial = type == null ? null : TypeConstraint.EMPTY.withInstanceofValue(runner.getFactory().createDfaType(type));
     final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace, onlyForPlace, initial);
     if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
       return visitor.getResult();
@@ -341,24 +340,34 @@ public class GuessManagerImpl extends GuessManager {
   @NotNull
   @Override
   public List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr) {
+    List<PsiType> result = null;
     PsiExpression place = PsiUtil.skipParenthesizedExprDown(expr);
+    if (place == null) return Collections.emptyList();
     if (place instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)place).resolve();
       if (target instanceof PsiParameter) {
         PsiElement parent = target.getParent();
         if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression) {
-          return getTypesFromDfa(expr);
+          result = getTypesFromDfa(expr);
         }
       }
     }
-    if (place == null) return Collections.emptyList();
-    GuessTypeVisitor visitor = new GuessTypeVisitor(place);
-    getTopmostBlock(place).accept(visitor);
+    if (result == null) {
+      GuessTypeVisitor visitor = new GuessTypeVisitor(place);
+      getTopmostBlock(place).accept(visitor);
 
-    if (visitor.isDfaNeeded()) {
-      return getTypesFromDfa(expr);
+      if (visitor.isDfaNeeded()) {
+        result = getTypesFromDfa(expr);
+      }
+      else {
+        result = visitor.mySpecificType == null ?
+                 Collections.emptyList() : Collections.singletonList(tryGenerify(expr, visitor.mySpecificType));
+      }
     }
-    return visitor.mySpecificType == null ? Collections.emptyList() : Collections.singletonList(tryGenerify(expr, visitor.mySpecificType));
+    if (result.equals(Collections.singletonList(expr.getType()))) {
+      result = Collections.emptyList();
+    }
+    return result;
   }
 
   @NotNull

@@ -76,11 +76,11 @@ public class PySdkFlavorTest extends PyTestCase {
 
   public void testPyPy323VersionString() {
     final PythonSdkFlavor flavor = PyPySdkFlavor.INSTANCE;
-    final String versionOutput = "Python 3.2.5 (986752d005bb6c65ce418113e4c3cd115f61a9b4, Jun 23 2014, 00:23:34)\n" +
+    final String versionOutput = "Python 3.4.5 (986752d005bb6c65ce418113e4c3cd115f61a9b4, Jun 23 2014, 00:23:34)\n" +
                                  "[PyPy 2.3.1 with GCC 4.8.2]\n";
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
-    assertEquals("PyPy 2.3.1 [Python 3.2.5]", mockSdk.getVersionString());
-    assertEquals(LanguageLevel.PYTHON32, flavor.getLanguageLevel(mockSdk));
+    assertEquals("PyPy 2.3.1 [Python 3.4.5]", mockSdk.getVersionString());
+    assertEquals(LanguageLevel.PYTHON34, flavor.getLanguageLevel(mockSdk));
     assertEquals("builtins.py", PythonSdkType.getBuiltinsFileName(mockSdk));
   }
 

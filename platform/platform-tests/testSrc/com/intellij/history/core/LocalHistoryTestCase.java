@@ -23,21 +23,24 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.TestVirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public abstract class LocalHistoryTestCase extends Assert {
-  {
-    FSRecords.connect();
-  }
   private static long myCurrentId = 0;
+  private static IdeaProjectTestFixture fixture; // to initialize FSRecords
 
   public static long nextId() {
     return myCurrentId++;
@@ -49,6 +52,30 @@ public abstract class LocalHistoryTestCase extends Assert {
 
   protected static Content c(String data) {
     return data == null ? null : new TestContent(b(data));
+  }
+
+  @BeforeClass
+  public static void setupFSRecords() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      fixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("ddd").getFixture();
+      fixture.setUp();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        assert fixture.getProject() != null;
+      });
+    });
+  }
+
+  @AfterClass
+  public static void tearDownFSRecords() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        fixture.tearDown();
+        fixture = null;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   public CreateFileChange createFile(RootEntry root, String path) {
@@ -183,7 +210,7 @@ public abstract class LocalHistoryTestCase extends Assert {
   }
 
   protected static void assertEquals(Object[] expected, Collection actual) {
-    assertArrayEquals(actual.toString(), expected, actual.toArray());
+    Assert.assertArrayEquals(actual.toString(), expected, actual.toArray());
   }
 
   protected static TestVirtualFile testDir(String name) {

@@ -45,7 +45,7 @@ public class PyTypingTest extends PyTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    setLanguageLevel(LanguageLevel.PYTHON32);
+    setLanguageLevel(LanguageLevel.PYTHON34);
   }
 
   @Override
@@ -775,6 +775,17 @@ public class PyTypingTest extends PyTestCase {
            "x: str\n" +
            "x = baz()\n" +
            "expr = x");
+  }
+
+  // PY-16412
+  public void testLocalVariableAnnotationAheadOfTimeExplicitAny() {
+    doTest("Any",
+           "from typing import Any\n" +
+           "\n" +
+           "def func(x):\n" +
+           "    var: Any\n" +
+           "    var = x\n" +
+           "    expr = var\n");
   }
 
   // PY-21864

@@ -119,7 +119,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
     if (myConfigurable.getSingleSelectedGroup() == null) return false;
     
     String s = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    return s != null && s.startsWith("<template ");
+    return s != null && s.trim().startsWith("<template ");
   }
 
   @Override

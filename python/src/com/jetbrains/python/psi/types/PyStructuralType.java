@@ -88,4 +88,11 @@ public class PyStructuralType implements PyType {
   public Set<String> getAttributeNames() {
     return myAttributes;
   }
+
+  @Override
+  public void accept(@NotNull PyTypeVisitor visitor) {
+    if (visitor instanceof PyTypeVisitorExt) {
+      ((PyTypeVisitorExt)visitor).visitStructuralType(this);
+    }
+  }
 }

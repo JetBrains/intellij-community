@@ -39,10 +39,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
-import com.intellij.util.text.MergingCharSequence;
 import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -422,9 +422,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public List<TextAttributes> getAttributesForPreviousAndTypedChars(@NotNull Document document, int offset, char c) {
     final CharSequence text = document.getImmutableCharSequence();
 
-    final CharSequence newText = new MergingCharSequence(
-      new MergingCharSequence(text.subSequence(0, offset), new SingleCharSequence(c)),
-      text.subSequence(offset, text.length()));
+    CharSequence newText = StringUtil.replaceSubSequence(text, offset, offset, new SingleCharSequence(c));
 
     final List<IElementType> tokenTypes = getTokenType(newText, offset);
 

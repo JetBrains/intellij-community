@@ -35,19 +35,27 @@ public abstract class BuildTargetScopeProvider {
   public static final ExtensionPointName<BuildTargetScopeProvider> EP_NAME = ExtensionPointName.create("com.intellij.compiler.buildTargetScopeProvider");
 
   /**
-   * @deprecated override {@link #getBuildTargetScopes(com.intellij.openapi.compiler.CompileScope, com.intellij.openapi.compiler.CompilerFilter, com.intellij.openapi.project.Project, boolean)} instead
+   * @deprecated override {@link #getBuildTargetScopes(CompileScope, Project, boolean)} instead
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
                                                                   @NotNull Project project) {
     return Collections.emptyList();
   }
 
-
+  /**
+   * @deprecated override {@link #getBuildTargetScopes(CompileScope, Project, boolean)} instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
                                                                   @NotNull Project project, boolean forceBuild) {
     return getBuildTargetScopes(baseScope, filter, project);
   }
 
+  @NotNull
+  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull Project project, boolean forceBuild) {
+    return getBuildTargetScopes(baseScope, CompilerFilter.ALL, project, forceBuild);
+  }
 }

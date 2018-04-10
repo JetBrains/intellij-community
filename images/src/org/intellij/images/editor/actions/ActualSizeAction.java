@@ -36,6 +36,7 @@ public final class ActualSizeAction extends AnAction implements DumbAware {
         if (decorator != null) {
             ImageZoomModel zoomModel = decorator.getZoomModel();
             zoomModel.setZoomFactor(1.0d);
+            zoomModel.setZoomLevelChanged(true);
         }
     }
 

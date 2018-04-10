@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -265,14 +264,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     final VirtualFile file = StringUtil.isEmpty(path) ? null : LocalFileSystem.getInstance().findFileByPath(path);
     if (file != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        AccessToken at = ApplicationManager.getApplication().acquireReadActionLock();
-
-        try {
-          FileEditorManager.getInstance(myProject).openFile(file, true);
-        }
-        finally {
-          at.finish();
-        }
+        FileEditorManager.getInstance(myProject).openFile(file, true);
       });
 
       return Boolean.TRUE;

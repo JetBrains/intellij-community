@@ -39,6 +39,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class RollbackWorker {
   private final Project myProject;
   private final String myOperationName;
@@ -63,7 +65,12 @@ public class RollbackWorker {
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
     Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
 
+    final LocalHistoryAction action = LocalHistory.getInstance().startAction(myOperationName);
+
     final Runnable afterRefresh = () -> {
+      action.finish();
+      LocalHistory.getInstance().putSystemLabel(myProject, notNull(localHistoryActionName, myOperationName), -1);
+
       InvokeAfterUpdateMode updateMode = myInvokedFromModalContext ?
                                          InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE :
                                          InvokeAfterUpdateMode.SILENT;
@@ -79,8 +86,12 @@ public class RollbackWorker {
     };
 
     List<Change> otherChanges = revertPartialChanges(changes);
+    if (otherChanges.isEmpty()) {
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(afterRefresh, null, myProject);
+      return;
+    }
 
-    final Runnable rollbackAction = new MyRollbackRunnable(otherChanges, deleteLocallyAddedFiles, afterRefresh, localHistoryActionName);
+    final Runnable rollbackAction = new MyRollbackRunnable(otherChanges, deleteLocallyAddedFiles, afterRefresh);
 
     if (ApplicationManager.getApplication().isDispatchThread() && !myInvokedFromModalContext) {
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myOperationName, true,
@@ -130,17 +141,14 @@ public class RollbackWorker {
     private final Collection<Change> myChanges;
     private final boolean myDeleteLocallyAddedFiles;
     private final Runnable myAfterRefresh;
-    private final String myLocalHistoryActionName;
     private ProgressIndicator myIndicator;
 
     private MyRollbackRunnable(final Collection<Change> changes,
                                final boolean deleteLocallyAddedFiles,
-                               final Runnable afterRefresh,
-                               final String localHistoryActionName) {
+                               final Runnable afterRefresh) {
       myChanges = changes;
       myDeleteLocallyAddedFiles = deleteLocallyAddedFiles;
       myAfterRefresh = afterRefresh;
-      myLocalHistoryActionName = localHistoryActionName;
     }
 
     public void run() {
@@ -196,12 +204,7 @@ public class RollbackWorker {
     }
 
     private void doRefresh(final Project project, final List<Change> changesToRefresh) {
-      final LocalHistoryAction action = LocalHistory.getInstance().startAction(myOperationName);
-
       final Runnable forAwtThread = () -> {
-        action.finish();
-        LocalHistory.getInstance().putSystemLabel(myProject, (myLocalHistoryActionName == null) ?
-                                                                                           myOperationName : myLocalHistoryActionName, -1);
         final VcsDirtyScopeManager manager = project.getComponent(VcsDirtyScopeManager.class);
         VcsGuess vcsGuess = new VcsGuess(myProject);
 

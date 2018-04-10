@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.service.ConfigurableStatisticsService;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsAggregator;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
+import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsStateService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -19,6 +20,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Set;
 
 public class FUStatisticsService extends ConfigurableStatisticsService<FUStatisticsSettingsService> {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.service.whiteList.FUStatisticsService");
@@ -27,16 +29,29 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
   private static final FUStatisticsAggregator myAggregator = FUStatisticsAggregator.create();
 
   @Override
+  @NotNull
   protected String sendData() {
     String serviceUrl = mySettingsService.getServiceUrl();
-    if (serviceUrl == null) return null;
+    if (serviceUrl == null) {
+      throw new StatServiceException("Unknown Statistics Server URL");
+    }
 
-    FSContent gsonContent = myAggregator.getUsageCollectorsData(mySettingsService.getApprovedGroups());
-    if (gsonContent == null) return null;
+    Set<String> approvedGroups = mySettingsService.getApprovedGroups();
+    if (approvedGroups.isEmpty()) {
+        throw new StatServiceException("There are no approved collectors or Statistics White List Service is unavailable.");
+    }
+    FSContent allDataFromCollectors = myAggregator.getUsageCollectorsData(approvedGroups);
+    if (allDataFromCollectors == null) {
+      throw new StatServiceException("There are no data from collectors to send");
+    }
 
     try {
-      String content = gsonContent.asJsonString();
-      HttpResponse response = postStatistics(serviceUrl, content);
+      String dataToSend = FUStatisticsStateService.create().getMergedDataToSend(allDataFromCollectors.asJsonString());
+      if (dataToSend == null) {
+        throw new StatServiceException("There are no data from collectors to send");
+      }
+
+      HttpResponse response = postStatistics(serviceUrl, dataToSend);
 
       if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
         String responseMessage = getResponseMessage(response);
@@ -44,11 +59,12 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
         throw new StatServiceException("Error during data sending. \n " + responseMessage);
       }
       FUStatisticsPersistence.clearSessionPersistence(System.currentTimeMillis());
-      FUStatisticsPersistence.persistSentState(content);
+      FUStatisticsPersistence.persistSentData(dataToSend);
+      FUStatisticsPersistence.persistDataFromCollectors(allDataFromCollectors.asJsonString());
 
       if (LOG.isDebugEnabled()) LOG.debug(getResponseMessage(response));
 
-      return content;
+      return dataToSend;
     }  catch (Exception e) {
       LOG.info(e);
       throw new StatServiceException("Error during data sending.", e);

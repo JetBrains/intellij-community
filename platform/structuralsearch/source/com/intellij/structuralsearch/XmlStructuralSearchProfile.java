@@ -11,10 +11,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.XmlCompilingVisitor;
@@ -46,6 +43,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new XmlMatchingVisitor(globalVisitor);
+  }
+
+  @Override
+  public boolean isIdentifier(PsiElement element) {
+    return element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_NAME;
   }
 
   @NotNull

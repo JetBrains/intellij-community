@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
 /**
@@ -78,13 +79,14 @@ class GradleArtifactsContributor : GradleMethodContextContributor {
   private fun processArtifactAddition(processor: PsiScopeProcessor,
                                       state: ResolveState,
                                       place: PsiElement): Boolean {
+    val name = ResolveUtil.getNameHint(processor) ?: return true
     val groovyPsiManager = GroovyPsiManager.getInstance(place.project)
     val artifactHandlerClass = JavaPsiFacade.getInstance(place.project).findClass(GRADLE_API_ARTIFACT_HANDLER, place.resolveScope) ?: return true
 
     val call = PsiTreeUtil.getParentOfType(place, GrMethodCall::class.java) ?: return true
     val returnClass = groovyPsiManager.createTypeByFQClassName(GRADLE_API_PUBLISH_ARTIFACT, place.resolveScope) ?: return true
     val type = PsiType.getJavaLangObject(place.manager, place.resolveScope).createArrayType()
-    val builder = GrLightMethodBuilder(place.manager, "add").apply {
+    val builder = GrLightMethodBuilder(place.manager, name).apply {
       containingClass = artifactHandlerClass
       addParameter(GrLightParameter("artifactNotation", type, place))
       returnType = returnClass

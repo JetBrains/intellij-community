@@ -36,7 +36,7 @@ public abstract class ConfigurableStatisticsService<T extends StatisticsConnecti
     return new StatisticsNotification(groupDisplayId, listener);
   }
 
-  @Nullable
+  @NotNull
   // result: the content was sent.
   protected abstract String sendData();
 

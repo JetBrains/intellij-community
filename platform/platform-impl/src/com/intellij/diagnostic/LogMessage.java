@@ -88,7 +88,7 @@ public class LogMessage extends AbstractMessage {
     return StringUtil.join(IdeaLogger.getThrowableRenderer().doRender(getThrowable()), Layout.LINE_SEP);
   }
 
-  public void addAttachment(@NotNull Attachment attachment) {
+  void addAttachment(@NotNull Attachment attachment) {
     if (myAttachments == null) {
       myAttachments = ContainerUtil.createLockFreeCopyOnWriteList();
     }

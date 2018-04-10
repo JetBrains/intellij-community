@@ -741,7 +741,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18116
   public void testParameterAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final PyNamedParameter param = func.getParameterList().findParameterByName("x");
@@ -756,7 +756,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18116
   public void testFunctionAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final String annotation = func.getAnnotationValue();
@@ -804,7 +804,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18116
   public void testTypeAliasInParameterAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final PyNamedParameter param = func.getParameterList().findParameterByName("x");
@@ -838,7 +838,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18166
   public void testUnresolvedTypingSymbol() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       assertType("() -> Any", func, TypeEvalContext.codeInsightFallback(file.getProject()));
@@ -887,7 +887,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18816
   public void testComplexGenericType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.copyDirectoryToProject(getTestName(true), "");
       final PsiManager manager = PsiManager.getInstance(myFixture.getProject());
       final PyFile originFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("a.py"));

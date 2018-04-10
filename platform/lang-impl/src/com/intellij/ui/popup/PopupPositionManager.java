@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.DimensionService;
@@ -113,10 +112,6 @@ public class PopupPositionManager {
     final Component existing = discoverPopup(LangDataKeys.POSITION_ADJUSTER_POPUP, focusOwner);
     if (existing != null) {
       return new PositionAdjuster2(existing, discoverPopup(LangDataKeys.PARENT_POPUP, focusOwner));
-    }
-
-    if (!(focusOwner instanceof EditorComponentImpl)) {
-      return new PositionAdjuster(focusOwner);
     }
 
     return null;

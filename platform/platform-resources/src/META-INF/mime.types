@@ -12,6 +12,7 @@
 # JavaScript
 
   application/javascript                js
+  application/javascript                mjs
 
 # Manifest files
 

@@ -23,11 +23,12 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
-import org.jetbrains.jetCheck.Generator;
-import org.jetbrains.jetCheck.PropertyChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.ImperativeCommand;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -38,8 +39,12 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {
     // remove jdk if it was created during highlighting to avoid leaks
-    JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
-    super.tearDown();
+    try {
+      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @NotNull
@@ -55,7 +60,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
                       InvokeCompletion.completions(file, new JavaCompletionPolicy()),
                       Generator.constant(new StripTestDataMarkup(file)),
                       DeleteRange.psiRangeDeletions(file));
-    PropertyChecker.forAll(actionsOnJavaFiles(fileActions)).shouldHold(FileWithActions::runActions);
+    ImperativeCommand.checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
   public void testPreserveComments() {
@@ -65,8 +70,8 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
       MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
       Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
         Generator.anyOf(InvokeIntention.randomIntentions(file, new JavaCommentingStrategy()),
-                        InsertLineComment.insertComment(file, "//simple end comment"));
-      PropertyChecker.forAll(actionsOnJavaFiles(fileActions)).shouldHold(FileWithActions::runActions);
+                        InsertLineComment.insertComment(file, "//simple end comment\n"));
+      ImperativeCommand.checkScenarios(actionsOnJavaFiles(fileActions));
     }
     finally {
       AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = oldSettings;
@@ -74,11 +79,11 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   }
 
   @NotNull
-  private Generator<FileWithActions> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
-    return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
+  private Supplier<ImperativeCommand> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
+    return MadTestingUtil.commandsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
   }
 
   public void testReparse() {
-    PropertyChecker.forAll(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks)).shouldHold(FileWithActions::runActions);
+    ImperativeCommand.checkScenarios(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks));
   }
 }

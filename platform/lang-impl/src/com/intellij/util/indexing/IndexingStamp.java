@@ -430,9 +430,9 @@ public class IndexingStamp {
             if (timestamp == null) continue;
 
             if (timestamp.isDirty() /*&& file.isValid()*/) {
-              final DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE);
-              timestamp.writeToStream(sink);
-              sink.close();
+              try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
+                timestamp.writeToStream(sink);
+              }
             }
           } catch (IOException e) {
             throw new RuntimeException(e);

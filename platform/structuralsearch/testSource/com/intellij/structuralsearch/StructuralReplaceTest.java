@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -2273,6 +2273,35 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("initializer should remain",
                  "class X {" +
                  "  private final long i=1;" +
+                 "}",
+                 replacer.testReplace(in, what, by, options, true));
+  }
+
+  public void testReplaceParentheses() {
+    String in = "public class MyFile {\n" +
+                "    void test(String a, Object b) {\n" +
+                "        if(a.length() == 0) {\n" +
+                "            System.out.println(\"empty\");\n" +
+                "        }\n" +
+                "        if(((String) b).length() == 0) {\n" +
+                "            System.out.println(\"empty\");\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+
+    String what = "'_expr:[exprtype( String )].length() == 0";
+    String by = "$expr$.isEmpty()";
+    assertEquals("parentheses should remain",
+
+                 "public class MyFile {\n" +
+                 "    void test(String a, Object b) {\n" +
+                 "        if(a.isEmpty()) {\n" +
+                 "            System.out.println(\"empty\");\n" +
+                 "        }\n" +
+                 "        if(((String) b).isEmpty()) {\n" +
+                 "            System.out.println(\"empty\");\n" +
+                 "        }\n" +
+                 "    }\n" +
                  "}",
                  replacer.testReplace(in, what, by, options, true));
   }

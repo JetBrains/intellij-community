@@ -42,10 +42,10 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
   }
 
   protected void invokeCompletion(AnActionEvent e, CompletionType type, int time) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    assert project != null;
     assert editor != null;
+    Project project = editor.getProject();
+    assert project != null;
     InputEvent inputEvent = e.getInputEvent();
     createHandler(type, true, false, true).invokeCompletion(project, editor, time, inputEvent != null && inputEvent.getModifiers() != 0, false);
   }
@@ -60,13 +60,12 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     e.getPresentation().setEnabled(false);
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) return;
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
 
-    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+    Project project = editor.getProject();
+    PsiFile psiFile = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
 
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;

@@ -67,6 +67,8 @@ public class KeywordParser {
   public boolean hasToken(int position, CharSequence myBuffer, @Nullable TokenInfo tokenInfo) {
     int index = 0;
     int offset = position;
+    String longestKeyword = null;
+    IElementType longestKeywordType = null;
     while (offset < myBuffer.length()) {
       char c = myBuffer.charAt(offset++);
       int nextIndex = myTrie.findSubNode(index, myIgnoreCase ? Character.toUpperCase(c) : c);
@@ -79,16 +81,19 @@ public class KeywordParser {
         String testKeyword = myIgnoreCase ? StringUtil.toUpperCase(keyword) : keyword;
         for (int i = 0; i < CustomHighlighterTokenType.KEYWORD_TYPE_COUNT; i++) {
           if (myKeywordSets.get(i).contains(testKeyword)) {
-            if (tokenInfo != null) {
-              tokenInfo.updateData(position, position + keyword.length(), getToken(i));
-            }
-            return true;
+            longestKeyword = testKeyword;
+            longestKeywordType = getToken(i);
+            break;
           }
         }
       }
     }
 
-    return false;
+    if (longestKeyword != null && tokenInfo != null) {
+      tokenInfo.updateData(position, position + longestKeyword.length(), longestKeywordType);
+    }
+
+    return longestKeyword != null;
   }
 
   private static boolean isWordEnd(int offset, CharSequence sequence) {

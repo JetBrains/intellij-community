@@ -1430,6 +1430,12 @@ public class HighlightUtil extends HighlightUtilBase {
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parentExpr).descriptionAndTooltip(message).create();
       if (parentExpr instanceof PsiPrefixExpression && token.getTokenType() == JavaTokenType.EXCL) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createNegationBroadScopeFix((PsiPrefixExpression)parentExpr));
+        if (expression instanceof PsiMethodCallExpression) {
+          PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+          if (method != null) {
+            QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.BOOLEAN, true));
+          }
+        }
       }
       return highlightInfo;
     }

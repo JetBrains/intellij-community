@@ -107,6 +107,7 @@ commonjs
 comparision
 concat
 cond
+conda
 conf
 config
 configs
@@ -332,6 +333,7 @@ lcovonly
 ldap
 lexing
 libxml
+licensor
 lifecycle
 likec
 linestring

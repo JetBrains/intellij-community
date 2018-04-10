@@ -9,6 +9,11 @@ This inspection is meant to replace all <i>opened but not safely closed</i> insp
 Use the first table below to specify which AutoCloseable subclasses should be ignored by this inspection.
 Specify AutoCloseable subclasses here which do not need to be closed.
 <p>
+  <b>Note</b>: This inspection will still warn on streams returned from the java.nio.file.Files methods lines(), walk(), list() and find(),
+  even when java.util.stream.Stream is specified to be ignored in this table.
+  These streams contain an associated I/O resource that needs to be closed.
+</p>
+<p>
 Use the second table below to specify which methods returning AutoCloseable will be ignored when called.
 <p>
 Use the first checkbox below to ignore an AutoCloseable if it the result of a method call.

@@ -41,6 +41,7 @@ import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import com.jetbrains.python.toolbox.Maybe;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.io.File;
@@ -203,7 +204,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
 
     @Override
-    public void runTestOn(String sdkHome) throws Exception {
+    public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
       final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS);
       runTestOn(sdk);
     }

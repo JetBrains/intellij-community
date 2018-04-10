@@ -272,7 +272,7 @@ public class JavaBuilderUtil {
                   FSOperations.markDirty(context, markDirtyRound, chunk, null);
                 }
               }
-              additionalPassRequired = compilingIncrementally && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+              additionalPassRequired = compilingIncrementally && moduleBasedFilter.containsFilesFromCurrentTargetChunk(newlyAffectedFiles);
             }
           }
           else {
@@ -354,13 +354,11 @@ public class JavaBuilderUtil {
   }
 
   private static void removeFilesAcceptedByFilter(@NotNull Set<File> files, @Nullable FileFilter filter) {
-    if (filter == null) return;
-
-    Iterator<File> iterator = files.iterator();
-    while (iterator.hasNext()) {
-      File next = iterator.next();
-      if (filter.accept(next)) {
-        iterator.remove();
+    if (filter != null) {
+      for (final Iterator<File> it = files.iterator(); it.hasNext();) {
+        if (filter.accept(it.next())) {
+          it.remove();
+        }
       }
     }
   }
@@ -376,36 +374,19 @@ public class JavaBuilderUtil {
     return scope.isBuildIncrementally(JavaModuleBuildTargetType.PRODUCTION) || scope.isBuildIncrementally(JavaModuleBuildTargetType.TEST);
   }
 
-  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context,
-                                                                             Collection<File> affected,
-                                                                             ModulesBasedFileFilter moduleBasedFilter) {
+  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<File> affected, ModulesBasedFileFilter moduleBasedFilter) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
     final List<Pair<File, JpsModule>> result = new ArrayList<>();
+    final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
-                                                                                                                                 file);
+        final JavaSourceRootDescriptor moduleAndRoot = rootIndex.findJavaRootDescriptor(context, file);
         result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.target.getModule() : null));
       }
     }
     return result;
-  }
-
-  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected)
-    throws IOException {
-    final Set<JpsModule> chunkModules = chunk.getModules();
-    if (!chunkModules.isEmpty()) {
-      for (File file : affected) {
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
-                                                                                                                                 file);
-        if (moduleAndRoot != null && chunkModules.contains(moduleAndRoot.target.getModule())) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @NotNull
@@ -509,6 +490,15 @@ public class JavaBuilderUtil {
     public boolean belongsToCurrentTargetChunk(File file) {
       final JavaSourceRootDescriptor rd = myBuildRootIndex.findJavaRootDescriptor(myContext, file);
       return rd != null && myChunkTargets.contains(rd.target);
+    }
+
+    public boolean containsFilesFromCurrentTargetChunk(Collection<File> files) {
+      for (File file : files) {
+        if (belongsToCurrentTargetChunk(file)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 

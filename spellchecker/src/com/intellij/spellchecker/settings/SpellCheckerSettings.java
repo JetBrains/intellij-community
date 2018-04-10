@@ -100,6 +100,12 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myBundledDisabledDictionariesPaths = bundledDisabledDictionariesPaths;
   }
 
+  public boolean isDefaultAdvancedSettings(){
+    return myCorrectionsLimit == DEFAULT_MAX_VALUE &&
+           myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
+           myDictionaryToSave == DEFAULT_DICTIONARY_TO_SAVE;
+  }
+
   @Override
   @SuppressWarnings({"ConstantConditions"})
   public Element getState() {

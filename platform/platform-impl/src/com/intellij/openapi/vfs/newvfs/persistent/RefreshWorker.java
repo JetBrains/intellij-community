@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -184,17 +184,10 @@ public class RefreshWorker {
   private void fullDirRefresh(NewVirtualFileSystem fs, PersistentFS persistence, TObjectHashingStrategy<String> strategy, VirtualDirectoryImpl dir) {
     while (true) {
       // obtaining directory snapshot
-      String[] currentNames;
-      VirtualFile[] children;
-
-      AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        currentNames = persistence.list(dir);
-        children = dir.getChildren();
-      }
-      finally {
-        token.finish();
-      }
+      Pair<String[], VirtualFile[]> result = LocalFileSystemRefreshWorker.getDirectorySnapshot(persistence, dir);
+      if (result == null) return;
+      String[] currentNames = result.getFirst();
+      VirtualFile[] children = result.getSecond();
 
       // reading children attributes
       String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
@@ -203,10 +196,7 @@ public class RefreshWorker {
       Set<String> deletedNames = newTroveSet(strategy, currentNames);
       ContainerUtil.removeAll(deletedNames, upToDateNames);
 
-      OpenTHashSet<String> actualNames = null;
-      if (!fs.isCaseSensitive()) {
-        actualNames = new OpenTHashSet<>(strategy, upToDateNames);
-      }
+      OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
       if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(currentNames) + " +" + newNames + " -" + deletedNames);
 
       List<Pair<String, FileAttributes>> addedMap = ContainerUtil.newArrayListWithCapacity(newNames.size());
@@ -223,13 +213,12 @@ public class RefreshWorker {
       }
 
       // generating events unless a directory was changed in between
-      token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
+      boolean hasEvents = ReadAction.compute(() -> {
         if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
           if (LOG.isTraceEnabled()) {
             LOG.trace("retry: " + dir);
           }
-          continue;
+          return false;
         }
 
         for (String name : deletedNames) {
@@ -260,10 +249,10 @@ public class RefreshWorker {
           }
         }
 
+        return true;
+      });
+      if (hasEvents) {
         break;
-      }
-      finally {
-        token.finish();
       }
     }
   }
@@ -271,22 +260,14 @@ public class RefreshWorker {
   private void partialDirRefresh(NewVirtualFileSystem fs, TObjectHashingStrategy<String> strategy, VirtualDirectoryImpl dir) {
     while (true) {
       // obtaining directory snapshot
-      List<VirtualFile> cached;
-      List<String> wanted;
+      Pair<List<VirtualFile>, List<String>> result =
+        ReadAction.compute(() -> Pair.create(dir.getCachedChildren(), dir.getSuspiciousNames()));
 
-      AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        cached = dir.getCachedChildren();
-        wanted = dir.getSuspiciousNames();
-      }
-      finally {
-        token.finish();
-      }
+      List<VirtualFile> cached = result.getFirst();
+      List<String> wanted = result.getSecond();
 
-      OpenTHashSet<String> actualNames = null;
-      if (!fs.isCaseSensitive()) {
-        actualNames = new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
-      }
+      OpenTHashSet<String> actualNames =
+        fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
 
       if (LOG.isTraceEnabled()) {
         LOG.trace("cached=" + cached + " actual=" + actualNames);
@@ -308,13 +289,12 @@ public class RefreshWorker {
       }
 
       // generating events unless a directory was changed in between
-      token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
+      boolean hasEvents = ReadAction.compute(() -> {
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
           if (LOG.isTraceEnabled()) {
             LOG.trace("retry: " + dir);
           }
-          continue;
+          return false;
         }
 
         for (Pair<VirtualFile, FileAttributes> pair : existingMap) {
@@ -337,10 +317,10 @@ public class RefreshWorker {
           }
         }
 
+        return true;
+      });
+      if (hasEvents) {
         break;
-      }
-      finally {
-        token.finish();
       }
     }
   }

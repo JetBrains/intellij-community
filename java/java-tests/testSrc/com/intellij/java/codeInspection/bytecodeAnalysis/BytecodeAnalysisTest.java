@@ -15,21 +15,18 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.junit.Assert;
 
-import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.security.MessageDigest;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.stream.Stream;
 
 /**
  * @author lambdamix
@@ -60,15 +57,19 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testInference() {
-    checkAnnotations(Test01.class);
-    checkAnnotations(Test02.class);
-    checkAnnotations(TestNonStable.class);
-    checkAnnotations(TestConflict.class);
-    checkAnnotations(TestEnum.class);
+    checkAnnotations(Test01.class.getName());
+    checkAnnotations(Test02.class.getName());
+    checkAnnotations(TestNonStable.class.getName());
+    checkAnnotations(TestConflict.class.getName());
+    checkAnnotations(TestEnum.class.getName());
+  }
+
+  public void testJava9Inference() {
+    checkAnnotations(Test01.class.getPackage().getName()+".TestJava9");
   }
 
   public void testHashCollision() {
-    checkAnnotations(TestHashCollision.class);
+    checkAnnotations(TestHashCollision.class.getName());
   }
 
   public void testConverter() {
@@ -118,59 +119,53 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
             isLeaking = true;
           }
         }
-        assertEquals(method.toString() + " #" + i, isLeaking, map.get(method)[i]);
+        assertEquals(method + " #" + i, isLeaking, map.get(method)[i]);
       }
     }
   }
 
-  private void checkAnnotations(Class<?> javaClass) {
-    PsiClass psiClass = myJavaPsiFacade.findClass(javaClass.getName(), GlobalSearchScope.moduleWithLibrariesScope(myModule));
+  private void checkAnnotations(String className) {
+    PsiClass psiClass = myJavaPsiFacade.findClass(className, GlobalSearchScope.moduleWithLibrariesScope(myModule));
     assertNotNull(psiClass);
 
-    for (java.lang.reflect.Method javaMethod : javaClass.getDeclaredMethods()) {
-      if(javaMethod.isSynthetic()) continue; // skip lambda runtime representation
-      PsiMethod psiMethod = ArrayUtil.getFirstElement(psiClass.findMethodsByName(javaMethod.getName(), false));
-      if (psiMethod == null) {
-        // Enum compilation adds some methods to bytecode which are not marked as synthetic
-        if(javaClass.isEnum()) continue;
-        fail("Unable to find method "+javaMethod.getName()+" in bytecode");
-      }
-      Annotation[][] annotations = javaMethod.getParameterAnnotations();
+    for (PsiMethod method : psiClass.getMethods()) {
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (method.isConstructor() && parameters.length == 0) continue;
 
       // not-null parameters
-      for (int i = 0; i < annotations.length; i++) {
-        Annotation[] parameterAnnotations = annotations[i];
-        PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[i];
-        PsiAnnotation inferredAnnotation = myBytecodeAnalysisService.findInferredAnnotation(psiParameter, AnnotationUtil.NOT_NULL);
-        boolean expectNotNull = Stream.of(parameterAnnotations).anyMatch(anno -> anno.annotationType() == ExpectNotNull.class);
-        assertNullity(getMethodDisplayName(javaMethod) + "/arg#" + i, expectNotNull, inferredAnnotation);
+      for (int i = 0; i < parameters.length; i++) {
+        PsiAnnotation inferredAnnotation = myBytecodeAnalysisService.findInferredAnnotation(parameters[i], AnnotationUtil.NOT_NULL);
+        boolean expectNotNull = AnnotationUtil.isAnnotated(parameters[i], ExpectNotNull.class.getName(), 0);
+        assertNullity(getMethodDisplayName(method) + "/arg#" + i, expectNotNull, inferredAnnotation);
       }
 
       // not-null result
-      ExpectNotNull expectedAnnotation = javaMethod.getAnnotation(ExpectNotNull.class);
-      PsiAnnotation actualAnnotation = myBytecodeAnalysisService.findInferredAnnotation(psiMethod, AnnotationUtil.NOT_NULL);
-      assertNullity(getMethodDisplayName(javaMethod), expectedAnnotation != null, actualAnnotation);
+      boolean expectNotNull = AnnotationUtil.isAnnotated(method, ExpectNotNull.class.getName(), 0);
+      PsiAnnotation actualAnnotation = myBytecodeAnalysisService.findInferredAnnotation(method, AnnotationUtil.NOT_NULL);
+      assertNullity(getMethodDisplayName(method), expectNotNull, actualAnnotation);
 
       // contracts
-      ExpectContract expectedContract = javaMethod.getAnnotation(ExpectContract.class);
-      PsiAnnotation actualContract = myBytecodeAnalysisService.findInferredAnnotation(psiMethod, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+      PsiAnnotation expectedContract = AnnotationUtil.findAnnotation(method, ExpectContract.class.getName());
+      PsiAnnotation actualContract = myBytecodeAnalysisService.findInferredAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
 
-      String expectedText = expectedContract == null ? "null" : expectedContract.toString();
-      String inferredText = actualContract == null ? "null" : actualContract.getText();
+      String expectedText = getContractText(expectedContract);
+      String inferredText = getContractText(actualContract);
 
-      assertEquals(getMethodDisplayName(javaMethod) + ":" + expectedText + " <> " + inferredText,
-                   expectedContract == null, actualContract == null);
-
-      if (expectedContract != null && actualContract != null) {
-        String expectedContractValue = expectedContract.value();
-        String actualContractValue = AnnotationUtil.getStringAttributeValue(actualContract, null);
-        assertEquals(getMethodDisplayName(javaMethod), expectedContractValue, actualContractValue);
-
-        boolean expectedPureValue = expectedContract.pure();
-        boolean actualPureValue = getPureAttribute(actualContract);
-        assertEquals(getMethodDisplayName(javaMethod), expectedPureValue, actualPureValue);
-      }
+      assertEquals(getMethodDisplayName(method) + ":" + expectedText + " <> " + inferredText,
+                   expectedText, inferredText);
     }
+  }
+
+  private static String getContractText(PsiAnnotation expectedContract) {
+    return expectedContract == null ? "null" :
+           expectedContract.getText().replaceFirst("^@.+Contract\\(", "@Contract(")
+              .replace(" = ", "=")
+              .replace(", ", ",");
+  }
+
+  @NotNull
+  private static String getMethodDisplayName(PsiMethod method) {
+    return method.getContainingClass().getQualifiedName() + "." + method.getName();
   }
 
   private static void assertNullity(String message, boolean expectedNotNull, PsiAnnotation inferredAnnotation) {
@@ -179,15 +174,6 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     } else if(!expectedNotNull && inferredAnnotation != null) {
       fail(message+": @NotNull inferred, but not expected");
     }
-  }
-
-  private static String getMethodDisplayName(java.lang.reflect.Method javaMethod) {
-    return javaMethod.getDeclaringClass().getSimpleName()+"."+javaMethod.getName();
-  }
-
-  private static boolean getPureAttribute(PsiAnnotation annotation) {
-    Boolean pureValue = AnnotationUtil.getBooleanAttributeValue(annotation, "pure");
-    return pureValue != null && pureValue.booleanValue();
   }
 
   private void checkCompoundIds(Class<?> javaClass) {
@@ -245,28 +231,26 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(vFile);
     PsiTestUtil.addLibrary(myModule, "dataClasses", vFile.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
 
-    if(getTestName(false).equals("Inference")) {
-      setUpConflictingClasses(basePath);
-    }
+    setUpPrecompiledDataClasses(basePath);
   }
 
-  private void setUpConflictingClasses(String basePath) throws IOException {
-    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-    StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, null);
+  private void setUpPrecompiledDataClasses(String basePath) throws IOException {
     File sourcePath = new File(PlatformTestUtil.getCommunityPath() + "/java/java-tests/testSrc/" + PACKAGE_PATH);
-    File[] sourceFiles = new File(sourcePath.getParentFile(), "classConflict").listFiles((dir, name) -> name.endsWith(".java"));
+    File[] sourceFiles = new File(sourcePath.getParentFile(), "precompiledData").listFiles((dir, name) -> name.endsWith(".java"));
     assertNotNull(sourceFiles);
-    Iterable<? extends JavaFileObject> sources = manager.getJavaFileObjectsFromFiles(Arrays.asList(sourceFiles));
-    File conflictOutput = new File(basePath + "/conflict/");
+    File conflictOutput = new File(basePath + "/precompiled/"+PACKAGE_PATH);
     assertTrue(conflictOutput.mkdirs());
-    manager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(conflictOutput));
-    JavaCompiler.CompilationTask task = compiler.getTask(null, manager, diagnostics, null, null, sources);
-    if(!task.call()) {
-      fail(diagnostics.getDiagnostics().toString());
+    for (File file : sourceFiles) {
+      File precompiledFile = new File(file.getParentFile(), file.getName().replaceFirst(".java$", ".class"));
+      if(!precompiledFile.exists()) {
+        fail("Unable to find precompiled "+precompiledFile+" for source file "+file);
+      }
+      FileUtil.copy(file, new File(conflictOutput, file.getName()));
+      FileUtil.copy(precompiledFile, new File(conflictOutput, precompiledFile.getName()));
     }
+
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(conflictOutput);
     assertNotNull(vFile);
-    PsiTestUtil.addLibrary(myModule, "conflictClasses", vFile.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
+    PsiTestUtil.addLibrary(myModule, "precompiled", vFile.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 }

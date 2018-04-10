@@ -161,6 +161,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     public String DEFAULT_COMPILER = JavaCompilers.JAVAC_ID;
     public int BUILD_PROCESS_HEAP_SIZE = DEFAULT_BUILD_PROCESS_HEAP_SIZE;
     public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
+    public boolean USE_RELEASE_OPTION = true;
   }
 
   @Override
@@ -295,6 +296,16 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @Nullable
   public String getProjectBytecodeTarget() {
     return myBytecodeTargetLevel;
+  }
+
+  @Override
+  public boolean useReleaseOption() {
+    return myState.USE_RELEASE_OPTION;
+  }
+
+  @Override
+  public void setUseReleaseOption(boolean useReleaseOption) {
+    myState.USE_RELEASE_OPTION = useReleaseOption;
   }
 
   public void setModulesBytecodeTargetMap(@NotNull Map<String, String> mapping) {

@@ -26,17 +26,17 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("UseJBColor")
 public class EclipseThemeOptionHandler implements EclipseThemeReader.OptionHandler, EclipseColorThemeElements {
-  private EditorColorsScheme myColorsScheme;
+  private final EditorColorsScheme myColorsScheme;
 
-  private final static Map<String, TextAttributesKey> ECLIPSE_TO_IDEA_ATTR_MAP = new HashMap<>();
+  private static final Map<String, TextAttributesKey> ECLIPSE_TO_IDEA_ATTR_MAP = new HashMap<>();
     
   static {
     ECLIPSE_TO_IDEA_ATTR_MAP.put(SINGLE_LINE_COMMENT_TAG, DefaultLanguageHighlighterColors.LINE_COMMENT);

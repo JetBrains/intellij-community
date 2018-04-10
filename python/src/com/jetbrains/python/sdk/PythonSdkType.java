@@ -138,7 +138,7 @@ public final class PythonSdkType extends SdkType {
   @NonNls
   public static String getBuiltinsFileName(@NotNull Sdk sdk) {
     final LanguageLevel level = getLanguageLevelForSdk(sdk);
-    return level.isOlderThan(LanguageLevel.PYTHON30) ? PyBuiltinCache.BUILTIN_FILE : PyBuiltinCache.BUILTIN_FILE_3K;
+    return level.isPython2() ? PyBuiltinCache.BUILTIN_FILE : PyBuiltinCache.BUILTIN_FILE_3K;
   }
 
   @Override

@@ -67,12 +67,8 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
           comma.delete();
         }
       }
-
-      super.deleteChildInternal(child);
     }
-    else {
-      super.deleteChildInternal(child);
-    }
+    super.deleteChildInternal(child);
   }
 
   @Override

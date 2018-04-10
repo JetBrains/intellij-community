@@ -428,7 +428,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
     final String nextMethodName = async
                                   ? PyNames.ANEXT
-                                  : LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30)
+                                  : !LanguageLevel.forElement(anchor).isPython2()
                                     ? PyNames.DUNDER_NEXT
                                     : PyNames.NEXT;
     final PyFunction next = findMethodByName(type, nextMethodName, context);

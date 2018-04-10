@@ -309,7 +309,7 @@ class LookupUi {
 
           Dimension adSize = myAdvertiser.getAdComponent().getPreferredSize();
 
-          int panelHeight = myList.getPreferredScrollableViewportSize().height + adSize.height;
+          int panelHeight = myScrollPane.getPreferredSize().height + adSize.height;
           int width = Math.max(listWidth, adSize.width);
           width = Math.min(width, Registry.intValue("ide.completion.max.width"));
           int height = Math.min(panelHeight, myMaximumHeight);

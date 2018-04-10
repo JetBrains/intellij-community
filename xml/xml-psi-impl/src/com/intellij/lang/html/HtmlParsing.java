@@ -240,21 +240,17 @@ public class HtmlParsing {
             final boolean hasChancesToMatch = HtmlUtil.isOptionalEndForHtmlTagL(endName) ? childTerminatesParentInStack(endName) : myTagNamesStack.contains(endName);
             if (hasChancesToMatch) {
               footer.rollbackTo();
-              if (isOptionalTagEnd) {
-                doneTag(myTagMarkersStack.peek());
-              }
-              else {
+              if (!isOptionalTagEnd) {
                 error(XmlErrorMessages.message("named.element.is.not.closed", myOriginalTagNamesStack.peek()));
-                doneTag(myTagMarkersStack.peek());
               }
-              continue;
+              doneTag(myTagMarkersStack.peek());
             }
             else {
               advance();
               if (token() == XmlTokenType.XML_TAG_END) advance();
               footer.error(XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing"));
-              continue;
             }
+            continue;
           }
 
           advance();

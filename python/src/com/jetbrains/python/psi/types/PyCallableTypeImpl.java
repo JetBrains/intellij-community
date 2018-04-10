@@ -110,4 +110,11 @@ public class PyCallableTypeImpl implements PyCallableType {
   @Override
   public void assertValid(String message) {
   }
+
+  @Override
+  public void accept(@NotNull PyTypeVisitor visitor) {
+    if (visitor instanceof PyTypeVisitorExt) {
+      visitor.visitCallableType(this);
+    }
+  }
 }

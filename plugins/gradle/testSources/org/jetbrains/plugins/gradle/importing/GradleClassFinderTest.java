@@ -15,8 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -62,17 +61,13 @@ public class GradleClassFinderTest extends GradleImportingTestCase {
                   "buildSrc", "buildSrc_main", "buildSrc_test");
     Module buildSrcModule = getModule("buildSrc_main");
     assertNotNull(buildSrcModule);
-    final AccessToken accessToken = ReadAction.start();
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       PsiClass[] appClasses = JavaPsiFacade.getInstance(myProject).findClasses("App", GlobalSearchScope.allScope(myProject));
       assertEquals(1, appClasses.length);
 
       PsiClass[] buildSrcClasses =
         JavaPsiFacade.getInstance(myProject).findClasses("org.buildsrc.BuildSrcClass", GlobalSearchScope.moduleScope(buildSrcModule));
       assertEquals(1, buildSrcClasses.length);
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 }

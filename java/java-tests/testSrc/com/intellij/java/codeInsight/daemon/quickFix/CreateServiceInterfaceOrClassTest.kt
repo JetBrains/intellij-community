@@ -4,6 +4,7 @@
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -33,11 +34,23 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
     addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
 
     val moduleInfo = myFixture.configureByText("module-info.java", "module foo.bar { uses foo.bar.<caret>MyService; }") as PsiJavaFile
-    doAction("foo.bar.MyService", moduleInfo, isClass = false)
+    doAction("foo.bar.MyService", moduleInfo, classKind = CreateClassKind.INTERFACE)
 
     myFixture.checkResult("foo/bar/MyService.java",
                           "package foo.bar;\n\n" +
                           "public interface MyService {\n" +
+                          "}", true)
+  }
+
+  fun testSameModuleExistingPackageAnnotation() {
+    addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
+
+    val moduleInfo = myFixture.configureByText("module-info.java", "module foo.bar { uses foo.bar.<caret>MyService; }") as PsiJavaFile
+    doAction("foo.bar.MyService", moduleInfo, classKind = CreateClassKind.ANNOTATION)
+
+    myFixture.checkResult("foo/bar/MyService.java",
+                          "package foo.bar;\n\n" +
+                          "public @interface MyService {\n" +
                           "}", true)
   }
 
@@ -85,11 +98,11 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
   fun testExistingLibraryOuterClass() = doTestNoAction("module foo.bar { uses java.io.File.<caret>MyService; }")
 
   private fun doAction(interfaceFQN: String, moduleInfo: PsiJavaFile,
-                       rootDirectory: PsiDirectory? = null, isClass: Boolean = true) {
+                       rootDirectory: PsiDirectory? = null, classKind: CreateClassKind = CreateClassKind.CLASS) {
     file.putUserData(CreateServiceClassFixBase.SERVICE_ROOT_DIR, rootDirectory ?: file.containingDirectory)
-    file.putUserData(CreateServiceClassFixBase.SERVICE_IS_CLASS, isClass)
+    file.putUserData(CreateServiceClassFixBase.SERVICE_CLASS_KIND, classKind)
 
-    val action = myFixture.findSingleIntention("Create interface or class '$interfaceFQN'")
+    val action = myFixture.findSingleIntention("Create service '$interfaceFQN'")
     myFixture.launchAction(action)
     myFixture.checkHighlighting(false, false, false) // no error
     val serviceImpl = myFixture.findClass(interfaceFQN)

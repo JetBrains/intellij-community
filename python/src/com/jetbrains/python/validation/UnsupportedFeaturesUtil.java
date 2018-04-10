@@ -22,10 +22,9 @@ import java.io.IOException;
 import java.util.*;
 
 public class UnsupportedFeaturesUtil {
-  public static Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<>();
-  public static Map<LanguageLevel, Set<String>> MODULES = new HashMap<>();
-  public static Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<>();
-  public static final List<String> ALL_LANGUAGE_LEVELS = new ArrayList<>();
+  public static final Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<>();
+  public static final Map<LanguageLevel, Set<String>> MODULES = new HashMap<>();
+  public static final Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<>();
 
   static {
     try {
@@ -35,9 +34,6 @@ public class UnsupportedFeaturesUtil {
     catch (IOException e) {
       Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
       log.error("Cannot find \"versions.xml\". " + e.getMessage());
-    }
-    for (LanguageLevel level : LanguageLevel.SUPPORTED_LEVELS) {
-      ALL_LANGUAGE_LEVELS.add(level.toString());
     }
   }
 
@@ -139,10 +135,11 @@ public class UnsupportedFeaturesUtil {
     private CharArrayWriter myContent = new CharArrayWriter();
     private LanguageLevel myCurrentLevel;
 
+    @Override
     public void startElement(String namespaceURI,
-                String localName,
-                String qName,
-                Attributes attr) throws SAXException {
+                             String localName,
+                             String qName,
+                             Attributes attr) throws SAXException {
       myContent.reset();
       if (localName.equals("python")) {
         BUILTINS.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<>());
@@ -151,9 +148,10 @@ public class UnsupportedFeaturesUtil {
       }
      }
 
+    @Override
     public void endElement(String namespaceURI,
-              String localName,
-              String qName) throws SAXException {
+                           String localName,
+                           String qName) throws SAXException {
       if (localName.equals("func")) {
         BUILTINS.get(myCurrentLevel).add(myContent.toString());
       }
@@ -162,6 +160,7 @@ public class UnsupportedFeaturesUtil {
       }
     }
 
+    @Override
     public void characters(char[] ch, int start, int length)
                                           throws SAXException {
       myContent.write(ch, start, length);
@@ -173,6 +172,7 @@ public class UnsupportedFeaturesUtil {
     private String myClassName = "";
     private LanguageLevel myCurrentLevel;
 
+    @Override
     public void startElement(String namespaceURI,
                              String localName,
                              String qName,
@@ -195,6 +195,7 @@ public class UnsupportedFeaturesUtil {
       }
     }
 
+    @Override
     public void endElement(String namespaceURI,
                            String localName,
                            String qName) throws SAXException {
@@ -208,6 +209,7 @@ public class UnsupportedFeaturesUtil {
       }
     }
 
+    @Override
     public void characters(char[] ch, int start, int length)
       throws SAXException {
       myContent.write(ch, start, length);

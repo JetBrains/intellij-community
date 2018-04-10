@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -68,19 +67,10 @@ public abstract class CreateClassFix {
         GroovyFileBase groovyFile = (GroovyFileBase)file;
         final PsiManager manager = myRefElement.getManager();
 
-        final String qualifier;
-        final String name;
-        final Module module;
-        final AccessToken accessToken = ReadAction.start();
-        try {
-          qualifier = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
-          name = myRefElement.getReferenceName();
-          assert name != null;
-          module = ModuleUtilCore.findModuleForPsiElement(file);
-        }
-        finally {
-          accessToken.finish();
-        }
+        final String qualifier = ReadAction.compute(() -> groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "");
+        final String name = ReadAction.compute(() -> myRefElement.getReferenceName());
+        assert name != null;
+        final Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(file));
 
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module, getText());
         if (targetDirectory == null) return;
@@ -104,13 +94,7 @@ public abstract class CreateClassFix {
 
   @Nullable
   private static PsiType[] getArgTypes(GrReferenceElement refElement) {
-    final AccessToken accessToken = ReadAction.start();
-    try {
-      return PsiUtil.getArgumentTypes(refElement, false);
-    }
-    finally {
-      accessToken.finish();
-    }
+    return ReadAction.compute(() -> PsiUtil.getArgumentTypes(refElement, false));
   }
 
   private static void generateConstructor(@NotNull PsiElement refElement,

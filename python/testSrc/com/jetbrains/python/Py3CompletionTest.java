@@ -74,7 +74,7 @@ public class Py3CompletionTest extends PyTestCase {
   // PY-4073
   public void testSpecialFunctionAttributesPy3() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON32,
+      LanguageLevel.PYTHON34,
       () -> {
         List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
         assertNotNull(suggested);
@@ -150,7 +150,7 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-17828
   public void testDunderPrepare() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-20279

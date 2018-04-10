@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 import static java.util.stream.Collectors.*;
 
 public class Main {
-  static Predicate<String> nonEmpty = s -> s != null && !s.isEmpty();
+  static final Predicate<String> nonEmpty = s -> s != null && !s.isEmpty();
 
   private static long testFunctionInField(List<String> strings) {
       long count = 0L;

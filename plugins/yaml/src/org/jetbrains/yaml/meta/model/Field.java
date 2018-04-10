@@ -222,8 +222,9 @@ public class Field {
     }
 
     LookupElementBuilder lookup = LookupElementBuilder.create(getName())
-      .withTypeText(myMainType.getDisplayName(), getLookupIcon(), true)
-      .withStrikeoutness(isDeprecated());
+                                                      .withTypeText(myMainType.getDisplayName(), true)
+                                                      .withIcon(getLookupIcon())
+                                                      .withStrikeoutness(isDeprecated());
 
     if (isRequired()) {
       lookup = lookup.bold();
@@ -241,10 +242,7 @@ public class Field {
   }
 
   @Nullable
-  private Icon getLookupIcon() {
-    if (myIsMany) {
-      return AllIcons.Json.Array;
-    }
-    return null;
+  public Icon getLookupIcon() {
+    return myIsMany ? AllIcons.Json.Array : myMainType.getIcon();
   }
 }

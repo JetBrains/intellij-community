@@ -185,12 +185,16 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
           val name = file.name
           val used = image.used
           val deprecated = image.deprecated
+          val deprecationComment = image.deprecationComment
 
           if (isIcon(file)) {
             processedIcons++
 
             if (used || deprecated) {
               append(answer, "", level)
+              if (deprecationComment != null) {
+                append(answer, "/** @deprecated $deprecationComment */", level)
+              }
               append(answer, "@SuppressWarnings(\"unused\")", level)
             }
             if (deprecated) {
@@ -237,7 +241,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     val rootDir = File(JpsPathUtil.urlToPath(rootUrl))
     if (!rootDir.isDirectory) return null
 
-    val file = File(rootDir, "icon-robots.txt")
+    val file = File(rootDir, ImageCollector.ROBOTS_FILE_NAME)
     if (!file.exists()) return null
 
     val prefix = "name:"
@@ -257,7 +261,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
 
   private fun className(name: String): String {
     val answer = StringBuilder()
-    name.split("-", "_").forEach {
+    name.removePrefix("intellij.").split("-", "_", ".").forEach {
       answer.append(capitalize(it))
     }
     return toJavaIdentifier(answer.toString())

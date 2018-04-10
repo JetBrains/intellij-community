@@ -15,6 +15,7 @@
  */
 package com.intellij.terminal;
 
+import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -69,6 +70,12 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     setName("terminal");
 
     Disposer.register(parent, this);
+
+    for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
+      for (Filter filter: eachProvider.getDefaultFilters(project)) {
+        addMessageFilter(project, filter);
+      }
+    }
   }
 
   @Override

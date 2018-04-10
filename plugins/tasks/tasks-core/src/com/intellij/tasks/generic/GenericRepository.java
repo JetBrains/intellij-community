@@ -89,7 +89,7 @@ public class GenericRepository extends BaseRepositoryImpl {
    */
   @SuppressWarnings({"UnusedDeclaration"})
   public GenericRepository() {
-    // empty
+    resetToDefaults();
   }
 
   public GenericRepository(final TaskRepositoryType type) {
@@ -359,8 +359,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     }
   )
   public List<ResponseHandler> getResponseHandlers() {
-    Collection<ResponseHandler> handlers = myResponseHandlersMap.values();
-    return new ArrayList<>(handlers);
+    return Collections.unmodifiableList(new ArrayList<>(myResponseHandlersMap.values()));
   }
 
   @SuppressWarnings("UnusedDeclaration")

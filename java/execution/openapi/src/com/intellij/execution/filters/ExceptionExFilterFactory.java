@@ -15,8 +15,7 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -80,31 +79,10 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
         if (info == emptyInfo) continue;
 
         if (info == null) {
-          info = emptyInfo;
-          AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-          try {
-            Result result = worker.execute(lineText, lineEndOffset);
-            if (result == null) continue;
-            HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();
-            if (!(hyperlinkInfo instanceof FileHyperlinkInfo)) continue;
-
-            OpenFileDescriptor descriptor = ((FileHyperlinkInfo)hyperlinkInfo).getDescriptor();
-            if (descriptor == null) continue;
-
-            PsiFile psiFile = worker.getFile();
-            if (psiFile == null || psiFile instanceof PsiCompiledFile) continue;
-            int offset = descriptor.getOffset();
-            if (offset <= 0) continue;
-
-            PsiElement element = psiFile.findElementAt(offset);
-            PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);
-            PsiCodeBlock tryBlock = parent != null? parent.getTryBlock() : null;
-            if (tryBlock == null || !tryBlock.getTextRange().contains(offset)) continue;
-            info = worker.getInfo();
-          }
-          finally {
-            token.finish();
-            visited.put(lineText, info);
+          info = ReadAction.compute(() -> doparse(emptyInfo, worker, lineEndOffset, lineText));
+          visited.put(lineText, info == null ? emptyInfo : info);
+          if (info == null) {
+            continue;
           }
         }
         int off = startOffset + lineStartOffset;
@@ -117,6 +95,30 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
           }
         });
       }
+    }
+
+    private Trinity<TextRange, TextRange, TextRange> doparse(Trinity<TextRange, TextRange, TextRange> emptyInfo,
+                                                             ExceptionWorker worker,
+                                                             int lineEndOffset, String lineText) {
+      Result result = worker.execute(lineText, lineEndOffset);
+      if (result == null) return null;
+      HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();
+      if (!(hyperlinkInfo instanceof FileHyperlinkInfo)) return null;
+
+      OpenFileDescriptor descriptor = ((FileHyperlinkInfo)hyperlinkInfo).getDescriptor();
+      if (descriptor == null) return null;
+
+      PsiFile psiFile = worker.getFile();
+      if (psiFile == null || psiFile instanceof PsiCompiledFile) return null;
+      int offset = descriptor.getOffset();
+      if (offset <= 0) return null;
+
+      PsiElement element = psiFile.findElementAt(offset);
+      PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);
+      PsiCodeBlock tryBlock = parent != null? parent.getTryBlock() : null;
+      if (tryBlock == null || !tryBlock.getTextRange().contains(offset)) return null;
+      Trinity<TextRange, TextRange, TextRange> info = worker.getInfo();
+      return info;
     }
 
     @NotNull

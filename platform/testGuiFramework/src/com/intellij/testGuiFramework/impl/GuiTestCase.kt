@@ -23,7 +23,9 @@ import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.RowFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
 import com.intellij.testGuiFramework.framework.GuiTestUtil
@@ -747,5 +749,15 @@ open class GuiTestCase {
     Pause.pause(object : Condition(condition) {
       override fun test() = testFunction()
     }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
+  }
+
+  fun tableRowValues(table: JTableFixture, rowIndex: Int): List<String> {
+    val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
+    return RowFixture(rowIndex, fixture).values()
+  }
+
+  fun tableRowCount(table: JTableFixture): Int {
+    val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
+    return fixture.rowCount()
   }
 }

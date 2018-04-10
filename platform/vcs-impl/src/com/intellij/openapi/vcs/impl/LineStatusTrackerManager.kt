@@ -17,10 +17,18 @@ package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
+import com.intellij.icons.AllIcons
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationAdapter
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.command.CommandEvent
+import com.intellij.openapi.command.CommandListener
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
@@ -32,6 +40,7 @@ import com.intellij.openapi.editor.event.EditorFactoryAdapter
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.DirectoryIndex
 import com.intellij.openapi.startup.StartupManager
@@ -41,11 +50,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.*
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.GuiUtils
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -62,6 +73,7 @@ class LineStatusTrackerManager(
   private val statusProvider: VcsBaseContentProvider,
   private val changeListManager: ChangeListManagerImpl,
   private val fileDocumentManager: FileDocumentManager,
+  private val fileEditorManager: FileEditorManagerEx,
   @Suppress("UNUSED_PARAMETER") makeSureIndexIsInitializedFirst: DirectoryIndex
 ) : ProjectComponent, LineStatusTrackerManagerI {
 
@@ -74,6 +86,8 @@ class LineStatusTrackerManager(
 
   private val partialChangeListsEnabled = Registry.`is`("vcs.enable.partial.changelists")
   private val documentsInDefaultChangeList = HashSet<Document>()
+
+  private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
 
   private val loader: SingleThreadLoader<RefreshRequest, RefreshData> = MyBaseRevisionLoader()
 
@@ -106,6 +120,8 @@ class LineStatusTrackerManager(
 
       val virtualFileManager = VirtualFileManager.getInstance()
       virtualFileManager.addVirtualFileListener(MyVirtualFileListener(), disposable)
+
+      if (partialChangeListsEnabled) CommandProcessor.getInstance().addCommandListener(MyCommandListener(), disposable)
     }
   }
 
@@ -605,11 +621,22 @@ class LineStatusTrackerManager(
   private inner class MyChangeListListener : ChangeListAdapter() {
     override fun defaultListChanged(oldDefaultList: ChangeList?, newDefaultList: ChangeList?) {
       edt {
+        expireInactiveRangesDamagedNotifications()
+
         EditorFactory.getInstance().allEditors
           .filterIsInstance(EditorEx::class.java)
           .forEach {
             it.gutterComponentEx.repaint()
           }
+      }
+    }
+  }
+
+  private inner class MyCommandListener : CommandListener {
+    override fun commandFinished(event: CommandEvent?) {
+      if (CommandProcessor.getInstance().currentCommand == null &&
+          !filesWithDamagedInactiveRanges.isEmpty()) {
+        showInactiveRangesDamagedNotification()
       }
     }
   }
@@ -706,6 +733,58 @@ class LineStatusTrackerManager(
 
         log("Tracker restored from config", virtualFile)
       }
+    }
+  }
+
+
+  @CalledInAwt
+  internal fun notifyInactiveRangesDamaged(virtualFile: VirtualFile) {
+    if (filesWithDamagedInactiveRanges.contains(virtualFile)) return
+    if (virtualFile == fileEditorManager.currentFile) return
+    filesWithDamagedInactiveRanges.add(virtualFile)
+  }
+
+  private fun showInactiveRangesDamagedNotification() {
+    val currentNotifications = NotificationsManager.getNotificationsManager()
+      .getNotificationsOfType(InactiveRangesDamagedNotification::class.java, project)
+
+    val lastNotification = currentNotifications.lastOrNull { !it.isExpired }
+    if (lastNotification != null) filesWithDamagedInactiveRanges.addAll(lastNotification.virtualFiles)
+
+    currentNotifications.forEach { it.expire() }
+
+    val files = filesWithDamagedInactiveRanges.toSet()
+    filesWithDamagedInactiveRanges.clear()
+
+    InactiveRangesDamagedNotification(project, files).notify(project)
+  }
+
+  @CalledInAwt
+  private fun expireInactiveRangesDamagedNotifications() {
+    filesWithDamagedInactiveRanges.clear()
+
+    val currentNotifications = NotificationsManager.getNotificationsManager()
+      .getNotificationsOfType(InactiveRangesDamagedNotification::class.java, project)
+    currentNotifications.forEach { it.expire() }
+  }
+
+  private class InactiveRangesDamagedNotification(project: Project, val virtualFiles: Set<VirtualFile>)
+    : Notification(VcsNotifier.STANDARD_NOTIFICATION.displayId,
+                   AllIcons.Toolwindows.ToolWindowChanges,
+                   null,
+                   null,
+                   VcsBundle.getString("lst.inactive.ranges.damaged.notification"),
+                   NotificationType.INFORMATION,
+                   null) {
+    init {
+      addAction(NotificationAction.createSimple("View Changes...") {
+        val defaultList = ChangeListManager.getInstance(project).defaultChangeList
+        val changes = defaultList.changes.filter { virtualFiles.contains(it.virtualFile) }
+
+        val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+        window.activate { ChangesViewManager.getInstance(project).selectChanges(changes) }
+        expire()
+      })
     }
   }
 }

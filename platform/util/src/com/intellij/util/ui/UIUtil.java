@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -34,14 +35,19 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
+import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
+import javax.swing.text.html.CSS;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
@@ -50,7 +56,6 @@ import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
@@ -382,6 +387,7 @@ public class UIUtil {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
+  // accessed from com.intellij.util.ui.paint.AbstractPainter2D via reflect
   private static Boolean jreHiDPI;
   private static boolean jreHiDPI_earlierVersion;
 
@@ -765,21 +771,12 @@ public class UIUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link LinePainter2D#paint(Graphics, double, double, double, double)} instead.
+   */
+  @Deprecated
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
-    Stroke stroke = ((Graphics2D)g).getStroke();
-    if (stroke instanceof BasicStroke) {
-      if (x1 == x2) {
-        float lineWidth = ((BasicStroke)stroke).getLineWidth();
-        ((Graphics2D)g).fill(new Rectangle2D.Float(x1, Math.min(y1, y2), lineWidth, Math.abs(y1 - y2) + lineWidth));
-        return;
-      }
-      if (y1 == y2) {
-        float lineWidth = ((BasicStroke)stroke).getLineWidth();
-        ((Graphics2D)g).fill(new Rectangle2D.Float(Math.min(x1, x2), y1, Math.abs(x1 - x2) + lineWidth, lineWidth));
-        return;
-      }
-    }
-    g.drawLine(x1, y1, x2, y2);
+    LinePainter2D.paint((Graphics2D)g, x1, y1, x2, y2);
   }
 
   public static void drawLine(Graphics2D g, int x1, int y1, int x2, int y2, @Nullable Color bgColor, @Nullable Color fgColor) {
@@ -791,7 +788,7 @@ public class UIUtil {
     if (bgColor != null) {
       g.setBackground(bgColor);
     }
-    drawLine(g, x1, y1, x2, y2);
+    LinePainter2D.paint(g, x1, y1, x2, y2);
     if (fgColor != null) {
       g.setColor(oldFg);
     }
@@ -1222,6 +1219,10 @@ public class UIUtil {
   public static Color getTreeUnfocusedSelectionBackground() {
     Color background = getTreeTextBackground();
     return ColorUtil.isDark(background) ? new JBColor(Gray._30, new Color(13, 41, 62)) : UNFOCUSED_SELECTION_COLOR;
+  }
+
+  public static Color getTableUnfocusedSelectionBackground() {
+    return getListUnfocusedSelectionBackground();
   }
 
   public static Color getTextFieldForeground() {
@@ -2620,7 +2621,9 @@ public class UIUtil {
   }
 
   public static class JBHtmlEditorKit extends HTMLEditorKit {
+    private static final Method MODEL_CHANGED = ReflectionUtil.getDeclaredMethod(BasicTextUI.class, "modelChanged");
     private final StyleSheet style;
+    private final HyperlinkListener myHyperlinkListener;
 
     public JBHtmlEditorKit() {
       this(true);
@@ -2629,6 +2632,42 @@ public class UIUtil {
     public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
       style = createStyleSheet();
       if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
+      myHyperlinkListener = new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+            setUnderlined(e, true);
+          } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+            setUnderlined(e, false);
+          }
+          if (MODEL_CHANGED == null) {
+            LOG.error("modelChanged missing from BasicTextUI, hyperlinks underline on hover will not work");
+            return;
+          }
+          try {
+            MODEL_CHANGED.invoke(((JEditorPane)e.getSource()).getUI());
+          }
+          catch (IllegalAccessException exception) {
+            LOG.error(exception);
+          }
+          catch (InvocationTargetException exception) {
+            LOG.error(exception);
+          }
+        }
+
+        private void setUnderlined(HyperlinkEvent e, boolean underlined) {
+          AttributeSet attributes = e.getSourceElement().getAttributes();
+          Object attribute = attributes.getAttribute(HTML.Tag.A);
+          if (attribute instanceof MutableAttributeSet) {
+            MutableAttributeSet a = (MutableAttributeSet)attribute;
+            if (underlined) {
+              a.addAttribute(CSS.Attribute.TEXT_DECORATION, "underline");
+            } else {
+              a.removeAttribute(CSS.Attribute.TEXT_DECORATION);
+            }
+          }
+        }
+      };
     }
 
     @Override
@@ -2641,6 +2680,8 @@ public class UIUtil {
       style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
       style.addRule("code { font-size: 100%; }"); // small by Swing's default
       style.addRule("small { font-size: small; }"); // x-small by Swing's default
+      style.addRule("a { text-decoration: none;}");
+
       return style;
     }
 
@@ -2666,7 +2707,14 @@ public class UIUtil {
             pane.removePropertyChangeListener(this);
           }
         });
+        pane.addHyperlinkListener(myHyperlinkListener);
       }
+    }
+
+    @Override
+    public void deinstall(JEditorPane c) {
+      c.removeHyperlinkListener(myHyperlinkListener);
+      super.deinstall(c);
     }
   }
 
@@ -4200,8 +4248,8 @@ public class UIUtil {
     return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
   }
 
-  public static boolean isHelpButton(JComponent button) {
-    return button instanceof JButton && "help".equals(button.getClientProperty("JButton.buttonType"));
+  public static boolean isHelpButton(Component button) {
+    return button instanceof JButton && "help".equals(((JComponent)button).getClientProperty("JButton.buttonType"));
   }
 
   public static void typeAheadUntilFocused(InputEvent event, Component component) {

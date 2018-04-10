@@ -34,6 +34,12 @@ public abstract class CompilerConfiguration {
   public abstract String getBuildProcessVMOptions();
   public abstract void setBuildProcessVMOptions(String options);
 
+  /**
+   * Specifies whether '--release' cross-compilation option should be used. Applicable to jdk 9 and later
+   */
+  public abstract boolean useReleaseOption();
+  public abstract void setUseReleaseOption(boolean useReleaseOption);
+
   @Nullable
   public abstract String getProjectBytecodeTarget();
   public abstract void setProjectBytecodeTarget(String level);

@@ -20,8 +20,6 @@ import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -68,19 +66,11 @@ public class SpringLoadedPositionManager implements PositionManager {
   @NotNull
   @Override
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) throws NoDataException {
-    int line;
-    String className;
 
-    AccessToken accessToken = ReadAction.start();
-    try {
-      className = findEnclosingName(classPosition);
-      if (className == null) throw NoDataException.INSTANCE;
+    String className = ReadAction.compute(() -> findEnclosingName(classPosition));
+    if (className == null) throw NoDataException.INSTANCE;
 
-      line = classPosition.getLine();
-    }
-    finally {
-      accessToken.finish();
-    }
+    int line = ReadAction.compute(() -> classPosition.getLine());
 
     List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
     if (referenceTypes.isEmpty()) throw NoDataException.INSTANCE;
@@ -136,9 +126,8 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @Nullable
   private static String getOuterClassName(final SourcePosition position) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 
-    try {
+    return ReadAction.compute(()->{
       PsiElement element = findElementAt(position);
       if (element == null) return null;
       PsiElement sourceImage = PsiTreeUtil.getParentOfType(element, GrClosableBlock.class, GrTypeDefinition.class, PsiClassImpl.class);
@@ -147,10 +136,7 @@ public class SpringLoadedPositionManager implements PositionManager {
         return getClassNameForJvm((PsiClass)sourceImage);
       }
       return null;
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @Nullable

@@ -20,7 +20,7 @@ public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCas
 
   public void testCaretOnImportedInvocation() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> {
         doIntentionTest(PyBundle.message("INTN.specify.return.type.in.annotation"), getTestName(true) + ".py", "foo_decl.py");
         myFixture.checkResultByFile("foo_decl.py", "foo_decl_after.py", false);
@@ -34,11 +34,11 @@ public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCas
 
 
   private void doTestReturnType() {
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
 
 
   private void doTestParam() {
-    doTest(PyBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON34);
   }
 }

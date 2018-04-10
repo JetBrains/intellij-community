@@ -227,9 +227,7 @@ public class GitConflictResolver {
         }
       }
     } catch (VcsException e) {
-      if (myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
-        notifyException(e);
-      }
+      notifyException(e);
     }
     return false;
 

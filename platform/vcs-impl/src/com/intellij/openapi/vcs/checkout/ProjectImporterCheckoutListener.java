@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 
 import java.io.File;
+import java.util.Collections;
 
 public class ProjectImporterCheckoutListener implements CheckoutListener {
   @Override
@@ -16,6 +17,10 @@ public class ProjectImporterCheckoutListener implements CheckoutListener {
     final File[] files = directory.listFiles();
     if (files != null) {
       final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+      
+      // need to refresh the project folder in order to get actual files via findFileByIoFile
+      localFileSystem.refreshIoFiles(Collections.singleton(directory));
+      
       for (File file : files) {
         if (file.isDirectory()) continue;
         final VirtualFile virtualFile = localFileSystem.findFileByIoFile(file);

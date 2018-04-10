@@ -482,4 +482,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return MODULE_MEMBERS;
   }
 
+  @Override
+  public void accept(@NotNull PyTypeVisitor visitor) {
+    if (visitor instanceof PyTypeVisitorExt) {
+      ((PyTypeVisitorExt)visitor).visitModuleType(this);
+    }
+  }
 }

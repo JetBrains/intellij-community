@@ -37,11 +37,9 @@ import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.config.GitExecutableManager;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
-import git4idea.config.GitVersion;
-import git4idea.i18n.GitBundle;
+import git4idea.config.GitExecutableManager;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -377,22 +375,7 @@ public class GithubUtil {
   }
 
   public static boolean testGitExecutable(final Project project) {
-    final String executable = GitExecutableManager.getInstance().getPathToGit(project);
-    final GitVersion version;
-    try {
-      version = GitVersion.identifyVersion(executable);
-    }
-    catch (Exception e) {
-      GithubNotifications.showErrorDialog(project, GitBundle.getString("find.git.error.title"), e);
-      return false;
-    }
-
-    if (!version.isSupported()) {
-      GithubNotifications.showWarningDialog(project, GitBundle.message("find.git.unsupported.message", version.getPresentation(), GitVersion.MIN.getPresentation()),
-                                            GitBundle.getString("find.git.success.title"));
-      return false;
-    }
-    return true;
+    return GitExecutableManager.getInstance().testGitExecutableVersionValid(project);
   }
 
   public static boolean isRepositoryOnGitHub(@NotNull GitRepository repository) {

@@ -202,6 +202,8 @@
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
 
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
+    <projectService serviceInterface="git4idea.config.GitExecutableProblemsNotifier"
+                    serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
 
     <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
                         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>

@@ -191,8 +191,14 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       return null;
     }
     @NonNls final StringBuilder conditional = new StringBuilder();
-    final String conditionText = getExpressionText(condition, true);
-    conditional.append(conditionText).append('?');
+    final String conditionText = commentTracker.text(condition, ParenthesesUtils.CONDITIONAL_PRECEDENCE);
+    if (condition instanceof PsiConditionalExpression) {
+      conditional.append('(').append(conditionText).append(')');
+    }
+    else {
+      conditional.append(conditionText);
+    }
+    conditional.append('?');
     final PsiType thenType = thenValue.getType();
     final PsiType elseType = elseValue.getType();
     if (thenType instanceof PsiPrimitiveType &&
@@ -203,23 +209,23 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       final PsiPrimitiveType primitiveType = (PsiPrimitiveType)thenType;
       conditional.append(primitiveType.getBoxedTypeName());
       conditional.append(".valueOf(").append(commentTracker.text(thenValue)).append("):");
-      conditional.append(getExpressionText(commentTracker.markUnchanged(elseValue), false));
+      conditional.append(commentTracker.text(elseValue, ParenthesesUtils.CONDITIONAL_PRECEDENCE));
     }
     else if (elseType instanceof PsiPrimitiveType &&
              !PsiType.NULL.equals(elseType) &&
              !(thenType instanceof PsiPrimitiveType) &&
              !(requiredType instanceof PsiPrimitiveType)) {
       // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
-      conditional.append(getExpressionText(commentTracker.markUnchanged(thenValue), false));
+      conditional.append(commentTracker.text(thenValue, ParenthesesUtils.CONDITIONAL_PRECEDENCE));
       conditional.append(':');
       final PsiPrimitiveType primitiveType = (PsiPrimitiveType)elseType;
       conditional.append(primitiveType.getBoxedTypeName());
       conditional.append(".valueOf(").append(commentTracker.text(elseValue)).append(')');
     }
     else {
-      conditional.append(getExpressionText(commentTracker.markUnchanged(thenValue), false));
+      conditional.append(commentTracker.text(thenValue, ParenthesesUtils.CONDITIONAL_PRECEDENCE));
       conditional.append(':');
-      conditional.append(getExpressionText(commentTracker.markUnchanged(elseValue), false));
+      conditional.append(commentTracker.text(elseValue, ParenthesesUtils.CONDITIONAL_PRECEDENCE));
     }
     return conditional.toString();
   }
@@ -231,18 +237,5 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       }
     }
     return thenValue;
-  }
-
-  private static String getExpressionText(PsiExpression expression, boolean isCondition) {
-    final int precedence = ParenthesesUtils.getPrecedence(expression);
-    if (precedence <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-      if (isCondition && precedence == ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-        return '(' + expression.getText() + ')';
-      }
-      return expression.getText();
-    }
-    else {
-      return '(' + expression.getText() + ')';
-    }
   }
 }

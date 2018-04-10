@@ -52,14 +52,17 @@ class FacetConfigurationHandler : ConfigurationHandler {
     List<Facet<out FacetConfiguration>> {
     val runCfgMap = find("facets")
 
-    if (runCfgMap !is Map<*,*>) { return emptyList() } else {
-      return runCfgMap.map { (name, cfg) ->
-        if (name !is String) {
-          RunConfigurationHandler.LOG.warn("unexpected key type in facets map: ${name?.javaClass?.name}, skipping")
-          return@map null
-        }
+    if (runCfgMap !is List<*>) { return emptyList() } else {
+      return runCfgMap.map { cfg ->
+
         if (cfg !is Map<*, *>) {
           RunConfigurationHandler.LOG.warn("unexpected value type in facets map: ${cfg?.javaClass?.name}, skipping")
+          return@map null
+        }
+
+        val name = cfg["name"]
+        if (name !is String) {
+          RunConfigurationHandler.LOG.warn("unexpected key type in facets map: ${name?.javaClass?.name}, skipping")
           return@map null
         }
 

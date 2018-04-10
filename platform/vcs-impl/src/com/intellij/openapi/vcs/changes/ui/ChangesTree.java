@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
@@ -615,13 +615,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       return FileColorManager.getInstance(myProject).getFileColor(file);
     }
     return super.getFileColorFor(object);
-  }
-
-  @Override
-  public Dimension getPreferredScrollableViewportSize() {
-    Dimension size = super.getPreferredScrollableViewportSize();
-    size = new Dimension(size.width + 10, size.height);
-    return size;
   }
 
   @Override

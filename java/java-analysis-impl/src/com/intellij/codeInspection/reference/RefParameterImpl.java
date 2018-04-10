@@ -19,6 +19,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
 public class RefParameterImpl extends RefJavaElementImpl implements RefParameter {
   private static final int USED_FOR_READING_MASK = 0x10000;
   private static final int USED_FOR_WRITING_MASK = 0x20000;
-  private static final String VALUE_UNDEFINED = "#";
+
 
   private final short myIndex;
-  private String myActualValueTemplate;
+  private Object myActualValueTemplate;
 
   RefParameterImpl(PsiParameter parameter, int index, RefManager manager) {
     super(parameter, manager);
@@ -100,37 +101,20 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   }
 
   void updateTemplateValue(PsiExpression expression) {
-    if (myActualValueTemplate == null) return;
+    if (myActualValueTemplate == VALUE_IS_NOT_CONST) return;
 
-    String newTemplate = null;
-    if (expression instanceof PsiLiteralExpression) {
-      PsiLiteralExpression psiLiteralExpression = (PsiLiteralExpression) expression;
-      newTemplate = psiLiteralExpression.getText();
-    } else if (expression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression referenceExpression = (PsiReferenceExpression) expression;
-      PsiElement resolved = referenceExpression.resolve();
-      if (resolved instanceof PsiField) {
-        PsiField psiField = (PsiField) resolved;
-        if (psiField.hasModifierProperty(PsiModifier.STATIC) &&
-            psiField.hasModifierProperty(PsiModifier.FINAL) &&
-            psiField.getContainingClass().getQualifiedName() != null) {
-          newTemplate = PsiFormatUtil.formatVariable(psiField, PsiFormatUtilBase.SHOW_NAME |
-                                                               PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
-        }
-      }
-    }
-
+    Object newTemplate = getExpressionValue(expression);
     if (myActualValueTemplate == VALUE_UNDEFINED) {
       myActualValueTemplate = newTemplate;
     }
     else if (!Comparing.equal(myActualValueTemplate, newTemplate)) {
-      myActualValueTemplate = null;
+      myActualValueTemplate = VALUE_IS_NOT_CONST;
     }
   }
 
+  @Nullable
   @Override
-  public String getActualValueIfSame() {
-    if (myActualValueTemplate == VALUE_UNDEFINED) return null;
+  public Object getActualValueIfSame() {
     return myActualValueTemplate;
   }
 
@@ -150,6 +134,30 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     ApplicationManager.getApplication().runReadAction(runnable);
 
     return result[0];
+  }
+
+  @Nullable
+  public static Object getExpressionValue(PsiExpression expression) {
+    if (expression instanceof PsiReferenceExpression) {
+      PsiReferenceExpression referenceExpression = (PsiReferenceExpression) expression;
+      PsiElement resolved = referenceExpression.resolve();
+      if (resolved instanceof PsiField) {
+        PsiField psiField = (PsiField) resolved;
+        if (psiField.hasModifierProperty(PsiModifier.STATIC) &&
+            psiField.hasModifierProperty(PsiModifier.FINAL) &&
+            psiField.getContainingClass().getQualifiedName() != null) {
+          return PsiFormatUtil.formatVariable(psiField, PsiFormatUtilBase.SHOW_NAME |
+                                                        PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                        PsiFormatUtilBase.SHOW_FQ_NAME,
+                                              PsiSubstitutor.EMPTY);
+        }
+      }
+    }
+    if (expression instanceof PsiLiteralExpression && ((PsiLiteralExpression)expression).getValue() == null) {
+      return null;
+    }
+    Object constValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
+    return constValue == null ? VALUE_IS_NOT_CONST : constValue;
   }
 
   @Nullable

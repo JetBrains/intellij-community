@@ -20,7 +20,9 @@ import org.fest.swing.awt.AWT
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
 import org.fest.swing.hierarchy.ExistingHierarchy
+import org.fest.swing.keystroke.KeyStrokeMap
 import org.fest.swing.timing.Pause
+import org.fest.swing.util.Modifiers
 import org.fest.util.Preconditions
 import java.awt.Component
 import java.awt.MouseInfo
@@ -28,6 +30,7 @@ import java.awt.Point
 import java.awt.Window
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
 /**
@@ -41,6 +44,7 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
   val waitConst = 30L
   var myAwareClick: Boolean = false
+  val fastRobot: java.awt.Robot = java.awt.Robot()
 
   fun superWaitForIdle() {
     super.waitForIdle()
@@ -134,6 +138,65 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
         if (System.currentTimeMillis() - timeStart < timeout) invokeWithCondition(timeStart, timeout, cdl, condition)
       }
     }
+  }
+
+  fun fastPressAndReleaseKey(keyCode: Int, vararg modifiers: Int) {
+    val unifiedModifiers = InputModifiers.unify(*modifiers)
+    val updatedModifiers = Modifiers.updateModifierWithKeyCode(keyCode, unifiedModifiers)
+    fastPressModifiers(updatedModifiers)
+    if (updatedModifiers == unifiedModifiers) {
+      fastPressKey(keyCode)
+      fastReleaseKey(keyCode)
+    }
+    fastReleaseModifiers(updatedModifiers)
+  }
+
+  fun fastPressAndReleaseKeyWithoutModifiers(keyCode: Int) {
+    fastPressKey(keyCode)
+    fastReleaseKey(keyCode)
+  }
+
+  fun fastType(character: Char) {
+    val keyStroke = KeyStrokeMap.keyStrokeFor(character) ?: throw Exception("Unable to get keystroke for char '$character'")
+    fastPressAndReleaseKey(keyStroke.keyCode)
+  }
+
+  fun preparedFastTypeWithoutModifiers(string: String) {
+    val keyCodeArray = string
+      .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
+      .toIntArray()
+    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it) }
+  }
+
+  fun shortcutAndTypeString(keyStoke: KeyStroke, string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
+    val keyCodeArray = string
+      .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
+      .toIntArray()
+    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
+    if (delayBetweenShortcutAndTypingMs > 0) Pause.pause(delayBetweenShortcutAndTypingMs.toLong())
+    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it); Pause.pause(10) }
+  }
+
+  private fun fastPressKey(keyCode: Int) {
+    fastRobot.keyPress(keyCode);
+  }
+
+  private fun fastReleaseKey(keyCode: Int) {
+    fastRobot.keyRelease(keyCode);
+  }
+
+  private fun fastPressModifiers(modifierMask: Int) {
+    val keys = Modifiers.keysFor(modifierMask)
+    val keysSize = keys.size
+    (0 until keysSize)
+      .map { keys[it] }
+      .forEach { fastPressKey(it) }
+  }
+
+  private fun fastReleaseModifiers(modifierMask: Int) {
+    val modifierKeys = Modifiers.keysFor(modifierMask)
+    for (i in modifierKeys.indices.reversed())
+      fastReleaseKey(modifierKeys[i])
   }
 
   private fun myEdtAwareClick(button: MouseButton, times: Int, point: Point, component: Component?) {

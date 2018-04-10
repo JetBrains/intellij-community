@@ -218,7 +218,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return resolveResult;
   }
 
-  private static boolean isInOwnScopeComprehension(PsiElement uexpr) {
+  private boolean isInOwnScopeComprehension(PsiElement uexpr) {
+    if (!myContext.getTypeEvalContext().maySwitchToAST(uexpr)) {
+      return false;
+    }
     PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(uexpr, PyComprehensionElement.class);
     return comprehensionElement != null && PyUtil.isOwnScopeComprehension(comprehensionElement);
   }
@@ -368,13 +371,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return resolved == referenceOwner && referenceOwner instanceof PyClass && !PyiUtil.isInsideStubAnnotation(myElement);
   }
 
-  private static boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
-    for (PsiElement element : elements) {
-      if (!isInOwnScopeComprehension(element)) {
-        return false;
-      }
-    }
-    return true;
+  private boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
+    return StreamEx.of(elements).allMatch(this::isInOwnScopeComprehension);
   }
 
   private static boolean allowsForwardOutgoingReferencesInClass(@NotNull PyQualifiedExpression element) {
@@ -609,7 +607,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Nullable
   private static PsiElement findContainer(@NotNull PsiElement element) {
     final PyElement parent = PsiTreeUtil.getParentOfType(element, ScopeOwner.class, PyComprehensionElement.class);
-    if (parent instanceof PyListCompExpression && LanguageLevel.forElement(element).isOlderThan(LanguageLevel.PYTHON30)) {
+    if (parent instanceof PyListCompExpression && LanguageLevel.forElement(element).isPython2()) {
       return findContainer(parent);
     }
     return parent;
@@ -725,7 +723,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
 
       // if we're inside method, add implicit __class__
-      if (LanguageLevel.forElement(myElement).isAtLeast(LanguageLevel.PYTHON30)) {
+      if (!LanguageLevel.forElement(myElement).isPython2()) {
         Optional
           .ofNullable(PsiTreeUtil.getParentOfType(myElement, PyFunction.class))
           .map(PyFunction::getContainingClass)

@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -23,7 +24,9 @@ import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -34,6 +37,7 @@ import java.util.concurrent.ConcurrentMap;
 public class BuildTargetTypeState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetTypeState");
   private final Map<BuildTarget<?>, Integer> myTargetIds;
+  private final List<Pair<String, Integer>> myStaleTargetIds;
   private final ConcurrentMap<BuildTarget<?>, BuildTargetConfiguration> myConfigurations;
   private final BuildTargetType<?> myTargetType;
   private final BuildTargetsState myTargetsState;
@@ -45,6 +49,7 @@ public class BuildTargetTypeState {
     myTargetsFile = new File(state.getDataPaths().getTargetTypeDataRoot(targetType), "targets.dat");
     myConfigurations = new ConcurrentHashMap<>(16, 0.75f, 1);
     myTargetIds = new HashMap<>();
+    myStaleTargetIds = new ArrayList<>();
     load();
   }
 
@@ -68,7 +73,7 @@ public class BuildTargetTypeState {
             myTargetIds.put(target, intId);
           }
           else {
-            LOG.info("Unknown " + myTargetType.getTypeId() + " target: " + stringId);
+            myStaleTargetIds.add(Pair.create(stringId, intId));
           }
         }
         return true;
@@ -89,10 +94,14 @@ public class BuildTargetTypeState {
       DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myTargetsFile)));
       try {
         output.writeInt(0);
-        output.writeInt(myTargetIds.size());
+        output.writeInt(myTargetIds.size() + myStaleTargetIds.size());
         for (Map.Entry<BuildTarget<?>, Integer> entry : myTargetIds.entrySet()) {
           IOUtil.writeString(entry.getKey().getId(), output);
           output.writeInt(entry.getValue());
+        }
+        for (Pair<String, Integer> pair : myStaleTargetIds) {
+          IOUtil.writeString(pair.first, output);
+          output.writeInt(pair.second);
         }
       }
       finally {
@@ -102,6 +111,14 @@ public class BuildTargetTypeState {
     catch (IOException e) {
       LOG.info("Cannot save " + myTargetType.getTypeId() + " targets data: " + e.getMessage(), e);
     }
+  }
+
+  public synchronized List<Pair<String, Integer>> getStaleTargetIds() {
+    return new ArrayList<>(myStaleTargetIds);
+  }
+
+  public synchronized void removeStaleTarget(String targetId) {
+    myStaleTargetIds.removeIf(pair -> pair.first.equals(targetId));
   }
 
   public synchronized int getTargetId(BuildTarget<?> target) {
@@ -115,8 +132,10 @@ public class BuildTargetTypeState {
     BuildTargetConfiguration configuration = myConfigurations.get(target);
     if (configuration == null) {
       configuration = new BuildTargetConfiguration(target, myTargetsState);
-      myConfigurations.putIfAbsent(target, configuration);
-      configuration = myConfigurations.get(target);
+      final BuildTargetConfiguration existing = myConfigurations.putIfAbsent(target, configuration);
+      if (existing != null) {
+        configuration = existing;
+      }
     }
     return configuration;
   }

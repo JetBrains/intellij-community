@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -1117,10 +1117,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
             icon = AllIcons.Actions.QuickList;
           }
           else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
-            boolean darcula = UIUtil.isUnderDarcula();
-            icon = DarculaLaf.getCheckmarkIcon(darcula);
-            selectedIcon = DarculaLaf.getCheckmarkSelectedIcon(darcula);
-            disabledIcon = DarculaLaf.getCheckmarkDisabledIcon(darcula);
+            icon = MacIntelliJIconCache.getIcon("checkmark", false, false, true);
+            selectedIcon = MacIntelliJIconCache.getIcon("checkmark", true, false, true);
+            disabledIcon = MacIntelliJIconCache.getIcon("checkmark", false, false, false);
           }
         }
         if (!enabled) {

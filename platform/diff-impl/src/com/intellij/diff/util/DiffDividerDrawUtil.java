@@ -15,11 +15,13 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.openapi.diff.impl.splitter.Transformation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,12 +102,20 @@ public class DiffDividerDrawUtil {
         if (leftInterval.start > endLine1 && rightInterval.start > endLine2) return true;
         if (leftInterval.end < startLine1 && rightInterval.end < startLine2) return false;
 
-        polygons.add(createPolygon(transformations, startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, dottedBorder));
+        if (isIntervalVisible(editor1, startLine1, endLine1) ||
+            isIntervalVisible(editor2, startLine2, endLine2)) {
+          polygons.add(createPolygon(transformations, startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, dottedBorder));
+        }
         return true;
       }
     });
 
     return polygons;
+  }
+
+  private static boolean isIntervalVisible(@NotNull Editor editor, int startLine, int endLine) {
+    TextRange range = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine);
+    return !FoldingUtil.isTextRangeFolded(editor, range);
   }
 
   @NotNull

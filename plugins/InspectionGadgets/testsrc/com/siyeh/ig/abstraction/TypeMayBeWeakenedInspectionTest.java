@@ -10,6 +10,7 @@ public class TypeMayBeWeakenedInspectionTest extends LightInspectionTestCase {
   public void testNumberAdderDemo() { doTest(); }
   public void testAutoClosableTest() { doTest(); }
   public void testLambda() { doTest(); }
+  public void testTryWithResources() { doTest(); }
 
   @Override
   protected String[] getEnvironmentClasses() {

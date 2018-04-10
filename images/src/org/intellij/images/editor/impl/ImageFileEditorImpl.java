@@ -81,16 +81,23 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     return new ImageFileEditorState(
       imageEditor.isTransparencyChessboardVisible(),
       imageEditor.isGridVisible(),
-      zoomModel.getZoomFactor());
+      zoomModel.getZoomFactor(),
+      zoomModel.isZoomLevelChanged());
   }
 
   public void setState(@NotNull FileEditorState state) {
     if (state instanceof ImageFileEditorState) {
+      Options options = OptionsManager.getInstance().getOptions();
+      ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+
       ImageFileEditorState editorState = (ImageFileEditorState)state;
       ImageZoomModel zoomModel = imageEditor.getZoomModel();
       imageEditor.setTransparencyChessboardVisible(editorState.isBackgroundVisible());
       imageEditor.setGridVisible(editorState.isGridVisible());
-      zoomModel.setZoomFactor(editorState.getZoomFactor());
+      if (editorState.isZoomFactorChanged() || !zoomOptions.isSmartZooming()) {
+        zoomModel.setZoomFactor(editorState.getZoomFactor());
+      }
+      zoomModel.setZoomLevelChanged(editorState.isZoomFactorChanged());
     }
   }
 

@@ -21,9 +21,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.URLUtil;
 
 import java.awt.datatransfer.DataFlavor;
-import java.net.URLEncoder;
 
 public class SearchWebAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
@@ -35,7 +35,7 @@ public class SearchWebAction extends AnAction implements DumbAware {
     provider.performCopy(dataContext);
     String string = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     if (StringUtil.isNotEmpty(string)) {
-      BrowserUtil.browse("http://www.google.com/search?q=" + URLEncoder.encode(string));
+      BrowserUtil.browse("http://www.google.com/search?q=" + URLUtil.encodeURIComponent(string));
     }
   }
 

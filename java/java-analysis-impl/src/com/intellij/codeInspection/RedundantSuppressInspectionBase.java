@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -300,7 +301,10 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
   @NotNull
   protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
     // todo for what we create modifiable model here?
-    return new InspectionProfileModifiableModel(InspectionProjectProfileManager.getInstance(manager.getProject()).getCurrentProfile()).getInspectionTools(psiElement);
+    String currentProfileName = ((InspectionManagerBase)manager).getCurrentProfile();
+    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(manager.getProject());
+    InspectionProfileImpl usedProfile = profileManager.getProfile(currentProfileName, false);
+    return new InspectionProfileModifiableModel(ObjectUtils.notNull(usedProfile, profileManager.getCurrentProfile())).getInspectionTools(psiElement);
   }
 
   @Override

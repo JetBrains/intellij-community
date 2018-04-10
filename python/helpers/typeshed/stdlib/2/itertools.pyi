@@ -55,7 +55,33 @@ def imap(func: Callable[[_T1], _S], iter1: Iterable[_T1]) -> Iterator[_S]: ...
 @overload
 def imap(func: Callable[[_T1, _T2], _S],
         iter1: Iterable[_T1],
-        iter2: Iterable[_T2]) -> Iterator[_S]: ...  # TODO more than two iterables
+        iter2: Iterable[_T2]) -> Iterator[_S]: ...
+@overload
+def imap(func: Callable[[_T1, _T2, _T3], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2],
+         iter3: Iterable[_T3]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[[_T1, _T2, _T3, _T4], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+         iter4: Iterable[_T4]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[[_T1, _T2, _T3, _T4, _T5], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+         iter4: Iterable[_T4], iter5: Iterable[_T5]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[[_T1, _T2, _T3, _T4, _T5, _T6], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+         iter4: Iterable[_T4], iter5: Iterable[_T5],
+         iter6: Iterable[_T6]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[..., _S],
+         iter1: Iterable[Any], iter2: Iterable[Any], iter3: Iterable[Any],
+         iter4: Iterable[Any], iter5: Iterable[Any], iter6: Iterable[Any],
+         iter7: Iterable[Any], *iterables: Iterable[Any]) -> Iterator[_S]: ...
 
 def starmap(func: Any, iterable: Iterable[Any]) -> Iterator[Any]: ...
 def takewhile(predicate: Callable[[_T], Any],

@@ -173,6 +173,7 @@ public class ChangelistConflictTracker {
   }
 
   public boolean isWritingAllowed(@NotNull VirtualFile file) {
+    if (!shouldDetectConflictsFor(file)) return true;
     if (isFromActiveChangelist(file)) return true;
     Conflict conflict = myConflicts.get(file.getPath());
     return conflict != null && conflict.ignored;
@@ -183,7 +184,7 @@ public class ChangelistConflictTracker {
     return changeList == null || changeList.isDefault();
   }
 
-  private boolean shouldDetectConflictsFor(@NotNull VirtualFile file) {
+  public boolean shouldDetectConflictsFor(@NotNull VirtualFile file) {
     return !LineStatusTrackerManager.getInstance(myProject).arePartialChangelistsEnabled(file);
   }
 

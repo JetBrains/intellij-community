@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -194,15 +193,12 @@ public class MavenModuleImporter {
   private void configDependencies() {
     THashSet<String> dependencyTypesFromSettings = new THashSet<>();
 
-    AccessToken accessToken = ReadAction.start();
-    try {
-      if (myModule.getProject().isDisposed()) return;
+    if (!ReadAction.compute(()->{
+      if (myModule.getProject().isDisposed()) return false;
 
       dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myModule.getProject()).getImportingSettings().getDependencyTypesAsSet());
-    }
-    finally {
-      accessToken.finish();
-    }
+      return true;
+    })) return;
 
 
     for (MavenArtifact artifact : myMavenProject.getDependencies()) {

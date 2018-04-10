@@ -26,7 +26,7 @@ public class PyTupleAssignmentBalanceInspectionTest extends PyInspectionTestCase
   }
 
   public void testPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-4357
@@ -56,7 +56,7 @@ public class PyTupleAssignmentBalanceInspectionTest extends PyInspectionTestCase
 
   // PY-22224
   public void testUnpackNonePy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   @NotNull

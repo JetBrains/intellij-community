@@ -15,5 +15,6 @@ public class YamlNumberType extends YamlScalarType {
 
   public YamlNumberType() {
     super("yaml:number");
+    setDisplayName("number");
   }
 }

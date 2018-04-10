@@ -37,6 +37,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -54,6 +55,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -317,6 +319,30 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   @Override
+  public void selectChanges(@NotNull List<Change> changes) {
+    List<TreePath> paths = new ArrayList<>();
+
+    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
+    for (Change change : changes) {
+      ContainerUtil.addIfNotNull(paths, findObjectInTree(root, change));
+    }
+
+    if (!paths.isEmpty()) {
+      TreeUtil.selectPaths(myView, paths);
+    }
+  }
+
+  @Nullable
+  private static TreePath findObjectInTree(@NotNull DefaultMutableTreeNode root, Object userObject) {
+    DefaultMutableTreeNode objectNode =
+      userObject instanceof ChangeListChange
+      ? TreeUtil.findNode(root, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject))
+      : TreeUtil.findNodeWithObject(root, userObject);
+    return objectNode != null ? TreeUtil.getPathFromRoot(objectNode) : null;
+  }
+
+
+  @Override
   public void refreshChangesViewNodeAsync(@NotNull final VirtualFile file) {
     ApplicationManager.getApplication().invokeLater(() -> refreshChangesViewNode(file), myProject.getDisposed());
   }
@@ -488,19 +514,10 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @Override
     protected void selectChange(@NotNull Wrapper change) {
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      DefaultMutableTreeNode node = findChangeInTree(root, change);
-      if (node != null) {
-        TreePath path = TreeUtil.getPathFromRoot(node);
+      TreePath path = findObjectInTree(root, change.getUserObject());
+      if (path != null) {
         TreeUtil.selectPath(myView, path, false);
       }
-    }
-
-    private DefaultMutableTreeNode findChangeInTree(@NotNull DefaultMutableTreeNode root, @NotNull Wrapper change) {
-      Object userObject = change.getUserObject();
-      if (userObject instanceof ChangeListChange) {
-        return TreeUtil.findNode(root, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
-      }
-      return TreeUtil.findNodeWithObject(root, userObject);
     }
 
     @NotNull

@@ -26,6 +26,7 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TitledSeparator
 import com.intellij.util.ui.JBUI
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import java.awt.Component
 import javax.swing.Icon
@@ -62,6 +63,8 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
         append("[invalid] $name", SimpleTextAttributes.ERROR_ATTRIBUTES)
       PythonSdkType.isIncompleteRemote(sdk) ->
         append("[incomplete] $name", SimpleTextAttributes.ERROR_ATTRIBUTES)
+      !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(sdk)) ->
+        append("[unsupported] $name", SimpleTextAttributes.ERROR_ATTRIBUTES)
       else ->
         append(name)
     }
@@ -79,7 +82,10 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
       val flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)
       val icon = if (flavor != null) flavor.icon else (sdk.sdkType as? SdkType)?.icon ?: return null
       return when {
-        PythonSdkType.isInvalid(sdk) || PythonSdkType.isIncompleteRemote(sdk) || PythonSdkType.hasInvalidRemoteCredentials(sdk) ->
+        PythonSdkType.isInvalid(sdk) ||
+        PythonSdkType.isIncompleteRemote(sdk) ||
+        PythonSdkType.hasInvalidRemoteCredentials(sdk) ||
+        !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(sdk)) ->
           wrapIconWithWarningDecorator(icon)
         sdk is PyDetectedSdk ->
           IconLoader.getTransparentIcon(icon)

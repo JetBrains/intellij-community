@@ -51,6 +51,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author peter
@@ -70,7 +72,7 @@ public class InvokeCompletion extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "InvokeCompletion{" + getVirtualFile().getPath() + ", " + myLog + "}";
+    return "InvokeCompletion{" + getPath() + ", " + myLog + "}";
   }
 
   @Override
@@ -79,27 +81,42 @@ public class InvokeCompletion extends ActionOnRange {
   }
 
   @Override
+  public void performCommand(@NotNull Environment env) {
+    int offset = env.generateValue(Generator.integers(0, getDocument().getTextLength()),
+                                   "Invoke basic completion at offset %s (" + getPath() + ")");
+    String selectionCharacters = myPolicy.getPossibleSelectionCharacters();
+    char c = selectionCharacters.charAt(env.generateValue(Generator.integers(0, selectionCharacters.length() - 1), null));
+    performActionAt(offset, c, items -> env.generateValue(Generator.sampledFrom(items), null), env::logMessage);
+  }
+
+  @Override
   public void performAction() {
+    int offset = getFinalStartOffset();
+    if (offset < 0) return;
+
+    myLog = "offset=" + offset;
+
+    performActionAt(offset, myCompletionChar, items -> items.get(myItemIndexRaw % items.size()), s -> myLog += ", " + s);
+  }
+
+  private void performActionAt(int offset, char completionChar, Function<List<LookupElement>, LookupElement> itemChooser, Consumer<String> logger) {
     Project project = getProject();
     Editor editor =
       FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), 0), true);
     assert editor != null;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    int offset = getFinalStartOffset();
-    if (offset < 0) return;
-    
-    myLog = "offset=" + offset;
 
     editor.getCaretModel().moveToOffset(offset);
-    
+
     MadTestingUtil.restrictChangesToDocument(editor.getDocument(), () -> {
       Disposable raiseCompletionLimit = Disposer.newDisposable();
       Registry.get("ide.completion.variant.limit").setValue(100_000, raiseCompletionLimit);
       try {
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
+        //noinspection deprecation
         Editor caretEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, getFile());
-        performCompletion(caretEditor, PsiUtilBase.getPsiFileInEditor(caretEditor, project));
+        performCompletion(caretEditor, PsiUtilBase.getPsiFileInEditor(caretEditor, project), completionChar, itemChooser, logger);
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
       }
       finally {
@@ -110,7 +127,11 @@ public class InvokeCompletion extends ActionOnRange {
     });
   }
 
-  private void performCompletion(@NotNull Editor editor, @NotNull PsiFile file) {
+  private void performCompletion(@NotNull Editor editor,
+                                 @NotNull PsiFile file,
+                                 char completionChar,
+                                 Function<List<LookupElement>, LookupElement> itemChooser,
+                                 Consumer<String> logger) {
     int caretOffset = editor.getCaretModel().getOffset();
     int adjustedOffset = TargetElementUtil.adjustOffset(file, getDocument(), caretOffset);
 
@@ -123,17 +144,17 @@ public class InvokeCompletion extends ActionOnRange {
     long stampBefore = getDocument().getModificationStamp();
 
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
-    
+
     String notFound = ". Please either fix completion so that the variant is suggested, " +
                       "or, if absolutely needed, tweak CompletionPolicy to exclude it.";
 
     LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup == null) {
       if (editor.getCaretModel().getOffset() != caretOffset || getDocument().getModificationStamp() != stampBefore) {
-        myLog += ", auto-inserted";
+        logger.accept("auto-inserted");
         return;
       }
-      myLog += ", no lookup";
+      logger.accept("no lookup");
       if (expectedVariant == null || prefixEqualsExpected) return;
       TestCase.fail("No lookup, but expected '" + expectedVariant + "' among completion variants" + notFound);
     }
@@ -148,9 +169,9 @@ public class InvokeCompletion extends ActionOnRange {
       checkNoDuplicates(items);
     }
 
-    LookupElement item = items.get(myItemIndexRaw % items.size());
-    myLog += ", selected '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(myCompletionChar)) + "'";
-    ((LookupImpl)lookup).finishLookup(myCompletionChar, item);
+    LookupElement item = itemChooser.apply(items);
+    logger.accept("selected '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "'");
+    ((LookupImpl)lookup).finishLookup(completionChar, item);
   }
 
   private boolean isPrefixEqualToExpectedVariant(int caretOffset, PsiElement leaf, PsiReference ref, String expectedVariant) {

@@ -393,9 +393,11 @@
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$FUSCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector$ShortcutUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl$ActionUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl$ActionUsagesCollectorNew"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector$IntentionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ExperimentalFeaturesUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.RegistryUsagesCollector"/>

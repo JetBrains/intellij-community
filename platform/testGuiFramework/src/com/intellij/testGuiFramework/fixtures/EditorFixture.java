@@ -24,6 +24,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
@@ -460,18 +461,17 @@ public class EditorFixture {
    */
   public EditorFixture moveToAndClick(final int offset, MouseButton button) {
     assertThat(offset).isGreaterThanOrEqualTo(0);
-    execute(new GuiTask() {
+    Editor editor = getEditor();
+    assert editor != null;
+    Component editorComponent = GuiTestUtilKt.INSTANCE.findAllWithBFS(editor.getComponent(), EditorComponentImpl.class).get(0);
+    Point pointToClick = execute(new GuiQuery<Point>() {
       @Override
-      protected void executeInEDT() {
-        Editor editor = getEditor();
-        assert editor != null;
+      protected Point executeInEDT() {
         VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
-        Point point = editor.visualPositionToXY(visualPosition);
-        Component editorComponent = robot.finder().find(editor.getComponent(), component -> component instanceof EditorComponentImpl);
-        robot.click(editorComponent, point, button, 1);
+        return editor.visualPositionToXY(visualPosition);
       }
     });
-
+    robot.click(editorComponent, pointToClick, MouseButton.LEFT_BUTTON, 1);
     return this;
   }
 

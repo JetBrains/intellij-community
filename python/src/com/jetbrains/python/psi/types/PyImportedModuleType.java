@@ -103,4 +103,11 @@ public class PyImportedModuleType implements PyType {
   public PyImportedModule getImportedModule() {
     return myImportedModule;
   }
+
+  @Override
+  public void accept(@NotNull PyTypeVisitor visitor) {
+    if (visitor instanceof PyTypeVisitorExt) {
+      ((PyTypeVisitorExt)visitor).visitImportedModuleType(this);
+    }
+  }
 }

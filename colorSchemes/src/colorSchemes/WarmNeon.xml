@@ -18,7 +18,6 @@
     <option name="SELECTED_FOLDING_TREE_COLOR" value="32be33" />
     <option name="SELECTED_INDENT_GUIDE" value="6b5656" />
     <option name="SELECTION_BACKGROUND" value="348d34" />
-    <option name="TEARLINE_COLOR" value="404040" />
     <option name="WHITESPACES" value="656565" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="6e5a5a" />
   </colors>
@@ -559,7 +558,7 @@
     </option>
     <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="46464d" />
+        <option name="BACKGROUND" value="525259" />
         <option name="ERROR_STRIPE_COLOR" value="ccccff" />
       </value>
     </option>
@@ -1249,7 +1248,7 @@
     </option>
     <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="4d444d" />
+        <option name="BACKGROUND" value="594B52" />
         <option name="ERROR_STRIPE_COLOR" value="ffcdff" />
       </value>
     </option>

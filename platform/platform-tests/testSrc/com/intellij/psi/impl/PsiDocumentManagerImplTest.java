@@ -76,6 +76,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -321,13 +322,14 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getDocument(file);
     assertNotNull(document);
 
-    WriteCommandAction.runWriteCommandAction(null, () -> document.insertString(0, "class X {" + StringUtil.repeat("public int IIII = 222;\n", 10000) + "}"));
+    WriteCommandAction.runWriteCommandAction(null, () -> document
+      .insertString(0, "class X {" + StringUtil.repeat("public int IIII = 222;\n", 10000) + "}"));
 
     waitForCommits();
 
     assertEquals(StdFileTypes.JAVA.getLanguage(), file.getLanguage());
 
-    for (int i=0;i<300;i++) {
+    for (int i = 0; i < 300; i++) {
       assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
       WriteCommandAction.runWriteCommandAction(null, () -> {
         document.insertString(0, "/**/");
@@ -338,7 +340,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       waitForCommits();
       String dumpBefore = ThreadDumper.dumpThreadsToString();
       if (!getPsiDocumentManager().isCommitted(document)) {
-        System.err.println("Thread dump1:\n"+dumpBefore+"\n;Thread dump2:\n"+ThreadDumper.dumpThreadsToString());
+        System.err.println("Thread dump1:\n" + dumpBefore + "\n;Thread dump2:\n" + ThreadDumper.dumpThreadsToString());
         fail("Still not committed: " + document);
       }
     }
@@ -403,7 +405,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(commitThread.isEnabled());
     WriteCommandAction.runWriteCommandAction(null, () -> {
       if (commitThread.isEnabled()) {
-        System.err.println("commitThread: "+commitThread + ";\n"+ThreadDumper.dumpThreadsToString());
+        System.err.println("commitThread: " + commitThread + ";\n" + ThreadDumper.dumpThreadsToString());
       }
       assertFalse(commitThread.isEnabled());
       WriteCommandAction.runWriteCommandAction(null, () -> assertFalse(commitThread.isEnabled()));
@@ -492,7 +494,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertException(new FileTooBigExceptionCase() {
       @Override
       public void tryClosure() throws Throwable {
-        vFile.setBinaryContent(new byte[] {});
+        vFile.setBinaryContent(new byte[]{});
       }
     });
     assertException(new FileTooBigExceptionCase() {
@@ -645,7 +647,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(document);
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(document.getTextLength(), " "));
-    
+
     PsiDocumentManager.getInstance(myProject).reparseFiles(Collections.singleton(file), false);
     assertEquals("1\n2\n3\n ", VfsUtilCore.loadText(file));
 
@@ -691,10 +693,10 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = editor.getDocument(); //getDocument(file);
 
     String text = "class X {" + StringUtil.repeat("void fff() {}\n", 1000) +
-               "}";
+                  "}";
     WriteCommandAction.runWriteCommandAction(null, () -> document.insertString(0, text));
 
-    for (int i=0;i<300;i++) {
+    for (int i = 0; i < 300; i++) {
       getPsiDocumentManager().commitAllDocuments();
       assertTrue(getPsiDocumentManager().isCommitted(document));
 
@@ -874,5 +876,45 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     public Class getExpectedExceptionClass() {
       return FileTooBigException.class;
     }
+  }
+
+  public void testRestartingCommitWithDifferentTransactionIdShouldFinish() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.java", ""));
+    PsiFile psiFile = findFile(vFile);
+    assertEquals(StdFileTypes.JAVA, psiFile.getFileType());
+    final Document document = getDocument(psiFile);
+    Random random = new Random();
+
+    for (int i=0; i<1000;i++) {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        @Language(value = "JAVA", prefix = "class c {", suffix = "}")
+        String body = "@NotNull\n" +
+                   "  private static String getTooLargeContent() {\n" +
+                   "    return StringUtil.repeat(\"a\", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1);\n" +
+                   "  }\n" +
+                   "private abstract static class FileTooBigExceptionCase extends AbstractExceptionCase {\n" +
+                   "    @Override\n" +
+                   "    public Class getExpectedExceptionClass() {\n" +
+                   "      return FileTooBigException.class;\n" +
+                   "    }\n" +
+                   "  }";
+        document.setText("class c {" + StringUtil.repeat(body, 10000) + "}");
+      });
+
+      TimeoutUtil.sleep(random.nextInt(50));
+
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+        boolean[] calledPerformWhenAllCommitted = new boolean[1];
+        getPsiDocumentManager().performWhenAllCommitted(() -> calledPerformWhenAllCommitted[0] = true);
+
+        // the old commit should be either canceled, or eventually end by itself
+        waitForCommits();
+        assertTrue(calledPerformWhenAllCommitted[0]);
+      });
+    }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      document.setText("");
+    });
+    waitForCommits();
   }
 }

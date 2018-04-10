@@ -247,6 +247,7 @@ public class ImageLoader implements Serializable {
     }
 
     public ImageConverterChain withFilter(final ImageFilter[] filters) {
+      if (filters == null) return this;
       ImageConverterChain chain = this;
       for (ImageFilter filter : filters) {
         chain = chain.withFilter(filter);
@@ -255,6 +256,7 @@ public class ImageLoader implements Serializable {
     }
 
     public ImageConverterChain withFilter(final ImageFilter filter) {
+      if (filter == null) return this;
       return with(new ImageConverter() {
         @Override
         public Image convert(Image source, ImageDesc desc) {
@@ -264,6 +266,7 @@ public class ImageLoader implements Serializable {
     }
 
     public ImageConverterChain withHiDPI(final ScaleContext ctx) {
+      if (ctx == null) return this;
       return with(new ImageConverter() {
         @Override
         public Image convert(Image source, ImageDesc desc) {

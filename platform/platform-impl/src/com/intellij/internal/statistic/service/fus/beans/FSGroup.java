@@ -22,7 +22,7 @@ public class FSGroup {
   }
 
   @NotNull
-  private Map<String, Integer> getMetrics() {
+  public Map<String, Integer> getMetrics() {
     if (metrics == null) {
       metrics = ContainerUtil.newHashMap();
     }
@@ -44,7 +44,6 @@ public class FSGroup {
 
   @Override
   public int hashCode() {
-
     return Objects.hash(id, metrics);
   }
 }

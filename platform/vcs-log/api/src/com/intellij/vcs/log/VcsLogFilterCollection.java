@@ -56,6 +56,69 @@ public interface VcsLogFilterCollection {
     return ContainerUtil.findAll(getFilters(), VcsLogDetailsFilter.class);
   }
 
+  /**
+   * To be removed in 2018.2. Use {@link VcsLogFilterCollection#get(FilterKey)} instead.
+   */
+  @Nullable
+  @Deprecated
+  default VcsLogBranchFilter getBranchFilter() {
+    return get(BRANCH_FILTER);
+  }
+
+  /**
+   * To be removed in 2018.2. Use {@link VcsLogFilterCollection#get(FilterKey)} instead.
+   */
+  @Nullable
+  @Deprecated
+  default VcsLogUserFilter getUserFilter() {
+    return get(USER_FILTER);
+  }
+
+  /**
+   * To be removed in 2018.2. Use {@link VcsLogFilterCollection#get(FilterKey)} instead.
+   */
+  @Nullable
+  @Deprecated
+  default VcsLogDateFilter getDateFilter() {
+    return get(DATE_FILTER);
+  }
+
+  /**
+   * To be removed in 2018.2. Use {@link VcsLogFilterCollection#get(FilterKey)} instead.
+   */
+  @Nullable
+  @Deprecated
+  default VcsLogTextFilter getTextFilter() {
+    return get(TEXT_FILTER);
+  }
+
+  /**
+   * To be removed in 2018.2. Use {@link VcsLogFilterCollection#get(FilterKey)} instead.
+   */
+  @Nullable
+  @Deprecated
+  default VcsLogHashFilter getHashFilter() {
+    return get(HASH_FILTER);
+  }
+
+  /**
+   * To be removed in 2018.2. Use {@link VcsLogFilterCollection#get(FilterKey)} instead.
+   */
+  @Nullable
+  @Deprecated
+  default VcsLogStructureFilter getStructureFilter() {
+    return get(STRUCTURE_FILTER);
+  }
+
+  /**
+   * To be removed in 2018.2. Use {@link VcsLogFilterCollection#get(FilterKey)} instead.
+   */
+  @Nullable
+  @Deprecated
+  default VcsLogRootFilter getRootFilter() {
+    return get(ROOT_FILTER);
+  }
+
   class FilterKey<T extends VcsLogFilter> {
     @NotNull private final String myName;
 
@@ -83,6 +146,11 @@ public interface VcsLogFilterCollection {
 
     public static <T extends VcsLogFilter> FilterKey<T> create(@NotNull String name) {
       return new FilterKey<>(name);
+    }
+
+    @Override
+    public String toString() {
+      return myName + " filter";
     }
   }
 }

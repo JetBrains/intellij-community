@@ -244,7 +244,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   /**
    * Creates SDK by its path
    *
-   * @param sdkHome         path to sdk (probably obtained by {@link #runTestOn(String)})
+   * @param sdkHome         path to sdk (probably obtained by {@link PyTestTask#runTestOn(String, Sdk)})
    * @param sdkCreationType SDK creation strategy (see {@link sdkTools.SdkCreationType} doc)
    * @return sdk
    */

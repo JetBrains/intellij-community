@@ -510,7 +510,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                                                      @NotNull TypeEvalContext context) {
     final LanguageLevel typeLevel =
       ArrayUtil.contains(functionQName, "io.open", "pathlib.Path.open", "_io.open")
-      ? LanguageLevel.PYTHON30
+      ? LanguageLevel.PYTHON34
       : LanguageLevel.forElement(call);
 
     return PyTypingTypeProvider.getOpenFunctionCallType(function, call, typeLevel, context);
@@ -539,7 +539,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                                 stub.getName(),
                                 parseNamedTupleFields(referenceTarget, fields, context),
                                 definitionLevel,
-                                ContainerUtil.find(fields.values(), Optional::isPresent) != null);
+                                ContainerUtil.find(fields.values(), Optional::isPresent) != null,
+                                as(referenceTarget, PyTargetExpression.class));
   }
 
   @Nullable

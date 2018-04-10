@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -151,7 +152,8 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
         }
         Pair<PsiElement, TextRange> pair = findExpression(elementAtCursor, sideEffectsAllowed);
         if (pair != null) {
-          return new ExpressionInfo(pair.getSecond(), null, null, pair.getFirst());
+          PsiElement element = pair.getFirst();
+          return new ExpressionInfo(pair.getSecond(), null, null, element instanceof PsiExpression ? element : null);
         }
       } catch (IndexNotReadyException ignored) {}
       return null;

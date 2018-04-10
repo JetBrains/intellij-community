@@ -40,10 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -70,6 +67,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
   private final StartupManager myStartupManager;
+  private volatile ProgressSuspender myCurrentSuspender;
+  private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
 
   public DumbServiceImpl(Project project, StartupManager startupManager) {
     myProject = project;
@@ -111,6 +110,47 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public boolean isAlternativeResolveEnabled() {
     return myAlternativeResolution.get() != null;
+  }
+
+  @Override
+  public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
+    String reason = "Indexing paused due to " + activityName;
+    synchronized (myRequestedSuspensions) {
+      myRequestedSuspensions.add(reason);
+    }
+
+    suspendCurrentTask(reason);
+    try {
+      activity.run();
+    } finally {
+      synchronized (myRequestedSuspensions) {
+        myRequestedSuspensions.remove(reason);
+      }
+      resumeAutoSuspendedTask(reason);
+    }
+  }
+
+  private void suspendCurrentTask(String reason) {
+    ProgressSuspender currentSuspender = myCurrentSuspender;
+    if (currentSuspender != null && !currentSuspender.isSuspended()) {
+      currentSuspender.suspendProcess(reason);
+    }
+  }
+
+  private void resumeAutoSuspendedTask(@NotNull String reason) {
+    ProgressSuspender currentSuspender = myCurrentSuspender;
+    if (currentSuspender != null && currentSuspender.isSuspended() && reason.equals(currentSuspender.getSuspendedText())) {
+      currentSuspender.resumeProcess();
+    }
+  }
+
+  private void suspendIfRequested(ProgressSuspender suspender) {
+    synchronized (myRequestedSuspensions) {
+      String suspendedReason = ContainerUtil.getLastItem(myRequestedSuspensions);
+      if (suspendedReason != null) {
+        suspender.suspendProcess(suspendedReason);
+      }
+    }
   }
 
   @Override
@@ -409,7 +449,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void runBackgroundProcess(@NotNull final ProgressIndicator visibleIndicator) {
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
-    ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
+    ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
+    myCurrentSuspender = suspender;
+    suspendIfRequested(suspender);
 
     final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
     final Thread self = Thread.currentThread();
@@ -446,6 +488,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
     finally {
       shutdownTracker.unregisterStopperThread(self);
+      myCurrentSuspender = null;
     }
   }
 

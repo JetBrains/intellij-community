@@ -120,7 +120,6 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
         }
       });
       connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
-      myFileManager.markInitialized();
     });
   }
 
@@ -578,7 +577,6 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
     private int depthCounter; // accessed from within write action only
     @Override
     public void beforeRootsChange(final ModuleRootEvent event) {
-      if (!myFileManager.isInitialized()) return;
       if (event.isCausedByFileTypesChange()) return;
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
@@ -600,7 +598,6 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
     public void rootsChanged(final ModuleRootEvent event) {
       myFileManager.dispatchPendingEvents();
 
-      if (!myFileManager.isInitialized()) return;
       if (event.isCausedByFileTypesChange()) return;
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;

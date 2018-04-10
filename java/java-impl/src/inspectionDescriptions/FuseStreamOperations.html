@@ -10,6 +10,13 @@ Could be converted to
 <pre>
   return stream.sorted().toArray(String[]::new);
 </pre>
+<p>
+  Note that sometimes converted stream chain may replace explicit <b>ArrayList</b> with <b>Collectors.toList()</b> or explicit
+  <b>HashSet</b> with <b>Collectors.toSet()</b>. While current library implementation uses these collections internally,
+  this is not specified, thus can be changed in future possibly changing the semantics of your code. If you are concerned about this,
+  use the checkbox below to suppress usages of <b>toList</b> and <b>toSet</b> collectors. In this case <b>Collectors.toCollection()</b>
+  will be suggested instead.
+</p>
 <!-- tooltip end -->
 <p><small>New in 2017.3</small></p>
 </body>

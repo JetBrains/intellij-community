@@ -69,6 +69,7 @@ class TypeAheadTest : GuiTestCase() {
       popupClick("Edit Configurations...")
       //check that we clicked to edit configurations after it become enabled
       if (!ensureJBListPopupFixtureIsGone()) {
+        shortcut(Key.ESCAPE)
         button("Main").click()
         popupClick("Edit Configurations...")
       }

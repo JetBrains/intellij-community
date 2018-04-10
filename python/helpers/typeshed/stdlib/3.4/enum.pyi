@@ -1,5 +1,5 @@
 import sys
-from typing import List, Any, TypeVar, Union, Iterable, Iterator, TypeVar, Generic, Type, Sized, Reversible, Container, Mapping
+from typing import List, Any, TypeVar, Union, Iterator, TypeVar, Generic, Type, Sized, Mapping
 from abc import ABCMeta
 
 _T = TypeVar('_T')
@@ -9,10 +9,11 @@ _S = TypeVar('_S', bound=Type[Enum])
 # This is a temporary workaround to allow multiple creation of enums with builtins
 # such as str as mixins, which due to the handling of ABCs of builtin types, cause
 # spurious inconsistent metaclass structure. See #1595.
-class EnumMeta(ABCMeta, Iterable[Enum], Sized, Reversible[Enum], Container[Enum]):
+# Structurally: Iterable[T], Reversible[T], Container[T] where T is the enum itself
+class EnumMeta(ABCMeta, Sized):
     def __iter__(self: Type[_T]) -> Iterator[_T]: ...
     def __reversed__(self: Type[_T]) -> Iterator[_T]: ...
-    def __contains__(self, member: Any) -> bool: ...
+    def __contains__(self: Type[_T], member: Any) -> bool: ...
     def __getitem__(self: Type[_T], name: str) -> _T: ...
     @property
     def __members__(self: Type[_T]) -> Mapping[str, _T]: ...

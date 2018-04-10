@@ -733,7 +733,7 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-9342
   public void testUnboundMethodSpecialAttributes() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, this::assertUnderscoredMethodSpecialAttributesSuggested);
-    runWithLanguageLevel(LanguageLevel.PYTHON32, this::assertUnderscoredFunctionAttributesSuggested);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::assertUnderscoredFunctionAttributesSuggested);
   }
 
   // PY-9342
@@ -1207,6 +1207,19 @@ public class PythonCompletionTest extends PyTestCase {
         final List<String> suggested = doTestByText("def __<caret>");
         assertNotNull(suggested);
         assertContainsElements(suggested, "__getattr__(name)", "__dir__()");
+      }
+    );
+  }
+
+  // PY-27913
+  public void testDunderClassGetItem() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final List<String> suggested = doTestByText("class A:\n" +
+                                                    "    def __<caret>");
+        assertNotNull(suggested);
+        assertContainsElements(suggested, "__class_getitem__(cls, item)");
       }
     );
   }

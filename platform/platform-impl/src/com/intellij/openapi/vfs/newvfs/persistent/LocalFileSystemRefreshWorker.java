@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -150,21 +150,10 @@ class LocalFileSystemRefreshWorker {
                               VirtualDirectoryImpl dir) {
     while (true) {
       // obtaining directory snapshot
-      String[] currentNames;
-      VirtualFile[] children;
-
-      Application application = ApplicationManager.getApplication();
-      AccessToken token = application.acquireReadActionLock();
-      try {
-        if (application.isDisposed()) {
-          return;
-        }
-        currentNames = persistence.list(dir);
-        children = dir.getChildren();
-      }
-      finally {
-        token.finish();
-      }
+      Pair<String[], VirtualFile[]> result = getDirectorySnapshot(persistence, dir);
+      if (result == null) return;
+      String[] currentNames = result.getFirst();
+      VirtualFile[] children = result.getSecond();
 
       RefreshingFileVisitor refreshingFileVisitor =
         new RefreshingFileVisitor(dir, persistence, fs, null, Arrays.asList(children), strategy);
@@ -172,23 +161,31 @@ class LocalFileSystemRefreshWorker {
       refreshingFileVisitor.visit(dir);
 
       // generating events unless a directory was changed in between
-      token = application.acquireReadActionLock();
-      try {
-        if (application.isDisposed()) {
-          return;
+      boolean hasEvents = ReadAction.compute(() -> {
+        if (ApplicationManager.getApplication().isDisposed()) {
+          return true;
         }
         if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
           if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
-          continue;
+          return false;
         }
 
         myFileEventSet.addAll(refreshingFileVisitor.getEventSet());
+        return true;
+      });
+      if (hasEvents) {
         break;
       }
-      finally {
-        token.finish();
-      }
     }
+  }
+
+  static Pair<String[], VirtualFile[]> getDirectorySnapshot(PersistentFS persistence, VirtualDirectoryImpl dir) {
+    return ReadAction.compute(() -> {
+          if (ApplicationManager.getApplication().isDisposed()) {
+            return null;
+          }
+          return Pair.create(persistence.list(dir), dir.getChildren());
+        });
   }
 
   private void partialDirRefresh(NewVirtualFileSystem fs,
@@ -197,36 +194,29 @@ class LocalFileSystemRefreshWorker {
                                  VirtualDirectoryImpl dir) {
     while (true) {
       // obtaining directory snapshot
-      List<VirtualFile> cached;
-      List<String> wanted;
+      Pair<List<VirtualFile>, List<String>> result =
+        ReadAction.compute(() -> Pair.create(dir.getCachedChildren(), dir.getSuspiciousNames()));
 
-      AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        cached = dir.getCachedChildren();
-        wanted = dir.getSuspiciousNames();
-      }
-      finally {
-        token.finish();
-      }
+      List<VirtualFile> cached = result.getFirst();
+      List<String> wanted = result.getSecond();
 
       if (cached.isEmpty() && wanted.isEmpty()) return;
       RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(dir, persistence, fs, wanted, cached, strategy);
       refreshingFileVisitor.visit(dir);
 
       // generating events unless a directory was changed in between
-      token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
+      boolean hasEvents = ReadAction.compute(() -> {
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
           if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
-          continue;
+          return false;
         }
 
         myFileEventSet.addAll(refreshingFileVisitor.getEventSet());
 
+        return true;
+      });
+      if (hasEvents) {
         break;
-      }
-      finally {
-        token.finish();
       }
     }
   }

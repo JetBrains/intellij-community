@@ -52,6 +52,10 @@ public class MoveClassToInnerTest extends RefactoringTestCase {
     doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }
 
+  public void testInnerEnum() throws Exception {
+    doTest(new String[] { "pack2.AEnum" }, "pack1.Class1");
+  }
+
   public void testInnerInsideMoved() throws Exception {
     doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }

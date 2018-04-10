@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -1006,25 +1004,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     myWidth = newWidth;
 
-    int rowsToShow = Math.min(30, data.size());
-    Dimension dimension = new Dimension(newWidth, table.getRowHeight() * rowsToShow);
-    Rectangle rectangle = fitToScreen(dimension, popupPosition, table);
-    if (!data.isEmpty()) {
-      ScrollingUtil.ensureSelectionExists(table);
-    }
-    table.setSize(rectangle.getSize());
-    //table.setPreferredSize(dimension);
-    //table.setMaximumSize(dimension);
-    //table.setPreferredScrollableViewportSize(dimension);
-
-
     Dimension footerSize = ((AbstractPopup)popup).getFooterPreferredSize();
 
     int footer = footerSize.height;
     int footerBorder = footer == 0 ? 0 : 1;
     Insets insets = ((AbstractPopup)popup).getPopupBorder().getBorderInsets(content);
-    rectangle.height += headerSize.height + footer + footerBorder + insets.top + insets.bottom;
-    ScreenUtil.fitToScreen(rectangle);
+    int minHeight = headerSize.height + footer + footerBorder + insets.top + insets.bottom;
+
+    Rectangle rectangle = getPreferredBounds(table, popupPosition.getScreenPoint(), newWidth, minHeight, data.size());
+    table.setSize(rectangle.width, rectangle.height - minHeight);
+    if (!data.isEmpty()) ScrollingUtil.ensureSelectionExists(table);
+
     Dimension newDim = rectangle.getSize();
     window.setBounds(rectangle);
     window.setMinimumSize(newDim);
@@ -1034,16 +1024,19 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     window.repaint();
   }
 
-  private static Rectangle fitToScreen(@NotNull Dimension newDim, @NotNull RelativePoint popupPosition, JTable table) {
-    Rectangle rectangle = new Rectangle(popupPosition.getScreenPoint(), newDim);
-    ScreenUtil.fitToScreen(rectangle);
-    if (rectangle.getHeight() != newDim.getHeight()) {
-      int newHeight = (int)rectangle.getHeight();
-      int roundedHeight = newHeight - newHeight % table.getRowHeight();
-      rectangle.setSize((int)rectangle.getWidth(), Math.max(roundedHeight, table.getRowHeight()));
+  private static Rectangle getPreferredBounds(@NotNull JTable table, @NotNull Point point, int width, int minHeight, int modelRows) {
+    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
+    int visibleRows = Math.min(30, modelRows);
+    int rowHeight = table.getRowHeight();
+    int space = addExtraSpace && visibleRows < modelRows ? rowHeight / 2 : 0;
+    int height = visibleRows * rowHeight + minHeight + space;
+    Rectangle bounds = new Rectangle(point.x, point.y, width, height);
+    ScreenUtil.fitToScreen(bounds);
+    if (bounds.height != height) {
+      minHeight += addExtraSpace && space == 0 ? rowHeight / 2 : space;
+      bounds.height = Math.max(1, (bounds.height - minHeight) / rowHeight) * rowHeight + minHeight;
     }
-    return rectangle;
-
+    return bounds;
   }
 
   private void appendMoreUsages(Editor editor,

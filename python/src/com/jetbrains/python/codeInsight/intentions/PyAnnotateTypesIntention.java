@@ -38,32 +38,26 @@ import java.util.List;
 
 import static com.jetbrains.python.codeInsight.intentions.SpecifyTypeInPy3AnnotationsIntention.*;
 import static com.jetbrains.python.codeInsight.intentions.TypeIntention.getMultiCallable;
-import static com.jetbrains.python.codeInsight.intentions.TypeIntention.resolvesToFunction;
 
 /**
  * @author traff
  */
 public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   
-  public PyAnnotateTypesIntention() {
-    setText(PyBundle.message("INTN.annotate.types"));
-  }
-
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INTN.annotate.types");
+    return PyBundle.message("INTN.add.type.hints.for.function.family");
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
 
-    updateText();
-
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
 
-    if (resolvesToFunction(elementAt, input -> true)) {
-      updateText();
+    final PyFunction function = TypeIntention.findSuitableFunction(elementAt, input -> true);
+    if (function != null) {
+      setText(PyBundle.message("INTN.add.type.hints.for.function", function.getName()));
       return true;
     }
     return false;
@@ -220,9 +214,5 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     if (callable != null) {
       startTemplate(project, callable, builder);
     }
-  }
-
-  protected void updateText() {
-    setText(PyBundle.message("INTN.annotate.types"));
   }
 }

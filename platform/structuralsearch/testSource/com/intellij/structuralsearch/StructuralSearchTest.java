@@ -1385,6 +1385,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Comment matching", 3, findMatchesCount(s1, "// 'Comment:[regex( .*(?:comment).* )]"));
     assertEquals("Comment matching, 2", 3, findMatchesCount(s1, "/* 'Comment:[regex( .*(?:comment).* )] */"));
     assertEquals("Java doc matching", 1, findMatchesCount(s1, "/** 'Comment:[regex( .*(?:comment).* )] */"));
+    assertEquals("Comment matching with negate", 2, findMatchesCount(s1, "// 'not_comment:[!regex( .*(?:comment).* )]"));
+    assertEquals("Multi line", 1, findMatchesCount(s1, "//'_comment:[regex( .*another.* )]"));
+    assertEquals("Multi line negated", 4, findMatchesCount(s1, "//'_comment:[!regex( .*another.* )]"));
 
     String s4 = "class X {{ java.util.Arrays.asList(\"'test\", \"another test\", \"garbage\"); }}";
     assertEquals("Literal content", 2, findMatchesCount(s4, "\"'test:[regex( .*test.* )]\""));
@@ -2215,6 +2218,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern2 = "System.out.println('_v);" +
                       "System.out.println('_v);";
     assertEquals(1, findMatchesCount(source, pattern2));
+
+    String source2 = "class B {{" +
+                     "  System.out.println((3 * 8) + 2 + (((2))));" +
+                     "}}";
+    String pattern3 = "3 * 8 + 2 + 2";
+    assertEquals(1, findMatchesCount(source2, pattern3));
   }
 
   public void testFindSelfAssignment() {

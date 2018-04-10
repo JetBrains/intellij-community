@@ -17,14 +17,12 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.*;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -49,11 +47,13 @@ import org.jetbrains.annotations.NotNull;
 public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   private String myText = PyBundle.message("INTN.specify.type.in.annotation");
 
+  @Override
   @NotNull
   public String getText() {
     return myText;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.specify.type.in.annotation");
@@ -151,36 +151,31 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
     final String annotationText = "-> " + returnType;
 
-    final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    Document documentWithCallable = manager.getDocument(function.getContainingFile());
-    if (documentWithCallable != null) {
-      try {
-        manager.doPostponedOperationsAndUnblockDocument(documentWithCallable);
-        final PyAnnotation oldAnnotation = function.getAnnotation();
-        if (oldAnnotation != null) {
-          final TextRange oldRange = oldAnnotation.getTextRange();
-          documentWithCallable.replaceString(oldRange.getStartOffset(), oldRange.getEndOffset(), annotationText);
+    PyFunction annotatedFunction = PyUtil.updateDocumentUnblockedAndCommitted(function, document -> {
+      final PyAnnotation oldAnnotation = function.getAnnotation();
+      if (oldAnnotation != null) {
+        final TextRange oldRange = oldAnnotation.getTextRange();
+        document.replaceString(oldRange.getStartOffset(), oldRange.getEndOffset(), annotationText);
+      }
+      else {
+        final PsiElement prevElem = PyPsiUtils.getPrevNonCommentSibling(function.getStatementList(), true);
+        assert prevElem != null;
+        final TextRange range = prevElem.getTextRange();
+        if (prevElem.getNode().getElementType() == PyTokenTypes.COLON) {
+          document.insertString(range.getStartOffset(), " " + annotationText);
         }
         else {
-          final PsiElement prevElem = PyPsiUtils.getPrevNonCommentSibling(function.getStatementList(), true);
-          assert prevElem != null;
-          final TextRange range = prevElem.getTextRange();
-          if (prevElem.getNode().getElementType() == PyTokenTypes.COLON) {
-            documentWithCallable.insertString(range.getStartOffset(), " " + annotationText);
-          }
-          else {
-            documentWithCallable.insertString(range.getEndOffset(), " " + annotationText + ":");
-          }
+          document.insertString(range.getEndOffset(), " " + annotationText + ":");
         }
       }
-      finally {
-        manager.commitDocument(documentWithCallable);
-      }
+      return CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
+    });
+
+    if (annotatedFunction == null) {
+      return null;
     }
 
-
-    function = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
-    final PyAnnotation annotation = function.getAnnotation();
+    final PyAnnotation annotation = annotatedFunction.getAnnotation();
     assert annotation != null;
     final PyExpression annotationValue = annotation.getValue();
     assert annotationValue != null : "Generated function must have annotation";
@@ -191,11 +186,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotationValue);
       builder.replaceRange(TextRange.create(0, returnType.length()), returnType);
       final Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
-      final OpenFileDescriptor descriptor = new OpenFileDescriptor(
-        project,
-        function.getContainingFile().getVirtualFile(),
-        offset
-      );
+      final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, annotatedFunction.getContainingFile().getVirtualFile(), offset);
       final Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
       if (targetEditor != null) {
         targetEditor.getCaretModel().moveToOffset(offset);
@@ -211,7 +202,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   }
 
   private static boolean isDefinedInAnnotation(PyParameter parameter) {
-    if (LanguageLevel.forElement(parameter).isOlderThan(LanguageLevel.PYTHON30)) {
+    if (LanguageLevel.forElement(parameter).isPython2()) {
       return false;
     }
     if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null)) return true;

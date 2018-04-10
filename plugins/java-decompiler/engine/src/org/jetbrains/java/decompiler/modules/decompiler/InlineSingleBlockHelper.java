@@ -118,17 +118,14 @@ public class InlineSingleBlockHelper {
       StatEdge edge = lst.get(0);
 
       if (sameCatchRanges(edge)) {
-        if (edge.explicit) {
-          return true;
-        }
-        else {
+        if (!edge.explicit) {
           for (int i = index; i < seq.getStats().size(); i++) {
             if (!noExitLabels(seq.getStats().get(i), seq)) {
               return false;
             }
           }
-          return true;
         }
+        return true;
       }
       // FIXME: count labels properly
     }

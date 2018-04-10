@@ -86,7 +86,7 @@ public class PyDeprecationInspection extends PyInspection {
       super.visitPyFunction(node);
 
       final PyDecoratorList decoratorList = node.getDecoratorList();
-      if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON33) && decoratorList != null) {
+      if (!LanguageLevel.forElement(node).isPython2() && decoratorList != null) {
         Arrays
           .stream(decoratorList.getDecorators())
           .filter(

@@ -205,6 +205,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     if (list != null) list.updatePointerTargetsAfterReparse();
   }
 
+  @TestOnly
+  public void clearPointers(@NotNull VirtualFile file) {
+    file.putUserData(POINTERS_KEY, null);
+  }
+
   Project getProject() {
     return myProject;
   }

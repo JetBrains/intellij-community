@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -104,14 +103,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final PsiFile file = element.getContainingFile();
     final int offset = editor.getCaretModel().getOffset();
-    final AccessToken accessToken = ReadAction.start();
-    final List<GrExpression> expressions;
-    try {
-      expressions = collectExpressions(file, offset);
-    }
-    finally {
-      accessToken.finish();
-    }
+    final List<GrExpression> expressions = ReadAction.compute(() -> collectExpressions(file, offset));
     final Document document = editor.getDocument();
     if (expressions.size() == 1) {
       invokeImpl(expressions.get(0), document);

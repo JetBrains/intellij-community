@@ -21,7 +21,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -243,6 +242,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   private void applySettingsToModel() {
+    if (((CodeStyleSchemesModel.ModelSettings)mySettings).isLocked()) return;
     try {
       if (myModel != null && myModel.isUiEventsEnabled()) {
         apply(mySettings);
@@ -601,7 +601,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
     codeStyle.apply(mySettings);
-    resetImpl(mySettings);
+    ((CodeStyleSchemesModel.ModelSettings) mySettings).doWithLockedSettings(()->resetImpl(mySettings));
     if (myModel != null) {
       myModel.fireAfterCurrentSettingsChanged();
     }

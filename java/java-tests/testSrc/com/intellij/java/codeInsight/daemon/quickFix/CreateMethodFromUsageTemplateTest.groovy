@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
+import com.intellij.idea.Bombed
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
@@ -207,5 +208,36 @@ class A {
     finally {
       settings.setUseFqClassNames(fqClassNames)
     }
+  }
+  
+  @Bombed(year = 2018, month = Calendar.FEBRUARY, day = 6, user = "Daniil Ovchinnikov")
+  void "test format adjusted imports"() {
+    configureFromFileText "a.java", """
+  /**javadoc*/
+  class A {
+      void m(java.util.List<String> list){
+        fo<caret>o(list);
+      }
+  }
+  """
+      TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+      doAction("Create method 'foo' in 'A'")
+      def state = TemplateManagerImpl.getTemplateState(getEditor())
+    
+      state.gotoEnd(false)
+
+      checkResultByText """import java.util.List;
+
+/**javadoc*/
+  class A {
+      void m(java.util.List<String> list){
+        foo(list);
+      }
+
+    private void foo(List<String> list) {
+        
+    }
+  }
+  """
   }
 }

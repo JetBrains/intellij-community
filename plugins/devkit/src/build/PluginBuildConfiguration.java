@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -163,23 +162,15 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestPath);
     if (manifest == null) {
       Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
-      AccessToken token = ReadAction.start();
-      try {
+      ReadAction.run(()-> {
         myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
           VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null);
-      }
-      finally {
-        token.finish();
-      }
+      });
     }
     else {
-      AccessToken token = ReadAction.start();
-      try {
+      WriteAction.run(()-> {
         myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null);
-      }
-      finally {
-        token.finish();
-      }
+      });
     }
   }
 

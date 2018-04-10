@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
@@ -16,6 +14,7 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -49,7 +48,7 @@ public class JavaSdkImpl extends JavaSdk {
   private static final String VM_EXE_NAME = "java";   // do not use JavaW.exe for Windows because of issues with encoding
 
   private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
-  private final Map<String, JavaSdkVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
+  private final Map<String, JavaVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
 
   public JavaSdkImpl(final VirtualFileManager fileManager, final FileTypeManager fileTypeManager) {
     super("JavaSDK");
@@ -135,6 +134,15 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) { }
+
+  @Override
+  public Comparator<Sdk> versionComparator() {
+    return (sdk1, sdk2) -> {
+      assert sdk1.getSdkType() == this : sdk1;
+      assert sdk2.getSdkType() == this : sdk2;
+      return Comparing.compare(getJavaVersion(sdk1), getJavaVersion(sdk2));
+    };
+  }
 
   @Override
   public String getBinPath(@NotNull Sdk sdk) {
@@ -299,9 +307,13 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
+    JavaVersion version = getJavaVersion(sdk);
+    return version != null ? JavaSdkVersion.fromJavaVersion(version) : null;
+  }
+
+  private JavaVersion getJavaVersion(Sdk sdk) {
     String versionString = sdk.getVersionString();
-    return versionString == null ? null :
-           myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaSdkVersion::fromVersionString);
+    return versionString != null ? myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaVersion::tryParse) : null;
   }
 
   @Override

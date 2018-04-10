@@ -78,4 +78,8 @@ public class SameParameterValueTest extends InspectionTestCase {
   public void testNotReportedDueToHighVisibility() {
     doTest(getTestDir(), myTool, false, false);
   }
+
+  public void testNegativeDouble() {
+    doTest(getTestDir(), myTool, false, true);
+  }
 }

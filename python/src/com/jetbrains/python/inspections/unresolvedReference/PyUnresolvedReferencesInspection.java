@@ -551,7 +551,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (element instanceof PyQualifiedExpression) {
           // TODO: Add __qualname__ for Python 3.3 to the skeleton of <class 'object'>, introduce a pseudo-class skeleton for
           // <class 'function'>
-          if ("__qualname__".equals(refText) && LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON33)) {
+          if ("__qualname__".equals(refText) && !LanguageLevel.forElement(element).isPython2()) {
             return;
           }
           final PyQualifiedExpression expr = (PyQualifiedExpression)element;

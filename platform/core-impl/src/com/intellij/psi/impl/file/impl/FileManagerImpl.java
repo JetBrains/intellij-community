@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -62,7 +61,6 @@ public class FileManagerImpl implements FileManager {
   private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = ContainerUtil.createConcurrentSoftValueMap();
   private final ConcurrentMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = ContainerUtil.createConcurrentWeakValueMap();
 
-  private boolean myInitialized;
   private boolean myDisposed;
 
   private final FileDocumentManager myFileDocumentManager;
@@ -77,6 +75,18 @@ public class FileManagerImpl implements FileManager {
 
     Disposer.register(manager.getProject(), this);
     LowMemoryWatcher.register(this::processQueue, this);
+
+    myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+        processFileTypesChanged();
+      }
+
+      @Override
+      public void exitDumbMode() {
+        processFileTypesChanged();
+      }
+    });
   }
 
   private static final VirtualFile NULL = new LightVirtualFile();
@@ -132,9 +142,7 @@ public class FileManagerImpl implements FileManager {
 
   @Override
   public void dispose() {
-    if (myInitialized) {
-      myConnection.disconnect();
-    }
+    myConnection.disconnect();
     clearViewProviders();
 
     myDisposed = true;
@@ -225,26 +233,17 @@ public class FileManagerImpl implements FileManager {
     return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled, fileType) : viewProvider;
   }
 
+  /** Left for plugin compatibility */
+  @SuppressWarnings("unused")
+  @Deprecated
   public void markInitialized() {
-    LOG.assertTrue(!myInitialized);
-    myDisposed = false;
-    myInitialized = true;
-
-    myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-        processFileTypesChanged();
-      }
-
-      @Override
-      public void exitDumbMode() {
-        processFileTypesChanged();
-      }
-    });
   }
 
+  /** Left for plugin compatibility */
+  @SuppressWarnings("unused")
+  @Deprecated
   public boolean isInitialized() {
-    return myInitialized;
+    return true;
   }
 
   private boolean myProcessingFileTypesChange;
@@ -279,9 +278,6 @@ public class FileManagerImpl implements FileManager {
   }
 
   void dispatchPendingEvents() {
-    if (!myInitialized) {
-      LOG.error("Project is not yet initialized: "+myManager.getProject());
-    }
     if (myDisposed) {
       LOG.error("Project is already disposed: "+myManager.getProject());
     }
@@ -324,8 +320,6 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   public PsiFile findFile(@NotNull VirtualFile vFile) {
     if (vFile.isDirectory()) return null;
-    final Project project = myManager.getProject();
-    if (project.isDefault()) return null;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
@@ -346,7 +340,6 @@ public class FileManagerImpl implements FileManager {
     if (myDisposed) {
       LOG.error("Project is already disposed: " + myManager.getProject());
     }
-    if (!myInitialized) return null;
 
     dispatchPendingEvents();
 
@@ -356,7 +349,6 @@ public class FileManagerImpl implements FileManager {
   @Override
   @Nullable
   public PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
-    LOG.assertTrue(myInitialized, "Access to psi files should be performed only after startup activity");
     if (myDisposed) {
       LOG.error("Access to psi files should not be performed after project disposal: "+myManager.getProject());
     }

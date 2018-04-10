@@ -374,7 +374,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                       "<html><b>int a</b>, int b, int c</html>");
     type("1, ");
     waitForAllAsyncStuff();
-    checkHintContents("[<html><font color=gray>&lt;no parameters&gt;</font color=gray></html>]\n" +
+    checkHintContents("<html><font color=gray>&lt;no parameters&gt;</font color=gray></html>\n" +
                       "-\n" +
                       "<html>int a, <b>int b</b>, int c</html>");
   }

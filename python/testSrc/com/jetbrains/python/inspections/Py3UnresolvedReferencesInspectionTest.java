@@ -220,6 +220,11 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     doTest();
   }
 
+  // PY-28177
+  public void testTypingOpaqueNameDunderGetItem() {
+    doTest();
+  }
+
   // PY-21655
   public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
     doMultiFileTest("a.py");

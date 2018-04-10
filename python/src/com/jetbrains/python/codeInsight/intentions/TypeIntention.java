@@ -111,25 +111,28 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
   }
 
   private boolean isAvailableForReturn(@NotNull final PsiElement elementAt) {
-    return resolvesToFunction(elementAt, input -> !isReturnTypeDefined(input));
+    return findSuitableFunction(elementAt, input -> !isReturnTypeDefined(input)) != null;
   }
 
-  static boolean resolvesToFunction(@NotNull PsiElement elementAt, Function<PyFunction, Boolean> isAvailableForFunction) {
+  @Nullable
+  public static PyFunction findSuitableFunction(@NotNull PsiElement elementAt, Function<PyFunction, Boolean> isAvailableForFunction) {
     final PyFunction parentFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
     if (parentFunction != null) {
       final ASTNode nameNode = parentFunction.getNameNode();
       if (nameNode != null) {
         final PsiElement prev = elementAt.getContainingFile().findElementAt(elementAt.getTextOffset()-1);
         if (nameNode.getPsi() == elementAt || nameNode.getPsi() == prev) {
-          return  isAvailableForFunction.apply(parentFunction);
+          if (isAvailableForFunction.apply(parentFunction)) {
+            return parentFunction;
+          }
         }
       }
     }
 
     final PyCallExpression callExpression = getCallExpression(elementAt);
-    if (callExpression == null) return false;
+    if (callExpression == null) return null;
     final PyExpression callee = callExpression.getCallee();
-    if (callee == null) return false;
+    if (callee == null) return null;
     final PsiReference reference = callee.getReference();
     if (reference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
@@ -137,18 +140,20 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
         if (results[i].getElement() instanceof PyFunction) {
           final PsiElement result = results[i].getElement();
           final PsiFile psiFile = result.getContainingFile();
-          if (psiFile == null) return false;
+          if (psiFile == null) return null;
           final VirtualFile virtualFile = psiFile.getVirtualFile();
           if (virtualFile != null) {
             if (ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
-              return false;
+              return null;
             }
           }
-          return isAvailableForFunction.apply((PyFunction)result);
+          if (isAvailableForFunction.apply((PyFunction)result)) {
+            return (PyFunction)result;
+          }
         }
       }
     }
-    return false;
+    return null;
   }
 
   protected boolean isReturnTypeDefined(@NotNull PyFunction function) {

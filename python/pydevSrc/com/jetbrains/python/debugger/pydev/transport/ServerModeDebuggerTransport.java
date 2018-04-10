@@ -75,6 +75,16 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
     }
   }
 
+  /**
+   * Server mode does not have this intermediate phase.
+   *
+   * @return {@code false}
+   */
+  @Override
+  public boolean isConnecting() {
+    return false;
+  }
+
   @Override
   public boolean isConnected() {
     return myConnected && mySocket != null && !mySocket.isClosed();

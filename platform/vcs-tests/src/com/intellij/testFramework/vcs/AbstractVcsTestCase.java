@@ -178,7 +178,7 @@ public abstract class AbstractVcsTestCase {
   }
 
   public static void verify(final ProcessOutput runResult) {
-    Assert.assertEquals(runResult.getStderr(), 0, runResult.getExitCode());
+    Assert.assertEquals(runResult.getStdout() + "\n---\n" + runResult.getStderr(), 0, runResult.getExitCode());
   }
 
   protected static void verify(final ProcessOutput runResult, final String... stdoutLines) {

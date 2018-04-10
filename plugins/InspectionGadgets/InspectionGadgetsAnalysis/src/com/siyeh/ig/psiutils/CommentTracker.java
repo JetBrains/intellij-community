@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
@@ -112,7 +110,18 @@ public class CommentTracker {
    */
   public void deleteAndRestoreComments(@NotNull PsiElement element) {
     grabCommentsOnDelete(element);
-    insertCommentsBefore(element instanceof PsiVariable ? element.getParent() : element);
+    PsiElement anchor = element;
+    if (element instanceof PsiVariable) {
+      anchor = element.getParent();
+    }
+    else if ((element.getParent() instanceof PsiJavaCodeReferenceElement &&
+              ((PsiJavaCodeReferenceElement)element.getParent()).getQualifier() == element)) {
+      anchor = element.getParent();
+      if (anchor.getParent() instanceof PsiMethodCallExpression) {
+        anchor = anchor.getParent();
+      }
+    }
+    insertCommentsBefore(anchor);
     element.delete();
   }
 
@@ -262,20 +271,9 @@ public class CommentTracker {
   }
 
   private void grabCommentsOnDelete(PsiElement element) {
-    if (element instanceof PsiExpression && element.getParent() instanceof PsiExpressionStatement) {
+    if (element instanceof PsiExpression && element.getParent() instanceof PsiExpressionStatement ||
+        element.getParent() instanceof PsiJavaCodeReferenceElement) {
       element = element.getParent();
-    }
-    if (element.getParent() instanceof PsiJavaCodeReferenceElement) {
-      PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element.getParent();
-      if (element == ref.getQualifier()) {
-        for (PsiElement child : ref.getChildren()) {
-          if(child.textMatches(".")) {
-            break;
-          }
-          grabComments(child);
-        }
-        return;
-      }
     }
     grabComments(element);
   }

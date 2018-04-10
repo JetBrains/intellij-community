@@ -30,7 +30,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   @Override
   public String getInformationHint(@NotNull PsiExpression element) {
     PsiType type = element.getType();
-    String text = type == null ? "<unknown>" : type.getCanonicalText();
+    String text = type == null ? "<unknown>" : type.getPresentableText();
     return StringUtil.escapeXml(text);
   }
 

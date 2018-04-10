@@ -1,4 +1,4 @@
-// "Remove 'comparing' call" "true"
+// "Remove 'comparing()' call" "true"
 import java.util.Comparator;
 import java.util.function.Function;
 

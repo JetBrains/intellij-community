@@ -26,7 +26,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
-          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, false);
+          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract);
           for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
             PsiElement element = entry.getKey();
             holder.registerProblem(element, entry.getValue());

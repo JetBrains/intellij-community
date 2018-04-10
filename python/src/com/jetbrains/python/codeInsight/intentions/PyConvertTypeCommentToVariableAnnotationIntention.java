@@ -16,12 +16,10 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.google.common.collect.ImmutableMap;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -37,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseIntentionAction {
@@ -49,29 +46,13 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
       final Map<PyTargetExpression, String> map = mapTargetsToAnnotations(typeComment);
       if (map != null) {
         if (typeComment.getParent() instanceof PyAssignmentStatement && map.size() == 1) {
-          final Document document = editor.getDocument();
-          runWithDocumentReleasedAndCommitted(project, document, () -> {
-            final PyTargetExpression target = ContainerUtil.getFirstItem(map.keySet());
-            assert target != null;
-            document.insertString(target.getTextRange().getEndOffset(), ": " + map.get(target));
-          });
+          final PyTargetExpression target = ContainerUtil.getFirstItem(map.keySet());
+          assert target != null;
+          PyTypeHintGenerationUtil.insertVariableAnnotation(target, null, new AnnotationInfo(map.get(target)), false);
         }
         else {
-          final PyStatement statement = PsiTreeUtil.getParentOfType(typeComment, PyStatement.class);
-          assert statement != null;
-
-          final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-          final List<Map.Entry<PyTargetExpression, String>> entries = new ArrayList<>(map.entrySet());
-          Collections.reverse(entries);
-
-          PsiElement anchor = statement;
-          for (Map.Entry<PyTargetExpression, String> entry : entries) {
-            final PyTargetExpression target = entry.getKey();
-            final String annotation = entry.getValue();
-            final PyTypeDeclarationStatement declaration = generator.createFromText(LanguageLevel.PYTHON36,
-                                                                                    PyTypeDeclarationStatement.class,
-                                                                                    target.getText() + ": " + annotation);
-            anchor = statement.getParent().addBefore(declaration, anchor);
+          for (Map.Entry<PyTargetExpression, String> entry : new ArrayList<>(map.entrySet())) {
+            PyTypeHintGenerationUtil.insertVariableAnnotation(entry.getKey(), null, new AnnotationInfo(entry.getValue()), false);
           }
         }
 
@@ -112,17 +93,6 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
   private static boolean isSuitableTypeComment(@NotNull PsiComment comment) {
     final String annotation = PyTypingTypeProvider.getTypeCommentValue(comment.getText());
     return annotation != null && mapTargetsToAnnotations(comment) != null;
-  }
-
-  public static void runWithDocumentReleasedAndCommitted(@NotNull Project project, @NotNull Document document, @NotNull Runnable runnable) {
-    final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    manager.doPostponedOperationsAndUnblockDocument(document);
-    try {
-      runnable.run();
-    }
-    finally {
-      manager.commitDocument(document);
-    }
   }
 
   @Nullable
