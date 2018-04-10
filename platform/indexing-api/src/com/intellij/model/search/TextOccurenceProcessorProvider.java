@@ -8,9 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-public interface TextOccurenceProcessorProvider extends Function<Processor<ModelReference>, TextOccurenceProcessor> {
+public interface TextOccurenceProcessorProvider extends Function<Processor<? super ModelReference>, TextOccurenceProcessor> {
 
   @NotNull
   @Override
-  TextOccurenceProcessor apply(@NotNull Processor<ModelReference> processor);
+  TextOccurenceProcessor apply(@NotNull Processor<? super ModelReference> processor);
 }

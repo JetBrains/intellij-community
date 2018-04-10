@@ -20,9 +20,9 @@ final class SingleTargetOccurenceProcessor implements TextOccurenceProcessor {
 
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final ModelElement myTarget;
-  private final Processor<ModelReference> myProcessor;
+  private final Processor<? super ModelReference> myProcessor;
 
-  SingleTargetOccurenceProcessor(@NotNull ModelElement target, @NotNull Processor<ModelReference> processor) {
+  SingleTargetOccurenceProcessor(@NotNull ModelElement target, @NotNull Processor<? super ModelReference> processor) {
     myTarget = target;
     myProcessor = processor;
   }
