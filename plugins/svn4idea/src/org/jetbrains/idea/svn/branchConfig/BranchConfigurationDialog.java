@@ -1,29 +1,28 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +31,8 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.lang.Math.min;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class BranchConfigurationDialog extends DialogWrapper {
@@ -40,9 +41,11 @@ public class BranchConfigurationDialog extends DialogWrapper {
   private final JBList<String> myBranchLocationsList;
   @NotNull private final MyListModel myBranchLocationsModel;
   private JPanel myListPanel;
-  private JLabel myErrorPrompt;
   @NotNull private final NewRootBunch mySvnBranchConfigManager;
   @NotNull private final VirtualFile myRoot;
+  @NotNull private final Url myRootUrl;
+  @NotNull private final SvnBranchConfigurationNew myConfiguration;
+  private Url myTrunkUrl;
 
   public BranchConfigurationDialog(@NotNull Project project,
                                    @NotNull SvnBranchConfigurationNew configuration,
@@ -51,8 +54,10 @@ public class BranchConfigurationDialog extends DialogWrapper {
                                    @NotNull Url url) {
     super(project, true);
     myRoot = root;
+    myRootUrl = rootUrl;
+    myConfiguration = configuration;
     init();
-    setTitle(SvnBundle.message("configure.branches.title"));
+    setTitle(message("configure.branches.title"));
 
     if (isEmptyOrSpaces(configuration.getTrunkUrl())) {
       configuration.setTrunkUrl(url.toString());
@@ -69,17 +74,35 @@ public class BranchConfigurationDialog extends DialogWrapper {
       }
     });
 
-    TrunkUrlValidator trunkUrlValidator = new TrunkUrlValidator(rootUrl, configuration);
-    myTrunkLocationTextField.getTextField().getDocument().addDocumentListener(trunkUrlValidator);
-    trunkUrlValidator.textChanged(null);
-
-    myErrorPrompt.setUI(new MultiLineLabelUI());
-    myErrorPrompt.setForeground(SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor());
-
     myBranchLocationsModel = new MyListModel(configuration);
     myBranchLocationsList = new JBList<>(myBranchLocationsModel);
 
     myListPanel.add(wrapLocationsWithToolbar(project, rootUrl), BorderLayout.CENTER);
+  }
+
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
+    try {
+      myTrunkUrl = createUrl(myTrunkLocationTextField.getText());
+    }
+    catch (SvnBindException e) {
+      return new ValidationInfo(e.getMessage(), myTrunkLocationTextField.getTextField());
+    }
+
+    if (!isAncestor(myRootUrl, myTrunkUrl) || myTrunkUrl.equals(myRootUrl)) {
+      return new ValidationInfo(message("configure.branches.error.wrong.url", myRootUrl), myTrunkLocationTextField.getTextField());
+    }
+
+    return null;
+  }
+
+  @Override
+  protected void doOKAction() {
+    if (myTrunkUrl != null) {
+      myConfiguration.setTrunkUrl(myTrunkUrl.toDecodedString());
+    }
+    super.doOKAction();
   }
 
   @NotNull
@@ -123,43 +146,6 @@ public class BranchConfigurationDialog extends DialogWrapper {
       .disableUpDownActions()
       .setToolbarPosition(ActionToolbarPosition.BOTTOM)
       .createPanel();
-  }
-
-  private class TrunkUrlValidator extends DocumentAdapter {
-    private final Url myRootUrl;
-    private final SvnBranchConfigurationNew myConfiguration;
-
-    private TrunkUrlValidator(final Url rootUrl, final SvnBranchConfigurationNew configuration) {
-      myRootUrl = rootUrl;
-      myConfiguration = configuration;
-    }
-
-    protected void textChanged(final DocumentEvent e) {
-      Url url = parseUrl(myTrunkLocationTextField.getText());
-
-      if (url != null) {
-        boolean areNotSame = isAncestor(myRootUrl, url) && !url.equals(myRootUrl);
-
-        if (areNotSame) {
-          myConfiguration.setTrunkUrl(url.toDecodedString());
-        }
-        myErrorPrompt.setText(areNotSame ? "" : SvnBundle.message("configure.branches.error.wrong.url", myRootUrl));
-      }
-    }
-
-    @Nullable
-    private Url parseUrl(@NotNull String url) {
-      Url result = null;
-
-      try {
-        result = SvnUtil.createUrl(url);
-      }
-      catch (SvnBindException e) {
-        myErrorPrompt.setText(e.getMessage());
-      }
-
-      return result;
-    }
   }
 
   @Nullable
