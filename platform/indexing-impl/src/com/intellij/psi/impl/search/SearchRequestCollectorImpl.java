@@ -3,9 +3,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.model.ModelReference;
 import com.intellij.model.search.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.util.Preprocessor;
 import com.intellij.util.Query;
@@ -84,12 +81,11 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
 
   @NotNull
   @Override
-  public SearchWordRequestor searchWord(@NotNull String word, @NotNull SearchScope searchScope) {
+  public SearchWordRequestor searchWord(@NotNull String word) {
     if (isEmptyOrSpaces(word)) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
-    return makesSenseToSearch(searchScope) ? new SearchWordRequestorImpl(this, word, searchScope)
-                                           : EmptySearchWordRequestor.INSTANCE;
+    return new SearchWordRequestorImpl(this, word);
   }
 
   void searchWord(@NotNull Collection<SearchWordRequest> requests, @NotNull TextOccurenceProcessor processor) {
@@ -101,6 +97,7 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
   }
 
   void searchWord(@NotNull Collection<SearchWordRequest> requests, @NotNull TextOccurenceProcessorProvider f) {
+    if (requests.isEmpty()) return;
     synchronized (lock) {
       for (SearchWordRequest request : requests) {
         myDeferredWordRequests.computeIfAbsent(request, r -> new SmartList<>()).add(processor -> f.apply(myPreprocessor.apply(processor)));
@@ -148,15 +145,6 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
     Map<K, V> result = new LinkedHashMap<>(map);
     map.clear();
     return result;
-  }
-
-  private static boolean makesSenseToSearch(@NotNull SearchScope searchScope) {
-    if (searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).getScope().length == 0) {
-      return false;
-    }
-    else {
-      return searchScope != GlobalSearchScope.EMPTY_SCOPE;
-    }
   }
 }
 

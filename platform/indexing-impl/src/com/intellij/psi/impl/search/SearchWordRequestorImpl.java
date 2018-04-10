@@ -7,10 +7,7 @@ import com.intellij.model.search.SearchWordRequestor;
 import com.intellij.model.search.TextOccurenceProcessorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchScopeUtil;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.psi.search.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -18,7 +15,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static com.intellij.psi.search.UsageSearchContext.*;
-import static com.intellij.util.ObjectUtils.notNull;
 
 final class SearchWordRequestorImpl implements SearchWordRequestor {
 
@@ -68,6 +64,16 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
     return this;
   }
 
+  private short getSearchContext() {
+    if (mySearchContext != null) {
+      return mySearchContext;
+    }
+    else {
+      int context = IN_CODE | IN_FOREIGN_LANGUAGES | IN_COMMENTS;
+      return (short)(context | (myTargetHint instanceof PsiFileSystemItem ? IN_STRINGS : 0));
+    }
+  }
+
   @NotNull
   @Override
   public SearchWordRequestor setSearchContext(short searchContext) {
@@ -89,7 +95,6 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
       return true;
     });
   }
-  // TODO pull up to interface ?
 
   public void searchRequests(@NotNull TextOccurenceProcessor processor) {
     myCollector.searchWord(createRequests(this), processor);
@@ -100,7 +105,6 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
     setTargetHint(target);
     search(processor -> new SingleTargetOccurenceProcessor(target, processor));
   }
-  // TODO pull up to interface ?
 
   public void search(@NotNull TextOccurenceProcessorProvider f) {
     myCollector.searchWord(createRequests(this), f);
@@ -108,10 +112,14 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
 
   @NotNull
   private static Collection<SearchWordRequest> createRequests(@NotNull SearchWordRequestorImpl requestor) {
+    SearchScope searchScope = requestor.getSearchScope();
+    if (!makesSenseToSearch(searchScope)) {
+      return Collections.emptyList();
+    }
+
     String word = requestor.myWord;
     ModelElement targetHint = requestor.myTargetHint;
-    SearchScope searchScope = requestor.getSearchScope();
-    short searchContext = notNull(requestor.mySearchContext, requestor::getDefaultSearchContext);
+    short searchContext = requestor.getSearchContext();
     boolean caseSensitive = requestor.myCaseSensitive;
 
     if (targetHint != null && searchScope instanceof GlobalSearchScope && (searchContext & IN_CODE) != 0) {
@@ -135,8 +143,12 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
     return Collections.singleton(new SearchWordRequest(word, searchScope, caseSensitive, searchContext, null));
   }
 
-  private short getDefaultSearchContext() {
-    int context = IN_CODE | IN_FOREIGN_LANGUAGES | IN_COMMENTS;
-    return (short)(context | (myTargetHint instanceof PsiFileSystemItem ? IN_STRINGS : 0));
+  private static boolean makesSenseToSearch(@NotNull SearchScope searchScope) {
+    if (searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).getScope().length == 0) {
+      return false;
+    }
+    else {
+      return searchScope != GlobalSearchScope.EMPTY_SCOPE;
+    }
   }
 }
