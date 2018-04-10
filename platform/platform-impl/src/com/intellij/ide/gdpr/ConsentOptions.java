@@ -3,6 +3,7 @@ package com.intellij.ide.gdpr;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -227,6 +228,11 @@ public final class ConsentOptions {
       catch (IOException e) {
         LOG.info(e);
       }
+      // Android Studio addition:
+      // Update the Android Studio metrics after saving consents in case the IJ Statistics consent
+      // has been updated. This will write any changed settings and reinitialize the UsageTracker
+      // & Publisher if changes were made.
+      UsageStatisticsPersistenceComponent.getInstance().updateAndroidStudioMetrics();
     }
   }
 
