@@ -80,7 +80,7 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SPIReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
-    <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
+    <searchRequestor implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <searchRequestor implementation="com.intellij.psi.impl.search.PsiToModelSearchRequestor" order="last"/>
   </extensions>
 </idea-plugin>

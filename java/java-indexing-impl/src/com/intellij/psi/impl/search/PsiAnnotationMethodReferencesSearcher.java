@@ -1,73 +1,64 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.JvmClassKind;
+import com.intellij.lang.jvm.JvmMethod;
+import com.intellij.model.ModelElement;
+import com.intellij.model.ModelReference;
+import com.intellij.model.search.ModelReferenceSearchParameters;
+import com.intellij.model.search.SearchRequestCollector;
+import com.intellij.model.search.SearchRequestor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
-import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
-import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
-public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
-  @Override
-  public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
-    final PsiElement refElement = p.getElementToSearch();
-    boolean isAnnotation = ReadAction.compute(() -> PsiUtil.isAnnotationMethod(refElement));
-    if (isAnnotation) {
-      final PsiMethod method = (PsiMethod)refElement;
-      PsiClass containingClass = ReadAction.compute(() -> {
-        boolean isValueMethod =
-          PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().isEmpty();
-        return isValueMethod ? method.getContainingClass() : null;
-      });
-      if (containingClass != null) {
-        SearchScope scope = ReadAction.compute(() -> p.getEffectiveSearchScope());
-        final Query<PsiReference> query = ReferencesSearch.search(containingClass, scope, p.isIgnoreAccessScope());
-        return query.forEach(createImplicitDefaultAnnotationMethodConsumer(consumer));
-      }
-    }
+import static com.intellij.psi.PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
 
-    return true;
+public class PsiAnnotationMethodReferencesSearcher implements SearchRequestor {
+
+  @Override
+  public void collectSearchRequests(@NotNull SearchRequestCollector collector) {
+    ModelReferenceSearchParameters parameters = collector.getParameters();
+
+    ModelElement refElement = parameters.getTarget();
+    if (!(refElement instanceof JvmMethod)) return;
+
+    JvmMethod method = (JvmMethod)refElement;
+    JvmClass clazz = ReadAction.compute(() -> method.getContainingClass());
+    if (clazz == null) return;
+
+    boolean isAnnotationClass = ReadAction.compute(() -> clazz.getClassKind()) != JvmClassKind.ANNOTATION;
+    if (isAnnotationClass) return;
+
+    boolean isValueMethod = ReadAction.compute(() -> DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && !method.hasParameters());
+    if (!isValueMethod) return;
+
+    collector.searchTarget(clazz)
+             .restrictSearchScopeTo(JavaFileType.INSTANCE)
+             .search(PsiAnnotationMethodReferencesSearcher::createImplicitDefaultAnnotationMethodConsumer);
   }
 
   @NotNull
-  static ReadActionProcessor<PsiReference> createImplicitDefaultAnnotationMethodConsumer(@NotNull Processor<PsiReference> consumer) {
-    return new ReadActionProcessor<PsiReference>() {
-      @Override
-      public boolean processInReadAction(final PsiReference reference) {
-        if (reference instanceof PsiJavaCodeReferenceElement) {
-          PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;
-          if (javaReference.getParent() instanceof PsiAnnotation) {
-            PsiNameValuePair[] members = ((PsiAnnotation)javaReference.getParent()).getParameterList().getAttributes();
-            if (members.length == 1 && members[0].getNameIdentifier() == null) {
-              PsiReference t = members[0].getReference();
-              if (t != null && !consumer.process(t)) return false;
-            }
+  static Processor<ModelReference> createImplicitDefaultAnnotationMethodConsumer(@NotNull Processor<? super PsiReference> consumer) {
+    return ReadActionProcessor.wrapInReadAction(reference -> {
+      if (reference instanceof PsiJavaCodeReferenceElement) {
+        PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;
+        if (javaReference.getParent() instanceof PsiAnnotation) {
+          PsiNameValuePair[] members = ((PsiAnnotation)javaReference.getParent()).getParameterList().getAttributes();
+          if (members.length == 1 && members[0].getNameIdentifier() == null) {
+            PsiReference t = members[0].getReference();
+            if (t != null && !consumer.process(t)) return false;
           }
         }
-        return true;
       }
-    };
+      return true;
+    });
   }
 }
