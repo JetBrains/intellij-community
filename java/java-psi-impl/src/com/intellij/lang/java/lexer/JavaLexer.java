@@ -149,6 +149,11 @@ public class JavaLexer extends LexerBase {
         myTokenEndOffset = getClosingQuote(myBufferIndex + 1, c);
         break;
 
+      case '`':
+        myTokenType = JavaTokenType.RAW_STRING_LITERAL;
+        myTokenEndOffset = getRawLiteralEnd(myBufferIndex);
+        break;
+
       default:
         flexLocateToken();
     }
@@ -241,6 +246,26 @@ public class JavaLexer extends LexerBase {
       char c = charAt(pos);
       if (c == '\r' || c == '\n') break;
       pos++;
+    }
+
+    return pos;
+  }
+
+  private int getRawLiteralEnd(int offset) {
+    int pos = offset;
+
+    while (pos < myBufferEndOffset && charAt(pos) == '`') pos++;
+    int quoteLen = pos - offset;
+
+    outer:
+    while (pos < myBufferEndOffset) {
+      while (pos < myBufferEndOffset && charAt(pos) != '`') pos++;
+
+      int left = quoteLen;
+      while (pos < myBufferEndOffset && charAt(pos) == '`') {
+        pos++;
+        if (--left == 0) break outer;
+      }
     }
 
     return pos;
