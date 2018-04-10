@@ -38,8 +38,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -50,6 +53,7 @@ import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
  */
 public class JsonSchemaMappingsView implements Disposable {
   private static final String ADD_SCHEMA_MAPPING = "settings.json.schema.add.mapping";
+  private static final String EDIT_SCHEMA_MAPPING = "settings.json.schema.edit.mapping";
   private final Runnable myTreeUpdater;
   private TableView<UserDefinedJsonSchemaConfiguration.Item> myTableView;
   private JComponent myComponent;
@@ -70,23 +74,20 @@ public class JsonSchemaMappingsView implements Disposable {
     myTableView = new TableView<>();
     myTableView.getTableHeader().setVisible(false);
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
-    decorator.setRemoveAction(new AnActionButtonRunnable() {
+    final MyEditActionButtonRunnableImpl editAction = new MyEditActionButtonRunnableImpl(project);
+    decorator.setRemoveAction(new MyRemoveActionButtonRunnable())
+             .setAddAction(new MyAddActionButtonRunnable(project))
+             .setEditAction(editAction)
+             .disableUpDownActions();
+
+    myTableView.addMouseListener(new MouseAdapter() {
       @Override
-      public void run(AnActionButton button) {
-        final int[] rows = myTableView.getSelectedRows();
-        if (rows != null && rows.length > 0) {
-          int cnt = 0;
-          for (int row : rows) {
-            myTableView.getListTableModel().removeRow(row - cnt);
-            ++cnt;
-          }
-          myTableView.getListTableModel().fireTableDataChanged();
-          myTreeUpdater.run();
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) {
+          editAction.execute();
         }
       }
-    })
-      .setAddAction(new MyAddActionButtonRunnable(project))
-      .disableUpDownActions();
+    });
 
     mySchemaField = new TextFieldWithBrowseButton();
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
@@ -180,21 +181,30 @@ public class JsonSchemaMappingsView implements Disposable {
     return myComponent;
   }
 
-  private class MyAddActionButtonRunnable implements AnActionButtonRunnable {
+  private abstract class MyAddOrEditActionButtonRunnableBase implements AnActionButtonRunnable {
     private final Project myProject;
 
-    public MyAddActionButtonRunnable(Project project) {
+    public MyAddOrEditActionButtonRunnableBase(Project project) {
       myProject = project;
     }
 
     @Override
-    public void run(AnActionButton button) {
+    public abstract void run(AnActionButton button);
+
+    protected void doRun(@Nullable UserDefinedJsonSchemaConfiguration.Item currentItem, int selectedRow) {
+      assert currentItem == null || selectedRow != -1;
       final JBPanel panel = new JBPanel(new GridBagLayout());
       final GridBag bag = new GridBag();
 
       final JBTextField patternField = new JBTextField();
       final TextFieldWithBrowseButton directoryField = new TextFieldWithBrowseButton();
+      if (currentItem != null && currentItem.directory) {
+        directoryField.setText(currentItem.path);
+      }
       final TextFieldWithBrowseButton fileField = new TextFieldWithBrowseButton();
+      if (currentItem != null && !currentItem.directory && !currentItem.pattern) {
+        fileField.setText(currentItem.path);
+      }
 
       bag.setDefaultAnchor(GridBagConstraints.NORTHWEST);
       final JBRadioButton radioPattern = new JBRadioButton("Filename pattern:");
@@ -218,17 +228,28 @@ public class JsonSchemaMappingsView implements Disposable {
       group.add(radioDirectory);
       group.add(radioFile);
 
-      radioDirectory.setSelected(true);
+      if (currentItem == null) {
+        radioDirectory.setSelected(true);
+      }
+      else {
+        if (currentItem.pattern) radioPattern.setSelected(true);
+        else if (currentItem.directory) radioDirectory.setSelected(true);
+        else radioFile.setSelected(true);
+      }
 
       patternField.setMinimumSize(new Dimension(JBUI.scale(200), UIUtil.getInformationIcon().getIconHeight()));
       patternField.getEmptyText().setText("Example: *.config.json");
+      if (currentItem != null && currentItem.pattern) {
+        patternField.setText(currentItem.path);
+      }
 
       final DialogBuilder builder = new DialogBuilder();
-      builder.setTitle("Add JSON Schema Mapping");
+      String addOrEdit = currentItem == null ? "Add" : "Edit";
+      builder.setTitle(addOrEdit + " JSON Schema Mapping");
       builder.setNorthPanel(panel);
       builder.setPreferredFocusComponent(directoryField);
       builder.setDimensionServiceKey("com.jetbrains.jsonSchema.JsonSchemaMappingsView#add");
-      builder.setHelpId(ADD_SCHEMA_MAPPING);
+      builder.setHelpId(currentItem == null ? ADD_SCHEMA_MAPPING : EDIT_SCHEMA_MAPPING);
 
       final Getter<String> textGetter = () -> {
         if (radioPattern.isSelected()) {
@@ -279,10 +300,63 @@ public class JsonSchemaMappingsView implements Disposable {
         final String pattern = textGetter.get();
         final UserDefinedJsonSchemaConfiguration.Item item =
           new UserDefinedJsonSchemaConfiguration.Item(pattern, radioPattern.isSelected(), radioDirectory.isSelected());
-        myTableView.getListTableModel().addRow(item);
+        if (currentItem != null) {
+          myTableView.getListTableModel().removeRow(selectedRow);
+          myTableView.getListTableModel().insertRow(selectedRow, item);
+          myTableView.setSelection(Collections.singleton(item));
+        }
+        else {
+          myTableView.getListTableModel().addRow(item);
+        }
         myTreeUpdater.run();
       }
       Disposer.dispose(alarm);
+    }
+  }
+
+  private class MyAddActionButtonRunnable extends MyAddOrEditActionButtonRunnableBase {
+    public MyAddActionButtonRunnable(Project project) {
+      super(project);
+    }
+
+    @Override
+    public void run(AnActionButton button) {
+      doRun(null, -1);
+    }
+  }
+
+  private class MyEditActionButtonRunnableImpl extends MyAddOrEditActionButtonRunnableBase {
+    public MyEditActionButtonRunnableImpl(Project project) {
+      super(project);
+    }
+
+    @Override
+    public void run(AnActionButton button) {
+      execute();
+    }
+
+    public void execute() {
+      int selectedRow = myTableView.getSelectedRow();
+      if (selectedRow == -1) return;
+      UserDefinedJsonSchemaConfiguration.Item item = myTableView.getListTableModel().getItem(selectedRow);
+      if (item == null) return;
+      doRun(item, selectedRow);
+    }
+  }
+
+  private class MyRemoveActionButtonRunnable implements AnActionButtonRunnable {
+    @Override
+    public void run(AnActionButton button) {
+      final int[] rows = myTableView.getSelectedRows();
+      if (rows != null && rows.length > 0) {
+        int cnt = 0;
+        for (int row : rows) {
+          myTableView.getListTableModel().removeRow(row - cnt);
+          ++cnt;
+        }
+        myTableView.getListTableModel().fireTableDataChanged();
+        myTreeUpdater.run();
+      }
     }
   }
 
