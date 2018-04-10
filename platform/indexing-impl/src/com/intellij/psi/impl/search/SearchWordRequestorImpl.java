@@ -4,7 +4,6 @@ package com.intellij.psi.impl.search;
 import com.intellij.model.ModelElement;
 import com.intellij.model.search.OccurenceSearchRequestor;
 import com.intellij.model.search.SearchWordRequestor;
-import com.intellij.model.search.TextOccurenceProcessorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.*;
