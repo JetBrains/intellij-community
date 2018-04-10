@@ -62,6 +62,16 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
     doTest();
   }
 
+  // Test strip literal block scalar chomping indicator
+  public void testLiteralStyleStrip() {
+    doTest();
+  }
+
+  // Test keep literal block scalar chomping indicator
+  public void testLiteralStyleKeep() {
+    doTest();
+  }
+
   public void testFoldedStyle1() {
     doTest();
   }
@@ -103,6 +113,16 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
 
   // Test indentation indicator in folded style block scalar header
   public void testFoldedStyleExplicitIndent() {
+    doTest();
+  }
+
+  // Test strip folded block scalar chomping indicator
+  public void testFoldedStyleStrip() {
+    doTest();
+  }
+
+  // Test keep folded block scalar chomping indicator
+  public void testFoldedStyleKeep() {
     doTest();
   }
 

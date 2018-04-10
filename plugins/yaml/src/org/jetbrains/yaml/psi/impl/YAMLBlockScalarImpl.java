@@ -35,6 +35,16 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
 
   @NotNull
   @Override
+  public String getTextValue() {
+    String value = super.getTextValue();
+    if (getChompingIndicator() != ChompingIndicator.STRIP) {
+      value += "\n";
+    }
+    return value;
+  }
+
+  @NotNull
+  @Override
   public List<TextRange> getContentRanges() {
     final ASTNode firstContentChild = getFirstContentNode();
     if (firstContentChild == null) {
@@ -80,6 +90,12 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
        result.add(TextRange.create(thisLineStart, getTextRange().getEndOffset()).shiftRight(-myStart));
     }
 
+    ChompingIndicator chomping = getChompingIndicator();
+
+    if (chomping == ChompingIndicator.KEEP) {
+      return result;
+    }
+
     final int lastNonEmpty = ContainerUtil.lastIndexOf(result, range -> range.getLength() != 0);
 
     return lastNonEmpty == -1 ? result : result.subList(0, lastNonEmpty + 1);
@@ -97,6 +113,24 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
       return YAMLUtil.getIndentInThisLine(firstLine.getPsi());
     }
     return 0;
+  }
+
+  /** See <a href="http://www.yaml.org/spec/1.2/spec.html#id2794534">8.1.1.2. Block Chomping Indicator</a>*/
+  @NotNull
+  protected final ChompingIndicator getChompingIndicator() {
+    ASTNode headerNode = getNthContentTypeChild(0);
+    assert headerNode != null;
+
+    String header = headerNode.getText();
+
+    if (header.contains("+")) {
+      return ChompingIndicator.KEEP;
+    }
+    if (header.contains("-")) {
+      return ChompingIndicator.STRIP;
+    }
+
+    return ChompingIndicator.CLIP;
   }
 
 
@@ -144,5 +178,12 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
       return false;
     }
     return YAMLElementTypes.EOL_ELEMENTS.contains(node.getElementType());
+  }
+
+  /** See <a href="http://www.yaml.org/spec/1.2/spec.html#id2794534">8.1.1.2. Block Chomping Indicator</a>*/
+  protected enum ChompingIndicator {
+    CLIP,
+    STRIP,
+    KEEP
   }
 }

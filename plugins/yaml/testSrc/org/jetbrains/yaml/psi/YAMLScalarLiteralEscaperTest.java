@@ -71,6 +71,16 @@ public class YAMLScalarLiteralEscaperTest extends LightPlatformCodeInsightFixtur
     doTest();
   }
 
+  // Test strip literal block scalar chomping indicator
+  public void testLiteralStyleStrip() {
+    doTest();
+  }
+
+  // Test keep literal block scalar chomping indicator
+  public void testLiteralStyleKeep() {
+    doTest();
+  }
+
   public void testFoldedStyle1() {
     doTest();
   }
@@ -93,6 +103,16 @@ public class YAMLScalarLiteralEscaperTest extends LightPlatformCodeInsightFixtur
 
   // Test presence of comment in folded style block scalar header
   public void testFoldedStyleCommentInHeader() {
+    doTest();
+  }
+
+  // Test strip folded block scalar chomping indicator
+  public void testFoldedStyleStrip() {
+    doTest();
+  }
+
+  // Test keep folded block scalar chomping indicator
+  public void testFoldedStyleKeep() {
     doTest();
   }
 
