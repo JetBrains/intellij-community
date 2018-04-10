@@ -631,6 +631,7 @@
 
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>
     <searchRequestor implementation="org.jetbrains.plugins.groovy.findUsages.GrAliasedImportedElementSearchRequestor"/>
+    <searchRequestor implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferenceSearchRequestor"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyTraitFieldSearcher"/>
 
