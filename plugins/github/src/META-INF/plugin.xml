@@ -31,6 +31,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
     <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

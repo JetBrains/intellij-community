@@ -1,409 +1,69 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.plugins.github.util;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.github.util
 
-import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.containers.Convertor;
-import git4idea.DialogManager;
-import git4idea.GitUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandler;
-import git4idea.config.GitExecutableManager;
-import git4idea.repo.GitRemote;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubConnection;
-import org.jetbrains.plugins.github.api.data.GithubUserDetailed;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
-import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
-import org.jetbrains.plugins.github.exceptions.GithubTwoFactorAuthenticationException;
-import org.jetbrains.plugins.github.ui.GithubLoginDialog;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.util.List;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import com.intellij.concurrency.JobScheduler
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import git4idea.repo.GitRemote
+import git4idea.repo.GitRepository
+import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import java.io.IOException
+import java.net.UnknownHostException
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 /**
  * Various utility methods for the GutHub plugin.
- *
- * @author oleg
- * @author Kirill Likhodedov
- * @author Aleksey Pivovarov
  */
-public class GithubUtil {
+object GithubUtil {
 
-  public static final Logger LOG = Logger.getInstance("github");
-  public static final String SERVICE_DISPLAY_NAME = "GitHub";
-  public static final String DEFAULT_TOKEN_NOTE = "IntelliJ Plugin";
-  public static final String GIT_AUTH_PASSWORD_SUBSTITUTE = "x-oauth-basic";
+  @JvmField
+  val LOG = Logger.getInstance("github")
+  const val SERVICE_DISPLAY_NAME = "GitHub"
+  const val DEFAULT_TOKEN_NOTE = "IntelliJ Plugin"
+  const val GIT_AUTH_PASSWORD_SUBSTITUTE = "x-oauth-basic"
 
-  // TODO: Consider sharing of GithubAuthData between actions (as member of GithubSettings)
-  public static <T> T runTask(@NotNull Project project,
-                              @NotNull GithubAuthDataHolder authHolder,
-                              @NotNull final ProgressIndicator indicator,
-                              @NotNull ThrowableConvertor<GithubConnection, T, IOException> task) throws IOException {
-    return runTask(project, authHolder, indicator, AuthLevel.LOGGED, task);
+  @JvmStatic
+  fun addCancellationListener(run: () -> Unit): ScheduledFuture<*> {
+    return JobScheduler.getScheduler().scheduleWithFixedDelay(run, 1000, 300, TimeUnit.MILLISECONDS)
   }
 
-  public static <T> T runTask(@NotNull Project project,
-                              @NotNull GithubAuthDataHolder authHolder,
-                              @NotNull final ProgressIndicator indicator,
-                              @NotNull AuthLevel authLevel,
-                              @NotNull ThrowableConvertor<GithubConnection, T, IOException> task) throws IOException {
-    GithubAuthData auth = authHolder.getAuthData();
+  private fun addCancellationListener(indicator: ProgressIndicator, thread: Thread): ScheduledFuture<*> {
+    return addCancellationListener({ if (indicator.isCanceled) thread.interrupt() })
+  }
+
+  @Throws(IOException::class)
+  @JvmStatic
+  fun <T> runInterruptable(indicator: ProgressIndicator,
+                           task: ThrowableComputable<T, IOException>): T {
+    var future: ScheduledFuture<*>? = null
     try {
-      if (!authLevel.accepts(auth)) {
-        throw new GithubAuthenticationException("Expected other authentication type: " + authLevel);
-      }
+      val thread = Thread.currentThread()
+      future = addCancellationListener(indicator, thread)
 
-      final GithubConnection connection = new GithubConnection(auth, true);
-      ScheduledFuture<?> future = null;
-
-      try {
-        future = addCancellationListener(indicator, connection);
-        return task.convert(connection);
-      }
-      finally {
-        connection.close();
-        if (future != null) future.cancel(true);
-      }
-    }
-    catch (GithubTwoFactorAuthenticationException e) {
-      getTwoFactorAuthData(project, authHolder, indicator, auth);
-      return runTask(project, authHolder, indicator, authLevel, task);
-    }
-    catch (GithubAuthenticationException e) {
-      getValidAuthData(project, authHolder, indicator, authLevel, auth);
-      return runTask(project, authHolder, indicator, authLevel, task);
-    }
-  }
-
-  @NotNull
-  private static GithubUserDetailed testConnection(@NotNull Project project,
-                                                   @NotNull GithubAuthDataHolder authHolder,
-                                                   @NotNull final ProgressIndicator indicator) throws IOException {
-    GithubAuthData auth = authHolder.getAuthData();
-    try {
-      final GithubConnection connection = new GithubConnection(auth, true);
-      ScheduledFuture<?> future = null;
-
-      try {
-        future = addCancellationListener(indicator, connection);
-        return GithubApiUtil.getCurrentUser(connection);
-      }
-      finally {
-        connection.close();
-        if (future != null) future.cancel(true);
-      }
-    }
-    catch (GithubTwoFactorAuthenticationException e) {
-      getTwoFactorAuthData(project, authHolder, indicator, auth);
-      return testConnection(project, authHolder, indicator);
-    }
-  }
-
-  @NotNull
-  public static ScheduledFuture<?> addCancellationListener(@NotNull Runnable run) {
-    return JobScheduler.getScheduler().scheduleWithFixedDelay(run, 1000, 300, TimeUnit.MILLISECONDS);
-  }
-
-  @NotNull
-  private static ScheduledFuture<?> addCancellationListener(@NotNull final ProgressIndicator indicator,
-                                                            @NotNull final GithubConnection connection) {
-    return addCancellationListener(() -> {
-      if (indicator.isCanceled()) connection.abort();
-    });
-  }
-
-  @NotNull
-  private static ScheduledFuture<?> addCancellationListener(@NotNull final ProgressIndicator indicator,
-                                                            @NotNull final Thread thread) {
-    return addCancellationListener(() -> {
-      if (indicator.isCanceled()) thread.interrupt();
-    });
-  }
-
-  private static void getValidAuthData(@NotNull final Project project,
-                                       @NotNull final GithubAuthDataHolder authHolder,
-                                       @NotNull final ProgressIndicator indicator,
-                                       @NotNull final AuthLevel authLevel,
-                                       @NotNull final GithubAuthData oldAuth) throws GithubOperationCanceledException {
-    authHolder.runTransaction(oldAuth, () -> {
-      final GithubAuthData[] authData = new GithubAuthData[1];
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        GithubLoginDialog dialog = new GithubLoginDialog(project, oldAuth, authLevel);
-        DialogManager.show(dialog);
-        if (dialog.isOK()) {
-          authData[0] = dialog.getAuthData();
-
-          if (!authLevel.isOnetime()) {
-            GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
-          }
-        }
-      }, indicator.getModalityState());
-
-      if (authData[0] == null) throw new GithubOperationCanceledException("Can't get valid credentials");
-      return authData[0];
-    });
-  }
-
-  private static void getTwoFactorAuthData(@NotNull final Project project,
-                                           @NotNull final GithubAuthDataHolder authHolder,
-                                           @NotNull final ProgressIndicator indicator,
-                                           @NotNull final GithubAuthData oldAuth) throws GithubOperationCanceledException {
-    authHolder.runTransaction(oldAuth, () -> {
-      if (authHolder.getAuthData().getAuthType() != GithubAuthData.AuthType.BASIC) {
-        throw new GithubOperationCanceledException("Two factor authentication can be used only with Login/Password");
-      }
-
-      GithubApiUtil.askForTwoFactorCodeSMS(new GithubConnection(oldAuth, false));
-
-      final Ref<String> codeRef = new Ref<>();
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        codeRef.set(Messages.showInputDialog(project, "Authentication Code", "Github Two-Factor Authentication", null));
-      }, indicator.getModalityState());
-      if (codeRef.isNull()) {
-        throw new GithubOperationCanceledException("Can't get two factor authentication code");
-      }
-
-      GithubSettings settings = GithubSettings.getInstance();
-      if (settings.getAuthType() == GithubAuthData.AuthType.BASIC &&
-          StringUtil.equalsIgnoreCase(settings.getLogin(), oldAuth.getBasicAuth().getLogin())) {
-        settings.setValidGitAuth(false);
-      }
-
-      return oldAuth.copyWithTwoFactorCode(codeRef.get());
-    });
-  }
-
-  @NotNull
-  public static GithubAuthDataHolder getValidAuthDataHolderFromConfig(@NotNull Project project,
-                                                                      @NotNull AuthLevel authLevel,
-                                                                      @NotNull ProgressIndicator indicator)
-    throws IOException {
-    GithubAuthData auth = GithubAuthData.createFromSettings();
-    GithubAuthDataHolder authHolder = new GithubAuthDataHolder(auth);
-    try {
-      if (!authLevel.accepts(auth)) throw new GithubAuthenticationException("Expected other authentication type: " + authLevel);
-      checkAuthData(project, authHolder, indicator);
-      return authHolder;
-    }
-    catch (GithubAuthenticationException e) {
-      getValidAuthData(project, authHolder, indicator, authLevel, auth);
-      return authHolder;
-    }
-  }
-
-  @NotNull
-  public static GithubUserDetailed checkAuthData(@NotNull Project project,
-                                                 @NotNull GithubAuthDataHolder authHolder,
-                                                 @NotNull ProgressIndicator indicator) throws IOException {
-    GithubAuthData auth = authHolder.getAuthData();
-
-    if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
-      throw new GithubAuthenticationException("Target host not defined");
-    }
-
-    try {
-      new URI(auth.getHost());
-    }
-    catch (URISyntaxException e) {
-      throw new GithubAuthenticationException("Invalid host URL");
-    }
-
-    switch (auth.getAuthType()) {
-      case BASIC:
-        GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
-        assert basicAuth != null;
-        if (StringUtil.isEmptyOrSpaces(basicAuth.getLogin()) || StringUtil.isEmptyOrSpaces(basicAuth.getPassword())) {
-          throw new GithubAuthenticationException("Empty login or password");
-        }
-        break;
-      case TOKEN:
-        GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
-        assert tokenAuth != null;
-        if (StringUtil.isEmptyOrSpaces(tokenAuth.getToken())) {
-          throw new GithubAuthenticationException("Empty token");
-        }
-        break;
-      case ANONYMOUS:
-        throw new GithubAuthenticationException("Anonymous connection not allowed");
-    }
-
-    return testConnection(project, authHolder, indicator);
-  }
-
-  public static <T> T computeValueInModalIO(@NotNull Project project,
-                                            @NotNull String caption,
-                                            @NotNull final ThrowableConvertor<ProgressIndicator, T, IOException> task) throws IOException {
-    return ProgressManager.getInstance().run(new Task.WithResult<T, IOException>(project, caption, true) {
-      @Override
-      protected T compute(@NotNull ProgressIndicator indicator) throws IOException {
-        return task.convert(indicator);
-      }
-    });
-  }
-
-  public static <T> T runInterruptable(@NotNull final ProgressIndicator indicator,
-                                       @NotNull ThrowableComputable<T, IOException> task) throws IOException {
-    ScheduledFuture<?> future = null;
-    try {
-      final Thread thread = Thread.currentThread();
-      future = addCancellationListener(indicator, thread);
-
-      return task.compute();
+      return task.compute()
     }
     finally {
-      if (future != null) future.cancel(true);
-      Thread.interrupted();
+      if (future != null) future.cancel(true)
+      Thread.interrupted()
     }
   }
 
-  /*
-  * Git utils
-  */
-
-  @Nullable
-  public static String findGithubRemoteUrl(@NotNull GitRepository repository) {
-    Pair<GitRemote, String> remote = findGithubRemote(repository);
-    if (remote == null) {
-      return null;
+  @JvmStatic
+  fun getErrorTextFromException(e: Throwable): String {
+    return if (e is UnknownHostException) {
+      "Unknown host: " + e.message
     }
-    return remote.getSecond();
-  }
-
-  @Nullable
-  public static Pair<GitRemote, String> findGithubRemote(@NotNull GitRepository repository) {
-    Pair<GitRemote, String> githubRemote = null;
-    for (GitRemote gitRemote : repository.getRemotes()) {
-      for (String remoteUrl : gitRemote.getUrls()) {
-        if (GithubUrlUtil.isGithubUrl(remoteUrl)) {
-          final String remoteName = gitRemote.getName();
-          if ("github".equals(remoteName) || "origin".equals(remoteName)) {
-            return Pair.create(gitRemote, remoteUrl);
-          }
-          if (githubRemote == null) {
-            githubRemote = Pair.create(gitRemote, remoteUrl);
-          }
-          break;
-        }
-      }
-    }
-    return githubRemote;
-  }
-
-  @Nullable
-  public static String findUpstreamRemote(@NotNull GitRepository repository) {
-    for (GitRemote gitRemote : repository.getRemotes()) {
-      final String remoteName = gitRemote.getName();
-      if ("upstream".equals(remoteName)) {
-        for (String remoteUrl : gitRemote.getUrls()) {
-          if (GithubUrlUtil.isGithubUrl(remoteUrl)) {
-            return remoteUrl;
-          }
-        }
-        return gitRemote.getFirstUrl();
-      }
-    }
-    return null;
-  }
-
-  public static boolean testGitExecutable(final Project project) {
-    return GitExecutableManager.getInstance().testGitExecutableVersionValid(project);
-  }
-
-  public static boolean isRepositoryOnGitHub(@NotNull GitRepository repository) {
-    return findGithubRemoteUrl(repository) != null;
-  }
-
-  @NotNull
-  public static String getErrorTextFromException(@NotNull Throwable e) {
-    if (e instanceof UnknownHostException) {
-      return "Unknown host: " + e.getMessage();
-    }
-    return StringUtil.notNullize(e.getMessage(), "Unknown error");
-  }
-
-  @Nullable
-  public static GitRepository getGitRepository(@NotNull Project project, @Nullable VirtualFile file) {
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    List<GitRepository> repositories = manager.getRepositories();
-    if (repositories.size() == 0) {
-      return null;
-    }
-    if (repositories.size() == 1) {
-      return repositories.get(0);
-    }
-    if (file != null) {
-      GitRepository repository = manager.getRepositoryForFileQuick(file);
-      if (repository != null) {
-        return repository;
-      }
-    }
-    return manager.getRepositoryForFileQuick(project.getBaseDir());
-  }
-
-  public static boolean addGithubRemote(@NotNull Project project,
-                                        @NotNull GitRepository repository,
-                                        @NotNull String remote,
-                                        @NotNull String url) {
-    final GitLineHandler handler = new GitLineHandler(project, repository.getRoot(), GitCommand.REMOTE);
-    handler.setSilent(true);
-
-    try {
-      handler.addParameters("add", remote, url);
-      GitCommandResult result = Git.getInstance().runCommand(handler);
-      result.getOutputOrThrow();
-      if (result.getExitCode() != 0) {
-        GithubNotifications.showError(project, "Can't add remote", "Failed to add GitHub remote: '" + url + "'. " + result.getErrorOutputAsJoinedString());
-        return false;
-      }
-      // catch newly added remote
-      repository.update();
-      return true;
-    }
-    catch (VcsException e) {
-      GithubNotifications.showError(project, "Can't add remote", e);
-      return false;
-    }
+    else StringUtil.notNullize(e.message, "Unknown error")
   }
 
   /**
@@ -414,27 +74,119 @@ public class GithubUtil {
    * @param commitMessage full commit message
    * @return couple of subject and description based on full commit message
    */
-  public static Couple<String> getGithubLikeFormattedDescriptionMessage(String commitMessage) {
+  @JvmStatic
+  fun getGithubLikeFormattedDescriptionMessage(commitMessage: String?): Couple<String> {
     //Trim original
-    String message = commitMessage == null ? "" : commitMessage.trim();
+    val message = commitMessage?.trim { it <= ' ' } ?: ""
     if (message.isEmpty()) {
-      return Couple.of("", "");
+      return Couple.of("", "")
     }
-    int firstLineEnd = message.indexOf("\n");
-    String subject;
-    String description;
+    val firstLineEnd = message.indexOf("\n")
+    val subject: String
+    val description: String
     if (firstLineEnd > -1) {
       //Subject is always first line
-      subject = message.substring(0, firstLineEnd).trim();
+      subject = message.substring(0, firstLineEnd).trim { it <= ' ' }
       //Description is all text after first line, we also trim it to remove empty lines on start of description
-      description = message.substring(firstLineEnd + 1).trim();
-    } else {
+      description = message.substring(firstLineEnd + 1).trim { it <= ' ' }
+    }
+    else {
       //If we don't have any line separators and cannot detect description,
       //we just assume that it is one-line commit and use full message as subject with empty description
-      subject = message;
-      description = "";
+      subject = message
+      description = ""
     }
 
-    return Couple.of(subject, description);
+    return Couple.of(subject, description)
   }
+
+  //region Deprecated
+  @JvmStatic
+  @Deprecated("{@link GithubAuthenticationManager}")
+  @Throws(IOException::class)
+  fun getValidAuthDataHolderFromConfig(project: Project,
+                                       authLevel: AuthLevel,
+                                       indicator: ProgressIndicator): GithubAuthDataHolder {
+    val authManager = GithubAuthenticationManager.getInstance()
+    var account = authManager.getSingleOrDefaultAccount(project)
+    if (account == null) {
+      account = invokeAndWaitIfNeed(ModalityState.any()) { authManager.requestNewAccount(project) }
+    }
+    if (account == null) throw ProcessCanceledException()
+
+    return if (authLevel.authType == GithubAuthData.AuthType.ANONYMOUS) {
+      GithubAuthDataHolder(GithubAuthData.createAnonymous(account.server.toString()))
+    }
+    else {
+      GithubAuthDataHolder(GithubAuthData.createTokenAuth(account.server.toString(),
+                                                          authManager.getTokenForAccount(account),
+                                                          true))
+    }
+  }
+
+  @JvmStatic
+  @Deprecated("{@link GithubGitHelper}", ReplaceWith("GithubGitHelper.findGitRepository(project, file)",
+                                                     "org.jetbrains.plugins.github.util.GithubGitHelper"))
+  fun getGitRepository(project: Project, file: VirtualFile?): GitRepository? {
+    return GithubGitHelper.findGitRepository(project, file)
+  }
+
+  @Suppress("MemberVisibilityCanBePrivate")
+  @JvmStatic
+  @Deprecated("{@link GithubGitHelper}")
+  fun findGithubRemoteUrl(repository: GitRepository): String? {
+    val remote = findGithubRemote(repository) ?: return null
+    return remote.getSecond()
+  }
+
+  @Suppress("MemberVisibilityCanBePrivate")
+  @JvmStatic
+  @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}, {@link GithubGitHelper}")
+  fun findGithubRemote(repository: GitRepository): Pair<GitRemote, String>? {
+    val server = GithubAuthenticationManager.getInstance().getSingleOrDefaultAccount(repository.project)?.server ?: return null
+
+    var githubRemote: Pair<GitRemote, String>? = null
+    for (gitRemote in repository.remotes) {
+      for (remoteUrl in gitRemote.urls) {
+        if (server.matches(remoteUrl)) {
+          val remoteName = gitRemote.name
+          if ("github" == remoteName || "origin" == remoteName) {
+            return Pair.create(gitRemote, remoteUrl)
+          }
+          if (githubRemote == null) {
+            githubRemote = Pair.create(gitRemote, remoteUrl)
+          }
+          break
+        }
+      }
+    }
+    return githubRemote
+  }
+
+  @JvmStatic
+  @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}, {@link GithubGitHelper}")
+  fun findUpstreamRemote(repository: GitRepository): String? {
+    val server = GithubAuthenticationManager.getInstance().getSingleOrDefaultAccount(repository.project)?.server ?: return null
+
+    for (gitRemote in repository.remotes) {
+      val remoteName = gitRemote.name
+      if ("upstream" == remoteName) {
+        for (remoteUrl in gitRemote.urls) {
+          if (server.matches(remoteUrl)) {
+            return remoteUrl
+          }
+        }
+        return gitRemote.firstUrl
+      }
+    }
+    return null
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @JvmStatic
+  @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}")
+  fun isRepositoryOnGitHub(repository: GitRepository): Boolean {
+    return findGithubRemoteUrl(repository) != null
+  }
+  //endregion
 }

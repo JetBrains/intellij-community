@@ -34,7 +34,6 @@ import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
-import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubGitHelper;
 import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUtil;
@@ -49,19 +48,17 @@ import static org.junit.Assume.assumeTrue;
  * <li>This is a "platform test case", which means that IDEA [almost] production platform is set up before the test starts.</li>
  * <li>Project base directory is the root of everything. </li>
  * </ul></p>
- * <p>All tests inherited from this class are required to have a login and a password to access the Github server.
+ * <p>All tests inherited from this class are required to have a token to access the Github server.
  * They are set up in Environment variables: <br/>
- * <code>idea.test.github.host=myHost<br/>
- * idea.test.github.login1=mylogin1<br/> // test user
- * idea.test.github.login2=mylogin2<br/> // user with configured test repositories
- * idea.test.github.password=mypassword</code> // password for test user
+ * <code>idea.test.github.host<br/>
+ * idea.test.github.token1<br/> // token test user
+ * idea.test.github.token2</code> // token user with configured test repositories
  * </p>
  */
 public abstract class GithubTest extends GitPlatformTest {
 
   @Nullable protected GitRepository myRepository;
 
-  @NotNull protected GithubSettings myGitHubSettings;
   @NotNull private GitHttpAuthTestService myHttpAuthService;
   @NotNull protected GithubAuthenticationManager myAuthenticationManager;
   @NotNull protected GithubApiTaskExecutor myApiTaskExecutor;
@@ -73,15 +70,6 @@ public abstract class GithubTest extends GitPlatformTest {
   @NotNull protected String myUsername2;
 
   @Nullable private String myToken;
-
-  @Deprecated
-  @NotNull protected GithubAuthData myAuth;
-  @Deprecated
-  @NotNull protected String myLogin1;
-  @Deprecated
-  @NotNull protected String myLogin2;
-  @Deprecated
-  @NotNull protected String myPassword;
 
   protected void createProjectFiles() {
     VfsTestUtil.createFile(projectRoot, "file.txt", "file.txt content");
@@ -117,13 +105,13 @@ public abstract class GithubTest extends GitPlatformTest {
       @NotNull
       @Override
       public String askPassword(@NotNull String url) {
-        return myAccount == null ? myPassword : GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE;
+        return GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE;
       }
 
       @NotNull
       @Override
       public String askUsername(@NotNull String url) {
-        return myAccount == null ? myLogin1 : myToken;
+        return myToken;
       }
 
       @Override
@@ -179,19 +167,12 @@ public abstract class GithubTest extends GitPlatformTest {
     super.setUp();
 
     final String host = System.getenv("idea.test.github.host");
-    final String login1 = System.getenv("idea.test.github.login1");
-    final String login2 = System.getenv("idea.test.github.login2");
-    final String password = System.getenv("idea.test.github.password1");
     final String token1 = System.getenv("idea.test.github.token1");
     final String token2 = System.getenv("idea.test.github.token2");
 
     // TODO change to assert when a stable Github testing server is ready
     assumeNotNull(host);
-    assumeTrue((login1 != null && password != null) || (token1 != null && token2 != null));
-    myLogin1 = login1;
-    myLogin2 = login2;
-    myPassword = password;
-    myAuth = GithubAuthData.createBasicAuth(host, login1, password);
+    assumeTrue(token1 != null && token2 != null);
     myAuthenticationManager = GithubAuthenticationManager.getInstance();
     myApiTaskExecutor = GithubApiTaskExecutor.getInstance();
     myAccount = myAuthenticationManager.registerAccount("account1", host, token1);
@@ -200,9 +181,6 @@ public abstract class GithubTest extends GitPlatformTest {
 
     myUsername = myApiTaskExecutor.execute(myAccount, c -> GithubApiUtil.getCurrentUser(c).getLogin());
     myUsername2 = myApiTaskExecutor.execute(myAccount2, c -> GithubApiUtil.getCurrentUser(c).getLogin());
-
-    myGitHubSettings = GithubSettings.getInstance();
-    myGitHubSettings.setAuthData(myAuth, true);
 
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
 
