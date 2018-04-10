@@ -33,6 +33,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,7 @@ import java.util.List;
  * @author Plushnikov Michail
  */
 public abstract class AbstractConstructorClassProcessor extends AbstractClassProcessor {
+  private static final String BUILDER_DEFAULT_ANNOTATION = Builder.Default.class.getName().replace("$", ".");
 
   AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
     super(supportedClass, supportedAnnotationClass);
@@ -183,7 +185,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
         boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
         // skip initialized final fields
-        addField &= (!isFinal || null == psiField.getInitializer());
+        addField &= (!isFinal || null == psiField.getInitializer() ||
+          PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION) != null);
       }
 
       if (addField) {
