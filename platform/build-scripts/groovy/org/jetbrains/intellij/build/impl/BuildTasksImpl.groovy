@@ -361,9 +361,9 @@ idea.fatal.error.notification=disabled
   }
 
   private void logFreeDiskSpace(String phase) {
-    def dir = new File(buildContext.paths.buildOutputRoot)
-    buildContext.messages.debug("Free disk space $phase: ${StringUtil.formatFileSize(dir.freeSpace)} (on disk containing $dir)")
+    CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
   }
+
 
   private def copyDependenciesFile() {
     if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
