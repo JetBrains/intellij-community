@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
+import com.intellij.model.ModelElement;
 import com.intellij.model.ModelReference;
 import com.intellij.util.Preprocessor;
 import com.intellij.util.Query;
@@ -14,6 +15,9 @@ public interface SearchRequestCollector {
   void searchSubQuery(@NotNull Query<? extends ModelReference> subQuery);
 
   <T> void searchSubQuery(@NotNull Query<T> subQuery, @NotNull Preprocessor<T, ModelReference> preprocessor);
+
+  @NotNull
+  SearchTargetRequestor searchTarget(@NotNull ModelElement target);
 
   @NotNull
   SearchWordRequestor searchWord(@NotNull String word);

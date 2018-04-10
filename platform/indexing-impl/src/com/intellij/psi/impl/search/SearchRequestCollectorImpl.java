@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
+import com.intellij.model.ModelElement;
 import com.intellij.model.ModelReference;
 import com.intellij.model.search.*;
 import com.intellij.psi.search.TextOccurenceProcessor;
@@ -70,6 +71,12 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
         myQueryRequests.add(new SearchQueryRequest<>(subQuery, Preprocessor.compose(preprocessor, myPreprocessor)));
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public SearchTargetRequestor searchTarget(@NotNull ModelElement target) {
+    return new SearchTargetRequestorImpl(this, target);
   }
 
   void searchParams(@NotNull ModelReferenceSearchParameters parameters,
