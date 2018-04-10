@@ -4,7 +4,7 @@ package com.intellij.util;
 import com.intellij.concurrency.AsyncFuture;
 import org.jetbrains.annotations.NotNull;
 
-public final class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
+public class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
 
   private final Query<B> myBaseQuery;
   private final Preprocessor<B, R> myPreprocessor;

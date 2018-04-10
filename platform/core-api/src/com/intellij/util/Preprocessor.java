@@ -4,6 +4,7 @@ package com.intellij.util;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * {@code Processor<Result> -> Processor<Base>}
@@ -35,5 +36,10 @@ public interface Preprocessor<Base, Result> extends Function<Processor<? super R
   static <V, Base, Result> Preprocessor<Base, V> compose(@NotNull Preprocessor<? super Base, ? extends Result> after,
                                                          @NotNull Preprocessor<? super Result, ? extends V> before) {
     return v -> after.apply(before.apply(v));
+  }
+
+  @NotNull
+  static <V> Preprocessor<V, V> filtering(@NotNull Predicate<? super V> predicate) {
+    return processor -> v -> !predicate.test(v) || processor.process(v);
   }
 }
