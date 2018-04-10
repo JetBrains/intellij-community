@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +28,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -240,7 +240,7 @@ public class FileTemplateUtil {
     final String result = stringWriter.toString();
 
     if (useSystemLineSeparators) {
-      final String newSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
+      final String newSeparator = CodeStyle.getDefaultSettings().getLineSeparator();
       if (!"\n".equals(newSeparator)) {
         return StringUtil.convertLineSeparators(result, newSeparator);
       }
@@ -363,7 +363,7 @@ public class FileTemplateUtil {
   }
 
   public static String indent(String methodText, Project project, FileType fileType) {
-    int indent = CodeStyleSettingsManager.getSettings(project).getIndentSize(fileType);
+    int indent = CodeStyle.getSettings(project).getIndentSize(fileType);
     return methodText.replaceAll("\n", "\n" + StringUtil.repeatSymbol(' ', indent));
   }
 
