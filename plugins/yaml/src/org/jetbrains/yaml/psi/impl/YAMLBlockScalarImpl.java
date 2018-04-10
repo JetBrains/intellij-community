@@ -37,7 +37,7 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
   @Override
   public String getTextValue() {
     String value = super.getTextValue();
-    if (getChompingIndicator() != ChompingIndicator.STRIP) {
+    if (!value.isEmpty() && getChompingIndicator() != ChompingIndicator.STRIP) {
       value += "\n";
     }
     return value;
@@ -98,7 +98,7 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
 
     final int lastNonEmpty = ContainerUtil.lastIndexOf(result, range -> range.getLength() != 0);
 
-    return lastNonEmpty == -1 ? result : result.subList(0, lastNonEmpty + 1);
+    return lastNonEmpty == -1 ? Collections.emptyList() : result.subList(0, lastNonEmpty + 1);
   }
 
   /** See <a href="http://www.yaml.org/spec/1.2/spec.html#id2793979">8.1.1.1. Block Indentation Indicator</a>*/

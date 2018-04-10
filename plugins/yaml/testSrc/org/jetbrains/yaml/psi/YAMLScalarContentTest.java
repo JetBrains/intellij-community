@@ -72,6 +72,11 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
     doTest();
   }
 
+  // Test empty literal style scalar
+  public void testLiteralStyleEmpty() {
+    doTest();
+  }
+
   public void testFoldedStyle1() {
     doTest();
   }
@@ -123,6 +128,11 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
 
   // Test keep folded block scalar chomping indicator
   public void testFoldedStyleKeep() {
+    doTest();
+  }
+
+  // Test empty folded style scalar
+  public void testFoldedStyleEmpty() {
     doTest();
   }
 
