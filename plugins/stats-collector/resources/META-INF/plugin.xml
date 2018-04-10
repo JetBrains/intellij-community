@@ -78,6 +78,7 @@
     <applicationService serviceImplementation="com.intellij.stats.ngram.NGramEnumeratingService"/>
 
     <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
+    <postStartupActivity implementation="com.intellij.plugin.NGramIndexingPermissionActivity"/>
 
     <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>
@@ -93,6 +94,7 @@
 
   <actions>
     <action class="com.intellij.plugin.ToggleManualMlSorting" id="ToggleManualMlSorting" internal="true"/>
+    <action class="com.intellij.plugin.ToggleNGramIndexing" id="ToggleNGramIndexing"/>
   </actions>
 
   <application-components>

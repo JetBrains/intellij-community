@@ -2,6 +2,7 @@ package com.intellij.ngram
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.plugin.NGramIndexingProperty
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.stats.ngram.NGramFileBasedIndex
 import com.intellij.util.indexing.FileBasedIndex
@@ -10,6 +11,7 @@ import junit.framework.TestCase
 class IndexCorrectnessTest : LightFixtureCompletionTestCase() {
     override fun setUp() {
         super.setUp()
+        NGramIndexingProperty.setEnabled(project, true)
         myFixture.configureByText(JavaFileType.INSTANCE, """
             public class Foo {
                void foo() {
@@ -26,6 +28,14 @@ class IndexCorrectnessTest : LightFixtureCompletionTestCase() {
             """)
     }
 
+    override fun tearDown() {
+        try {
+            NGramIndexingProperty.reset(project)
+        } finally {
+            super.tearDown()
+        }
+    }
+
     fun testIndexContent() {
         val allKeys = FileBasedIndex.getInstance().getAllKeys(NGramFileBasedIndex.KEY, project!!)
         var counter = 0
@@ -35,6 +45,6 @@ class IndexCorrectnessTest : LightFixtureCompletionTestCase() {
                 counter += numberOfOccurrences
             }
         }
-        TestCase.assertEquals(counter, 5)
+        TestCase.assertEquals(5, counter)
     }
 }

@@ -14,6 +14,7 @@
   "com.intellij.psi.css.impl.util.completion.CssValuesCompletionWeigher",
   "prox_goPackageProximity",
 
+  "naiveNGramWeigher",
   "before_rerank_order",
   "ml_rank",
   "invokationCount"

@@ -2,6 +2,7 @@
   "javaRelevance": [
     "before_rerank_order",
     "ml_rank",
+    "naiveNGramWeigher",
 
     "position",
     "query_length",
