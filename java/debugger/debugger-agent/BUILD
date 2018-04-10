@@ -8,13 +8,20 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/java/debugger/debugger-agent-storage:intellij.java.debugger.agent.storage[module]",
+        "//tools/idea/java/debugger/debugger-agent:lib/asm-capture",
     ],
 )
 
 filegroup(
     name = "artifact_files",
     srcs = ["META-INF/MANIFEST.MF"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "lib/asm-capture",
+    jars = ["lib/asm-capture.jar"],
+    tags = ["managed"],
     visibility = ["//visibility:public"],
 )

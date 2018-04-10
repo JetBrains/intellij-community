@@ -8,6 +8,7 @@ iml_module(
     test_srcs = ["test"],
     test_tags = ["manual"],  # b/77882590
     visibility = ["//visibility:public"],
+    runtime_deps = ["//tools/idea/platform/util:intellij.platform.util"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:JUnit4[test]",
