@@ -82,7 +82,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String DEQUE = "typing.Deque";
   private static final String TUPLE = "typing.Tuple";
   private static final String CLASS_VAR = "typing.ClassVar";
-  private static final String TYPE_VAR = "typing.TypeVar";
+  public static final String TYPE_VAR = "typing.TypeVar";
   private static final String CHAIN_MAP = "typing.ChainMap";
   private static final String UNION = "typing.Union";
   private static final String OPTIONAL = "typing.Optional";
