@@ -373,7 +373,7 @@ public final class IconLoader {
 
   /**
    * Gets a snapshot of the icon, immune to changes made by these calls:
-   * {@link IconLoader#setFilter(ImageFilter)}, {@link IconLoader#setUseDarkIcons(boolean)}
+   * {@link #setFilter(ImageFilter)}, {@link #setUseDarkIcons(boolean)}
    *
    * @param icon the source icon
    * @return the icon snapshot
@@ -411,7 +411,7 @@ public final class IconLoader {
     private volatile boolean dark;
     private volatile int numberOfPatchers = ourPatchers.size();
     private final boolean svg;
-    private boolean useCacheOnLoad = true;
+    private final boolean useCacheOnLoad;
 
     private ImageFilter[] myFilters;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
@@ -450,11 +450,10 @@ public final class IconLoader {
       this.useCacheOnLoad = useCacheOnLoad;
     }
 
-    private void setGlobalFilter(@NotNull ImageFilter globalFilter) {
+    private void setGlobalFilter(ImageFilter globalFilter) {
       myFilters[0] = globalFilter;
     }
 
-    @NotNull
     private ImageFilter getGlobalFilter() {
       return myFilters[0];
     }
