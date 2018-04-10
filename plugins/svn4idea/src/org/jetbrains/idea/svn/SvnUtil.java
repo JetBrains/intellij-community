@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
@@ -613,7 +613,7 @@ public class SvnUtil {
   @NotNull
   public static Url removePathTail(@NotNull Url url) throws SvnBindException {
     // TODO: Fix - remove tail only from path
-    return createUrl(Url.removeTail(url.toDecodedString()));
+    return createUrl(Url.removeTail(url.toDecodedString()), false);
   }
 
   @NotNull
