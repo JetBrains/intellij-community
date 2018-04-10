@@ -198,8 +198,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   @NotNull
   public List<List<String>> getRecentlyFilteredBranchGroups() {
-    List<List<String>> groups = getRecentGroup(getState().RECENTLY_FILTERED_BRANCH_GROUPS);
-    return ContainerUtil.filter(groups, group -> group.size() > 1);
+    return getRecentGroup(getState().RECENTLY_FILTERED_BRANCH_GROUPS);
   }
 
   @NotNull
