@@ -1447,7 +1447,7 @@ public class JBUI {
       }
 
       public static Color disabledForeground() {
-        return foreground(false);
+        return disabledForeground(false);
       }
     }
   }
