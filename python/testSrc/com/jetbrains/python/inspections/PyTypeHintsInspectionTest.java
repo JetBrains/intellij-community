@@ -36,6 +36,64 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "<warning descr=\"Type variables must not be redefined\">T0</warning> = TypeVar('T0')");
   }
 
+  // PY-28124
+  public void testTypeVarBivariant() {
+    doTestByText("from typing import TypeVar\n" +
+                 "\n" +
+                 "T1 = <error descr=\"Bivariant type variables are not supported\">TypeVar('T1', contravariant=True, covariant=True)</error>\n" +
+                 "true = True\n" +
+                 "T2 = <error descr=\"Bivariant type variables are not supported\">TypeVar('T2', contravariant=true, covariant=true)</error>");
+  }
+
+  // PY-28124
+  public void testTypeVarConstraintsAndBound() {
+    doTestByText("from typing import TypeVar\n" +
+                 "\n" +
+                 "T2 = <error descr=\"Constraints cannot be combined with bound=...\">TypeVar('T2', int, str, bound=str)</error>");
+  }
+
+  // PY-28124
+  public void testTypeVarConstraintsNumber() {
+    doTestByText("from typing import TypeVar\n" +
+                 "\n" +
+                 "T1 = <error descr=\"A single constraint is not allowed\">TypeVar('T1', int)</error>\n" +
+                 "T2 = TypeVar('T2', int, str)");
+  }
+
+  // PY-28124
+  public void testTypeVarNameAsLiteral() {
+    doTestByText("from typing import TypeVar\n" +
+                 "\n" +
+                 "name = 'T0'\n" +
+                 "T0 = TypeVar(<warning descr=\"'TypeVar()' expects a string literal as first argument\">name</warning>)\n" +
+                 "T1 = TypeVar('T1')");
+  }
+
+  // PY-28243
+  public void testTypeVarParameterizedConstraints() {
+    doTestByText("from typing import TypeVar, List\n" +
+                 "\n" +
+                 "T1 = TypeVar('T1', int, str)\n" +
+                 "\n" +
+                 "T2 = TypeVar('T2', int, <warning descr=\"Constraints cannot be parametrized by type variables\">List[T1]</warning>)\n" +
+                 "T3 = TypeVar('T3', bound=<warning descr=\"Constraints cannot be parametrized by type variables\">List[T1]</warning>)\n" +
+                 "\n" +
+                 "T4 = TypeVar('T4', int, List[int])\n" +
+                 "T5 = TypeVar('T5', bound=List[int])\n" +
+                 "\n" +
+                 "my_int = int\n" +
+                 "my_str = str\n" +
+                 "T11 = TypeVar('T11', my_int, my_str)\n" +
+                 "\n" +
+                 "my_list_t1 = List[T1]\n" +
+                 "T22 = TypeVar('T22', int, <warning descr=\"Constraints cannot be parametrized by type variables\">my_list_t1</warning>)\n" +
+                 "T33 = TypeVar('T33', bound=<warning descr=\"Constraints cannot be parametrized by type variables\">my_list_t1</warning>)\n" +
+                 "\n" +
+                 "my_list_int = List[int]\n" +
+                 "T44 = TypeVar('T44', int, my_list_int)\n" +
+                 "T55 = TypeVar('T55', bound=my_list_int)");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

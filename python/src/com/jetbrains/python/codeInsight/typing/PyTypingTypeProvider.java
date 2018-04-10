@@ -732,6 +732,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
+  public static Ref<PyType> getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    return getType(expression, new Context(context));
+  }
+
+  @Nullable
   static Ref<PyType> getType(@NotNull PyExpression expression, @NotNull Context context) {
     final List<PyType> members = Lists.newArrayList();
     boolean foundAny = false;
