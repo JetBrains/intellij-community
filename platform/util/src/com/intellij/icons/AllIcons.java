@@ -239,6 +239,9 @@ public class AllIcons {
     public static final Icon AttachToProcess = IconLoader.getIcon("/debugger/attachToProcess.png"); // 16x16
     public static final Icon AutoVariablesMode = IconLoader.getIcon("/debugger/autoVariablesMode.png"); // 16x16
     public static final Icon BreakpointAlert = IconLoader.getIcon("/debugger/breakpointAlert.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Class_filter = IconLoader.getIcon("/debugger/class_filter.png"); // 16x16
     public static final Icon CommandLine = IconLoader.getIcon("/debugger/commandLine.png"); // 16x16
     public static final Icon Console = IconLoader.getIcon("/debugger/console.png"); // 16x16
@@ -309,6 +312,9 @@ public class AllIcons {
     }
     public static final Icon MultipleBreakpoints = IconLoader.getIcon("/debugger/MultipleBreakpoints.png"); // 12x12
     public static final Icon MuteBreakpoints = IconLoader.getIcon("/debugger/muteBreakpoints.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon NewWatch = IconLoader.getIcon("/debugger/newWatch.png"); // 16x16
     public static final Icon Overhead = IconLoader.getIcon("/debugger/overhead.png"); // 16x16
     public static final Icon Question_badge = IconLoader.getIcon("/debugger/question_badge.png"); // 6x9
@@ -346,6 +352,9 @@ public class AllIcons {
     public static final Icon Value = IconLoader.getIcon("/debugger/value.png"); // 16x16
     public static final Icon ViewBreakpoints = IconLoader.getIcon("/debugger/viewBreakpoints.png"); // 16x16
     public static final Icon Watch = IconLoader.getIcon("/debugger/watch.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Watches = IconLoader.getIcon("/debugger/watches.png"); // 16x16
     public static final Icon WatchLastReturnValue = IconLoader.getIcon("/debugger/watchLastReturnValue.png"); // 16x16
 

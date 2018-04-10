@@ -203,7 +203,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
-                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watches, null);
+                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watch, null);
     watchesContent.setCloseable(false);
     return watchesContent;
   }
