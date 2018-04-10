@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -28,10 +27,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author vlan
@@ -55,14 +51,14 @@ public class PyStructuralType implements PyType {
   }
 
   @Override
-  public LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final List<LookupElement> variants = new ArrayList<>();
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+    final List<Object> variants = new ArrayList<>();
     for (String attribute : myAttributes) {
       if (!attribute.equals(completionPrefix)) {
         variants.add(LookupElementBuilder.create(attribute).withIcon(PlatformIcons.FIELD_ICON));
       }
     }
-    return variants.toArray(LookupElement.EMPTY_ARRAY);
+    return variants.toArray();
   }
 
   @Nullable

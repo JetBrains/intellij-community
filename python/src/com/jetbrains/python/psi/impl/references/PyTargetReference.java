@@ -15,11 +15,11 @@
  */
 package com.jetbrains.python.psi.impl.references;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
@@ -57,11 +57,11 @@ public class PyTargetReference extends PyReferenceImpl {
 
   @NotNull
   @Override
-  public LookupElement[] getVariants() {
+  public Object[] getVariants() {
     final PyImportElement importElement = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class);
     // reference completion is useless in 'as' part of import statement (PY-2384)
     if (importElement != null && myElement == importElement.getAsNameElement()) {
-      return LookupElement.EMPTY_ARRAY;
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     return super.getVariants();
   }

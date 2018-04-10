@@ -671,7 +671,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   @Override
   @NotNull
-  public LookupElement[] getVariants() {
+  public Object[] getVariants() {
     final List<LookupElement> ret = Lists.newArrayList();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
@@ -734,7 +734,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     ret.addAll(getOriginalElements(processor));
-    return ret.toArray(LookupElement.EMPTY_ARRAY);
+    return ret.toArray();
   }
 
   /**
@@ -816,7 +816,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return myElement.hashCode();
   }
 
-  protected static LookupElement[] getTypeCompletionVariants(PyExpression pyExpression, PyType type) {
+  protected static Object[] getTypeCompletionVariants(PyExpression pyExpression, PyType type) {
     ProcessingContext context = new ProcessingContext();
     context.put(PyType.CTX_NAMES, new HashSet<>());
     return type.getCompletionVariants(pyExpression.getName(), pyExpression, context);

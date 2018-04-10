@@ -399,10 +399,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Override
-  public LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(location.getProject(), location.getContainingFile());
     final List<LookupElement> result = getCompletionVariantsAsLookupElements(location, context, false, false, typeEvalContext);
-    return result.toArray(LookupElement.EMPTY_ARRAY);
+    return result.toArray();
   }
 
   @NotNull

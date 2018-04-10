@@ -1,9 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
@@ -64,13 +64,13 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   }
 
   @Override
-  public LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final List<LookupElement> result = new ArrayList<>();
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+    final List<Object> result = new ArrayList<>();
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
     for (String field : myFields.keySet()) {
       result.add(LookupElementBuilder.create(field));
     }
-    return result.toArray(LookupElement.EMPTY_ARRAY);
+    return ArrayUtil.toObjectArray(result);
   }
 
   @NotNull

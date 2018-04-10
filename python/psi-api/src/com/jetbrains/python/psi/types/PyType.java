@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
@@ -72,7 +71,7 @@ public interface PyType {
    * @param context    to share state between nested invocations
    * @return completion variants good for {@link com.intellij.psi.PsiReference#getVariants} return value.
    */
-  LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context);
+  Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context);
 
   /**
    * Context key for access to a set of names already found by variant search.

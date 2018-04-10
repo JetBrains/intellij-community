@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -59,14 +59,14 @@ public class PyUnionType implements PyType {
     return allNulls ? null : ret;
   }
 
-  public LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    Set<LookupElement> variants = new HashSet<>();
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+    Set<Object> variants = new HashSet<>();
     for (PyType member : myMembers) {
       if (member != null) {
         Collections.addAll(variants, member.getCompletionVariants(completionPrefix, location, context));
       }
     }
-    return variants.toArray(LookupElement.EMPTY_ARRAY);
+    return ArrayUtil.toObjectArray(variants);
   }
 
   public String getName() {

@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ipnb.psi;
 
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiDocumentManager;
@@ -32,8 +31,8 @@ public class IpnbPyReference extends PyReferenceImpl {
 
   @NotNull
   @Override
-  public LookupElement[] getVariants() {
-    final List<LookupElement> variants = Lists.newArrayList();
+  public Object[] getVariants() {
+    final List<Object> variants = Lists.newArrayList();
     Collections.addAll(variants, super.getVariants());
     PsiFile file = myElement.getContainingFile();
     if (file instanceof IpnbPyFragment) {
@@ -51,7 +50,7 @@ public class IpnbPyReference extends PyReferenceImpl {
         variants.addAll(getOriginalElements(processor));
       }
     }
-    return variants.toArray(LookupElement.EMPTY_ARRAY);
+    return variants.toArray();
   }
 
   @NotNull

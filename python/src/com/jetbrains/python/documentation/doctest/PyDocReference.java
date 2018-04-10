@@ -17,7 +17,6 @@ package com.jetbrains.python.documentation.doctest;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -150,10 +149,11 @@ public class PyDocReference extends PyReferenceImpl {
   }
 
   @NotNull
-  public LookupElement[] getVariants() {
-    final ArrayList<LookupElement> ret = Lists.newArrayList(super.getVariants());
-    final PyQualifiedExpression originalElement = CompletionUtil.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
+  public Object[] getVariants() {
+    final ArrayList<Object> ret = Lists.newArrayList(super.getVariants());
+    final PsiElement originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyQualifiedExpression element = originalElement instanceof PyQualifiedExpression ?
+                                          (PyQualifiedExpression)originalElement : myElement;
 
     final ScopeOwner scopeOwner = getHostScopeOwner();
     if (scopeOwner != null) {
@@ -161,7 +161,7 @@ public class PyDocReference extends PyReferenceImpl {
       PyResolveUtil.scopeCrawlUp(processor, scopeOwner, null, null);
       ret.addAll(processor.getResultList());
     }
-    return ret.toArray(LookupElement.EMPTY_ARRAY);
+    return ret.toArray();
   }
 
 
