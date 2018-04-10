@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.findUsages
 import com.intellij.lang.jvm.JvmMember
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.model.ModelElement
-import com.intellij.model.search.ModelReferenceSearchParameters
 import com.intellij.model.search.OccurenceSearchRequestor
 import com.intellij.model.search.SearchRequestCollector
 import com.intellij.model.search.SearchRequestor
@@ -21,7 +20,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.getPropertyNameAndKind
 
 class GrAliasedImportedElementSearchRequestor : SearchRequestor {
 
-  override fun collectSearchRequests(collector: SearchRequestCollector, parameters: ModelReferenceSearchParameters) {
+  override fun collectSearchRequests(collector: SearchRequestCollector) {
+    val parameters = collector.parameters
     val target = parameters.target as? JvmMember ?: return
 
     val name = runReadAction { target.name }

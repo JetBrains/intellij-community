@@ -5,7 +5,6 @@ import com.intellij.model.ModelReference;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
 public interface ModelSearchHelper {
@@ -15,5 +14,5 @@ public interface ModelSearchHelper {
     return ServiceManager.getService(project, ModelSearchHelper.class);
   }
 
-  boolean runQuery(@NotNull Query<ModelReference> query, @NotNull Processor<ModelReference> processor);
+  boolean runParameters(@NotNull ModelReferenceSearchParameters parameters, @NotNull Processor<ModelReference> processor);
 }

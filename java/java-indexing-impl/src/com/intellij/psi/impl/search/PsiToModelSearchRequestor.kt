@@ -17,7 +17,8 @@ import com.intellij.util.Query
  */
 class PsiToModelSearchRequestor : SearchRequestor {
 
-  override fun collectSearchRequests(collector: SearchRequestCollector, parameters: ModelReferenceSearchParameters) {
+  override fun collectSearchRequests(collector: SearchRequestCollector) {
+    val parameters = collector.parameters
     if (parameters is ModelToPsiReferenceSearcher.PsiToModelParameters) {
       // search started from ReferencesSearch
       // -> ModelToPsiReferenceSearcher queries ModelReferenceSearch with PsiToModelParameters

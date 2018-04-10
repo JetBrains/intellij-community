@@ -20,7 +20,8 @@ public final class ModelReferenceSearchQuery extends AbstractQuery<ModelReferenc
 
   @Override
   protected boolean processResults(@NotNull Processor<ModelReference> consumer) {
-    return ModelSearchHelper.getInstance(myParameters.getProject()).runQuery(this, consumer);
+    return myBaseQuery.forEach(consumer) &&
+           ModelSearchHelper.getInstance(myParameters.getProject()).runParameters(myParameters, consumer);
   }
 
   @Contract(pure = true)

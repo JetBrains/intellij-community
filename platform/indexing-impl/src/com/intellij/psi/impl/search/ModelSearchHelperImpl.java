@@ -3,9 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.model.ModelReference;
 import com.intellij.model.search.ModelReferenceSearchParameters;
-import com.intellij.model.search.ModelReferenceSearchQuery;
 import com.intellij.model.search.ModelSearchHelper;
-import com.intellij.model.search.SearchRequestCollector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbService;
@@ -22,8 +20,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.util.Preprocessor;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.StringSearcher;
@@ -38,8 +36,7 @@ import java.util.function.BiConsumer;
 
 import static com.intellij.psi.impl.search.PsiSearchHelperImpl.*;
 import static com.intellij.util.Processors.cancelableCollectProcessor;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static com.intellij.util.containers.ContainerUtil.map2LinkedSet;
+import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.stream.Collectors.groupingBy;
 
 public class ModelSearchHelperImpl implements ModelSearchHelper {
@@ -57,50 +54,66 @@ public class ModelSearchHelperImpl implements ModelSearchHelper {
   }
 
   @Override
-  public boolean runQuery(@NotNull Query<ModelReference> rootQuery, @NotNull Processor<ModelReference> processor) {
-    if (!(rootQuery instanceof ModelReferenceSearchQuery)) return rootQuery.forEach(processor);
+  public boolean runParameters(@NotNull ModelReferenceSearchParameters parameters, @NotNull Processor<ModelReference> processor) {
+    final List<SearchRequestCollectorImpl> collectors = new LinkedList<>();
+    collectors.add(initCollector(parameters, Preprocessor.id()));
+    return runCollectors(collectors, processor);
+  }
 
-    final SearchRequestCollectorImpl collector = new SearchRequestCollectorImpl(rootQuery);
+  @NotNull
+  private static SearchRequestCollectorImpl initCollector(@NotNull ModelReferenceSearchParameters parameters,
+                                                          @NotNull Preprocessor<ModelReference, ModelReference> preprocessor) {
+    SearchRequestCollectorImpl childCollector = new SearchRequestCollectorImpl(parameters, preprocessor);
+    SearchRequestors.collectSearchRequests(childCollector);
+    return childCollector;
+  }
+
+  private boolean runCollectors(@NotNull Collection<SearchRequestCollectorImpl> collectors, @NotNull Processor<ModelReference> processor) {
     final ProgressIndicator progress = getIndicatorOrEmpty();
 
-    while (true) {
-      collectRequests(progress, collector, collector.takeSubSearchParameters());
-      if (!collector.hasMoreRequests()) return true;
-      if (!processSubQueries(progress, collector.takeSubQueries(), processor)) return false;
-      if (!processWordRequests(progress, collector.takeWordRequests(), processor)) return false;
+    while (!collectors.isEmpty()) {
+      progress.checkCanceled();
+
+      if (!processQueryRequests(progress, collectors, processor)) return false;
+      if (!processWordRequests(progress, collectors, processor)) return false;
+
+      final Collection<SearchParamsRequest> paramsRequests = flatten(map(collectors, it -> it.takeParametersRequests()));
+      for (SearchParamsRequest request : paramsRequests) {
+        progress.checkCanceled();
+        collectors.add(initCollector(request.parameters, request.preprocessor));
+      }
+
+      collectors.removeIf(it -> it.isEmpty());
     }
+
+    return true;
   }
 
-  private static void collectRequests(@NotNull ProgressIndicator progress,
-                                      @NotNull SearchRequestCollector collector,
-                                      @NotNull Collection<ModelReferenceSearchParameters> subSearchParameters) {
-    for (ModelReferenceSearchParameters parameters : subSearchParameters) {
+  private static boolean processQueryRequests(@NotNull ProgressIndicator progress,
+                                              @NotNull Collection<SearchRequestCollectorImpl> collectors,
+                                              @NotNull Processor<ModelReference> processor) {
+    for (SearchRequestCollectorImpl collector : collectors) {
       progress.checkCanceled();
-      SearchRequestors.collectSearchRequests(collector, parameters);
-    }
-  }
-
-  private static boolean processSubQueries(@NotNull ProgressIndicator progress,
-                                           @NotNull Collection<Query<? extends ModelReference>> subQueries,
-                                           @NotNull Processor<ModelReference> processor) {
-    if (subQueries.isEmpty()) {
-      return true;
-    }
-    for (Query<? extends ModelReference> query : subQueries) {
-      progress.checkCanceled();
-      if (!runSubQuery(query, processor)) return false;
+      for (SearchQueryRequest<?> request : collector.takeQueryRequests()) {
+        progress.checkCanceled();
+        if (!processQueryRequest(request, processor)) return false;
+      }
     }
     return true;
   }
 
-  private static <T extends ModelReference> boolean runSubQuery(Query<T> query, Processor<ModelReference> processor) {
-    return query.forEach((Processor<T>)processor::process);
+  private static <T> boolean processQueryRequest(@NotNull SearchQueryRequest<T> request, @NotNull Processor<ModelReference> processor) {
+    Processor<? super T> preprocessed = request.preprocessor.apply(processor);
+    return request.query.forEach((Processor<T>)preprocessed::process);
   }
 
+  /**
+   * This operation may add more requests into each collector
+   */
   private boolean processWordRequests(@NotNull ProgressIndicator progress,
-                                      @NotNull WordRequests requests,
+                                      @NotNull Collection<SearchRequestCollectorImpl> collectors,
                                       @NotNull Processor<ModelReference> processor) {
-    if (requests.isEmpty()) return true;
+    if (collectors.isEmpty()) return true;
 
     final Map<SearchWordRequest, Set<TextOccurenceProcessor>> locals = new LinkedHashMap<>();
     final Map<SearchWordRequest, Set<TextOccurenceProcessor>> globals = new LinkedHashMap<>();
@@ -111,12 +124,18 @@ public class ModelSearchHelperImpl implements ModelSearchHelper {
         .computeIfAbsent(request, r -> new LinkedHashSet<>())
         .addAll(processors);
     };
-    // process deferred requests first because they may feed something into processor and return early
-    requests.deferredWordRequests.forEach((request, processorProviders) -> distributor.accept(
-      request, map(processorProviders, it -> it.apply(processor))
-    ));
-    // there requests can't feed anything into processor -> they can't return early -> process them last
-    requests.immediateWordRequests.forEach(distributor);
+
+    for (SearchRequestCollectorImpl collector : collectors) {
+      progress.checkCanceled();
+      WordRequests wordRequests = collector.takeWordRequests();
+      if (wordRequests.isEmpty()) continue;
+      // process deferred requests first because they may feed something into processor and return early
+      wordRequests.deferredWordRequests.forEach((request, processorProviders) -> distributor.accept(
+        request, map(processorProviders, it -> it.apply(processor))
+      ));
+      // there requests can't feed anything into processor -> they can't return early -> process them last
+      wordRequests.immediateWordRequests.forEach(distributor);
+    }
 
     return processGlobalRequests(progress, globals) &&
            processLocalRequests(progress, locals);

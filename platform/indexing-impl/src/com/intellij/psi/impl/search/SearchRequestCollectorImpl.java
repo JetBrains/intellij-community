@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.util.Preprocessor;
 import com.intellij.util.Query;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +20,8 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
 
   private final Object lock = new Object();
 
-  private final Set<Query<? extends ModelReference>> mySubQueries = new LinkedHashSet<>();
-  private final Set<ModelReferenceSearchParameters> mySubSearchParameters = new LinkedHashSet<>();
+  private final Set<SearchQueryRequest<?>> myQueryRequests = new LinkedHashSet<>();
+  private final Set<SearchParamsRequest> myParamsRequests = new LinkedHashSet<>();
   /**
    * Requests that does not require Processor.<br/>
    * There requests' {@link TextOccurenceProcessor processors} may add another requests while being processed.
@@ -36,22 +37,48 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
    */
   private final Map<SearchWordRequest, List<TextOccurenceProcessorProvider>> myDeferredWordRequests = new LinkedHashMap<>();
 
-  SearchRequestCollectorImpl(@NotNull Query<ModelReference> rootQuery) {
-    searchSubQuery(rootQuery);
+  private final ModelReferenceSearchParameters myParameters;
+  private final Preprocessor<ModelReference, ModelReference> myPreprocessor;
+
+  SearchRequestCollectorImpl(@NotNull ModelReferenceSearchParameters parameters,
+                             @NotNull Preprocessor<ModelReference, ModelReference> preprocessor) {
+    myParameters = parameters;
+    myPreprocessor = preprocessor;
+  }
+
+  @NotNull
+  @Override
+  public ModelReferenceSearchParameters getParameters() {
+    return myParameters;
   }
 
   @Override
   public void searchSubQuery(@NotNull Query<? extends ModelReference> subQuery) {
+    searchSubQuery(subQuery, Preprocessor.id());
+  }
+
+  @Override
+  public <T> void searchSubQuery(@NotNull Query<T> subQuery, @NotNull Preprocessor<T, ModelReference> preprocessor) {
     synchronized (lock) {
       if (subQuery instanceof ModelReferenceSearchQuery) {
         // unwrap subQuery into current session
         ModelReferenceSearchQuery referenceSearchQuery = (ModelReferenceSearchQuery)subQuery;
-        mySubQueries.add(referenceSearchQuery.getBaseQuery());
-        mySubSearchParameters.add(referenceSearchQuery.getParameters());
+        // T is ModelReference, but java can't infer that
+        //noinspection unchecked
+        Preprocessor<ModelReference, ModelReference> referencePreprocessor = (Preprocessor<ModelReference, ModelReference>)preprocessor;
+        searchSubQuery(referenceSearchQuery.getBaseQuery(), referencePreprocessor);
+        searchParams(referenceSearchQuery.getParameters(), referencePreprocessor);
       }
       else {
-        mySubQueries.add(subQuery);
+        myQueryRequests.add(new SearchQueryRequest<>(subQuery, Preprocessor.compose(preprocessor, myPreprocessor)));
       }
+    }
+  }
+
+  void searchParams(@NotNull ModelReferenceSearchParameters parameters,
+                    @NotNull Preprocessor<ModelReference, ModelReference> preprocessor) {
+    synchronized (lock) {
+      myParamsRequests.add(new SearchParamsRequest(parameters, Preprocessor.compose(preprocessor, myPreprocessor)));
     }
   }
 
@@ -76,31 +103,31 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
   void searchWord(@NotNull Collection<SearchWordRequest> requests, @NotNull TextOccurenceProcessorProvider f) {
     synchronized (lock) {
       for (SearchWordRequest request : requests) {
-        myDeferredWordRequests.computeIfAbsent(request, r -> new SmartList<>()).add(f);
+        myDeferredWordRequests.computeIfAbsent(request, r -> new SmartList<>()).add(processor -> f.apply(myPreprocessor.apply(processor)));
       }
     }
   }
 
-  boolean hasMoreRequests() {
+  boolean isEmpty() {
     synchronized (lock) {
-      return !mySubQueries.isEmpty() ||
-             !mySubSearchParameters.isEmpty() ||
-             !myImmediateWordRequests.isEmpty() ||
-             !myDeferredWordRequests.isEmpty();
+      return myQueryRequests.isEmpty() &&
+             myParamsRequests.isEmpty() &&
+             myImmediateWordRequests.isEmpty() &&
+             myDeferredWordRequests.isEmpty();
     }
   }
 
   @NotNull
-  Collection<Query<? extends ModelReference>> takeSubQueries() {
+  Collection<SearchQueryRequest<?>> takeQueryRequests() {
     synchronized (lock) {
-      return take(mySubQueries);
+      return take(myQueryRequests);
     }
   }
 
   @NotNull
-  Collection<ModelReferenceSearchParameters> takeSubSearchParameters() {
+  Collection<SearchParamsRequest> takeParametersRequests() {
     synchronized (lock) {
-      return take(mySubSearchParameters);
+      return take(myParamsRequests);
     }
   }
 
