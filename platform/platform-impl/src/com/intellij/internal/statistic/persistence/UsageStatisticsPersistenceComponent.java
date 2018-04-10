@@ -150,6 +150,10 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     updateAndroidStudioMetrics(allowed);
   }
 
+  public void updateAndroidStudioMetrics() {
+    updateAndroidStudioMetrics(ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES);
+  }
+
   private void updateAndroidStudioMetrics(boolean allowed) {
     Logger intelliJLogger = Logger.getInstance("#com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent");
     // Create logger & scheduler based on IntelliJ/ADT helpers.

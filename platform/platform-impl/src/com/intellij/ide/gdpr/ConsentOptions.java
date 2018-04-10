@@ -5,6 +5,7 @@ package com.intellij.ide.gdpr;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -201,6 +202,7 @@ public final class ConsentOptions {
       catch (IOException e) {
         LOG.info(e);
       }
+      UsageStatisticsPersistenceComponent.getInstance().updateAndroidStudioMetrics();
     }
   }
 
