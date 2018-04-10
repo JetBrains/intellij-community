@@ -19,6 +19,7 @@ package com.intellij.xdebugger.breakpoints;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -243,6 +244,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   public String getShortText(B breakpoint) {
     return getDisplayText(breakpoint);
+  }
+
+  public String getLogMessageLabelText() {
+    return XDebuggerBundle.message("xbreakpoints.log.message.label");
   }
 
   public interface XBreakpointCreator<P extends XBreakpointProperties> {
