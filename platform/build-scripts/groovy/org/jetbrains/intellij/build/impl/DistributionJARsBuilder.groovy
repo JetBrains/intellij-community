@@ -431,6 +431,12 @@ class DistributionJARsBuilder {
       def jarPath = getActualModuleJarPath(it.key, modules, layout.explicitlySetJarPaths)
       actualModuleJars.putAll(jarPath, modules)
     }
+    MultiValuesMap<String, String> actualTestModuleJars = new MultiValuesMap<>(true)
+    testModuleJars.entrySet().each {
+      def modules = it.value
+      def jarPath = getActualModuleJarPath(it.key, modules, layout.explicitlySetJarPaths)
+      actualTestModuleJars.putAll(jarPath, modules)
+    }
     layoutBuilder.layout(targetDirectory) {
       dir("lib") {
         actualModuleJars.entrySet().each {
@@ -454,8 +460,8 @@ class DistributionJARsBuilder {
               }
             }
             // Android Studio
-            if (testModuleJars.containsKey(jarPath)) {
-              testModuleJars.get(jarPath).each { testModuleName ->
+            if (actualTestModuleJars.containsKey(jarPath)) {
+              actualTestModuleJars.get(jarPath).each { testModuleName ->
                 moduleTests(testModuleName) {
                   if (layout.localizableResourcesJarName(testModuleName) != null) {
                     ant.patternset(refid: resourceExcluded)
@@ -475,10 +481,10 @@ class DistributionJARsBuilder {
           }
         }
         // Android Studio
-        testModuleJars.entrySet().each {
+        actualTestModuleJars.entrySet().each {
           def modules = it.value
           def jarPath = it.key
-          if (!moduleJars.containsKey(jarPath)) { // done above
+          if (!actualModuleJars.containsKey(jarPath)) { // done above
             jar(jarPath, true) {
               modules.each { moduleName ->
                 moduleTests(moduleName) {
@@ -548,7 +554,7 @@ class DistributionJARsBuilder {
             }
         }
         // Android Studio
-        testModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
+        actualTestModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
           .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
