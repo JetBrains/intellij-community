@@ -271,7 +271,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
-    final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(file);
+    final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(file);
     LOG.debug("Checking moved file ", file, "; status=", status);
     if (status == FileStatus.IGNORED) {
       if (file.getParent() != null) {

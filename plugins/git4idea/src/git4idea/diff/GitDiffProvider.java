@@ -17,7 +17,11 @@ package git4idea.diff;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffMixin;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -35,13 +39,10 @@ import git4idea.GitVcs;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Set;
 
 /**
  * Git diff provider
@@ -51,20 +52,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
    * The context project
    */
   private final Project myProject;
-  /**
-   * The status manager for the project
-   */
-  private final FileStatusManager myStatusManager;
-  /**
-   *
-   */
-  private static final Set<FileStatus> ourGoodStatuses;
-
-  static {
-    ourGoodStatuses = new THashSet<>();
-    ourGoodStatuses.addAll(
-      Arrays.asList(FileStatus.NOT_CHANGED, FileStatus.DELETED, FileStatus.MODIFIED, FileStatus.MERGE, FileStatus.MERGED_WITH_CONFLICTS));
-  }
+  private final ChangeListManager myChangeListManager;
 
   /**
    * A constructor
@@ -73,7 +61,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
    */
   public GitDiffProvider(@NotNull Project project) {
     myProject = project;
-    myStatusManager = FileStatusManager.getInstance(myProject);
+    myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
   /**
@@ -114,7 +102,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
     if (file.isDirectory()) {
       return null;
     }
-    if (!ourGoodStatuses.contains(myStatusManager.getStatus(file))) {
+    if (!hasGoodFileStatus(file)) {
       return null;
     }
     try {
@@ -123,6 +111,14 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
     catch (VcsException e) {
       return null;
     }
+  }
+
+  private boolean hasGoodFileStatus(VirtualFile file) {
+    FileStatus status = myChangeListManager.getStatus(file);
+    return status == FileStatus.NOT_CHANGED ||
+           status == FileStatus.DELETED ||
+           status == FileStatus.MODIFIED ||
+           status == FileStatus.MERGED_WITH_CONFLICTS;
   }
 
   /**
@@ -182,7 +178,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
     }
     final VirtualFile vf = filePath.getVirtualFile();
     if (vf != null) {
-      if (! ourGoodStatuses.contains(myStatusManager.getStatus(vf))) {
+      if (!hasGoodFileStatus(vf)) {
         return null;
       }
     }

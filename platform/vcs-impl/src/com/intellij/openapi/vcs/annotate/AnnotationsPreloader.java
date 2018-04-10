@@ -22,7 +22,11 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -71,7 +75,7 @@ public class AnnotationsPreloader {
           }
           if (!FileEditorManager.getInstance(myProject).isFileOpen(file)) return;
 
-          FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(file);
+          FileStatus fileStatus = ChangeListManager.getInstance(myProject).getStatus(file);
           if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
             return;
           }

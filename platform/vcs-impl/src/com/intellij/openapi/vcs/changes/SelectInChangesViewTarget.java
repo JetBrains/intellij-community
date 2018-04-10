@@ -20,7 +20,6 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
@@ -44,7 +43,7 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   @Override
   public boolean canSelect(final SelectInContext context) {
     final VirtualFile file = context.getVirtualFile();
-    FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(file);
+    FileStatus fileStatus = ChangeListManager.getInstance(myProject).getStatus(file);
     return ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length != 0 &&
            !fileStatus.equals(FileStatus.NOT_CHANGED);
   }
