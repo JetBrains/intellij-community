@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +31,23 @@ public class TouchBarsManager {
       public void projectOpened(Project project) {
         trace("opened project %s, set general touchbar", project);
         showTouchBar(TouchBarGeneral.instance(project));
+
+        final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
+        twm.addToolWindowManagerListener(new ToolWindowManagerListener() {
+          @Override
+          public void toolWindowRegistered(@NotNull String id) {}
+          @Override
+          public void stateChanged() {
+            final String activeId = twm.getActiveToolWindowId();
+            if (activeId != null && activeId.equals("Debug"))
+              showTouchBar(TouchBarDebugger.instance(project));
+            else {
+              TouchBarDebugger tbd = TouchBarDebugger.findInstance(project);
+              if (tbd != null)
+                closeTouchBar(tbd);
+            }
+          }
+        });
       }
       @Override
       public void projectClosed(Project project) {
