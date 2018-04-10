@@ -351,3 +351,17 @@ class OptionalGet {
     return Stream.of("foo", "bar", "baz").map(String::toUpperCase).max(Comparator.naturalOrder()).get();
   }
 }
+
+class CtorTest {
+  Optional<String> test = Optional.of("foo");
+
+  CtorTest() {
+    System.out.println(test.get());
+    something();
+    System.out.println(test.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
+  }
+
+  void something() {
+    test = Optional.empty();
+  }
+}

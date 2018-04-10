@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -98,21 +97,13 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         for (PsiMethod method : aClass.getConstructors()) {
           List<DfaMemoryState> initialStates;
           PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
-          if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && hasImplicitImpureSuperCall(aClass, method))) {
+          if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && DfaUtil.hasImplicitImpureSuperCall(aClass, method))) {
             initialStates = Collections.singletonList(runner.createMemoryState());
           } else {
             initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();
           }
           analyzeMethod(method, runner, initialStates);
         }
-      }
-
-      private boolean hasImplicitImpureSuperCall(PsiClass aClass, PsiMethod constructor) {
-        PsiClass superClass = aClass.getSuperClass();
-        if (superClass == null) return false;
-        PsiElement superCtor = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(constructor, constructor.getProject(), superClass);
-        if (!(superCtor instanceof PsiMethod)) return false;
-        return !ControlFlowAnalyzer.isPure((PsiMethod)superCtor);
       }
 
       @Override

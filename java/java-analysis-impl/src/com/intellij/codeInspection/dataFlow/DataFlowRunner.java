@@ -266,9 +266,9 @@ public class DataFlowRunner {
     return analyzeBlockRecursively(block, states, visitor);
   }
 
-  private RunnerResult analyzeBlockRecursively(PsiElement block,
-                                               Collection<? extends DfaMemoryState> states,
-                                               StandardInstructionVisitor visitor) {
+  public RunnerResult analyzeBlockRecursively(PsiElement block,
+                                              Collection<? extends DfaMemoryState> states,
+                                              StandardInstructionVisitor visitor) {
     RunnerResult result = analyzeMethod(block, visitor, false, states);
     if (result != RunnerResult.OK) return result;
 
