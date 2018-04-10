@@ -153,6 +153,11 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     GeneralSettings settings = GeneralSettings.getInstance();
     myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
     myComponent.myChkSupportScreenReaders.setSelected(settings.isSupportScreenReaders());
+    if (GeneralSettings.isSupportScreenReadersOverriden()) {
+      myComponent.myChkSupportScreenReaders.setEnabled(false);
+      myComponent.myChkSupportScreenReaders.setToolTipText(
+        "The option is overriden by the JVM property: \"" + GeneralSettings.SUPPORT_SCREEN_READERS + "\"");
+    }
     myComponent.myChkSyncOnFrameActivation.setSelected(settings.isSyncOnFrameActivation());
     myComponent.myChkSaveOnFrameDeactivation.setSelected(settings.isSaveOnFrameDeactivation());
     myComponent.myChkAutoSaveIfInactive.setSelected(settings.isAutoSaveIfInactive());
