@@ -34,7 +34,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CharArrayUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,9 +104,14 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     element = element.withInsertHandler(new InsertHandler<LookupElement>() {
       @Override
       public void handleInsert(InsertionContext context, LookupElement item) {
+        context.commitDocument();
         int startOffset = context.getTailOffset();
-        int endOffset = CharArrayUtil.shiftForwardUntil(context.getDocument().getImmutableCharSequence(), startOffset, ")");
-        context.getDocument().deleteString(startOffset, endOffset);
+        PsiExpressionList exprList =
+          PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), startOffset - 1, PsiExpressionList.class, false);
+        PsiElement rParen = exprList == null ? null : exprList.getLastChild();
+        if (rParen != null && rParen.textMatches(")")) {
+          context.getDocument().deleteString(startOffset, rParen.getTextRange().getStartOffset());
+        }
         if (makeFinalIfNeeded) {
           context.commitDocument();
           for (PsiParameter parameter : CompletionUtil.getOriginalOrSelf(takeParametersFrom).getParameterList().getParameters()) {
