@@ -13,6 +13,12 @@ import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.lang.jvm.types.JvmType
 import java.beans.Introspector
 
+fun getPropertyName(method: JvmMethod): String? {
+  if (method.isConstructor) return null
+  val (name, kind) = getPropertyNameAndKind(method.name) ?: return null
+  return if (method.checkKind(kind)) name else null
+}
+
 fun getPropertyNameAndKind(method: JvmMethod): Pair<String, PropertyKind>? {
   if (method.isConstructor) return null
   val (name, kind) = getPropertyNameAndKind(method.name) ?: return null
