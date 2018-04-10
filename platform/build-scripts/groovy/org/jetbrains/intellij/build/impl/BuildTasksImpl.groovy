@@ -48,6 +48,7 @@ class BuildTasksImpl extends BuildTasks {
       }
       buildContext.notifyArtifactBuilt(targetFile)
     }
+    logFreeDiskSpace("after building sources archive")
   }
 
   @Override
@@ -299,7 +300,9 @@ idea.fatal.error.notification=disabled
     copyDependenciesFile()
 
     def patchedApplicationInfo = patchApplicationInfo()
+    logFreeDiskSpace("before compilation")
     def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    logFreeDiskSpace("after compilation")
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty()) {
       buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
@@ -354,6 +357,12 @@ idea.fatal.error.notification=disabled
         }
       }
     }
+    logFreeDiskSpace("after building distributions")
+  }
+
+  private void logFreeDiskSpace(String phase) {
+    def dir = new File(buildContext.paths.buildOutputRoot)
+    buildContext.messages.debug("Free disk space $phase: ${StringUtil.formatFileSize(dir.freeSpace)} (on disk containing $dir)")
   }
 
   private def copyDependenciesFile() {
