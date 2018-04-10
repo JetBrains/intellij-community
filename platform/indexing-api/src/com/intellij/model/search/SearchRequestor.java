@@ -3,6 +3,16 @@ package com.intellij.model.search;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Enables to search something else.
+ * <p/>
+ * Example:
+ * When searching for references to some getter method 'getFoo()',
+ * we also want to include property references 'foo' from some XMLs.
+ * In this case we order to pass all references with 'foo' text that resolve to 'getFoo()' into original processor.
+ * <p/>
+ * Implementations should be registered at {@code com.intellij.searchRequestor} extension point.
+ */
 public interface SearchRequestor {
 
   void collectSearchRequests(@NotNull SearchRequestCollector collector);
