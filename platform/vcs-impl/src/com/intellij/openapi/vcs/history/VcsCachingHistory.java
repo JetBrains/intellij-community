@@ -161,20 +161,20 @@ public class VcsCachingHistory {
     FilePath correctedFilePath = cacheableFactory.getUsedFilePath(cached);
     FilePath path = correctedFilePath != null ? correctedFilePath : filePath;
 
+    VcsRevisionNumber currentRevision = null;
     if (VcsType.distributed.equals(myType)) {
-      VcsRevisionNumber currentRevision = cached.calcCurrentRevisionNumber();
-      if (cached.getRevisionList().get(0).getRevisionNumber().equals(currentRevision)) {
-        return cached;
+      currentRevision = cached.calcCurrentRevisionNumber();
+    }
+    else {
+      ItemLatestState lastRevision = myDiffProvider.getLastRevision(path);
+      if (lastRevision != null && !lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
+        currentRevision = lastRevision.getNumber();
       }
-      return null;
     }
 
-    ItemLatestState lastRevision = myDiffProvider.getLastRevision(path);
-    if (lastRevision != null && !lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
-      List<VcsFileRevision> revisionList = cached.getRevisionList();
-      if (revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
-        return cached;
-      }
+    VcsRevisionNumber firstCachedRevision = cached.getRevisionList().get(0).getRevisionNumber();
+    if (currentRevision != null && firstCachedRevision.equals(currentRevision)) {
+      return cached;
     }
     return null;
   }
