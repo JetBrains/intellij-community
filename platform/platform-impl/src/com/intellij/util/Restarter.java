@@ -104,9 +104,13 @@ public class Restarter {
   }
 
   public static void scheduleRestart(@NotNull String... beforeRestart) throws IOException {
+    scheduleRestart(false, beforeRestart);
+  }
+
+  public static void scheduleRestart(Boolean elevate, @NotNull String... beforeRestart) throws IOException {
     Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
     if (SystemInfo.isWindows) {
-      restartOnWindows(beforeRestart);
+      restartOnWindows(elevate, beforeRestart);
     }
     else if (SystemInfo.isMac) {
       restartOnMac(beforeRestart);
@@ -119,7 +123,7 @@ public class Restarter {
     }
   }
 
-  private static void restartOnWindows(String... beforeRestart) throws IOException {
+  private static void restartOnWindows(Boolean elevate, String... beforeRestart) throws IOException {
     Kernel32 kernel32 = Native.loadLibrary("kernel32", Kernel32.class);
     Shell32 shell32 = Native.loadLibrary("shell32", Shell32.class);
 
@@ -146,7 +150,13 @@ public class Restarter {
     args.add(String.valueOf(pid));
     args.add(String.valueOf(beforeRestart.length));
     Collections.addAll(args, beforeRestart);
-    args.add(String.valueOf(argv.length));
+    if (elevate) {
+      args.add(String.valueOf(argv.length + 1));
+      args.add(new File(PathManager.getBinPath(), "launcher.exe").getPath());
+    }
+    else {
+      args.add(String.valueOf(argv.length));
+    }
     Collections.addAll(args, argv);
     runRestarter(new File(PathManager.getBinPath(), "restarter.exe"), args);
 
