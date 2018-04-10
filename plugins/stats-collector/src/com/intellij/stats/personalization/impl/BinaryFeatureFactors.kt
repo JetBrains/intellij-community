@@ -20,8 +20,8 @@ import com.intellij.stats.personalization.UserFactorBase
 import com.intellij.stats.personalization.UserFactorDescriptions
 import com.intellij.stats.personalization.UserFactorReaderBase
 import com.intellij.stats.personalization.UserFactorUpdaterBase
-import com.jetbrains.completion.ranker.features.BinaryFeature
-import com.jetbrains.completion.ranker.features.impl.FeatureUtils
+import com.jetbrains.completion.feature.BinaryFeature
+import com.jetbrains.completion.feature.impl.FeatureUtils
 
 /**
  * @author Vitaliy.Bibaev

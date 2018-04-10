@@ -116,7 +116,7 @@
 
     <component>
       <implementation-class>com.intellij.completion.FeatureManagerImpl</implementation-class>
-      <interface-class>com.jetbrains.completion.ranker.features.FeatureManager</interface-class>
+      <interface-class>com.jetbrains.completion.feature.FeatureManager</interface-class>
     </component>
   </application-components>
 

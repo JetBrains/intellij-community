@@ -31,7 +31,7 @@ import com.intellij.stats.experiment.WebServiceStatusProvider
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.network.service.ResponseData
-import com.jetbrains.completion.ranker.features.impl.FeatureUtils
+import com.jetbrains.completion.feature.impl.FeatureUtils
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions
