@@ -20,17 +20,29 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 final class SearchWordRequestorImpl implements SearchWordRequestor {
 
-  private final @NotNull SearchRequestCollectorImpl mySession;
+  private final @NotNull SearchRequestCollectorImpl myCollector;
   private final @NotNull String myWord;
-  private final @NotNull SearchScope mySearchScope;
+
+  private SearchScope mySearchScope;
   private boolean myCaseSensitive = true;
   private Short mySearchContext;
   private ModelElement myTargetHint;
 
-  SearchWordRequestorImpl(@NotNull SearchRequestCollectorImpl session, @NotNull String word, @NotNull SearchScope scope) {
-    mySession = session;
+  SearchWordRequestorImpl(@NotNull SearchRequestCollectorImpl collector, @NotNull String word) {
+    myCollector = collector;
     myWord = word;
-    mySearchScope = scope;
+  }
+
+  @NotNull
+  private SearchScope getSearchScope() {
+    return mySearchScope != null ? mySearchScope : myCollector.getParameters().getEffectiveSearchScope();
+  }
+
+  @NotNull
+  @Override
+  public SearchWordRequestor setSearchScope(@NotNull SearchScope searchScope) {
+    mySearchScope = searchScope;
+    return this;
   }
 
   @NotNull
@@ -57,14 +69,14 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
   @Override
   public void searchRequests(@NotNull OccurenceSearchRequestor occurenceSearchRequestor) {
     searchRequests((element, offsetInElement) -> {
-      occurenceSearchRequestor.collectRequests(mySession, element, offsetInElement);
+      occurenceSearchRequestor.collectRequests(myCollector, element, offsetInElement);
       return true;
     });
   }
-
   // TODO pull up to interface ?
+
   public void searchRequests(@NotNull TextOccurenceProcessor processor) {
-    mySession.searchWord(createRequests(this), processor);
+    myCollector.searchWord(createRequests(this), processor);
   }
 
   @Override
@@ -72,17 +84,17 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
     setTargetHint(target);
     search(processor -> new SingleTargetOccurenceProcessor(target, processor));
   }
-
   // TODO pull up to interface ?
+
   public void search(@NotNull TextOccurenceProcessorProvider f) {
-    mySession.searchWord(createRequests(this), f);
+    myCollector.searchWord(createRequests(this), f);
   }
 
   @NotNull
   private static Collection<SearchWordRequest> createRequests(@NotNull SearchWordRequestorImpl requestor) {
     String word = requestor.myWord;
     ModelElement targetHint = requestor.myTargetHint;
-    SearchScope searchScope = requestor.mySearchScope;
+    SearchScope searchScope = requestor.getSearchScope();
     short searchContext = notNull(requestor.mySearchContext, requestor::getDefaultSearchContext);
     boolean caseSensitive = requestor.myCaseSensitive;
 

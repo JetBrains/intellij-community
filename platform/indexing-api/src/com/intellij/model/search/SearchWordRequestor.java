@@ -2,9 +2,13 @@
 package com.intellij.model.search;
 
 import com.intellij.model.ModelElement;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
 public interface SearchWordRequestor {
+
+  @NotNull
+  SearchWordRequestor setSearchScope(@NotNull SearchScope searchScope);
 
   @NotNull
   SearchWordRequestor setCaseSensitive(boolean caseSensitive);

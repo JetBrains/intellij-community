@@ -28,10 +28,10 @@ class GrAliasedImportedElementSearchRequestor : SearchRequestor {
     if (name == null || StringUtil.isEmptyOrSpaces(name)) return
 
     val groovyScope = restrictScopeToGroovyFiles(parameters.effectiveSearchScope)
-    collector.searchWord(name, groovyScope).setTargetHint(target).searchRequests(MyProcessor(target, null))
+    collector.searchWord(name).setSearchScope(groovyScope).setTargetHint(target).searchRequests(MyProcessor(target, null))
     if (target is JvmMethod) {
       val (propertyName, kind) = runReadAction { getPropertyNameAndKind(target) } ?: return
-      collector.searchWord(propertyName, groovyScope).setTargetHint(target).searchRequests(MyProcessor(target, kind.prefix))
+      collector.searchWord(propertyName).setSearchScope(groovyScope).setTargetHint(target).searchRequests(MyProcessor(target, kind.prefix))
     }
   }
 
@@ -51,9 +51,9 @@ class GrAliasedImportedElementSearchRequestor : SearchRequestor {
       if (!codeReference.references((myTarget as? GrAccessorMethod)?.property ?: myTarget)) return
 
       val scope = LocalSearchScope(element.containingFile)
-      collector.searchWord(alias, scope).search(myTarget)
+      collector.searchWord(alias).setSearchScope(scope).search(myTarget)
       if (prefix != null) {
-        collector.searchWord(prefix + GroovyPropertyUtils.capitalize(alias), scope).search(myTarget)
+        collector.searchWord(prefix + GroovyPropertyUtils.capitalize(alias)).setSearchScope(scope).search(myTarget)
       }
     }
   }
