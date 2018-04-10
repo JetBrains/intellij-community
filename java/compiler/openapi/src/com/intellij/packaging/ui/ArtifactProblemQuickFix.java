@@ -19,7 +19,7 @@ package com.intellij.packaging.ui;
  * @author nik
  */
 public abstract class ArtifactProblemQuickFix {
-  private String myActionName;
+  private final String myActionName;
 
   protected ArtifactProblemQuickFix() {
     this("Fix");

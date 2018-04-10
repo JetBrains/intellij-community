@@ -9,13 +9,13 @@
 #define IDS_JDK_ENV_VAR                 104
 #define IDS_VM_OPTIONS_PATH             105
 #define IDS_MAIN_CLASS                  106
-#define IDI_WINLAUNCHER                 107
+// this magic number reflects IDI_ICON in OpenJDK jdk/src/windows/resource/java.rc
+#define IDI_WINLAUNCHER                 2000
 #define IDS_CLASSPATH_LIBS              107
 #define IDI_SMALL                       108
 #define IDS_JDK_ONLY                    108
 #define IDC_WINLAUNCHER                 109
 #define IDS_COMMAND_LINE_PROCESSOR_CLASS 110
-#define IDS_BOOTCLASSPATH_LIBS          111
 #define IDS_PROPS_ENV_VAR               112
 #define IDS_VM_OPTIONS_ENV_VAR          113
 #define IDS_ERROR_LAUNCHING_APP         114

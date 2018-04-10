@@ -153,8 +153,8 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     invokeRefactoring(new InheritanceToDelegationProcessor(myProject, myClass,
                                                            getSelectedTargetClass(), getFieldName(),
                                                            getInnerClassName(),
-                                                           implementedInterfaces.toArray(new PsiClass[implementedInterfaces.size()]),
-                                                           delegatedMethods.toArray(new PsiMethod[delegatedMethods.size()]),
+                                                           implementedInterfaces.toArray(PsiClass.EMPTY_ARRAY),
+                                                           delegatedMethods.toArray(PsiMethod.EMPTY_ARRAY),
                                                            isGenerateGetter(), isGenerateGetter()));
   }
 

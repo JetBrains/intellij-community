@@ -100,6 +100,12 @@ abstract class TerminalOperation extends Operation {
     if(name.equals("toSet") && args.length == 0) {
       return ToCollectionTerminalOperation.toSet(resultType);
     }
+    if(name.equals("toImmutableList") && args.length == 0) {
+      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList");
+    }
+    if(name.equals("toImmutableSet") && args.length == 0) {
+      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet");
+    }
     if((name.equals("anyMatch") || name.equals("allMatch") || name.equals("noneMatch")) && args.length == 1) {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
       return fn == null ? null : new MatchTerminalOperation(fn, name);
@@ -174,13 +180,20 @@ abstract class TerminalOperation extends Operation {
       case "toList":
         if (collectorArgs.length != 0) return null;
         return ToCollectionTerminalOperation.toList(resultType);
+      case "toUnmodifiableList":
+        if (collectorArgs.length != 0) return null;
+        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList");
       case "toSet":
         if (collectorArgs.length != 0) return null;
         return ToCollectionTerminalOperation.toSet(resultType);
+      case "toUnmodifiableSet":
+        if (collectorArgs.length != 0) return null;
+        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet");
       case "toCollection":
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 0);
         return fn == null ? null : new ToCollectionTerminalOperation(resultType, fn, null);
+      case "toUnmodifiableMap":
       case "toMap": {
         if (collectorArgs.length < 2 || collectorArgs.length > 4) return null;
         FunctionHelper key = FunctionHelper.create(collectorArgs[0], 1);
@@ -191,7 +204,10 @@ abstract class TerminalOperation extends Operation {
                    ? FunctionHelper.create(collectorArgs[3], 0)
                    : FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_MAP);
         if(supplier == null) return null;
-        return new ToMapTerminalOperation(key, value, merger, supplier, resultType);
+        CollectorBasedTerminalOperation operation = new ToMapTerminalOperation(key, value, merger, supplier, resultType);
+        return collectorName.equals("toUnmodifiableMap")
+               ? new WrappedCollectionTerminalOperation(operation, "unmodifiableMap")
+               : operation;
       }
       case "reducing":
         switch (collectorArgs.length) {
@@ -344,9 +360,9 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ReduceTerminalOperation extends TerminalOperation {
-    private PsiExpression myIdentity;
-    private PsiType myType;
-    private FunctionHelper myUpdater;
+    private final PsiExpression myIdentity;
+    private final PsiType myType;
+    private final FunctionHelper myUpdater;
 
     public ReduceTerminalOperation(PsiExpression identity, FunctionHelper updater, PsiType type) {
       myIdentity = identity;
@@ -369,8 +385,8 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ReduceToOptionalTerminalOperation extends TerminalOperation {
-    private PsiType myType;
-    private FunctionHelper myUpdater;
+    private final PsiType myType;
+    private final FunctionHelper myUpdater;
 
     public ReduceToOptionalTerminalOperation(FunctionHelper updater, PsiType type) {
       myType = type;
@@ -463,7 +479,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ToPrimitiveArrayTerminalOperation extends TerminalOperation {
-    private PsiType myType;
+    private final PsiType myType;
 
     ToPrimitiveArrayTerminalOperation(PsiType type) {
       myType = type;
@@ -510,7 +526,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class FindTerminalOperation extends TerminalOperation {
-    private PsiType myType;
+    private final PsiType myType;
 
     public FindTerminalOperation(PsiType type) {
       myType = type;
@@ -591,19 +607,28 @@ abstract class TerminalOperation extends Operation {
     final PsiType myType;
     final Function<StreamToLoopReplacementContext, String> myAccNameSupplier;
     final FunctionHelper mySupplier;
+    final String myMostAbstractAllowedType;
 
-    CollectorBasedTerminalOperation(PsiType type, Function<StreamToLoopReplacementContext, String> accNameSupplier,
+    CollectorBasedTerminalOperation(PsiType type,
+                                    String mostAbstractAllowedType,
+                                    Function<StreamToLoopReplacementContext, String> accNameSupplier,
                                     FunctionHelper accSupplier) {
       myType = type;
+      myMostAbstractAllowedType = mostAbstractAllowedType;
       myAccNameSupplier = accNameSupplier;
       mySupplier = accSupplier;
     }
 
     @Override
     String initAccumulator(StreamVariable inVar, StreamToLoopReplacementContext context) {
+      return initAccumulator(inVar, context, true);
+    }
+
+    String initAccumulator(StreamVariable inVar, StreamToLoopReplacementContext context, boolean canBeFinal) {
       transform(context, inVar.getName());
       PsiType resultType = correctReturnType(myType);
-      return context.declareResult(myAccNameSupplier.apply(context), resultType, getSupplier(), ResultKind.FINAL);
+      return context.declareResult(myAccNameSupplier.apply(context), resultType, myMostAbstractAllowedType, getSupplier(),
+                                   canBeFinal ? ResultKind.FINAL : ResultKind.UNKNOWN);
     }
 
     @Override
@@ -628,11 +653,11 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class TemplateBasedOperation extends AccumulatedOperation implements CollectorOperation {
-    private String myAccName;
-    private PsiType myAccType;
-    private String myAccInitializer;
-    private String myUpdateTemplate;
-    private String myFinisherTemplate;
+    private final String myAccName;
+    private final PsiType myAccType;
+    private final String myAccInitializer;
+    private final String myUpdateTemplate;
+    private final String myFinisherTemplate;
 
     /**
      * @param accName desired name for accumulator variable
@@ -706,11 +731,39 @@ abstract class TerminalOperation extends Operation {
     }
   }
 
+  static class WrappedCollectionTerminalOperation extends TerminalOperation {
+    private final CollectorBasedTerminalOperation myDelegate;
+    private final String myWrapper;
+
+    public WrappedCollectionTerminalOperation(CollectorBasedTerminalOperation delegate, String wrapper) {
+      myDelegate = delegate;
+      myWrapper = wrapper;
+    }
+
+    @Override
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myDelegate.registerReusedElements(consumer);
+    }
+
+    @Override
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myDelegate.preprocessVariables(context, inVar, outVar);
+    }
+
+    @Override
+    String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
+      String acc = myDelegate.initAccumulator(inVar, context, false);
+      context.setFinisher(CommonClassNames.JAVA_UTIL_COLLECTIONS + "." + myWrapper + "(" + acc + ")");
+      return myDelegate.getAccumulatorUpdater(inVar, acc);
+    }
+  }
+
   static class ToCollectionTerminalOperation extends CollectorBasedTerminalOperation {
     private final boolean myList;
 
     public ToCollectionTerminalOperation(PsiType resultType, FunctionHelper fn, String desiredName) {
-      super(resultType, context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
+      super(resultType, CommonClassNames.JAVA_UTIL_COLLECTION,
+            context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
       myList = InheritanceUtil.isInheritor(resultType, CommonClassNames.JAVA_UTIL_LIST);
     }
 
@@ -742,14 +795,16 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class MinMaxTerminalOperation extends TerminalOperation {
-    private PsiType myType;
-    private String myTemplate;
-    private @Nullable FunctionHelper myComparator;
+    private final PsiType myType;
+    private final String myTemplate;
+    private @Nullable final FunctionHelper myComparator;
+    private final boolean myMax;
 
-    public MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator) {
+    public MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator, boolean max) {
       myType = type;
       myTemplate = template;
       myComparator = comparator;
+      myMax = max;
     }
 
     @Override
@@ -759,8 +814,33 @@ abstract class TerminalOperation extends Operation {
       }
     }
 
+    Number getExtremeValue() {
+      if (PsiType.INT.equals(myType)) {
+        return myMax ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+      }
+      if (PsiType.LONG.equals(myType)) {
+        return myMax ? Long.MIN_VALUE : Long.MAX_VALUE;
+      }
+      return null;
+    }
+
+    String getExtremeValueExpression() {
+      if (PsiType.INT.equals(myType)) {
+        return CommonClassNames.JAVA_LANG_INTEGER + (myMax ? ".MIN_VALUE" : ".MAX_VALUE");
+      }
+      if (PsiType.LONG.equals(myType)) {
+        return CommonClassNames.JAVA_LANG_LONG + (myMax ? ".MIN_VALUE" : ".MAX_VALUE");
+      }
+      return null;
+    }
+
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
+      if (getExtremeValue() != null && context.tryUnwrapOrElse(getExtremeValue())) {
+        String best = context.declareResult("best", myType, getExtremeValueExpression(), ResultKind.NON_FINAL);
+        String comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName());
+        return "if(" + comparePredicate + ")\n" + best + "=" + inVar + ";\n";
+      }
       String seen = context.declare("seen", "boolean", "false");
       String best = context.declareResult("best", myType, myType instanceof PsiPrimitiveType ? "0" : "null", ResultKind.UNKNOWN);
       context.setFinisher(new ConditionalExpression.Optional(myType, seen, best));
@@ -784,16 +864,16 @@ abstract class TerminalOperation extends Operation {
       String sign = max ? ">" : "<";
       if(comparator == null) {
         if (PsiType.INT.equals(elementType) || PsiType.LONG.equals(elementType)) {
-          return new MinMaxTerminalOperation(elementType, "{item}" + sign + "{best}", null);
+          return new MinMaxTerminalOperation(elementType, "{item}" + sign + "{best}", null, max);
         }
         if (PsiType.DOUBLE.equals(elementType)) {
-          return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null);
+          return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null, max);
         }
       }
       else {
         FunctionHelper fn = FunctionHelper.create(comparator, 2);
         if(fn != null) {
-          return new MinMaxTerminalOperation(elementType, "{comparator}"+sign+"0", fn);
+          return new MinMaxTerminalOperation(elementType, "{comparator}" + sign + "0", fn, max);
         }
       }
       return null;
@@ -809,7 +889,7 @@ abstract class TerminalOperation extends Operation {
                            PsiExpression merger,
                            FunctionHelper supplier,
                            PsiType resultType) {
-      super(resultType, context -> "map", supplier);
+      super(resultType, CommonClassNames.JAVA_UTIL_MAP, context -> "map", supplier);
       myKeyExtractor = keyExtractor;
       myValueExtractor = valueExtractor;
       myMerger = merger;
@@ -874,11 +954,11 @@ abstract class TerminalOperation extends Operation {
 
   static class GroupByTerminalOperation extends CollectorBasedTerminalOperation {
     private final CollectorOperation myCollector;
-    private FunctionHelper myKeyExtractor;
+    private final FunctionHelper myKeyExtractor;
     private String myKeyVar;
 
     public GroupByTerminalOperation(FunctionHelper keyExtractor, FunctionHelper supplier, PsiType resultType, CollectorOperation collector) {
-      super(resultType, context -> "map", supplier);
+      super(resultType, CommonClassNames.JAVA_UTIL_MAP, context -> "map", supplier);
       myKeyExtractor = keyExtractor;
       myCollector = collector;
     }
@@ -922,7 +1002,7 @@ abstract class TerminalOperation extends Operation {
   static class PartitionByTerminalOperation extends TerminalOperation {
     private final String myResultType;
     private final CollectorOperation myCollector;
-    private FunctionHelper myPredicate;
+    private final FunctionHelper myPredicate;
 
     public PartitionByTerminalOperation(FunctionHelper predicate, PsiType resultType, CollectorOperation collector) {
       myPredicate = predicate;
@@ -947,7 +1027,7 @@ abstract class TerminalOperation extends Operation {
       PsiType resultType = context.createType(myResultType);
       resultType = correctTypeParameters(resultType, CommonClassNames.JAVA_UTIL_MAP,
                                          Collections.singletonMap("V", myCollector::correctReturnType));
-      String map = context.declareResult("map", resultType, "new java.util.HashMap<>()", ResultKind.FINAL);
+      String map = context.declareResult("map", resultType, CommonClassNames.JAVA_UTIL_MAP, "new java.util.HashMap<>()", ResultKind.FINAL);
       myPredicate.transform(context, inVar.getName());
       myCollector.transform(context, inVar.getName());
       context.addBeforeStep(map + ".put(false, " + myCollector.getSupplier() + ");");
@@ -1066,7 +1146,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ForEachTerminalOperation extends TerminalOperation {
-    private FunctionHelper myFn;
+    private final FunctionHelper myFn;
 
     public ForEachTerminalOperation(FunctionHelper fn) {
       myFn = fn;

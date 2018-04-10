@@ -16,10 +16,11 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Py3CompatibilityInspectionTest extends PyTestCase {
+public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
 
   @Nullable
   @Override
@@ -32,9 +33,14 @@ public class Py3CompatibilityInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile("inspections/PyCompatibilityInspection3K/" + getTestName(true) + ".py");
-    myFixture.enableInspections(PyCompatibilityInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyCompatibilityInspection.class;
+  }
+
+  @Override
+  protected String getTestCaseDirectory() {
+    return "inspections/PyCompatibilityInspection3K/";
   }
 }

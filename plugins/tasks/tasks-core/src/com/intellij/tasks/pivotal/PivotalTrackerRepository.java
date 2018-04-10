@@ -51,7 +51,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   {
     if (StringUtil.isEmpty(getUrl())) {
-      setUrl("http://www.pivotaltracker.com");
+      setUrl("https://www.pivotaltracker.com");
     }
   }
 
@@ -88,7 +88,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     List<Element> children = getStories(query, max);
 
     final List<Task> tasks = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   private List<Element> getStories(@Nullable final String query, final int max) throws Exception {
@@ -237,7 +237,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
       final String author = note.getChildText("author");
       result.add(new SimpleComment(date.get(), author, text));
     }
-    return result.toArray(new Comment[result.size()]);
+    return result.toArray(Comment.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -292,6 +292,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   @Override
   protected void configureHttpMethod(final HttpMethod method) {
     method.addRequestHeader("X-TrackerToken", myAPIKey);
+    //method.setFollowRedirects(true);
   }
 
   public String getProjectId() {
@@ -383,5 +384,13 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   @Override
   protected int getFeatures() {
     return super.getFeatures() | BASIC_HTTP_AUTHORIZATION | STATE_UPDATING;
+  }
+
+  @Override
+  public void setUrl(String url) {
+    if (url.startsWith("http:")) {
+      url = "https:" + StringUtil.trimStart(url, "http:");
+    }
+    super.setUrl(url);
   }
 }

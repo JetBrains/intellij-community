@@ -62,7 +62,7 @@ public class CompressionUtil {
   private static final AtomicLong mySizeAfterCompression = new AtomicLong();
 
   public static final boolean DUMP_COMPRESSION_STATS = SystemProperties.getBooleanProperty("idea.dump.compression.stats", false);
-  public static final boolean USE_SNAPPY = SystemProperties.getBooleanProperty("idea.use.snappy", true);
+  public static final boolean USE_SNAPPY = SystemProperties.getBooleanProperty("idea.use.snappy", false);
 
   public static int writeCompressedWithoutOriginalBufferLength(@NotNull DataOutput out, @NotNull byte[] bytes, int length) throws IOException {
     long started = DUMP_COMPRESSION_STATS ? System.nanoTime() : 0;
@@ -85,7 +85,7 @@ public class CompressionUtil {
     int requests = myCompressionRequests.incrementAndGet();
     long l = myCompressionTime.addAndGet(time);
 
-    if (DUMP_COMPRESSION_STATS && requests % 1000  == 0) {
+    if (DUMP_COMPRESSION_STATS && (requests & 0x1fff)  == 0) {
       System.out.println("Compressed " + requests + " times, size:" + mySizeBeforeCompression + "->" + mySizeAfterCompression + " for " + (l  / 1000000) + "ms");
     }
 
@@ -96,7 +96,7 @@ public class CompressionUtil {
   }
 
   @NotNull
-  public static byte[] readCompressedWithoutOriginalBufferLength(@NotNull DataInput in) throws IOException {
+  public static byte[] readCompressedWithoutOriginalBufferLength(@NotNull DataInput in, int originalBufferLength) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
 
     byte[] bytes = spareBufferLocal.getBuffer(size);
@@ -110,13 +110,13 @@ public class CompressionUtil {
     if (USE_SNAPPY) {
       decompressedResult = Snappy.uncompress(bytes, 0, size);
     } else {
-      decompressedResult = LZ4Factory.fastestJavaInstance().fastDecompressor().decompress(bytes, 0, 32768);
+      decompressedResult = LZ4Factory.fastestJavaInstance().fastDecompressor().decompress(bytes, 0, originalBufferLength);
     }
 
     long doneTime = (DUMP_COMPRESSION_STATS ? System.nanoTime() : 0) - started;
     long decompressedSize = myDecompressedSize.addAndGet(size);
     long decompressedTime = myDecompressionTime.addAndGet(doneTime);
-    if (DUMP_COMPRESSION_STATS && decompressedRequests % 1000 == 0) {
+    if (DUMP_COMPRESSION_STATS && (decompressedRequests & 0x1fff)  == 0) {
       System.out.println("Decompressed " + decompressedRequests + " times, size: " + decompressedSize  + " for " + (decompressedTime / 1000000) + "ms");
     }
 

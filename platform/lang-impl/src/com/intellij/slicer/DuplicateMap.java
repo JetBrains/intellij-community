@@ -46,11 +46,7 @@ public class DuplicateMap {
   SliceNode putNodeCheckDupe(@NotNull final SliceNode node) {
     return ReadAction.compute(() -> {
       SliceUsage usage = node.getValue();
-      SliceNode eq = myDuplicates.get(usage);
-      if (eq == null) {
-        myDuplicates.put(usage, node);
-      }
-      return eq;
+      return myDuplicates.putIfAbsent(usage, node);
     });
   }
 

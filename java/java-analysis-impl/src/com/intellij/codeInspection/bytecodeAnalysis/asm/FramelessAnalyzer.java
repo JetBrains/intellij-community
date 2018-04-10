@@ -15,14 +15,12 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Specialized version of {@link org.jetbrains.org.objectweb.asm.tree.analysis.Analyzer}.
@@ -30,6 +28,9 @@ import java.util.Map;
  * So, the main point here is handling of subroutines (jsr) and try-catch-finally blocks.
  */
 public class FramelessAnalyzer extends SubroutineFinder {
+  private static final Set<String> NPE_HANDLERS = ContainerUtil.set("java/lang/Throwable", "java/lang/Exception",
+                                                                    "java/lang/RuntimeException", "java/lang/NullPointerException");
+
   protected boolean[] wasQueued;
   protected boolean[] queued;
   protected int[] queue;
@@ -52,8 +53,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
     top = 0;
 
     // computes exception handlers for each instruction
-    for (int i = 0; i < m.tryCatchBlocks.size(); ++i) {
-      TryCatchBlockNode tcb = m.tryCatchBlocks.get(i);
+    for (TryCatchBlockNode tcb : m.tryCatchBlocks) {
       int begin = insns.indexOf(tcb.start);
       int end = insns.indexOf(tcb.end);
       for (int j = begin; j < end; ++j) {
@@ -193,7 +193,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
   }
 
   protected boolean newControlFlowExceptionEdge(final int insn, final TryCatchBlockNode tcb) {
-    return myEdgeCreator.newControlFlowExceptionEdge(insn, insns.indexOf(tcb.handler));
+    return myEdgeCreator.newControlFlowExceptionEdge(insn, insns.indexOf(tcb.handler), NPE_HANDLERS.contains(tcb.type));
   }
 
   // -------------------------------------------------------------------------
@@ -244,6 +244,6 @@ public class FramelessAnalyzer extends SubroutineFinder {
   interface EdgeCreator {
     void newControlFlowEdge(final int insn, final int successor);
 
-    boolean newControlFlowExceptionEdge(final int insn, final int successor);
+    boolean newControlFlowExceptionEdge(final int insn, final int successor, boolean npe);
   }
 }

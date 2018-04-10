@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.lang.annotation.ProblemGroup;
@@ -22,6 +8,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,6 +30,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
   private ProblemGroup myProblemGroup;
+  @Nullable private final Throwable myCreationTrace;
 
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
@@ -61,14 +50,29 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     assertPhysical(startElement);
     if (startElement != endElement) assertPhysical(endElement);
 
-    final TextRange startElementRange = startElement.getTextRange();
-    LOG.assertTrue(startElementRange != null, startElement);
-    final TextRange endElementRange = endElement.getTextRange();
-    LOG.assertTrue(endElementRange != null, endElement);
-    if (startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
+    final TextRange startElementRange = getAnnotationRange(startElement);
+    LOG.assertTrue(startElement instanceof ExternallyAnnotated || startElementRange != null, startElement);
+    final TextRange endElementRange = getAnnotationRange(endElement);
+    LOG.assertTrue(endElement instanceof ExternallyAnnotated || endElementRange != null, endElement);
+    if (startElementRange != null
+        && endElementRange != null
+        && startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
       if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
-        LOG.error("Empty PSI elements should not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement + ", startContainingFile: " + startContainingFile);
+        LOG.error("Empty PSI elements must not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement + ", startContainingFile: " + startContainingFile);
       }
+    }
+    if (rangeInElement != null && startElementRange != null && endElementRange != null) {
+      TextRange.assertProperRange(rangeInElement);
+      if (rangeInElement.getEndOffset() > endElementRange.getEndOffset() - startElementRange.getStartOffset()) {
+        LOG.error("Argument rangeInElement " + rangeInElement + " endOffset"+
+                  " must not exceed descriptor text range " +
+                  "(" + startElementRange.getStartOffset() +
+                  ", " + endElementRange.getEndOffset() + ")" +
+                  " length ("+(endElementRange.getEndOffset()-startElementRange.getStartOffset())+").");
+      }
+    }
+    if (rangeInElement != null) {
+      TextRange.assertProperRange(rangeInElement);
     }
 
     myHighlightType = highlightType;
@@ -76,9 +80,20 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     myStartSmartPointer = manager.createSmartPsiElementPointer(startElement, startContainingFile);
     myEndSmartPointer = startElement == endElement ? null : manager.createSmartPsiElementPointer(endElement, endContainingFile);
+    if (myEndSmartPointer != null) {
+      LOG.assertTrue(endContainingFile == startContainingFile, "start/end elements should be from the same file");
+    }
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
+    myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
+  }
+
+  @Nullable
+  private static TextRange getAnnotationRange(@NotNull PsiElement startElement) {
+    return startElement instanceof ExternallyAnnotated
+           ? ((ExternallyAnnotated)startElement).getAnnotationRegion()
+           : startElement.getTextRange();
   }
 
   protected void assertPhysical(final PsiElement element) {
@@ -86,6 +101,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       LOG.error("Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree: " +
                 element + "; file: " + element.getContainingFile());
     }
+  }
+
+  @Nullable
+  public Throwable getCreationTrace() {
+    return myCreationTrace;
   }
 
   @Override
@@ -160,6 +180,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myEnforcedTextAttributes;
   }
 
+  @Nullable
   public TextRange getTextRangeForNavigation() {
     TextRange textRange = getTextRange();
     if (textRange == null) return null;
@@ -167,6 +188,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, textRange);
   }
 
+  @Nullable
   public TextRange getTextRange() {
     PsiElement startElement = getStartElement();
     PsiElement endElement = myEndSmartPointer == null ? startElement : getEndElement();
@@ -174,20 +196,37 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       return null;
     }
 
-    TextRange textRange = startElement.getTextRange();
-    if (startElement == endElement) {
-      if (isAfterEndOfLine()) return new TextRange(textRange.getEndOffset(), textRange.getEndOffset());
-      if (myTextRangeInElement != null) {
-        return new TextRange(textRange.getStartOffset() + myTextRangeInElement.getStartOffset(),
-                             textRange.getStartOffset() + myTextRangeInElement.getEndOffset());
-      }
-      return textRange;
+    TextRange startRange = getAnnotationRange(startElement);
+    if (startRange == null) {
+      return null;
     }
-    return new TextRange(textRange.getStartOffset(), endElement.getTextRange().getEndOffset());
+
+    if (startElement != endElement) {
+      TextRange endRange = getAnnotationRange(endElement);
+      if (endRange == null) return null;
+      startRange = startRange.union(endRange);
+    }
+    else if (myTextRangeInElement != null) {
+      if (myTextRangeInElement.getEndOffset() > startRange.getLength()) {
+        // became invalid
+        return null;
+      }
+      startRange = startRange.cutOut(myTextRangeInElement);
+    }
+    if (isAfterEndOfLine()) {
+      int endOffset = startRange.getEndOffset();
+      return new TextRange(endOffset, endOffset);
+    }
+    return startRange;
   }
 
   public Navigatable getNavigatable() {
     return myNavigatable;
+  }
+
+  @Nullable
+  public VirtualFile getContainingFile() {
+    return myStartSmartPointer.getVirtualFile();
   }
 
   public void setNavigatable(final Navigatable navigatable) {

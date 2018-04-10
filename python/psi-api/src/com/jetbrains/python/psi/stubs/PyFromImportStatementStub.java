@@ -26,6 +26,12 @@ import org.jetbrains.annotations.Nullable;
 public interface PyFromImportStatementStub extends StubElement<PyFromImportStatement> {
   @Nullable
   QualifiedName getImportSourceQName();
+
+  /**
+   * @deprecated Use stub-based {@link PyFromImportStatement#getStarImportElement()} instead.
+   */
+  @Deprecated
   boolean isStarImport();
+
   int getRelativeLevel();
 }

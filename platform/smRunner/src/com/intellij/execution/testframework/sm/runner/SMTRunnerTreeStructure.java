@@ -60,7 +60,7 @@ public class SMTRunnerTreeStructure extends TestTreeViewStructure<SMTestProxy>
     final List<? extends SMTestProxy> results =
         ((SMTestProxy)element).getChildren(getFilter());
 
-    return results.toArray(new AbstractTestProxy[results.size()]);
+    return results.toArray(new AbstractTestProxy[0]);
   }
 
   @Override

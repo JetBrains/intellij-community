@@ -8,7 +8,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 12-Jun-17
  */
 @XmlRootElement
 public class Request extends Message{

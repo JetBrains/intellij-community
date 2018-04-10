@@ -32,13 +32,14 @@ public class ImageUtil {
 
   public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
     if (image instanceof JBHiDPIScaledImage) {
-      Image img = ((JBHiDPIScaledImage)image).getDelegate();
-      float scale = ((JBHiDPIScaledImage)image).getScale();
+      JBHiDPIScaledImage jbImage = (JBHiDPIScaledImage)image;
+      Image img = jbImage.getDelegate();
       if (img != null) {
-        image = img;
         if (inUserSize) {
-          image = scaleImage(image, 1 / scale);
+          double scale = jbImage.getScale();
+          img = scaleImage(img, 1 / scale);
         }
+        image = img;
       }
     }
     if (image instanceof BufferedImage) {
@@ -75,6 +76,13 @@ public class ImageUtil {
     g.drawImage(image, 0, 0, null);
     g.dispose();
     return bufferedImage;
+  }
+
+  public static double getImageScale(BufferedImage image) {
+    if (image instanceof JBHiDPIScaledImage) {
+      return ((JBHiDPIScaledImage)image).getScale();
+    }
+    return 1;
   }
 
   public static int getRealWidth(@NotNull Image image) {
@@ -116,7 +124,7 @@ public class ImageUtil {
   /**
    * Scales the image taking into account its HiDPI awareness.
    */
-  public static Image scaleImage(Image image, float scale) {
+  public static Image scaleImage(Image image, double scale) {
     return ImageLoader.scaleImage(image, scale);
   }
 }

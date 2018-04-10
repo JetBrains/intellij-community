@@ -39,7 +39,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class InspectionViewSuppressActionHolder {
-  private final Map<String, Map<ContextDescriptor, SuppressIntentionAction[]>> mySuppressActions = FactoryMap.createMap(__ -> new THashMap<>());
+  private final Map<String, Map<ContextDescriptor, SuppressIntentionAction[]>> mySuppressActions =
+    FactoryMap.create(__ -> new THashMap<>());
   private final Interner<Set<SuppressIntentionAction>> myActionSetInterner = new Interner<>();
 
   @NotNull

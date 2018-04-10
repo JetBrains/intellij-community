@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.suspiciousNameCombination;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.InvalidDataException;
@@ -34,12 +20,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalInspectionTool {
+public class SuspiciousNameCombinationInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   @NonNls private static final String ELEMENT_GROUPS = "group";
   @NonNls private static final String ATTRIBUTE_NAMES = "names";
   @NonNls private static final String ELEMENT_IGNORED_METHODS = "ignored";
   protected final List<String> myNameGroups = new ArrayList<>();
   private final Map<String, String> myWordToGroupMap = new HashMap<>();
+  private int myLongestWord = 0;
   final MethodMatcher myIgnoredMethods = new MethodMatcher()
     // parameter name is 'x' which is completely unrelated to coordinates
     .add("java.io.PrintStream", "println")
@@ -73,13 +60,16 @@ public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalI
   protected void clearNameGroups() {
     myNameGroups.clear();
     myWordToGroupMap.clear();
+    myLongestWord = 0;
   }
 
-  protected void addNameGroup(@NonNls final String group) {
+  public void addNameGroup(@NonNls final String group) {
     myNameGroups.add(group);
     List<String> words = StringUtil.split(group, ",");
     for(String word: words) {
-      myWordToGroupMap.put(canonicalize(word), group);
+      String canonicalized = canonicalize(word);
+      myLongestWord = Math.max(myLongestWord, canonicalized.length());
+      myWordToGroupMap.put(canonicalized, group);
     }
   }
 
@@ -210,16 +200,21 @@ public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalI
         return null;
       }
       String[] words = NameUtil.splitNameIntoWords(name);
+      Arrays.asList(words).replaceAll(SuspiciousNameCombinationInspectionBase::canonicalize);
       String result = null;
-      for(String word: words) {
-        String group = myWordToGroupMap.get(canonicalize(word));
-        if (group != null) {
-          if (result == null) {
-            result = group;
-          }
-          else if (!result.equals(group)) {
-            result = null;
-            break;
+      for (int i = 0; i < words.length; i++) {
+        String word = "";
+        for (int j = i; j < words.length; j++) {
+          word += words[j];
+          if (word.length() > myLongestWord) break;
+          String group = myWordToGroupMap.get(word);
+          if (group != null) {
+            if (result == null) {
+              result = group;
+            }
+            else if (!result.equals(group)) {
+              return null;
+            }
           }
         }
       }

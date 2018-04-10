@@ -93,7 +93,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
       if (i != 0) builder.append(", ");
       builder.append(myWeighers[i]);
       builder.append("=");
-      builder.append(getWeight(i));
+      builder.append(myComputedWeighs[i]);
     }
     return builder.append("]").toString();
   }

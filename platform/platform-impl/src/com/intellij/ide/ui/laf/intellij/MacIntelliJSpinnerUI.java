@@ -17,8 +17,8 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,7 +32,7 @@ import java.awt.geom.Path2D;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
-  private static final Icon DEFAULT_ICON = EmptyIcon.create(MacIntelliJIconCache.getIcon("spinnerRight"));
+  private static final Icon DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("spinnerRight"));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -52,10 +52,10 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
 
     if (c instanceof JSpinner) {
       Graphics2D g2 = (Graphics2D)g;
-      g2.setColor(UIManager.getColor("FormattedTextField.background"));
+      g2.setColor(getBackground());
 
-      double arc = JBUI.scale(6);
-      Path2D rect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      float arc = JBUI.scale(6f);
+      Path2D rect = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       rect.moveTo(x, i.top);
       rect.lineTo(x, c.getHeight() - i.bottom);
       rect.lineTo(i.left + arc, c.getHeight() - i.bottom);
@@ -67,7 +67,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
       g2.fill(rect);
     }
 
-    Icon icon = MacIntelliJIconCache.getIcon("spinnerRight", false, false, c.isEnabled());
+    Icon icon = IconCache.getIcon("spinnerRight", false, false, c.isEnabled());
     icon.paintIcon(c, g, x, i.top);
   }
 
@@ -88,7 +88,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
     Insets i = spinner.getInsets();
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
-    return new Dimension(Math.max(d.width + 7, iconWidth), Math.max(d.height, iconHeight));
+    return new Dimension(Math.max(d.width + JBUI.scale(7), iconWidth), Math.max(d.height, iconHeight));
   }
 
   @Override
@@ -117,14 +117,17 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
   }
 
   @Override
-  protected void layoutEditor(@NotNull JComponent editor) {
-    int w = spinner.getWidth();
-    int h = spinner.getHeight();
-    Insets i = spinner.getInsets();
-    editor.setBounds(JBUI.scale(2) + i.left,
-                     JBUI.scale(2) + i.top,
-                     w - (i.left + i.right + DEFAULT_ICON.getIconWidth() + JBUI.scale(6)),
-                     h - (i.top + i.bottom + JBUI.scale(4)));
+  protected void layout() {
+    JComponent editor = spinner.getEditor();
+    if (editor != null) {
+      int w = spinner.getWidth();
+      int h = spinner.getHeight();
+      Insets i = spinner.getInsets();
+      editor.setBounds(JBUI.scale(2) + i.left,
+                       JBUI.scale(2) + i.top,
+                       w - (i.left + i.right + DEFAULT_ICON.getIconWidth() + JBUI.scale(6)),
+                       h - (i.top + i.bottom + JBUI.scale(2) * 2));
+    }
   }
 
   @Nullable Rectangle getArrowButtonBounds() {

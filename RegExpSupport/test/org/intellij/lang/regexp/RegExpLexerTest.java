@@ -132,6 +132,24 @@ public class RegExpLexerTest extends LexerTestCase {
                             "CLASS_END (']')", lexer);
   }
 
+  public void testMysqlCharExpressions() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(MYSQL_BRACKET_EXPRESSIONS));
+    doTest("[[.~.][.tilda.][.NUL.][.plus-sign.]]", "CLASS_BEGIN ('[')\n" +
+                                                   "MYSQL_CHAR_BEGIN ('[.')\nCHARACTER ('~')\nMYSQL_CHAR_END ('.]')\n" +
+                                                   "MYSQL_CHAR_BEGIN ('[.')\nNAME ('tilda')\nMYSQL_CHAR_END ('.]')\n" +
+                                                   "MYSQL_CHAR_BEGIN ('[.')\nNAME ('NUL')\nMYSQL_CHAR_END ('.]')\n" +
+                                                   "MYSQL_CHAR_BEGIN ('[.')\nNAME ('plus-sign')\nMYSQL_CHAR_END ('.]')\n" +
+                                                   "CLASS_END (']')", lexer);
+  }
+
+  public void testMysqlCharEqExpressions() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(MYSQL_BRACKET_EXPRESSIONS));
+    doTest("[[=.=][=c=]]", "CLASS_BEGIN ('[')\n" +
+                           "MYSQL_CHAR_EQ_BEGIN ('[=')\nCHARACTER ('.')\nMYSQL_CHAR_EQ_END ('=]')\n" +
+                           "MYSQL_CHAR_EQ_BEGIN ('[=')\nCHARACTER ('c')\nMYSQL_CHAR_EQ_END ('=]')\n" +
+                           "CLASS_END (']')", lexer);
+  }
+
   /**
    * \\177 is the maximum valid octal character under Ruby.
    */

@@ -38,7 +38,7 @@ public class SimpleActionGroup extends ActionGroup {
   @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    return myChildren.toArray(new AnAction[myChildren.size()]);
+    return myChildren.toArray(AnAction.EMPTY_ARRAY);
   }
 
   public int getChildrenCount() {

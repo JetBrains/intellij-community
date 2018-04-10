@@ -193,7 +193,18 @@ public abstract class GotoActionBase extends AnAction {
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection) {
     showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection,
-                        new DefaultChooseByNameItemProvider(getPsiContext(e)));
+                        ChooseByNameModelEx.getItemProvider(model, getPsiContext(e)));
+  }
+
+  @Deprecated
+  protected <T> void showNavigationPopup(AnActionEvent e,
+                                         ChooseByNameModel model,
+                                         final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         boolean useSelectionFromEditor,
+                                         final boolean allowMultipleSelection,
+                                         final DefaultChooseByNameItemProvider itemProvider) {
+    showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection, (ChooseByNameItemProvider)itemProvider);
   }
 
   protected <T> void showNavigationPopup(AnActionEvent e,
@@ -202,14 +213,16 @@ public abstract class GotoActionBase extends AnAction {
                                          @Nullable final String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection,
-                                         final DefaultChooseByNameItemProvider itemProvider) {
+                                         final ChooseByNameItemProvider itemProvider) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
+                                                            mayRequestOpenInCurrentWindow,
+                                                            start.second);
+    //UIUtil.typeAheadUntilFocused(e.getInputEvent(), popup.getTextField());
     showNavigationPopup(callback, findUsagesTitle,
-                        ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
-                                                      mayRequestOpenInCurrentWindow,
-                                                      start.second), allowMultipleSelection);
+                        popup, allowMultipleSelection);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
@@ -318,6 +331,7 @@ public abstract class GotoActionBase extends AnAction {
       }
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
   }
+
 
   private static boolean historyEnabled() {
     return !ContainerUtil.isEmpty(ourHistory.get(myInAction));

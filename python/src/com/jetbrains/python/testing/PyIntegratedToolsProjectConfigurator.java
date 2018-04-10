@@ -71,6 +71,9 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
   }
 
   private static void updateIntegratedTools(@NotNull final Module module) {
+    if (module.isDisposed()) {
+      return;
+    }
     Application application = ApplicationManager.getApplication();
     assert !application.isDispatchThread() : "This method should not be called on AWT";
 

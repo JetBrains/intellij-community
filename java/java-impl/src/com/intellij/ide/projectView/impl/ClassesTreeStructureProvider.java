@@ -38,40 +38,43 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class ClassesTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
   private final Project myProject;
 
-  public ClassesTreeStructureProvider(Project project) {
+  public ClassesTreeStructureProvider(@NotNull Project project) {
     myProject = project;
   }
 
   @NotNull
   @Override
-  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
+  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
+                                             @NotNull Collection<AbstractTreeNode> children,
+                                             ViewSettings settings) {
     return AbstractTreeUi.calculateYieldingToWriteAction(() -> doModify(parent, children));
   }
 
   @NotNull
   private Collection<AbstractTreeNode> doModify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<>();
-    for (final AbstractTreeNode child : children) {
+    List<AbstractTreeNode> result = new ArrayList<>();
+    for (AbstractTreeNode child : children) {
       ProgressManager.checkCanceled();
 
       Object o = child.getValue();
       if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
-        final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
-        final PsiClassOwner classOwner = (PsiClassOwner)o;
-        final VirtualFile file = classOwner.getVirtualFile();
+        ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
+        PsiClassOwner classOwner = (PsiClassOwner)o;
+        VirtualFile file = classOwner.getVirtualFile();
 
         if (!(classOwner instanceof PsiCompiledElement)) {
           //do not show duplicated items if jar file contains classes and sources
-          final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+          ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
           if (file != null && fileIndex.isInLibrarySource(file)) {
-            final PsiElement originalElement = classOwner.getOriginalElement();
+            PsiElement originalElement = classOwner.getOriginalElement();
             if (originalElement instanceof PsiFile) {
               PsiFile classFile = (PsiFile)originalElement;
-              final VirtualFile virtualClassFile = classFile.getVirtualFile();
+              VirtualFile virtualClassFile = classFile.getVirtualFile();
               if (virtualClassFile != null && fileIndex.isInLibraryClasses(virtualClassFile)
                   && !classOwner.getManager().areElementsEquivalent(classOwner, classFile)
                   && classOwner.getManager().areElementsEquivalent(classOwner.getContainingDirectory(), classFile.getContainingDirectory())) {
@@ -105,12 +108,12 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   }
 
   private boolean fileInRoots(VirtualFile file) {
-    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     return file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
   }
 
   @Override
-  public PsiElement getTopLevelElement(final PsiElement element) {
+  public PsiElement getTopLevelElement(PsiElement element) {
     PsiFile baseRootFile = getBaseRootFile(element);
     if (baseRootFile == null) return null;
 
@@ -118,16 +121,15 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
     PsiElement current = element;
     while (current != null) {
-
-      if (isSelectable(current)) break;
-      if (isTopLevelClass(current, baseRootFile)) break;
-
+      if (isSelectable(current) || isTopLevelClass(current)) {
+        break;
+      }
       current = current.getParent();
     }
 
     if (current instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)current).getClasses();
-      if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) && isTopLevelClass(classes[0], baseRootFile)) {
+      if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) && isTopLevelClass(classes[0])) {
         current = classes[0];
       }
     }
@@ -138,8 +140,10 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   private static boolean isSelectable(PsiElement element) {
     if (element instanceof PsiFileSystemItem) return true;
 
+    if (element instanceof PsiJavaModule) return true;
+
     if (element instanceof PsiField || element instanceof PsiClass || element instanceof PsiMethod) {
-      return !(element.getParent() instanceof PsiAnonymousClass) && !(element instanceof PsiAnonymousClass);
+      return !(element instanceof PsiAnonymousClass || element.getParent() instanceof PsiAnonymousClass);
     }
 
     return false;
@@ -147,18 +151,15 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
   @Nullable
   private static PsiFile getBaseRootFile(PsiElement element) {
-    final PsiFile containingFile = element.getContainingFile();
+    PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
 
-    final FileViewProvider viewProvider = containingFile.getViewProvider();
+    FileViewProvider viewProvider = containingFile.getViewProvider();
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
-  private static boolean isTopLevelClass(final PsiElement element, @NotNull PsiFile baseRootFile) {
-    if (!(element instanceof PsiClass)) {
-      return false;
-    }
-    return ClassUtil.isTopLevelClass((PsiClass)element);
+  private static boolean isTopLevelClass(PsiElement element) {
+    return element instanceof PsiClass && ClassUtil.isTopLevelClass((PsiClass)element);
   }
 
   private static class PsiClassOwnerTreeNode extends PsiFileNode {
@@ -168,15 +169,17 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
     @Override
     public Collection<AbstractTreeNode> getChildrenImpl() {
-      final ViewSettings settings = getSettings();
-      final ArrayList<AbstractTreeNode> result = new ArrayList<>();
-      for (PsiClass aClass : ((PsiClassOwner)getValue()).getClasses()) {
-        if (!(aClass instanceof SyntheticElement)) {
-          result.add(new ClassTreeNode(myProject, aClass, settings));
+      List<AbstractTreeNode> result = new ArrayList<>();
+      PsiFile value = getValue();
+      if (value instanceof PsiClassOwner) {
+        ViewSettings settings = getSettings();
+        for (PsiClass aClass : ((PsiClassOwner)value).getClasses()) {
+          if (!(aClass instanceof SyntheticElement)) {
+            result.add(new ClassTreeNode(myProject, aClass, settings));
+          }
         }
       }
       return result;
     }
-
   }
 }

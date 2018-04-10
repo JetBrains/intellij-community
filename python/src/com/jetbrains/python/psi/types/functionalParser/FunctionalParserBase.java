@@ -187,7 +187,7 @@ public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, 
   private static class CachedParser<R, T> extends FunctionalParserBase<R, T> {
     @NotNull private final FunctionalParser<R, T> myParser;
     @Nullable private Object myKey;
-    @NotNull private Map<Integer, SoftReference<Pair<R, State>>> myCache;
+    @NotNull private final Map<Integer, SoftReference<Pair<R, State>>> myCache;
 
     public CachedParser(@NotNull FunctionalParser<R, T> parser) {
       myParser = parser;

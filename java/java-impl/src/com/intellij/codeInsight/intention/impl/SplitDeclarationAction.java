@@ -27,6 +27,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -79,6 +80,9 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     if (declaredElements.length == 1) {
       PsiLocalVariable var = (PsiLocalVariable)declaredElements[0];
       if (var.getInitializer() == null) return false;
+      if (var.getTypeElement().isInferredType()) {
+        return false;
+      } 
       PsiElement parent = decl.getParent();
       if (parent instanceof PsiForStatement) {
         String varName = var.getName();
@@ -144,11 +148,12 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         .createStatementFromText(var.getName() + "=xxx;", null);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
+      CommentTracker commentTracker = new CommentTracker();
       PsiExpression initializer = var.getInitializer();
       PsiExpression rExpression = RefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType());
 
-      assignment.getRExpression().replace(rExpression);
-      initializer.delete();
+      commentTracker.replace(assignment.getRExpression(), rExpression);
+      commentTracker.deleteAndRestoreComments(initializer);
 
       PsiElement block = decl.getParent();
       if (block instanceof PsiForStatement) {

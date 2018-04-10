@@ -3,14 +3,17 @@ package com.jetbrains.env;
 import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -32,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -83,6 +87,14 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
    */
   protected PyExecutionFixtureTestTask(@Nullable final String relativeTestDataPath) {
     myRelativeTestDataPath = relativeTestDataPath;
+  }
+
+  /**
+   * Debug output of this classes will be captured and reported in case of test failure
+   */
+  @NotNull
+  public Iterable<Class<?>> getClassesToEnableDebug() {
+    return Collections.emptyList();
   }
 
   public Project getProject() {
@@ -168,11 +180,20 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     return PythonTestUtil.getTestDataPath();
   }
 
+  @Override
   public void tearDown() throws Exception {
     if (myFixture != null) {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance())) {
+          WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
+        }
+      });
+      // Teardown should be called on main thread because fixture teardown checks for
+      // thread leaks, and blocked main thread is considered as leaked
       myFixture.tearDown();
       myFixture = null;
     }
+    super.tearDown();
   }
 
   @Nullable
@@ -233,13 +254,14 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   /**
    * Creates SDK by its path
    *
-   * @param sdkHome         path to sdk (probably obtained by {@link #runTestOn(String)})
+   * @param sdkHome         path to sdk (probably obtained by {@link PyTestTask#runTestOn(String, Sdk)})
    * @param sdkCreationType SDK creation strategy (see {@link sdkTools.SdkCreationType} doc)
    * @return sdk
    */
   @NotNull
   protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType)
     throws InvalidSdkException {
+
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
     final Sdk sdk = PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());

@@ -22,7 +22,7 @@ import com.intellij.util.concurrency.Semaphore;
 public class SvnCopiesRefreshManager {
   private final RequestsMerger myRequestsMerger;
   private final Semaphore mySemaphore;
-  private Runnable myMappingCallback;
+  private final Runnable myMappingCallback;
 
   public SvnCopiesRefreshManager(final SvnFileUrlMappingImpl mapping) {
     mySemaphore = new Semaphore();

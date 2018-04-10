@@ -46,6 +46,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -104,6 +105,8 @@ public class ViewOfflineResultsAction extends AnAction {
                                                               new PerformAnalysisInBackgroundOption(project)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        //for non project directories ensure refreshed directory 
+        VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile);
         final VirtualFile[] files = virtualFile.getChildren();
         try {
           for (final VirtualFile inspectionFile : files) {

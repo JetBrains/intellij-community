@@ -18,11 +18,12 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 /**
@@ -37,11 +38,21 @@ public class VfsEventsMerger {
     updateChange(fileId, file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
   }
 
+  private final AtomicInteger myPublishedEventIndex = new AtomicInteger();
+  
+  int getPublishedEventIndex() {
+    return myPublishedEventIndex.get();
+  }
+  
+  // NB: this code is executed not only during vfs events dispatch (in write action) but also during requestReindex (in read action)
   private void updateChange(int fileId, @NotNull VirtualFile file, short mask) {
     while (true) {
       ChangeInfo existingChangeInfo = myChangeInfos.get(fileId);
       ChangeInfo newChangeInfo = new ChangeInfo(file, mask, existingChangeInfo);
-      if(myChangeInfos.put(fileId, newChangeInfo) == existingChangeInfo) break;
+      if(myChangeInfos.put(fileId, newChangeInfo) == existingChangeInfo) {
+        myPublishedEventIndex.incrementAndGet();
+        break;
+      }
     }
   }
 
@@ -87,7 +98,7 @@ public class VfsEventsMerger {
     return myChangeInfos.values().stream().map(ChangeInfo::getFile);
   }
 
-  private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos = ContainerUtil.createConcurrentIntObjectMap();
+  private final IntObjectMap<VfsEventsMerger.ChangeInfo> myChangeInfos = ContainerUtil.createConcurrentIntObjectMap();
 
   private static final short FILE_ADDED = 1;
   private static final short FILE_REMOVED = 2;

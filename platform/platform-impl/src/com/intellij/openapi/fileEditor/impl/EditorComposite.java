@@ -111,7 +111,7 @@ public abstract class EditorComposite implements Disposable {
                   @NotNull final FileEditorManagerEx fileEditorManager) {
     myFile = file;
     myEditors = editors;
-    if (NullUtils.hasNull(editors)) throw new IllegalArgumentException("Must not pass null editors in " + Arrays.asList(editors));
+    if (ArrayUtil.contains(null, editors)) throw new IllegalArgumentException("Must not pass null editors in " + Arrays.asList(editors));
     myFileEditorManager = fileEditorManager;
     myInitialFileTimeStamp     = myFile.getTimeStamp();
 

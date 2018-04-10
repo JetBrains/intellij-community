@@ -40,7 +40,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +77,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     setOptions(options);
   }
 
+  @NotNull
   protected String getCommandName() {
     return myCommandName;
   }
@@ -138,11 +139,12 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    UsageInfo[] usageInfos = usagesList.toArray(new UsageInfo[usagesList.size()]);
+    UsageInfo[] usageInfos = usagesList.toArray(UsageInfo.EMPTY_ARRAY);
     usageInfos = UsageViewUtil.removeDuplicatedUsages(usageInfos);
     return usageInfos;
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(myMembersToMove.size() == elements.length);
     myMembersToMove.clear();
@@ -274,7 +276,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         filtered.add(usage);
       }
     }
-    UsageInfo[] infos = filtered.toArray(new UsageInfo[filtered.size()]);
+    UsageInfo[] infos = filtered.toArray(UsageInfo.EMPTY_ARRAY);
     VisibilityUtil.fixVisibility(UsageViewUtil.toElements(infos), newMember, myNewVisibility);
   }
 
@@ -338,6 +340,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   public void doRun() {
     if (myMembersToMove.isEmpty()){
       String message = RefactoringBundle.message("no.members.selected");

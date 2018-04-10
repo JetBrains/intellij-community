@@ -6,7 +6,7 @@ import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
 
-private val LIBRARY by lazy { Native.loadLibrary("secret-1", SecretLibrary::class.java) as SecretLibrary }
+private val LIBRARY by lazy { Native.loadLibrary("secret-1", SecretLibrary::class.java) }
 
 private const val SECRET_SCHEMA_NONE = 0
 private const val SECRET_SCHEMA_ATTRIBUTE_STRING = 0
@@ -101,8 +101,8 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
 private inline fun <T> checkError(method: String, task: (errorRef: Array<GErrorStruct?>) -> T): T {
   val errorRef = arrayOf<GErrorStruct?>(null)
   val result = task(errorRef)
-  val error = errorRef.get(0)
-  if (error != null && error.code !== 0) {
+  val error = errorRef[0]
+  if (error != null && error.code != 0) {
     if (error.code == 32584 || error.code == 32618 || error.code == 32606 || error.code == 32642) {
       LOG.warn("gnome-keyring not installed or kde doesn't support Secret Service API. $method error code ${error.code}, error message ${error.message}")
     }

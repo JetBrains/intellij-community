@@ -19,7 +19,12 @@ import com.intellij.lang.jvm.JvmTypeParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 public interface JvmSubstitutor {
+
+  @NotNull
+  Collection<JvmTypeParameter> getTypeParameters();
 
   @Nullable
   JvmType substitute(@NotNull JvmTypeParameter typeParameter);

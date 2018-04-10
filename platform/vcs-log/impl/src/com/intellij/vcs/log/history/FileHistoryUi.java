@@ -17,7 +17,6 @@ package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -33,10 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
@@ -70,25 +66,26 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FilePath myPath;
+  @Nullable private final Hash myRevision;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
   @NotNull private final IndexDataGetter myIndexDataGetter;
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
-                       @NotNull Project project,
                        @NotNull VcsLogColorManager manager,
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
-                       @NotNull FilePath path) {
-    super(logData, project, manager, refresher);
+                       @NotNull FilePath path,
+                       @Nullable Hash revision,
+                       @NotNull VirtualFile root) {
+    super(logData, manager, refresher);
     myUiProperties = uiProperties;
 
     myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
-    myFilterUi = new FileHistoryFilterUi(path, uiProperties);
+    myRevision = revision;
+    myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
     myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
-
-    updateFilter();
 
     for (VcsLogHighlighterFactory factory : ContainerUtil.filter(Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject),
                                                                  f -> HIGHLIGHTERS.contains(f.getId()))) {
@@ -151,21 +148,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return null;// file was deleted
   }
 
-  @Nullable
-  public FilePath getPreviousPath(@NotNull VcsFullCommitDetails details) {
-    if (myPath.isDirectory()) return myPath;
-
-    List<Change> changes = collectRelevantChanges(details);
-    for (Change change : changes) {
-      ContentRevision revision = change.getBeforeRevision();
-      if (revision != null) {
-        return revision.getFile();
-      }
-    }
-
-    return null;// file was created
-  }
-
   @NotNull
   public List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
     Set<FilePath> fileNames = getFileNames(details);
@@ -216,7 +198,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
     String mainText = "Commit " + commitId.toString() + " does not exist in history for " + myPath.getName();
-    if (getFilters().getBranchFilter() != null) {
+    if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
       showWarningWithLink(mainText + " in current branch.", "Show all branches and search again.", () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
         invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
@@ -249,25 +231,15 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return myPath;
   }
 
+  @Nullable
+  public Hash getRevision() {
+    return myRevision;
+  }
+
   @NotNull
   @Override
   public VcsLogFilterUi getFilterUi() {
     return myFilterUi;
-  }
-
-  @Override
-  public boolean areGraphActionsEnabled() {
-    return false;
-  }
-
-  @Override
-  public boolean isMultipleRoots() {
-    return false;
-  }
-
-  @Override
-  public boolean isShowRootNames() {
-    return false;
   }
 
   @Override
@@ -290,11 +262,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   public Component getMainComponent() {
     return myFileHistoryPanel;
-  }
-
-  @Override
-  protected VcsLogFilterCollection getFilters() {
-    return myFilterUi.getFilters();
   }
 
   private void updateFilter() {

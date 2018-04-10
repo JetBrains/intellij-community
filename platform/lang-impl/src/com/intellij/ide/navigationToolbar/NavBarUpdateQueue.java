@@ -41,12 +41,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Konstantin Bulenkov
  */
 public class NavBarUpdateQueue extends MergingUpdateQueue {
-  private AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
-  private Alarm myUserActivityAlarm = new Alarm(this);
+  private final AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
+  private final Alarm myUserActivityAlarm = new Alarm(this);
   private Runnable myRunWhenListRebuilt;
-  private Runnable myUserActivityAlarmRunnable = () -> processUserActivity();
+  private final Runnable myUserActivityAlarmRunnable = () -> processUserActivity();
 
-  private NavBarPanel myPanel;
+  private final NavBarPanel myPanel;
 
   public NavBarUpdateQueue(NavBarPanel panel) {
     super("NavBar", Registry.intValue("navBar.updateMergeTime"), true, panel, panel);
@@ -83,7 +83,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     try {
       final NavBarModel model = myPanel.getModel();
       if (dataContext != null) {
-        if (CommonDataKeys.PROJECT.getData(dataContext) != myPanel.getProject() || myPanel.isNodePopupShowing()) {
+        if (CommonDataKeys.PROJECT.getData(dataContext) != myPanel.getProject() || myPanel.isNodePopupActive()) {
           requestModelUpdate(null, myPanel.getContextObject(), true);
           return;
         }
@@ -142,11 +142,14 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
       }
 
       if (focus != null && focus.isShowing()) {
-        if (!myPanel.hasFocus() && !myPanel.isNodePopupShowing()) {
+        if (!myPanel.isFocused() && !myPanel.isNodePopupActive()) {
           requestModelUpdate(DataManager.getInstance().getDataContext(focus), null, false);
         }
       }
       else if (wnd.isActive()) {
+        if (myPanel.allowNavItemsFocus() && (myPanel.isFocused() || myPanel.isNodePopupActive())) {
+          return;
+        }
         requestModelUpdate(null, myPanel.getContextObject(), false);
       }
     });
@@ -256,11 +259,6 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         }
       }
     });
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
   }
 
   public void queueTypeAheadDone(final ActionCallback done) {

@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 20.09.13
  */
 public class ModuleTypeCategory extends ProjectCategory {
 

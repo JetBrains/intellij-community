@@ -16,7 +16,10 @@
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.PrivacyPolicy;
+import com.intellij.ide.gdpr.Consent;
+import com.intellij.ide.gdpr.ConsentOptions;
+import com.intellij.ide.gdpr.ConsentSettingsUi;
+import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,6 +35,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
@@ -41,19 +45,26 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -69,6 +80,12 @@ public class AppUIUtil {
   private static boolean ourMacDocIconSet = false;
 
   public static void updateWindowIcon(@NotNull Window window) {
+    if (SystemInfo.isWindows &&
+        SystemProperties.getBooleanProperty("ide.native.launcher", false) &&
+        SystemProperties.getBooleanProperty("jbre.win.app.icon.supported", false)) // todo[tav] defined by JBRE, remove when OpenJDK supports it as well
+    {
+      return; // JDK will load icon from the exe resource
+    }
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
@@ -151,7 +168,7 @@ public class AppUIUtil {
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
-    String wmClass = VENDOR_PREFIX + name;
+    String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
     if (DEBUG_MODE) wmClass += "-debug";
     return wmClass;
   }
@@ -233,13 +250,29 @@ public class AppUIUtil {
     return iconPath;
   }
 
-  public static void showPrivacyPolicy() {
+  public static void showUserAgreementAndConsentsIfNeeded() {
     if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
-      Pair<PrivacyPolicy.Version, String> policy = PrivacyPolicy.getContent();
-      if (!PrivacyPolicy.isVersionAccepted(policy.getFirst())) {
+      EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
+      if (!agreement.isAccepted()) {
         try {
-          SwingUtilities.invokeAndWait(() -> showPrivacyPolicyAgreement(policy.getSecond()));
-          PrivacyPolicy.setVersionAccepted(policy.getFirst());
+          // todo: does not seem to request focus when shown
+          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText()));
+          EndUserAgreement.setAccepted(agreement);
+        }
+        catch (Exception e) {
+          Logger.getInstance(AppUIUtil.class).warn(e);
+        }
+      }
+      final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+      if (consentsToShow.second) {
+        try {
+          final Ref<Collection<Consent>> result = Ref.create(null);
+          // todo: does not seem to request focus when shown
+          SwingUtilities.invokeAndWait(() -> result.set(confirmConsentOptions(consentsToShow.first)));
+          final Collection<Consent> confirmed = result.get();
+          if (confirmed != null) {
+            ConsentOptions.getInstance().setConsents(confirmed);
+          }
         }
         catch (Exception e) {
           Logger.getInstance(AppUIUtil.class).warn(e);
@@ -249,10 +282,12 @@ public class AppUIUtil {
   }
 
   /**
+   * todo: update to support GDPR requirements
+   *
    * @param htmlText Updated version of Privacy Policy text if any.
    *                 If it's {@code null}, the standard text from bundled resources would be used.
    */
-  public static void showPrivacyPolicyAgreement(@NotNull String htmlText) {
+  public static void showEndUserAgreementText(@NotNull String htmlText) {
     DialogWrapper dialog = new DialogWrapper(true) {
       @Override
       protected JComponent createCenterPanel() {
@@ -284,7 +319,19 @@ public class AppUIUtil {
         viewer.setCaretPosition(0);
         viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
         centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
-        centerPanel.add(new JBScrollPane(viewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+        JBScrollPane scrollPane = new JBScrollPane(viewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+        final JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
+        scrollBar.addAdjustmentListener(new AdjustmentListener() {
+          boolean wasScrolledToTheBottom = false;
+          @Override
+          public void adjustmentValueChanged(AdjustmentEvent e) {
+            if (!wasScrolledToTheBottom) {
+              wasScrolledToTheBottom = UIUtil.isScrolledToTheBottom(viewer);
+            }
+            setOKActionEnabled(wasScrolledToTheBottom);
+          }
+        });
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
         return centerPanel;
       }
 
@@ -293,6 +340,7 @@ public class AppUIUtil {
         super.createDefaultActions();
         init();
         setOKButtonText("Accept");
+        setOKActionEnabled(false);
         setCancelButtonText("Reject and Exit");
         setAutoAdjustable(false);
       }
@@ -310,9 +358,82 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement");
+    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User License Agreement");
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
+  }
+
+  @Nullable
+  public static List<Consent> confirmConsentOptions(@NotNull List<Consent> consents) {
+    if (consents.isEmpty()) return null;
+
+    ConsentSettingsUi ui = new ConsentSettingsUi(false);
+    final DialogWrapper dialog = new DialogWrapper(true) {
+      @Nullable
+      @Override
+      protected Border createContentPaneBorder() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      protected JComponent createSouthPanel() {
+        JComponent southPanel = super.createSouthPanel();
+        if (southPanel != null) {
+          southPanel.setBorder(ourDefaultBorder);
+        }
+        return southPanel;
+      }
+
+      @Override
+      protected JComponent createCenterPanel() {
+        return ui.getComponent();
+      }
+
+      @NotNull
+      @Override
+      protected Action[] createActions() {
+        if (consents.size() > 1) {
+          return super.createActions();
+        }
+        setOKButtonText(consents.iterator().next().getName());
+        return new Action[]{getOKAction(), new DialogWrapperAction("Don't send") {
+          @Override
+          protected void doAction(ActionEvent e) {
+            close(NEXT_USER_EXIT_CODE);
+          }
+        }};
+      }
+
+      @Override
+      protected void createDefaultActions() {
+        super.createDefaultActions();
+        init();
+        setAutoAdjustable(false);
+      }
+
+    };
+    ui.reset(consents);
+    dialog.setModal(true);
+    dialog.setTitle("Data Sharing");
+    dialog.pack();
+    if (consents.size() < 2) {
+      dialog.setSize(dialog.getWindow().getWidth(), dialog.getWindow().getHeight() + JBUI.scale(75));
+    }
+    dialog.show();
+
+    int exitCode = dialog.getExitCode();
+    if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+      return null; //Don't save any changes in this case: user hasn't made a choice
+    }
+    if (consents.size() == 1) {
+      consents.set(0, consents.get(0).derive(exitCode == DialogWrapper.OK_EXIT_CODE));
+      return consents;
+    }
+
+    List<Consent> result = new ArrayList<>();
+    ui.apply(result);
+    return result;
   }
 
   /**
@@ -335,6 +456,10 @@ public class AppUIUtil {
   public static void targetToDevice(@NotNull Component comp, @Nullable Component target) {
     if (comp.isShowing()) return;
     GraphicsConfiguration gc = target != null ? target.getGraphicsConfiguration() : null;
+    setGraphicsConfiguration(comp, gc);
+  }
+
+  public static void setGraphicsConfiguration(@NotNull Component comp, @Nullable GraphicsConfiguration gc) {
     AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc);
   }
 }

@@ -24,16 +24,17 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -90,45 +91,46 @@ public class PatchProjectUtil {
     final Map<Pattern, Set<Pattern>> includePatterns = loadPatterns("idea.include.patterns");
 
     if (excludePatterns.isEmpty() && includePatterns.isEmpty()) return;
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final ModifiableModuleModel modulesModel = ModuleManager.getInstance(project).getModifiableModel();
     final Module[] modules = modulesModel.getModules();
     final ModifiableRootModel[] models = new ModifiableRootModel[modules.length];
     for (int i = 0; i < modules.length; i++) {
-      models[i] = ModuleRootManager.getInstance(modules[i]).getModifiableModel();
+      ModuleRootManager rootManager = ModuleRootManager.getInstance(modules[i]);
+      models[i] = rootManager.getModifiableModel();
       final int idx = i;
+      ModuleFileIndex fileIndex = rootManager.getFileIndex();
       final ContentEntry[] contentEntries = models[i].getContentEntries();
       for (final ContentEntry contentEntry : contentEntries) {
         final VirtualFile contentRoot = contentEntry.getFile();
         if (contentRoot == null) continue;
         final Set<VirtualFile> included = new HashSet<>();
-        iterate(contentRoot, fileOrDir -> {
-          String relativeName = VfsUtilCore.getRelativePath(fileOrDir, contentRoot, '/');
-          for (Pattern module : excludePatterns.keySet()) {
-            if (module == null || module.matcher(modules[idx].getName()).matches()) {
-              final Set<Pattern> dirPatterns = excludePatterns.get(module);
-              for (Pattern pattern : dirPatterns) {
-                if (pattern.matcher(relativeName).matches()) {
-                  contentEntry.addExcludeFolder(fileOrDir);
-                  return false;
+        fileIndex.iterateContentUnderDirectory(contentRoot, fileOrDir -> {
+              String relativeName = VfsUtilCore.getRelativePath(fileOrDir, contentRoot, '/');
+              for (Pattern module : excludePatterns.keySet()) {
+                if (module == null || module.matcher(modules[idx].getName()).matches()) {
+                  final Set<Pattern> dirPatterns = excludePatterns.get(module);
+                  for (Pattern pattern : dirPatterns) {
+                    if (pattern.matcher(relativeName).matches()) {
+                      contentEntry.addExcludeFolder(fileOrDir);
+                      return true;
+                    }
+                  }
                 }
               }
-            }
-          }
-          if (includePatterns.isEmpty()) return true;
-          for (Pattern module : includePatterns.keySet()) {
-            if (module == null || module.matcher(modules[idx].getName()).matches()) {
-              final Set<Pattern> dirPatterns = includePatterns.get(module);
-              for (Pattern pattern : dirPatterns) {
-                if (pattern.matcher(relativeName).matches()) {
-                  included.add(fileOrDir);
-                  return true;
+              if (includePatterns.isEmpty()) return true;
+              for (Pattern module : includePatterns.keySet()) {
+                if (module == null || module.matcher(modules[idx].getName()).matches()) {
+                  final Set<Pattern> dirPatterns = includePatterns.get(module);
+                  for (Pattern pattern : dirPatterns) {
+                    if (pattern.matcher(relativeName).matches()) {
+                      included.add(fileOrDir);
+                      return true;
+                    }
+                  }
                 }
               }
-            }
-          }
-          return true;
-        }, index);
+              return true;
+            });
         processIncluded(contentEntry, included);
       }
     }
@@ -157,17 +159,6 @@ public class PatchProjectUtil {
       }
     }
     processIncluded(contentEntry, parents);
-  }
-
-  public static void iterate(VirtualFile contentRoot, final ContentIterator iterator, final ProjectFileIndex idx) {
-    VfsUtilCore.visitChildrenRecursively(contentRoot, new VirtualFileVisitor() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (!iterator.processFile(file)) return false;
-        if (idx.getModuleForFile(file) == null) return false;  // already excluded
-        return true;
-      }
-    });
   }
 
   /**

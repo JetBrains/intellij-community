@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -271,7 +268,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
         if (readableType == null) continue;
         if (TypeConversionUtil.isAssignable(propertyType, readableType) ||
             resolvedType != null && TypeConversionUtil.isAssignable(resolvedType, readableType)) {
-          final String propertyName = PropertyUtil.getPropertyName(readableMember);
+          final String propertyName = PropertyUtilBase.getPropertyName(readableMember);
           if (propertyName != null) {
             objs.add(LookupElementBuilder.create(readableMember, propertyName));
           }

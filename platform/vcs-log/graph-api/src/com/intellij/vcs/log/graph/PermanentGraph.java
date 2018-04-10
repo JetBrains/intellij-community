@@ -32,6 +32,17 @@ import java.util.Set;
  */
 public interface PermanentGraph<Id> {
 
+  /**
+   * Create a new instance of VisibleGraph with specific sort type, visible branches and commits.
+   *
+   * @param sortType               mechanism of sorting for commits in the graph (see {@link PermanentGraph.SortType}):
+   *                               <ul><li/> sort topologically and by date,
+   *                               <li/> show incoming commits first for merges (IntelliSort),
+   *                               <li/> show incoming commits on top of main branch commits as if they were rebased (linear IntelliSort).</ul>
+   * @param headsOfVisibleBranches heads of visible branches, null value means all branches are visible.
+   * @param matchedCommits         visible commits, null value means all commits are visible.
+   * @return new instance of VisibleGraph.
+   */
   @NotNull
   VisibleGraph<Id> createVisibleGraph(@NotNull SortType sortType,
                                       @Nullable Set<Id> headsOfVisibleBranches,

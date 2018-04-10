@@ -85,11 +85,6 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
     myAdditionalRequiredHtmlAttributes = appendName(getAdditionalEntries(), text);
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   public static LocalQuickFix getIntentionAction(String name) {
     return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlBundle.message("add.optional.html.attribute", name));
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -22,6 +8,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -40,6 +28,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
@@ -63,6 +52,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileTabBackgroundColor;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 /**
@@ -203,7 +193,7 @@ public class EditorWindow {
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
     final Integer second = info.getSecond();
     if (file != null) {
-      getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue());
+      getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue(), false);
     }
   }
 
@@ -214,7 +204,7 @@ public class EditorWindow {
       final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
       final Integer second = info.getSecond();
       if (file != null) {
-        getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue());
+        getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue(), false);
       }
     }
   }
@@ -285,6 +275,8 @@ public class EditorWindow {
       }
       finally {
         editorManager.removeSelectionRecord(file, this);
+
+        ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
         editorManager.notifyPublisher(() -> {
           final Project project = editorManager.getProject();
@@ -469,7 +461,7 @@ public class EditorWindow {
   void updateFileBackgroundColor(@NotNull VirtualFile file) {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
-      final Color color = EditorTabbedContainer.calcTabColor(getManager().getProject(), file);
+      final Color color = getFileTabBackgroundColor(getManager().getProject(), file);
       setBackgroundColorAt(index, color);
     }
   }
@@ -517,6 +509,12 @@ public class EditorWindow {
     @NotNull final EditorWithProviderComposite myEditor;
     protected final EditorWindow myWindow;
 
+    /*@Override
+    public void addNotify() {
+      super.addNotify();
+      requestFocusInWindow();
+    }*/
+
     TComp(@NotNull EditorWindow window, @NotNull EditorWithProviderComposite editor) {
       super(new BorderLayout());
       myEditor = editor;
@@ -532,6 +530,32 @@ public class EditorWindow {
               IdeFocusManager.getGlobalInstance().requestFocus(focus, true);
             }
           });
+        }
+      });
+      setFocusTraversalPolicy(new FocusTraversalPolicy() {
+        @Override
+        public Component getComponentAfter(Container aContainer, Component aComponent) {
+          return myEditor.getComponent();
+        }
+
+        @Override
+        public Component getComponentBefore(Container aContainer, Component aComponent) {
+          return myEditor.getComponent();
+        }
+
+        @Override
+        public Component getFirstComponent(Container aContainer) {
+          return myEditor.getComponent();
+        }
+
+        @Override
+        public Component getLastComponent(Container aContainer) {
+          return myEditor.getComponent();
+        }
+
+        @Override
+        public Component getDefaultComponent(Container aContainer) {
+          return myEditor.getComponent();
         }
       });
     }
@@ -583,9 +607,17 @@ public class EditorWindow {
   }
 
   public EditorWithProviderComposite getSelectedEditor() {
+    return getSelectedEditor(false);
+  }
+
+  /**
+   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab, 
+   *                    editor for which menu is invoked will be returned
+   */
+  public EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
     final TComp comp;
     if (myTabbedPane != null) {
-      comp = (TComp)myTabbedPane.getSelectedComponent();
+      comp = (TComp)myTabbedPane.getSelectedComponent(ignorePopup);
     }
     else if (myPanel.getComponentCount() != 0) {
       final Component component = myPanel.getComponent(0);
@@ -751,7 +783,8 @@ public class EditorWindow {
           }
 
           final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
-          final FileEditor[] editors = fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true).first;
+          HistoryEntry currentState = selectedEditor.currentStateAsHistoryEntry();
+          final FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState, true, focusNew, null, -1, true).first;
           syncCaretIfPossible(editors);
           res.setFilePinned (nextFile, isFilePinned (file));
           if (!focusNew) {
@@ -770,9 +803,16 @@ public class EditorWindow {
           panel.revalidate();
           final VirtualFile firstFile = firstEC.getFile();
           final VirtualFile nextFile = virtualFile == null ? firstFile : virtualFile;
-          final FileEditor[] firstEditors = fileEditorManager.openFileImpl3(this, firstFile, !focusNew, null, true).first;
+          HistoryEntry currentState = firstEC.currentStateAsHistoryEntry();
+
+          fileEditorManager.disposeComposite(firstEC);
+
+          final boolean focusEditor = !focusNew;
+          final FileEditor[] firstEditors = fileEditorManager.openFileImpl4(this, firstFile, currentState,
+                                                                            true, focusEditor, null, -1, true).first;
           syncCaretIfPossible(firstEditors);
-          final FileEditor[] secondEditors = fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true).first;
+          final FileEditor[] secondEditors = fileEditorManager.openFileImpl4(res, nextFile, currentState,
+                                                                             true, focusNew, null, -1, true).first;
           syncCaretIfPossible(secondEditors);
         }
         return res;
@@ -839,7 +879,7 @@ public class EditorWindow {
         }
       }
     }
-    return res.toArray(new EditorWindow[res.size()]);
+    return res.toArray(new EditorWindow[0]);
   }
 
   void changeOrientation() {
@@ -860,7 +900,7 @@ public class EditorWindow {
   void updateFileName(VirtualFile file) {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
-      setTitleAt(index, EditorTabbedContainer.calcTabTitle(getManager().getProject(), file));
+      setTitleAt(index, VfsPresentationUtil.getPresentableNameForUI(getManager().getProject(), file));
       setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips()
                               ? getManager().getFileTooltipText(file)
                               : null);
@@ -1194,6 +1234,8 @@ public class EditorWindow {
   }
 
   public void clear() {
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+    
     FileEditorManagerImpl manager = getManager();
     FileEditorManagerListener.Before beforePublisher = 
       manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER);

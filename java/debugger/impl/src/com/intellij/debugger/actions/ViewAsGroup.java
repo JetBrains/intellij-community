@@ -17,6 +17,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -80,16 +81,16 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       }
 
       process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-          public void threadAction() {
-            for (final XValueNodeImpl node : selectedNodes) {
-              final XValue container = node.getValueContainer();
-              if (container instanceof JavaValue) {
-                ((JavaValue)container).setRenderer(myNodeRenderer, node);
-              }
+        @Override
+        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+          for (XValueNodeImpl node : selectedNodes) {
+            XValue container = node.getValueContainer();
+            if (container instanceof JavaValue) {
+              ((JavaValue)container).setRenderer(myNodeRenderer, node);
             }
           }
         }
-      );
+      });
     }
   }
 
@@ -148,7 +149,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
     children.addAll(renderers);
 
-    return children.toArray(new AnAction[children.size()]);
+    return children.toArray(AnAction.EMPTY_ARRAY);
   }
 
   public void update(final AnActionEvent event) {
@@ -171,7 +172,8 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
     
     process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-      public void threadAction() {
+      @Override
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         myChildren = calcChildren(values);
         DebuggerAction.enableAction(event, myChildren.length > 0);
       }

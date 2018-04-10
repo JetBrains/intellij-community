@@ -44,7 +44,6 @@ import java.util.Collections;
 
 /**
  * Created by Eugene Petrenko (eugene.petrenko@gmail.com)
- * Date: 28.05.12 16:07
  */
 public class RunTargetAction extends AnAction {
   public RunTargetAction() {
@@ -74,10 +73,10 @@ public class RunTargetAction extends AnAction {
     Pair<AntBuildFileBase, AntDomTarget> antTarget = findAntTarget(e);
     if (antTarget == null) {
       presentation.setEnabled(false);
-      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text", ""));
+      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text.template", ""));
     } else {
       presentation.setEnabled(true);
-      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text", "'" + antTarget.second.getName().getValue() + "'"));
+      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text.template", "'" + antTarget.second.getName().getValue() + "'"));
     }
   }
 

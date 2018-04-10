@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 2, 2007
  */
 public class AntDomPattern extends AntDomRecursiveVisitor {
   private static final List<Pattern> ourDefaultExcludes = new ArrayList<>(getDefaultExcludes(true));
@@ -124,7 +123,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     String normalizedPattern = antPattern.endsWith("/") || antPattern.endsWith(File.separator)? antPattern.replace(File.separatorChar, '/') + "**" : antPattern.replace(File.separatorChar, '/');
     if (normalizedPattern.startsWith("/") && normalizedPattern.length() > 1) {
       // cut first leading slash if any
-      normalizedPattern = normalizedPattern.substring(1, normalizedPattern.length());
+      normalizedPattern = normalizedPattern.substring(1);
     }
     if (!normalizedPattern.startsWith("/")) {
       final String[] patDirs = normalizedPattern.split(ourSeparatorPattern);

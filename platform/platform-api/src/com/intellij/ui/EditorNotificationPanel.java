@@ -56,7 +56,7 @@ import java.util.List;
 public class EditorNotificationPanel extends JPanel implements IntentionActionProvider, Weighted {
   protected final JLabel myLabel = new JLabel();
   protected final JLabel myGearLabel = new JLabel();
-  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
+  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(16)));
   protected Color myBackgroundColor;
   protected ColorKey myBackgroundColorKey;
 
@@ -82,6 +82,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     add(BorderLayout.CENTER, panel);
     add(BorderLayout.EAST, myGearLabel);
     setBorder(JBUI.Borders.empty(0, 10));
+  }
+
+  public static Color getToolbarBackground() {
+    return UIUtil.getPanelBackground();
   }
 
   public void setText(String text) {

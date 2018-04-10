@@ -34,15 +34,15 @@ import java.util.List;
  */
 class CSVReader {
 
-    private BufferedReader br;
+    private final BufferedReader br;
 
     private boolean hasNext = true;
 
-    private char separator;
+    private final char separator;
 
-    private char quotechar;
+    private final char quotechar;
 
-    private int skipLines;
+    private final int skipLines;
 
     private boolean linesSkiped;
 

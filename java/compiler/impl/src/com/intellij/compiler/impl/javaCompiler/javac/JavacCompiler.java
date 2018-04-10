@@ -48,7 +48,7 @@ public class JavacCompiler implements BackendCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new JavacConfigurable(JavacConfiguration.getOptions(myProject, JavacConfiguration.class));
+    return new JavacConfigurable(myProject, JavacConfiguration.getOptions(myProject, JavacConfiguration.class));
   }
 
   @NotNull 

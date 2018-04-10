@@ -53,6 +53,7 @@ import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,13 +122,13 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return ret;
   }
 
-  private static boolean isOtherClassQualifying(PyExpression qualifier, PyClassType qualifierType) {
+  private static boolean isOtherClassQualifying(@NotNull PyExpression qualifier, @NotNull PyClassType qualifierType) {
     final List<? extends PsiElement> match = PyUtil.searchForWrappingMethod(qualifier, true);
     if (match == null) {
       return true;
     }
     if (match.size() > 1) {
-      final PyClass ourClass = qualifierType.getPyClass();
+      final PyClass ourClass = PyiUtil.stubToOriginal(qualifierType.getPyClass(), PyClass.class);
       final PsiElement theirClass = CompletionUtil.getOriginalOrSelf(match.get(match.size() - 1));
       if (ourClass != theirClass) return true;
     }
@@ -158,11 +159,9 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
     }
 
-    PyClassAttributesIndex.findClassAndInstanceAttributes(referencedName, project, scope).forEach((PyTargetExpression attribute) -> {
-      ret.add(new ImplicitResolveResult(attribute, getImplicitResultRate(attribute, imports)));
-    });
-
-
+    PyClassAttributesIndex
+      .findClassAndInstanceAttributes(referencedName, project, scope)
+      .forEach(attribute -> ret.add(new ImplicitResolveResult(attribute, getImplicitResultRate(attribute, imports))));
   }
 
   private static List<QualifiedName> collectImports(PyFile containingFile) {

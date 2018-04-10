@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.impl;
 
 import com.intellij.lang.*;
@@ -30,8 +16,8 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.text.BlockSupportImpl;
-import com.intellij.psi.impl.source.text.DiffLog;
+import com.intellij.psi.impl.BlockSupportImpl;
+import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.text.BlockSupport;
@@ -80,6 +66,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final IElementType[] myLexTypes;
   private int myCurrentLexeme;
 
+  private final ParserDefinition myParserDefinition;
   private final Lexer myLexer;
   private final TokenSet myWhitespaces;
   private TokenSet myComments;
@@ -155,6 +142,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                          @Nullable Object parentCachingNode) {
     myProject = project;
     myFile = containingFile;
+    myParserDefinition = parserDefinition;
 
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
@@ -945,10 +933,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @NotNull
   private TreeElement createRootAST(@NotNull StartMarker rootMarker) {
-    final IElementType type = rootMarker.getTokenType();
-    @SuppressWarnings("NullableProblems")
-    final TreeElement rootNode = type instanceof ILazyParseableElementType ?
-                             ASTFactory.lazy((ILazyParseableElementType)type, null) : createComposite(rootMarker);
+    IElementType type = rootMarker.getTokenType();
+    TreeElement rootNode = type instanceof ILazyParseableElementType ?
+                           createLazy((ILazyParseableElementType)type, null, getASTFactory()) :
+                           createComposite(rootMarker, getASTFactory());
     if (myCharTable == null) {
       myCharTable = rootNode instanceof FileElement ? ((FileElement)rootNode).getCharTable() : new CharTableImpl();
     }
@@ -958,13 +946,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return rootNode;
   }
 
+  @Nullable
+  private ASTFactory getASTFactory() {
+    return myParserDefinition instanceof ASTFactory ? (ASTFactory)myParserDefinition : null;
+  }
+
   private static class ConvertFromTokensToASTBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
     private final DiffTreeChangeBuilder<ASTNode, ASTNode> myDelegate;
     private final ASTConverter myConverter;
 
-    private ConvertFromTokensToASTBuilder(@NotNull StartMarker rootNode, @NotNull DiffTreeChangeBuilder<ASTNode, ASTNode> delegate) {
+    private ConvertFromTokensToASTBuilder(@NotNull StartMarker rootNode,
+                                          @NotNull DiffTreeChangeBuilder<ASTNode, ASTNode> delegate,
+                                          @Nullable ASTFactory astFactory) {
       myDelegate = delegate;
-      myConverter = new ASTConverter(rootNode);
+      myConverter = new ASTConverter(rootNode, astFactory);
     }
 
     @Override
@@ -991,9 +986,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @NotNull
   private DiffLog merge(@NotNull final ASTNode oldRoot, @NotNull StartMarker newRoot, @NotNull CharSequence lastCommittedText) {
     DiffLog diffLog = new DiffLog();
-    DiffTreeChangeBuilder<ASTNode, LighterASTNode> builder = new ConvertFromTokensToASTBuilder(newRoot, diffLog);
+    DiffTreeChangeBuilder<ASTNode, LighterASTNode> builder = new ConvertFromTokensToASTBuilder(newRoot, diffLog, getASTFactory());
     MyTreeStructure treeStructure = new MyTreeStructure(newRoot, null);
-    ShallowNodeComparator<ASTNode, LighterASTNode> comparator = new MyComparator(getUserDataUnprotected(CUSTOM_COMPARATOR), treeStructure);
+    final List<CustomLanguageASTComparator> customLanguageASTComparators = CustomLanguageASTComparator.getMatchingComparators(myFile);
+    ShallowNodeComparator<ASTNode, LighterASTNode> comparator =
+      new MyComparator(getUserDataUnprotected(CUSTOM_COMPARATOR), customLanguageASTComparators, treeStructure);
 
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, indicator == null ? new EmptyProgressIndicator() : indicator,
@@ -1009,6 +1006,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     // build tree only once to avoid threading issues in read-only PSI
     StartMarker rootMarker = (StartMarker)Objects.requireNonNull(myProduction.getStartingMarkerAt(0));
     if (rootMarker.myFirstChild != null) return rootMarker;
+
+    myOptionalData.compact();
 
     myTokenTypeChecked = true;
     balanceWhiteSpaces();
@@ -1174,6 +1173,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private void bind(@NotNull StartMarker rootMarker, @NotNull CompositeElement rootNode) {
+    ASTFactory astFactory = getASTFactory();
     StartMarker curMarker = rootMarker;
     CompositeElement curNode = rootNode;
 
@@ -1196,7 +1196,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         else if (!myOptionalData.isCollapsed(marker.markerId)) {
           curMarker = marker;
 
-          final CompositeElement childNode = createComposite(marker);
+          CompositeElement childNode = createComposite(marker, astFactory);
           curNode.rawAddChildrenWithoutNotifications(childNode);
           curNode = childNode;
 
@@ -1263,7 +1263,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @NotNull
-  private static CompositeElement createComposite(@NotNull StartMarker marker) {
+  private static CompositeElement createComposite(@NotNull StartMarker marker, @Nullable ASTFactory astFactory) {
     final IElementType type = marker.myType;
     if (type == TokenType.ERROR_ELEMENT) {
       return Factory.createErrorElement(marker.myBuilder.myOptionalData.getDoneError(marker.markerId));
@@ -1273,7 +1273,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       throw new RuntimeException(UNBALANCED_MESSAGE);
     }
 
+    if (astFactory != null) {
+      CompositeElement composite = astFactory.createComposite(marker.getTokenType());
+      if (composite != null) return composite;
+    }
     return ASTFactory.composite(type);
+  }
+
+  @NotNull
+  private static LazyParseableElement createLazy(@NotNull ILazyParseableElementType type, @Nullable CharSequence text, @Nullable ASTFactory astFactory) {
+    if (astFactory != null) {
+      LazyParseableElement element = astFactory.createLazy(type, text);
+      if (element != null) return element;
+    }
+    return ASTFactory.lazy(type, text);
   }
 
   @Nullable
@@ -1291,11 +1304,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private static class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
     private final TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom;
+    @NotNull private final List<CustomLanguageASTComparator> myCustomLanguageASTComparators;
     private final MyTreeStructure myTreeStructure;
 
     private MyComparator(TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
+                         @NotNull List<CustomLanguageASTComparator> customLanguageASTComparators,
                          @NotNull MyTreeStructure treeStructure) {
       this.custom = custom;
+      myCustomLanguageASTComparators = customLanguageASTComparators;
       myTreeStructure = treeStructure;
     }
 
@@ -1312,12 +1328,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return Comparing.equal(e1.getErrorDescription(), getErrorMessage(newNode)) ? ThreeState.UNSURE : ThreeState.NO;
       }
 
-      if (custom != null) {
-        ThreeState customResult = custom.fun(oldNode, newNode, myTreeStructure);
-
-        if (customResult != ThreeState.UNSURE) {
-          return customResult;
-        }
+      final ThreeState customResult = customCompare(oldNode, newNode);
+      if (customResult != ThreeState.UNSURE) {
+        return customResult;
       }
       if (newNode instanceof Token) {
         final IElementType type = newNode.getTokenType();
@@ -1354,6 +1367,25 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
       }
 
+      return ThreeState.UNSURE;
+    }
+
+    @NotNull
+    private ThreeState customCompare(@NotNull final ASTNode oldNode, @NotNull final LighterASTNode newNode) {
+      for (CustomLanguageASTComparator comparator : myCustomLanguageASTComparators) {
+        final ThreeState customComparatorResult = comparator.compareAST(oldNode, newNode, myTreeStructure);
+        if (customComparatorResult != ThreeState.UNSURE) {
+          return customComparatorResult;
+        }
+      }
+
+      if (custom != null) {
+        ThreeState customResult = custom.fun(oldNode, newNode, myTreeStructure);
+
+        if (customResult != ThreeState.UNSURE) {
+          return customResult;
+        }
+      }
       return ThreeState.UNSURE;
     }
 
@@ -1619,10 +1651,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private static class ASTConverter implements Convertor<Node, ASTNode> {
-    @NotNull private final StartMarker myRoot;
+    private final StartMarker myRoot;
+    private final ASTFactory myASTFactory;
 
-    private ASTConverter(@NotNull StartMarker root) {
+    private ASTConverter(@NotNull StartMarker root, @Nullable ASTFactory astFactory) {
       myRoot = root;
+      myASTFactory = astFactory;
     }
 
     @Override
@@ -1637,7 +1671,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       else {
         final StartMarker startMarker = (StartMarker)n;
         final CompositeElement composite = n == myRoot ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot)
-                                                         : createComposite(startMarker);
+                                                         : createComposite(startMarker, myASTFactory);
         startMarker.myBuilder.bind(startMarker, composite);
         return composite;
       }
@@ -1647,6 +1681,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @Override
   public void setDebugMode(boolean dbgMode) {
     myDebugMode = dbgMode;
+  }
+
+  public int getLexemeCount() {
+    return myLexemeCount;
   }
 
   @NotNull
@@ -1665,8 +1703,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return (TreeElement)((ICustomParsingType)type).parse(text, myCharTable);
     }
 
+    ASTFactory astFactory = getASTFactory();
     if (type instanceof ILazyParseableElementType) {
-      return ASTFactory.lazy((ILazyParseableElementType)type, text);
+      return createLazy((ILazyParseableElementType)type, text, astFactory);
+    }
+
+    if (astFactory != null) {
+      TreeElement element = astFactory.createLeaf(type, text);
+      if (element != null) return element;
     }
 
     return ASTFactory.leaf(type, text);

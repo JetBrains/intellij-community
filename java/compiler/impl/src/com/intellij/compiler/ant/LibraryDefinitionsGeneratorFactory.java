@@ -37,7 +37,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 25, 2004
  */
 public class LibraryDefinitionsGeneratorFactory {
   private final ProjectEx myProject;

@@ -110,9 +110,9 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
     }
 
     if (value != Language.ANY || iStream != null) {
-      final DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir);
-      DataInputOutputUtil.writeINT(oStream, ourLanguagesEnumerator.getId(value.getID()));
-      oStream.close();
+      try (DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir)) {
+        DataInputOutputUtil.writeINT(oStream, ourLanguagesEnumerator.getId(value.getID()));
+      }
       PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, Conditions.alwaysTrue());
     }
   }

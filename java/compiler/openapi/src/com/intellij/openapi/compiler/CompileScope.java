@@ -21,6 +21,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * Interface describing the current compilation scope.
  * Only sources that belong to the scope are compiled.
@@ -56,4 +59,12 @@ public interface CompileScope extends ExportableUserDataHolder {
    */
   @NotNull
   Module[] getAffectedModules();
+
+  /**
+   * @return list of names of unloaded modules this scope affects.
+   */
+  @NotNull
+  default Collection<String> getAffectedUnloadedModules() {
+    return Collections.emptyList();
+  }
 }

@@ -15,6 +15,11 @@
  */
 package org.jetbrains.jps.model.java.compiler;
 
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author nik
  */
@@ -24,5 +29,7 @@ public class JpsJavaCompilerOptions {
   public boolean GENERATE_NO_WARNINGS = false;
   public boolean DEPRECATION = true;
   public String ADDITIONAL_OPTIONS_STRING = "";
+  @MapAnnotation(surroundWithTag = false, entryTagName = "module", keyAttributeName = "name", valueAttributeName = "options")
+  public Map<String, String> ADDITIONAL_OPTIONS_OVERRIDE = new HashMap<>();
   public int MAXIMUM_HEAP_SIZE = 128;
 }

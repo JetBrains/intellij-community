@@ -31,10 +31,14 @@ import com.intellij.refactoring.changeSignature.JavaChangeInfo;
 import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +81,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     myCallingBlock = PsiTreeUtil.getTopmostParentOfType(myMethodCall, PsiCodeBlock.class);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return InlineParameterHandler.REFACTORING_NAME;
@@ -169,14 +174,14 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     PsiType returnType = myMethod.getReturnType();
     myChangeInfo = new JavaChangeInfoImpl(VisibilityUtil.getVisibilityModifier(myMethod.getModifierList()), myMethod, myMethod.getName(),
                                           returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
-                                          psiParameters.toArray(new ParameterInfoImpl[psiParameters.size()]),
+                                          psiParameters.toArray(new ParameterInfoImpl[0]),
                                           null,
                                           false,
                                           Collections.emptySet(),
                                           Collections.emptySet() );
     myChangeSignatureUsages = ChangeSignatureProcessorBase.findUsages(myChangeInfo);
 
-    final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
@@ -311,20 +316,11 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
 
   @Nullable
   private PsiElement findAnchorForLocalVariableDeclaration(PsiCodeBlock body) {
-    PsiElement anchor = body.getLBrace();
-    if (myMethod.isConstructor()) {
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement) {
-        final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-          final String referenceName = ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceName();
-          if (PsiKeyword.SUPER.equals(referenceName) || PsiKeyword.THIS.equals(referenceName)) {
-            anchor = statements[0];
-          }
-        }
-      }
+    PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(myMethod);
+    if (call != null) {
+      return call.getParent();
     }
-    return anchor;
+    return body.getLBrace();
   }
 
   private static class LocalReplacementUsageInfo extends UsageInfo {

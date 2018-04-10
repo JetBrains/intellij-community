@@ -114,6 +114,11 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
     myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE).addChild(module);
   }
 
+  @Override
+  public void removeModule(@NotNull JpsModule module) {
+    myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE).removeChild(module);
+  }
+
   @NotNull
   @Override
   public JpsLibraryCollection getLibraryCollection() {

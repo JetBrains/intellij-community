@@ -251,6 +251,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       "<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\">\n" +
       "  <option name=\"CONSOLE_FONT_NAME\" value=\"Test\" />\n" +
       "  <option name=\"CONSOLE_FONT_SIZE\" value=\"10\" />\n" +
+      "  <option name=\"CONSOLE_LINE_SPACING\" value=\"1.0\" />\n" +
       "</scheme>",
       serialize(editorColorsScheme));
   }
@@ -468,5 +469,177 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     );
     assertEquals(fontName, scheme.getEditorFontName());
     assertTrue("Expected font ligatures on", scheme.getFontPreferences().useLigatures());
+  }
+
+  public void testOptimizeAttributes() throws Exception {
+    TextAttributesKey staticFieldKey = TextAttributesKey.createTextAttributesKey("STATIC_FIELD_ATTRIBUTES");
+    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)loadScheme(
+      "<scheme name=\"IdeaLight\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <colors>\n" +
+      "    <option name=\"CARET_ROW_COLOR\" value=\"f5f5f5\" />\n" +
+      "    <option name=\"CONSOLE_BACKGROUND_KEY\" value=\"fdfdfd\" />\n" +
+      "  </colors>\n" +
+      "  <attributes>\n" +
+      "    <option name=\"DEFAULT_ATTRIBUTE\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"4c4fa1\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_CLASS_NAME\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"906f5d\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_CONSTANT\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"3\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_FUNCTION_DECLARATION\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_GLOBAL_VARIABLE\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"6e6cc2\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_IDENTIFIER\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_INSTANCE_FIELD\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_INTERFACE_NAME\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"906f5d\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_KEYWORD\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_LOCAL_VARIABLE\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"6f8374\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_METADATA\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"989800\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_NUMBER\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"8281e8\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_OPERATION_SIGN\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"9587a4\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_PARAMETER\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"a05f72\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_PARENTHS\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"7e7e7e\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_PREDEFINED_SYMBOL\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"ab8381\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_SEMICOLON\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"9587a4\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_STATIC_FIELD\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_STATIC_METHOD\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_STRING\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"58806b\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"INSTANCE_FIELD_ATTRIBUTES\" baseAttributes=\"DEFAULT_INSTANCE_FIELD\" />\n" +
+      "    <option name=\"STATIC_FIELD_ATTRIBUTES\" baseAttributes=\"DEFAULT_STATIC_FIELD\" />\n" +
+      "    <option name=\"STATIC_FINAL_FIELD_ATTRIBUTES\" baseAttributes=\"STATIC_FIELD_ATTRIBUTES\" />\n" +
+      "    <option name=\"TEXT\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"141414\" />\n" +
+      "        <option name=\"BACKGROUND\" value=\"fbfbfb\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "  </attributes>\n" +
+      "</scheme>"
+    );
+    editorColorsScheme.optimizeAttributeMap();
+    //
+    // The following attributes have specific colors in Default color scheme. It is important to keep the inheritance markers, otherwise
+    // the explicitly defined colors from the base (default) scheme will be used which is not what we want here.
+    //
+    assertSame(INHERITED_ATTRS_MARKER, editorColorsScheme.getDirectlyDefinedAttributes(staticFieldKey));
+  }
+
+  public void testIdea188308() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme initialScheme = (EditorColorsScheme)defaultScheme.clone();
+    initialScheme.setLineSpacing(1.2f);
+    initialScheme.setConsoleLineSpacing(1.0f);
+    assertFalse(initialScheme.getLineSpacing() == initialScheme.getConsoleLineSpacing());
+    Element root = serialize(initialScheme);
+    EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
+    targetScheme.readExternal(root);
+    assertEquals(1.0f, targetScheme.getConsoleLineSpacing());
+  }
+
+  public void testNonDefaultConsoleLineSpacing() {
+    ModifiableFontPreferences appPrefs = (ModifiableFontPreferences)AppEditorFontOptions.getInstance().getFontPreferences();
+    float currSpacing = appPrefs.getLineSpacing();
+    try {
+      appPrefs.setLineSpacing(1.2f);
+      EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+      EditorColorsScheme initialScheme = (EditorColorsScheme)defaultScheme.clone();
+      initialScheme.setConsoleLineSpacing(1.0f);
+      assertFalse(appPrefs.getLineSpacing() == initialScheme.getConsoleLineSpacing());
+      Element root = serialize(initialScheme);
+
+      EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
+      targetScheme.readExternal(root);
+      appPrefs.setLineSpacing(1.3f);
+
+      assertEquals(1.3f, targetScheme.getLineSpacing()); // we expect that editor still listens to app font preferences
+      assertEquals(1.0f, targetScheme.getConsoleLineSpacing());
+    }
+    finally {
+      appPrefs.setLineSpacing(currSpacing);
+    }
   }
 }

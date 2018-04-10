@@ -18,7 +18,9 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +41,7 @@ public class CompletionPolicy {
    */
   @Nullable
   protected String getExpectedVariant(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement leaf, @Nullable PsiReference ref) {
-    if (MadTestingUtil.isAfterError(file, leaf.getTextRange().getStartOffset())) {
+    if (isAfterError(file, leaf)) {
       return null;
     }
     
@@ -51,11 +53,23 @@ public class CompletionPolicy {
       return null;
     }
 
+    if (leafText.length() == 1 && 
+        "org.intellij.lang.regexp.RegExpElementType".equals(PsiUtilCore.getElementType(leaf).getClass().getName())) {
+      // regexp has a token for each character: not interesting (and no completion)
+      return null;
+    }
+
     if (isDeclarationName(editor, file, leaf)) return null;
 
     if (ref != null) {
       PsiElement target = getValidResolveResult(ref);
       if (target == null || !shouldSuggestReferenceText(ref, target)) return null;
+      
+      if (ref instanceof PsiMultiReference) {
+        for (PsiReference ref1 : ((PsiMultiReference)ref).getReferences()) {
+          if (target == ref1.resolve() && !shouldSuggestReferenceText(ref1, target)) return null;
+        }
+      }
     }
     else {
       if (!SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).isEmpty()) {
@@ -66,8 +80,12 @@ public class CompletionPolicy {
     return leafText;
   }
 
+  protected boolean isAfterError(@NotNull PsiFile file, @NotNull PsiElement leaf) {
+    return MadTestingUtil.isAfterError(file, leaf.getTextRange().getStartOffset());
+  }
+
   public boolean shouldCheckDuplicates(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement leaf) {
-    return true;
+    return leaf != null && !isAfterError(file, leaf);
   }
 
   private static PsiElement getValidResolveResult(@NotNull PsiReference ref) {

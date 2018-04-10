@@ -16,7 +16,7 @@
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
-import com.intellij.openapi.externalSystem.model.project.ConfigurationData;
+import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;

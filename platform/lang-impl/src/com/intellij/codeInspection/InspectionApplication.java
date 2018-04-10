@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -55,22 +41,22 @@ import java.util.*;
 /**
  * @author max
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class InspectionApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionApplication");
 
-  public InspectionToolCmdlineOptionHelpProvider myHelpProvider = null;
-  public String myProjectPath = null;
-  public String myOutPath = null;
-  public String mySourceDirectory = null;
-  public String myStubProfile = null;
-  public String myProfileName = null;
-  public String myProfilePath = null;
-  public boolean myRunWithEditorSettings = false;
-  public boolean myRunGlobalToolsOnly = false;
+  public InspectionToolCmdlineOptionHelpProvider myHelpProvider;
+  public String myProjectPath;
+  public String myOutPath;
+  public String mySourceDirectory;
+  public String myStubProfile;
+  public String myProfileName;
+  public String myProfilePath;
+  public boolean myRunWithEditorSettings;
+  public boolean myRunGlobalToolsOnly;
   private Project myProject;
-  private int myVerboseLevel = 0;
-  public String myOutputFormat = null;
+  private int myVerboseLevel;
+  public String myOutputFormat;
 
   public boolean myErrorCodeRequired = true;
 
@@ -96,10 +82,10 @@ public class InspectionApplication {
         final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
         logMessage(1, InspectionsBundle.message("inspection.application.starting.up",
                                                 appInfo.getFullApplicationName() + " (build " + appInfo.getBuild().asString() + ")"));
-        application.doNotSave();
+        application.setSaveAllowed(false);
         logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
-        this.run();
+        run();
       }
       catch (Exception e) {
         LOG.error(e);
@@ -451,25 +437,21 @@ public class InspectionApplication {
     final Map<String, Set<InspectionToolWrapper>> map = new HashMap<>();
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       final String groupName = toolWrapper.getGroupDisplayName();
-      Set<InspectionToolWrapper> groupInspections = map.get(groupName);
-      if (groupInspections == null) {
-        groupInspections = new HashSet<>();
-        map.put(groupName, groupInspections);
-      }
+      Set<InspectionToolWrapper> groupInspections = map.computeIfAbsent(groupName, __ -> new HashSet<>());
       groupInspections.add(toolWrapper);
     }
 
-    FileWriter fw = new FileWriter(myOutputPath);
-    try {
+    try (FileWriter fw = new FileWriter(myOutputPath)) {
       @NonNls final PrettyPrintWriter xmlWriter = new PrettyPrintWriter(fw);
       xmlWriter.startNode(INSPECTIONS_NODE);
       if (name != null) {
         xmlWriter.addAttribute(PROFILE, name);
       }
-      for (String groupName : map.keySet()) {
+      for (Map.Entry<String, Set<InspectionToolWrapper>> entry : map.entrySet()) {
         xmlWriter.startNode("group");
+        String groupName = entry.getKey();
         xmlWriter.addAttribute("name", groupName);
-        final Set<InspectionToolWrapper> entries = map.get(groupName);
+        final Set<InspectionToolWrapper> entries = entry.getValue();
         for (InspectionToolWrapper toolWrapper : entries) {
           xmlWriter.startNode("inspection");
           final String shortName = toolWrapper.getShortName();
@@ -489,9 +471,6 @@ public class InspectionApplication {
         xmlWriter.endNode();
       }
       xmlWriter.endNode();
-    }
-    finally {
-      fw.close();
     }
   }
 }

@@ -97,6 +97,7 @@ public class FileStructureDialog extends DialogWrapper {
     if (applySortAndFilter) {
       myTreeActionsOwner = new TreeStructureActionsOwner(myBaseTreeModel);
       myTreeModel = new TreeModelWrapper(structureViewModel, myTreeActionsOwner);
+      myTreeActionsOwner.setActionIncluded(Sorter.ALPHA_SORTER, true);
     }
     else {
       myTreeActionsOwner = null;

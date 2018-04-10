@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -66,6 +52,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 class IntroduceConstantDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceConstantDialog");
@@ -275,10 +263,10 @@ class IntroduceConstantDialog extends DialogWrapper {
       myCbDeleteVariable.setVisible(false);
     }
 
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    if ((myTypeSelectorManager.isSuggestedType(CommonClassNames.JAVA_LANG_STRING) || (myLocalVariable != null && AnnotationUtil.isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, false, false)))&&
-        LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5) &&
-        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
+    if ((myTypeSelectorManager.isSuggestedType(CommonClassNames.JAVA_LANG_STRING) ||
+         (myLocalVariable != null && AnnotationUtil.isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, CHECK_EXTERNAL))) &&
+        LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5) &&
+        JavaPsiFacade.getInstance(myProject).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
       myCbNonNls.setSelected(component.getBoolean(NONNLS_SELECTED_PROPERTY));
       myCbNonNls.addItemListener(new ItemListener() {

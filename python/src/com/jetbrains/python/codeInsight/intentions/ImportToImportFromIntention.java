@@ -26,7 +26,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -46,7 +46,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <i>NOTE: currently we only check usage of module name in the same file. For re-exported module names this is not sufficient.</i>
  * <br>
  * <small>User: dcheryasov
- * Date: Sep 22, 2009 1:42:52 AM</small>
  */
 public class ImportToImportFromIntention extends PyBaseIntentionAction {
 

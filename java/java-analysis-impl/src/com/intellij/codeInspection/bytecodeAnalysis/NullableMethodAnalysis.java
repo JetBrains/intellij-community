@@ -304,8 +304,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   }
 
   @Override
-  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3)
-    throws AnalyzerException {
+  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     if (value1 instanceof Calls) {
       delta = ((Calls)value1).mergedLabels;
     }
@@ -341,7 +340,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
         if (origins[insnIndex]) {
           boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
           MethodInsnNode mNode = ((MethodInsnNode)insn);
-          Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+          Member method = new Member(mNode.owner, mNode.name, mNode.desc);
           int label = 1 << originsMapping[insnIndex];
           if (keys[insnIndex] == null) {
             keys[insnIndex] = new EKey(method, Direction.NullableOut, stable);

@@ -37,9 +37,11 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.ReferenceQueue;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public class ResolveCache {
-  private final ConcurrentMap[] myMaps = new ConcurrentMap[2*2*2]; //boolean physical, boolean incompleteCode, boolean isPoly
+  private final AtomicReferenceArray<ConcurrentMap> myPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
+  private final AtomicReferenceArray<ConcurrentMap> myNonPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
   private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
 
   public static ResolveCache getInstance(Project project) {
@@ -79,9 +81,6 @@ public class ResolveCache {
   }
 
   public ResolveCache(@NotNull MessageBus messageBus) {
-    for (int i = 0; i < myMaps.length; i++) {
-      myMaps[i] = createWeakMap();
-    }
     messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
@@ -117,8 +116,16 @@ public class ResolveCache {
   }
 
   public void clearCache(boolean isPhysical) {
-    int startIndex = isPhysical ? 0 : 1;
-    for (int i=startIndex;i<2;i++)for (int j=0;j<2;j++)for (int k=0;k<2;k++) myMaps[i*4+j*2+k].clear();
+    if (isPhysical) {
+      clearArray(myPhysicalMaps);
+    }
+    clearArray(myNonPhysicalMaps);
+  }
+
+  private static void clearArray(AtomicReferenceArray<?> array) {
+    for (int i = 0; i < array.length(); i++) {
+      array.set(i, null);
+    }
   }
 
   @Nullable
@@ -133,8 +140,8 @@ public class ResolveCache {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
 
-    int index = getIndex(isPhysical, incompleteCode, isPoly);
-    ConcurrentMap<TRef, TResult> map = getMap(index);
+    int index = getIndex(incompleteCode, isPoly);
+    ConcurrentMap<TRef, TResult> map = getMap(isPhysical, index);
     TResult result = map.get(ref);
     if (result != null) {
       return result;
@@ -185,8 +192,9 @@ public class ResolveCache {
     ProgressIndicatorProvider.checkCanceled();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    int index = getIndex(containingFile.isPhysical(), incompleteCode, true);
-    ConcurrentMap<T, ResolveResult[]> map = getMap(index);
+    boolean physical = containingFile.isPhysical();
+    int index = getIndex(incompleteCode, true);
+    ConcurrentMap<T, ResolveResult[]> map = getMap(physical, index);
     ResolveResult[] result = map.get(ref);
     if (result != null) {
       return result;
@@ -220,7 +228,7 @@ public class ResolveCache {
 
   @Nullable
   public <T extends PsiPolyVariantReference> ResolveResult[] getCachedResults(@NotNull T ref, boolean physical, boolean incompleteCode, boolean isPoly) {
-    Map<T, ResolveResult[]> map = getMap(getIndex(physical, incompleteCode, isPoly));
+    Map<T, ResolveResult[]> map = getMap(physical, getIndex(incompleteCode, isPoly));
     return map.get(ref);
   }
 
@@ -234,13 +242,19 @@ public class ResolveCache {
   }
 
   @NotNull
-  private <TRef extends PsiReference,TResult> ConcurrentMap<TRef, TResult> getMap(int index) {
+  private <TRef extends PsiReference,TResult> ConcurrentMap<TRef, TResult> getMap(boolean physical, int index) {
+    AtomicReferenceArray<ConcurrentMap> array = physical ? myPhysicalMaps : myNonPhysicalMaps;
+    ConcurrentMap map = array.get(index);
+    while (map == null) {
+      ConcurrentMap newMap = createWeakMap();
+      map = array.compareAndSet(index, null, newMap) ? newMap : array.get(index);
+    }
     //noinspection unchecked
-    return myMaps[index];
+    return map;
   }
 
-  private static int getIndex(boolean physical, boolean incompleteCode, boolean isPoly) {
-    return (physical ? 0 : 1)*4 + (incompleteCode ? 0 : 1)*2 + (isPoly ? 0 : 1);
+  private static int getIndex(boolean incompleteCode, boolean isPoly) {
+    return (incompleteCode ? 0 : 1)*2 + (isPoly ? 0 : 1);
   }
 
   private static final Object NULL_RESULT = new Object();

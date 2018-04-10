@@ -28,11 +28,8 @@ class IncrementUtil {
   @Nullable
   @Contract("null -> null")
   static String getOperatorText(@Nullable PsiElement element) {
-    if (element instanceof PsiPostfixExpression) {
-      return ((PsiPostfixExpression)element).getOperationSign().getText();
-    }
-    if (element instanceof PsiPrefixExpression) {
-      return ((PsiPrefixExpression)element).getOperationSign().getText();
+    if (element instanceof PsiUnaryExpression) {
+      return ((PsiUnaryExpression)element).getOperationSign().getText();
     }
     return null;
   }
@@ -40,12 +37,8 @@ class IncrementUtil {
   @Nullable
   @Contract("null -> null")
   static PsiReferenceExpression getIncrementOrDecrementOperand(@Nullable PsiElement element) {
-    if (element instanceof PsiPostfixExpression) {
-      final PsiPostfixExpression expression = (PsiPostfixExpression)element;
-      return getIncrementOrDecrementOperand(expression.getOperationTokenType(), expression.getOperand());
-    }
-    if (element instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression expression = (PsiPrefixExpression)element;
+    if (element instanceof PsiUnaryExpression) {
+      final PsiUnaryExpression expression = (PsiUnaryExpression)element;
       return getIncrementOrDecrementOperand(expression.getOperationTokenType(), expression.getOperand());
     }
     return null;

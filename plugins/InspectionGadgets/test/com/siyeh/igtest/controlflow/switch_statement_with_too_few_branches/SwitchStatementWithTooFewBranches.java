@@ -4,7 +4,7 @@ class SwitchStatementWithTooFewBranches {
 
   void foo(int i) {
     switch (i) {}
-    switch (i) {
+    <warning descr="'switch' has too few branches (1), and should probably be replaced with an 'if' statement">switch</warning> (i) {
       case 1:
         System.out.println(i);
     }
@@ -17,6 +17,6 @@ class SwitchStatementWithTooFewBranches {
         break;
 
     }
-    switch (i)
+    switch (i)<EOLError descr="'{' expected"></EOLError>
   }
 }

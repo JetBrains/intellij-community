@@ -394,10 +394,14 @@ CHARACTER (')')
     SyntaxTable table = new SyntaxTable()
     table.addKeyword1("a*")
     table.addKeyword1("b-c")
+    table.addKeyword1(":")
     table.addKeyword2("d#")
     table.addKeyword2("e")
     table.addKeyword2("foo{}")
-    doTest table, 'a* b-c d# e- e foo{}', '''\
+    table.addKeyword3("foldl")
+    table.addKeyword3("foldl'")
+    def text = "a* b-c d# e- e foo{} : foldl' foo"
+    def expected = '''\
 KEYWORD_1 ('a*')
 WHITESPACE (' ')
 KEYWORD_1 ('b-c')
@@ -410,7 +414,15 @@ WHITESPACE (' ')
 KEYWORD_2 ('e')
 WHITESPACE (' ')
 KEYWORD_2 ('foo{}')
+WHITESPACE (' ')
+KEYWORD_1 (':')
+WHITESPACE (' ')
+KEYWORD_3 ('foldl'')
+WHITESPACE (' ')
+IDENTIFIER ('foo')
 '''
+    doTest(new CustomFileTypeLexer(table), text, expected)
+    doTest(new CustomFileHighlighter(table).highlightingLexer, text, expected)
   }
 
   void testWordsScanner() {

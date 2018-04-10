@@ -29,4 +29,19 @@ class Contracts {
     System.out.println(object2.toString());
   }
 
+  private void checkTrue(boolean b) {
+    assertThat("b is true", b, is(true));
+    if(<warning descr="Condition 'b' is always 'true'">b</warning>) {
+      System.out.println("always");
+    }
+    <warning descr="The call to 'assertThat' always fails, according to its method contracts">assertThat</warning>("b is not true", <warning descr="Value 'b' is always 'true'">b</warning>, not(is(true)));
+  }
+
+  private void checkFalse(boolean b) {
+    assertThat("b is false", b, is(equalTo(false)));
+    if(<warning descr="Condition 'b' is always 'false'">b</warning>) {
+      System.out.println("never");
+    }
+  }
+
 }

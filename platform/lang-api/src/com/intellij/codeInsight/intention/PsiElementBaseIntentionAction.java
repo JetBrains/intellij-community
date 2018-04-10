@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -36,11 +37,17 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!file.getManager().isInProject(file)) return;
+    if (editor == null || !checkFile(file)) return;
     final PsiElement element = getElement(editor, file);
     if (element != null) {
       invoke(project, editor, element);
     }
+  }
+
+  protected boolean checkFile(@Nullable PsiFile file) {
+    if (file == null) return false;
+    PsiManager manager = file.getManager();
+    return manager != null && manager.isInProject(file) || ScratchFileService.isInScratchRoot(file.getVirtualFile());
   }
 
   /**
@@ -49,16 +56,12 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
    * @param project the project in which the file is opened.
    * @param editor  the editor for the file.
    * @param element the element under cursor.
-   *
    */
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (file == null) return false;
-    final PsiManager manager = file.getManager();
-    if (manager == null) return false;
-    if (!manager.isInProject(file)) return false;
+    if (!checkFile(file)) return false;
     final PsiElement element = editor == null ? null : getElement(editor, file);
     return element != null && isAvailable(project, editor, element);
   }

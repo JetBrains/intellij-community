@@ -17,8 +17,6 @@ package com.intellij.execution.dashboard;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -52,11 +50,11 @@ public abstract class RunDashboardContributor {
     return myType;
   }
 
-  public void updatePresentation(@NotNull PresentationData presentation, @NotNull DashboardNode node) {
+  public void updatePresentation(@NotNull PresentationData presentation, @NotNull RunDashboardNode node) {
   }
 
   public boolean customizeCellRenderer(@NotNull ColoredTreeCellRenderer cellRenderer, @NotNull JLabel nodeLabel,
-                                       @NotNull DashboardNode node,
+                                       @NotNull RunDashboardNode node,
                                        boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     return false;
   }
@@ -68,24 +66,8 @@ public abstract class RunDashboardContributor {
    * @return node's status. Returned status is used for grouping nodes by status.
    */
   @NotNull
-  public DashboardRunConfigurationStatus getStatus(@NotNull DashboardRunConfigurationNode node) {
-    RunContentDescriptor descriptor = node.getDescriptor();
-    if (descriptor == null) {
-      return DashboardRunConfigurationStatus.STOPPED;
-    }
-    ProcessHandler processHandler = descriptor.getProcessHandler();
-    if (processHandler == null) {
-      return DashboardRunConfigurationStatus.STOPPED;
-    }
-    Integer exitCode = processHandler.getExitCode();
-    if (exitCode == null) {
-      return DashboardRunConfigurationStatus.STARTED;
-    }
-    Boolean terminationRequested = processHandler.getUserData(ProcessHandler.TERMINATION_REQUESTED);
-    if (exitCode == 0 || (terminationRequested != null && terminationRequested)) {
-      return DashboardRunConfigurationStatus.STOPPED;
-    }
-    return DashboardRunConfigurationStatus.FAILED;
+  public RunDashboardRunConfigurationStatus getStatus(@NotNull RunDashboardRunConfigurationNode node) {
+    return RunDashboardRunConfigurationStatus.getStatus(node);
   }
 
   public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {

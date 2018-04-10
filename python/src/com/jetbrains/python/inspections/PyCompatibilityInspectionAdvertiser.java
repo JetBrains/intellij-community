@@ -121,7 +121,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   @Nullable
   private static LanguageLevel getLatestConfiguredCompatiblePython3Version(@NotNull PsiElement element) {
     final LanguageLevel latestVersion = getLatestConfiguredCompatiblePythonVersion(element);
-    return latestVersion != null && latestVersion.isAtLeast(LanguageLevel.PYTHON30) ? latestVersion : null;
+    return latestVersion != null && !latestVersion.isPython2() ? latestVersion : null;
   }
 
   private static void showStalePython3VersionWarning(@NotNull PyFile file, 
@@ -147,7 +147,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   private static List<LanguageLevel> getVersionsNewerThan(@NotNull LanguageLevel version) {
     final List<LanguageLevel> result = new ArrayList<>();
     final LanguageLevel latest = LanguageLevel.getLatest();
-    for (LanguageLevel level : LanguageLevel.values()) {
+    for (LanguageLevel level : LanguageLevel.SUPPORTED_LEVELS) {
       if (version.isOlderThan(level) && latest.isAtLeast(level)) {
         result.add(level);
       }

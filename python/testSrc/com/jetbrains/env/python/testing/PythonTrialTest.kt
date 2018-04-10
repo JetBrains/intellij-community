@@ -19,6 +19,7 @@ import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.ut.PyScriptTestProcessRunner
 import com.jetbrains.python.testing.PyTrialTestConfiguration
 import com.jetbrains.python.testing.PyTrialTestFactory
+import java.io.File
 
 // Twisted trial test case
 @EnvTestTagsRequired(tags = arrayOf("twisted"))
@@ -29,4 +30,9 @@ internal class PythonTrialTest : PythonUnitTestingLikeTest<PyTrialTestProcessRun
 
 class PyTrialTestProcessRunner(scriptName: String,
                                timesToRerunFailedTests: Int) : PyScriptTestProcessRunner<PyTrialTestConfiguration>(
-  PyTrialTestFactory, PyTrialTestConfiguration::class.java, scriptName, timesToRerunFailedTests)
+  PyTrialTestFactory, PyTrialTestConfiguration::class.java, scriptName, timesToRerunFailedTests) {
+  override fun configurationCreatedAndWillLaunch(configuration: PyTrialTestConfiguration) {
+    super.configurationCreatedAndWillLaunch(configuration)
+    configuration.additionalArguments = "--temp-directory=" + File(createTempDir(), "trial").path
+  }
+}

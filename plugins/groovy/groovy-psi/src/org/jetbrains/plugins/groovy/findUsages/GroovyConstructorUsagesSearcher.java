@@ -244,17 +244,19 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       GrParameter[] grParameters = (GrParameter[])constructor.getParameterList().getParameters();
       if (grParameters.length > 0 && !grParameters[0].isOptional()) return;
     }
-    else if (constructor.getParameterList().getParameters().length > 0) return;
+    else if (!constructor.getParameterList().isEmpty()) return;
 
 
     PsiManager manager = constructor.getManager();
     if (manager.areElementsEquivalent(usage, constructor) || manager.areElementsEquivalent(constructor.getContainingClass(), usage.getContainingClass())) return;
     processor.process(new LightMemberReference(manager, usage, PsiSubstitutor.EMPTY) {
+      @NotNull
       @Override
       public PsiElement getElement() {
         return usage;
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         if (usage instanceof PsiClass) {

@@ -178,7 +178,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         final PsiMethod[] methodsByName = baseClass.findMethodsByName(name, false);
         ContainerUtil.addAll(methodsList, methodsByName);
       }
-      delegatedMethods = methodsList.toArray(new PsiMethod[methodsList.size()]);
+      delegatedMethods = methodsList.toArray(PsiMethod.EMPTY_ARRAY);
 
       final PsiClass[] delegatedInterfaces = new PsiClass[delegatedInterfaceNames.length];
       for (int i = 0; i < delegatedInterfaceNames.length; i++) {

@@ -3,7 +3,7 @@ class Calculator {
     private Object i;
 
     {
-      setI(() -> {}); 
+      setI(() -> {});
     }
 
     public void setI(Object i) {

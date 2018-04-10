@@ -38,7 +38,11 @@ object ScriptWrapper {
       "import org.fest.swing.core.Robot",
       "import java.awt.Component",
       "import com.intellij.openapi.application.ApplicationManager",
-      "import org.fest.swing.fixture.*")
+      "import org.fest.swing.fixture.*",
+      "import com.intellij.testGuiFramework.util.Key.*",
+      "import com.intellij.testGuiFramework.util.Modifier.*",
+      "import com.intellij.testGuiFramework.util.plus",
+      "import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone")
     {
       classWrap {
         funWrap {

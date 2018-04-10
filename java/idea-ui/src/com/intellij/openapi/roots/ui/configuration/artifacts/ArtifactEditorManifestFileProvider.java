@@ -27,7 +27,7 @@ import java.util.List;
 * @author nik
 */
 public class ArtifactEditorManifestFileProvider implements ManifestFileProvider {
-  private ArtifactsStructureConfigurableContext myArtifactsStructurContext;
+  private final ArtifactsStructureConfigurableContext myArtifactsStructurContext;
 
   public ArtifactEditorManifestFileProvider(ArtifactsStructureConfigurableContext artifactsStructurContext) {
     myArtifactsStructurContext = artifactsStructurContext;

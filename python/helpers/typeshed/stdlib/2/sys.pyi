@@ -1,11 +1,10 @@
 """Stubs for the 'sys' module."""
 
 from typing import (
-    IO, Union, List, Sequence, Any, Dict, Tuple, BinaryIO, Optional, Callable,
-    overload, Type,
+    IO, NoReturn, Union, List, Sequence, Any, Dict, Tuple, BinaryIO, Optional,
+    Callable, overload, Text, Type,
 )
 from types import FrameType, ModuleType, TracebackType, ClassType
-from mypy_extensions import NoReturn
 
 class _flags:
     bytes_warning = ...  # type: int
@@ -61,7 +60,7 @@ long_info = ...  # type: object
 maxint = ...  # type: int
 maxsize = ...  # type: int
 maxunicode = ...  # type: int
-modules = ...  # type: Dict[str, ModuleType]
+modules = ...  # type: Dict[str, Any]
 path = ...  # type: List[str]
 platform = ...  # type: str
 prefix = ...  # type: str
@@ -124,14 +123,15 @@ def exit(arg: Any = ...) -> NoReturn:
 def getcheckinterval() -> int: ...  # deprecated
 def getdefaultencoding() -> str: ...
 def getdlopenflags() -> int: ...
-def getfilesystemencoding() -> Union[str, None]: ...
+def getfilesystemencoding() -> str: ...  # In practice, never returns None
 def getrefcount(arg: Any) -> int: ...
 def getrecursionlimit() -> int: ...
 def getsizeof(obj: object, default: int = ...) -> int: ...
-def getprofile() -> None: ...
-def gettrace() -> None: ...
+def getprofile() -> Optional[Any]: ...
+def gettrace() -> Optional[Any]: ...
 def setcheckinterval(interval: int) -> None: ...  # deprecated
 def setdlopenflags(n: int) -> None: ...
+def setdefaultencoding(encoding: Text) -> None: ...  # only exists after reload(sys)
 def setprofile(profilefunc: Any) -> None: ...  # TODO type
 def setrecursionlimit(limit: int) -> None: ...
 def settrace(tracefunc: Any) -> None: ...  # TODO type

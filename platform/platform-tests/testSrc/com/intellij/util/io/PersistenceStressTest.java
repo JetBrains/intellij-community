@@ -121,7 +121,7 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     while (ContainerUtil.find(futures, STILL_RUNNING) != null) {
       Thread.sleep(100);
-      CacheUpdateRunner.processFiles(new EmptyProgressIndicator(), true, files, getProject(),
+      CacheUpdateRunner.processFiles(new EmptyProgressIndicator(), files, getProject(),
                                      content -> index.indexFileContent(getProject(), content));
     }
     for (Future<Boolean> future : futures) {

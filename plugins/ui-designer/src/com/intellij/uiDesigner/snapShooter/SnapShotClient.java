@@ -86,7 +86,7 @@ public class SnapShotClient {
       }
       result.add(new SnapShotRemoteComponent(line, id == 0));
     }
-    return result.toArray(new SnapShotRemoteComponent[result.size()]);
+    return result.toArray(new SnapShotRemoteComponent[0]);
   }
 
   public String createSnapshot(final int id) throws Exception {

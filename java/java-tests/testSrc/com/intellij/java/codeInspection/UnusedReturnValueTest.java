@@ -55,6 +55,10 @@ public class UnusedReturnValueTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testFromReflection() {
+    doTest();
+  }
+
   public void testSimpleSetter() {
     try {
       myTool.IGNORE_BUILDER_PATTERN = true;

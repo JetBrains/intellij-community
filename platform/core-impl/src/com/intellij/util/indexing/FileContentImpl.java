@@ -140,7 +140,12 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
                                            @NotNull VirtualFile file, @NotNull String fileName) {
     final Language language = fileType.getLanguage();
     final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
-    return PsiFileFactory.getInstance(project).createFileFromText(fileName, substitutedLanguage, text, false, false, true, file);
+    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(fileName, substitutedLanguage, text, false, false, true, file);
+    if (psiFile == null) {
+      throw new IllegalStateException("psiFile is null. language = " + language.getID() +
+                                      ", substitutedLanguage = " + substitutedLanguage.getID());
+    }
+    return psiFile;
   }
 
   public static class IllegalDataException extends RuntimeException {

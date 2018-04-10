@@ -15,10 +15,12 @@
  */
 package com.intellij.compiler.impl.javaCompiler.javac;
 
+import com.intellij.compiler.impl.javaCompiler.CompilerModuleOptionsComponent;
 import com.intellij.compiler.options.ComparingUtils;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
@@ -27,7 +29,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 30, 2004
  */
 public class JavacConfigurable implements Configurable{
   private JPanel myPanel;
@@ -36,17 +37,26 @@ public class JavacConfigurable implements Configurable{
   private JCheckBox myCbDeprecation;
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
+  private CompilerModuleOptionsComponent myOptionsOverride;
+  private final Project myProject;
   private final JpsJavaCompilerOptions myJavacSettings;
 
-  public JavacConfigurable(final JpsJavaCompilerOptions javacSettings) {
+  public JavacConfigurable(Project project, final JpsJavaCompilerOptions javacSettings) {
+    myProject = project;
     myJavacSettings = javacSettings;
     myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
+    myAdditionalOptionsField.setDescriptor(null, false);
+  }
+
+  private void createUIComponents() {
+    myOptionsOverride = new CompilerModuleOptionsComponent(myProject);
   }
 
   public String getDisplayName() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
@@ -62,6 +72,8 @@ public class JavacConfigurable implements Configurable{
     isModified |= ComparingUtils.isModified(myCbDebuggingInfo, myJavacSettings.DEBUGGING_INFO);
     isModified |= ComparingUtils.isModified(myCbGenerateNoWarnings, myJavacSettings.GENERATE_NO_WARNINGS);
     isModified |= ComparingUtils.isModified(myAdditionalOptionsField, myJavacSettings.ADDITIONAL_OPTIONS_STRING);
+    isModified |= !myOptionsOverride.getModuleOptionsMap().equals(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
+
     return isModified;
   }
 
@@ -71,6 +83,8 @@ public class JavacConfigurable implements Configurable{
     myJavacSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
     myJavacSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
     myJavacSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptionsField.getText();
+    myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE.clear();
+    myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE.putAll(myOptionsOverride.getModuleOptionsMap());
   }
 
   public void reset() {
@@ -79,9 +93,6 @@ public class JavacConfigurable implements Configurable{
     myCbDebuggingInfo.setSelected(myJavacSettings.DEBUGGING_INFO);
     myCbGenerateNoWarnings.setSelected(myJavacSettings.GENERATE_NO_WARNINGS);
     myAdditionalOptionsField.setText(myJavacSettings.ADDITIONAL_OPTIONS_STRING);
+    myOptionsOverride.setModuleOptionsMap(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
   }
-
-  public void disposeUIResources() {
-  }
-
 }

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -141,7 +142,8 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
       private void checkElement(final PsiElement owner) {
         String idsString = JavaSuppressionUtil.getSuppressedInspectionIdsIn(owner);
         if (idsString != null && !idsString.isEmpty()) {
-          List<String> ids = StringUtil.split(idsString, ",");
+          List<String> ids = new ArrayList<>();
+          StringUtil.tokenize(idsString, "[, ]").forEach(ids::add);
           if (IGNORE_ALL && (ids.contains(SuppressionUtil.ALL) || ids.contains(SuppressionUtil.ALL.toLowerCase()))) return;
           Collection<String> suppressed = suppressedScopes.get(owner);
           if (suppressed == null) {
@@ -289,7 +291,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
       refManager.inspectionReadActionFinished();
       globalContext.close(true);
     }
-    return result.toArray(new ProblemDescriptor[result.size()]);
+    return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   protected GlobalInspectionContextBase createContext(PsiFile file) {
@@ -299,7 +301,10 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
   @NotNull
   protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
     // todo for what we create modifiable model here?
-    return new InspectionProfileModifiableModel(InspectionProjectProfileManager.getInstance(manager.getProject()).getCurrentProfile()).getInspectionTools(psiElement);
+    String currentProfileName = ((InspectionManagerBase)manager).getCurrentProfile();
+    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(manager.getProject());
+    InspectionProfileImpl usedProfile = profileManager.getProfile(currentProfileName, false);
+    return new InspectionProfileModifiableModel(ObjectUtils.notNull(usedProfile, profileManager.getCurrentProfile())).getInspectionTools(psiElement);
   }
 
   @Override

@@ -23,7 +23,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ClearableLazyValue<T> {
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("ClearableLazyValue");
-  protected T myValue;
+
+  @NotNull
+  public static <T> ClearableLazyValue<T> create(final Computable<T> computable) {
+    return new ClearableLazyValue<T>() {
+      @NotNull
+      @Override
+      protected T compute() {
+        return computable.compute();
+      }
+    };
+  }
+
+  private T myValue;
 
   @NotNull
   protected abstract T compute();

@@ -17,12 +17,12 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -30,7 +30,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
@@ -41,14 +40,14 @@ import org.jetbrains.annotations.Nullable;
 */
 public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
 
-  private final BaseInspection myInspection;
+  private final AbstractBaseJavaLocalInspectionTool myInspection;
 
-  private SuppressForTestsScopeFix(BaseInspection inspection) {
+  private SuppressForTestsScopeFix(AbstractBaseJavaLocalInspectionTool inspection) {
     myInspection = inspection;
   }
 
   @Nullable
-  public static SuppressForTestsScopeFix build(BaseInspection inspection, PsiElement context) {
+  public static SuppressForTestsScopeFix build(AbstractBaseJavaLocalInspectionTool inspection, PsiElement context) {
     if (!TestUtils.isInTestSourceContent(context)) {
       return null;
     }
@@ -72,12 +71,12 @@ public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
     final VirtualFile vFile = descriptor.getPsiElement().getContainingFile().getVirtualFile();
     UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
       @Override
-      public void undo() throws UnexpectedUndoException {
+      public void undo() {
         addRemoveTestsScope(project, false);
       }
 
       @Override
-      public void redo() throws UnexpectedUndoException {
+      public void redo() {
         addRemoveTestsScope(project, true);
       }
     });

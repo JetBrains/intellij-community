@@ -63,7 +63,7 @@ public class InputVariables {
   /**
    * copy use only
    */
-  public InputVariables(List<VariableData> inputVariables,
+  private InputVariables(List<VariableData> inputVariables,
                         Project project,
                         LocalSearchScope scope) {
     myProject = project;
@@ -100,9 +100,6 @@ public class InputVariables {
       final String defaultName = getParameterName(var);
       String name = nameGenerator.generateUniqueName(defaultName);
       PsiType type = GenericsUtil.getVariableTypeByExpressionType(var.getType());
-      if (type instanceof PsiEllipsisType) {
-        type = ((PsiEllipsisType)type).toArrayType();
-      }
       final Map<PsiCodeBlock, PsiType> casts = new HashMap<>();
       for (PsiReference reference : ReferencesSearch.search(var, myScope)) {
         final PsiElement element = reference.getElement();

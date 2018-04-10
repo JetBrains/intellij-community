@@ -26,7 +26,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 6, 2004
  */
 public class ExpandMacroToPathMap extends PathMacroMap {
   private final Map<String, String> myPlainMap = ContainerUtilRt.newLinkedHashMap();

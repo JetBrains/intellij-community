@@ -143,7 +143,7 @@ public abstract class AbstractConfigUtils {
     if (project == null || project.isDisposed()) return Library.EMPTY_ARRAY;
     final LibraryTable table = ProjectLibraryTable.getInstance(project);
     final List<Library> all = ContainerUtil.findAll(table.getLibraries(), LIB_SEARCH_CONDITION);
-    return all.toArray(new Library[all.size()]);
+    return all.toArray(Library.EMPTY_ARRAY);
   }
 
   public Library[] getAllSDKLibraries(@Nullable Project project) {
@@ -155,7 +155,7 @@ public abstract class AbstractConfigUtils {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       libraries.addAll(Arrays.asList(getSDKLibrariesByModule(module)));
     }
-    return libraries.toArray(new Library[libraries.size()]);
+    return libraries.toArray(Library.EMPTY_ARRAY);
   }
 
   public Library[] getGlobalSDKLibraries() {

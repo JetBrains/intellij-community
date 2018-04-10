@@ -113,6 +113,10 @@ public class Disposer {
     return ourTree.getDisposalInfo(disposable) != null;
   }
 
+  public static boolean isDisposing(@NotNull Disposable disposable) {
+    return ourTree.isDisposing(disposable);
+  }
+
   public static Disposable get(@NotNull String key) {
     return ourKeyDisposables.get(key);
   }

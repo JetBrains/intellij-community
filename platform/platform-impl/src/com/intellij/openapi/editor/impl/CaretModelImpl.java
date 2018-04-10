@@ -31,14 +31,19 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyClipboardOwner;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
+import java.util.List;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable, InlayModel.Listener {
   private final EditorImpl myEditor;
@@ -508,7 +513,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
                                myEditor.logicalPositionToOffset(caretState.getSelectionStart()),
                                myEditor.logicalToVisualPosition(caretState.getSelectionEnd()),
                                myEditor.logicalPositionToOffset(caretState.getSelectionEnd()), 
-                               true, updateSystemSelection, false);
+                               true, false, false);
           selectionStartsAfter.add(caret.getSelectionStart());
           selectionEndsAfter.add(caret.getSelectionEnd());
         }
@@ -521,6 +526,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         }
         fireCaretRemoved(caret);
         Disposer.dispose(caret);
+      }
+      if (updateSystemSelection) {
+        updateSystemSelection();
       }
       if (selectionStartsBefore != null) {
         SelectionEvent event = new SelectionEvent(myEditor, selectionStartsBefore.toNativeArray(), selectionEndsBefore.toNativeArray(), 
@@ -542,6 +550,15 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
                                   caret.getSelectionEndLogicalPosition()));
       }
       return states;
+    }
+  }
+
+  void updateSystemSelection() {
+    if (GraphicsEnvironment.isHeadless()) return;
+
+    final Clipboard clip = myEditor.getComponent().getToolkit().getSystemSelection();
+    if (clip != null) {
+      clip.setContents(new StringSelection(myEditor.getSelectionModel().getSelectedText(true)), EmptyClipboardOwner.INSTANCE);
     }
   }
 

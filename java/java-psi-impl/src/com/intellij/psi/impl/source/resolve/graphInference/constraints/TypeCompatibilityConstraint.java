@@ -58,7 +58,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     }
 
     if (isUncheckedConversion(myT, myS)) {
-      session.setErasedDuringApplicabilityCheck();
+      session.setErased();
       return true;
     }
 

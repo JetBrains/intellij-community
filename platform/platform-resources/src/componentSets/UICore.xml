@@ -32,18 +32,18 @@
       <implementation-class>com.intellij.ide.SaveAndSyncHandlerImpl</implementation-class>
       <headless-implementation-class>com.intellij.ide.SaveAndSyncHandlerStub</headless-implementation-class>
     </component>
+
     <component>
       <implementation-class>com.intellij.ide.ScreenReaderSupportHandler</implementation-class>
     </component>
+
     <component>
       <interface-class>com.intellij.ide.FrameStateManager</interface-class>
       <implementation-class>com.intellij.ide.FrameStateManagerImpl</implementation-class>
     </component>
+
     <component>
       <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector</implementation-class>
     </component>
 
     <component>

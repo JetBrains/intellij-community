@@ -27,6 +27,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.tasks.MavenKeymapExtension;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,7 +53,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     }
   }
 
-  public void testRefreshingActionsOnImport() throws Exception {
+  public void testRefreshingActionsOnImport() {
     assertTrue(getProjectActions().isEmpty());
 
     VirtualFile p1 = createModulePom("p1", "<groupId>test</groupId>" +
@@ -67,7 +68,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assertEmptyKeymap();
   }
 
-  public void testRefreshingOnProjectRead() throws Exception {
+  public void testRefreshingOnProjectRead() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -92,7 +93,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(myProjectPom, goal);
   }
 
-  public void testRefreshingOnPluginResolve() throws Exception {
+  public void testRefreshingOnPluginResolve() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -120,7 +121,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(myProjectPom, goal);
   }
 
-  public void testActionWhenSeveralSimilarPlugins() throws Exception {
+  public void testActionWhenSeveralSimilarPlugins() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -150,7 +151,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(myProjectPom, goal);
   }
 
-  public void testRefreshingOnProjectAddition() throws Exception {
+  public void testRefreshingOnProjectAddition() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -176,10 +177,10 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(m, goal);
   }
 
-  public void testDeletingActionOnProjectRemoval() throws Exception {
+  public void testDeletingActionOnProjectRemoval() throws IOException {
     final VirtualFile p1 = createModulePom("p1", "<groupId>test</groupId>" +
-                                           "<artifactId>p1</artifactId>" +
-                                           "<version>1</version>");
+                                                 "<artifactId>p1</artifactId>" +
+                                                 "<version>1</version>");
 
     VirtualFile p2 = createModulePom("p2", "<groupId>test</groupId>" +
                                            "<artifactId>p2</artifactId>" +
@@ -195,12 +196,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p1, goal);
     assertKeymapContains(p2, goal);
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        p1.delete(this);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> p1.delete(this));
 
     waitForReadingCompletion();
 
@@ -208,7 +204,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p2, goal);
   }
 
-  public void testRefreshingActionsOnChangingIgnoreFlag() throws Exception {
+  public void testRefreshingActionsOnChangingIgnoreFlag() {
     VirtualFile p1 = createModulePom("p1", "<groupId>test</groupId>" +
                                            "<artifactId>p1</artifactId>" +
                                            "<version>1</version>");

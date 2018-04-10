@@ -22,7 +22,7 @@ if sys.version_info >= (3, 3):
             @classmethod
             def find_spec(cls, fullname: str,
                           path: Optional[Sequence[importlib.abc._Path]],
-                          target: types.ModuleType = None) -> Optional[ModuleSpec]:
+                          target: Optional[types.ModuleType] = ...) -> Optional[ModuleSpec]:
                 ...
         # InspectLoader
         @classmethod
@@ -30,9 +30,9 @@ if sys.version_info >= (3, 3):
         @classmethod
         def load_module(cls, fullname: str) -> types.ModuleType: ...
         @classmethod
-        def get_code(cls, fullname: str) -> None: ...  # type: ignore
+        def get_code(cls, fullname: str) -> None: ...
         @classmethod
-        def get_source(cls, fullname: str) -> None: ...  # type: ignore
+        def get_source(cls, fullname: str) -> None: ...
         # Loader
         @classmethod
         def load_module(cls, fullname: str) -> types.ModuleType: ...
@@ -59,9 +59,9 @@ else:
         @classmethod
         def load_module(cls, fullname: str) -> types.ModuleType: ...
         @classmethod
-        def get_code(cls, fullname: str) -> None: ...  # type: ignore
+        def get_code(cls, fullname: str) -> None: ...
         @classmethod
-        def get_source(cls, fullname: str) -> None: ...  # type: ignore
+        def get_source(cls, fullname: str) -> None: ...
         # Loader
         @classmethod
         def load_module(cls, fullname: str) -> types.ModuleType: ...
@@ -79,7 +79,7 @@ if sys.version_info >= (3, 3):
             @classmethod
             def find_spec(cls, fullname: str,
                           path: Optional[Sequence[importlib.abc._Path]],
-                          target: types.ModuleType = None) -> Optional[ModuleSpec]:
+                          target: Optional[types.ModuleType] = ...) -> Optional[ModuleSpec]:
                 ...
         # InspectLoader
         @classmethod
@@ -87,9 +87,9 @@ if sys.version_info >= (3, 3):
         @classmethod
         def load_module(cls, fullname: str) -> types.ModuleType: ...
         @classmethod
-        def get_code(cls, fullname: str) -> None: ...  # type: ignore
+        def get_code(cls, fullname: str) -> None: ...
         @classmethod
-        def get_source(cls, fullname: str) -> None: ...  # type: ignore
+        def get_source(cls, fullname: str) -> None: ...
         # Loader
         @classmethod
         def load_module(cls, fullname: str) -> types.ModuleType: ...
@@ -125,7 +125,7 @@ else:
         def load_module(cls, fullname: str) -> types.ModuleType: ...
 
 if sys.version_info >= (3, 3):
-    class WindowsRegisteryFinder(importlib.abc.MetaPathFinder):
+    class WindowsRegistryFinder(importlib.abc.MetaPathFinder):
         @classmethod
         def find_module(
             cls, fullname: str,
@@ -136,7 +136,7 @@ if sys.version_info >= (3, 3):
             @classmethod
             def find_spec(cls, fullname: str,
                           path: Optional[Sequence[importlib.abc._Path]],
-                          target: types.ModuleType = None) -> Optional[ModuleSpec]:
+                          target: Optional[types.ModuleType] = ...) -> Optional[ModuleSpec]:
                 ...
 else:
     class WindowsRegisteryFinder:

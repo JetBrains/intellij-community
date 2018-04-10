@@ -71,7 +71,7 @@ public class GenericDomValueConvertersRegistry {
       if (psiType instanceof PsiClassType) {
         PsiClass resolve = ((PsiClassType)psiType).resolve();
         if (resolve != null) {
-          return (CommonClassNames.JAVA_LANG_CLASS.equals(resolve.getQualifiedName()));
+          return CommonClassNames.JAVA_LANG_CLASS.equals(resolve.getQualifiedName());
         }
       }
       return false;

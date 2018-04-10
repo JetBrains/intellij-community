@@ -5,7 +5,7 @@ enum E {
         public int foo() {
             return 0;
         }
-    };
+    }, B {};
 
     public abstract int foo();
 }

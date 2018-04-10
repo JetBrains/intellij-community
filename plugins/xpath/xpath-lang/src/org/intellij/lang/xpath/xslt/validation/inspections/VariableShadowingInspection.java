@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
@@ -41,11 +40,6 @@ public class VariableShadowingInspection extends XsltInspection {
   @NotNull
   public String getShortName() {
     return "XsltVariableShadowing";
-  }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
   }
 
   @NotNull

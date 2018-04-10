@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,33 +35,33 @@ import java.util.Map;
 
 public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
 
-  private static final Map<String, String> gridbagConstants = new HashMap();
+  private static final Map<String, String> gridbagConstants = new HashMap<>();
   static {
     gridbagConstants.put("NORTHWEST", "FIRST_LINE_START");
     gridbagConstants.put("NORTHEAST", "FIRST_LINE_END");
     gridbagConstants.put("SOUTHWEST", "LAST_LINE_START");
     gridbagConstants.put("SOUTHEAST", "LAST_LINE_END");
   }
-  private static final Map<String, String> borderLayoutConstants = new HashMap();
+  private static final Map<String, String> borderLayoutConstants = new HashMap<>();
   static {
     borderLayoutConstants.put("NORTH", "PAGE_START");
     borderLayoutConstants.put("SOUTH", "PAGE_END");
     borderLayoutConstants.put("EAST", "LINE_END");
     borderLayoutConstants.put("WEST", "LINE_START");
   }
-  private static final Map<String, String> flowLayoutConstants = new HashMap();
+  private static final Map<String, String> flowLayoutConstants = new HashMap<>();
   static {
     flowLayoutConstants.put("LEFT", "LEADING");
     flowLayoutConstants.put("RIGHT", "TRAILING");
   }
-  private static final Map<String, String> scrollPaneConstants = new HashMap();
+  private static final Map<String, String> scrollPaneConstants = new HashMap<>();
   static {
     scrollPaneConstants.put("LOWER_LEFT_CORNER", "LOWER_LEADING_CORNER");
     scrollPaneConstants.put("LOWER_RIGHT_CORNER", "LOWER_TRAILING_CORNER");
     scrollPaneConstants.put("UPPER_LEFT_CORNER", "UPPER_LEADING_CORNER");
     scrollPaneConstants.put("UPPER_RIGHT_CORNER", "UPPER_TRAILING_CORNER");
   }
-  private static final Map<String, String> boxLayoutConstants = new HashMap();
+  private static final Map<String, String> boxLayoutConstants = new HashMap<>();
   static {
     boxLayoutConstants.put("X_AXIS", "LINE_AXIS");
     boxLayoutConstants.put("Y_AXIS", "PAGE_AXIS");
@@ -109,7 +111,7 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceExpression)) {

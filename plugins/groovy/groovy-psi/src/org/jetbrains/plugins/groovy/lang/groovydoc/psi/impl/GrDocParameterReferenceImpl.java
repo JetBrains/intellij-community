@@ -71,7 +71,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
           candidates.add(new GroovyResolveResultImpl(parameter, true));
         }
       }
-      return candidates.toArray(new ResolveResult[candidates.size()]);
+      return candidates.toArray(ResolveResult.EMPTY_ARRAY);
     }
     else {
       final PsiElement firstChild = getFirstChild();
@@ -90,11 +90,13 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return ResolveResult.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());

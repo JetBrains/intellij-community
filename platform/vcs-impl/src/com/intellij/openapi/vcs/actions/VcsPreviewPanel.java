@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.PreviewPanel;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -28,8 +27,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
 import com.intellij.openapi.vcs.ex.Range;
@@ -105,7 +104,7 @@ class VcsPreviewPanel implements PreviewPanel {
   private static Range createModifiedRange(int currentLine, byte... inner) {
     List<InnerRange> innerRanges = new ArrayList<>();
 
-    int currentInnerLine = currentLine;
+    int currentInnerLine = 0;
     for (byte type : inner) {
       switch (type) {
         case Range.EQUAL:
@@ -120,17 +119,20 @@ class VcsPreviewPanel implements PreviewPanel {
       }
     }
 
-    return new Range(currentLine, currentInnerLine, 0, 1, innerRanges);
+    return new Range(currentLine, currentLine + currentInnerLine, 0, 1, innerRanges);
   }
 
   private void addHighlighter(@NotNull Range range, @NotNull ColorKey colorKey) {
-    TextRange textRange = DiffUtil.getLinesRange(myEditor.getDocument(), range.getLine1(), range.getLine2());
+    RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, myEditor.getMarkupModel());
+    highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
+      @Override
+      public void paint(Editor editor, Graphics g, Rectangle r) {
+        LineStatusMarkerRenderer.paintRange(g, myEditor, range, 0);
+      }
 
-    RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, textRange, myEditor.getMarkupModel());
-    highlighter.setLineMarkerRenderer(new LineStatusMarkerRenderer(range) {
       @Override
       public boolean canDoAction(MouseEvent e) {
-        return isInsideMarkerArea(e);
+        return LineStatusMarkerRenderer.isInsideMarkerArea(e);
       }
 
       @Override

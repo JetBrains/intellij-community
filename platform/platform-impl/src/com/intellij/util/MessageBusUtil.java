@@ -15,14 +15,11 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NotNull;
 
 public class MessageBusUtil {
   private static <T> Runnable createPublisherRunnable(final Project project, final Topic<T> topic, final Consumer<T> listener) {
@@ -42,13 +39,4 @@ public class MessageBusUtil {
     }
   }
 
-  @NotNull
-  public static Disposable newMessageBusDisposer(@NotNull final MessageBus messageBus) {
-    return new Disposable() {
-      @Override
-      public void dispose() {
-        messageBus.dispose();
-      }
-    };
-  }
 }

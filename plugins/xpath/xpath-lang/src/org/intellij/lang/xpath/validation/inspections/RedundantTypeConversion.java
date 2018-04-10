@@ -29,9 +29,6 @@ import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class RedundantTypeConversion extends XPathInspection {
     @NonNls
@@ -58,12 +55,7 @@ public class RedundantTypeConversion extends XPathInspection {
         return new MyElementVisitor(manager, isOnTheFly);
     }
 
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return null;
-    }
-
-    protected boolean acceptsLanguage(Language language) {
+  protected boolean acceptsLanguage(Language language) {
       return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
     }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,9 +38,10 @@ public class AnsiEscapeDecoder {
   private static final char BACKSPACE = '\b';
 
   private final ColoredOutputTypeRegistry myColoredOutputTypeRegistry = ColoredOutputTypeRegistry.getInstance();
-  private Key myCurrentTextAttributes;
   private String myUnhandledStdout;
   private String myUnhandledStderr;
+  private ProcessOutputType myCurrentStdoutOutputType;
+  private ProcessOutputType myCurrentStderrOutputType;
 
   /**
    * Parses ansi-color codes from text and sends text fragments with color attributes to textAcceptor
@@ -61,6 +63,9 @@ public class AnsiEscapeDecoder {
         if (escSeqBeginInd < -1) {
           unhandledSuffixLength = decodeUnhandledSuffixLength(escSeqBeginInd);
         }
+        if (pos < text.length() - unhandledSuffixLength) {
+          chunks = processTextChunk(chunks, text.substring(pos, text.length() - unhandledSuffixLength), outputType, textAcceptor);
+        }
         break;
       }
       if (pos < escSeqBeginInd) {
@@ -78,14 +83,17 @@ public class AnsiEscapeDecoder {
         // this is a simple fix for RUBY-8996:
         // we replace several consecutive escape sequences with one which contains all these sequences
         String colorAttribute = StringUtil.replace(escSeq, M_CSI, ";");
-        myCurrentTextAttributes = myColoredOutputTypeRegistry.getOutputKey(colorAttribute);
+        ProcessOutputType resultType = myColoredOutputTypeRegistry.getOutputType(colorAttribute, outputType);
+        if (resultType.isStdout()) {
+          myCurrentStdoutOutputType = resultType;
+        }
+        else if (resultType.isStderr()) {
+          myCurrentStderrOutputType = resultType;
+        }
       }
       pos = escSeqEndInd + 1;
     }
     updateUnhandledSuffix(text, outputType, unhandledSuffixLength);
-    if (unhandledSuffixLength == 0 && pos < text.length()) {
-      chunks = processTextChunk(chunks, text.substring(pos), outputType, textAcceptor);
-    }
     if (chunks != null && textAcceptor instanceof ColoredChunksAcceptor) {
       ((ColoredChunksAcceptor)textAcceptor).coloredChunksAvailable(chunks);
     }
@@ -93,10 +101,10 @@ public class AnsiEscapeDecoder {
 
   private void updateUnhandledSuffix(@NotNull String text, @NotNull Key outputType, int unhandledSuffixLength) {
     String unhandledSuffix = unhandledSuffixLength > 0 ? text.substring(text.length() - unhandledSuffixLength) : null;
-    if (outputType == ProcessOutputTypes.STDOUT) {
+    if (ProcessOutputType.isStdout(outputType)) {
       myUnhandledStdout = unhandledSuffix;
     }
-    else if (outputType == ProcessOutputTypes.STDERR) {
+    else if (ProcessOutputType.isStderr(outputType)) {
       myUnhandledStderr = unhandledSuffix;
     }
   }
@@ -104,11 +112,11 @@ public class AnsiEscapeDecoder {
   @NotNull
   private String prependUnhandledText(@NotNull String text, @NotNull Key outputType) {
     String prevUnhandledText = null;
-    if (outputType == ProcessOutputTypes.STDOUT) {
+    if (ProcessOutputType.isStdout(outputType)) {
       prevUnhandledText = myUnhandledStdout;
       myUnhandledStdout = null;
     }
-    else if (outputType == ProcessOutputTypes.STDERR) {
+    else if (ProcessOutputType.isStderr(outputType)) {
       prevUnhandledText = myUnhandledStderr;
       myUnhandledStderr = null;
     }
@@ -263,10 +271,13 @@ public class AnsiEscapeDecoder {
 
   @NotNull
   protected Key getCurrentOutputAttributes(@NotNull Key outputType) {
-    if (outputType == ProcessOutputTypes.STDERR || outputType == ProcessOutputTypes.SYSTEM) {
-      return outputType;
+    if (ProcessOutputType.isStdout(outputType)) {
+      return ObjectUtils.notNull(myCurrentStdoutOutputType, outputType);
     }
-    return myCurrentTextAttributes != null ? myCurrentTextAttributes : outputType;
+    if (ProcessOutputType.isStderr(outputType)) {
+      return ObjectUtils.notNull(myCurrentStderrOutputType, outputType);
+    }
+    return outputType;
   }
 
   public interface ColoredChunksAcceptor extends ColoredTextAcceptor {

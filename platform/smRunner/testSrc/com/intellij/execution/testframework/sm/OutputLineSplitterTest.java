@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.OutputLineSplitter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
@@ -34,12 +36,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.hamcrest.CoreMatchers.*;
 
 public class OutputLineSplitterTest extends PlatformTestCase {
-  private static final Key RED = Key.create(OutputLineSplitterTest.class + ".RED");
-  private static final Key GREEN = Key.create(OutputLineSplitterTest.class + ".GREEN");
-  private static final Key BLUE = Key.create(OutputLineSplitterTest.class + ".BLUE");
-
   private static final List<Key> ALL_TYPES = Arrays.asList(ProcessOutputTypes.STDERR, ProcessOutputTypes.STDOUT, ProcessOutputTypes.SYSTEM);
-  private static final List<Key> ALL_COLORS = Arrays.asList(RED, GREEN, BLUE);
+  private static final List<Key> ALL_STDOUT_KEYS = Arrays.asList(
+    new ProcessOutputType(OutputLineSplitterTest.class + ".RED", (ProcessOutputType)ProcessOutputTypes.STDOUT),
+    new ProcessOutputType(OutputLineSplitterTest.class + ".GREEN", (ProcessOutputType)ProcessOutputTypes.STDOUT),
+    new ProcessOutputType(OutputLineSplitterTest.class + ".BLUE", (ProcessOutputType)ProcessOutputTypes.STDOUT)
+  );
+  private static final List<Key> ALL_STDERR_KEYS = Arrays.asList(
+    new ProcessOutputType(OutputLineSplitterTest.class + ".RED", (ProcessOutputType)ProcessOutputTypes.STDERR),
+    new ProcessOutputType(OutputLineSplitterTest.class + ".GREEN", (ProcessOutputType)ProcessOutputTypes.STDERR),
+    new ProcessOutputType(OutputLineSplitterTest.class + ".BLUE", (ProcessOutputType)ProcessOutputTypes.STDERR)
+  );
 
   private OutputLineSplitter mySplitter;
   final Map<Key, List<String>> myOutput = new THashMap<>();
@@ -51,11 +58,11 @@ public class OutputLineSplitterTest extends PlatformTestCase {
     mySplitter = new OutputLineSplitter(false) {
       @Override
       protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
-        if (ProcessOutputTypes.STDERR != outputType && ProcessOutputTypes.SYSTEM != outputType) outputType = ProcessOutputTypes.STDOUT;
+        ProcessOutputType baseOutputType = ((ProcessOutputType)outputType).getBaseOutputType();
         synchronized (myOutput) {
-          List<String> list = myOutput.get(outputType);
+          List<String> list = myOutput.get(baseOutputType);
           if (list == null) {
-            myOutput.put(outputType, list = new ArrayList<>());
+            myOutput.put(baseOutputType, list = new ArrayList<>());
           }
           list.add(text);
         }
@@ -67,6 +74,17 @@ public class OutputLineSplitterTest extends PlatformTestCase {
    * When tc message is in the middle of line it should reported as separate line like if it has \n before it
    */
   public void testMessageInTheMiddleOfLine() {
+    mySplitter.process("\nStarting...\n##teamcity[name1]\nDone 1\n\n##teamcity[name2]\nDone 2", ProcessOutputTypes.STDOUT);
+    mySplitter.process("##teamcity[name3]Test print##teamcity[name4]", ProcessOutputTypes.STDOUT);
+    mySplitter.process("##teamcity[name5]\n", ProcessOutputTypes.STDOUT);
+    mySplitter.process("##teamcity[name6]\nInfo##teamcity[name7]\n", ProcessOutputTypes.STDOUT);
+    List<String> stdout = myOutput.get(ProcessOutputTypes.STDOUT);
+    Assert.assertEquals(ContainerUtil.newArrayList(
+      "\n", "Starting...\n", "##teamcity[name1]\n", "Done 1\n", "\n", "##teamcity[name2]\n", "Done 2",
+      "##teamcity[name3]Test print", "##teamcity[name4]",
+      "##teamcity[name5]\n",
+      "##teamcity[name6]\n", "Info", "##teamcity[name7]\n"
+    ), stdout);
     for(String prefix: new String[]{"...", "", "... ", "##", " ##", "##team##teamcity["}) {
       final String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
       final String testEnded = ServiceMessageBuilder.testFinished("myTest").toString() + "\n";
@@ -124,13 +142,26 @@ public class OutputLineSplitterTest extends PlatformTestCase {
         for (int i = 0; i < 1000; i++) {
           String s = StringUtil.repeat("A", 100 + r.nextInt(1000)) + "\n";
 
+          final Key outputType;
           if (each == ProcessOutputTypes.STDOUT) {
-            mySplitter.process(s, ALL_COLORS.get(r.nextInt(2)));
+            outputType = ALL_STDOUT_KEYS.get(r.nextInt(2));
+          }
+          else if (each == ProcessOutputTypes.STDERR) {
+            outputType = ALL_STDERR_KEYS.get(r.nextInt(2));
           }
           else {
-            mySplitter.process(s, each);
+            outputType = each;
           }
-          written.get(each).add(s);
+          String prefix = each.toString() + ":";
+          mySplitter.process(prefix, each);
+          mySplitter.process(s, outputType);
+          if (!outputType.equals(each)) {
+            written.get(each).add(prefix);
+            written.get(each).add(s);
+          }
+          else {
+            written.get(each).add(prefix + s);
+          }
         }
       }).get();
     }

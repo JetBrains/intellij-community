@@ -11,13 +11,17 @@ class Test2 {
     static <T> I<T> bar(I<T> i){return i;}
  
     {
-        bar((<caret>)->{
+      class Local {
+        {
+          bar((<caret>)-> {
             A a = new A() {
               void foo() {
                 super.foo();
               }
             }
             return "sss";
-        });
+          });
+        }
+      }
     }
 }

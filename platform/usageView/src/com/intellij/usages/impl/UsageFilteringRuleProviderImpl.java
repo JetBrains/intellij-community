@@ -53,7 +53,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     if (!myReadWriteState.isShowWriteAccess()) {
       rules.add(new WriteAccessFilteringRule());
     }
-    return rules.toArray(new UsageFilteringRule[rules.size()]);
+    return rules.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
 
   @Override

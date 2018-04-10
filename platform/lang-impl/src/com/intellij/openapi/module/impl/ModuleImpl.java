@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -33,6 +19,9 @@ import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
+import com.intellij.openapi.roots.ProjectModelElement;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -139,7 +128,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public void rename(@NotNull String newName, boolean notifyStorage) {
     myName = newName;
     if (notifyStorage) {
-      ServiceKt.getStateStore(this).getStateStorageManager()
+      ServiceKt.getStateStore(this).getStorageManager()
         .rename(StoragePathMacros.MODULE_FILE, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     }
   }
@@ -147,7 +136,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   @NotNull
   public String getModuleFilePath() {
-    return ServiceKt.getStateStore(this).getStateStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
+    return ServiceKt.getStateStore(this).getStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
   }
 
   @Override
@@ -334,7 +323,25 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @State(name = "DeprecatedModuleOptionManager")
-  static class DeprecatedModuleOptionManager extends SimpleModificationTracker implements PersistentStateComponent<DeprecatedModuleOptionManager.State> {
+  static class DeprecatedModuleOptionManager extends SimpleModificationTracker implements PersistentStateComponent<DeprecatedModuleOptionManager.State>,
+                                                                                          ProjectModelElement {
+    private final Module module;
+
+    public DeprecatedModuleOptionManager(@NotNull Module module) {
+      this.module = module;
+    }
+
+    @Override
+    @Nullable
+    public ProjectModelExternalSource getExternalSource() {
+      if (state.options.size() > 1 || (state.options.size() == 1 && !state.options.containsKey(Module.ELEMENT_TYPE) /* unrealistic case, but just to be sure */)) {
+        return null;
+      }
+      else {
+        return ExternalProjectSystemRegistry.getInstance().getExternalSource(module);
+      }
+    }
+
     static final class State {
       @Property(surroundWithTag = false)
       @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")
@@ -350,7 +357,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     }
 
     @Override
-    public void loadState(State state) {
+    public void loadState(@NotNull State state) {
       this.state = state;
     }
   }

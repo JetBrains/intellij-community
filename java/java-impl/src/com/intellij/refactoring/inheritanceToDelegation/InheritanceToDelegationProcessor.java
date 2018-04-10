@@ -51,7 +51,7 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,7 +173,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       processClass(inheritor, usages);
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private FieldAccessibility getFieldAccessibility(PsiElement element) {
@@ -215,7 +215,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
     }
     ArrayList<UsageInfo> filteredUsages = filterUsages(oldUsages);
-    refUsages.set(filteredUsages.toArray(new UsageInfo[filteredUsages.size()]));
+    refUsages.set(filteredUsages.toArray(UsageInfo.EMPTY_ARRAY));
     prepareSuccessful();
     return true;
   }
@@ -292,7 +292,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         result.add(((ObjectUpcastedUsageInfo)usage));
       }
     }
-    return result.toArray(new ObjectUpcastedUsageInfo[result.size()]);
+    return result.toArray(new ObjectUpcastedUsageInfo[0]);
   }
 
   private ArrayList<UsageInfo> filterUsages(ArrayList<UsageInfo> usages) {
@@ -892,6 +892,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("replace.inheritance.with.delegation.command", DescriptiveNameUtil.getDescriptiveName(myClass));
   }

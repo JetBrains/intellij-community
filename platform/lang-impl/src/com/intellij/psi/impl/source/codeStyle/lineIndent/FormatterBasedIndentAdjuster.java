@@ -51,9 +51,9 @@ public class FormatterBasedIndentAdjuster  {
   }
   
   public static class IndentAdjusterRunnable implements Runnable {
-    private Project myProject;
-    private int myLine;
-    private Document myDocument;
+    private final Project myProject;
+    private final int myLine;
+    private final Document myDocument;
 
     public IndentAdjusterRunnable(Project project, Document document, int offset) {
       myProject = project;

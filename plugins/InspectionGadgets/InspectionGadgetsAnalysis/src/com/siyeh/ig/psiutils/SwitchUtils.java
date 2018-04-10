@@ -30,19 +30,28 @@ public class SwitchUtils {
 
   private SwitchUtils() {}
 
+  /**
+   * Does not count the default statement, but returns a negative number when it is present.
+   * So for example if a switch statement contains 4 cases and a default case, it will return -4
+   * @param statement  the statement to count the cases of.
+   * @return a negative number if a default case was encountered.
+   */
   public static int calculateBranchCount(@NotNull PsiSwitchStatement statement) {
     final PsiCodeBlock body = statement.getBody();
     if (body == null) {
       return 0;
     }
-    final PsiStatement[] statements = body.getStatements();
     int branches = 0;
-    for (final PsiStatement child : statements) {
-      if (child instanceof PsiSwitchLabelStatement) {
+    boolean defaultFound = false;
+    for (final PsiSwitchLabelStatement child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatement.class)) {
+      if (child.isDefaultCase()) {
+        defaultFound = true;
+      }
+      else {
         branches++;
       }
     }
-    return branches;
+    return defaultFound ? -branches : branches;
   }
 
   @Nullable

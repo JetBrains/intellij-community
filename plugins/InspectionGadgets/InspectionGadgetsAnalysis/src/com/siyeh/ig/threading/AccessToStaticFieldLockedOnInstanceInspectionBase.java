@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class AccessToStaticFieldLockedOnInstanceInspectionBase extends BaseInspection {
-  @SuppressWarnings("PublicField") public OrderedSet<String> ignoredClasses = new OrderedSet();
+  @SuppressWarnings("PublicField") public OrderedSet<String> ignoredClasses = new OrderedSet<>();
 
   @Override
   @NotNull
@@ -61,15 +62,8 @@ public class AccessToStaticFieldLockedOnInstanceInspectionBase extends BaseInspe
       if (!PsiTreeUtil.isAncestor(containingClass, expression, false)) {
         return;
       }
-      if (!ignoredClasses.isEmpty()) {
-        final PsiType type = lockedField.getType();
-        if (type instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)type;
-          final PsiClass aClass = classType.resolve();
-          if (aClass != null && ignoredClasses.contains(aClass.getQualifiedName())) {
-            return;
-          }
-        }
+      if (!ignoredClasses.isEmpty() && ignoredClasses.contains(TypeUtils.resolvedClassName(lockedField.getType()))) {
+        return;
       }
 
       boolean isLockedOnInstance = false;
@@ -118,7 +112,7 @@ public class AccessToStaticFieldLockedOnInstanceInspectionBase extends BaseInspe
       if (!isLockedOnInstance || isLockedOnClass) {
         return;
       }
-      registerError(expression);
+      registerError(expression, expression);
     }
   }
 }

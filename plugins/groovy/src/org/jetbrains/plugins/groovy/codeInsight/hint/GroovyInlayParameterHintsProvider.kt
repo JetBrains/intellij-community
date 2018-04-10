@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
@@ -26,6 +12,7 @@ import com.intellij.psi.PsiMirrorElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ArgInfo
@@ -49,9 +36,19 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
     val original = signature.parameters.zip(infos)
     val closureArgument = closureArguments.singleOrNull()
 
-    // leave only regular literal arguments and varargs which contain literals
+    // show:
+    // - regular literal arguments
+    // - varargs which contain literals
+    // - prefix unary expressions with numeric literal arguments
+    fun shouldShowHint(arg: PsiElement): Boolean {
+      if (arg is GrClosableBlock) return true
+      if (arg is GrLiteral) return true
+      if (arg is GrUnaryExpression) return arg.operand.let { it is GrLiteral && it.value is Number }
+      return false
+    }
+
     fun ArgInfo<PsiElement>.shouldShowHint(): Boolean {
-      if (args.none { it is GrLiteral || it is GrClosableBlock }) return false // do not show non-literals
+      if (args.none(::shouldShowHint)) return false
       if (isMultiArg) return args.none { it is GrNamedArgument } //  do not show named arguments
       if (closureArgument == null) return true
       return closureArgument !in args // do not show closure argument

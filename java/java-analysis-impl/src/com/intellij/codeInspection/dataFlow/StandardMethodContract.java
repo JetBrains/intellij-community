@@ -44,7 +44,7 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   @NotNull
-  static ValueConstraint[] createConstraintArray(int paramCount) {
+  public static ValueConstraint[] createConstraintArray(int paramCount) {
     ValueConstraint[] args = new ValueConstraint[paramCount];
     for (int i = 0; i < args.length; i++) {
       args[i] = ValueConstraint.ANY_VALUE;
@@ -77,11 +77,11 @@ public final class StandardMethodContract extends MethodContract {
 
   @Override
   String getArgumentsPresentation() {
-    return StringUtil.join(arguments, constraint -> constraint.toString(), ", ");
+    return StringUtil.join(arguments, ValueConstraint::toString, ", ");
   }
 
   @Override
-  protected List<ContractValue> getConditions() {
+  public List<ContractValue> getConditions() {
     return IntStreamEx.ofIndices(arguments).mapToObj(idx -> arguments[idx].getCondition(idx)).without(ContractValue.booleanValue(true))
       .toList();
   }

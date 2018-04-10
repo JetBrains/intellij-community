@@ -28,9 +28,8 @@ import org.jetbrains.annotations.NotNull;
   storages = @Storage(FileTemplateSettings.EXPORTABLE_SETTINGS_FILE),
   additionalExportFile = FileTemplatesLoader.TEMPLATES_DIR
 )
-public class ExportableFileTemplateSettings extends FileTemplateSettings {
-
-  public ExportableFileTemplateSettings(@NotNull FileTypeManagerEx typeManager) {
+class ExportableFileTemplateSettings extends FileTemplateSettings {
+  ExportableFileTemplateSettings(@NotNull FileTypeManagerEx typeManager) {
     super(typeManager, null);
   }
 }

@@ -26,24 +26,22 @@ import java.util.*;
  */
 
 public class ConvertUsagesUtil {
-  private static final char GROUP_SEPARATOR = ':';
-  private static final char GROUPS_SEPARATOR = ';';
-  private static final char GROUP_VALUE_SEPARATOR = ',';
+  static final char GROUP_SEPARATOR = ':';
+  static final char GROUPS_SEPARATOR = ';';
+  static final char GROUP_VALUE_SEPARATOR = ',';
 
   private ConvertUsagesUtil() {
   }
 
 
   // @NotNull
-  public static <T extends UsageDescriptor> String convertUsages(Map<GroupDescriptor, Set<T>> map) {
+  public static <T extends UsageDescriptor> String convertUsages(Map<String, Set<T>> map) {
     assert map != null;
-    final Map<GroupDescriptor, Set<T>> sortedMap = sortDescriptorsByPriority(map);
-
     StringBuffer buffer = new StringBuffer();
-    for (Map.Entry<GroupDescriptor, Set<T>> entry : sortedMap.entrySet()) {
+    for (Map.Entry<String, Set<T>> entry : map.entrySet()) {
       String value = convertValueMap(entry.getValue());
       if (!StringUtil.isEmptyOrSpaces(value)) {
-        buffer.append(entry.getKey().getId());
+        buffer.append(entry.getKey());
         buffer.append(GROUP_SEPARATOR);
         buffer.append(value);
         buffer.append(GROUPS_SEPARATOR);
@@ -165,7 +163,7 @@ public class ConvertUsagesUtil {
    */
   @NotNull
   public static String escapeDescriptorName(@NotNull final String name) {
-    return name.replace(" ", "_").
+    return name.
       replace(GROUP_SEPARATOR, '_').
       replace(GROUPS_SEPARATOR, '_').
       replace(GROUP_VALUE_SEPARATOR, '_')

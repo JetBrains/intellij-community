@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -62,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -91,6 +78,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
@@ -130,7 +118,7 @@ public class PsiImplUtil {
     PsiElement oldParent = oldExpr.getParent();
     if (oldParent == null) throw new PsiInvalidElementAccessException(oldExpr);
 
-    if (!(oldExpr instanceof GrApplicationStatement)) {
+    if (convertToMethodCall(oldExpr)) {
       newExpr = ApplicationStatementUtil.convertToMethodCallExpression(newExpr);
     }
 
@@ -186,6 +174,10 @@ public class PsiImplUtil {
       }
     }
 
+    if (oldParent instanceof GrForInClause) {
+      return (GrExpression) oldExpr.replace(parenthesize(newExpr));
+    }
+
     //if replace closure argument with expression
     //we should add the expression in arg list
     if (oldExpr instanceof GrClosableBlock &&
@@ -239,6 +231,13 @@ public class PsiImplUtil {
       }
     }
     return newExpr;
+  }
+
+  private static boolean convertToMethodCall(GrExpression position) {
+    if (position instanceof GrApplicationStatement) return false;
+    final PsiElement parent = position.getParent();
+    if (parent instanceof GrVariable && ((GrVariable)parent).getInitializerGroovy() == position) return false;
+    return true;
   }
 
   private static boolean isFirstChild(PsiElement element) {
@@ -312,8 +311,7 @@ public class PsiImplUtil {
 
   @Nullable
   public static PsiElement realPrevious(PsiElement previousLeaf) {
-    while (previousLeaf != null &&
-        (previousLeaf instanceof PsiWhiteSpace ||
+    while ((previousLeaf instanceof PsiWhiteSpace ||
             previousLeaf instanceof PsiComment ||
             previousLeaf instanceof PsiErrorElement)) {
       previousLeaf = previousLeaf.getPrevSibling();
@@ -335,6 +333,11 @@ public class PsiImplUtil {
     if (results.length != 1) return null;
     final PsiElement element = results[0].getElement();
     return element instanceof PsiMethod ? (PsiMethod) element : null;
+  }
+
+  @NotNull
+  public static GroovyResolveResult extractUniqueResult(@NotNull Collection<? extends GroovyResolveResult> results) {
+    return results.size() == 1 ? results.iterator().next() : EmptyGroovyResolveResult.INSTANCE;
   }
 
   @NotNull
@@ -398,11 +401,13 @@ public class PsiImplUtil {
 
     for (GrParameter p : parameters) {
       final GrTypeElement declaredType = p.getTypeElementGroovy();
-      if ((declaredType == null || declaredType.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING + "[]")) &&
-          p.getInitializerGroovy() == null) {
+      boolean optional = p.isOptional();
+      if (optional) {
+        optional_count++;
+      }
+      else if (declaredType == null || declaredType.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING + "[]")) {
         args_count++;
       }
-      if (p.getInitializerGroovy() != null) optional_count++;
     }
 
     return optional_count == parameters.length - 1 && args_count == 1;
@@ -698,13 +703,10 @@ public class PsiImplUtil {
     return false;
   }
 
-  public static boolean hasClosureArguments(@Nullable GrCall call) {
-    if (call == null) return false;
-
-    for (PsiElement child = call.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof GrClosableBlock) return true;
-    }
-    return false;
+  public static boolean hasArguments(@NotNull GrCall call) {
+    if (call.hasClosureArguments()) return true;
+    GrArgumentList list = call.getArgumentList();
+    return hasExpressionArguments(list) || hasNamedArguments(list);
   }
 
   public static PsiElement findTailingSemicolon(@NotNull GrStatement statement) {
@@ -738,7 +740,7 @@ public class PsiImplUtil {
         result.add((GrStatement)cur);
       }
     }
-    return result.toArray(new GrStatement[result.size()]);
+    return result.toArray(GrStatement.EMPTY_ARRAY);
   }
 
   public static GrNamedArgument findNamedArgument(final GrNamedArgumentsOwner namedArgumentOwner,

@@ -34,7 +34,7 @@ import java.util.concurrent.Executor;
  */
 public class Preloader implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.Preloader");
-  private final Executor myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("com.intellij.openapi.application.Preloader pool");
+  private final Executor myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Preloader Pool");
   private final ProgressIndicator myIndicator = new ProgressIndicatorBase();
   private final ProgressIndicator myWrappingIndicator = new AbstractProgressIndicatorBase() {
     @Override

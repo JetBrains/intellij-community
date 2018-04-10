@@ -95,7 +95,6 @@ public class GradleRunnerConfigurable extends BaseConfigurable {
 
   private void enableGradleMake(boolean enable) {
     myGradleAwareMakeCheckBox.setSelected(enable);
-    myPreferredTestRunner.setEnabled(!enable);
   }
 
   private static TestRunnerItem getItem(GradleSystemRunningSettings.PreferredTestRunner preferredTestRunner) {

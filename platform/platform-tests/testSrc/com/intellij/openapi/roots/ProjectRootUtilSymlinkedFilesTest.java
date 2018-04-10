@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,9 +23,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 
 public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
   private File myNonContentDir;
@@ -94,13 +93,8 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
     assertEquals(linkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
   }
   
-  public void testFileWithTheSameNotButNotLinked() {
-    new WriteAction<Object>() {
-      @Override
-      protected void run(@NotNull Result<Object> result) throws Throwable {
-        myContentVDir.createChildData(this, myNonContentFile.getName());
-      }
-    }.execute();
+  public void testFileWithTheSameNotButNotLinked() throws IOException {
+    WriteAction.computeAndWait(() -> myContentVDir.createChildData(this, myNonContentFile.getName()));
 
     assertEquals(myNonContentVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
   }

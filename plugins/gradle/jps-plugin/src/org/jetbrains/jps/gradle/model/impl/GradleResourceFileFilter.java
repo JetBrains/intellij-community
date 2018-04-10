@@ -35,8 +35,8 @@ import java.util.regex.Pattern;
  * @since 7/10/2014
  */
 public class GradleResourceFileFilter implements FileFilter {
-  private FilePattern myFilePattern;
-  private File myRoot;
+  private final FilePattern myFilePattern;
+  private final File myRoot;
   private final Spec<RelativePath> myFileFilterSpec;
 
   public GradleResourceFileFilter(@NotNull File rootFile, @NotNull FilePattern filePattern) {

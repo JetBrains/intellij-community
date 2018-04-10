@@ -15,8 +15,11 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -33,5 +36,10 @@ public class GenericCreateFromUsageTest extends LightQuickFixParameterizedTestCa
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_5;
+  }
+
+  @Override
+  protected ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
+    return ActionHint.parse(file, contents, false);
   }
 }

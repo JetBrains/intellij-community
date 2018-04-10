@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 13.08.13
  */
 public abstract class InjectedReferenceVisitor implements PsiLanguageInjectionHost.InjectedPsiVisitor {
   @Override

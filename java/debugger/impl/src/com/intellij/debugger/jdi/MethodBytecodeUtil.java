@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
 import com.intellij.Patches;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ReflectionUtil;
@@ -242,7 +227,7 @@ public class MethodBytecodeUtil {
   }
 
   @Nullable
-  public static Method getLambdaMethod(ReferenceType clsType, VirtualMachineProxy vm) {
+  public static Method getLambdaMethod(ReferenceType clsType, @NotNull ClassesByNameProvider classesByName) {
     Ref<Method> methodRef = Ref.create();
     if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
       List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
@@ -250,7 +235,7 @@ public class MethodBytecodeUtil {
         visit(applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-            ReferenceType cls = ContainerUtil.getFirstItem(vm.classesByName(owner));
+            ReferenceType cls = ContainerUtil.getFirstItem(classesByName.get(owner));
             if (cls != null) {
               Method method = DebuggerUtils.findMethod(cls, name, desc);
               if (method != null) {
@@ -265,7 +250,7 @@ public class MethodBytecodeUtil {
   }
 
   @Nullable
-  public static Method getBridgeTargetMethod(Method method, VirtualMachineProxy vm) {
+  public static Method getBridgeTargetMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
     Ref<Method> methodRef = Ref.create();
     if (method.isBridge()) {
       visit(method, new MethodVisitor(Opcodes.API_VERSION) {
@@ -281,7 +266,7 @@ public class MethodBytecodeUtil {
             cls = declaringType;
           }
           else {
-            cls = ContainerUtil.getFirstItem(vm.classesByName(owner));
+            cls = ContainerUtil.getFirstItem(classesByName.get(owner));
           }
           if (cls != null) {
             Method method = DebuggerUtils.findMethod(cls, name, desc);

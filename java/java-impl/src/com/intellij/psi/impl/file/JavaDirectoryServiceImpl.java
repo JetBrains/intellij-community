@@ -40,6 +40,8 @@ import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collections;
 import java.util.Map;
@@ -50,10 +52,27 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
-    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
-    String packageName = projectFileIndex.getPackageNameByDirectory(dir.getVirtualFile());
+    Project project = dir.getProject();
+    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    VirtualFile virtualFile = dir.getVirtualFile();
+    String packageName = projectFileIndex.getPackageNameByDirectory(virtualFile);
     if (packageName == null) return null;
-    return JavaPsiFacade.getInstance(dir.getProject()).findPackage(packageName);
+    return JavaPsiFacade.getInstance(project).findPackage(packageName);
+  }
+
+  @Nullable
+  @Override
+  public PsiPackage getPackageInSources(@NotNull PsiDirectory dir) {
+    PsiPackage aPackage = getPackage(dir);
+    if (aPackage != null) {
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
+      VirtualFile virtualFile = dir.getVirtualFile();
+      if (fileIndex.isInSourceContent(virtualFile) &&
+          !fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.RESOURCES)) {
+        return aPackage;
+      }
+    }
+    return null;
   }
 
   @Override

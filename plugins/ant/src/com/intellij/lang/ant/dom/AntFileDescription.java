@@ -19,7 +19,6 @@ import com.intellij.util.xml.DomFileDescription;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 6, 2010
  */
 public class AntFileDescription<T extends AntDomElement> extends DomFileDescription<T> {
 

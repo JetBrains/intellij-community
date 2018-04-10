@@ -15,6 +15,10 @@
  */
 package com.intellij.execution.rmi.ssl;
 
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.Base64;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,10 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.Base64;
-import org.jetbrains.annotations.NotNull;
-
 public class PrivateKeyReader {
   public static final String P1_BEGIN_MARKER = "-----BEGIN RSA PRIVATE KEY";
   public static final String P1_END_MARKER = "-----END RSA PRIVATE KEY";
@@ -42,7 +42,7 @@ public class PrivateKeyReader {
   public static final String P8_BEGIN_MARKER = "-----BEGIN PRIVATE KEY";
   public static final String P8_END_MARKER = "-----END PRIVATE KEY";
 
-  private static Map<String, PrivateKey> keyCache = Collections.synchronizedMap(new HashMap<String, PrivateKey>());
+  private static final Map<String, PrivateKey> keyCache = Collections.synchronizedMap(new HashMap<String, PrivateKey>());
 
   @NotNull private final String myFileName;
 

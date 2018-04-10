@@ -60,6 +60,8 @@ class PydevPlugin(Plugin):
                     f = test.context.__file__
                     if f.endswith('.pyc'):
                         f = f[:-1]
+                    elif f.endswith('$py.class'):
+                        f = f[:-len('$py.class')] + '.py'
                     address = f, '?'
         except:
             sys.stderr.write("PyDev: Internal pydev error getting test address. Please report at the pydev bug tracker\n")

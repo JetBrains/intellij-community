@@ -111,11 +111,6 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return null;
   }
 
-  @Override
-  public boolean tracksParameterIndex() {
-    return false;
-  }
-
   @Nullable
   private static XmlTag findXmlTag(PsiFile file, int offset){
     if (!(file instanceof XmlFile)) return null;

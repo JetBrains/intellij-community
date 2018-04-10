@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
@@ -59,8 +45,59 @@ class Gr {
 }
 new Gr().fo<caret>o()
 ''', '''\
-<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://Gr"><code>Gr</code></a></b></small><PRE>void&nbsp;<b>foo</b>()</PRE>
-     Use <a href="psi_element://Gr#bar()"><code>bar()</code></a> from class <a href="psi_element://Gr"><code>Gr</code></a> instead</body></html>'''
+<div class='definition'><pre><a href="psi_element://Gr"><code>Gr</code></a><br>void&nbsp;<b>foo</b>()</pre></div><div class='content'>
+     Use <a href="psi_element://Gr#bar()"><code>bar()</code></a> from class <a href="psi_element://Gr"><code>Gr</code></a> instead
+   <p></div><table class='sections'><p></table>'''
+  }
+
+  void 'test link with label'() {
+    doTest '''\
+/**
+ * check this out {@link java.lang.CharSequence character sequences}
+ */
+def docs() {}
+
+<caret>docs()
+''', '''<div class='definition'><pre>\
+<a href="psi_element://_"><code>_</code></a><br>\
+<a href="psi_element://java.lang.Object"><code>Object</code></a>&nbsp;<b>docs</b>()</pre></div>\
+<div class='content'>
+   check this out <a href="psi_element://java.lang.CharSequence"><code>character sequences</code></a>
+ <p></div>\
+<table class='sections'><p></table>'''
+  }
+
+  void 'test link to method'() {
+    doTest '''\
+class Main {
+  /**
+   * Link 1: {@link #foo(String[])} 
+   * <p>
+   * Link 2: {@link #bar(String[])}
+   * <p>
+   * Link 3: {@link #bar(String[], Integer)}
+   */
+  static void docs() {}
+  void foo(String[] args) {}
+  void bar(String[] args) {}
+  void bar(String[] args, Integer i) {}
+}
+Main.<caret>docs()
+''', '''\
+<div class='definition'><pre>\
+<a href="psi_element://Main"><code>Main</code></a><br>\
+static&nbsp;void&nbsp;<b>docs</b>()\
+</pre></div>\
+<div class='content'>
+     Link 1: <a href="psi_element://Main#foo(java.lang.String[])"><code>foo(String[])</code></a> 
+     <p>
+     Link 2: <a href="psi_element://Main#bar(java.lang.String[])"><code>bar(String[])</code></a>
+     <p>
+     Link 3: <a href="psi_element://Main#bar(java.lang.String[], java.lang.Integer)"><code>bar(String[], Integer)</code></a>
+   <p>\
+</div>\
+<table class='sections'><p></table>\
+'''
   }
 
   void 'test untyped local variable'() {
@@ -68,7 +105,7 @@ new Gr().fo<caret>o()
 def aa = 1
 a<caret>a
 ''', '''\
-<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><PRE><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>aa</b></PRE><p>[inferred type] <a href="psi_element://java.lang.Integer"><code>Integer</code></a></body></html>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>aa</b></pre></div><table class='sections'></table><p>[inferred type] <a href="psi_element://java.lang.Integer"><code>Integer</code></a>'''
   }
 
   void 'test implicit closure parameter'() {
@@ -76,7 +113,7 @@ a<caret>a
 List<String> ss = []
 ss.collect { i<caret>t }
 ''', '''\
-<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><PRE><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>it</b></PRE><p>[inferred type] <a href="psi_element://java.lang.String"><code>String</code></a></body></html>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>it</b></pre></div><table class='sections'></table><p>[inferred type] <a href="psi_element://java.lang.String"><code>String</code></a>'''
   }
 
   private void doTest(String text, String doc) {

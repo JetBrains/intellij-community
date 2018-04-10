@@ -81,16 +81,13 @@ public class AntCommandLineBuilder {
   public void setBuildFile(AbstractProperty.AbstractPropertyContainer container, File buildFile) throws CantRunException {
     String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(container);
     Sdk jdk;
-    if (jdkName != null && jdkName.length() > 0) {
-      jdk = GlobalAntConfiguration.findJdk(jdkName);
-    }
-    else {
+    if (jdkName == null || jdkName.length() <= 0) {
       jdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(container);
       if (jdkName == null || jdkName.length() == 0) {
         throw new CantRunException(AntBundle.message("project.jdk.not.specified.error.message"));
       }
-      jdk = GlobalAntConfiguration.findJdk(jdkName);
     }
+    jdk = GlobalAntConfiguration.findJdk(jdkName);
     if (jdk == null) {
       throw new CantRunException(AntBundle.message("jdk.with.name.not.configured.error.message", jdkName));
     }

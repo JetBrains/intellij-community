@@ -21,8 +21,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -48,6 +46,7 @@ import org.intellij.plugins.testUtil.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public abstract class HighlightingTestBase extends UsefulTestCase implements IdeaCodeInsightTestCase {
   protected CodeInsightTestFixture myTestFixture;
@@ -70,13 +69,10 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
 
     myTestFixture.enableInspections(inspectionClasses);
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        ResourceUtil.copyFiles(HighlightingTestBase.this);
-        init();
-      }
-    }.execute().throwException();
+    WriteAction.runAndWait(() -> {
+      ResourceUtil.copyFiles(HighlightingTestBase.this);
+      init();
+    });
   }
 
   protected static String toAbsolutePath(String relativeTestDataPath) {
@@ -117,7 +113,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   public abstract String getTestDataPath();
 
   protected void init() {
-    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined"));
+    ExternalResourceManagerEx.getInstanceEx().addIgnoredResources(Collections.singletonList("urn:test:undefined"), getTestRootDisposable());
   }
 
   @Override
@@ -207,12 +203,9 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
                                                                                                                fixes,
                                                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                                                                true);
-    new WriteCommandAction.Simple(project, myTestFixture.getFile()) {
-      @Override
-      protected void run() {
-        fixes[0].applyFix(project, problemDescriptor);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, myTestFixture.getFile()).run(() -> {
+      fixes[0].applyFix(project, problemDescriptor);
+    });
     myTestFixture.checkResultByFile(file + "_after." + ext);
   }
 

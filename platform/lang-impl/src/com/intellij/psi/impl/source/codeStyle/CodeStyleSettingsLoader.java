@@ -33,13 +33,43 @@ public class CodeStyleSettingsLoader {
     return settings;
   }
 
-  protected void loadSettings(@NotNull Element rootElement, @NotNull CodeStyleSettings settings) throws SchemeImportException {
+  protected static void loadSettings(@NotNull Element rootElement, @NotNull CodeStyleSettings settings) throws SchemeImportException {
     try {
-      settings.readExternal(rootElement);
+      settings.readExternal(findSchemeRoot(rootElement));
     }
     catch (InvalidDataException e) {
       throw new SchemeImportException(ApplicationBundle.message("settings.code.style.import.xml.error.can.not.load", e.getMessage()));
     }
   }
 
+  protected static Element findSchemeRoot(@NotNull Element rootElement) throws SchemeImportException {
+    String rootName = rootElement.getName();
+    //
+    // Project code style 172.x and earlier
+    //
+    if ("project".equals(rootName)) {
+      Element child = rootElement.getChild("component");
+      if (child != null && "ProjectCodeStyleSettingsManager".equals(child.getAttributeValue("name"))) {
+        child = child.getChild("option");
+        if (child != null && "PER_PROJECT_SETTINGS".equals(child.getAttributeValue("name"))) {
+          child = child.getChild("value");
+          if (child != null) return child;
+        }
+      }
+      throw new SchemeImportException("Invalid scheme root: " + rootName);
+    }
+    //
+    // Project code style 173.x and later
+    //
+    else if ("component".equals(rootName)) {
+      if ("ProjectCodeStyleConfiguration".equals(rootElement.getAttributeValue("name"))) {
+        Element child = rootElement.getChild("code_scheme");
+        if (child != null) {
+          return child;
+        }
+      }
+      throw new SchemeImportException("Invalid scheme root: " + rootName);
+    }
+    return rootElement;
+  }
 }

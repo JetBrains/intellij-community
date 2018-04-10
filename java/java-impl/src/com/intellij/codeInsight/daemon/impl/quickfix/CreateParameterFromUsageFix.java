@@ -99,7 +99,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
       }
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
+        ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[0]);
         String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
         ChangeSignatureProcessor processor =
           new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
@@ -117,16 +117,13 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
                 if (!Comparing.strEqual(varName, newParamName)) {
                   final PsiExpression newExpr =
                     JavaPsiFacade.getElementFactory(project).createExpressionFromText(newParamName, method);
-                  new WriteCommandAction(project) {
-                    @Override
-                    protected void run(@NotNull Result result) throws Throwable {
-                      final PsiReferenceExpression[] refs =
-                        CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
-                      for (PsiReferenceExpression ref : refs) {
-                        ref.replace(newExpr.copy());
-                      }
+                  WriteCommandAction.writeCommandAction(project).run(() -> {
+                    final PsiReferenceExpression[] refs =
+                      CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
+                    for (PsiReferenceExpression ref : refs) {
+                      ref.replace(newExpr.copy());
                     }
-                  }.execute();
+                  });
                 }
                 break;
               }

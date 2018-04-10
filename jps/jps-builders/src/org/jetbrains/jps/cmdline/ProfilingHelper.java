@@ -19,7 +19,6 @@ import java.lang.reflect.Method;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 12/6/12
  */
 class ProfilingHelper {
 

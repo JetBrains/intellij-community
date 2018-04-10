@@ -1225,6 +1225,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.Arrays.ArrayList java.lang.Object[] toArray()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Arrays.LegacyMergeSort LegacyMergeSort()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

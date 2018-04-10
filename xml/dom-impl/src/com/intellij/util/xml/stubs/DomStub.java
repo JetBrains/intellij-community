@@ -34,7 +34,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/2/12
  */
 public abstract class DomStub extends ObjectStubBase<DomStub> {
 

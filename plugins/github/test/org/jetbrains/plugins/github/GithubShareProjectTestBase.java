@@ -54,7 +54,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   }
 
   protected void registerDefaultShareDialogHandler() {
-    myDialogManager.registerDialogHandler(GithubShareDialog.class, new TestDialogHandler<GithubShareDialog>() {
+    dialogManager.registerDialogHandler(GithubShareDialog.class, new TestDialogHandler<GithubShareDialog>() {
       @Override
       public int handleDialog(GithubShareDialog dialog) {
         dialog.testSetRepositoryName(PROJECT_NAME);
@@ -64,8 +64,8 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   }
 
   protected void registerDefaultUntrackedFilesDialogHandler() {
-    myDialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog.class,
-                                          new TestDialogHandler<GithubShareAction.GithubUntrackedFilesDialog>() {
+    dialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog.class,
+                                        new TestDialogHandler<GithubShareAction.GithubUntrackedFilesDialog>() {
                                             @Override
                                             public int handleDialog(GithubShareAction.GithubUntrackedFilesDialog dialog) {
                                               // actually we should ask user for name/email ourselves (like in CommitDialog)
@@ -78,8 +78,8 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   }
 
   protected void registerSelectNoneUntrackedFilesDialogHandler() {
-    myDialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog.class,
-                                          new TestDialogHandler<GithubShareAction.GithubUntrackedFilesDialog>() {
+    dialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog.class,
+                                        new TestDialogHandler<GithubShareAction.GithubUntrackedFilesDialog>() {
                                             @Override
                                             public int handleDialog(GithubShareAction.GithubUntrackedFilesDialog dialog) {
                                               // actually we should ask user for name/email ourselves (like in CommitDialog)

@@ -682,7 +682,7 @@ public class GroovyBlockGenerator {
       if (groovyFile instanceof GroovyFileBase) {
         addChildNodes(groovyFile, childList, range, psi);
       }
-      return childList.toArray(new ASTNode[childList.size()]);
+      return childList.toArray(ASTNode.EMPTY_ARRAY);
     }
     return node.getChildren(null);
   }

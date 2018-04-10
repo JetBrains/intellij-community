@@ -33,6 +33,9 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -46,7 +49,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
  */
@@ -559,7 +561,7 @@ class Indirect {
 
     touch(used.virtualFile)
     touch(main)
-    assertEmpty make()
+    assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
 
     assertEmpty compileModule(myModule)
     assertEmpty compileModule(myModule)
@@ -574,6 +576,8 @@ class Indirect {
 
     assert findClassFile('Used2') == null
   }
+
+  protected abstract List<String> chunkRebuildMessage(String builder)
 
   void testClassLoadingDuringBytecodeGeneration() {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
@@ -593,7 +597,7 @@ class Main {
 
     touch(used.virtualFile)
     touch(main)
-    assertEmpty make()
+    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
   }
 
   void testMakeInDependentModuleAfterChunkRebuild() {
@@ -611,7 +615,7 @@ class Main {
     touch(main)
     setFileText(dep, 'class Dep { String prop = new Used().getProp(); }')
 
-    assertEmpty make()
+    assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
   }
 
   void "test extend package-private class from another module"() {
@@ -813,7 +817,7 @@ string
     touch bar3.virtualFile
     touch using.virtualFile
 
-    assertEmpty make()
+    assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
   }
 
   void "test rename class to java and touch its usage"() {
@@ -902,10 +906,8 @@ class AppTest {
     addGroovyLibrary(anotherModule)
 
     PsiTestUtil.addProjectLibrary(myModule, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
-
-    def cliPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib")
-    PsiTestUtil.addLibrary(myModule, "cli", cliPath, "commons-cli-1.2.jar")
-    PsiTestUtil.addLibrary(anotherModule, "cli", cliPath, "commons-cli-1.2.jar")
+    PsiTestUtil.addProjectLibrary(myModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
+    PsiTestUtil.addProjectLibrary(anotherModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
     myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
@@ -941,6 +943,36 @@ class AppTest {
     assert !make().find { it.category == CompilerMessageCategory.ERROR }
   }
 
+  void "test recompile one file that triggers chunk rebuild inside"() {
+    myFixture.addFileToProject('BuildContext.groovy', '''
+@groovy.transform.CompileStatic 
+class BuildContext {
+  static BuildContext createContext(PropTools tools) { return BuildContextImpl.create(tools) } 
+}
+
+''')
+    myFixture.addFileToProject('PropTools.groovy', 'class PropTools { SomeTool someTool }')
+    myFixture.addFileToProject('SomeTool.groovy', 'interface SomeTool { void call(BuildContext ctx) }')
+    def subText = '''
+@groovy.transform.CompileStatic 
+class BuildContextImpl extends BuildContext {
+  static BuildContextImpl create(PropTools tools) { return new BuildContextImpl() }
+  void foo(SomeTool tool) { tool.call(this) } 
+}
+'''
+    def sub = myFixture.addFileToProject('BuildContextImpl.groovy', subText)
+    assertEmpty(make())
+    
+    setFileText(sub, subText + ' ')
+    assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
+    def fileMessages = compileFiles(sub.virtualFile)
+    if (this instanceof GroovycTest) {
+      assert fileMessages.collect { it.message == 'Consider building whole project or rebuilding the module' }
+    } else {
+      assert fileMessages.empty
+    }
+  }
+
   void "test report real compilation errors"() {
     addModule('another', true)
 
@@ -951,8 +983,8 @@ class AppTest {
 
   static class GroovycTest extends GroovyCompilerTest {
     void "test navigate from stub to source"() {
-      GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")
-      myFixture.addClass("class Java4 extends Groovy3 {}").containingFile
+      myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }").virtualFile
+      myFixture.addClass("class Java4 extends Groovy3 {}")
 
       def msg = make().find { it.message.contains('InvalidType') }
       assert msg?.virtualFile
@@ -962,7 +994,7 @@ class AppTest {
       assert messages
       def error = messages.find { it.message.contains('InvalidType') }
       assert error?.virtualFile
-      assert groovyFile.classes[0] == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
+      assert myFixture.findClass("Groovy3") == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
     }
 
     void "test config script"() {
@@ -984,6 +1016,10 @@ class Bar {}'''
       assert msg.message.contains('org.apache.commons.logging.Log')
     }
 
+    protected List<String> chunkRebuildMessage(String builder) {
+      return ['Builder "' + builder + '" requested rebuild of module chunk "mainModule"']
+    }
+
   }
 
   static class EclipseTest extends GroovyCompilerTest {
@@ -998,5 +1034,20 @@ class Bar {}'''
 
       GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
     }
+
+    @Override
+    void runTest() {
+      if (JavaSdkVersionUtil.getJavaSdkVersion(ModuleRootManager.getInstance(myModule).sdk)?.isAtLeast(JavaSdkVersion.JDK_1_9)) {
+        println "Groovy-Eclipse doesn't support JDK9 yet"
+        return
+      }
+
+      super.runTest()
+    }
+
+    protected List<String> chunkRebuildMessage(String builder) {
+      return []
+    }
+
   }
 }

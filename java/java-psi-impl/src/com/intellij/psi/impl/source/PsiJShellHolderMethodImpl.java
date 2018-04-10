@@ -35,7 +35,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 21-Jun-17
  */
 public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements PsiJShellHolderMethod {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJShellHolderMethodImpl");
@@ -121,7 +120,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
   @Nullable
   @Override
   public PsiCodeBlock getBody() {
-    return (PsiCodeBlock)getFirstChild();
+    final PsiElement child = getFirstChild();
+    return child instanceof PsiCodeBlock? (PsiCodeBlock)child : null;
   }
 
   @Override

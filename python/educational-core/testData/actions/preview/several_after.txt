@@ -1,1 +1,0 @@
-print("<placeholder>veryverylongtextveryverylongtextveryverylongtextveryverylongtext</placeholder> + <placeholder>test</placeholder> = 2")

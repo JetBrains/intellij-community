@@ -36,7 +36,7 @@ class PyConsoleSourceHighlighter {
   private final PyHighlighter myPyHighlighter;
 
   private int myLexerState;
-  private PythonConsoleView myPythonConsoleView;
+  private final PythonConsoleView myPythonConsoleView;
 
   PyConsoleSourceHighlighter(PythonConsoleView pythonConsoleView, EditorColorsScheme scheme, PyHighlighter pyHighlighter) {
     myPythonConsoleView = pythonConsoleView;

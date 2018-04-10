@@ -66,7 +66,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
   
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XmlTokenType.XML_DOCTYPE_PUBLIC) {
@@ -245,6 +245,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
       public String getCanonicalText() {
         return extractValue(dtdUrlElement);
       }
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         return TextRange.from(dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset() + 1, Math.max(dtdUrlElement.getTextRange().getLength() - 2, 0));

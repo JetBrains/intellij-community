@@ -27,7 +27,7 @@ import java.awt.event.MouseEvent;
  * @author Alexander Lobas
  */
 public abstract class AbstractCreationTool extends TargetingTool {
-  private boolean myCanUnload;
+  private final boolean myCanUnload;
 
   protected AbstractCreationTool(boolean canUnload) {
     myCanUnload = canUnload;

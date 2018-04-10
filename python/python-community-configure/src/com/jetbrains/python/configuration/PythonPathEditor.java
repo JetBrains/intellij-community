@@ -41,6 +41,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public class PythonPathEditor extends SdkPathEditor {
   private final PathListModel myPathListModel;
 
   public PythonPathEditor(final String displayName,
-                          final OrderRootType orderRootType,
+                          @NotNull OrderRootType orderRootType,
                           final FileChooserDescriptor descriptor) {
     super(displayName, orderRootType, descriptor);
     myPathListModel = new PathListModel(orderRootType, getListModel());
@@ -143,11 +144,11 @@ public class PythonPathEditor extends SdkPathEditor {
   private static class PathListModel {
     private Set<VirtualFile> myAdded = Sets.newHashSet();
     private Set<VirtualFile> myExcluded = Sets.newHashSet();
-    private Set<VirtualFile> myFoundFiles = Sets.newHashSet();
-    private List<VirtualFile> myFilteredOut = Lists.newArrayList();
+    private final Set<VirtualFile> myFoundFiles = Sets.newHashSet();
+    private final List<VirtualFile> myFilteredOut = Lists.newArrayList();
     private final DefaultListModel myListModel;
     private final OrderRootType myOrderRootType;
-    private Set<VirtualFile> myUserAddedToRemove = Sets.newHashSet();
+    private final Set<VirtualFile> myUserAddedToRemove = Sets.newHashSet();
 
     public PathListModel(OrderRootType orderRootType, DefaultListModel listModel) {
       myOrderRootType = orderRootType;
@@ -212,7 +213,7 @@ public class PythonPathEditor extends SdkPathEditor {
     private SdkAdditionalData collectSdkAdditionalData(SdkModificator sdkModificator) {
       PythonSdkAdditionalData data = (PythonSdkAdditionalData)sdkModificator.getSdkAdditionalData();
       if (data == null) {
-        data = new PythonSdkAdditionalData(null);
+        data = new PythonSdkAdditionalData((PythonSdkFlavor)null);
       }
       data.setAddedPathsFromVirtualFiles(myAdded);
       data.setExcludedPathsFromVirtualFiles(myExcluded);

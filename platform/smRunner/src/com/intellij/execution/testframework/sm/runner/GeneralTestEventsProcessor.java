@@ -48,7 +48,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected SMTestLocator myLocator = null;
   private final String myTestFrameworkName;
   private final Project myProject;
-  private TransferToEDTQueue<Runnable> myTransferToEDTQueue;
+  private final TransferToEDTQueue<Runnable> myTransferToEDTQueue;
   protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<>();
 
   protected boolean myTreeBuildBeforeStart = false;
@@ -60,7 +60,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     myTransferToEDTQueue = new TransferToEDTQueue<>("SM queue", runnable -> {
       runnable.run();
       return true;
-    }, project.getDisposed(), 300);
+    }, project.getDisposed());
     myTestsRootProxy = testsRootProxy;
   }
   // tree construction events
@@ -76,20 +76,20 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     });
   }
 
-  protected SMTestProxy createProxy(String testName, String locationHint, String id, String parentNodeId) {
-    return new SMTestProxy(testName, false, locationHint);
+  protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    return new SMTestProxy(testName, false, locationHint, metaInfo, false);
   }
 
-  protected SMTestProxy createSuite(String suiteName, String locationHint, String id, String parentNodeId) {
-    return new SMTestProxy(suiteName, true, locationHint);
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    return new SMTestProxy(suiteName, true, locationHint, metaInfo, false);
   }
 
   protected final List<Runnable> myBuildTreeRunnables = new ArrayList<>();
 
-  public void onSuiteTreeNodeAdded(final String testName, final String locationHint, String id, String parentNodeId) {
+  public void onSuiteTreeNodeAdded(final String testName, final String locationHint, final String metaInfo, String id, String parentNodeId) {
     myTreeBuildBeforeStart = true;
     myBuildTreeRunnables.add(() -> {
-      final SMTestProxy testProxy = createProxy(testName, locationHint, id, parentNodeId);
+      final SMTestProxy testProxy = createProxy(testName, locationHint, metaInfo, id, parentNodeId);
       testProxy.setTreeBuildBeforeStart();
       if (myLocator != null) {
         testProxy.setLocator(myLocator);
@@ -103,10 +103,10 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     });
   }
 
-  public void onSuiteTreeStarted(final String suiteName, final String locationHint, String id, String parentNodeId) {
+  public void onSuiteTreeStarted(final String suiteName, final String locationHint, String metaInfo, String id, String parentNodeId) {
     myTreeBuildBeforeStart = true;
     myBuildTreeRunnables.add(() -> {
-      final SMTestProxy newSuite = createSuite(suiteName, locationHint, id, parentNodeId);
+      final SMTestProxy newSuite = createSuite(suiteName, locationHint, metaInfo, id, parentNodeId);
       if (myLocator != null) {
         newSuite.setLocator(myLocator);
       }
@@ -217,7 +217,10 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     rootNode.setTestsReporterAttached();
   }
 
-  public abstract void onFinishTesting();
+  public void onFinishTesting() {
+    stopEventProcessing();
+  }
+
   protected void fireOnTestingFinished(SMTestProxy.SMRootTestProxy root) {
     myEventPublisher.onTestingFinished(root);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -306,7 +309,11 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   public void addToInvokeLater(final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
-      UIUtil.invokeLaterIfNeeded(runnable);
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (!myProject.isDisposed()) {
+          runnable.run();
+        }
+      });
     }
     else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
       runnable.run();

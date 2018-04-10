@@ -64,4 +64,10 @@ public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeV
   public boolean isOneLine() {
     return true;
   }
+
+  @NotNull
+  @Override
+  public TextRange getRelevantTextRange() {
+    return myXmlAttribute.getValueTextRange();
+  }
 }

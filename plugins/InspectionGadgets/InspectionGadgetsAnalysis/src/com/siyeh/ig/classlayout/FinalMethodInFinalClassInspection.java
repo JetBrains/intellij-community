@@ -16,6 +16,7 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -61,7 +62,7 @@ public class FinalMethodInFinalClassInspection extends BaseInspection {
         return;
       }
       if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-          AnnotationUtil.findAnnotation(method, true, "java.lang.SafeVarargs") != null) {
+          AnnotationUtil.findAnnotation(method, true, CommonClassNames.JAVA_LANG_SAFE_VARARGS) != null) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();

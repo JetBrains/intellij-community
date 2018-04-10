@@ -20,6 +20,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -35,7 +36,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +140,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
 
       context.getDebugProcess().getManagerThread().invoke(new DebuggerContextCommandImpl(context) {
         @Override
-        public void threadAction() {
+        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           runnable.run();
         }
 

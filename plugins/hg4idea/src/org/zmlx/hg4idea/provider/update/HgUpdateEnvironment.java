@@ -14,7 +14,6 @@ package org.zmlx.hg4idea.provider.update;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -98,6 +97,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       return "Update";
     }
 
+    @Override
     public String getHelpTopic() {
       return "reference.VersionControl.Mercurial.UpdateProject";
     }
@@ -111,7 +111,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       return true;
     }
 
-    public void apply() throws ConfigurationException {
+    public void apply() {
       updateDialog.applyTo(updateConfiguration);
     }
 

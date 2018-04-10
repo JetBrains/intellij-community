@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -43,7 +42,6 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
   public boolean myHighlightIfGroovyObjectOverridden = true;
   public boolean myHighlightIfMissingMethodsDeclared = true;
-  public boolean myHighlightInnerClasses = true;
 
   public static boolean isSuppressed(@NotNull PsiElement ref) {
     return isElementToolSuppressedIn(ref, SHORT_NAME);
@@ -63,7 +61,6 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden");
     optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared");
-    optionsPanel.addCheckbox(GroovyBundle.message("highlight.constructor.calls.of.a.non.static.inner.classes.without.enclosing.instance.passed"), "myHighlightInnerClasses");
     return optionsPanel;
   }
 

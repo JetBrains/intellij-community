@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.Dumpable;
@@ -21,12 +7,12 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
@@ -48,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -236,13 +223,10 @@ public final class EditorUtil {
     final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
     final String filler = EditorModificationUtil.calcStringToFillVirtualSpace(editor);
     if (!filler.isEmpty()) {
-      new WriteAction(){
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          editor.getDocument().insertString(offset, filler);
-          editor.getCaretModel().moveToOffset(offset + filler.length());
-        }
-      }.execute();
+      WriteAction.run(() -> {
+        editor.getDocument().insertString(offset, filler);
+        editor.getCaretModel().moveToOffset(offset + filler.length());
+      });
     }
   }
 
@@ -373,6 +357,16 @@ public final class EditorUtil {
     return (nTabs + 1) * tabSize;
   }
 
+  public static float nextTabStop(float x, float plainSpaceWidth, int tabSize) {
+    if (tabSize <= 0) {
+      return x + plainSpaceWidth;
+    }
+    tabSize *= plainSpaceWidth;
+
+    int nTabs = (int) (x / tabSize);
+    return (nTabs + 1) * tabSize;
+  }
+
   public static int textWidthInColumns(@NotNull Editor editor, @NotNull CharSequence text, int start, int end, int x) {
     int startToUse = start;
     int lastTabSymbolIndex = -1;
@@ -431,6 +425,10 @@ public final class EditorUtil {
       result++;
     }
     return result;
+  }
+
+  public static int columnsNumber(float width, float plainSpaceSize) {
+    return (int)Math.ceil(width / plainSpaceSize);
   }
 
   /**
@@ -596,14 +594,34 @@ public final class EditorUtil {
   }
 
   public static void scrollToTheEnd(@NotNull Editor editor) {
+    scrollToTheEnd(editor, false);
+  }
+
+  public static void scrollToTheEnd(@NotNull Editor editor, boolean preferVerticalScroll) {
     editor.getSelectionModel().removeSelection();
-    int lastLine = Math.max(0, editor.getDocument().getLineCount() - 1);
+    Document document = editor.getDocument();
+    int lastLine = Math.max(0, document.getLineCount() - 1);
     if (editor.getCaretModel().getLogicalPosition().line == lastLine) {
-      editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
+      editor.getCaretModel().moveToOffset(document.getTextLength());
     } else {
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lastLine, 0));
     }
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    if (preferVerticalScroll && document.getLineStartOffset(lastLine) == document.getLineEndOffset(lastLine)) {
+      // don't move 'focus' to empty last line
+      int scrollOffset;
+      if (editor instanceof EditorEx) {
+        JScrollBar verticalScrollBar = ((EditorEx)editor).getScrollPane().getVerticalScrollBar();
+        scrollOffset = verticalScrollBar.getMaximum() - verticalScrollBar.getModel().getExtent();
+      }
+      else {
+        scrollOffset = editor.getContentComponent().getHeight() - scrollingModel.getVisibleArea().height;
+      }
+      scrollingModel.scrollVertically(scrollOffset);
+    }
+    else {
+      scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+    }
   }
 
   public static boolean isChangeFontSize(@NotNull MouseWheelEvent e) {
@@ -680,23 +698,28 @@ public final class EditorUtil {
     editor.getSelectionModel().setSelection(startOffset, endOffset);
   }
 
+  /**
+   * This returns a {@link java.awt.Font#PLAIN} font from family, used in editor, with size matching editor font size (except in
+   * presentation mode, when adjusted presentation mode font size is used). Returned font has fallback variants (i.e. if main font doesn't
+   * support certain Unicode characters, some other font may be used to display them), but fallback mechanism differs from the one used in
+   * editor.
+   */
   public static Font getEditorFont() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     int size = UISettings.getInstance().getPresentationMode()
                ? UISettings.getInstance().getPresentationModeFontSize() - 4 : scheme.getEditorFontSize();
-    return new Font(scheme.getEditorFontName(), Font.PLAIN, size);
+    return UIUtil.getFontWithFallback(scheme.getEditorFontName(), Font.PLAIN, size);
+  }
+
+  public static int getDefaultCaretWidth() {
+    return Registry.intValue("editor.caret.width", 2);
   }
 
   /**
    * Number of virtual soft wrap introduced lines on a current logical line before the visual position that corresponds
    * to the current logical position.
-   *
-   * @see LogicalPosition#softWrapLinesOnCurrentLogicalLine
    */
   public static int getSoftWrapCountAfterLineStart(@NotNull Editor editor, @NotNull LogicalPosition position) {
-    if (position.visualPositionAware) {
-      return position.softWrapLinesOnCurrentLogicalLine;
-    }
     int startOffset = editor.getDocument().getLineStartOffset(position.line);
     int endOffset = editor.logicalPositionToOffset(position);
     return editor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).size();
@@ -766,5 +789,37 @@ public final class EditorUtil {
         if (animationWasEnabled) scrollingModel.enableAnimation();
       }
     }
+  }
+
+  @NotNull
+  public static String displayCharInEditor(char c, @NotNull TextAttributesKey textAttributesKey, @NotNull String fallback) {
+    int codePoint = (int)c;
+    if (!Character.isValidCodePoint(codePoint)) {
+      return fallback;
+    }
+
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes textAttributes = scheme.getAttributes(textAttributesKey);
+    int style = textAttributes != null ? textAttributes.getFontType() : Font.PLAIN;
+    FontInfo fallbackFont = ComplementaryFontsRegistry.getFontAbleToDisplay((int)c, style, scheme.getFontPreferences(), null);
+    return fallbackFont.canDisplay(codePoint) ? String.valueOf(c) : fallback;
+  }
+
+  /**
+   * Performs inlay-aware conversion of offset to visual position in editor. If there are inlays at given position, their
+   * 'related to preceding text' property will be taken account to determine resulting position. Specifically, resulting position will
+   * match caret's visual position if it's moved to the given offset using {@link Caret#moveToOffset(int)} call.
+   *
+   * @see Inlay#isRelatedToPrecedingText()
+   */
+  @NotNull
+  public static VisualPosition inlayAwareOffsetToVisualPosition(@NotNull Editor editor, int offset) {
+    VisualPosition pos = editor.logicalToVisualPosition(editor.offsetToLogicalPosition(offset));
+    Inlay inlay;
+    while ((inlay = editor.getInlayModel().getInlineElementAt(pos)) != null) {
+      if (inlay.isRelatedToPrecedingText()) break;
+      pos = new VisualPosition(pos.line, pos.column + 1);
+    }
+    return pos;
   }
 }

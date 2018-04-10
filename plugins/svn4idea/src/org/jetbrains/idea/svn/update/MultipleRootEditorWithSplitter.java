@@ -36,12 +36,10 @@ import java.util.Map;
 
 /**
  * @author irengrig
- *         Date: 1/14/11
- *         Time: 1:17 PM
  */
 public class MultipleRootEditorWithSplitter extends JPanel {
-  private JList myList;
-  private JPanel myConfigureRootPanel;
+  private final JList myList;
+  private final JPanel myConfigureRootPanel;
   @NonNls private static final String EMPTY = "empty";
 
   public MultipleRootEditorWithSplitter(final Map<FilePath, SvnPanel> rootToPanel, final Project project) {

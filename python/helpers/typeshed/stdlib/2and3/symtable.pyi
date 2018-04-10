@@ -1,7 +1,7 @@
-# Stubs for symtable (Python 2 and 3)
-
 import sys
-from typing import List, Sequence, Tuple
+from typing import List, Sequence, Tuple, Text
+
+def symtable(code: Text, filename: Text, compile_type: Text) -> SymbolTable: ...
 
 class SymbolTable(object):
     def get_type(self) -> str: ...

@@ -254,6 +254,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       myVcsRoot = vcsRoot;
     }
 
+    @Override
     public void consume(String s) {
       LOG.debug("update for: " + s);
       //todo check canceled - check VCS's ready for asynchronous queries

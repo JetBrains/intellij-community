@@ -19,19 +19,22 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class InstanceofInstruction extends BinopInstruction {
-  @NotNull private final PsiExpression myLeft;
+  @Nullable private final PsiExpression myLeft;
   @NotNull private final PsiType myCastType;
 
-  public InstanceofInstruction(PsiElement psiAnchor, @NotNull Project project, PsiExpression left, PsiType castType) {
-    super(JavaTokenType.INSTANCEOF_KEYWORD, psiAnchor, project);
+  public InstanceofInstruction(PsiElement psiAnchor, @Nullable PsiExpression left, @NotNull PsiType castType) {
+    super(JavaTokenType.INSTANCEOF_KEYWORD, psiAnchor, PsiType.BOOLEAN);
     myLeft = left;
     myCastType = castType;
   }
@@ -41,7 +44,11 @@ public class InstanceofInstruction extends BinopInstruction {
     return visitor.visitInstanceof(this, runner, stateBefore);
   }
 
-  @NotNull
+  /**
+   * @return instanceof operand or null if it's not applicable
+   * (e.g. instruction is emitted when inlining Xyz.class::isInstance method reference)
+   */
+  @Nullable
   public PsiExpression getLeft() {
     return myLeft;
   }

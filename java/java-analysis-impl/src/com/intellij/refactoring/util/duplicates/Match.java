@@ -32,7 +32,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -424,10 +424,11 @@ public final class Match {
     return getMatchStart().getContainingFile();
   }
 
-  public boolean putAdditionalParameter(@NotNull PsiElement pattern, @NotNull PsiElement candidate) {
-    return ExtractedParameter.match(pattern, candidate, myExtractedParameters);
+  public boolean putExtractedParameter(@NotNull ExtractableExpressionPart patternPart, @NotNull ExtractableExpressionPart candidatePart) {
+    return ExtractedParameter.match(patternPart, candidatePart, myExtractedParameters);
   }
 
+  @NotNull
   public List<ExtractedParameter> getExtractedParameters() {
     return myExtractedParameters;
   }

@@ -173,11 +173,13 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
     return false;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;

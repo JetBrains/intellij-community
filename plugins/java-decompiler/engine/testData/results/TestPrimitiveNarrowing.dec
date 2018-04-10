@@ -1,0 +1,64 @@
+package pkg;
+
+class TestPrimitiveNarrowing {
+   TestPrimitiveNarrowing(Short value) {
+   }// 6
+
+   static void invocations() {
+      withInteger((Integer)null);// 9
+      withShort((Short)null);// 10
+      withByte((Byte)null);// 11
+      new TestPrimitiveNarrowing((Short)null);// 12
+   }// 13
+
+   static void withByte(Byte defaultValue) {
+   }// 16
+
+   static void withInteger(Integer defaultValue) {
+   }// 19
+
+   static void withShort(Short defaultValue) {
+   }// 22
+}
+
+class 'pkg/TestPrimitiveNarrowing' {
+   method '<init> (Ljava/lang/Short;)V' {
+      4      4
+   }
+
+   method 'invocations ()V' {
+      0      7
+      1      7
+      4      8
+      5      8
+      8      9
+      9      9
+      10      10
+      15      11
+   }
+
+   method 'withByte (Ljava/lang/Byte;)V' {
+      0      14
+   }
+
+   method 'withInteger (Ljava/lang/Integer;)V' {
+      0      17
+   }
+
+   method 'withShort (Ljava/lang/Short;)V' {
+      0      20
+   }
+}
+
+Lines mapping:
+6 <-> 5
+9 <-> 8
+10 <-> 9
+11 <-> 10
+12 <-> 11
+13 <-> 12
+16 <-> 15
+19 <-> 18
+22 <-> 21
+Not mapped:
+5

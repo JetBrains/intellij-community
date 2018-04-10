@@ -23,7 +23,7 @@ import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
  */
 public class FileExtension {
   private final String myExtension;
-  private KeywordSubstitutionListWithSelection myKeywordSubstitution;
+  private final KeywordSubstitutionListWithSelection myKeywordSubstitution;
 
   public FileExtension(String extension) {
     myExtension = extension;

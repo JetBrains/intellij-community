@@ -1,38 +1,18 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.idea.svn.auth.ProviderType;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.*;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.auth.*;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvider {
-  private final SvnAuthenticationManager myManager;
+public class SvnTestInteractiveAuthentication implements AuthenticationProvider {
   private boolean mySaveData;
-  private final Map<String, Convertor<SVNURL, SVNAuthentication>> myData;
+  private final Map<String, Convertor<Url, AuthenticationData>> myData;
 
-  public SvnTestInteractiveAuthentication(SvnAuthenticationManager manager) {
-    myManager = manager;
+  public SvnTestInteractiveAuthentication() {
     mySaveData = true;
     myData = new HashMap<>();
   }
@@ -42,37 +22,26 @@ public class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvi
   }
 
   @Override
-  public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
-    return ISVNAuthenticationProvider.REJECTED;
+  public AcceptResult acceptServerAuthentication(Url url, String realm, Object certificate, boolean canCache) {
+    return AcceptResult.REJECTED;
   }
 
-  public void addAuthentication(final String kind, final Convertor<SVNURL, SVNAuthentication> authentication) {
+  public void addAuthentication(final String kind, final Convertor<Url, AuthenticationData> authentication) {
     myData.put(kind, authentication);
   }
 
   @Override
-  public SVNAuthentication requestClientAuthentication(String kind,
-                                                       SVNURL url,
-                                                       String realm,
-                                                       SVNErrorMessage errorMessage,
-                                                       SVNAuthentication previousAuth,
-                                                       boolean authMayBeStored) {
-    authMayBeStored = authMayBeStored && mySaveData;
-    Convertor<SVNURL, SVNAuthentication> convertor = myData.get(kind);
-    SVNAuthentication result = convertor == null ? null : convertor.convert(url);
+  public AuthenticationData requestClientAuthentication(String kind, Url url, String realm, boolean canCache) {
+    canCache = canCache && mySaveData;
+    Convertor<Url, AuthenticationData> convertor = myData.get(kind);
+    AuthenticationData result = convertor == null ? null : convertor.convert(url);
     if (result == null) {
-      if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-        result = new SVNUserNameAuthentication("username", authMayBeStored);
-      } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
-        result = new SVNPasswordAuthentication("username", "abc", authMayBeStored, url, false);
-      } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
-        result = new SVNSSHAuthentication("username", "abc", -1, authMayBeStored, url, false);
-      } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
-        result = new SVNSSLAuthentication(new File("aaa"), "abc", authMayBeStored, url, false);
+      if (SvnAuthenticationManager.PASSWORD.equals(kind)) {
+        result = new PasswordAuthenticationData("username", "abc", canCache);
       }
-    }
-    if (! ISVNAuthenticationManager.USERNAME.equals(kind)) {
-      myManager.requested(ProviderType.interactive, url, realm, kind, result == null);
+      else if (SvnAuthenticationManager.SSL.equals(kind)) {
+        result = new CertificateAuthenticationData("aaa", "abc".toCharArray(), canCache);
+      }
     }
     return result;
   }

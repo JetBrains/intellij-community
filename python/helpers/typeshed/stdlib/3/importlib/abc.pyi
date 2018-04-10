@@ -1,7 +1,8 @@
 from abc import ABCMeta, abstractmethod
+import os
 import sys
 import types
-from typing import Any, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, IO, Iterator, Mapping, Optional, Sequence, Tuple, Union
 
 # Loader is exported from this module, but for circular import reasons
 # exists in its own stub file (with ModuleSpec and ModuleType).
@@ -19,7 +20,7 @@ class Finder(metaclass=ABCMeta):
     # easier to simply ignore that this method exists.
     # @abstractmethod
     # def find_module(self, fullname: str,
-    #                 path: Sequence[_Path] = None) -> Optional[Loader]: ...
+    #                 path: Optional[Sequence[_Path]] = ...) -> Optional[Loader]: ...
 
 class ResourceLoader(Loader):
     @abstractmethod
@@ -35,11 +36,11 @@ class InspectLoader(Loader):
         def exec_module(self, module: types.ModuleType) -> None: ...
     if sys.version_info[:2] == (3, 4):
         def source_to_code(self, data: Union[bytes, str],
-                           path: str = '<string>') -> types.CodeType: ...
+                           path: str = ...) -> types.CodeType: ...
     elif sys.version_info >= (3, 5):
         @staticmethod
         def source_to_code(data: Union[bytes, str],
-                           path: str = '<string>') -> types.CodeType: ...
+                           path: str = ...) -> types.CodeType: ...
 
 class ExecutionLoader(InspectLoader):
     @abstractmethod
@@ -64,7 +65,7 @@ if sys.version_info >= (3, 3):
             # Not defined on the actual class, but expected to exist.
             def find_spec(
                 self, fullname: str, path: Optional[Sequence[_Path]],
-                target: types.ModuleType = None
+                target: Optional[types.ModuleType] = ...
             ) -> Optional[ModuleSpec]:
                 ...
 
@@ -78,7 +79,7 @@ if sys.version_info >= (3, 3):
             # Not defined on the actual class, but expected to exist.
             def find_spec(
                 self, fullname: str,
-                target: types.ModuleType = None
+                target: Optional[types.ModuleType] = ...
             ) -> Optional[ModuleSpec]: ...
 
     class FileLoader(ResourceLoader, ExecutionLoader):
@@ -87,3 +88,16 @@ if sys.version_info >= (3, 3):
         def __init__(self, fullname: str, path: _Path) -> None: ...
         def get_data(self, path: _Path) -> bytes: ...
         def get_filename(self, fullname: str) -> _Path: ...
+
+if sys.version_info >= (3, 7):
+    _PathLike = Union[bytes, str, os.PathLike[Any]]
+
+    class ResourceReader(metaclass=ABCMeta):
+        @abstractmethod
+        def open_resource(self, resource: _PathLike) -> IO[bytes]: ...
+        @abstractmethod
+        def resource_path(self, resource: _PathLike) -> str: ...
+        @abstractmethod
+        def is_resource(self, name: str) -> bool: ...
+        @abstractmethod
+        def contents(self) -> Iterator[str]: ...

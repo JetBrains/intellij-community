@@ -30,7 +30,6 @@ import com.intellij.psi.PsiElement;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 10, 2004
  */
 public class ModuleRule implements GetDataRule {
   @Override

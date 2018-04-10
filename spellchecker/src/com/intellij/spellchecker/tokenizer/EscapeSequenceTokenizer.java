@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public abstract class EscapeSequenceTokenizer<T extends PsiElement> extends Tokenizer<T> {
-  private static Key<int[]> ESCAPE_OFFSETS = Key.create("escape.tokenizer.offsets");
+  private static final Key<int[]> ESCAPE_OFFSETS = Key.create("escape.tokenizer.offsets");
 
   public static void processTextWithOffsets(PsiElement element, TokenConsumer consumer, StringBuilder unescapedText,
                                             int[] offsets, int startOffset) {

@@ -67,12 +67,7 @@ public class SelectWordUtil {
     return SELECTIONERS;
   }
 
-  public static final CharCondition JAVA_IDENTIFIER_PART_CONDITION = new CharCondition() {
-    @Override
-    public boolean value(char ch) {
-      return Character.isJavaIdentifierPart(ch);
-    }
-  };
+  public static final CharCondition JAVA_IDENTIFIER_PART_CONDITION = ch -> Character.isJavaIdentifierPart(ch);
 
   public static void addWordSelection(boolean camel, CharSequence editorText, int cursorOffset, @NotNull List<TextRange> ranges) {
     addWordSelection(camel, editorText, cursorOffset, ranges, JAVA_IDENTIFIER_PART_CONDITION);
@@ -190,10 +185,10 @@ public class SelectWordUtil {
   }
 
   public static void processRanges(@Nullable PsiElement element,
-                                   CharSequence text,
+                                   @NotNull CharSequence text,
                                    int cursorOffset,
-                                   Editor editor,
-                                   Processor<TextRange> consumer) {
+                                   @NotNull Editor editor,
+                                   @NotNull Processor<TextRange> consumer) {
     if (element == null) return;
 
     PsiFile file = element.getContainingFile();
@@ -226,10 +221,10 @@ public class SelectWordUtil {
   }
 
   private static void processInFile(@NotNull final PsiElement element,
-                                    final Processor<TextRange> consumer,
-                                    final CharSequence text,
+                                    @NotNull Processor<TextRange> consumer,
+                                    @NotNull CharSequence text,
                                     final int cursorOffset,
-                                    final Editor editor) {
+                                    @NotNull Editor editor) {
     DumbService.getInstance(element.getProject()).withAlternativeResolveEnabled(() -> {
       PsiElement e = element;
       while (e != null && !(e instanceof PsiFile)) {
@@ -240,12 +235,10 @@ public class SelectWordUtil {
   }
 
   private static boolean processElement(@NotNull PsiElement element,
-                                     Processor<TextRange> processor,
-                                     CharSequence text,
-                                     int cursorOffset,
-                                     Editor editor) {
-    boolean stop = false;
-
+                                        @NotNull Processor<TextRange> processor,
+                                        @NotNull CharSequence text,
+                                        int cursorOffset,
+                                        @NotNull Editor editor) {
     ExtendWordSelectionHandler[] extendWordSelectionHandlers = getExtendWordSelectionHandlers();
     int minimalTextRangeLength = 0;
     List<ExtendWordSelectionHandler> availableSelectioners = ContainerUtil.newLinkedList();
@@ -258,6 +251,7 @@ public class SelectWordUtil {
         availableSelectioners.add(selectioner);
       }
     }
+    boolean stop = false;
     for (ExtendWordSelectionHandler selectioner : availableSelectioners) {
       List<TextRange> ranges = askSelectioner(element, text, cursorOffset, editor, selectioner);
       if (ranges == null) continue;
@@ -274,10 +268,10 @@ public class SelectWordUtil {
 
   @Nullable
   private static List<TextRange> askSelectioner(@NotNull PsiElement element,
-                                                CharSequence text,
+                                                @NotNull CharSequence text,
                                                 int cursorOffset,
-                                                Editor editor,
-                                                ExtendWordSelectionHandler selectioner) {
+                                                @NotNull Editor editor,
+                                                @NotNull ExtendWordSelectionHandler selectioner) {
     try {
       long stamp = editor.getDocument().getModificationStamp();
       List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
@@ -315,6 +309,7 @@ public class SelectWordUtil {
       lexer.advance();
     }
   }
-  
+
+  @FunctionalInterface
   public interface CharCondition { boolean value(char ch); }
 }

@@ -27,7 +27,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
- * Implementation of the {@link List} interface which:
+ * Implementation of the {@link Collection} interface which:
  * <ul>
  *  <li>Stores elements using weak semantics (see {@link WeakReference})</li>
  *  <li>Automatically reclaims storage for garbage collected elements</li>
@@ -35,11 +35,15 @@ import java.util.*;
  *  <li>Is NOT RandomAccess, because garbage collector can remove element at any time</li>
  *  <li>Does NOT support null elements</li>
  * </ul>
+ * Please note that since weak references can be collected at any time, index-based methods (like get(index))
+ * or size-based methods (like size()) are dangerous, misleading, error-inducing and are not supported.
+ * Instead, please use add(element) and iterator().
  */
-public class UnsafeWeakList<T> extends AbstractList<T> {
+public class UnsafeWeakList<T> extends AbstractCollection<T> {
   protected final List<MyReference<T>> myList;
   private final ReferenceQueue<T> myQueue = new ReferenceQueue<T>();
   private int myAlive;
+  private int modCount;
 
   private static class MyReference<T> extends WeakReference<T> {
     private final int index;
@@ -78,6 +82,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   private void nullizeAt(int index) {
     myList.set(index, null);
     myAlive--;
+    // do not incr modCount here because every iterator().remove() usages will throw
   }
 
   private void reduceCapacity() {
@@ -147,6 +152,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
 
     private int nextIndex = -1;
     private T nextElement;
+    private boolean modified; // set this flag on modification and update modCount in the very end of iteration to avoid CME on each remove()
 
     private MyIterator() {
       startModCount = modCount;
@@ -167,6 +173,9 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
           break;
         }
       }
+      if (nextIndex == -1 && modified) {
+        modCount++;
+      }
     }
 
     @Override
@@ -186,6 +195,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
       if (curElement == null) throw new NoSuchElementException();
       int index = curIndex;
       nullizeAt(index);
+      modified = true;
     }
   }
 
@@ -196,6 +206,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
       T t = SoftReference.dereference(myList.get(i));
       if (t != null && t.equals(o)) {
         nullizeAt(i);
+        modCount++;
         return true;
       }
     }
@@ -226,14 +237,23 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   }
   @NotNull
   public List<T> toStrongList() {
-    Function<MyReference<T>, T> deref = deref();
-    return ContainerUtil.mapNotNull(myList, deref);
+    return ContainerUtil.mapNotNull(myList, UnsafeWeakList.<T>deref());
   }
 
+  /**
+   * Since weak references can be collected at any time,
+   * this method considered dangerous, misleading, error-inducing and are is not supported.
+   * Instead, please use add(element) and iterator()
+   */
   @Override
+  @Deprecated
   public int size() {
-    throwNotRandomAccess();
+    throwNotAllowedException();
     return -1;
+  }
+
+  private static void throwNotAllowedException() {
+    throw new IncorrectOperationException("index/size-based operations in UnsafeWeakList are not supported because they don't make sense in the presence of weak references. Use .iterator() (which retains its elements to avoid sudden GC) instead.");
   }
 
   @Override
@@ -254,55 +274,10 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
     }
   };
 
-  @Override
-  public T set(int index, T element) {
-    return throwNotRandomAccess();
-  }
-
-  @Override
-  public int indexOf(Object o) {
-    throwNotRandomAccess();
-    return -1;
-  }
-
-  @Override
-  public int lastIndexOf(Object o) {
-    throwNotRandomAccess();
-    return -1;
-  }
-
-  @Override
-  public boolean addAll(int index, Collection<? extends T> c) {
-    throwNotRandomAccess();
-    return false;
-  }
-
-  @NotNull
-  @Override
-  public List<T> subList(int fromIndex, int toIndex) {
-    throwNotRandomAccess();
-    return this;
-  }
-  @Override
-  public void add(int index, T element) {
-    throwNotRandomAccess();
-  }
-
-  @Override
-  public T remove(int index) {
-    return throwNotRandomAccess();
-  }
-
-  @Override
-  protected void removeRange(int fromIndex, int toIndex) {
-    throwNotRandomAccess();
-  }
-  @Override
+  // (*@#ing plugins
+  @Deprecated
   public T get(int index) {
-    return throwNotRandomAccess();
-  }
-
-  private T throwNotRandomAccess() {
-    throw new IncorrectOperationException("UnsafeWeakList is not RandomAccess, use list.iterator() instead.");
+    throwNotAllowedException();
+    return null;
   }
 }

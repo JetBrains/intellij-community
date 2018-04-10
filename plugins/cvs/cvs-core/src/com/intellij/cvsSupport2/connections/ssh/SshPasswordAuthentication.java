@@ -53,7 +53,7 @@ public class SshPasswordAuthentication implements SshAuthentication {
 
       if (methods.contains(KEYBOARD_METHOD)) {
         final boolean wasAuthenticated = connection.authenticateWithKeyboardInteractive(myLogin, new InteractiveCallback() {
-          public String[] replyToChallenge(String s, String instruction, int numPrompts, String[] strings, boolean[] booleans) throws Exception {
+          public String[] replyToChallenge(String s, String instruction, int numPrompts, String[] strings, boolean[] booleans) {
             final String[] result = new String[numPrompts];
             if (numPrompts > 0) {
               Arrays.fill(result, password);

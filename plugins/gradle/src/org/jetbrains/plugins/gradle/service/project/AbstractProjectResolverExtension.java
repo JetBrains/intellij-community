@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -32,14 +31,13 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 /**
- * {@link org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension} provides dummy implementation of Gradle project resolver.
+ * {@link AbstractProjectResolverExtension} provides dummy implementation of Gradle project resolver.
  *
  * @author Vladislav.Soroka
  * @since 10/14/13
@@ -73,12 +71,6 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
   @Override
   public ProjectData createProject() {
     return nextResolver.createProject();
-  }
-
-  @NotNull
-  @Override
-  public JavaProjectData createJavaProjectData() {
-    return nextResolver.createJavaProjectData();
   }
 
   @Override
@@ -160,10 +152,6 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
 
   @Override
   public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
-  }
-
-  @Override
-  public void enhanceLocalProcessing(@NotNull List<URL> urls) {
   }
 
   @Override

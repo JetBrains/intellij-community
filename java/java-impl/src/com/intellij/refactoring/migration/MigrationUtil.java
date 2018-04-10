@@ -66,7 +66,7 @@ public class MigrationUtil {
       results.add(new UsageInfo(usage));
     }
 
-    return results.toArray(new UsageInfo[results.size()]);
+    return results.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   static void doMigration(PsiElement elementToBind, String newQName, UsageInfo[] usages, ArrayList<SmartPsiElementPointer<PsiElement>> refsToShorten) {

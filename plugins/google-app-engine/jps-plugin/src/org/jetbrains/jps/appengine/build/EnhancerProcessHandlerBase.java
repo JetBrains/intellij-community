@@ -36,8 +36,8 @@ import java.util.Map;
  */
 public abstract class EnhancerProcessHandlerBase extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.enhancement.EnhancerProcessHandler");
-  private Map<Key, EnhancerOutputParser> myParsers =
-    FactoryMap.createMap(key -> new EnhancerOutputParser(ProcessOutputTypes.STDERR.equals(key)));
+  private final Map<Key, EnhancerOutputParser> myParsers =
+    FactoryMap.create(key -> new EnhancerOutputParser(ProcessOutputTypes.STDERR.equals(key)));
 
   public EnhancerProcessHandlerBase(Process process, @NotNull String commandLine, Charset charset) {
     super(process, commandLine, charset);
@@ -64,7 +64,7 @@ public abstract class EnhancerProcessHandlerBase extends BaseOSProcessHandler {
 
   private class EnhancerOutputParser {
     @NonNls private static final String PLEASE_SEE_THE_LOGS_PREFIX = "Please see the logs [";
-    private StringBuilder myBuffer = new StringBuilder();
+    private final StringBuilder myBuffer = new StringBuilder();
     private final boolean myErrorStream;
 
     public EnhancerOutputParser(boolean errorStream) {

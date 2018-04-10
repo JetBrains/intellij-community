@@ -3,7 +3,6 @@
     <component>
       <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
     </component>
 
     

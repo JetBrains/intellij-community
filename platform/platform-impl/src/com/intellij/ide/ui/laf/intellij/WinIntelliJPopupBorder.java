@@ -35,8 +35,8 @@ public class WinIntelliJPopupBorder extends AbstractBorder implements UIResource
     }
   }
 
-  private Shape getBorderShape(Component c, Rectangle rect) {
-    Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+  private static Shape getBorderShape(Component c, Rectangle rect) {
+    Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
     if ("ComboPopup.popup".equals(c.getName())) {
       JBInsets.removeFrom(rect, JBUI.insets(0, 1));
     }

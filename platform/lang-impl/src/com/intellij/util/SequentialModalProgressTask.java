@@ -90,7 +90,7 @@ public class SequentialModalProgressTask extends Task.Modal {
         long start = System.currentTimeMillis();
         try {
           while (!task.isDone() && System.currentTimeMillis() - start < myMinIterationTime) {
-            task.iteration();
+            task.iteration(indicator);
           }
         }
         catch (RuntimeException e) {

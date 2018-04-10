@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInsight.navigation;
@@ -20,6 +8,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
+import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
@@ -27,13 +16,14 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -65,6 +55,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -73,6 +64,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.DefinitionsScopedSearch;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
@@ -99,9 +91,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.CtrlMouseHandler");
+  private static final long DOC_GENERATION_TIMEOUT_MS = 5000;
+  private static final long DOC_GENERATION_RETRY_DELAY_MS = 100;
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
   private final EditorColorsManager myEditorColorsManager;
 
@@ -112,6 +108,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private final DocumentationManager myDocumentationManager;
   @Nullable private Point myPrevMouseLocation;
   private LightweightHint myHint;
+  private final AtomicReference<ProgressIndicator> myCurrentRequestProgress = new AtomicReference<>();
 
   public enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
@@ -146,7 +143,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           }
           myStoredModifiers = modifiers;
           cancelPreviousTooltip();
-          myTooltipProvider = new TooltipProvider(tooltipProvider.myEditor, tooltipProvider.myPosition);
+          myTooltipProvider = new TooltipProvider(tooltipProvider.myHostEditor, tooltipProvider.myHostPosition);
           myTooltipProvider.execute(browseMode);
         }
       }
@@ -203,26 +200,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       Editor editor = e.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-      PsiFile psiFile = documentManager.getPsiFile(editor.getDocument());
       Point point = new Point(mouseEvent.getPoint());
-      if (documentManager.isCommitted(editor.getDocument())) {
-        // when document is committed, try to check injected stuff - it's fast
-        int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(point));
-        editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile, offset);
-      }
-
-      LogicalPosition pos = editor.xyToLogicalPosition(point);
-      int offset = editor.logicalPositionToOffset(pos);
-      int selStart = editor.getSelectionModel().getSelectionStart();
-      int selEnd = editor.getSelectionModel().getSelectionEnd();
-
-      if (offset >= selStart && offset < selEnd) {
-        disposeHighlighter();
-        return;
-      }
-
-      myTooltipProvider = new TooltipProvider(editor, pos);
+      myTooltipProvider = new TooltipProvider(editor, editor.xyToLogicalPosition(point));
       myTooltipProvider.execute(browseMode);
     }
   };
@@ -647,13 +626,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
                               @NotNull final PsiElement originalElement,
                               @NotNull final PsiElement anchorElement,
                               @NotNull final Consumer<String> newTextConsumer,
-                              @NotNull final LightweightHint hint)
+                              @NotNull final LightweightHint hint,
+                              @NotNull final Editor editor)
   {
-    myDocAlarm.cancelAllRequests();
+    ProgressIndicatorBase progress = new ProgressIndicatorBase();
+    myCurrentRequestProgress.set(progress);
     myDocAlarm.addRequest(() -> {
       final Ref<String> fullTextRef = new Ref<>();
       final Ref<String> qualifiedNameRef = new Ref<>();
-      ApplicationManager.getApplication().runReadAction(() -> {
+      QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
         if (anchorElement.isValid() && originalElement.isValid()) {
           try {
             fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
@@ -665,7 +646,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
           }
         }
-      });
+      }, DOC_GENERATION_TIMEOUT_MS, DOC_GENERATION_RETRY_DELAY_MS, progress);
+      myCurrentRequestProgress.compareAndSet(progress, null);
       String fullText = fullTextRef.get();
       if (fullText == null) {
         return;
@@ -712,7 +694,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             // re-show the hint here. Benefits: there is a possible case that we'll be able to show nice layered pane-based balloon;
             // the popup will be re-positioned according to the new width.
             hint.hide();
-            tooltipProvider.showHint(new LightweightHint(component));
+            tooltipProvider.showHint(new LightweightHint(component), editor);
           }
           else {
             component.setPreferredSize(new Dimension(newSize.width + widthIncrease, oldSize.height));
@@ -772,15 +754,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   private class TooltipProvider {
-    @NotNull private final Editor myEditor;
-    @NotNull private final LogicalPosition myPosition;
+    @NotNull private final Editor myHostEditor;
+    @NotNull private final LogicalPosition myHostPosition;
     private BrowseMode myBrowseMode;
     private boolean myDisposed;
     private final ProgressIndicator myProgress = new ProgressIndicatorBase();
 
-    TooltipProvider(@NotNull Editor editor, @NotNull LogicalPosition pos) {
-      myEditor = editor;
-      myPosition = pos;
+    TooltipProvider(@NotNull Editor hostEditor, @NotNull LogicalPosition hostPos) {
+      myHostEditor = hostEditor;
+      myHostPosition = hostPos;
     }
 
     void dispose() {
@@ -795,28 +777,29 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     void execute(@NotNull BrowseMode browseMode) {
       myBrowseMode = browseMode;
 
-      Document document = myEditor.getDocument();
-      final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (file == null) return;
+      if (PsiDocumentManager.getInstance(myProject).getPsiFile(myHostEditor.getDocument()) == null) return;
 
-      if (EditorUtil.inVirtualSpace(myEditor, myPosition)) {
+      if (EditorUtil.inVirtualSpace(myHostEditor, myHostPosition)) {
         disposeHighlighter();
         return;
       }
 
-      final int offset = myEditor.logicalPositionToOffset(myPosition);
+      final int offset = myHostEditor.logicalPositionToOffset(myHostPosition);
 
-      int selStart = myEditor.getSelectionModel().getSelectionStart();
-      int selEnd = myEditor.getSelectionModel().getSelectionEnd();
+      int selStart = myHostEditor.getSelectionModel().getSelectionStart();
+      int selEnd = myHostEditor.getSelectionModel().getSelectionEnd();
 
-      if (offset >= selStart && offset < selEnd) return;
+      if (offset >= selStart && offset < selEnd) {
+        disposeHighlighter();
+        return;
+      }
 
       PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(
         () -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, new ReadTask() {
           @Nullable
           @Override
           public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-            return doExecute(file, offset);
+            return doExecute();
           }
 
           @Override
@@ -827,13 +810,19 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     @Nullable
-    private ReadTask.Continuation doExecute(@NotNull PsiFile file, int offset) {
-      if (isTaskOutdated()) return null;
+    private ReadTask.Continuation doExecute() {
+      if (isTaskOutdated(myHostEditor)) return null;
+
+      Editor editor = getPossiblyInjectedEditor();
+      int offset = editor.logicalPositionToOffset(getPosition(editor));
+
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      if (file == null) return null;
 
       final Info info;
       final DocInfo docInfo;
       try {
-        info = getInfoAt(myEditor, file, offset, myBrowseMode);
+        info = getInfoAt(editor, file, offset, myBrowseMode);
         if (info == null) return null;
         docInfo = info.getInfo();
       }
@@ -844,18 +833,32 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       LOG.debug("Obtained info about element under cursor");
       return new ReadTask.Continuation(() -> {
-        if (isTaskOutdated()) return;
-        showHint(info, docInfo);
+        if (isTaskOutdated(editor)) return;
+        showHint(info, docInfo, editor);
       });
     }
 
-    private boolean isTaskOutdated() {
-      return myDisposed || myProject.isDisposed() || myEditor.isDisposed() || !myEditor.getComponent().isShowing();
+    @NotNull
+    private Editor getPossiblyInjectedEditor() {
+      final Document document = myHostEditor.getDocument();
+      if (PsiDocumentManager.getInstance(myProject).isCommitted(document)) {
+        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myHostEditor, psiFile, myHostEditor.logicalPositionToOffset(myHostPosition));
+      }
+      return myHostEditor;
     }
 
-    private void showHint(@NotNull Info info, @NotNull DocInfo docInfo) {
-      if (myDisposed || myEditor.isDisposed()) return;
-      Component internalComponent = myEditor.getContentComponent();
+    private boolean isTaskOutdated(@NotNull Editor editor) {
+      return myDisposed || myProject.isDisposed() || editor.isDisposed() || !editor.getComponent().isShowing();
+    }
+
+    private LogicalPosition getPosition(@NotNull Editor editor) {
+      return editor instanceof EditorWindow ? ((EditorWindow)editor).hostToInjected(myHostPosition) : myHostPosition;
+    }
+
+    private void showHint(@NotNull Info info, @NotNull DocInfo docInfo, @NotNull Editor editor) {
+      if (myDisposed || editor.isDisposed()) return;
+      Component internalComponent = editor.getContentComponent();
       if (myHighlighter != null) {
         if (!info.isSimilarTo(myHighlighter.getStoredInfo())) {
           disposeHighlighter();
@@ -869,11 +872,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
       }
 
-      if (!info.isValid(myEditor.getDocument()) || !info.isNavigatable() && docInfo.text == null) {
+      if (!info.isValid(editor.getDocument()) || !info.isNavigatable() && docInfo.text == null) {
         return;
       }
 
-      myHighlighter = installHighlighterSet(info, myEditor);
+      myHighlighter = installHighlighterSet(info, editor);
 
       if (docInfo.text == null) return;
 
@@ -926,25 +929,93 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
       });
       myDocAlarm.cancelAllRequests();
+      ProgressIndicator currentIndicator = myCurrentRequestProgress.getAndSet(null);
+      if (currentIndicator != null) currentIndicator.cancel(); 
       if (newTextConsumer != null && docInfo.docProvider != null && docInfo.documentationAnchor != null) {
-        fulfillDocInfo(docInfo.text, docInfo.docProvider, info.myElementAtPointer, docInfo.documentationAnchor, newTextConsumer, hint);
+        fulfillDocInfo(docInfo.text, docInfo.docProvider, info.myElementAtPointer, docInfo.documentationAnchor, newTextConsumer, hint, editor);
       }
 
-      showHint(hint);
+      showHint(hint, editor);
+      if (newTextConsumer != null) {
+        updateOnPsiChanges(hint, info, newTextConsumer, docInfo.text, editor);
+      }
     }
 
-    public void showHint(@NotNull LightweightHint hint) {
-      if (myEditor.isDisposed()) return;
+    private void updateOnPsiChanges(@NotNull LightweightHint hint,
+                                    @NotNull Info info,
+                                    @NotNull Consumer<String> textConsumer,
+                                    @NotNull String oldText,
+                                    @NotNull Editor editor) {
+      if (!hint.isVisible()) return;
+      Disposable hintDisposable = Disposer.newDisposable("CtrlMouseHandler.TooltipProvider.updateOnPsiChanges");
+      hint.addHintListener(new HintListener() {
+        @Override
+        public void hintHidden(EventObject event) {
+          Disposer.dispose(hintDisposable);
+        }
+      });
+      AtomicBoolean updating = new AtomicBoolean(false);
+      myProject.getMessageBus().connect(hintDisposable).subscribe(PsiModificationTracker.TOPIC, () -> {
+        if (updating.getAndSet(true)) return;
+        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
+          ProgressIndicatorBase progress = new ProgressIndicatorBase();
+          if (Disposer.isDisposed(hintDisposable)) {
+            progress.cancel();
+          }
+          else {
+            Disposer.register(hintDisposable, () -> progress.cancel());
+          }
+          ProgressIndicatorUtils.scheduleWithWriteActionPriority(progress, new ReadTask() {
+            @Nullable
+            @Override
+            public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+              if (!info.isValid(editor.getDocument())) {
+                updating.set(false);
+                return null;
+              }
+              DocInfo newDocInfo = info.getInfo();
+              return new Continuation(() -> {
+                updating.set(false);
+                if (newDocInfo.text != null && !oldText.equals(newDocInfo.text)) {
+                  updateText(newDocInfo, textConsumer, info, hint, editor);
+                }
+              });
+            }
+
+            @Override
+            public void onCanceled(@NotNull ProgressIndicator indicator) {
+              updating.set(false);
+            }
+          });
+        });
+      });
+    }
+
+    private void updateText(@NotNull DocInfo docInfo,
+                            @NotNull Consumer<String> textConsumer,
+                            @NotNull Info info,
+                            @NotNull LightweightHint hint,
+                            @NotNull Editor editor) {
+      if (docInfo.text == null) return;
+      textConsumer.consume(docInfo.text);
+      if (docInfo.docProvider != null && docInfo.documentationAnchor != null) {
+        fulfillDocInfo(docInfo.text, docInfo.docProvider, info.myElementAtPointer,
+                       docInfo.documentationAnchor, textConsumer, hint, editor);
+      }
+    }
+
+    public void showHint(@NotNull LightweightHint hint, @NotNull Editor editor) {
+      if (editor.isDisposed()) return;
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
       short constraint = HintManager.ABOVE;
-      Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, constraint);
+      Point p = HintManagerImpl.getHintPosition(hint, editor, getPosition(editor), constraint);
       if (p.y - hint.getComponent().getPreferredSize().height < 0) {
         constraint = HintManager.UNDER;
-        p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, constraint);
+        p = HintManagerImpl.getHintPosition(hint, editor, getPosition(editor), constraint);
       }
-      hintManager.showEditorHint(hint, myEditor, p,
+      hintManager.showEditorHint(hint, editor, p,
                                  HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
-                                 0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, constraint).setContentActive(false));
+                                 0, false, HintManagerImpl.createHintHint(editor, p, hint, constraint).setContentActive(false));
     }
   }
 
@@ -1044,7 +1115,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       for (AbstractDocumentationTooltipAction action : ourTooltipActions) {
         Icon icon = action.getTemplatePresentation().getIcon();
         Dimension minSize = new Dimension(icon.getIconWidth(), icon.getIconHeight());
-        myButtons.add(new ActionButton(action, presentationFactory.getPresentation(action), IdeTooltipManager.IDE_TOOLTIP_PLACE, minSize));
+        ActionButton actionButton =
+          new ActionButton(action, presentationFactory.getPresentation(action), IdeTooltipManager.IDE_TOOLTIP_PLACE, minSize) {
+            @Override
+            protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
+              return e.getButton() != MouseEvent.BUTTON1;
+            }
+          };
+        myButtons.add(actionButton);
         action.setDocInfo(documentationAnchor, elementUnderMouse);
       }
       Collections.reverse(myButtons);

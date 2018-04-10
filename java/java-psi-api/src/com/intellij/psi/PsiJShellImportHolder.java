@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 21-Jun-17
  */
 public interface PsiJShellImportHolder extends PsiElement, PsiJShellSyntheticElement{
   PsiJShellImportHolder[] EMPTY_ARRAY = new PsiJShellImportHolder[0];

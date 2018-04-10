@@ -16,7 +16,6 @@ import org.jdom.Element;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 02.08.13
  */
 public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
   public void testInjectReference() {

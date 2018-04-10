@@ -16,6 +16,7 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -66,7 +67,7 @@ public class FinalPrivateMethodInspection extends BaseInspection {
           || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", false) && method.isVarArgs()) {
+      if (AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0) && method.isVarArgs()) {
         return;
       }
       registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);

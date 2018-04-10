@@ -120,6 +120,9 @@ public class ControlFlowFactory {
                                     @NotNull ControlFlowPolicy policy,
                                     boolean enableShortCircuit,
                                     boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
+    if (!element.isPhysical()) {
+      return new ControlFlowAnalyzer(element, policy, enableShortCircuit, evaluateConstantIfCondition).buildControlFlow();
+    }
     final long modificationCount = element.getManager().getModificationTracker().getModificationCount();
     ConcurrentList<ControlFlowContext> cached = getOrCreateCachedFlowsForElement(element);
     for (ControlFlowContext context : cached) {

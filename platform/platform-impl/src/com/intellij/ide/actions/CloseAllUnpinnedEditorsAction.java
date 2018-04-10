@@ -23,7 +23,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 
 import java.util.ArrayList;
 import java.util.Set;

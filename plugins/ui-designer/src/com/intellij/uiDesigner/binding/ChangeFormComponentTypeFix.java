@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 15, 2005
  */
 public class ChangeFormComponentTypeFix implements IntentionAction {
   private final PsiPlainTextFile myFormFile;

@@ -21,14 +21,10 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.testng.Assert;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static org.testng.Assert.assertNotNull;
 
@@ -38,7 +34,7 @@ import static org.testng.Assert.assertNotNull;
  */
 public class HgTestChangeListManager {
 
-  private ChangeListManagerImpl peer;
+  private final ChangeListManagerImpl peer;
 
   public HgTestChangeListManager(Project project) {
     peer = ChangeListManagerImpl.getInstanceImpl(project);
@@ -87,7 +83,7 @@ public class HgTestChangeListManager {
     final LocalChangeList list = peer.getDefaultChangeList();
     assertNotNull(list);
     peer.editComment(list.getName(), "A comment to a commit");
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> Assert.assertTrue(peer.commitChangesSynchronouslyWithResult(list, changes)));
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> peer.commitChangesSynchronouslyWithResult(list, changes));
     ensureUpToDate();
   }
 

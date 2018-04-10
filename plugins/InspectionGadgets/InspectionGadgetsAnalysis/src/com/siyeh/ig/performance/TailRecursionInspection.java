@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.graph.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,10 +121,11 @@ public class TailRecursionInspection extends BaseInspection {
         tailCallIsContainedInLoop = false;
       }
       builder.append("while(true)");
-      replaceTailCalls(body, method, thisVariableName, tailCallIsContainedInLoop, builder);
+      CommentTracker tracker = new CommentTracker();
+      replaceTailCalls(body, method, thisVariableName, tailCallIsContainedInLoop, builder, tracker);
       builder.append('}');
       final PsiCodeBlock block = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(builder.toString(), method);
-      body.replace(block);
+      tracker.replaceAndRestoreComments(body,block);
       CodeStyleManager.getInstance(project).reformat(method);
     }
 
@@ -137,12 +136,7 @@ public class TailRecursionInspection extends BaseInspection {
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
       }
-      final PsiType returnType = method.getReturnType();
-      if (!(returnType instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)returnType;
-      final PsiClass aClass = classType.resolve();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
       return containingClass.equals(aClass);
     }
 
@@ -195,13 +189,17 @@ public class TailRecursionInspection extends BaseInspection {
       }
     }
 
-    private static void replaceTailCalls(PsiElement element, PsiMethod method, @Nullable String thisVariableName, 
-                                         boolean tailCallIsContainedInLoop, @NonNls StringBuilder out) {
+    private static void replaceTailCalls(PsiElement element,
+                                         PsiMethod method,
+                                         @Nullable String thisVariableName,
+                                         boolean tailCallIsContainedInLoop,
+                                         @NonNls StringBuilder out,
+                                         CommentTracker tracker) {
       if (isImplicitCallOnThis(element, method)) {
         if (thisVariableName != null) {
           out.append(thisVariableName).append('.');
         }
-        out.append(element.getText());
+        out.append(tracker.text(element));
       }
       else if (element instanceof PsiThisExpression || element instanceof PsiSuperExpression) {
         if (thisVariableName == null) {
@@ -265,7 +263,7 @@ public class TailRecursionInspection extends BaseInspection {
             replacements.put(parameter, variableName);
           }
           out.append(parameterName).append('=');
-          buildText(argument, replacements, out);
+          buildText(argument, replacements, out, tracker);
           out.append(';');
           seen.add(index);
         }
@@ -274,7 +272,7 @@ public class TailRecursionInspection extends BaseInspection {
           final PsiExpression qualifier = methodExpression.getQualifierExpression();
           if (qualifier != null) {
             out.append(thisVariableName).append('=');
-            replaceTailCalls(qualifier, method, thisVariableName, tailCallIsContainedInLoop, out);
+            replaceTailCalls(qualifier, method, thisVariableName, tailCallIsContainedInLoop, out, tracker);
             out.append(';');
           }
         }
@@ -296,32 +294,35 @@ public class TailRecursionInspection extends BaseInspection {
       else {
         final PsiElement[] children = element.getChildren();
         if (children.length == 0) {
-          out.append(element.getText());
+          out.append(tracker.text(element));
         }
         else {
           for (final PsiElement child : children) {
-            replaceTailCalls(child, method, thisVariableName, tailCallIsContainedInLoop, out);
+            replaceTailCalls(child, method, thisVariableName, tailCallIsContainedInLoop, out, tracker);
           }
         }
       }
     }
 
-    private static void buildText(PsiElement element, Map<PsiElement, String> replacements, StringBuilder out) {
+    private static void buildText(PsiElement element,
+                                  Map<PsiElement, String> replacements,
+                                  StringBuilder out,
+                                  CommentTracker tracker) {
       if (element instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         final PsiElement target = referenceExpression.resolve();
         final String replacement = replacements.get(target);
-        out.append(replacement != null ? replacement : element.getText());
+        out.append(replacement != null ? replacement : tracker.text(element));
         return;
       }
       final PsiElement[] children = element.getChildren();
       if (children.length > 0) {
         for (PsiElement child : children) {
-          buildText(child, replacements, out);
+          buildText(child, replacements, out, tracker);
         }
       }
       else {
-        out.append(element.getText());
+        out.append(tracker.text(element));
       }
     }
 

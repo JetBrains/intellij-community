@@ -114,6 +114,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
     return "template";
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {

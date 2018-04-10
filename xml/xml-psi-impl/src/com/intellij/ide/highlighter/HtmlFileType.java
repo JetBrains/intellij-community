@@ -21,7 +21,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.XmlCharsetDetector;
@@ -31,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class HtmlFileType extends XmlLikeFileType {
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".html";
@@ -72,20 +71,14 @@ public class HtmlFileType extends XmlLikeFileType {
 
   @Override
   public String getCharset(@NotNull final VirtualFile file, @NotNull final byte[] content) {
-    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessed = LoadTextUtil.guessFromContent(file, content, content.length);
+    LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
     String charset =
-      guessed != null && guessed.first != null
-      ? guessed.first.name()
+      guessed.hardCodedCharset != null
+      ? guessed.hardCodedCharset.name()
       : XmlCharsetDetector.extractXmlEncodingFromProlog(content);
 
     if (charset != null) return charset;
-    @NonNls String strContent;
-    try {
-      strContent = new String(content, "ISO-8859-1");
-    }
-    catch (UnsupportedEncodingException e) {
-      return null;
-    }
+    @NonNls String strContent = new String(content, StandardCharsets.ISO_8859_1);
     Charset c = HtmlUtil.detectCharsetFromMetaTag(strContent);
     return c == null ? null : c.name();
   }

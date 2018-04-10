@@ -26,6 +26,7 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -57,10 +58,12 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     myEnabledCheckBox = new JCheckBox("Enable File Colors");
     myEnabledCheckBox.setMnemonic('F');
     topPanel.add(myEnabledCheckBox);
+    topPanel.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
 
     myTabsEnabledCheckBox = new JCheckBox("Use in Editor Tabs");
     myTabsEnabledCheckBox.setMnemonic('T');
     topPanel.add(myTabsEnabledCheckBox);
+    topPanel.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
 
     myProjectViewEnabledCheckBox = new JCheckBox("Use in Project View");
     myProjectViewEnabledCheckBox.setMnemonic('P');

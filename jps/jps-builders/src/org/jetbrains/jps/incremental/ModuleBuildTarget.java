@@ -16,10 +16,8 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
@@ -42,7 +40,6 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
-import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -206,7 +203,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     }
 
     final JpsModule module = getModule();
-    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly();
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly().recursively().exportedOnly();
     if (!isTests()) {
       enumerator = enumerator.productionOnly();
     }

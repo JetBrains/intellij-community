@@ -1,7 +1,6 @@
 // "Move 'return' closer to computation of the value of 'r'" "true"
 class T {
     String f(String p) {
-        String r = null;
         try {
             while (true) {
                 String n = next();

@@ -57,5 +57,10 @@ class ModulePointerImpl : ModulePointer {
     this.module = null
   }
 
+  internal fun renameUnresolved(newName: String) {
+    LOG.assertTrue(module == null)
+    moduleName = newName
+  }
+
   override fun toString() = "moduleName: $moduleName, module: $module"
 }

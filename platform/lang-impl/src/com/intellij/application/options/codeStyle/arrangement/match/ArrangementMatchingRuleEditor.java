@@ -221,7 +221,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
       if (orderType == null) {
         orderType = StdArrangementTokens.Order.KEEP;
       }
-      return Pair.create(ArrangementUtil.combine(conditions.toArray(new ArrangementMatchCondition[conditions.size()])), orderType);
+      return Pair.create(ArrangementUtil.combine(conditions.toArray(new ArrangementMatchCondition[0])), orderType);
     }
     else {
       return null;

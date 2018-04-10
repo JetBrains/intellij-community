@@ -89,10 +89,6 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
       return view == null ? UsageViewBundle.message("node.non.code.usages") : view.getPresentation().getNonCodeUsagesString();
     }
 
-    @Override
-    public void update() {
-    }
-
     public String toString() {
       //noinspection HardCodedStringLiteral
       return "NonCodeUsages";

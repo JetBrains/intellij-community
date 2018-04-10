@@ -34,9 +34,12 @@ import java.util.HashSet;
 
 public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   private String[] mySeparators;
-  
+
+  public GotoSymbolModel2(@NotNull Project project, @NotNull ChooseByNameContributor[] contributors) {
+    super(project, contributors);
+  }
   public GotoSymbolModel2(@NotNull Project project) {
-    super(project, ChooseByNameRegistry.getInstance().getSymbolModelContributors());
+    this(project, ChooseByNameRegistry.getInstance().getSymbolModelContributors());
   }
 
   @Override

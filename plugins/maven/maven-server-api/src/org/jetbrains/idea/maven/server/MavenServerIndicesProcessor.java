@@ -15,12 +15,10 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import org.jetbrains.idea.maven.model.MavenId;
-
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
 
 public interface MavenServerIndicesProcessor extends Remote {
-  void processArtifacts(Collection<MavenId> artifacts) throws RemoteException;
+  void processArtifacts(Collection<IndexedMavenId> artifacts) throws RemoteException;
 }

@@ -29,14 +29,8 @@ import org.jetbrains.annotations.NotNull;
 public class SimplifyToAssignmentFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return InspectionsBundle.message("inspection.data.flow.simplify.to.assignment.quickfix.name");
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
+    return InspectionsBundle.message("inspection.data.flow.simplify.to.assignment.quickfix.name");
   }
 
   @Override

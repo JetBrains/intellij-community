@@ -73,7 +73,7 @@ public class BytecodeAnalysisConverter {
       return null;
     }
     String methodName = psiMethod.getReturnType() == null ? "<init>" : psiMethod.getName();
-    return new EKey(new Method(className, methodName, methodSig), direction, true, false);
+    return new EKey(new Member(className, methodName, methodSig), direction, true, false);
   }
 
   @Nullable

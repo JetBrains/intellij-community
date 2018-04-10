@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.actions.generate.DomTemplateRunner;
 import com.intellij.util.xml.ui.actions.generate.CreateDomElementAction;
@@ -76,14 +76,11 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
                                      final PsiFile file,
                                      final Project project,
                                      PsiClass selectedClass) {
-    final Map<String,String> map = new HashMap<>();
+    final Map<String, String> map = new HashMap<>();
     map.put("CLASS_NAME", selectedClass.getQualifiedName());
-    new WriteCommandAction.Simple(project, file) {
-      @Override
-      protected void run() throws Throwable {
-        DomTemplateRunner.getInstance(project).runTemplate(createElement(context), myTemplate, editor, map);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, file).run(() -> {
+      DomTemplateRunner.getInstance(project).runTemplate(createElement(context), myTemplate, editor, map);
+    });
     return null;
   }
 

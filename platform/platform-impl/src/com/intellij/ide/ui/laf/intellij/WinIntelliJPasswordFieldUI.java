@@ -16,6 +16,9 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -30,21 +33,17 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROP
 
 public class WinIntelliJPasswordFieldUI extends BasicPasswordFieldUI {
 
-  private final JPasswordField passwordField;
   private MouseListener hoverListener;
   private FocusListener focusListener;
 
-  public WinIntelliJPasswordFieldUI(JPasswordField passwordField) {
-    this.passwordField = passwordField;
-  }
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    return new WinIntelliJPasswordFieldUI((JPasswordField)c);
+    return new WinIntelliJPasswordFieldUI();
   }
 
   @Override public void installListeners() {
     super.installListeners();
+    JTextComponent passwordField = getComponent();
     hoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(passwordField, HOVER_PROPERTY);
     focusListener = new FocusListener() {
       @Override public void focusGained(FocusEvent e) {
@@ -62,6 +61,7 @@ public class WinIntelliJPasswordFieldUI extends BasicPasswordFieldUI {
 
   @Override public void uninstallListeners() {
     super.uninstallListeners();
+    JTextComponent passwordField = getComponent();
     if (hoverListener != null) {
       passwordField.removeMouseListener(hoverListener);
     }
@@ -89,5 +89,16 @@ public class WinIntelliJPasswordFieldUI extends BasicPasswordFieldUI {
     } finally {
       g2.dispose();
     }
+  }
+
+  @Override
+  public Dimension getMinimumSize(JComponent c) {
+    Dimension size = super.getMinimumSize(c);
+    if (size != null && JBUI.isUseCorrectInputHeight(c)) {
+      size.height = DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
+                    UIUtil.getParentOfType(JSpinner.class, c) != null ?
+                    JBUI.scale(18) : JBUI.scale(24);
+    }
+    return size;
   }
 }

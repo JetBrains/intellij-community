@@ -133,7 +133,7 @@ public final class AnnotateCommand extends AbstractCommand {
   // Utils ==================================================================
 
   private String getCvsArguments() {
-    @NonNls final StringBuilder cvsArguments = new StringBuilder("");
+    @NonNls final StringBuilder cvsArguments = new StringBuilder();
     if (!isRecursive()) {
       cvsArguments.append("-l ");
     }

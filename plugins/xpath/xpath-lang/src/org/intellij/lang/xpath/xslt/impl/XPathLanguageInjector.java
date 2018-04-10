@@ -114,7 +114,7 @@ public class XPathLanguageInjector implements MultiHostInjector {
         }
 
         if (avtRanges.size() > 0) {
-          ranges = avtRanges.toArray(new TextRange[avtRanges.size()]);
+          ranges = avtRanges.toArray(new TextRange[0]);
         } else {
           ranges = EMPTY_ARRAY;
         }
@@ -127,11 +127,13 @@ public class XPathLanguageInjector implements MultiHostInjector {
       return ranges;
     }
 
+  @Override
   @NotNull
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Arrays.asList(XmlAttribute.class);
   }
 
+  @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     final XmlAttribute attribute = (XmlAttribute)context;
     if (!XsltSupport.isXPathAttribute(attribute)) return;

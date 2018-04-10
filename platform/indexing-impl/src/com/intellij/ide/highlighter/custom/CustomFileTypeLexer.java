@@ -68,6 +68,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
     if (multilineCommentParser != null) {
       tokenParsers.add(multilineCommentParser);
     }
+    tokenParsers.add(keywordParser);
     tokenParsers.add(quotedStringParser);
     tokenParsers.add(quotedStringParser2);
     tokenParsers.add(new PunctuationParser());
@@ -75,7 +76,6 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
       tokenParsers.add(hexNumberParser);
     }
     tokenParsers.add(numberParser);
-    tokenParsers.add(keywordParser);
     tokenParsers.add(identifierParser);
 
     if (table.isHasBraces()) {

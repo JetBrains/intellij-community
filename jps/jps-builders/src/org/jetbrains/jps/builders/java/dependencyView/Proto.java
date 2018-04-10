@@ -29,7 +29,6 @@ import java.util.Set;
 
 /**
  * @author: db
- * Date: 01.03.11
  */
 class Proto implements RW.Savable, Streamable {
   public final int access;
@@ -50,7 +49,7 @@ class Proto implements RW.Savable, Streamable {
       access = DataInputOutputUtil.readINT(in);
       signature = DataInputOutputUtil.readINT(in);
       name = DataInputOutputUtil.readINT(in);
-      annotations = (Set<TypeRepr.ClassType>)RW.read(TypeRepr.classTypeExternalizer(context), new THashSet<>(), in);
+      annotations = RW.read(TypeRepr.classTypeExternalizer(context), new THashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -179,8 +178,8 @@ class Proto implements RW.Savable, Streamable {
       }
 
       @Override
-      public boolean weakedAccess() {
-        return Difference.weakerAccess(past.access, access);
+      public boolean accessRestricted() {
+        return Difference.weakerAccess(access, past.access);
       }
 
       @Override
@@ -197,14 +196,16 @@ class Proto implements RW.Savable, Streamable {
       stream.print("    Class ");
       stream.println(context.getValue(name));
     }
-
-    if (this instanceof MethodRepr) {
+    else if (this instanceof MethodRepr) {
       stream.print("        Method ");
       stream.println(context.getValue(name));
     }
-
-    if (this instanceof FieldRepr) {
+    else if (this instanceof FieldRepr) {
       stream.print("        Field ");
+      stream.println(context.getValue(name));
+    }
+    else if (this instanceof ModuleRepr) {
+      stream.print("        Module ");
       stream.println(context.getValue(name));
     }
 

@@ -81,10 +81,10 @@ internal class SchemeManagerTest {
 
     val scheme = manager.findSchemeByName("first")
     assertThat(scheme).isNotNull()
-    scheme!!.name = "renamed"
+    scheme!!.name = "Grünwald"
     manager.save()
 
-    checkSchemes("2->second;renamed->renamed")
+    checkSchemes("2->second;Grünwald->Grünwald")
   }
 
   @Test fun testRenameScheme2() {
@@ -137,7 +137,7 @@ internal class SchemeManagerTest {
   @Test fun testGenerateUniqueSchemeName() {
     val manager = createAndLoad("options1")
     val scheme = TestScheme("first")
-    manager.addNewScheme(scheme, false)
+    manager.addScheme(scheme, false)
 
     assertThat("first2").isEqualTo(scheme.name)
   }
@@ -173,22 +173,23 @@ internal class SchemeManagerTest {
 
   @Test fun setSchemes() {
     val dir = tempDirManager.newPath()
-    val schemeManager = createSchemeManager(dir)
+    val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir, schemeNameToFileName = MODERN_NAME_CONVERTER)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
 
-    val scheme = TestScheme("s1")
+    val schemeName = "Grünwald и русский"
+    val scheme = TestScheme(schemeName)
     schemeManager.setSchemes(listOf(scheme))
 
     val schemes = schemeManager.allSchemes
     assertThat(schemes).containsOnly(scheme)
 
-    assertThat(dir.resolve("s1.xml")).doesNotExist()
+    assertThat(dir.resolve("$schemeName.xml")).doesNotExist()
 
     scheme.data = "newTrue"
     schemeManager.save()
 
-    assertThat(dir.resolve("s1.xml")).isRegularFile()
+    assertThat(dir.resolve("$schemeName.xml")).isRegularFile()
 
     schemeManager.setSchemes(emptyList())
 

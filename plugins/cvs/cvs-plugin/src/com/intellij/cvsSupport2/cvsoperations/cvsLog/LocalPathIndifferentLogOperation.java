@@ -24,14 +24,12 @@ import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperati
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchesProvider;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
-import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.ConstantLocalFileReader;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.DeafAdminWriter;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.log.LogCommand;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
-import org.netbeans.lib.cvsclient.file.ILocalFileReader;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -96,10 +94,6 @@ public class LocalPathIndifferentLogOperation extends LocalPathIndifferentOperat
 
   public List<LogInformation> getLogInformationList() {
     return myLogInformationList;
-  }
-
-  protected ILocalFileReader createLocalFileReader() {
-    return ConstantLocalFileReader.FOR_EXISTING_FILE;
   }
 
   public void addFile(File file) {

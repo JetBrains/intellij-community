@@ -23,13 +23,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,14 +50,10 @@ public class GenerateAntBuildAction extends CompileActionBase {
       final String[] names = dialog.getRepresentativeModuleNames();
       final GenerationOptionsImpl[] genOptions = new GenerationOptionsImpl[1];
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        (Runnable)() -> genOptions[0] = ApplicationManager.getApplication().runReadAction(new Computable<GenerationOptionsImpl>() {
-          @Override
-          public GenerationOptionsImpl compute() {
-            return new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(),
-                                             dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(),
-                                             dialog.isIdeaHomeGenerated(), names, dialog.getOutputFileName());
-          }
-        }), "Analyzing project structure...", true, project)) {
+        (Runnable)() -> genOptions[0] = ReadAction
+          .compute(() -> new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(),
+                                                   dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(),
+                                                   dialog.isIdeaHomeGenerated(), names, dialog.getOutputFileName())), "Analyzing project structure...", true, project)) {
         return;
       }
       if (!validateGenOptions(project, genOptions[0])) {
@@ -134,7 +130,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
           allFiles.add(new File(chunkBaseDir, BuildProperties.getModuleChunkBuildFileName(chunk) + XML_EXTENSION));
         }
 
-        ensureFilesWritable(project, allFiles.toArray(new File[allFiles.size()]));
+        ensureFilesWritable(project, allFiles.toArray(new File[0]));
       }
 
       new Task.Modal(project, CompilerBundle.message("generate.ant.build.title"), false) {
@@ -193,7 +189,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
     final String path = file.getPath();
     final int extensionIndex = path.lastIndexOf(".");
-    final String extension = path.substring(extensionIndex, path.length());
+    final String extension = path.substring(extensionIndex);
     //noinspection HardCodedStringLiteral
     final String backupPath = path.substring(0, extensionIndex) +
                               "_" +
@@ -352,7 +348,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
 
     filesToRefresh.addAll(generated);
-    return generated.toArray(new File[generated.size()]);
+    return generated.toArray(new File[0]);
   }
 
 }

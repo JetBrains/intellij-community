@@ -16,7 +16,6 @@
 package com.intellij.jps.impl;
 
 import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -33,11 +33,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author nik
  */
 public class JpsIdePluginManagerImpl extends JpsPluginManager {
-  private List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
+  private final List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
 
   public JpsIdePluginManagerImpl() {
     ExtensionsArea rootArea = Extensions.getRootArea();
-    //todo[nik] get rid of this check: currently this class is used in jps-builders tests instead of JpsPluginManagerImpl because platform-impl module is added to classpath via testFramework
+    //todo[nik] get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
     if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME.getName())) {
       rootArea.getExtensionPoint(JpsPluginBean.EP_NAME).addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
         @Override
@@ -120,8 +120,7 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
 
   private static List<String> loadClassNames(URL url) throws IOException {
     List<String> result = new ArrayList<>();
-    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), CharsetToolkit.UTF8));
-    try {
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
       String line;
       while ((line = in.readLine()) != null) {
         int i = line.indexOf('#');
@@ -131,9 +130,6 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
           result.add(line);
         }
       }
-    }
-    finally {
-      in.close();
     }
     return result;
   }

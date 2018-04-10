@@ -15,7 +15,6 @@
  */
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -36,8 +35,7 @@ public final class PsiVisitors {
    * Read action will be taken automatically
    */
   public static <RESULT> RESULT visit(@NotNull XSourcePosition position, @NotNull Project project, @NotNull Visitor<RESULT> visitor, RESULT defaultResult) {
-    AccessToken token = ReadAction.start();
-    try {
+    return ReadAction.compute(()->{
       Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
       PsiFile file = document == null || document.getTextLength() == 0 ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (file == null) {
@@ -55,10 +53,7 @@ public final class PsiVisitors {
 
       PsiElement element = file.findElementAt(positionOffset);
       return element == null ? defaultResult : visitor.visit(position, element, positionOffset, document);
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 
   public interface Visitor<RESULT> {

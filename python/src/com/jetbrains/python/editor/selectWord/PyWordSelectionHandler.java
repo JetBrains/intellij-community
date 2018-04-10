@@ -19,12 +19,14 @@ import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectio
 import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyWordSelectionHandler extends AbstractWordSelectioner {
-  public boolean canSelect(final PsiElement e) {
+  @Override
+  public boolean canSelect(@NotNull final PsiElement e) {
     final ASTNode astNode = e.getNode();
     return astNode != null && astNode.getElementType() == PyTokenTypes.IDENTIFIER;
   }

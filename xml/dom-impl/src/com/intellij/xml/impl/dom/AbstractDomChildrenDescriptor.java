@@ -97,7 +97,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
       xmlElementDescriptors.add(new AnyXmlElementDescriptor(this, getNSDescriptor()));
     }
 
-    return xmlElementDescriptors.toArray(new XmlElementDescriptor[xmlElementDescriptors.size()]);
+    return xmlElementDescriptors.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -172,7 +172,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
         }
       }
     }
-    return descriptors.toArray(new XmlAttributeDescriptor[descriptors.size()]);
+    return descriptors.toArray(XmlAttributeDescriptor.EMPTY);
   }
 
   @Override

@@ -37,7 +37,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   private final List<Transferable> myData = new ArrayList<>();
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
   private final ClipboardSynchronizer myClipboardSynchronizer;
-  private boolean myOwnContent = false;
+  private boolean myOwnContent;
 
   public static CopyPasteManagerEx getInstanceEx() {
     return (CopyPasteManagerEx)getInstance();
@@ -252,7 +252,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     if (clipString != null && (myData.isEmpty() || !Comparing.equal(clipString, getStringContent(myData.get(0))))) {
       addToTheTopOfTheStack(new StringSelection(clipString));
     }
-    return myData.toArray(new Transferable[myData.size()]);
+    return myData.toArray(new Transferable[0]);
   }
 
   public void removeContent(Transferable t) {

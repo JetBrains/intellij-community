@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.HighlightUtil;
@@ -41,23 +43,18 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final List<String> callTexts = new ArrayList<>();
-    PsiExpression root = (PsiExpression)element;
-    while (root instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) root;
-      final PsiExpressionList arguments = methodCallExpression.getArgumentList();
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      callTexts.add(methodExpression.getReferenceName() + arguments.getText());
-      root = methodExpression.getQualifierExpression();
-      if (root == null) {
-        return;
-      }
+    PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
+    PsiExpression root = MethodCallChainPredicate.getCallChainRoot(call);
+    if (root == null) return;
+    CommentTracker tracker = new CommentTracker();
+    while (call != null && call != root) {
+      callTexts.add(call.getMethodExpression().getReferenceName() + tracker.text(call.getArgumentList()));
+      call = MethodCallUtils.getQualifierMethodCall(call);
     }
     final PsiType rootType = root.getType();
-    if (rootType == null) {
-      return;
-    }
+    if (rootType == null) return;
     final String targetText;
     final PsiStatement appendStatement;
     @NonNls final String firstStatement;
@@ -92,14 +89,16 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
           final PsiJavaToken token = assignment.getOperationSign();
           firstStatement = targetText + token.getText() + root.getText() + ';';
           showRenameTemplate = false;
-        } else {
+        }
+        else {
           targetText = "x";
           showRenameTemplate = true;
           final Project project = element.getProject();
           final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
           if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
             firstStatement = "final " + rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
-          } else {
+          }
+          else {
             firstStatement = rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
           }
         }
@@ -119,7 +118,8 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
           }
           variableDeclaration = null;
           showRenameTemplate = false;
-        } else {
+        }
+        else {
           if (variable.hasModifierProperty(PsiModifier.FINAL)) {
             variableDeclaration = "final " + variableType.getCanonicalText() + ' ' + variable.getName() + '=';
           }
@@ -132,7 +132,8 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
           final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
           if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
             firstStatement = "final " + rootType.getCanonicalText() + " x=" + root.getText() + ';';
-          } else {
+          }
+          else {
             firstStatement = rootType.getCanonicalText() + " x=" + root.getText() + ';';
           }
         }
@@ -158,11 +159,11 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     final PsiCodeBlock codeBlock = factory.createCodeBlockFromText(builder.toString(), appendStatement);
     if (appendStatementParent instanceof PsiLoopStatement || appendStatementParent instanceof PsiIfStatement) {
-      final PsiElement insertedCodeBlock = appendStatement.replace(codeBlock);
+      final PsiElement insertedCodeBlock = tracker.replaceAndRestoreComments(appendStatement, codeBlock);
       final PsiCodeBlock reformattedCodeBlock = (PsiCodeBlock)codeStyleManager.reformat(insertedCodeBlock);
       if (showRenameTemplate) {
         final PsiStatement[] statements = reformattedCodeBlock.getStatements();
-        final PsiVariable variable = (PsiVariable)((PsiDeclarationStatement) statements[0]).getDeclaredElements()[0];
+        final PsiVariable variable = (PsiVariable)((PsiDeclarationStatement)statements[0]).getDeclaredElements()[0];
         HighlightUtil.showRenameTemplate(appendStatementParent, variable);
       }
     }
@@ -170,13 +171,13 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
       final PsiStatement[] statements = codeBlock.getStatements();
       PsiVariable variable = null;
       for (int i = 0, length = statements.length; i < length; i++) {
-        final PsiElement insertedStatement = appendStatementParent.addBefore(statements[i], appendStatement);
+        final PsiElement insertedStatement = appendStatementParent.addBefore(tracker.markUnchanged(statements[i]), appendStatement);
         if (i == 0 && showRenameTemplate) {
-          variable = (PsiVariable)((PsiDeclarationStatement) insertedStatement).getDeclaredElements()[0];
+          variable = (PsiVariable)((PsiDeclarationStatement)insertedStatement).getDeclaredElements()[0];
         }
         codeStyleManager.reformat(insertedStatement);
       }
-      appendStatement.delete();
+      tracker.deleteAndRestoreComments(appendStatement);
       if (variable != null) {
         HighlightUtil.showRenameTemplate(appendStatementParent, variable);
       }

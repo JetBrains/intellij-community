@@ -34,11 +34,9 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -259,7 +257,7 @@ public class ExpectedTypesProvider {
 
     @NotNull
     public ExpectedTypeInfo[] getResult() {
-      return myResult.toArray(new ExpectedTypeInfo[myResult.size()]);
+      return myResult.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     @Override
@@ -410,8 +408,8 @@ public class ExpectedTypesProvider {
     private void visitMethodReturnType(final PsiMethod scopeMethod, PsiType type, boolean tailTypeSemicolon) {
       if (type != null) {
         NullableComputable<String> expectedName;
-        if (PropertyUtil.isSimplePropertyAccessor(scopeMethod)) {
-          expectedName = () -> PropertyUtil.getPropertyName(scopeMethod);
+        if (PropertyUtilBase.isSimplePropertyAccessor(scopeMethod)) {
+          expectedName = () -> PropertyUtilBase.getPropertyName(scopeMethod);
         }
         else {
           expectedName = ExpectedTypeInfoImpl.NULL;
@@ -467,7 +465,7 @@ public class ExpectedTypesProvider {
         PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         PsiClass iterableClass =
           JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", statement.getResolveScope());
-        if (iterableClass != null && iterableClass.getTypeParameters().length == 1) {
+        if (iterableClass != null && iterableClass.getTypeParameters().length == 1 && !PsiType.NULL.equals(type)) {
           Map<PsiTypeParameter, PsiType> map = new HashMap<>();
           map.put(iterableClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, type));
           PsiType iterableType = factory.createType(iterableClass, factory.createSubstitutor(map));
@@ -641,7 +639,7 @@ public class ExpectedTypesProvider {
       for (PsiMethod constructor : referencedClass.getConstructors()) {
         array.add(new MethodCandidateInfo(constructor, substitutor, false, false, argumentList, null, argumentList.getExpressionTypes(), null));
       }
-      CandidateInfo[] candidates = array.toArray(new CandidateInfo[array.size()]);
+      CandidateInfo[] candidates = array.toArray(CandidateInfo.EMPTY_ARRAY);
       Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(candidates, argumentList, myExpr, myForCompletion));
     }
 
@@ -948,7 +946,7 @@ public class ExpectedTypesProvider {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
 
-      PsiMethod toExclude = ExpressionUtils.isConstructorInvocation(argumentList.getParent())
+      PsiMethod toExclude = JavaPsiConstructorUtil.isConstructorCall(argumentList.getParent())
                             ? PsiTreeUtil.getParentOfType(argument, PsiMethod.class) : null;
 
       PsiResolveHelper helper = JavaPsiFacade.getInstance(myExpr.getProject()).getResolveHelper();
@@ -958,6 +956,10 @@ public class ExpectedTypesProvider {
         if (element instanceof PsiMethod && helper.isAccessible((PsiMember)element, argumentList, null) && element != toExclude) {
           methodCandidates.add(candidate);
         }
+      }
+      if (methodCandidates.isEmpty()) {
+        Collections.addAll(methodCandidates, allCandidates);
+        methodCandidates.remove(toExclude);
       }
 
       final PsiExpression[] args = argumentList.getExpressions().clone();
@@ -1021,7 +1023,7 @@ public class ExpectedTypesProvider {
         }
       }
 
-      return array.toArray(new ExpectedTypeInfo[array.size()]);
+      return array.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     @NotNull
@@ -1114,7 +1116,7 @@ public class ExpectedTypesProvider {
               typeArg != null && TypeConversionUtil.erasure(typeArg).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             PsiClass placeClass = PsiTreeUtil.getContextOfType(argument, PsiClass.class);
             PsiClass classClass = ((PsiClassType)parameterType).resolve();
-            if (placeClass != null && classClass != null) {
+            if (placeClass != null && classClass != null && classClass.getTypeParameters().length == 1) {
               return factory.createType(classClass, factory.createType(placeClass));
             }
           }
@@ -1192,7 +1194,7 @@ public class ExpectedTypesProvider {
         }
       }
 
-      return types.toArray(new ExpectedTypeInfo[types.size()]);
+      return types.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     @NotNull
@@ -1215,7 +1217,7 @@ public class ExpectedTypesProvider {
         //Do not filter inheritors!
         types.add(info);
       }
-      return types.toArray(new ExpectedTypeInfo[types.size()]);
+      return types.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
   }
 

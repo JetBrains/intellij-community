@@ -23,7 +23,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/5/13
  */
 public class ErrorPostponingMethodVisitor extends FailSafeMethodVisitor {
 

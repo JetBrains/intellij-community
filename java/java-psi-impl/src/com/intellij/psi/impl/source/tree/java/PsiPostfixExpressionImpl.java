@@ -71,7 +71,7 @@ public class PsiPostfixExpressionImpl extends ExpressionPsiElement implements Ps
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child == getFirstChildNode()) return ChildRole.OPERAND;
     if (child == getLastChildNode()) return ChildRole.OPERATION_SIGN;

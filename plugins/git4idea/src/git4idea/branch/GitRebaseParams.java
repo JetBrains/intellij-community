@@ -36,7 +36,7 @@ public class GitRebaseParams {
   @Nullable private final GitRebaseEditorHandler myEditorHandler;
 
   @NotNull
-  public static GitRebaseParams editCommits(@NotNull String base, @NotNull GitRebaseEditorHandler editorHandler, boolean preserveMerges) {
+  public static GitRebaseParams editCommits(@NotNull String base, @Nullable GitRebaseEditorHandler editorHandler, boolean preserveMerges) {
     return new GitRebaseParams(null, null, base, true, preserveMerges, editorHandler);
   }
 

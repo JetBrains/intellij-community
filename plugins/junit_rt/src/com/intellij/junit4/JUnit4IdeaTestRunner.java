@@ -36,7 +36,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   private JUnit4TestListener myTestsListener;
   private ArrayList myListeners;
 
-  public void createListeners(ArrayList listeners) {
+  public void createListeners(ArrayList listeners, int count) {
     myListeners = listeners;
     myTestsListener = new JUnit4TestListener();
   }

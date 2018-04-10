@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataFile;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
@@ -32,7 +32,6 @@ import java.util.regex.Pattern;
 /**
  * Base for cases that need marked PSI elements.
  * User: dcheryasov
- * Date: Mar 14, 2009 11:57:52 PM
  */
 public abstract class LightMarkedTestCase extends PyTestCase {
   protected PsiFile myFile;

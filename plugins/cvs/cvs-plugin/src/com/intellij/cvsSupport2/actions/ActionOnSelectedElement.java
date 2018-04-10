@@ -43,13 +43,11 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
     VirtualFile[] selectedFiles = context.getSelectedFiles();
     File[] selectedIOFiles = context.getSelectedIOFiles();
     ArrayList result = new ArrayList();
-    if (selectedFiles != null) {
-      for (int i = 0; i < selectedFiles.length; i++) {
-        result.add(CvsVfsUtil.getFileFor(selectedFiles[i]));
-      }
+    for (VirtualFile selectedFile : selectedFiles) {
+      result.add(CvsVfsUtil.getFileFor(selectedFile));
     }
     if (selectedIOFiles != null) ContainerUtil.addAll(result, selectedIOFiles);
-    return (File[])result.toArray(new File[result.size()]);
+    return (File[])result.toArray(new File[0]);
   }
 
   protected static CvsActionVisibility.Condition FILES_HAVE_PARENT_UNDER_CVS =

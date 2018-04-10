@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -159,7 +160,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
       }
       node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", spaceCount + 1), result.getNode());
     } else if (prev instanceof GrPackageDefinition) {
-      node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", commonSettings.BLANK_LINES_AFTER_PACKAGE), result.getNode());
+      node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", commonSettings.getCommonSettings(GroovyLanguage.INSTANCE).BLANK_LINES_AFTER_PACKAGE), result.getNode());
     }
   }
 

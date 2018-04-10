@@ -44,7 +44,7 @@ public class OverrideImplementExploreUtil {
     Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<>();
     Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<>();
 
-    if (aClass.isAnnotationType()) return Collections.emptyMap();
+    if (aClass.isAnnotationType() || aClass instanceof PsiTypeParameter) return Collections.emptyMap();
 
     PsiUtilCore.ensureValid(aClass);
     Collection<HierarchicalMethodSignature> allMethodSigs = aClass.getVisibleSignatures();
@@ -54,6 +54,8 @@ public class OverrideImplementExploreUtil {
       PsiUtilCore.ensureValid(method);
 
       if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) continue;
+      //broken super
+      if (method.isConstructor() && method.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
       for (HierarchicalMethodSignature superMethodSignature : signature.getSuperSignatures()) {
         final PsiMethod superMethod = superMethodSignature.getMethod();
         if (PsiUtil.getAccessLevel(superMethod.getModifierList()) > PsiUtil.getAccessLevel(method.getModifierList())) {

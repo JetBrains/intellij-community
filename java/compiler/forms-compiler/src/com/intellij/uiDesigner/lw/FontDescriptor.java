@@ -16,7 +16,7 @@
 package com.intellij.uiDesigner.lw;
 
 import javax.swing.*;
-import java.awt.Font;
+import java.awt.*;
 
 /**
  * @author yole
@@ -110,7 +110,7 @@ public class FontDescriptor {
   }
 
   public boolean equals(Object obj) {
-    if (obj == null || !(obj instanceof FontDescriptor)) {
+    if (!(obj instanceof FontDescriptor)) {
       return false;
     }
     FontDescriptor rhs = (FontDescriptor) obj;

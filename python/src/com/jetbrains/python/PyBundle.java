@@ -30,7 +30,6 @@ import java.util.ResourceBundle;
 /**
  * TODO: Copy/paste  with Django and PyBDD bundles
  * Resource bundle access.
- * Date: Nov 25, 2008 2:36:10 AM
  */
 public class PyBundle {
 

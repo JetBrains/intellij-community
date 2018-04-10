@@ -96,7 +96,7 @@ public class XPathAppComponent implements PersistentStateComponent<Config>, Defa
   }
 
   @Override
-  public void loadState(Config state) {
+  public void loadState(@NotNull Config state) {
     configuration = state;
   }
 

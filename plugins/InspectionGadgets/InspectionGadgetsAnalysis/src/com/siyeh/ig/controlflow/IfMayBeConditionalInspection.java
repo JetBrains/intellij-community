@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -76,7 +76,7 @@ public class IfMayBeConditionalInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
       final PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -84,19 +84,20 @@ public class IfMayBeConditionalInspection extends BaseInspection {
       final PsiStatement elseBranch = ifStatement.getElseBranch();
       final PsiStatement elseStatement = ControlFlowUtils.stripBraces(elseBranch);
       final PsiExpression condition = ifStatement.getCondition();
+      CommentTracker tracker = new CommentTracker();
       @NonNls final StringBuilder replacementText = new StringBuilder();
       if (thenStatement instanceof PsiReturnStatement) {
         final PsiReturnStatement elseReturn = (PsiReturnStatement)elseStatement;
         final PsiReturnStatement thenReturn = (PsiReturnStatement)thenStatement;
         replacementText.append("return ");
-        appendExpressionText(condition, replacementText);
+        appendExpressionText(condition, replacementText, tracker);
         replacementText.append('?');
         final PsiExpression thenReturnValue = thenReturn.getReturnValue();
-        appendExpressionText(thenReturnValue, replacementText);
+        appendExpressionText(thenReturnValue, replacementText, tracker);
         replacementText.append(':');
         if (elseReturn != null) {
           final PsiExpression elseReturnValue = elseReturn.getReturnValue();
-          appendExpressionText(elseReturnValue, replacementText);
+          appendExpressionText(elseReturnValue, replacementText, tracker);
         }
         replacementText.append(';');
       }
@@ -108,24 +109,24 @@ public class IfMayBeConditionalInspection extends BaseInspection {
         if (thenExpression instanceof PsiAssignmentExpression && elseExpression instanceof PsiAssignmentExpression) {
           final PsiAssignmentExpression thenAssignmentExpression = (PsiAssignmentExpression)thenExpression;
           final PsiExpression lhs = thenAssignmentExpression.getLExpression();
-          replacementText.append(lhs.getText());
+          replacementText.append(tracker.text(lhs));
           final PsiJavaToken token = thenAssignmentExpression.getOperationSign();
           replacementText.append(token.getText());
-          appendExpressionText(condition, replacementText);
+          appendExpressionText(condition, replacementText, tracker);
           replacementText.append('?');
           final PsiExpression thenRhs = thenAssignmentExpression.getRExpression();
-          appendExpressionText(thenRhs, replacementText);
+          appendExpressionText(thenRhs, replacementText, tracker);
           replacementText.append(':');
           final PsiAssignmentExpression elseAssignmentExpression = (PsiAssignmentExpression)elseExpression;
           final PsiExpression elseRhs = elseAssignmentExpression.getRExpression();
-          appendExpressionText(elseRhs, replacementText);
+          appendExpressionText(elseRhs, replacementText, tracker);
           replacementText.append(';');
         }
         else if (thenExpression instanceof PsiMethodCallExpression && elseExpression instanceof PsiMethodCallExpression) {
           final PsiMethodCallExpression thenMethodCallExpression = (PsiMethodCallExpression)thenExpression;
           final PsiMethodCallExpression elseMethodCallExpression = (PsiMethodCallExpression)elseExpression;
           final PsiReferenceExpression thenMethodExpression = thenMethodCallExpression.getMethodExpression();
-          replacementText.append(thenMethodExpression.getText());
+          replacementText.append(tracker.text(thenMethodExpression));
           replacementText.append('(');
           final PsiExpressionList thenArgumentList = thenMethodCallExpression.getArgumentList();
           final PsiExpression[] thenArguments = thenArgumentList.getExpressions();
@@ -138,14 +139,14 @@ public class IfMayBeConditionalInspection extends BaseInspection {
             final PsiExpression thenArgument = thenArguments[i];
             final PsiExpression elseArgument = elseArguments[i];
             if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenArgument, elseArgument)) {
-              replacementText.append(thenArgument.getText());
+              replacementText.append(tracker.text(thenArgument));
             }
             else {
-              appendExpressionText(condition, replacementText);
+              appendExpressionText(condition, replacementText, tracker);
               replacementText.append('?');
-              appendExpressionText(thenArgument, replacementText);
+              appendExpressionText(thenArgument, replacementText, tracker);
               replacementText.append(':');
-              appendExpressionText(elseArgument, replacementText);
+              appendExpressionText(elseArgument, replacementText, tracker);
             }
           }
           replacementText.append(");");
@@ -154,23 +155,16 @@ public class IfMayBeConditionalInspection extends BaseInspection {
           return;
         }
       }
-      PsiReplacementUtil.replaceStatement(ifStatement, replacementText.toString());
+
+      PsiReplacementUtil.replaceStatement(ifStatement, replacementText.toString(), tracker);
     }
 
-    private static void appendExpressionText(@Nullable PsiExpression expression, StringBuilder out) {
+    private static void appendExpressionText(@Nullable PsiExpression expression, StringBuilder out, CommentTracker tracker) {
       expression = ParenthesesUtils.stripParentheses(expression);
       if (expression == null) {
         return;
       }
-      final String expressionText = expression.getText();
-      if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-        out.append('(');
-        out.append(expressionText);
-        out.append(')');
-      }
-      else {
-        out.append(expressionText);
-      }
+      out.append(tracker.text(expression, ParenthesesUtils.CONDITIONAL_PRECEDENCE));
     }
   }
 

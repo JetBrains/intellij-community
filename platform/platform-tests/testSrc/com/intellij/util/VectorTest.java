@@ -40,7 +40,7 @@ public class VectorTest extends TestCase {
 
   public void testCreateNull() {
     try {
-      fail("Created " + Vector.create(null));
+      fail("Created " + Vector.create((double[])null));
     }
     catch (Exception ignored) {
     }

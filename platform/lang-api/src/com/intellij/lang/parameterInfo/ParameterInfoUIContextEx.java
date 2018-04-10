@@ -25,7 +25,6 @@ import java.util.EnumSet;
 /**
  * Richer interface for describing a popup hint contents.
  * User: dcheryasov
- * Date: Sep 6, 2008
  */
 public interface ParameterInfoUIContextEx extends ParameterInfoUIContext {
 

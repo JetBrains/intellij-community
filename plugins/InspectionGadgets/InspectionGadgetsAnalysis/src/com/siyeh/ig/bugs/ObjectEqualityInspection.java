@@ -67,8 +67,7 @@ public class ObjectEqualityInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "object.comparison.problem.description");
+    return InspectionGadgetsBundle.message("object.comparison.problem.description");
   }
 
   @Override
@@ -109,48 +108,55 @@ public class ObjectEqualityInspection extends BaseInspection {
         return;
       }
       final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-      if (method != null && MethodUtils.isEquals(method) &&
+      if (MethodUtils.isEquals(method) &&
           (isThisReference(lhs, method.getContainingClass()) || isThisReference(rhs, method.getContainingClass()))) {
         return;
       }
       if (m_ignoreEnums && TypeConversionUtil.isEnumType(lhs.getType())) {
         return;
       }
-      ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-      if (!TypeConversionUtil.isBinaryOperatorApplicable(expression.getOperationTokenType(), lhs, rhs, false)) {
-        // don't warn on non-compiling code, but allow to replace
-        highlightType = ProblemHighlightType.INFORMATION;
+      ProblemHighlightType highlightType;
+      if (shouldHighlight(expression, rhs, lhs)) {
+        highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       }
-      if (m_ignoreClassObjects && ClassUtils.isFinalClassWithDefaultEquals(PsiUtil.resolveClassInClassTypeOnly(lhs.getType()))) {
-        highlightType = ProblemHighlightType.INFORMATION;
-      }
-      if (m_ignorePrivateConstructors && typeHasPrivateConstructor(lhs)) {
+      else {
+        if (!isOnTheFly()) {
+          return;
+        }
         highlightType = ProblemHighlightType.INFORMATION;
       }
       registerError(expression.getOperationSign(), highlightType, expression);
+    }
+
+    private boolean shouldHighlight(@NotNull PsiBinaryExpression expression,
+                                    PsiExpression rhs,
+                                    PsiExpression lhs) {
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(expression.getOperationTokenType(), lhs, rhs, false)) {
+        // don't warn on non-compiling code, but allow to replace
+        return false;
+      }
+      if (m_ignoreClassObjects && ClassUtils.isFinalClassWithDefaultEquals(PsiUtil.resolveClassInClassTypeOnly(lhs.getType()))) {
+        return false;
+      }
+      if (m_ignorePrivateConstructors && typeHasPrivateConstructor(lhs)) {
+        return false;
+      }
+      return true;
     }
 
     private boolean typeHasPrivateConstructor(@Nullable PsiExpression expression) {
       if (expression == null) {
         return false;
       }
-      final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
-      if (aClass != null && aClass.isInterface()) {
-        return implementersHaveOnlyPrivateConstructors(aClass);
-      }
-      else {
-        return ClassUtils.hasOnlyPrivateConstructors(aClass);
-      }
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+      return (aClass != null && aClass.isInterface())
+             ? implementersHaveOnlyPrivateConstructors(aClass)
+             : ClassUtils.hasOnlyPrivateConstructors(aClass);
     }
 
     private boolean implementersHaveOnlyPrivateConstructors(final PsiClass aClass) {
       final GlobalSearchScope scope = GlobalSearchScope.allScope(aClass.getProject());
-      final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit(6);
+      final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<>(6);
       final ProgressManager progressManager = ProgressManager.getInstance();
       progressManager.runProcess(
         (Runnable)() -> ClassInheritorsSearch.search(aClass, scope, true).forEach(new PsiElementProcessorAdapter<>(processor)), null);

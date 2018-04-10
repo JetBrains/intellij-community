@@ -84,7 +84,7 @@ public class QuestionableNameInspectionBase extends BaseInspection {
 
   private class QuestionableNameVisitor extends BaseInspectionVisitor {
 
-    private final Set<String> nameSet = new HashSet(nameList);
+    private final Set<String> nameSet = new HashSet<>(nameList);
 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {

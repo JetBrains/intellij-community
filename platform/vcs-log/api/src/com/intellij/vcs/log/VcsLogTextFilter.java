@@ -17,6 +17,8 @@ package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.vcs.log.VcsLogFilterCollection.TEXT_FILTER;
+
 /**
  * Specifies the log filter by text.
  */
@@ -41,4 +43,10 @@ public interface VcsLogTextFilter extends VcsLogDetailsFilter {
    * @return true if case sensitive, false otherwise.
    */
   boolean matchesCase();
+
+  @NotNull
+  @Override
+  default VcsLogFilterCollection.FilterKey<VcsLogTextFilter> getKey() {
+    return TEXT_FILTER;
+  }
 }

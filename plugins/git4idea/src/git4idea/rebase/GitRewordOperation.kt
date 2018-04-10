@@ -15,10 +15,8 @@
  */
 package git4idea.rebase
 
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -40,9 +38,10 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitConfigUtil
+import git4idea.config.GitVersionSpecialty
 import git4idea.history.GitLogUtil
-import git4idea.rebase.GitRebaseEntry.Action.pick
-import git4idea.rebase.GitRebaseEntry.Action.reword
+import git4idea.rebase.GitRebaseEntry.Action.PICK
+import git4idea.rebase.GitRebaseEntry.Action.REWORD
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.reset.GitResetMode
@@ -66,7 +65,7 @@ class GitRewordOperation(private val repository: GitRepository,
 
   fun execute() {
     var reworded = false
-    if (isLatestCommit()) {
+    if (canRewordViaAmend()) {
       reworded = rewordViaAmend()
     }
     if (!reworded) {
@@ -78,6 +77,9 @@ class GitRewordOperation(private val repository: GitRepository,
       rewordedCommit = findNewHashOfRewordedCommit(headAfterReword!!)
     }
   }
+
+  private fun canRewordViaAmend() =
+    isLatestCommit() && GitVersionSpecialty.CAN_AMEND_WITHOUT_FILES.existsIn(project)
 
   private fun isLatestCommit() = commit.id.asString() == initialHeadPosition
 
@@ -142,8 +144,8 @@ class GitRewordOperation(private val repository: GitRepository,
 
   private fun injectRewordAction(list: List<GitRebaseEntry>): List<GitRebaseEntry> {
     return list.map({ entry ->
-      if (entry.action == pick && commit.id.asString().startsWith(entry.commit))
-        GitRebaseEntry(reword, entry.commit, entry.subject)
+      if (entry.action == PICK && commit.id.asString().startsWith(entry.commit))
+        GitRebaseEntry(REWORD, entry.commit, entry.subject)
       else entry
     })
   }
@@ -192,19 +194,17 @@ class GitRewordOperation(private val repository: GitRepository,
 
   private fun notifySuccess() {
     val notification = STANDARD_NOTIFICATION.createNotification("Reworded Successfully", "", NotificationType.INFORMATION, null)
-    notification.addAction(object : NotificationAction("Undo") {
-      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        notification.expire()
-        undoInBackground()
-      }
+    notification.addAction(NotificationAction.createSimple("Undo") {
+      notification.expire()
+      undoInBackground()
     })
 
     val connection = project.messageBus.connect()
     notification.whenExpired { connection.disconnect() }
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-      BackgroundTaskUtil.executeOnPooledThread(Runnable {
+      BackgroundTaskUtil.executeOnPooledThread(repository, Runnable {
         if (checkUndoPossibility(project) !is UndoPossibility.Possible) notification.expire()
-      }, repository)
+      })
     })
 
     notifier.notify(notification)

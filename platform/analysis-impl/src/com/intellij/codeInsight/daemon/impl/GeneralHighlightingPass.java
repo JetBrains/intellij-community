@@ -38,7 +38,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -66,7 +65,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
   private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
@@ -159,7 +158,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 Arrays.asList(Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject)));
     }
 
-    return visitors.toArray(new HighlightVisitor[visitors.size()]);
+    return visitors.toArray(new HighlightVisitor[0]);
   }
 
   void setHighlightVisitorProducer(@NotNull NotNullProducer<HighlightVisitor[]> highlightVisitorProducer) {
@@ -256,10 +255,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       myHighlights.addAll(insideResult);
       myHighlights.addAll(outsideResult);
     }
-  }
-
-  boolean isFailFastOnAcquireReadAction() {
-    return true;
   }
 
   private boolean isWholeFileHighlighting() {

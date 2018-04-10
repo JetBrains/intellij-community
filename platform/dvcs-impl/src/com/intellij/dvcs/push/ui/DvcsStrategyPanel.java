@@ -23,7 +23,7 @@ import java.awt.*;
 
 public class DvcsStrategyPanel extends JPanel {
 
-  private ComboBox myReferenceStrategyCombobox;
+  private final ComboBox myReferenceStrategyCombobox;
 
   public DvcsStrategyPanel() {
     setLayout(new BorderLayout());

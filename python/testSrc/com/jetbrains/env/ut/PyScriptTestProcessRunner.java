@@ -22,7 +22,7 @@ import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyAbstractTestConfiguration;
-import com.jetbrains.python.testing.TestTargetType;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -68,10 +68,10 @@ public class PyScriptTestProcessRunner<CONF_T extends AbstractPythonRunConfigura
       final ConfigurationTarget target = ((PyAbstractTestConfiguration)configuration).getTarget();
       if (myScriptName.startsWith(TEST_TARGET_PREFIX)) {
         target.setTarget(myScriptName.substring(TEST_TARGET_PREFIX.length()));
-        target.setTargetType(TestTargetType.PYTHON);
+        target.setTargetType(PyRunTargetVariant.PYTHON);
       } else {
         target.setTarget(myScriptName);
-        target.setTargetType(TestTargetType.PATH);
+        target.setTargetType(PyRunTargetVariant.PATH);
       }
     }
   }

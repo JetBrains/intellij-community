@@ -1,23 +1,12 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.jarRepository.services;
 
 import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.jarRepository.services.artifactory.ArtifactoryRepositoryService;
+import com.intellij.jarRepository.services.bintray.BintrayRepositoryService;
 import com.intellij.jarRepository.services.nexus.NexusRepositoryService;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -27,8 +16,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -51,13 +40,12 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   public static final List<String> DEFAULT_SERVICES = Collections.unmodifiableList(Arrays.asList(
     "https://oss.sonatype.org/service/local/",
     "http://repo.jfrog.org/artifactory/api/",
-    "https://repository.jboss.org/nexus/service/local/"
+    "https://repository.jboss.org/nexus/service/local/",
+    "https://jcenter.bintray.com"
   ));
 
   public MavenRepositoryServicesManager() {
-    for (String s : DEFAULT_SERVICES) {
-      myUrls.add(s);
-    }
+    myUrls.addAll(DEFAULT_SERVICES);
   }
 
   @NotNull
@@ -67,7 +55,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
 
   @NotNull
   public static MavenRepositoryService[] getServices() {
-    return new MavenRepositoryService[]{new NexusRepositoryService(), new ArtifactoryRepositoryService()};
+    return new MavenRepositoryService[]{new NexusRepositoryService(), new ArtifactoryRepositoryService(), new BintrayRepositoryService()};
   }
 
   public static String[] getServiceUrls(final Project project) {
@@ -76,7 +64,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
 
   @NotNull
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag = "service-url", elementValueAttribute = "")
+  @XCollection(elementName = "service-url", valueAttributeName = "")
   public List<String> getUrls() {
     return myUrls;
   }
@@ -94,7 +82,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   }
 
   @Override
-  public void loadState(MavenRepositoryServicesManager state) {
+  public void loadState(@NotNull MavenRepositoryServicesManager state) {
     myUrls.clear();
     myUrls.addAll(state.getUrls());
   }

@@ -21,7 +21,6 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.deployment.DeploymentUtil;
@@ -275,16 +274,14 @@ public class ManifestFileUtil {
   @Nullable
   public static VirtualFile createManifestFile(final @NotNull VirtualFile directory, final @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final Ref<IOException> exc = Ref.create(null);
-    final VirtualFile file = new WriteAction<VirtualFile>() {
-      protected void run(@NotNull final Result<VirtualFile> result) {
+    try {
+      return WriteAction.compute(() -> {
         VirtualFile dir = directory;
-        try {
           if (!dir.getName().equals(MANIFEST_DIR_NAME)) {
             dir = VfsUtil.createDirectoryIfMissing(dir, MANIFEST_DIR_NAME);
           }
-          final VirtualFile file = dir.createChildData(this, MANIFEST_FILE_NAME);
-          final OutputStream output = file.getOutputStream(this);
+          final VirtualFile f = dir.createChildData(dir, MANIFEST_FILE_NAME);
+          final OutputStream output = f.getOutputStream(dir);
           try {
             final Manifest manifest = new Manifest();
             ManifestBuilder.setVersionAttribute(manifest.getMainAttributes());
@@ -293,21 +290,14 @@ public class ManifestFileUtil {
           finally {
             output.close();
           }
-          result.setResult(file);
-        }
-        catch (IOException e) {
-          exc.set(e);
-        }
-      }
-    }.execute().getResultObject();
-
-    final IOException exception = exc.get();
-    if (exception != null) {
-      LOG.info(exception);
-      Messages.showErrorDialog(project, exception.getMessage(), CommonBundle.getErrorTitle());
+          return f;
+      });
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
       return null;
     }
-    return file;
   }
 
   public static FileChooserDescriptor createDescriptorForManifestDirectory() {

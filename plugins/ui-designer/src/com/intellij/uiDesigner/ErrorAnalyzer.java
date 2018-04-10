@@ -37,7 +37,7 @@ import com.intellij.uiDesigner.quickFixes.*;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -397,7 +397,7 @@ public final class ErrorAnalyzer {
     if (errorInfos != null) {
       result.addAll(errorInfos);
     }
-    return result.toArray(new ErrorInfo[result.size()]);
+    return result.toArray(ErrorInfo.EMPTY_ARRAY);
   }
 
   private static ArrayList<ErrorInfo> getErrorInfos(final IComponent component) {

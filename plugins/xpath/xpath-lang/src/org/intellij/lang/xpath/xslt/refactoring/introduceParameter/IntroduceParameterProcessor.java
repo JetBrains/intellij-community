@@ -102,11 +102,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         return usageInfos;
     }
 
-    protected void refreshElements(@NotNull PsiElement[] psiElements) {
-        // TODO When's that called? What should it do?
-    }
-
-    protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
+  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
         XmlTag tag;
         if (myTemplate != null) {
             tag = myTemplate.getTag();
@@ -163,6 +159,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         }
     }
 
+    @NotNull
     protected String getCommandName() {
         return XsltIntroduceParameterAction.COMMAND_NAME;
     }

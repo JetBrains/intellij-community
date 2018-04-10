@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.TimeoutUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.junit.Test;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -50,7 +50,7 @@ public class SvnCommandLineStabilityTest extends Svn17TestCase {
     File workingDirectory = VfsUtilCore.virtualToIoFile(myWorkingCopyDir);
     Command command = new Command(SvnCommandName.info);
 
-    command.setTarget(SvnTarget.fromFile(workingDirectory));
+    command.setTarget(Target.on(workingDirectory));
     command.setWorkingDirectory(workingDirectory);
     command.put("--xml");
 

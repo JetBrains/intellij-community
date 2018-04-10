@@ -16,7 +16,7 @@ public class UnqualifiedFieldAccess {
       void foo() {
         new Object() {
           void foo() {
-            i  = 0;
+            <warning descr="Instance field access 'i' is not qualified with 'this'">i</warning>  = 0;
           }
         };
       }
@@ -26,7 +26,7 @@ public class UnqualifiedFieldAccess {
       void a() {
         new Object() {
           void b() {
-            System.out.println(i);
+            System.out.println(<warning descr="Instance field access 'i' is not qualified with 'this'">i</warning>);
           }
         };
       }

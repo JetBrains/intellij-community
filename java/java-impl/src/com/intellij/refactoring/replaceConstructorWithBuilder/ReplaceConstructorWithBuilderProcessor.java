@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.refactoring.replaceConstructorWithBuilder;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -29,7 +29,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -118,7 +118,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     if (myMoveDestination != null) {
       directory = myMoveDestination.getTargetDirectory(containingDirectory);
     } else {
-      final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(containingFile);
       assert module != null;
       directory = PackageUtil.findOrCreateDirectoryForPackage(module, myPackageName, containingDirectory, true, true);
     }
@@ -178,7 +178,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
       }
     }
     if (setter == null) {
-      setter = PropertyUtil.generateSetterPrototype(field, builderClass, true);
+      setter = PropertyUtilBase.generateSetterPrototype(field, builderClass, true);
       final PsiIdentifier nameIdentifier = setter.getNameIdentifier();
       assert nameIdentifier != null;
       nameIdentifier.replace(myElementFactory.createIdentifier(parameterData.getSetterName()));
@@ -217,7 +217,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   private void fixSetterReturnType(PsiClass builderClass, PsiField field, PsiMethod method) {
     if (PsiUtil.resolveClassInType(method.getReturnType()) != builderClass) {
       final PsiCodeBlock body = method.getBody();
-      final PsiCodeBlock generatedBody = PropertyUtil.generateSetterPrototype(field, builderClass, true).getBody();
+      final PsiCodeBlock generatedBody = PropertyUtilBase.generateSetterPrototype(field, builderClass, true).getBody();
       assert body != null;
       assert generatedBody != null;
       body.replace(generatedBody);
@@ -252,7 +252,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     PsiMethod constructor = getMostCommonConstructor();
     if (constructor == null){
       constructor = myConstructors[0];
-      if (constructor.getParameterList().getParametersCount() == 0) {
+      if (constructor.getParameterList().isEmpty()) {
         constructor = myConstructors[1];
       }
     }
@@ -322,6 +322,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     return showConflicts(conflicts, refUsages.get());
   }
 
+  @NotNull
   protected String getCommandName() {
     return REFACTORING_NAME;
   }

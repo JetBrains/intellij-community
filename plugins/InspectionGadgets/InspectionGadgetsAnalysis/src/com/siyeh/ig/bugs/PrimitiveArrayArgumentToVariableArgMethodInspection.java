@@ -28,8 +28,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-
 public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseInspection {
 
   @NotNull
@@ -109,8 +107,7 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
       }
       final JavaResolveResult result = call.resolveMethodGenerics();
       final PsiMethod method = (PsiMethod)result.getElement();
-      if (method == null ||
-          AnnotationUtil.isAnnotated(method, Collections.singletonList("java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
+      if (method == null || AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();

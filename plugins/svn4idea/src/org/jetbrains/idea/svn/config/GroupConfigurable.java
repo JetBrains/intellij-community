@@ -58,6 +58,7 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     return myProxyGroup.getName();
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
@@ -126,9 +127,5 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     } catch (NumberFormatException e) {
       // never
     }
-  }
-
-  public void disposeUIResources() {
-
   }
 }

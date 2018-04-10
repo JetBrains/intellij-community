@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.psi.util.PsiUtilCore;
@@ -49,10 +35,15 @@ public interface CommonProblemDescriptor {
   ArrayFactory<CommonProblemDescriptor> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new CommonProblemDescriptor[count];
 
   /**
-   * Returns the template from which the problem description is built. The template may
-   * contain special markers: {@code #ref} is replaced with the text of the element
-   * in which the problem has been found, and {@code #loc} is replaced with the filename
-   * and line number in exported inspection results and ignored when viewing within IDEA.
+   * Returns the template (text or html) from which the problem description is built.
+   * The template may contain special markers:
+   *
+   * 1. {@code #ref} is replaced with the text of the element in which the problem has been found;
+   *
+   * 2. {@code #loc} is replaced with the filename and line number in exported inspection results and ignored when viewing within IDEA;
+   *
+   * 3. {@code #treeend} is used as cut-symbol for template when it's shown inside inspection result tree.
+   * So any content after this marker is not visible in the tree node.
    *
    * @return the template for the problem description.
    */

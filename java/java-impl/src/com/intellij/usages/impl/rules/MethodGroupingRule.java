@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.usages.impl.rules;
 
@@ -44,7 +32,13 @@ import javax.swing.*;
  * @author max
  */
 public class MethodGroupingRule extends SingleParentUsageGroupingRule {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.rules.MethodGroupingRule");
+  private static final Logger LOG = Logger.getInstance(MethodGroupingRule.class);
+  @NotNull
+  private final UsageViewSettings myUsageViewSettings;
+
+  public MethodGroupingRule(@NotNull UsageViewSettings usageViewSettings) {
+    myUsageViewSettings = usageViewSettings;
+  }
 
   @Nullable
   @Override
@@ -70,7 +64,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
       while (true);
 
       if (containingMethod != null) {
-        return new MethodUsageGroup((PsiMethod)containingMethod);
+        return new MethodUsageGroup((PsiMethod)containingMethod, myUsageViewSettings);
       }
     }
     return null;
@@ -82,7 +76,10 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     private final Icon myIcon;
     private final Project myProject;
 
-    public MethodUsageGroup(PsiMethod psiMethod) {
+    @NotNull
+    private final UsageViewSettings myUsageViewSettings;
+
+    public MethodUsageGroup(PsiMethod psiMethod, @NotNull UsageViewSettings usageViewSettings) {
       myName = PsiFormatUtil.formatMethod(
           psiMethod,
           PsiSubstitutor.EMPTY,
@@ -93,6 +90,8 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
       myMethodPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(psiMethod);
 
       myIcon = getIconImpl(psiMethod);
+
+      myUsageViewSettings = usageViewSettings;
     }
 
     @Override
@@ -169,7 +168,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
       if (SmartPointerManager.getInstance(myProject).pointToTheSameElement(myMethodPointer, other.myMethodPointer)) {
         return 0;
       }
-      if (!UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY) {
+      if (!myUsageViewSettings.isSortAlphabetically()) {
         Segment segment1 = myMethodPointer.getRange();
         Segment segment2 = other.myMethodPointer.getRange();
         if (segment1 != null && segment2 != null) {

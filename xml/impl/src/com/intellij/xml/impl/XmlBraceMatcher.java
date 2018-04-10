@@ -39,8 +39,6 @@ import java.util.List;
 
 /**
  * @author Maxim.Mossienko
- *         Date: Apr 15, 2008
- *         Time: 4:27:25 PM
  */
 public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   private static final int XML_TAG_TOKEN_GROUP = 1;

@@ -32,14 +32,14 @@ import java.util.Map;
 public class JpsSerializationManagerImpl extends JpsSerializationManager {
   @NotNull
   @Override
-  public JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath)
+  public JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath, boolean loadUnloadedModules)
     throws IOException {
     JpsModel model = JpsElementFactory.getInstance().createModel();
     if (optionsPath != null) {
       JpsGlobalLoader.loadGlobalSettings(model.getGlobal(), optionsPath);
     }
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
-    JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectPath);
+    JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectPath, loadUnloadedModules);
     return model;
   }
 

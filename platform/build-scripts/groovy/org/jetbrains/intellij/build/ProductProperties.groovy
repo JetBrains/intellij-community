@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -55,7 +41,7 @@ abstract class ProductProperties {
   String inspectCommandName = "inspect"
 
   /**
-   * {@code true} if tools.jar from JDK must be added to IDE's classpath
+   * {@code true} if tools.jar from JDK must be added to IDE classpath
    */
   boolean toolsJarRequired = false
 
@@ -85,8 +71,8 @@ abstract class ProductProperties {
   boolean reassignAltClickToMultipleCarets = false
 
   /**
-   * If {@code true} a txt file containing information (in Atlassian Confluence format) about third-party libraries used in the product
-   * will be generated.
+   * Now file containing information about third-party libraries is bundled and shown inside IDE.
+   * If {@code true} html file of third-party libraries will be placed alongside with build artifacts.
    */
   boolean generateLibrariesLicensesTable = true
 
@@ -163,6 +149,11 @@ abstract class ProductProperties {
    * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts. It makes sense only if {@link #yourkitAgentBinariesDirectoryPath} is non-null.
    */
   boolean enableYourkitAgentInEAP = false
+
+  /**
+   * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.
+   */
+  MavenArtifactsProperties mavenArtifacts = new MavenArtifactsProperties()
 
   /**
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.

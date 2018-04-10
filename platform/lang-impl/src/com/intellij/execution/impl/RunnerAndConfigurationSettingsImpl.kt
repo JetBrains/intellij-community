@@ -1,58 +1,51 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.configurationStore.deserializeAndLoadState
-import com.intellij.configurationStore.serializeInto
-import com.intellij.execution.*
+import com.intellij.configurationStore.serializeStateInto
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.Executor
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.impl.BasePathMacroManager
+import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionException
-import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
+import com.intellij.util.getAttributeBooleanValue
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
+import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
 
 private val LOG = logger<RunnerAndConfigurationSettings>()
 
-private val RUNNER_ID = "RunnerId"
+private const val RUNNER_ID = "RunnerId"
 
-private val CONFIGURATION_TYPE_ATTRIBUTE = "type"
-private val FACTORY_NAME_ATTRIBUTE = "factoryName"
-private val FOLDER_NAME = "folderName"
-val NAME_ATTR = "name"
-val DUMMY_ELEMENT_NAME = "dummy"
-private val TEMPORARY_ATTRIBUTE = "temporary"
-private val EDIT_BEFORE_RUN = "editBeforeRun"
-private val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
+private const val CONFIGURATION_TYPE_ATTRIBUTE = "type"
+private const val FACTORY_NAME_ATTRIBUTE = "factoryName"
+private const val FOLDER_NAME = "folderName"
+const val NAME_ATTR = "name"
+const val DUMMY_ELEMENT_NAME = "dummy"
+private const val TEMPORARY_ATTRIBUTE = "temporary"
+private const val EDIT_BEFORE_RUN = "editBeforeRun"
+private const val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
 
-private val TEMP_CONFIGURATION = "tempConfiguration"
-internal val TEMPLATE_FLAG_ATTRIBUTE = "default"
+private const val TEMP_CONFIGURATION = "tempConfiguration"
+internal const val TEMPLATE_FLAG_ATTRIBUTE = "default"
 
-val SINGLETON = "singleton"
+const val SINGLETON = "singleton"
 
 enum class RunConfigurationLevel {
   WORKSPACE, PROJECT, TEMPORARY
@@ -62,7 +55,15 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
                                                                    private var singleton: Boolean = false,
-                                                                   var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, Scheme, SerializableScheme {
+                                                                   var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+  companion object {
+    @Suppress("DEPRECATION")
+    @JvmStatic
+    fun getUniqueIdFor(configuration: RunConfiguration): String {
+      return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
+    }
+  }
+
   private val runnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
     override fun createSettings(runner: ProgramRunner<*>) = runner.createConfigurationData(InfoProvider(runner))
   }
@@ -125,7 +126,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     if (result == null || !result.contains(configuration.name)) {
       val configuration = configuration
       @Suppress("DEPRECATION")
-      result = "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
+      result = getUniqueIdFor(configuration)
       uniqueId = result
     }
     return result
@@ -156,17 +157,18 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun getFolderName() = folderName
 
   fun readExternal(element: Element, isShared: Boolean) {
-    isTemplate = element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE).toBoolean()
+    isTemplate = element.getAttributeBooleanValue(TEMPLATE_FLAG_ATTRIBUTE)
 
     if (isShared) {
       level = RunConfigurationLevel.PROJECT
     }
     else {
-      level = if (element.getAttributeValue(TEMPORARY_ATTRIBUTE).toBoolean() || TEMP_CONFIGURATION == element.name) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
+      level = if (element.getAttributeBooleanValue(TEMPORARY_ATTRIBUTE) || TEMP_CONFIGURATION == element.name) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
     }
 
-    isEditBeforeRun = (element.getAttributeValue(EDIT_BEFORE_RUN)).toBoolean()
+    isEditBeforeRun = (element.getAttributeBooleanValue(EDIT_BEFORE_RUN))
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
+    @Suppress("PlatformExtensionReceiverOfInline")
     isActivateToolWindowBeforeRun = value == null || value.toBoolean()
     folderName = element.getAttributeValue(FOLDER_NAME)
     val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate) ?: return
@@ -182,7 +184,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       }
       else {
         wasSingletonSpecifiedExplicitly = true
-        singleton = singletonStr.toBoolean()
+        singleton = singletonStr!!.toBoolean()
       }
     }
 
@@ -277,12 +279,25 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         PathMacroManager.getInstance(it).collapsePathsRecursively(element)
       }
     }
-    PathMacroManager.getInstance(configuration.project).collapsePathsRecursively(element)
+    val project = configuration.project
+    val macroManager = PathMacroManager.getInstance(project)
+
+    // https://youtrack.jetbrains.com/issue/IDEA-178510
+    val projectParentPath = project.basePath?.let { PathUtilRt.getParentPath(it) }
+    if (!projectParentPath.isNullOrEmpty()) {
+      val replacePathMap = (macroManager as? ProjectPathMacroManager)?.replacePathMap
+      if (replacePathMap != null) {
+        replacePathMap.addReplacement(projectParentPath, '$' + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$/..", true)
+        BasePathMacroManager.collapsePaths(element, true, replacePathMap)
+        return
+      }
+    }
+    PathMacroManager.getInstance(project).collapsePathsRecursively(element)
   }
 
   private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
     if (configuration is PersistentStateComponent<*>) {
-      configuration.state!!.serializeInto(element)
+      configuration.serializeStateInto(element)
     }
     else {
       configuration.writeExternal(element)
@@ -314,11 +329,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     if (executor != null) {
       configuration.checkSettingsBeforeRun()
     }
-  }
-
-  override fun canRunOn(target: ExecutionTarget): Boolean {
-    val configuration = configuration
-    return if (configuration is TargetAwareRunProfile) configuration.canRunOn(target) else true
   }
 
   override fun getRunnerSettings(runner: ProgramRunner<*>) = runnerSettings.getOrCreateSettings(runner)
@@ -384,21 +394,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   override fun getSchemeState(): SchemeState? {
-    val configuration = configuration
-    if (configuration is UnknownRunConfiguration) {
-      return if (configuration.isDoNotStore) SchemeState.NON_PERSISTENT else SchemeState.UNCHANGED
+    val configuration = _configuration
+    return when (configuration) {
+      null -> SchemeState.UNCHANGED
+      is UnknownRunConfiguration -> if (configuration.isDoNotStore) SchemeState.NON_PERSISTENT else SchemeState.UNCHANGED
+      else -> null
     }
-    
-    if (isTemplate && _configuration != null) {
-      // todo optimize
-      val templateSettings = manager.createTemplateSettings(configuration.factory)
-      if (JDOMUtil.areElementsEqual(writeScheme(), templateSettings.writeScheme())) {
-        // this state doesn't mean that scheme will be removed - SchemeManager doesn't expect that scheme can be NON_PERSISTENT after UNCHANGED
-        // todo definitely, SchemeManager should be improved to support this case, but it is not safe to do right now
-        return SchemeState.NON_PERSISTENT
-      }
-    }
-    return null
   }
 
   private abstract inner class RunnerItem<T>(private val childTagName: String) {
@@ -479,7 +480,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         if (unloadedSettings == null) {
           unloadedSettings = SmartList<Element>()
         }
-        unloadedSettings!!.add(state)
+        unloadedSettings!!.add(JDOMUtil.internElement(state))
         return
       }
 

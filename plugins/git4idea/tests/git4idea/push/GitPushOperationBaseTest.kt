@@ -29,18 +29,18 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    pushSupport = getPushSupport(myVcs) as GitPushSupport
+    pushSupport = getPushSupport(vcs) as GitPushSupport
   }
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitPushOperation::class.java.name)
 
   protected fun updateRepositories() {
-    myGitRepositoryManager.updateAllRepositories()
+    repositoryManager.updateAllRepositories()
   }
 
   protected fun agreeToUpdate(exitCode: Int) {
-    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog::class.java,
-                                          TestDialogHandler<GitRejectedPushUpdateDialog> { exitCode })
+    dialogManager.registerDialogHandler(GitRejectedPushUpdateDialog::class.java,
+                                        TestDialogHandler<GitRejectedPushUpdateDialog> { exitCode })
   }
 
   internal fun assertResult(type: GitPushRepoResult.Type, pushedCommits: Int, from: String, to: String,

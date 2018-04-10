@@ -74,9 +74,5 @@ public abstract class ExternalAnnotationsManager {
   @Nullable
   public abstract List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
 
-  public static class CanceledConfigurationException extends RuntimeException {
-    public static final CanceledConfigurationException INSTANCE = new CanceledConfigurationException();
-
-    private CanceledConfigurationException() {}
-  }
+  public static class CanceledConfigurationException extends RuntimeException {}
 }

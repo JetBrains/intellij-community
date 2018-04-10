@@ -140,11 +140,10 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   @Override
   protected TokenProcessor createTokenProcessor(final int startIndex) {
     return new TokenProcessor() {
-      final Map<Mapper, LightMapper> docTexts = FactoryMap.createMap(key-> {
-          final MappedRange predecessor = key.findPredecessor(startIndex);
-          return new LightMapper(key, predecessor != null ? predecessor.range.getEndOffset() : 0);
-        }
-      );
+      final Map<Mapper, LightMapper> docTexts = FactoryMap.create(key -> {
+        final MappedRange predecessor = key.findPredecessor(startIndex);
+        return new LightMapper(key, predecessor != null ? predecessor.range.getEndOffset() : 0);
+      });
 
       @Override
       public void addToken(final int i, final int startOffset, final int endOffset, final int data, final IElementType tokenType) {
@@ -232,8 +231,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
     @Override
     public void remove(int startIndex, int endIndex) {
-      Map<Mapper, Integer> mins = FactoryMap.createMap(key -> Integer.MAX_VALUE);
-      Map<Mapper, Integer> maxs = FactoryMap.createMap(key -> 0);
+      Map<Mapper, Integer> mins = FactoryMap.create(key -> Integer.MAX_VALUE);
+      Map<Mapper, Integer> maxs = FactoryMap.create(key -> 0);
 
       for (int i = startIndex; i < endIndex; i++) {
         final MappedRange range = myRanges[i];

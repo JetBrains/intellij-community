@@ -1,6 +1,6 @@
 class Test {
     /**
-     *  @throws java.lang.Exception
+     * @throws java.lang.Exception an exception
      */
-     public void foo() {}
+    public void foo() {}
 }

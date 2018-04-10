@@ -16,6 +16,7 @@
 package com.intellij.util.ui.update;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -98,5 +99,14 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   public boolean isRejected() {
     return myRejected;
+  }
+
+  public static Update create(@NonNls Object identity, @NotNull Runnable runnable) {
+    return new Update(identity) {
+      @Override
+      public void run() {
+        runnable.run();
+      }
+    };
   }
 }

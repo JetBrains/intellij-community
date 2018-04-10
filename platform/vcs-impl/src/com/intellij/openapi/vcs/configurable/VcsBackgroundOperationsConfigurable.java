@@ -52,6 +52,7 @@ public class VcsBackgroundOperationsConfigurable implements SearchableConfigurab
     return "Background";
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.Background";
   }

@@ -28,6 +28,7 @@ public class YAMLFileType extends LanguageFileType {
     return DESCRIPTION;
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;

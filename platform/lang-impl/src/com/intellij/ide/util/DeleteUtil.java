@@ -22,7 +22,7 @@ import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.text.MessageFormat;
 import java.util.Map;
@@ -40,7 +40,7 @@ public class DeleteUtil {
       return MessageFormat.format(messageTemplate, type + (StringUtil.isEmptyOrSpaces(name) ? "" : " \"" + name + "\""));
     }
 
-    Map<String, Integer> countMap = FactoryMap.createMap(key -> 0);
+    Map<String, Integer> countMap = FactoryMap.create(key -> 0);
     Map<String, String> pluralToSingular = new HashMap<>();
     int directoryCount = 0;
     String containerType = null;

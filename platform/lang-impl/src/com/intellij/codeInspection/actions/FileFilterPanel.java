@@ -32,7 +32,6 @@ import java.awt.event.ActionListener;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/11/11
  */
 class FileFilterPanel {
   private JCheckBox myUseFileMask;

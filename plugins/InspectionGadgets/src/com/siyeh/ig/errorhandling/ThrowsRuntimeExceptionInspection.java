@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +48,7 @@ public class ThrowsRuntimeExceptionInspection extends ThrowsRuntimeExceptionInsp
 
     private final String myExceptionName;
 
-    private MoveExceptionToJavadocFix(String exceptionName) {
+    MoveExceptionToJavadocFix(String exceptionName) {
       myExceptionName = exceptionName;
     }
 
@@ -66,7 +65,7 @@ public class ThrowsRuntimeExceptionInspection extends ThrowsRuntimeExceptionInsp
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
@@ -87,13 +86,15 @@ public class ThrowsRuntimeExceptionInspection extends ThrowsRuntimeExceptionInsp
         final CodeDocumentationProvider codeDocumentationProvider;
         if (documentationProvider instanceof CodeDocumentationProvider) {
           codeDocumentationProvider = (CodeDocumentationProvider)documentationProvider;
-        } else if (documentationProvider instanceof CompositeDocumentationProvider) {
+        }
+        else if (documentationProvider instanceof CompositeDocumentationProvider) {
           final CompositeDocumentationProvider compositeDocumentationProvider = (CompositeDocumentationProvider)documentationProvider;
           codeDocumentationProvider = compositeDocumentationProvider.getFirstCodeDocumentationProvider();
           if (codeDocumentationProvider == null) {
             return;
           }
-        } else {
+        }
+        else {
           return;
         }
         final String commentStub = codeDocumentationProvider.generateDocumentationContentStub(resultComment);
@@ -163,7 +164,7 @@ public class ThrowsRuntimeExceptionInspection extends ThrowsRuntimeExceptionInsp
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       descriptor.getPsiElement().delete();
     }
   }

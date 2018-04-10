@@ -18,7 +18,6 @@ package com.intellij.remoteServer.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Computable;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.runtime.Deployment;
@@ -84,11 +83,11 @@ public abstract class CloudApplicationRuntime extends DeploymentRuntime {
                 ? null
                 : new CloudLoggingHandlerImpl(deployment.getOrCreateLogManager(project)) {
 
-                  @Override
-                  public void println(String message) {
-                    LOG.info(message);
-                  }
-                };
+                @Override
+                public void println(String message) {
+                  LOG.info(message);
+                }
+              };
             this.run(loggingHandler);
             return null;
           });

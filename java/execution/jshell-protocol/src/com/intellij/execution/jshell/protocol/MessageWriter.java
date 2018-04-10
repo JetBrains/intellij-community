@@ -9,7 +9,6 @@ import java.io.OutputStreamWriter;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 12-Jun-17
  */
 public class MessageWriter<T extends Message> extends Endpoint {
   private final BufferedWriter myOut;

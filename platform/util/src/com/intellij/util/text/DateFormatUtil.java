@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.CommonBundle;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
@@ -167,21 +168,23 @@ public class DateFormatUtil {
   @NotNull
   private static String doFormatPretty(long time, boolean formatTime) {
     long currentTime = Clock.getTime();
-
     Calendar c = Calendar.getInstance();
-    c.setTimeInMillis(currentTime);
 
+    c.setTimeInMillis(currentTime);
     int currentYear = c.get(Calendar.YEAR);
     int currentDayOfYear = c.get(Calendar.DAY_OF_YEAR);
 
     c.setTimeInMillis(time);
-
     int year = c.get(Calendar.YEAR);
     int dayOfYear = c.get(Calendar.DAY_OF_YEAR);
 
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("now=" + currentTime + " t=" + time + " z=" + c.getTimeZone());
+    }
+
     if (formatTime) {
       long delta = currentTime - time;
-      if (delta <= HOUR && delta >= 0) {
+      if (delta >= 0 && delta <= HOUR + MINUTE) {
         return CommonBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE));
       }
     }
@@ -195,7 +198,6 @@ public class DateFormatUtil {
     boolean isYesterdayOnPreviousYear =
       (currentYear == year + 1) && currentDayOfYear == 1 && dayOfYear == c.getActualMaximum(Calendar.DAY_OF_YEAR);
     boolean isYesterday = isYesterdayOnPreviousYear || (currentYear == year && currentDayOfYear == dayOfYear + 1);
-
     if (isYesterday) {
       String result = CommonBundle.message("date.format.yesterday");
       return formatTime ? result + " " + TIME_FORMAT.format(time) : result;
@@ -281,10 +283,16 @@ public class DateFormatUtil {
 
   @NotNull
   public static String formatAboutDialogDate(@NotNull Date date) {
-    return ABOUT_DATE_FORMAT.format(date);
+    return formatAboutDialogDate(date.getTime());
   }
 
-  // helpers
+  @NotNull
+  public static String formatAboutDialogDate(long time) {
+    return ABOUT_DATE_FORMAT.format(time);
+  }
+
+
+  //<editor-fold desc="Helpers.">
 
   @SuppressWarnings("Duplicates")
   private static String someTimeAgoMessage(final Period period, final int n) {
@@ -326,19 +334,21 @@ public class DateFormatUtil {
     DateFormat[] formats = new DateFormat[4];
 
     boolean loaded = false;
-    try {
-      if (SystemInfo.isWin7OrNewer) {
-        loaded = getWindowsFormats(formats);
+    if (JnaLoader.isLoaded() || SystemInfo.isXWindow) {
+      try {
+        if (SystemInfo.isWin7OrNewer) {
+          loaded = getWindowsFormats(formats);
+        }
+        else if (SystemInfo.isMac) {
+          loaded = getMacFormats(formats);
+        }
+        else if (SystemInfo.isUnix) {
+          loaded = getUnixFormats(formats);
+        }
       }
-      else if (SystemInfo.isMac) {
-        loaded = getMacFormats(formats);
+      catch (Throwable t) {
+        LOG.error(t);
       }
-      else if (SystemInfo.isUnix) {
-        loaded = getUnixFormats(formats);
-      }
-    }
-    catch (Throwable t) {
-      LOG.info(t);
     }
 
     if (!loaded) {
@@ -426,7 +436,7 @@ public class DateFormatUtil {
   }
 
   private static boolean getWindowsFormats(DateFormat[] formats) {
-    Kernel32 kernel32 = (Kernel32)Native.loadLibrary("Kernel32", Kernel32.class);
+    Kernel32 kernel32 = Native.loadLibrary("Kernel32", Kernel32.class);
     int dataSize = 128, rv;
     Memory data = new Memory(dataSize);
 
@@ -455,4 +465,5 @@ public class DateFormatUtil {
     format = StringUtil.replace(format, "tt", "a");
     return format;
   }
+  //</editor-fold>
 }

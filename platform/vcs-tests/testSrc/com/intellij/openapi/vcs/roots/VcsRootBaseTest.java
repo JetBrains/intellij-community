@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -56,12 +42,12 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   protected void setUp() throws Exception {
     super.setUp();
 
-    cd(myProjectRoot);
+    cd(projectRoot);
     Module module = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance());
     myRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getRootModel();
     mkdir("repository");
-    myProjectRoot.refresh(false, true);
-    myRepository = myProjectRoot.findChild("repository");
+    projectRoot.refresh(false, true);
+    myRepository = projectRoot.findChild("repository");
 
     myVcs = new MockAbstractVcs(myProject);
     ExtensionPoint<VcsRootChecker> point = getExtensionPoint();
@@ -117,7 +103,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
     if (!contentRoots.isEmpty()) {
       EdtTestUtil.runInEdtAndWait(() -> {
         for (String root : contentRoots) {
-          VirtualFile f = myProjectRoot.findFileByRelativePath(root);
+          VirtualFile f = projectRoot.findFileByRelativePath(root);
           if (f != null) {
             myRootModel.addContentEntry(f);
           }
@@ -129,11 +115,11 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   void createProjectStructure(@NotNull Project project, @NotNull Collection<String> paths) {
     for (String path : paths) {
       cd(project.getBaseDir().getPath());
-      File f = new File(project.getBaseDir().getPath(), path);
+      File f = new File(project.getBasePath(), path);
       f.mkdirs();
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
     }
-    myProjectRoot.refresh(false, true);
+    projectRoot.refresh(false, true);
   }
 
   private void createDirs(@NotNull Collection<String> mockRoots) throws IOException {

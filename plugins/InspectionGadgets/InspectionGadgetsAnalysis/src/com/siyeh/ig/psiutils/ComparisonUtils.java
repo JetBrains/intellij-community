@@ -89,17 +89,6 @@ public class ComparisonUtils {
     return s_invertedComparisons.get(tokenType);
   }
 
-  @Nullable
-  public static IElementType getNegatedComparisonTokenType(IElementType tokenType) {
-    if(JavaTokenType.EQEQ.equals(tokenType)) return JavaTokenType.NE;
-    if(JavaTokenType.NE.equals(tokenType)) return JavaTokenType.EQEQ;
-    if(JavaTokenType.LT.equals(tokenType)) return JavaTokenType.GE;
-    if(JavaTokenType.LE.equals(tokenType)) return JavaTokenType.GT;
-    if(JavaTokenType.GT.equals(tokenType)) return JavaTokenType.LE;
-    if(JavaTokenType.GE.equals(tokenType)) return JavaTokenType.LT;
-    return null;
-  }
-
   @Contract("null, _, _ -> false")
   public static boolean isNullComparison(PsiExpression expression, @NotNull PsiVariable variable, boolean equal) {
     return variable.equals(ExpressionUtils.getVariableFromNullComparison(expression, equal));

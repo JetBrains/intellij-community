@@ -1,5 +1,22 @@
 package com.siyeh.igtest.controlflow.double_negation;
 
+@SuppressWarnings("unused")
+class LambdaUnfriendlyOverload<T> {
+  interface Consumer<C> {
+    void m(C c);
+  }
+  interface Predicate<P> {
+    boolean t(P p);
+  }
+  void act(Consumer<T> consumer) {}
+  void act(Predicate<T> predicate) {}
+
+  void test() {
+    act(s -> !!s.equals("abc"));
+    act(s -> !(!s.equals("abc")));
+  }
+}
+
 public class DoubleNegation {
 
   void negative(boolean b1, boolean b2, boolean b3) {

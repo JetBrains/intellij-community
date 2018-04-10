@@ -239,7 +239,7 @@ public class RainbowHighlighter {
         ((EditorColorsScheme)colorsScheme).setAttributes(key, key.getDefaultAttributes());
       }
     }
-    return rainbowColors.toArray(new Color[rainbowColors.size()]);
+    return rainbowColors.toArray(new Color[0]);
   }
 
   private static Color resolveConflict(@NotNull final List<Pair<Color, Double>> colorCircles, @NotNull final Color sampleColor, int nestLevel) {
@@ -315,7 +315,7 @@ public class RainbowHighlighter {
     if (invalidCache) {
       return null;
     }
-    return colors.toArray(new Color[colors.size()]);
+    return colors.toArray(new Color[0]);
   }
 
   @Nullable

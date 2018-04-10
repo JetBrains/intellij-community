@@ -16,8 +16,11 @@
 package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
@@ -78,7 +81,6 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
@@ -193,6 +195,7 @@ public class GradleManager
       result.setIdeProjectPath(ideProjectPath);
       if (projectLevelSettings != null) {
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
+        result.setUseQualifiedModuleNames(projectLevelSettings.isUseQualifiedModuleNames());
       }
 
       configureExecutionWorkspace(projectLevelSettings, settings, result, project, pair.second);
@@ -274,10 +277,6 @@ public class GradleManager
 
     parameters.getVMParametersList().addProperty(
       ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, GradleConstants.SYSTEM_ID.getId());
-  }
-
-  @Override
-  public void enhanceLocalProcessing(@NotNull List<URL> urls) {
   }
 
   @NotNull
@@ -374,6 +373,14 @@ public class GradleManager
         .toArray(Module[]::new);
       return modules.length > 0 ? SearchScopeProvider.createSearchScope(modules) : null;
     }
+  }
+
+  @Nullable
+  @Override
+  public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Project project,
+                                                                @NotNull Executor executor,
+                                                                @NotNull RunConfiguration runConfiguration) {
+    return GradleIdeManager.getInstance().createTestConsoleProperties(project, executor, runConfiguration);
   }
 
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -24,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -35,11 +22,12 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
+import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
 /**
  * @author Tagir Valeev
  */
-public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalInspectionTool {
+public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(RedundantStreamOptionalCallInspection.class);
   private static final Set<String> INTERESTING_NAMES =
     ContainerUtil.set("map", "filter", "distinct", "sorted", "sequential", "parallel", "unordered", "flatMap");
@@ -52,6 +40,14 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
   private static final Set<String> BOX_UNBOX_NAMES = ContainerUtil
     .set("valueOf", "booleanValue", "byteValue", "charValue", "shortValue", "intValue", "longValue", "floatValue", "doubleValue");
 
+  private static final CallMatcher COLLECTOR_TO_SET =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toSet", "toUnmodifiableSet").parameterCount(0);
+  private static final CallMatcher COLLECTOR_TO_MAP =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toUnmodifiableMap").parameterTypes(
+      CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
+  private static final CallMatcher UNORDERED_COLLECTORS = CallMatcher.anyOf(COLLECTOR_TO_MAP, COLLECTOR_TO_SET);
+
+  @SuppressWarnings("PublicField")
   public boolean USELESS_BOXING_IN_STREAM_MAP = true;
 
   @Nullable
@@ -114,7 +110,7 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
           case "sorted":
             if (args.length <= 1) {
               PsiMethodCallExpression furtherCall =
-                findSubsequentCall(call, CALLS_MAKING_SORT_USELESS::contains, CALLS_KEEPING_SORT_ORDER::contains);
+                findSubsequentCall(call, CALLS_MAKING_SORT_USELESS::contains, UNORDERED_COLLECTORS, CALLS_KEEPING_SORT_ORDER::contains);
               if (furtherCall != null) {
                 register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.sorted",
                                                          furtherCall.getMethodExpression().getReferenceName()));
@@ -125,8 +121,12 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
             if (args.length == 0) {
               PsiMethodCallExpression furtherCall =
                 findSubsequentCall(call, Predicate.isEqual("distinct"), CALLS_KEEPING_ELEMENTS_DISTINCT::contains);
-              if (furtherCall != null && furtherCall.getArgumentList().getExpressions().length == 0) {
+              if (furtherCall != null && furtherCall.getArgumentList().isEmpty()) {
                 register(furtherCall, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.distinct"));
+              }
+              if (findSubsequentCall(call, c -> false, COLLECTOR_TO_SET,
+                                     ContainerUtil.set("unordered", "parallel", "sequential", "sorted")::contains) != null) {
+                register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.distinct.set"));
               }
             }
             break;
@@ -134,7 +134,7 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
             if (args.length == 0) {
               PsiMethodCallExpression furtherCall =
                 findSubsequentCall(call, Predicate.isEqual("unordered"), n -> !n.equals("sorted"));
-              if (furtherCall != null && furtherCall.getArgumentList().getExpressions().length == 0) {
+              if (furtherCall != null && furtherCall.getArgumentList().isEmpty()) {
                 register(furtherCall, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.unordered"));
               }
             }
@@ -143,7 +143,7 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
           case "parallel":
             if (args.length == 0) {
               PsiMethodCallExpression furtherCall = findSubsequentCall(call, CALLS_AFFECTING_PARALLELIZATION::contains, n -> true);
-              if (furtherCall != null && furtherCall.getArgumentList().getExpressions().length == 0) {
+              if (furtherCall != null && furtherCall.getArgumentList().isEmpty()) {
                 register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.parallel",
                                                          furtherCall.getMethodExpression().getReferenceName()));
               }
@@ -162,23 +162,6 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
                                new RemoveCallFix(methodName));
       }
     };
-  }
-
-  @Nullable
-  private static PsiMethodCallExpression findSubsequentCall(PsiMethodCallExpression call,
-                                                            Predicate<String> isWantedCall,
-                                                            Predicate<String> isAllowedIntermediateCall) {
-    for (PsiMethodCallExpression chainCall = ExpressionUtils.getCallForQualifier(call); chainCall != null;
-         chainCall = ExpressionUtils.getCallForQualifier(chainCall)) {
-      String name = chainCall.getMethodExpression().getReferenceName();
-      if (name == null) return null;
-      if (isWantedCall.test(name)) return chainCall;
-      if (!isAllowedIntermediateCall.test(name) ||
-          !InheritanceUtil.isInheritor(chainCall.getType(), CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
-        return null;
-      }
-    }
-    return null;
   }
 
   @NotNull
@@ -228,7 +211,7 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
     if (aClass == null) return false;
     PsiType primitiveCandidate = null;
     PsiParameterList list = method.getParameterList();
-    if (list.getParametersCount() == 0) {
+    if (list.isEmpty()) {
       primitiveCandidate = method.getReturnType();
     }
     else if (list.getParametersCount() == 1) {

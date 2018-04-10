@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 21, 2010
  */
 public abstract class AntDomDirname extends AntDomPropertyDefiningTask {
   @Attribute("file")

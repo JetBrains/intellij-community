@@ -25,7 +25,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -335,22 +334,19 @@ public class GrabDependencies implements IntentionAction {
             }
           }
         }
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            jarCount = jars.size();
-            messages = jarCount + " jar";
-            if (jarCount != 1) {
-              messages += "s";
-            }
-            if (jarCount == 0) {
-              messages += "<br>" + myStdOut.toString().replaceAll("\n", "<br>") + "<p>" + myStdErr.toString().replaceAll("\n", "<br>");
-            }
-            if (!jars.isEmpty()) {
-              addGrapeDependencies(jars);
-            }
+        WriteAction.runAndWait(() -> {
+          jarCount = jars.size();
+          messages = jarCount + " jar";
+          if (jarCount != 1) {
+            messages += "s";
           }
-        }.execute();
+          if (jarCount == 0) {
+            messages += "<br>" + myStdOut.toString().replaceAll("\n", "<br>") + "<p>" + myStdErr.toString().replaceAll("\n", "<br>");
+          }
+          if (!jars.isEmpty()) {
+            addGrapeDependencies(jars);
+          }
+        });
       }
       finally {
         super.notifyProcessTerminated(exitCode);

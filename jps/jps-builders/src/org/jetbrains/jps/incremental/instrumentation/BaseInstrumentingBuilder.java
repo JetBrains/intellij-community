@@ -31,7 +31,6 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/25/12
  */
 public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.instrumentation.BaseInstrumentingBuilder");

@@ -39,6 +39,7 @@ public class JsonSchemaTestSuite extends TestCase {
     suite.addTestSuite(JsonBySchemaHeavyCompletionTest.class);
     suite.addTestSuite(JsonSchemaReadTest.class);
     suite.addTestSuite(JsonSchemaFileResolveTest.class);
+    suite.addTestSuite(JsonSchemaPerformanceTest.class);
     return suite;
   }
 }

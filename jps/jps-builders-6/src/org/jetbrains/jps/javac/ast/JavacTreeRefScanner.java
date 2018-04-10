@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac.ast;
 
 import com.intellij.util.containers.Stack;
@@ -21,6 +7,7 @@ import com.sun.source.util.TreeScanner;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacNameTable;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.ArrayType;
@@ -67,8 +54,21 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       if (element != null) {
         collector.sinkReference(collector.asJavacRef(element));
       }
+      return super.visitNewClass(node, collector);
+    } else {
+      //anonymous class
+      myCurrentAnonymousTree.add(node);
+      try {
+        scan(node.getEnclosingExpression(), collector);
+        scan(node.getIdentifier(), collector);
+        scan(node.getTypeArguments(), collector);
+        //scan(node.getArguments(), collector);
+        scan(node.getClassBody(), collector);
+        return null;
+      } finally {
+        myCurrentAnonymousTree.pop();
+      }
     }
-    return super.visitNewClass(node, collector);
   }
 
   @Override
@@ -164,6 +164,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
 
   private final Stack<TypeElement> myCurrentEnclosingElement = new Stack<TypeElement>(1);
   private final Stack<Long> myCurrentEnclosingElementOffset = new Stack<Long>(1);
+  private final Stack<NewClassTree> myCurrentAnonymousTree = new Stack<NewClassTree>(1);
 
   @Override
   public Tree visitClass(ClassTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
@@ -198,11 +199,32 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       if (aClass == null) return null;
       refCollector.sinkReference(aClass);
       refCollector.sinkDeclaration(new JavacDef.JavacClassDef(aClass, supers));
+      if (((JavacRef.JavacClass)aClass).isAnonymous()) {
+        scan(myCurrentAnonymousTree.peek().getArguments(), refCollector);
+      }
       super.visitClass(node, refCollector);
     } finally {
       myCurrentEnclosingElement.pop();
       myCurrentEnclosingElementOffset.pop();
     }
+    return null;
+  }
+
+  @Override
+  public Tree visitTypeCast(TypeCastTree node, JavacReferenceCollectorListener.ReferenceCollector collector) {
+    super.visitTypeCast(node, collector);
+
+    Element castType = collector.getReferencedElement(node.getType());
+    if (castType == null) return null;
+    JavacRef.JavacElementRefBase castTypeElement = collector.asJavacRef(castType);
+    if (!(castTypeElement instanceof JavacRef.JavacClass)) return null;
+
+    TypeMirror operandType = collector.getType(node.getExpression());
+    if (operandType == null) return null;
+    JavacRef.JavacElementRefBase operandTypeElement = collector.asJavacRef(operandType);
+    if (!(operandTypeElement instanceof JavacRef.JavacClass)) return null;
+
+    collector.sinkTypeCast(new JavacTypeCast((JavacRef.JavacClass) operandTypeElement, (JavacRef.JavacClass) castTypeElement));
     return null;
   }
 

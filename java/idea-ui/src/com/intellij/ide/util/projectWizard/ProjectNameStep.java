@@ -36,7 +36,6 @@ import static com.intellij.openapi.components.StorageScheme.DIRECTORY_BASED;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 21, 2004
  */
 public class ProjectNameStep extends ModuleWizardStep {
   private final NamePathComponent myNamePathComponent;
@@ -45,8 +44,8 @@ public class ProjectNameStep extends ModuleWizardStep {
 
   public ProjectNameStep(WizardContext wizardContext) {
     myWizardContext = wizardContext;
-    myNamePathComponent = new NamePathComponent(IdeBundle.message("label.project.name"), IdeBundle.message("label.component.file.location",
-                                                                                                           StringUtil.capitalize(myWizardContext.getPresentationName())), 'a', 'l',
+    myNamePathComponent = new NamePathComponent(IdeBundle.message("label.project.name"),
+                                                IdeBundle.message("label.component.file.location", StringUtil.capitalize(myWizardContext.getPresentationName())),
                                                 IdeBundle.message("title.select.project.file.directory", myWizardContext.getPresentationName()),
                                                 IdeBundle.message("description.select.project.file.directory", myWizardContext.getPresentationName()));
     myPanel = new JPanel(new GridBagLayout());

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.inspection;
 
 import com.intellij.codeInspection.*;
@@ -27,7 +13,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SystemProperties;
@@ -40,7 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTool {
+public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(FrequentlyUsedInheritorInspection.class);
 
   public static final byte MAX_RESULT = 3;
@@ -179,17 +164,14 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
       .filter(Objects::nonNull)
       .map(defAndCount -> {
         String name = compilerRefService.getName(defAndCount.myDef.getName());
-        PsiClass inheritor =
-          JavaFullClassNameIndex.getInstance().get(name.hashCode(), project, searchScope).stream()
-            .filter(cls -> name.equals(cls.getQualifiedName()))
-            .collect(MoreCollectors.onlyOne())
-            .orElse(null);
-
-        if (inheritor == null || !inheritor.isInheritor(aClass, false)) {
-          return null;
+        PsiClass[] inheritors = JavaPsiFacade.getInstance(project).findClasses(name, searchScope);
+        if (inheritors.length == 1) {
+          PsiClass inheritor = inheritors[0];
+          if (inheritor.isInheritor(aClass, false)) {
+            return new ClassAndInheritorCount(inheritor, defAndCount.myDef, defAndCount.inheritorCount);
+          }
         }
-
-        return new ClassAndInheritorCount(inheritor, defAndCount.myDef, defAndCount.inheritorCount);
+        return null;
       })
       .filter(Objects::nonNull)
       .collect(Collectors.toList());

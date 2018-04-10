@@ -30,7 +30,6 @@ import java.security.MessageDigest
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.*
-import javax.xml.bind.DatatypeConverter
 
 internal fun loadKdbx(file: Path, credentials: KeePassCredentials) = file.inputStreamIfExists()?.use {
   KeePassDatabase(KdbxStreamFormat().load(credentials, it))
@@ -88,7 +87,7 @@ internal fun save(rootElement: Element, outputStream: OutputStream, encryption: 
 private fun load(inputStream: InputStream, encryption: KdbxEncryption): Element {
   val rootElement = loadElement(inputStream)
   rootElement.getChild("Root")?.getChild("Group")?.let { rootGroupElement ->
-    processEntries(rootGroupElement) { container, valueElement ->
+    processEntries(rootGroupElement) { _, valueElement ->
       if (valueElement.getAttributeValue("Protected", "false").equals("true", ignoreCase = true)) {
         valueElement.text = encryption.decrypt(Base64.getDecoder().decode(valueElement.text)).toString(Charsets.UTF_8)
         valueElement.removeAttribute("Protected")
@@ -161,10 +160,11 @@ internal interface KdbxEncryption {
   fun encrypt(decryptedText: ByteArray): ByteArray
 }
 
-private val SALSA20_IV = DatatypeConverter.parseHexBinary("E830094B97205D2A")
+private val SALSA20_IV = byteArrayOf(-24, 48, 9, 75, -105, 32, 93, 42)  // 0xE830094B97205D2A
 
 /**
- * Salsa20 doesn't quite fit the KeePass memory model - all encrypted items have to be en/decrypted in order of encryption, i.e. in document order and at the same time.
+ * Salsa20 doesn't quite fit the KeePass memory model - all encrypted items have to be en/decrypted in order of encryption,
+ * i.e. in document order and at the same time.
  */
 internal class Salsa20Encryption(override val key: ByteArray) : KdbxEncryption {
   private val salsa20 = Salsa20Engine()
@@ -188,10 +188,10 @@ internal class Salsa20Encryption(override val key: ByteArray) : KdbxEncryption {
 }
 
 internal fun parseTime(value: String): Long {
-  try {
-    return ZonedDateTime.parse(value).toEpochSecond()
+  return try {
+    ZonedDateTime.parse(value).toEpochSecond()
   }
   catch (e: DateTimeParseException) {
-    return 0
+    0
   }
 }

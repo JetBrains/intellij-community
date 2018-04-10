@@ -47,7 +47,7 @@ public interface ActionToolbar {
   int AUTO_LAYOUT_POLICY = 2;
 
   /** This is default minimum size of the toolbar button */
-  Dimension DEFAULT_MINIMUM_BUTTON_SIZE = JBUI.size(25, 25);
+  Dimension DEFAULT_MINIMUM_BUTTON_SIZE = JBUI.size(22, 22);
 
   Dimension NAVBAR_MINIMUM_BUTTON_SIZE = JBUI.size(20, 20);
 
@@ -89,8 +89,8 @@ public interface ActionToolbar {
   /**
    * Sets toolbar orientation
    *
-   * @see javax.swing.SwingConstants#HORIZONTAL
-   * @see javax.swing.SwingConstants#VERTICAL
+   * @see SwingConstants#HORIZONTAL
+   * @see SwingConstants#VERTICAL
    */
   void setOrientation(int orientation);
 
@@ -107,11 +107,11 @@ public interface ActionToolbar {
   boolean hasVisibleActions();
 
   /**
-   * @param component will be used for datacontext computations
+   * Will be used for data-context retrieval.
    */
-  void setTargetComponent(final JComponent component);
+  void setTargetComponent(JComponent component);
 
-  void setReservePlaceAutoPopupIcon(final boolean reserve);
+  void setReservePlaceAutoPopupIcon(boolean reserve);
 
   void setSecondaryActionsTooltip(String secondaryActionsTooltip);
 

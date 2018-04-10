@@ -22,11 +22,9 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 
 import java.io.File;
@@ -47,20 +45,10 @@ class ToggleAssociationAction extends ToggleAction {
         final VirtualFile virtualFile = assoc.getVirtualFile();
         assert virtualFile != null;
 
-        final String path = compatibleGetPath(psiFile.getVirtualFile(), virtualFile);
+        final String path = VfsUtilCore.findRelativePath(psiFile.getVirtualFile(), virtualFile, File.separatorChar);
         final ProjectFileIndex index = ProjectRootManager.getInstance(assoc.getProject()).getFileIndex();
         final Module module = index.getModuleForFile(virtualFile);
         return path != null ? (module != null ? "[" + module.getName() + "] - " + path : path) : virtualFile.getPresentableUrl();
-    }
-
-    @Nullable
-    private static String compatibleGetPath(VirtualFile file, VirtualFile virtualFile) {
-        try {
-            return VfsUtil.getPath(file, virtualFile, File.separatorChar);
-        } catch (Exception e) {
-            // ensure compatibility between 5.0.2 and 5.0.3+ as there are different exception signatures of VfsUtil.getPath()
-            throw new Error(e);
-        }
     }
 
     public boolean isSelected(AnActionEvent e) {

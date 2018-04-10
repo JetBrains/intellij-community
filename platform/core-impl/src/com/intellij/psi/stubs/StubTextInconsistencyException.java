@@ -72,10 +72,11 @@ public class StubTextInconsistencyException extends RuntimeException implements 
   public static void checkStubTextConsistency(@NotNull PsiFile file) throws StubTextInconsistencyException {
     PsiUtilCore.ensureValid(file);
 
-    if (!(file instanceof PsiFileImpl) || ((PsiFileImpl)file).getElementTypeForStubBuilder() == null) return;
-
     FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider instanceof FreeThreadedFileViewProvider) return;
+
+    PsiFile bindingRoot = viewProvider.getStubBindingRoot();
+    if (!(bindingRoot instanceof PsiFileImpl) || ((PsiFileImpl)bindingRoot).getElementTypeForStubBuilder() == null) return;
 
     List<PsiFileStub> fromText = restoreStubsFromText(viewProvider);
 
@@ -102,7 +103,7 @@ public class StubTextInconsistencyException extends RuntimeException implements 
   private static List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
     FileContentImpl fc = new FileContentImpl(viewProvider.getVirtualFile(), viewProvider.getContents(), 0);
     fc.putUserData(IndexingDataKeys.PROJECT, viewProvider.getManager().getProject());
-    PsiFileStub copyTree = (PsiFileStub) StubTreeBuilder.buildStubTree(fc);
+    PsiFileStubImpl copyTree = (PsiFileStubImpl) StubTreeBuilder.buildStubTree(fc);
     return copyTree == null ? Collections.emptyList() : Arrays.asList(copyTree.getStubRoots());
   }
 }

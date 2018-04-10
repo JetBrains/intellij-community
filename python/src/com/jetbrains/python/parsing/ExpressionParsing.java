@@ -37,7 +37,7 @@ public class ExpressionParsing extends Parsing {
 
   public boolean parsePrimaryExpression(boolean isTargetExpression) {
     final IElementType firstToken = myBuilder.getTokenType();
-    if (firstToken == PyTokenTypes.IDENTIFIER) {
+    if (isIdentifier(myBuilder)) {
       if (isTargetExpression) {
         buildTokenElement(PyElementTypes.TARGET_EXPRESSION, myBuilder);
       }
@@ -303,6 +303,21 @@ public class ExpressionParsing extends Parsing {
         parseComprehension(expr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
       }
       else {
+        final PsiBuilder.Marker err = myBuilder.mark();
+        boolean empty = true;
+        while (!myBuilder.eof() &&
+               myBuilder.getTokenType() != PyTokenTypes.RPAR &&
+               myBuilder.getTokenType() != PyTokenTypes.LINE_BREAK &&
+               myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK) {
+          myBuilder.advanceLexer();
+          empty = false;
+        }
+        if (!empty) {
+          err.error("Unexpected expression syntax");
+        }
+        else {
+          err.drop();
+        }
         checkMatches(PyTokenTypes.RPAR, message("PARSE.expected.rpar"));
         expr.done(PyElementTypes.PARENTHESIZED_EXPRESSION);
       }
@@ -323,7 +338,7 @@ public class ExpressionParsing extends Parsing {
     boolean recastFirstIdentifier = false;
     boolean recastQualifier = false;
     do {
-      boolean firstIdentifierIsTarget = isTargetExpression && ! recastFirstIdentifier;
+      boolean firstIdentifierIsTarget = isTargetExpression && !recastFirstIdentifier;
       PsiBuilder.Marker expr = myBuilder.mark();
       if (!parsePrimaryExpression(firstIdentifierIsTarget)) {
         expr.drop();
@@ -340,7 +355,7 @@ public class ExpressionParsing extends Parsing {
           }
           myBuilder.advanceLexer();
           checkMatches(PyTokenTypes.IDENTIFIER, message("PARSE.expected.name"));
-          if (isTargetExpression && ! recastQualifier && !atAnyOfTokens(PyTokenTypes.DOT, PyTokenTypes.LPAR, PyTokenTypes.LBRACKET)) {
+          if (isTargetExpression && !recastQualifier && !atAnyOfTokens(PyTokenTypes.DOT, PyTokenTypes.LPAR, PyTokenTypes.LBRACKET)) {
             expr.done(PyElementTypes.TARGET_EXPRESSION);
           }
           else {
@@ -390,7 +405,7 @@ public class ExpressionParsing extends Parsing {
               expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
             }
           }
-          if (isTargetExpression && ! recastQualifier) {
+          if (isTargetExpression && !recastQualifier) {
             recastFirstIdentifier = true; // subscription is always a reference
             recastQualifier = true; // recast non-first qualifiers too
             expr.rollbackTo();
@@ -424,8 +439,8 @@ public class ExpressionParsing extends Parsing {
     return false;
   }
 
-  private static TokenSet BRACKET_OR_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA);
-  private static TokenSet BRACKET_COLON_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COLON, PyTokenTypes.COMMA);
+  private static final TokenSet BRACKET_OR_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA);
+  private static final TokenSet BRACKET_COLON_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COLON, PyTokenTypes.COMMA);
 
   public void parseSliceEnd(PsiBuilder.Marker exprStart, PsiBuilder.Marker sliceItemStart) {
     myBuilder.advanceLexer();
@@ -524,9 +539,9 @@ public class ExpressionParsing extends Parsing {
         starArgMarker.done(PyElementTypes.STAR_ARGUMENT_EXPRESSION);
       }
       else {
-        if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
+        if (isIdentifier(myBuilder)) {
           final PsiBuilder.Marker keywordArgMarker = myBuilder.mark();
-          myBuilder.advanceLexer();
+          advanceIdentifierLike(myBuilder);
           if (myBuilder.getTokenType() == PyTokenTypes.EQ) {
             myBuilder.advanceLexer();
             if (!parseSingleExpression(false)) {
@@ -637,7 +652,7 @@ public class ExpressionParsing extends Parsing {
       return parseLambdaExpression(false);
     }
     PsiBuilder.Marker condExpr = myBuilder.mark();
-    if (!parseORTestExpression( stopOnIn, isTargetExpression)) {
+    if (!parseORTestExpression(stopOnIn, isTargetExpression)) {
       condExpr.drop();
       return false;
     }
@@ -982,7 +997,8 @@ public class ExpressionParsing extends Parsing {
       else {
         if (isTargetExpression) {
           expr.error("can't assign to await expression");
-        } else {
+        }
+        else {
           expr.done(PyElementTypes.PREFIX_EXPRESSION);
         }
       }
@@ -997,10 +1013,12 @@ public class ExpressionParsing extends Parsing {
   private boolean atForOrAsyncFor() {
     if (atToken(PyTokenTypes.FOR_KEYWORD)) {
       return true;
-    } else if (matchToken(PyTokenTypes.ASYNC_KEYWORD)) {
+    }
+    else if (matchToken(PyTokenTypes.ASYNC_KEYWORD)) {
       if (atToken(PyTokenTypes.FOR_KEYWORD)) {
         return true;
-      } else {
+      }
+      else {
         myBuilder.error("'for' expected");
         return false;
       }

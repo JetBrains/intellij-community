@@ -21,7 +21,7 @@ import com.intellij.lang.LanguageExtension;
  * @author yole
  */
 public class CodeBlockProviders extends LanguageExtension<CodeBlockProvider> {
-  public static CodeBlockProviders INSTANCE = new CodeBlockProviders();
+  public static final CodeBlockProviders INSTANCE = new CodeBlockProviders();
   
   private CodeBlockProviders() {
     super("com.intellij.codeBlockProvider");

@@ -21,4 +21,12 @@ public class For {
         }
         return result;
     }
+
+    public static int foo2() {
+        int result = 0;
+        for (int i = 0, j = 0; i < 10; j--, i++) {
+            result += i - j;
+        }
+        return result;
+    }
 }

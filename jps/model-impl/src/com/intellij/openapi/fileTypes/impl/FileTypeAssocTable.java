@@ -135,7 +135,7 @@ public class FileTypeAssocTable<T> {
 
   private boolean removeAssociationsFromMap(@NotNull Map<CharSequence, T> extensionMappings, @NotNull T type, boolean changed) {
     Set<CharSequence> exts = extensionMappings.keySet();
-    CharSequence[] extsStrings = exts.toArray(new CharSequence[exts.size()]);
+    CharSequence[] extsStrings = exts.toArray(new CharSequence[0]);
     for (CharSequence s : extsStrings) {
       if (extensionMappings.get(s) == type) {
         extensionMappings.remove(s);
@@ -245,6 +245,18 @@ public class FileTypeAssocTable<T> {
       }
     }
     return false;
+  }
+
+  Map<FileNameMatcher, T> getRemovedMappings(FileTypeAssocTable<T> newTable, Collection<T> keys) {
+    Map<FileNameMatcher, T> map = new HashMap<>();
+    for (T key : keys) {
+      List<FileNameMatcher> associations = getAssociations(key);
+      associations.removeAll(newTable.getAssociations(key));
+      for (FileNameMatcher matcher : associations) {
+        map.put(matcher, key);
+      }
+    }
+    return map;
   }
 
   public boolean equals(Object o) {

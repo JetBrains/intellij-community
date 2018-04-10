@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenId;
 
 import java.io.File;
 import java.rmi.Remote;
@@ -29,8 +28,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public interface MavenServerIndexer extends Remote {
-  String SEARCH_TERM_COORDINATES = "u"; // see org.sonatype.nexus.index.ArtifactInfo
-  String SEARCH_TERM_CLASS_NAMES = "c";
+  String SEARCH_TERM_CLASS_NAMES = "c"; // see org.sonatype.nexus.index.ArtifactInfo
 
   int createIndex(@NotNull String indexId,
                   @NotNull String repositoryId,
@@ -48,7 +46,7 @@ public interface MavenServerIndexer extends Remote {
 
   void processArtifacts(int indexId, MavenServerIndicesProcessor processor) throws RemoteException, MavenServerIndexerException;
 
-  MavenId addArtifact(int indexId, File artifactFile) throws RemoteException, MavenServerIndexerException;
+  IndexedMavenId addArtifact(int indexId, File artifactFile) throws RemoteException, MavenServerIndexerException;
 
   Set<MavenArtifactInfo> search(int indexId, Query query, int maxResult) throws RemoteException, MavenServerIndexerException;
 

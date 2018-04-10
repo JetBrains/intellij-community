@@ -109,11 +109,7 @@ public class CustomMethodHandlers {
     if (leftConst != null && rightConst != null) {
       return singleResult(memState, factory.getBoolean(ignoreCase ? leftConst.equalsIgnoreCase(rightConst) : leftConst.equals(rightConst)));
     }
-    DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, args.myQualifier);
-    DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, arg);
-    DfaValue trueRelation = factory.createCondition(leftLength, RelationType.EQ, rightLength);
-    DfaValue falseRelation = factory.createCondition(leftLength, RelationType.NE, rightLength);
-    return applyCondition(memState, trueRelation, DfaUnknownValue.getInstance(), falseRelation, factory.getBoolean(false));
+    return Collections.emptyList();
   }
 
   private static List<DfaMemoryState> indexOf(DfaValue qualifier,
@@ -121,28 +117,28 @@ public class CustomMethodHandlers {
                                               DfaValueFactory factory,
                                               SpecialField specialField) {
     DfaValue length = specialField.createValue(factory, qualifier);
-    LongRangeSet range = memState.getValueFact(DfaFactType.RANGE, length);
+    LongRangeSet range = memState.getValueFact(length, DfaFactType.RANGE);
     long maxLen = range == null || range.isEmpty() ? Integer.MAX_VALUE : range.max();
-    return singleResult(memState, factory.getRangeFactory().create(LongRangeSet.range(-1, maxLen - 1)));
+    return singleResult(memState, factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(-1, maxLen - 1)));
   }
 
   private static List<DfaMemoryState> mathMinMax(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean max) {
     if(args == null || args.length != 2) return Collections.emptyList();
-    LongRangeSet first = memState.getValueFact(DfaFactType.RANGE, args[0]);
-    LongRangeSet second = memState.getValueFact(DfaFactType.RANGE, args[1]);
+    LongRangeSet first = memState.getValueFact(args[0], DfaFactType.RANGE);
+    LongRangeSet second = memState.getValueFact(args[1], DfaFactType.RANGE);
     if (first == null || second == null || first.isEmpty() || second.isEmpty()) return Collections.emptyList();
     LongRangeSet domain = max ? LongRangeSet.range(Math.max(first.min(), second.min()), Long.MAX_VALUE)
                           : LongRangeSet.range(Long.MIN_VALUE, Math.min(first.max(), second.max()));
     LongRangeSet result = first.union(second).intersect(domain);
-    return singleResult(memState, factory.getRangeFactory().create(result));
+    return singleResult(memState, factory.getFactValue(DfaFactType.RANGE, result));
   }
 
   private static List<DfaMemoryState> mathAbs(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean isLong) {
     DfaValue arg = ArrayUtil.getFirstElement(args);
     if(arg == null) return Collections.emptyList();
-    LongRangeSet range = memState.getValueFact(DfaFactType.RANGE, arg);
+    LongRangeSet range = memState.getValueFact(arg, DfaFactType.RANGE);
     if (range == null) return Collections.emptyList();
-    return singleResult(memState, factory.getRangeFactory().create(range.abs(isLong)));
+    return singleResult(memState, factory.getFactValue(DfaFactType.RANGE, range.abs(isLong)));
   }
 
   private static List<DfaMemoryState> singleResult(DfaMemoryState state, DfaValue value) {

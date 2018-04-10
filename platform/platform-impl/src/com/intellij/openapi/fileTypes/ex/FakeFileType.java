@@ -23,6 +23,7 @@ import javax.swing.*;
 
 public abstract class FakeFileType implements FileTypeIdentifiableByVirtualFile {
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return "fakeExtension";
@@ -32,14 +33,17 @@ public abstract class FakeFileType implements FileTypeIdentifiableByVirtualFile 
     return null;
   }
 
+  @Override
   public boolean isBinary() {
     return true;
   }
 
+  @Override
   public boolean isReadOnly() {
     return true;
   }
 
+  @Override
   public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     return null;
   }

@@ -39,7 +39,6 @@ import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
@@ -71,7 +70,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   });
   private final JRootPane myRootPane;
 
-  private final Map<String, PaintersHelper> myNamedPainters = FactoryMap.createMap(key -> new PaintersHelper(IdeGlassPaneImpl.this));
+  private final Map<String, PaintersHelper> myNamedPainters = FactoryMap.create(key -> new PaintersHelper(this));
 
   private boolean myPreprocessorActive;
   private final Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<>();
@@ -102,10 +101,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   @Override
-  public void addNotify() {
-    super.addNotify();
-  }
-
   public boolean dispatch(@NotNull final AWTEvent e) {
     JRootPane eventRootPane = myRootPane;
 
@@ -579,11 +574,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   protected void paintComponent(final Graphics g) {
     getPainters().paint(g);
-  }
-
-  @Override
-  protected void paintChildren(Graphics g) {
-    super.paintChildren(g);
   }
 
   public Component getTargetComponentFor(MouseEvent e) {

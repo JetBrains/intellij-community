@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -145,7 +146,9 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
 
     if (getModel().getSize() == 0 && visible) return;
-    if (visible && JBPopupFactory.getInstance().getChildFocusedPopup(this) != null) return;
+    if (visible &&
+        ApplicationManager.getApplication() != null /* Allow ComboBox on welcome wizard*/ &&
+        JBPopupFactory.getInstance().getChildFocusedPopup(this) != null) return;
 
     final boolean wasShown = isPopupVisible();
     super.setPopupVisible(visible);
@@ -168,7 +171,8 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
 
   @Override
   public void eventDispatched(AWTEvent event) {
-    if (event.getID() == WindowEvent.WINDOW_OPENED) {
+    if (event.getID() == WindowEvent.WINDOW_OPENED
+        && ApplicationManager.getApplication() != null /* Allow ComboBox on welcome wizard*/) {
       final WindowEvent we = (WindowEvent)event;
       for (JBPopup each : JBPopupFactory.getInstance().getChildPopups(this)) {
         if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
@@ -250,7 +254,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   }
 
   @Override
-  public final Dimension getPreferredSize() {
+  public Dimension getPreferredSize() {
     int width = myMinimumAndPreferredWidth;
     final Dimension preferredSize = super.getPreferredSize();
     if (width < 0) {

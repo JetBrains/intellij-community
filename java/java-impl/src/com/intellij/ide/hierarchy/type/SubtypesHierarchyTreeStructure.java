@@ -69,7 +69,7 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
       descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, expression, false));
       return true;
     });
-    return descriptors.toArray(new HierarchyNodeDescriptor[descriptors.size()]);
+    return descriptors.toArray(new HierarchyNodeDescriptor[0]);
   }
 
   @NotNull

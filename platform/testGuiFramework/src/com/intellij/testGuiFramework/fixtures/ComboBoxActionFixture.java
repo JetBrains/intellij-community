@@ -37,8 +37,8 @@ import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.junit.Assert.*;
 
 public class ComboBoxActionFixture {
-  @NotNull private Robot myRobot;
-  @NotNull private JButton myTarget;
+  @NotNull private final Robot myRobot;
+  @NotNull private final JButton myTarget;
   private static final Class<?> ourComboBoxButtonClass;
   static {
     Class<?> temp = null;

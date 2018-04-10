@@ -26,6 +26,9 @@ public class Junit5ConverterFixTest extends IGQuickFixesTestCase {
   public void testSimple() {
     doTest();
   }
+  public void testFullConversion() {
+    doTest();
+  }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {

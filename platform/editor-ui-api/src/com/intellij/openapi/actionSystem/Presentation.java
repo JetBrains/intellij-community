@@ -129,6 +129,7 @@ public final class Presentation implements Cloneable {
 
       if (mayContainMnemonic) {
         StringBuilder plainText = new StringBuilder();
+        int backShift = 0;
         for (int i = 0; i < text.length(); i++) {
           char ch = text.charAt(i);
           if (myMnemonic == 0 && (ch == '_' || ch == '&')) {
@@ -143,8 +144,10 @@ public final class Presentation implements Cloneable {
               }
               else {
                 myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
-                myDisplayedMnemonicIndex = i - 1;
+                myDisplayedMnemonicIndex = i - 1 - backShift;
               }
+            } else if (myMnemonic == 0) {
+              backShift++;
             }
           }
           plainText.append(ch);
@@ -309,6 +312,7 @@ public final class Presentation implements Cloneable {
     setText(presentation.getTextWithMnemonic(), presentation.myDisplayedMnemonicIndex > -1);
     setDescription(presentation.getDescription());
     setIcon(presentation.getIcon());
+    setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
     setHoveredIcon(presentation.getHoveredIcon());
     setVisible(presentation.isVisible());

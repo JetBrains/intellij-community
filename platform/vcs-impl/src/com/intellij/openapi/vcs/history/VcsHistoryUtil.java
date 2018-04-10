@@ -212,9 +212,4 @@ public class VcsHistoryUtil {
       }
     }.queue();
   }
-
-  @NotNull
-  public static Font getCommitDetailsFont() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-  }
 }

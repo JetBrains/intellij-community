@@ -205,7 +205,6 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testSpaces1() {
-    defaultSettings();
     doTextTest("public interface PsiClass{\n" +
                "    @Nullable(documentation = \"parameter1 value\", doc2=\"parameter2 value\")\n" +
                "    String getQualifiedName();\n" +
@@ -217,7 +216,6 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testSpaces2() {
-    defaultSettings();
     getSettings(JavaLanguage.INSTANCE).SPACE_BEFORE_ANOTATION_PARAMETER_LIST = true;
 
     doTextTest("public interface PsiClass{\n" +
@@ -231,7 +229,6 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testSpaces3() {
-    defaultSettings();
     getSettings(JavaLanguage.INSTANCE).SPACE_AROUND_ASSIGNMENT_OPERATORS = false;
     doTextTest("public interface PsiClass{\n" +
                "    @Nullable(documentation = \"parameter1 value\", doc2=\"parameter2 value\")\n" +
@@ -244,7 +241,6 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testSpaces4() {
-    defaultSettings();
     getSettings(JavaLanguage.INSTANCE).SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
 
     doTextTest("public interface PsiClass{\n" +
@@ -258,7 +254,6 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testSpaces6() {
-    defaultSettings();
     getSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_ANNOTATION_PARENTHESES = true;
 
     doTextTest("public interface PsiClass{\n" +
@@ -272,7 +267,6 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testSpaces7() {
-    defaultSettings();
     doTextTest("public interface PsiClass{\n" +
                "    @ Nullable  ( documentation    =  \"parameter1 value\"   ,doc2=\"parameter2 value\"   )  \n" +
                "    String getQualifiedName();\n" +
@@ -302,7 +296,6 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testEnumFormatting() {
-    defaultSettings();
     getSettings(JavaLanguage.INSTANCE).ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(ourProject).getLanguageLevel();
     try {

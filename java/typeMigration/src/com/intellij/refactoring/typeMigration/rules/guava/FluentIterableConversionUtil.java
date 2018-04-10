@@ -258,11 +258,6 @@ public class FluentIterableConversionUtil {
     public GuavaFilterInstanceOfConversionDescriptor(String filterClassQName) {
       super("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "(" + filterClassQName + ".class::isInstance)." + StreamApiConstants.MAP + "(" + filterClassQName + ".class::cast)");
     }
-
-    @Override
-    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
-      return super.replace(expression, evaluator);
-    }
   }
 
   static TypeConversionDescriptor createToCollectionDescriptor(@Nullable String methodName,

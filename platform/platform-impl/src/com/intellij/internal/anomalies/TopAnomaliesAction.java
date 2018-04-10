@@ -170,7 +170,7 @@ public class TopAnomaliesAction extends ActionGroup {
     }
   };
 
-  private static ResettableAction[] CHILDREN = {TOP_PARENTS, TOP_UI_PROPERTIES, RESET_THEM_ALL};
+  private static final ResettableAction[] CHILDREN = {TOP_PARENTS, TOP_UI_PROPERTIES, RESET_THEM_ALL};
 
   @Override
   public void update(AnActionEvent e) {

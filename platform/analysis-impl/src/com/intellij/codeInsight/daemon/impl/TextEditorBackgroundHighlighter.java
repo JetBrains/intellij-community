@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -30,7 +16,6 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,7 +34,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private final Editor myEditor;
   private final Document myDocument;
   private PsiFile myFile;
-  private boolean myCompiled;
 
   public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;
@@ -61,10 +45,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private void renewFile() {
     if (myFile == null || !myFile.isValid()) {
       myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-      myCompiled = myFile instanceof PsiCompiledFile;
-      if (myCompiled) {
-        myFile = ((PsiCompiledFile)myFile).getDecompiledPsiFile();
-      }
       if (myFile != null && !myFile.isValid()) {
         myFile = null;
       }
@@ -78,20 +58,27 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   @NotNull
   List<TextEditorHighlightingPass> getPasses(@NotNull int[] passesToIgnore) {
     if (myProject.isDisposed()) return Collections.emptyList();
-    Document[] uncommitted = PsiDocumentManager.getInstance(myProject).getUncommittedDocuments();
-    LOG.assertTrue(uncommitted.length == 0, "Uncommitted documents: " + Arrays.asList(uncommitted));
+
+    LOG.assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(myDocument));
+
     renewFile();
-    if (myFile == null) return Collections.emptyList();
-    if (myCompiled) {
+    PsiFile file = myFile;
+    if (file == null) return Collections.emptyList();
+
+    boolean compiled = file instanceof PsiCompiledFile;
+    if (compiled) {
+      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
+    }
+
+    if (compiled) {
       passesToIgnore = EXCEPT_OVERRIDDEN;
     }
-    else if (!DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
+    else if (!DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
       return Collections.emptyList();
     }
 
     TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
-
-    return passRegistrar.instantiatePasses(myFile, myEditor, passesToIgnore);
+    return passRegistrar.instantiatePasses(file, myEditor, passesToIgnore);
   }
 
   @Override
@@ -104,6 +91,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   @NotNull
   public TextEditorHighlightingPass[] createPassesForEditor() {
     List<TextEditorHighlightingPass> passes = getPasses(ArrayUtil.EMPTY_INT_ARRAY);
-    return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(new TextEditorHighlightingPass[passes.size()]);
+    return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY);
   }
 }

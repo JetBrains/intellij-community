@@ -22,12 +22,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.javadoc.PsiDocComment;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class FieldSelectioner extends WordSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiField && e.getLanguage() == JavaLanguage.INSTANCE;
   }
 
@@ -42,7 +43,7 @@ public class FieldSelectioner extends WordSelectioner {
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
     PsiField field = (PsiField)e;
     TextRange fieldRange = field.getTextRange();

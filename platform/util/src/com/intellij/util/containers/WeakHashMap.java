@@ -52,7 +52,7 @@ public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
     super(t);
   }
 
-  public WeakHashMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<K> strategy) {
+  WeakHashMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<K> strategy) {
     super(initialCapacity, loadFactor, strategy);
   }
 

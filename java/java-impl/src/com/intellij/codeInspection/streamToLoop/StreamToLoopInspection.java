@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -40,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
@@ -57,14 +44,15 @@ import static com.intellij.codeInspection.streamToLoop.Operation.FlatMapOperatio
 /**
  * @author Tagir Valeev
  */
-public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
+public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
 
   // To quickly filter out most of the non-interesting method calls
   private static final Set<String> SUPPORTED_TERMINALS = ContainerUtil.set(
     "count", "sum", "summaryStatistics", "reduce", "collect", "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch", "toArray",
-    "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet");
+    "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet", "toImmutableList", "toImmutableSet");
 
+  @SuppressWarnings("PublicField")
   public boolean SUPPORT_UNKNOWN_SOURCES = false;
 
   @Nullable
@@ -240,7 +228,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   static class ReplaceStreamWithLoopFix implements LocalQuickFix {
-    private String myMessage;
+    private final String myMessage;
 
     public ReplaceStreamWithLoopFix(String message) {
       myMessage = message;
@@ -277,7 +265,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       }
       TerminalOperation terminal = getTerminal(operations);
       if (terminal == null) return;
-      PsiStatement statement = PsiTreeUtil.getParentOfType(terminalCall, PsiStatement.class);
+      PsiStatement statement = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(terminalCall, false), PsiStatement.class);
       LOG.assertTrue(statement != null);
       CommentTracker ct = new CommentTracker();
       try {
@@ -475,9 +463,17 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     public String declareResult(String desiredName, PsiType type, String initializer, @NotNull ResultKind kind) {
+      return declareResult(desiredName, type, null, initializer, kind);
+    }
+
+    public String declareResult(String desiredName,
+                                PsiType type,
+                                String mostAbstractAllowedType,
+                                String initializer,
+                                @NotNull ResultKind kind) {
       if (kind != ResultKind.UNKNOWN && myStreamExpression.getParent() instanceof PsiVariable) {
         PsiVariable var = (PsiVariable)myStreamExpression.getParent();
-        if (EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(var.getType(), type) &&
+        if (isCompatibleType(var, type, mostAbstractAllowedType) &&
             var.getParent() instanceof PsiDeclarationStatement && (kind == ResultKind.FINAL || canUseAsNonFinal(var))) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)var.getParent();
           if(declaration.getDeclaredElements().length == 1) {
@@ -504,6 +500,30 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       }
       setFinisher(name);
       return name;
+    }
+
+    public boolean tryUnwrapOrElse(@NotNull Number wantedValue) {
+      if (!(myStreamExpression instanceof PsiExpression)) return false;
+      PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myStreamExpression);
+      if (call == null ||
+          call.getParent() instanceof PsiExpressionStatement ||
+          !"orElse".equals(call.getMethodExpression().getReferenceName())) {
+        return false;
+      }
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length == 1 && wantedValue.equals(ExpressionUtils.computeConstantExpression(args[0]))) {
+        myStreamExpression = call;
+        return true;
+      }
+      return false;
+    }
+
+    private static boolean isCompatibleType(@NotNull PsiVariable var, @NotNull PsiType type, @Nullable String mostAbstractAllowedType) {
+      if (EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(var.getType(), type)) return true;
+      if (mostAbstractAllowedType == null) return false;
+      PsiType[] superTypes = type.getSuperTypes();
+      return Arrays.stream(superTypes).anyMatch(superType -> InheritanceUtil.isInheritor(superType, mostAbstractAllowedType) &&
+                                                             isCompatibleType(var, superType, mostAbstractAllowedType));
     }
 
     @Contract("null -> false")
@@ -633,7 +653,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
           }
         }
         if (candidate != null &&
-            (unwrapLazilyEvaluated || ExpressionUtils.isSimpleExpression(createExpression(candidate.getFalseBranch())))) {
+            (unwrapLazilyEvaluated || ExpressionUtils.isSafelyRecomputableExpression(createExpression(candidate.getFalseBranch())))) {
           myStreamExpression = parent;
           return candidate;
         }

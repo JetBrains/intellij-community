@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 21-Jun-17
  * according to JShell spec, a snippet must correspond to one of the following JLS syntax productions:
       Expression
       Statement
@@ -48,8 +47,8 @@ import java.util.List;
  */
 public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJShellRootClass {
 
-  private String myName;
-  private String myQName;
+  private final String myName;
+  private final String myQName;
 
   public PsiJShellRootClassImpl(ASTNode node, int index) {
     super(node);

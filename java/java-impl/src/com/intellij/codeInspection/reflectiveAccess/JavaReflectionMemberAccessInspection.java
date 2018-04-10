@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reflectiveAccess;
 
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.ListTable;
@@ -47,7 +33,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 /**
  * @author Pavel.Dolgov
  */
-public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInspectionTool {
+public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Set<String> MEMBER_METHOD_NAMES = Collections.unmodifiableSet(
     ContainerUtil.set(GET_FIELD, GET_DECLARED_FIELD,
@@ -163,19 +149,19 @@ public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInsp
       final PsiExpression nameExpression = arguments[0];
       final String fieldName = getMemberName(nameExpression);
       if (fieldName != null) {
-        final PsiClass psiClass = getPsiClass(callExpression);
-        if (psiClass != null) {
-          final PsiField field = psiClass.findFieldByName(fieldName, true);
+        final ReflectiveClass ownerClass = getOwnerClass(callExpression);
+        if (ownerClass != null && ownerClass.isExact()) {
+          final PsiField field = ownerClass.getPsiClass().findFieldByName(fieldName, true);
           if (field == null) {
-            if (reportUnresolvedMembersOf(psiClass)) {
+            if (reportUnresolvedMembersOf(ownerClass)) {
               holder.registerProblem(nameExpression, InspectionsBundle.message(
                 "inspection.reflection.member.access.cannot.resolve.field", fieldName));
             }
             return;
           }
-          if (isDeclared && field.getContainingClass() != psiClass) {
+          if (isDeclared && field.getContainingClass() != ownerClass.getPsiClass()) {
             holder.registerProblem(nameExpression, InspectionsBundle.message(
-              "inspection.reflection.member.access.field.not.in.class", fieldName, psiClass.getQualifiedName()));
+              "inspection.reflection.member.access.field.not.in.class", fieldName, ownerClass.getPsiClass().getQualifiedName()));
             return;
           }
           if (!isDeclared && !field.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -193,11 +179,11 @@ public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInsp
       final PsiExpression nameExpression = arguments[0];
       final String methodName = getMemberName(nameExpression);
       if (methodName != null) {
-        final PsiClass psiClass = getPsiClass(callExpression);
-        if (psiClass != null) {
-          final PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
+        final ReflectiveClass ownerClass = getOwnerClass(callExpression);
+        if (ownerClass != null && ownerClass.isExact()) {
+          final PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(methodName, true);
           if (methods.length == 0) {
-            if (reportUnresolvedMembersOf(psiClass)) {
+            if (reportUnresolvedMembersOf(ownerClass)) {
               holder.registerProblem(nameExpression, InspectionsBundle.message(
                 "inspection.reflection.member.access.cannot.resolve.method", methodName));
             }
@@ -205,15 +191,15 @@ public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInsp
           }
           final PsiMethod matchingMethod = matchMethod(methods, arguments, 1);
           if (matchingMethod == null) {
-            if (reportUnresolvedMembersOf(psiClass)) {
+            if (reportUnresolvedMembersOf(ownerClass)) {
               holder.registerProblem(nameExpression, InspectionsBundle.message(
                 "inspection.reflection.member.access.cannot.resolve.method.arguments", methodName));
             }
             return;
           }
-          if (isDeclared && matchingMethod.getContainingClass() != psiClass) {
+          if (isDeclared && matchingMethod.getContainingClass() != ownerClass.getPsiClass()) {
             holder.registerProblem(nameExpression, InspectionsBundle.message(
-              "inspection.reflection.member.access.method.not.in.class", methodName, psiClass.getQualifiedName()));
+              "inspection.reflection.member.access.method.not.in.class", methodName, ownerClass.getPsiClass().getQualifiedName()));
             return;
           }
           if (!isDeclared && !matchingMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -228,9 +214,9 @@ public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInsp
   private void checkConstructor(@NotNull PsiMethodCallExpression callExpression,
                                 boolean isDeclared,
                                 @NotNull ProblemsHolder holder) {
-    final PsiClass psiClass = getPsiClass(callExpression);
-    if (psiClass != null) {
-      final PsiMethod[] methods = psiClass.getConstructors();
+    final ReflectiveClass ownerClass = getOwnerClass(callExpression);
+    if (ownerClass != null && ownerClass.isExact()) {
+      final PsiMethod[] methods = ownerClass.getPsiClass().getConstructors();
       final PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
       final PsiModifierListOwner constructorOrClass;
       if (methods.length != 0) {
@@ -238,10 +224,10 @@ public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInsp
       }
       else {
         // implicit constructor
-        constructorOrClass = arguments.length == 0 ? psiClass : null;
+        constructorOrClass = arguments.length == 0 ? ownerClass.getPsiClass() : null;
       }
       if (constructorOrClass == null) {
-        if (reportUnresolvedMembersOf(psiClass)) {
+        if (reportUnresolvedMembersOf(ownerClass)) {
           holder.registerProblem(callExpression.getArgumentList(), InspectionsBundle.message(
             "inspection.reflection.member.access.cannot.resolve.constructor.arguments"));
         }
@@ -254,9 +240,9 @@ public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInsp
     }
   }
 
-  private boolean reportUnresolvedMembersOf(@NotNull PsiClass psiClass) {
-    return (checkMemberExistsInNonFinalClasses || psiClass.hasModifierProperty(PsiModifier.FINAL)) &&
-           !ignoredClassNames.contains(psiClass.getQualifiedName());
+  private boolean reportUnresolvedMembersOf(@NotNull ReflectiveClass ownerClass) {
+    return (checkMemberExistsInNonFinalClasses || ownerClass.getPsiClass().hasModifierProperty(PsiModifier.FINAL)) &&
+           !ignoredClassNames.contains(ownerClass.getPsiClass().getQualifiedName());
   }
 
   @Contract("null->null")
@@ -266,7 +252,7 @@ public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInsp
   }
 
   @Nullable
-  private static PsiClass getPsiClass(@NotNull PsiMethodCallExpression callExpression) {
+  private static ReflectiveClass getOwnerClass(@NotNull PsiMethodCallExpression callExpression) {
     return getReflectiveClass(callExpression.getMethodExpression().getQualifierExpression());
   }
 

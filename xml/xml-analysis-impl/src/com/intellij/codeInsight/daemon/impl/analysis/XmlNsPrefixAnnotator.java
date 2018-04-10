@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 25.10.13
  */
 public class XmlNsPrefixAnnotator implements Annotator {
   @Override

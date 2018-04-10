@@ -253,7 +253,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		)
 		style.attrs.type =
 			attribute type {
-				common.data.mimetype
+				text
 			}
 		style.attrs.media =
 			attribute media {

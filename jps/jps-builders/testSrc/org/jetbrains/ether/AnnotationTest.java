@@ -17,7 +17,6 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 26.07.11
  */
 public class AnnotationTest extends IncrementalTestCase {
   public AnnotationTest() {
@@ -25,6 +24,14 @@ public class AnnotationTest extends IncrementalTestCase {
   }
 
   public void testAddAnnotationTarget() {
+    doTest();
+  }
+
+  public void testAddAnnotationTargetTypeUse() {
+    doTest();
+  }
+  
+  public void testAddTypeUseAnnotationTarget() {
     doTest();
   }
 
@@ -94,6 +101,10 @@ public class AnnotationTest extends IncrementalTestCase {
  } */
 
   public void testRemoveAnnotationTarget() {
+    doTest();
+  }
+
+  public void testRemoveTypeUseAnnotationTarget() {
     doTest();
   }
 

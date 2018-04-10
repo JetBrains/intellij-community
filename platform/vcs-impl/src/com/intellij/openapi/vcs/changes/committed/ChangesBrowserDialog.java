@@ -38,7 +38,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
   private Project myProject;
   private CommittedChangesTableModel myChanges;
   private Mode myMode;
-  private CommittedChangesBrowser myCommittedChangesBrowser;
+  private CommittedChangesBrowserDialogPanel myCommittedChangesBrowser;
   private AsynchConsumer<List<CommittedChangeList>> myAppender;
   private final Consumer<ChangesBrowserDialog> myInitRunnable;
 
@@ -68,6 +68,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
     }
     myAppender = new AsynchConsumer<List<CommittedChangeList>>() {
 
+      @Override
       public void finished() {
         SwingUtilities.invokeLater(() -> {
           if (ChangesBrowserDialog.this.isShowing()) {
@@ -76,6 +77,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
         });
       }
 
+      @Override
       public void consume(final List<CommittedChangeList> committedChangeLists) {
         SwingUtilities.invokeLater(() -> {
           if (ChangesBrowserDialog.this.isShowing()) {
@@ -115,14 +117,8 @@ public class ChangesBrowserDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    myCommittedChangesBrowser = new CommittedChangesBrowser(myProject, myChanges);
+    myCommittedChangesBrowser = new CommittedChangesBrowserDialogPanel(myProject, myChanges);
     return myCommittedChangesBrowser;
-  }
-
-  @Override
-  protected void dispose() {
-    super.dispose();
-    myCommittedChangesBrowser.dispose();
   }
 
   @Override

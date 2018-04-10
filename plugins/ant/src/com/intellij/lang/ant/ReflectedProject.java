@@ -32,7 +32,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Apr 9, 2010
 */
 public final class ReflectedProject {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.ReflectedProject");

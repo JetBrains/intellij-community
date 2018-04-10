@@ -28,6 +28,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledElement;
@@ -57,6 +58,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -99,7 +101,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
 
     @Override
-    public void loadState(final Element element) {
+    public void loadState(@NotNull final Element element) {
       myAdvancedConfiguration.loadState(element);
       super.loadState(element);
     }
@@ -219,7 +221,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   @Override
-  public void loadState(final Element element) {
+  public void loadState(@NotNull final Element element) {
     myInjections.clear();
 
     List<Element> injectionElements = element.getChildren("injection");
@@ -281,6 +283,9 @@ public class Configuration extends SimpleModificationTracker implements Persiste
               stream = url.openStream();
               cfgList.add(load(stream));
             }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
             catch (Exception e) {
               LOG.warn(e);
             }
@@ -291,6 +296,9 @@ public class Configuration extends SimpleModificationTracker implements Persiste
             }
           }
         }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.warn(e);
@@ -456,7 +464,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
         if (replace) {
           originalInjections.add(injection);
           final BaseInjection newInjection = injection.copy();
-          newInjection.setInjectionPlaces(newPlaces.toArray(new InjectionPlace[newPlaces.size()]));
+          newInjection.setInjectionPlaces(newPlaces.toArray(InjectionPlace.EMPTY_ARRAY));
           newInjections.add(newInjection);
         }
       }
@@ -516,22 +524,17 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     };
     final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(psiElementsToRemove, o -> o instanceof PsiCompiledElement ? null : o.getContainingFile());
-    new WriteCommandAction.Simple(project, "Language Injection Configuration Update", PsiUtilCore.toPsiFileArray(psiFiles)) {
-      @Override
-      public void run() {
-        for (PsiElement annotation : psiElementsToRemove) {
-          if (!annotation.isValid()) continue;
-          annotation.delete();
-        }
-        actualProcessor.process(add, remove);
-        UndoManager.getInstance(project).undoableActionPerformed(action);
-      }
-
-      @Override
-      protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
-        return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, PsiUtilCore.toPsiFileArray(psiFiles))
+                      .withName("Language Injection Configuration Update")
+                      .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
+                      .run(() -> {
+                        for (PsiElement annotation : psiElementsToRemove) {
+                          if (!annotation.isValid()) continue;
+                          annotation.delete();
+                        }
+                        actualProcessor.process(add, remove);
+                        UndoManager.getInstance(project).undoableActionPerformed(action);
+                      });
   }
 
   public boolean replaceInjections(List<? extends BaseInjection> newInjections,
@@ -548,6 +551,17 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       configurationModified();
     }
     return changed;
+  }
+
+  @TestOnly
+  public void withInjections(List<? extends BaseInjection> injections, Runnable runnable) {
+    replaceInjections(injections, ContainerUtil.emptyList(), true);
+    try {
+      runnable.run();
+    }
+    finally {
+      replaceInjections(ContainerUtil.emptyList(), injections, true);
+    }
   }
 
   public static class AdvancedConfiguration {

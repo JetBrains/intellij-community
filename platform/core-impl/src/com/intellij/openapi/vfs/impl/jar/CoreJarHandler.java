@@ -40,7 +40,7 @@ public class CoreJarHandler extends ZipHandler {
     Map<EntryInfo, CoreJarVirtualFile> entries = new HashMap<>();
 
     final Map<String, EntryInfo> entriesMap = getEntriesMap();
-    final Map<CoreJarVirtualFile, List<VirtualFile>> childrenMap = FactoryMap.createMap(key -> new ArrayList<>());
+    final Map<CoreJarVirtualFile, List<VirtualFile>> childrenMap = FactoryMap.create(key -> new ArrayList<>());
     for (EntryInfo info : entriesMap.values()) {
       CoreJarVirtualFile file = getOrCreateFile(info, entries);
       VirtualFile parent = file.getParent();

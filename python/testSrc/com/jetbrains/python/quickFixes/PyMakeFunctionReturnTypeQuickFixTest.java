@@ -31,6 +31,6 @@ public class PyMakeFunctionReturnTypeQuickFixTest extends PyQuickFixTestCase {
     }
 
     public void testPy3OneReturn() {
-      doQuickFixTest(PyTypeCheckerInspection.class, PyBundle.message("QFIX.NAME.make.$0.return.$1", "f", "int"), LanguageLevel.PYTHON30);
+      doQuickFixTest(PyTypeCheckerInspection.class, PyBundle.message("QFIX.NAME.make.$0.return.$1", "f", "int"), LanguageLevel.PYTHON34);
     }
 }

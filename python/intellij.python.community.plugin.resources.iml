@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/pluginResources">
+      <sourceFolder url="file://$MODULE_DIR$/pluginResources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
+    <orderEntry type="module" module-name="intellij.java.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.pycharm.community.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.configure" scope="RUNTIME" />
+  </component>
+</module>

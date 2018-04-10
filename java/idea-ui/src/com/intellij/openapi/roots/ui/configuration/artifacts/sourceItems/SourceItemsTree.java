@@ -114,7 +114,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   @Override
   public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
     List<PackagingSourceItem> items = getSelectedItems();
-    return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[items.size()])));
+    return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[0])));
   }
 
   public List<SourceItemNode> getSelectedSourceItemNodes() {

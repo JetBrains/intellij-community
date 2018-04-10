@@ -136,9 +136,9 @@ public class JavaGenerateMemberCompletionContributor {
     }
   }
 
-  private static LookupElementBuilder createOverridingLookupElement(boolean implemented,
-                                                                    final PsiMethod baseMethod,
-                                                                    PsiClass baseClass, PsiSubstitutor substitutor, boolean generateDefaultMethods, PsiClass targetClass) {
+  private static LookupElement createOverridingLookupElement(boolean implemented,
+                                                             PsiMethod baseMethod,
+                                                             PsiClass baseClass, PsiSubstitutor substitutor, boolean generateDefaultMethods, PsiClass targetClass) {
 
     RowIcon icon = new RowIcon(baseMethod.getIcon(0), implemented ? AllIcons.Gutter.ImplementingMethod : AllIcons.Gutter.OverridingMethod);
     return createGenerateMethodElement(baseMethod, substitutor, icon, baseClass.getName(), new InsertHandler<LookupElement>() {
@@ -181,17 +181,17 @@ public class JavaGenerateMemberCompletionContributor {
         }
       }
 
-      GlobalInspectionContextBase.cleanupElements(context.getProject(), null, elements.toArray(new PsiElement[elements.size()]));
+      GlobalInspectionContextBase.cleanupElements(context.getProject(), null, elements.toArray(PsiElement.EMPTY_ARRAY));
       newInfos.get(0).positionCaret(context.getEditor(), true);
     }
   }
 
-  private static LookupElementBuilder createGenerateMethodElement(PsiMethod prototype,
-                                                                  PsiSubstitutor substitutor,
-                                                                  Icon icon,
-                                                                  String typeText, InsertHandler<LookupElement> insertHandler,
-                                                                  boolean generateDefaultMethod,
-                                                                  PsiClass targetClass) {
+  private static LookupElement createGenerateMethodElement(PsiMethod prototype,
+                                                           PsiSubstitutor substitutor,
+                                                           Icon icon,
+                                                           String typeText, InsertHandler<LookupElement> insertHandler,
+                                                           boolean generateDefaultMethod,
+                                                           PsiClass targetClass) {
     String methodName = prototype.getName();
 
     String visibility = VisibilityUtil.getVisibilityModifier(prototype.getModifierList());
@@ -215,7 +215,7 @@ public class JavaGenerateMemberCompletionContributor {
       element = element.withStrikeoutness(true);
     }
     element.putUserData(GENERATE_ELEMENT, true);
-    return element;
+    return PrioritizedLookupElement.withPriority(element, -1);
   }
 
   @NotNull

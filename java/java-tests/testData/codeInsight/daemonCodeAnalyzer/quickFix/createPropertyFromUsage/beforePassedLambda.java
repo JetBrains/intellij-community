@@ -1,6 +1,6 @@
 // "Create property" "true"
 class Calculator {
     {
-      set<caret>I(() -> {}); 
+      set<caret>I(() -> {});
     }
 }

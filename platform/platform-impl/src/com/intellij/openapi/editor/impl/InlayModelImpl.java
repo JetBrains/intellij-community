@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -42,7 +28,8 @@ import java.util.List;
 public class InlayModelImpl implements InlayModel, Disposable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
   private static final Comparator<Inlay> INLAY_COMPARATOR = Comparator.comparingInt(Inlay::getOffset)
-                                                                     .thenComparingInt(i -> ((InlayImpl)i).myOriginalOffset);
+    .thenComparing(i -> i.isRelatedToPrecedingText())
+    .thenComparingInt(i -> ((InlayImpl)i).myOriginalOffset);
 
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
@@ -51,7 +38,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
   final RangeMarkerTree<InlayImpl> myInlayTree;
   
   boolean myMoveInProgress;
-  private List<Inlay> myInlaysToTheRightOfCaret;
+  private List<Inlay> myInlaysAtCaret;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -99,10 +86,10 @@ public class InlayModelImpl implements InlayModel, Disposable {
             VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
             VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
             if (inlaysStartPosition.line == caretPosition.line && 
-                caretPosition.column >= inlaysStartPosition.column && caretPosition.column < inlaysStartPosition.column + inlayCount) {
-              myInlaysToTheRightOfCaret = inlays.subList(caretPosition.column - inlaysStartPosition.column, inlayCount);
-              for (Inlay inlay : myInlaysToTheRightOfCaret) {
-                ((InlayImpl)inlay).setStickingToRight(true);
+                caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
+              myInlaysAtCaret = inlays;
+              for (int i = 0; i < inlayCount; i++) {
+                ((InlayImpl)inlays.get(i)).setStickingToRight(i >= (caretPosition.column - inlaysStartPosition.column));
               }
             }
           }
@@ -111,11 +98,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
       @Override
       public void documentChanged(DocumentEvent event) {
-        if (myInlaysToTheRightOfCaret != null) {
-          for (Inlay inlay : myInlaysToTheRightOfCaret) {
-            ((InlayImpl)inlay).setStickingToRight(false);
+        if (myInlaysAtCaret != null) {
+          for (Inlay inlay : myInlaysAtCaret) {
+            ((InlayImpl)inlay).setStickingToRight(inlay.isRelatedToPrecedingText());
           }
-          myInlaysToTheRightOfCaret = null;
+          myInlaysAtCaret = null;
         }
       }
 
@@ -166,6 +153,16 @@ public class InlayModelImpl implements InlayModel, Disposable {
   }
 
   @Override
+  public boolean hasInlineElementsInRange(int startOffset, int endOffset) {
+    return !myInlayTree.processOverlappingWith(startOffset, endOffset, inlay -> false);
+  }
+
+  @Override
+  public boolean hasInlineElements() {
+    return myInlayTree.size() > 0;
+  }
+
+  @Override
   public boolean hasInlineElementAt(int offset) {
     return !myInlayTree.processOverlappingWith(offset, offset, inlay -> false);
   }
@@ -178,6 +175,18 @@ public class InlayModelImpl implements InlayModel, Disposable {
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
     return visualPosition.line == inlayStartPosition.line && 
            visualPosition.column >= inlayStartPosition.column && visualPosition.column < inlayStartPosition.column + inlayCount;
+  }
+
+  @Nullable
+  @Override
+  public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
+    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+    List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+    if (inlays.isEmpty()) return null;
+    VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
+    if (visualPosition.line != inlayStartPosition.line) return null;
+    int inlayIndex = visualPosition.column - inlayStartPosition.column;
+    return inlayIndex >= 0 && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
   }
 
   @Nullable

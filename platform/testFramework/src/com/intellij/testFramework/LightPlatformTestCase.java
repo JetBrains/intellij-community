@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -28,6 +29,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.lang.Language;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -70,17 +72,15 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.DocumentCommitThread;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -130,12 +130,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static TestCase ourTestCase;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
+  private static SdkLeakTracker myOldSdks;
 
   private ThreadTracker myThreadTracker;
 
   static {
     PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
   }
+
+  private VirtualFilePointerTracker myVirtualFilePointerTracker;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -249,9 +252,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ourSourceRoot = sourceRoot;
       }
     });
-
-    // project creation may make a lot of pointers, do not regard them as leak
-    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).storePointers();
   }
 
   /**
@@ -280,8 +280,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       myThreadTracker = new ThreadTracker();
       ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
-      VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-      filePointerManager.storePointers();
+      myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     });
   }
 
@@ -296,6 +295,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    myOldSdks = new SdkLeakTracker();
+
     boolean reusedProject = true;
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
@@ -339,7 +341,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
                "; startup passed:" + passed +
                "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
 
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
+    CodeStyle.setTemporarySettings(getProject(), new CodeStyleSettings());
 
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     if (manager instanceof FileDocumentManagerImpl) {
@@ -376,22 +378,27 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
 
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll(
-      () -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings(),
+      () -> CodeStyle.dropTemporarySettings(project),
       this::checkForSettingsDamage,
       () -> doTearDown(project, ourApplication),
       () -> checkEditorsReleased(),
+      () -> myOldSdks.checkForJdkTableLeaks(),
       super::tearDown,
       () -> myThreadTracker.checkLeak(),
       () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project),
-      () -> ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed()
+      () -> myVirtualFilePointerTracker.assertPointersAreDisposed()
     ).run();
   }
 
-  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) throws Exception {
+  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) {
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll().
       append(() -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue()).
-      append(() -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()).
+      append(() -> CodeStyle.dropTemporarySettings(project)).
       append(LightPlatformTestCase::checkJavaSwingTimersAreDisposed).
       append(() -> UsefulTestCase.doPostponedFormatting(project)).
       append(() -> LookupManager.getInstance(project).hideActiveLookup()).
@@ -430,7 +437,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }).
       append(() -> clearUncommittedDocuments(project)).
       append(() -> ((HintManagerImpl)HintManager.getInstance()).cleanup()).
-      append(() -> DocumentCommitThread.getInstance().clearQueue()).
       append(() -> ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests()).
       append(() -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests()).
       append(() -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest()).
@@ -481,6 +487,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void checkEditorsReleased() {
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll(
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {
@@ -620,7 +628,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @NotNull
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject());
+    return CodeStyle.getSettings(getProject());
   }
 
   protected static Document getDocument(@NotNull PsiFile file) {

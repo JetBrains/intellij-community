@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ui;
 
@@ -20,11 +8,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +29,16 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
   private volatile String myPresentableName;
   private volatile Boolean myValid;
+  private volatile NodeState myPreviousState;
 
   protected SuppressableInspectionTreeNode(Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
     myPresentation = presentation;
+  }
+
+  @Override
+  protected boolean doesNeedInternProblemLevels() {
+    return true;
   }
 
   @NotNull
@@ -60,27 +55,33 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   public abstract boolean isQuickFixAppliedFromView();
 
   @Override
+  protected boolean isProblemCountCacheValid() {
+    NodeState currentState = calculateState();
+    if (myPreviousState == null || !currentState.equals(myPreviousState)) {
+      myPreviousState = currentState;
+      return false;
+    }
+    return true;
+  }
+
+  @Override
   public int getProblemCount(boolean allowSuppressed) {
     return !isExcluded() && isValid() && !isQuickFixAppliedFromView() && (allowSuppressed || !isAlreadySuppressedFromView()) ? 1 : 0;
   }
 
   @NotNull
-  public Set<SuppressIntentionAction> getAvailableSuppressActions() {
-    return myAvailableSuppressActions;
+  public synchronized Set<SuppressIntentionAction> getAvailableSuppressActions() {
+    Set<SuppressIntentionAction> actions = myAvailableSuppressActions;
+    if (actions == null) {
+      actions = calculateAvailableSuppressActions();
+      myAvailableSuppressActions = actions;
+    }
+    return actions;
   }
 
   public void removeSuppressActionFromAvailable(@NotNull SuppressIntentionAction action) {
     myAvailableSuppressActions.remove(action);
   }
-
-  protected void init(Project project) {
-    myPresentableName = calculatePresentableName();
-    myValid = calculateIsValid();
-    myAvailableSuppressActions = getElement() == null
-                                 ? Collections.emptySet()
-                                 : calculateAvailableSuppressActions(project);
-  }
-
 
   @Nullable
   public abstract RefEntity getElement();
@@ -112,12 +113,26 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   @Override
   public String getTailText() {
     if (isQuickFixAppliedFromView()) {
-      return null;
+      return "";
     }
     if (isAlreadySuppressedFromView()) {
       return "Suppressed";
     }
     return !isValid() ? "No longer valid" : null;
+  }
+
+  @Override
+  protected void nodeAddedToTree() {
+    myPresentableName = calculatePresentableName();
+    myValid = calculateIsValid();
+    myAvailableSuppressActions = calculateAvailableSuppressActions();
+  }
+
+  @NotNull
+  private Set<SuppressIntentionAction> calculateAvailableSuppressActions() {
+    return getElement() == null
+                                 ? Collections.emptySet()
+                                 : calculateAvailableSuppressActions(myPresentation.getContext().getProject());
   }
 
   @NotNull
@@ -152,18 +167,52 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
 
   protected abstract boolean calculateIsValid();
 
-  protected void dropCache(Project project) {
+  protected void dropCache() {
+    myProblemLevels.drop();
+    if (isQuickFixAppliedFromView() || isAlreadySuppressedFromView()) return;
     myValid = calculateIsValid();
     myPresentableName = calculatePresentableName();
     for (int i = 0; i < getChildCount(); i++) {
       TreeNode child = getChildAt(i);
       if (child instanceof SuppressableInspectionTreeNode) {
-        ((SuppressableInspectionTreeNode)child).dropCache(project);
+        ((SuppressableInspectionTreeNode)child).dropCache();
       }
     }
   }
 
-  protected boolean isExcluded() {
-    return getPresentation().getContext().getView().getExcludedManager().isExcluded(this);
+  private static class NodeState {
+    private static final Interner<NodeState> INTERNER = new Interner<>();
+    private final boolean isValid;
+    private final boolean isSuppressed;
+    private final boolean isFixApplied;
+
+    private NodeState(boolean isValid, boolean isSuppressed, boolean isFixApplied) {
+      this.isValid = isValid;
+      this.isSuppressed = isSuppressed;
+      this.isFixApplied = isFixApplied;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      NodeState state = (NodeState)o;
+
+      if (isValid != state.isValid) return false;
+      if (isSuppressed != state.isSuppressed) return false;
+      if (isFixApplied != state.isFixApplied) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+     return (isValid ? 0x1 : 0) + (isFixApplied ? 0x2 : 0) + (isSuppressed ? 0x4 : 0);
+    }
+  }
+
+  protected NodeState calculateState() {
+    return NodeState.INTERNER.intern(new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView()));
   }
 }

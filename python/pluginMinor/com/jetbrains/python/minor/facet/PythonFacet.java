@@ -31,19 +31,22 @@ import org.jetbrains.annotations.NotNull;
 public class PythonFacet extends LibraryContributingFacet<PythonFacetType.PythonFacetConfiguration> {
   public static final FacetTypeId<PythonFacet> ID = new FacetTypeId<>("python");
 
-  public PythonFacet(@NotNull final FacetType facetType, @NotNull final Module module, final @NotNull String name, @NotNull final PythonFacetType.PythonFacetConfiguration configuration,
+  public PythonFacet(@NotNull final FacetType facetType, @NotNull final Module module, @NotNull final String name, @NotNull final PythonFacetType.PythonFacetConfiguration configuration,
                      Facet underlyingFacet) {
     super(facetType, module, name, configuration, underlyingFacet);
   }
 
+  @Override
   public void updateLibrary() {
     PythonFacetUtil.updateLibrary(getModule(), getConfiguration());
   }
 
+  @Override
   public void removeLibrary() {
     PythonFacetUtil.removeLibrary(getModule());
   }
 
+  @Override
   public void initFacet() {
     updateLibrary();
   }

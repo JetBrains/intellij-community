@@ -21,7 +21,7 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.netbeans.lib.cvsclient.file.IReaderFactory;
 import org.netbeans.lib.cvsclient.file.IReceiveTextFilePreprocessor;
 

@@ -1,10 +1,17 @@
 package com.siyeh.ig.numeric;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class DivideByZeroInspectionTest extends IGInspectionTestCase {
+public class DivideByZeroInspectionTest extends LightInspectionTestCase {
+  public void testDivideByZero() {
+    doTest();
+  }
 
-  public void test() {
-    doTest("com/siyeh/igtest/numeric/divide_by_zero", new DivideByZeroInspection());
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new DivideByZeroInspection();
   }
 }

@@ -32,9 +32,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.DebugReflectionUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -52,12 +52,13 @@ class CachedValueLeakChecker {
     if (!ourCheckedKeys.add(key.toString())) return; // store strings because keys are created afresh in each (test) project
 
     if (!SystemInfo.IS_AT_LEAST_JAVA9) {
-      findReferencedPsi(provider, userDataHolder, 5);
+      findReferencedPsi(provider, key, userDataHolder, 5);
     }
   }
 
   private static synchronized void findReferencedPsi(@NotNull final Object root,
-                                                     @Nullable final UserDataHolder toIgnore,
+                                                     @NotNull Key key,
+                                                     @NotNull final UserDataHolder toIgnore,
                                                      int depth) {
     Condition<Object> shouldExamineValue = value -> {
       if (value == toIgnore) return false;
@@ -75,7 +76,8 @@ class CachedValueLeakChecker {
       }
       return true;
     };
-    DebugReflectionUtil.walkObjects(depth, Collections.singletonList(root), PsiElement.class, shouldExamineValue, (value, backLink) -> {
+    Map<Object, String> roots = Collections.singletonMap(root, "CachedValueProvider "+key);
+    DebugReflectionUtil.walkObjects(depth, roots, PsiElement.class, shouldExamineValue, (value, backLink) -> {
       if (value instanceof PsiElement) {
         LOG.error(
           "Incorrect CachedValue use. Provider references PSI, causing memory leaks and possible invalid element access, provider=" +

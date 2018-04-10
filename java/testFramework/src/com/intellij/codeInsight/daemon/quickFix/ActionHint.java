@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,11 +45,13 @@ public class ActionHint {
   private final String myExpectedText;
   private final boolean myShouldPresent;
   private final ProblemHighlightType myHighlightType;
+  private final boolean myExactMatch;
 
-  private ActionHint(String expectedText, boolean shouldPresent, ProblemHighlightType severity) {
+  private ActionHint(String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch) {
     myExpectedText = expectedText;
     myShouldPresent = shouldPresent;
     myHighlightType = severity;
+    myExactMatch = exactMatch;
   }
 
   /**
@@ -84,31 +87,43 @@ public class ActionHint {
    */
   @Nullable
   public IntentionAction findAndCheck(Collection<IntentionAction> actions, Supplier<String> infoSupplier) {
-    IntentionAction result = actions.stream().filter(t -> t.getText().equals(myExpectedText)).findFirst().orElse(null);
+    IntentionAction result = actions.stream().filter(t -> {
+      String text = t.getText();
+      return myExactMatch ? text.equals(myExpectedText) : text.startsWith(myExpectedText);
+    }).findFirst().orElse(null);
     if(myShouldPresent) {
       if(result == null) {
-        fail("Action with text '" + myExpectedText + "' not found\nAvailable actions: " +
+        fail(exceptionHeader() + " not found\nAvailable actions: " +
              actions.stream().map(IntentionAction::getText).collect(Collectors.joining(", ", "[", "]\n")) +
              infoSupplier.get());
       }
       else if(myHighlightType != null) {
         if (result instanceof IntentionActionDelegate) result = ((IntentionActionDelegate)result).getDelegate();
         if(!(result instanceof QuickFixWrapper)) {
-          fail("Action with text '" + myExpectedText + "' is not a LocalQuickFix, but " + result.getClass().getName() +
+          fail(exceptionHeader() + " is not a LocalQuickFix, but " + result.getClass().getName() +
                "\nExpected LocalQuickFix with ProblemHighlightType=" + myHighlightType + "\n" +
                infoSupplier.get());
         }
         ProblemHighlightType actualType = ((QuickFixWrapper)result).getHighlightType();
         if(actualType != myHighlightType) {
-          fail("Action with text '" + myExpectedText + "' has wrong ProblemHighlightType.\nExpected: " + myHighlightType +
+          fail(exceptionHeader() + " has wrong ProblemHighlightType.\nExpected: " + myHighlightType +
                "\nActual: " + actualType + "\n" + infoSupplier.get());
         }
       }
     }
     else if(result != null) {
-      fail("Action with text '" + myExpectedText + "' is present, but should not\n" + infoSupplier.get());
+      fail(exceptionHeader() + " is present, but should not\n" + infoSupplier.get());
     }
     return result;
+  }
+
+  private String exceptionHeader() {
+    return "Action with " + (myExactMatch ? "text" : "prefix") + " '" + myExpectedText + "'";
+  }
+
+  @NotNull
+  public static ActionHint parse(@NotNull PsiFile file, @NotNull String contents) {
+    return parse(file, contents, true);
   }
 
   /**
@@ -126,11 +141,12 @@ public class ActionHint {
    *
    * @param file PsiFile associated with contents (used to determine the language)
    * @param contents file contents
+   * @param exactMatch if false then action hint matches prefix like in {@link CodeInsightTestFixture#filterAvailableIntentions(java.lang.String)}
    * @return ActionHint object
    * @throws AssertionError if action hint is absent or has invalid format
    */
   @NotNull
-  public static ActionHint parse(@NotNull PsiFile file, @NotNull String contents) {
+  public static ActionHint parse(@NotNull PsiFile file, @NotNull String contents, boolean exactMatch) {
     PsiFile hostFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
 
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(hostFile.getLanguage());
@@ -147,8 +163,8 @@ public class ActionHint {
     final String text = matcher.group(1);
     String state = matcher.group(2);
     if(state.equals("true") || state.equals("false")) {
-      return new ActionHint(text, Boolean.parseBoolean(state), null);
+      return new ActionHint(text, Boolean.parseBoolean(state), null, exactMatch);
     }
-    return new ActionHint(text, true, ProblemHighlightType.valueOf(state));
+    return new ActionHint(text, true, ProblemHighlightType.valueOf(state), exactMatch);
   }
 }

@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.psi;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +29,7 @@ import java.util.Map;
 public class XPath2Type extends XPathType {
   public static final String XMLSCHEMA_NS = "http://www.w3.org/2001/XMLSchema";
 
-  private static Map<QName, XPath2Type> ourMap = new HashMap<>();
+  private static final Map<QName, XPath2Type> ourMap = new HashMap<>();
 
   public static final XPath2Type ITEM = createItemType("item()", ANY);
   public static final XPath2Type NODE = createItemType("node()", ITEM);

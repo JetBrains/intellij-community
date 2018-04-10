@@ -29,7 +29,7 @@ class AssertTrueOrFalsePredicate implements PsiElementPredicate {
     final PsiMethodCallExpression expression =
       (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = expression.getArgumentList();
-    final int numExpressions = argumentList.getExpressions().length;
+    final int numExpressions = argumentList.getExpressionCount();
     if (numExpressions < 1 || numExpressions > 2) {
       return false;
     }

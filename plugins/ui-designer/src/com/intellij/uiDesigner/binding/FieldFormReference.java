@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 5, 2005
  */
 public final class FieldFormReference extends ReferenceInForm {
   private final PsiReference myClassReference;

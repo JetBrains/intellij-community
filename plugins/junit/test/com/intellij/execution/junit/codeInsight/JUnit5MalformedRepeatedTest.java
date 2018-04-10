@@ -31,9 +31,13 @@ public class JUnit5MalformedRepeatedTest extends LightInspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    addEnvironmentClass("package org.junit.platform.commons.annotation;\n" +
+                        "public @interface Testable {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "@org.junit.platform.commons.annotation.Testable\n" +
                         "public @interface RepeatedTest {int value(); String name() default \"\";}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "@org.junit.platform.commons.annotation.Testable\n" +
                         "public @interface Test {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public @interface AfterEach {}");
@@ -48,6 +52,7 @@ public class JUnit5MalformedRepeatedTest extends LightInspectionTestCase {
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public interface TestReporter {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "@org.junit.platform.commons.annotation.Testable\n" +
                         "public @interface ParameterizedTest {}");
   }
 

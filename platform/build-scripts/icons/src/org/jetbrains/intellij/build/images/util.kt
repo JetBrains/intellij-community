@@ -16,8 +16,9 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.StringUtil
-import java.awt.*
+import java.awt.Dimension
 import java.io.File
+import javax.imageio.ImageIO
 
 internal val File.children: List<File> get() = if (isDirectory) listFiles().toList() else emptyList()
 
@@ -35,25 +36,10 @@ internal fun isIcon(file: File): Boolean {
 private fun isImage(name: String) = name.endsWith(".png") || name.endsWith(".gif")
 
 internal fun imageSize(file: File): Dimension? {
-  val image = loadImage(file) ?: return null
+  val image = ImageIO.read(file) ?: return null
   val width = image.getWidth(null)
   val height = image.getHeight(null)
   return Dimension(width, height)
-}
-
-private fun loadImage(file: File): Image? {
-  val image = Toolkit.getDefaultToolkit().createImage(file.absolutePath)
-  if (!waitForImage(image)) return null
-  return image
-}
-
-private fun waitForImage(image: Image?): Boolean {
-  if (image == null) return false
-  if (image.getWidth(null) > 0) return true
-  val mediaTracker = MediaTracker(object : Component() {})
-  mediaTracker.addImage(image, 1)
-  mediaTracker.waitForID(1, 5000)
-  return !mediaTracker.isErrorID(1)
 }
 
 internal enum class ImageType(private val suffix: String) {

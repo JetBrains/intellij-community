@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.fixtures.extended
 
+import com.intellij.openapi.application.runInEdt
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.cellReader.ProjectTreeCellReader
 import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
@@ -25,11 +26,13 @@ import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JTreeFixture
+import org.fest.swing.timing.Pause
 import java.util.*
 import javax.swing.JTree
+import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
-class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robot, tree) {
+open class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robot, tree) {
 
   val myDriver = ExtendedJTreeDriver(robot)
   val myCellReader: JTreeCellReader
@@ -37,6 +40,10 @@ class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robo
   init {
     replaceDriverWith(myDriver)
     myCellReader = defineCellReader()
+  }
+
+  fun hasXPath(vararg pathStrings: String): Boolean {
+    return hasPath(pathStrings.toList())
   }
 
   fun hasPath(pathStrings: List<String>): Boolean {
@@ -49,24 +56,25 @@ class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robo
     }
   }
 
-  fun clickPath(pathStrings: List<String>, mouseClickInfo: MouseClickInfo)
-    = myDriver.clickPath(tree, pathStrings, mouseClickInfo)
+  fun clickPath(pathStrings: List<String>, mouseClickInfo: MouseClickInfo) = myDriver.clickPath(tree, pathStrings, mouseClickInfo)
 
-  fun clickPath(vararg pathStrings: String, mouseClickInfo: MouseClickInfo)
-    = myDriver.clickPath(tree, pathStrings.toList(), mouseClickInfo)
+  fun clickPath(vararg pathStrings: String, mouseClickInfo: MouseClickInfo) = myDriver.clickPath(tree, pathStrings.toList(), mouseClickInfo)
 
-  fun clickPath(pathStrings: List<String>, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1)
-    = myDriver.clickPath(tree, pathStrings, button, times)
+  fun clickPath(pathStrings: List<String>, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1) = myDriver.clickPath(tree,
+                                                                                                                               pathStrings,
+                                                                                                                               button,
+                                                                                                                               times)
 
-  fun clickXPath(vararg xPathStrings: String)
-    = myDriver.clickXPath(tree, xPathStrings.toList())
+  fun clickXPath(vararg xPathStrings: String) = myDriver.clickXPath(tree, xPathStrings.toList())
 
   fun clickXPath(xPathStrings: List<String>) {
     myDriver.clickXPath(tree, xPathStrings, MouseButton.LEFT_BUTTON, 1)
   }
 
-  fun clickPath(vararg pathStrings: String, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1)
-    = myDriver.clickPath(tree, pathStrings.toList(), button, times)
+  fun clickPath(vararg pathStrings: String, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1) = myDriver.clickPath(tree,
+                                                                                                                                pathStrings.toList(),
+                                                                                                                                button,
+                                                                                                                                times)
 
   fun checkPathExists(pathStrings: List<String>) = myDriver.checkPathExists(tree, pathStrings)
 
@@ -80,25 +88,37 @@ class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robo
 
   fun doubleClickPath(vararg pathStrings: String) = myDriver.doubleClickPath(tree, pathStrings.toList())
 
+  fun doubleClickXPath(vararg pathStrings: String) = myDriver.doubleClickXPath(tree, pathStrings.toList())
+
   fun rightClickPath(pathStrings: List<String>) = myDriver.rightClickPath(tree, pathStrings)
 
   fun rightClickPath(vararg pathStrings: String) = myDriver.rightClickPath(tree, pathStrings.toList())
+
+  fun rightClickXPath(vararg pathStrings: String) = myDriver.rightClickXPath(tree, pathStrings.toList())
 
   fun expandPath(pathStrings: List<String>) = myDriver.expandPath(tree, pathStrings)
 
   fun expandPath(vararg pathStrings: String) = myDriver.expandPath(tree, pathStrings.toList())
 
+  fun expandXPath(vararg pathStrings: String) = myDriver.expandXPath(tree, pathStrings.toList())
+
   fun collapsePath(pathStrings: List<String>) = myDriver.collapsePath(tree, pathStrings)
 
   fun collapsePath(vararg pathStrings: String) = myDriver.collapsePath(tree, pathStrings.toList())
+
+  fun collapseXPath(vararg pathStrings: String) = myDriver.collapseXPath(tree, pathStrings.toList())
 
   fun selectPath(pathStrings: List<String>) = myDriver.selectPath(tree, pathStrings)
 
   fun selectPath(vararg pathStrings: String) = myDriver.selectPath(tree, pathStrings.toList())
 
+  fun selectXPath(vararg pathStrings: String) = myDriver.selectXPath(tree, pathStrings.toList())
+
   fun scrollToPath(pathStrings: List<String>) = myDriver.scrollToPath(tree, pathStrings)
 
   fun scrollToPath(vararg pathStrings: String) = myDriver.scrollToPath(tree, pathStrings.toList())
+
+  fun scrollToXPath(vararg pathStrings: String) = myDriver.scrollToXPath(tree, pathStrings.toList())
 
   fun showPopupMenu(pathStrings: List<String>) = myDriver.showPopupMenu(tree, pathStrings)
 
@@ -124,7 +144,56 @@ class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robo
     return result
   }
 
-  private fun defineCellReader() : JTreeCellReader {
+  fun getPathByNode(node: String): List<String> {
+    expandNodes()
+    Pause.pause(1000) //Wait for EDT thread to finish expanding
+    val result: MutableList<String> = mutableListOf()
+    var currentNode = tree.model.root as DefaultMutableTreeNode
+    val e = currentNode.preorderEnumeration()
+    while (e.hasMoreElements()) {
+      currentNode = e.nextElement() as DefaultMutableTreeNode
+      if (currentNode.toString() == node) {
+        break
+      }
+    }
+    result.add(0, currentNode.toString())
+    while (currentNode.parent != null) {
+      currentNode = currentNode.parent as DefaultMutableTreeNode
+      result.add(0, currentNode.toString())
+    }
+    //Test tool window JTree has root="[root]"
+    //Settings JTree has root=""
+    if (tree.model.root.toString() == "[root]") {
+      result[0] = "Test Results"
+    }else if (tree.model.root.toString() == ""){
+      result.removeAt(0)
+    }
+    return result
+  }
+
+  /**
+   * Find full path of the given node and click
+   * Works fine for test tool window and settings
+   * Works incorrect for npm/gulp.grunt tool windows
+   * @param node - node full name
+   */
+  fun clickPathByNode(node: String) {
+    clickPath(getPathByNode(node))
+  }
+
+  /**
+   * Expand nodes in given JTree
+   * @param rowsCount - number of first rows to be expanded
+   */
+  fun expandNodes(rowsCount: Int = 50) {
+    runInEdt {
+      for (i in 0 until rowsCount) {
+        tree.expandRow(i)
+      }
+    }
+  }
+
+  private fun defineCellReader(): JTreeCellReader {
     var resultReader: JTreeCellReader
     when (tree.javaClass.name) {
       "com.intellij.openapi.options.newEditor.SettingsTreeView\$MyTree" -> resultReader = SettingsTreeCellReader()
@@ -134,5 +203,4 @@ class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robo
     replaceCellReader(resultReader)
     return resultReader
   }
-
 }

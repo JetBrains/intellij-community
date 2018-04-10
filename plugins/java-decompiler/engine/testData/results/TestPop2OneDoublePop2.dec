@@ -1,0 +1,27 @@
+package pkg;
+
+public class TestPop2OneDoublePop2 {
+   public static void main(String... var0) {
+      double var10002 = 3.14159265358D;// 24
+      System.out.println(1234567890);// 22 23 26
+   }// 27
+}
+
+class 'pkg/TestPop2OneDoublePop2' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      5
+      3      5
+      5      4
+      9      5
+      c      6
+   }
+}
+
+Lines mapping:
+22 <-> 6
+23 <-> 6
+24 <-> 5
+26 <-> 6
+27 <-> 7
+Not mapped:
+25

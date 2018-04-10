@@ -43,7 +43,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
   }
 
   protected String getNameLabelText() {
-    final String occurrencesString = myOccurrencesNumber > -1 ? " - " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
+    final String occurrencesString = myOccurrencesNumber > -1 ? "has " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
 
     String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,PsiSubstitutor.EMPTY);
     return RefactoringBundle.message("inline.field.field.name.label", fieldText, occurrencesString);

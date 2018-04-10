@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SourcePositionProvider;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -32,6 +33,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class EditSourceAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {
@@ -47,7 +49,8 @@ public class EditSourceAction extends DebuggerAction{
       DebugProcessImpl process = debuggerContext.getDebugProcess();
       if (process != null) {
         process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-          public void threadAction() {
+          @Override
+          public void threadAction(@NotNull SuspendContextImpl suspendContext) {
             final SourcePosition sourcePosition = getSourcePosition(selectedNode, debuggerContext);
             if (sourcePosition != null) {
               sourcePosition.navigate(true);
@@ -96,7 +99,8 @@ public class EditSourceAction extends DebuggerAction{
     if (debuggerContext.getDebugProcess() != null) {
       presentation.setEnabled(true);
       debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-        public void threadAction() {
+        @Override
+        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           final SourcePosition position = getSourcePosition(node, debuggerContext);
           if (position == null) {
             DebuggerInvocationUtil.swingInvokeLater(project, () -> presentation.setEnabled(false));

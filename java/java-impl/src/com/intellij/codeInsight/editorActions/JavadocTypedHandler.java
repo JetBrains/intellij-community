@@ -46,13 +46,30 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
   private static final char SLASH = '/';
   private static final String COMMENT_PREFIX = "!--";
   
+  @NotNull
   @Override
-  public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (project == null) {
+  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (file instanceof PsiJavaFile &&
+        (insertClosingTagIfNecessary(c, project, editor, file) ||
+         adjustStartTagIndent(c, editor, file))) {
       return Result.CONTINUE;
     }
-    insertClosingTagIfNecessary(c, project, editor, file);
     return Result.CONTINUE;
+  }
+
+  private static boolean adjustStartTagIndent(char c, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (c == '@') {
+      final int offset = editor.getCaretModel().getOffset();
+      PsiElement currElement = file.findElementAt(offset);
+      if (currElement instanceof PsiWhiteSpace) {
+        PsiElement prev = currElement.getPrevSibling();
+        if (prev != null && prev.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+          editor.getDocument().replaceString(currElement.getTextRange().getStartOffset(), offset - 1, " ");
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -65,7 +82,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
    * @return          {@code true} if closing tag is inserted; {@code false} otherwise
    */
   private static boolean insertClosingTagIfNecessary(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (c != CLOSE_TAG_SYMBOL || !CodeInsightSettings.getInstance().JAVADOC_GENERATE_CLOSING_TAG || !(file instanceof PsiJavaFile)) {
+    if (c != CLOSE_TAG_SYMBOL || !CodeInsightSettings.getInstance().JAVADOC_GENERATE_CLOSING_TAG) {
       return false;
     }
 

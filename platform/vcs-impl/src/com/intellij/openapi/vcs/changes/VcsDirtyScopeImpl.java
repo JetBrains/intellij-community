@@ -66,7 +66,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   private final AbstractVcs myVcs;
-  private VcsDirtyScopeModifier myVcsDirtyScopeModifier;
+  private final VcsDirtyScopeModifier myVcsDirtyScopeModifier;
   private boolean myWasEverythingDirty;
 
   public VcsDirtyScopeImpl(final AbstractVcs vcs, final Project project) {

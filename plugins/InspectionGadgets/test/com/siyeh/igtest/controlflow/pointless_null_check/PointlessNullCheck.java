@@ -26,13 +26,13 @@ public class PointlessNullCheck {
     String arg1 = "foo";
 
     public void testMethods(Object obj, Object obj1, Object obj2) {
-        if(<warning descr="Unnecessary 'null' check before 'check' call">obj != null</warning> && check(obj)) {
+        if(<warning descr="Unnecessary 'null' check before 'check()' call">obj != null</warning> && check(obj)) {
             System.out.println("ok");
         }
-        if(<warning descr="Unnecessary 'null' check before 'check1' call">obj1 != null</warning> && obj2 != null && check1(obj1, obj2)) {
+        if(<warning descr="Unnecessary 'null' check before 'check1()' call">obj1 != null</warning> && obj2 != null && check1(obj1, obj2)) {
             System.out.println("ok");
         }
-        if(obj1 != null && <warning descr="Unnecessary 'null' check before 'check2' call">obj2 != null</warning> && check2(obj1, obj2)) {
+        if(obj1 != null && <warning descr="Unnecessary 'null' check before 'check2()' call">obj2 != null</warning> && check2(obj1, obj2)) {
             System.out.println("ok");
         }
         if(obj != null && check1(obj, obj.toString())) {
@@ -86,5 +86,15 @@ public class PointlessNullCheck {
         if (arg1 != null && arg1.equals(arg1) && arg1 instanceof String) {
             System.out.println("no warning");
         }
+    }
+
+    void testQualified(Object obj) {
+        if(<warning descr="Unnecessary 'null' check before 'check()' call">obj != null</warning> && check(obj)) System.out.println(1);
+        if(<warning descr="Unnecessary 'null' check before 'check()' call">obj != null</warning> && this.check(obj)) System.out.println(1);
+        // ctor called only if obj is non-null: removing it may change the semantics
+        if(obj != null && new PointlessNullCheck().check(obj)) System.out.println(1);
+        if(<warning descr="Unnecessary 'null' check before 'check2()' call">obj != null</warning> && check2(null, obj)) System.out.println(1);
+        // argument side effect
+        if(obj != null && check2(new PointlessNullCheck(), obj)) System.out.println(1);
     }
 }

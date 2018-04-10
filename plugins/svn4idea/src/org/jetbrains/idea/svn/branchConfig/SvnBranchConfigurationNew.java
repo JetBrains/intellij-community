@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,18 +8,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.sorted;
+import static java.util.Comparator.comparingInt;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class SvnBranchConfigurationNew {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew");
@@ -123,13 +110,13 @@ public class SvnBranchConfigurationNew {
   @Nullable
   public String getBaseUrl(String url) {
     if (myTrunkUrl != null) {
-      if (SVNPathUtil.isAncestor(myTrunkUrl, url)) {
+      if (Url.isAncestor(myTrunkUrl, url)) {
         return cutEndSlash(myTrunkUrl);
       }
     }
-    for(String branchUrl: myBranchMap.keySet()) {
-      if (SVNPathUtil.isAncestor(branchUrl, url)) {
-        String relativePath = SVNPathUtil.getRelativePath(branchUrl, url);
+    for (String branchUrl : sortBranchLocations(myBranchMap.keySet())) {
+      if (Url.isAncestor(branchUrl, url)) {
+        String relativePath = Url.getRelative(branchUrl, url);
         int secondSlash = relativePath.indexOf("/");
         return cutEndSlash(branchUrl + (secondSlash == -1 ? relativePath : relativePath.substring(0, secondSlash)));
       }
@@ -154,18 +141,17 @@ public class SvnBranchConfigurationNew {
   }
 
   @Nullable
-  public SVNURL getWorkingBranch(@NotNull SVNURL someUrl) throws SvnBindException {
+  public Url getWorkingBranch(@NotNull Url someUrl) throws SvnBindException {
     String baseUrl = getBaseUrl(someUrl.toString());
-    return baseUrl == null ? null : SvnUtil.createUrl(baseUrl);
+    return baseUrl == null ? null : createUrl(baseUrl);
   }
 
-  private void iterateUrls(final UrlListener listener) throws SVNException {
+  private void iterateUrls(final UrlListener listener) throws SvnBindException {
     if (listener.accept(myTrunkUrl)) {
       return;
     }
 
-    for (String branchUrl : myBranchMap.keySet()) {
-      // use more exact comparison first (paths longer)
+    for (String branchUrl : sortBranchLocations(myBranchMap.keySet())) {
       final List<SvnBranchItem> children = myBranchMap.get(branchUrl).getValue();
       for (SvnBranchItem child : children) {
         if (listener.accept(child.getUrl())) {
@@ -186,7 +172,8 @@ public class SvnBranchConfigurationNew {
       final BranchRootSearcher searcher = new BranchRootSearcher(SvnVcs.getInstance(project), root);
       iterateUrls(searcher);
       return searcher.getBranchesUnder();
-    } catch (SVNException e) {
+    }
+    catch (SvnBindException e) {
       return null;
     }
   }
@@ -196,26 +183,34 @@ public class SvnBranchConfigurationNew {
     myBranchMap.remove(url);
   }
 
+  /**
+   * Sorts branch locations by length descending as there could be cases when one branch location is under another.
+   */
+  @NotNull
+  private static Collection<String> sortBranchLocations(@NotNull Collection<String> branchLocations) {
+    return sorted(branchLocations, comparingInt(String::length).reversed());
+  }
+
   private static class BranchRootSearcher implements UrlListener {
     private final VirtualFile myRoot;
-    private final SVNURL myRootUrl;
+    private final Url myRootUrl;
     // url path to file path
     private final Map<String, String> myBranchesUnder;
 
-    private BranchRootSearcher(final SvnVcs vcs, final VirtualFile root) throws SVNException {
+    private BranchRootSearcher(final SvnVcs vcs, final VirtualFile root) {
       myRoot = root;
       myBranchesUnder = new HashMap<>();
       final Info info = vcs.getInfo(myRoot.getPath());
       myRootUrl = info != null ? info.getURL() : null;
     }
 
-    public boolean accept(final String url) throws SVNException {
+    public boolean accept(final String url) throws SvnBindException {
       if (myRootUrl != null) {
         final File baseDir = virtualToIoFile(myRoot);
         final String baseUrl = myRootUrl.getPath();
 
-        final SVNURL branchUrl = SVNURL.parseURIEncoded(url);
-        if (myRootUrl.equals(SVNURLUtil.getCommonURLAncestor(myRootUrl, branchUrl))) {
+        final Url branchUrl = createUrl(url);
+        if (isAncestor(myRootUrl, branchUrl)) {
           final File file = SvnUtil.fileFromUrl(baseDir, baseUrl, branchUrl.getPath());
           myBranchesUnder.put(url, file.getAbsolutePath());
         }
@@ -229,6 +224,6 @@ public class SvnBranchConfigurationNew {
   }
 
   private interface UrlListener {
-    boolean accept(final String url) throws SVNException;
+    boolean accept(final String url) throws SvnBindException;
   }
 }

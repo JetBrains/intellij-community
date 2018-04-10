@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +33,7 @@ public class ExceptionUtil {
   public static boolean causedBy(Throwable e, Class klass) {
     return findCause(e, klass) != null;
   }
-  
+
   @NotNull
   public static Throwable makeStackTraceRelative(@NotNull Throwable th, @NotNull Throwable relativeTo) {
     StackTraceElement[] trace = th.getStackTrace();
@@ -54,7 +41,7 @@ public class ExceptionUtil {
     for (int i=0, len = Math.min(trace.length, rootTrace.length); i < len; i++) {
       if (trace[trace.length - i - 1].equals(rootTrace[rootTrace.length - i - 1])) continue;
       int newDepth = trace.length - i;
-      th.setStackTrace(Arrays.asList(trace).subList(0, newDepth).toArray(new StackTraceElement[newDepth]));
+      th.setStackTrace(Arrays.copyOf(trace, newDepth));
       break;
     }
     return th;
@@ -159,6 +146,7 @@ public class ExceptionUtil {
     if (t instanceof RuntimeException) throw (RuntimeException)t;
   }
 
+  @Contract("!null->fail")
   public static void rethrowAll(@Nullable Throwable t) throws Exception {
     if (t != null) {
       rethrowUnchecked(t);
@@ -166,15 +154,16 @@ public class ExceptionUtil {
     }
   }
 
+  @Contract("_->fail")
   public static void rethrow(@Nullable Throwable throwable) {
     rethrowUnchecked(throwable);
     throw new RuntimeException(throwable);
   }
 
+  @Contract("!null->fail")
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
     if (t != null) {
-      rethrowUnchecked(t);
-      throw new RuntimeException(t);
+      rethrow(t);
     }
   }
 

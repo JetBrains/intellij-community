@@ -27,7 +27,7 @@ import org.jdom.Element;
  * @author yole
  */
 public class PythonTestRunConfigurationsConverter extends ConversionProcessor<RunManagerSettings> {
-  private static ImmutableMap<String, String> ourTypeToFactoryNameMap = ImmutableMap.<String, String>builder()
+  private static final ImmutableMap<String, String> ourTypeToFactoryNameMap = ImmutableMap.<String, String>builder()
     .put("PythonUnitTestConfigurationType", PyBundle.message("runcfg.unittest.display_name"))
     .put("PythonDocTestRunConfigurationType", PyBundle.message("runcfg.doctest.display_name"))
     .put("PythonNoseTestRunConfigurationType", PyBundle.message("runcfg.nosetests.display_name"))

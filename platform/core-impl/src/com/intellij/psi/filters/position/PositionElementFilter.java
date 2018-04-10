@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.filters.position;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 
 public abstract class PositionElementFilter implements ElementFilter {
@@ -32,12 +31,5 @@ public abstract class PositionElementFilter implements ElementFilter {
   @Override
   public boolean isClassAcceptable(Class hintClass) {
     return true;
-  }
-
-  protected static PsiElement getOwnerChild(final PsiElement scope, PsiElement element) {
-    while (element != null && element.getParent() != scope) {
-      element = element.getParent();
-    }
-    return element;
   }
 }

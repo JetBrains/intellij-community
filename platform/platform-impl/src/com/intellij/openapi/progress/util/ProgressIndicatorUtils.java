@@ -33,7 +33,6 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.BiConsumer;
 
 /**
  * Methods in this class are used to equip long background processes which take read actions with a special listener
@@ -177,7 +176,7 @@ public class ProgressIndicatorUtils {
         }
       };
       application.addApplicationListener(listener);
-      future.whenComplete((BiConsumer<Object, Throwable>)(o, throwable) -> application.removeApplicationListener(listener));
+      future.whenComplete((__, ___) -> application.removeApplicationListener(listener));
       try {
         executor.execute(new Runnable() {
           @Override
@@ -248,6 +247,13 @@ public class ProgressIndicatorUtils {
    * by background thread read action (until its first checkCanceled call). Shouldn't be called from under read action.
    */
   public static void yieldToPendingWriteActions() {
-    ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
+    Application application = ApplicationManager.getApplication();
+    if (application.isReadAccessAllowed()) {
+      throw new IllegalStateException("Mustn't be called from within read action");
+    }
+    if (application.isDispatchThread()) {
+      throw new IllegalStateException("Mustn't be called from EDT");
+    }
+    application.invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
   }
 }

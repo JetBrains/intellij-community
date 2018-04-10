@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 
 public abstract class GetterSetterPrototypeProvider {
   public static final ExtensionPointName<GetterSetterPrototypeProvider> EP_NAME = ExtensionPointName.create("com.intellij.getterSetterProvider");
@@ -74,7 +75,7 @@ public abstract class GetterSetterPrototypeProvider {
         if (getterSetter != null) return getterSetter;
       }
     }
-    final PsiMethod propertyGetterSetter = PropertyUtil.findPropertyGetter(aClass, propertyName, isStatic, false);
+    final PsiMethod propertyGetterSetter = PropertyUtilBase.findPropertyGetter(aClass, propertyName, isStatic, false);
     if (propertyGetterSetter != null) {
       return new PsiMethod[] {propertyGetterSetter};
     }

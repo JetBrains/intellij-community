@@ -32,7 +32,7 @@ class GitRmTest : GitSingleRepoTest() {
 
   // IDEA-75590
   fun `test empty directories are not removed on git rm`() {
-    val nestedDir = File(myProjectPath, "lib/subdir")
+    val nestedDir = File(projectPath, "lib/subdir")
     assertTrue("Directory $nestedDir wasn't created", nestedDir.mkdirs())
     val file = File(nestedDir, "f.txt")
     assertTrue("File $file wasn't created", file.createNewFile())
@@ -43,7 +43,7 @@ class GitRmTest : GitSingleRepoTest() {
     vf!!
 
     runInEdtAndWait {
-      CommandProcessor.getInstance().executeCommand(myProject, {
+      CommandProcessor.getInstance().executeCommand(project, {
         runWriteAction {
           vf.delete(this)
         }

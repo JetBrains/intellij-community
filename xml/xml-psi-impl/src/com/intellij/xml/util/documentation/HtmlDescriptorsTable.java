@@ -17,7 +17,7 @@ package com.intellij.xml.util.documentation;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -150,7 +150,7 @@ public class HtmlDescriptorsTable {
         parentDescriptor.attributes.add(value);
       }
 
-      value.setHelpRef(element.getAttributeValue(HELPREF_ATTR));
+      value.setHelpRef(baseHtmlExtDocUrl + element.getAttributeValue(HELPREF_ATTR));
       value.setDescription(element.getAttributeValue(DESCRIPTION_ATTR));
       value.setName(attrName);
 

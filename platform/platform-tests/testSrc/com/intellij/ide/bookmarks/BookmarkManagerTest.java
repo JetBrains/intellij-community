@@ -64,12 +64,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     List<Bookmark> bookmarksBefore = getManager().getValidBookmarks();
     assertEquals(1, bookmarksBefore.size());
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        myEditor.getDocument().setText(text);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> myEditor.getDocument().setText(text));
 
     List<Bookmark> bookmarksAfter = getManager().getValidBookmarks();
     assertEquals(1, bookmarksAfter.size());
@@ -167,12 +162,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     init(text, TestFileType.TEXT);
     addBookmark(2);
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        myEditor.getDocument().setText("111\n222" + text + "333");
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> myEditor.getDocument().setText("111\n222" + text + "333"));
 
     List<Bookmark> bookmarks = getManager().getValidBookmarks();
     assertEquals(1, bookmarks.size());

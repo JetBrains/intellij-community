@@ -20,13 +20,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.settingsSummary.ProblemType;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,8 +39,6 @@ import java.util.Date;
 import java.util.zip.ZipOutputStream;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
-
-  private static final ExtensionPointName<ProblemType> EP_SETTINGS = ExtensionPointName.create("com.intellij.settingsSummaryFactory");
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
 
   @Override
@@ -53,8 +51,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       final File zippedLogsFile = createZip(project);
       if (!doNotShowDialog) {
         Messages.showIdeaMessageDialog(
-          project, "Included log and settings may contain sensitive data.", "Sensitive Data",
-          new String[]{Messages.OK_BUTTON}, 1, Messages.getInformationIcon(),
+          project, "Included logs and settings may contain sensitive data.", "Sensitive Data",
+          new String[]{"Show in " + ShowFilePathAction.getFileManagerName()}, 1, Messages.getWarningIcon(),
           new DialogWrapper.DoNotAskOption.Adapter() {
             @Override
             public void rememberChoice(final boolean selected, final int exitCode) {
@@ -83,6 +81,9 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       ZipUtil.addFileOrDirRecursively(zipOutputStream, null, new File(PathManager.getLogPath()), "", null, null);
       settingsTempFile = dumpSettingsToFile(project);
       ZipUtil.addFileToZip(zipOutputStream, settingsTempFile, "settings.txt", null, null);
+      for (File javaErrorLog : getJavaErrorLogs()) {
+        ZipUtil.addFileToZip(zipOutputStream, javaErrorLog, javaErrorLog.getName(), null, null);
+      }
     }
     catch (final IOException exception) {
       //noinspection ResultOfMethodCallIgnored
@@ -98,11 +99,15 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     return zippedLogsFile;
   }
 
+  private static File[] getJavaErrorLogs() {
+    return new File(SystemProperties.getUserHome()).listFiles(file -> file.isFile() && file.getName().startsWith("java_error_in"));
+  }
+
   @NotNull
   private static File dumpSettingsToFile(final Project project) throws IOException {
     final File settingsTempFile = FileUtil.createTempFile("settings" + getDate(), ".txt");
-    for (final ProblemType problemType : EP_SETTINGS.getExtensions()) {
-      final String settingString = problemType.collectInfo(project);
+    for (ProblemType problemType : ProblemType.EP_SETTINGS.getExtensions()) {
+      String settingString = problemType.collectInfo(project);
       FileUtil.appendToFile(settingsTempFile, settingString + '\n');
     }
     return settingsTempFile;
@@ -121,6 +126,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @NotNull
   private static String getActionName() {
-    return "Collect and Show Logs in " + ShowFilePathAction.getFileManagerName();
+    return "Compress Logs and Show in " + ShowFilePathAction.getFileManagerName();
   }
 }

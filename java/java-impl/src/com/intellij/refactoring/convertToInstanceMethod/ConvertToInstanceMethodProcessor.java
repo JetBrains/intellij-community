@@ -41,7 +41,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,6 +93,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     return new MoveInstanceMethodViewDescriptor(myMethod, myTargetParameter, myTargetClass);
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length > 1);
     myMethod = (PsiMethod)elements[0];
@@ -142,7 +142,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     }
 
 
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
 
@@ -172,14 +172,14 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final Set<PsiMember> methods = Collections.singleton((PsiMember)myMethod);
-    if (!myTargetClass.isInterface()) {
-      RefactoringConflictsUtil.analyzeAccessibilityConflicts(methods, myTargetClass, conflicts, myNewVisibility);
-    }
-    else {
+    //check that method to call would be still accessible from the call places
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(methods, myTargetClass, conflicts, myNewVisibility);
+    //additionally check that body of method contains only accessible in the inheritors references
+    if (myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
       for (final UsageInfo usage : usagesIn) {
         if (usage instanceof ImplementingClassUsageInfo) {
-          RefactoringConflictsUtil
-            .analyzeAccessibilityConflicts(methods, ((ImplementingClassUsageInfo)usage).getPsiClass(), conflicts, PsiModifier.PUBLIC);
+          PsiClass targetClass = ((ImplementingClassUsageInfo)usage).getPsiClass();
+          RefactoringConflictsUtil.checkUsedElements(myMethod, myMethod, methods, null, targetClass, targetClass, conflicts);
         }
       }
     }

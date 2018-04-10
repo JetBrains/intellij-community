@@ -117,13 +117,14 @@ public abstract class PythonSdkFlavor {
     result.add(IronPythonSdkFlavor.INSTANCE);
     result.add(PyPySdkFlavor.INSTANCE);
     result.add(VirtualEnvSdkFlavor.INSTANCE);
+    result.add(CondaEnvSdkFlavor.INSTANCE);
     result.add(PyRemoteSdkFlavor.INSTANCE);
 
     return result;
   }
 
   @Nullable
-  public static PythonSdkFlavor getFlavor(Sdk sdk) {
+  public static PythonSdkFlavor getFlavor(@NotNull final Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof PythonSdkAdditionalData) {
       PythonSdkFlavor flavor = ((PythonSdkAdditionalData)data).getFlavor();
@@ -219,8 +220,8 @@ public abstract class PythonSdkFlavor {
     return Collections.emptyList();
   }
 
-  public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    initPythonPath(path, cmd.getEnvironment());
+  public void initPythonPath(GeneralCommandLine cmd, boolean passParentEnvs, Collection<String> path) {
+    initPythonPath(path, passParentEnvs, cmd.getEnvironment());
   }
 
   public static void addToEnv(final String key, String value, Map<String, String> envs) {
@@ -237,7 +238,16 @@ public abstract class PythonSdkFlavor {
 
   @NotNull
   public LanguageLevel getLanguageLevel(@NotNull Sdk sdk) {
-    final String version = sdk.getVersionString();
+    return getLanguageLevelFromVersionString(sdk.getVersionString());
+  }
+
+  @NotNull
+  public LanguageLevel getLanguageLevel(@NotNull String sdkHome) {
+    return getLanguageLevelFromVersionString(getVersionString(sdkHome));
+  }
+
+  @NotNull
+  private LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
     final String prefix = getName() + " ";
     if (version != null && version.startsWith(prefix)) {
       return LanguageLevel.fromPythonVersion(version.substring(prefix.length()));
@@ -249,9 +259,8 @@ public abstract class PythonSdkFlavor {
     return PythonIcons.Python.Python;
   }
 
-  public void initPythonPath(Collection<String> path, Map<String, String> env) {
-    path = appendSystemPythonPath(path);
-    addToEnv(PythonEnvUtil.PYTHONPATH, StringUtil.join(path, File.pathSeparator), env);
+  public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
+    initPythonPath(env, passParentEnvs, path);
   }
 
   public VirtualFile getSdkPath(VirtualFile path) {

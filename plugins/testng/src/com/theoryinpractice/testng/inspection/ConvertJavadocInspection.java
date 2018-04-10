@@ -1,25 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -37,9 +20,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Hani Suleiman Date: Aug 3, 2005 Time: 4:18:11 PM
+ * @author Hani Suleiman
  */
-public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
+public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls private static final String TESTNG_PREFIX = "testng.";
   private static final String DISPLAY_NAME = "Convert TestNG Javadoc to 1.5 annotations";
 
@@ -122,14 +105,14 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
               }
               else {
                 //otherwise, it's foo =bar, so we strip equals
-                value = next.substring(1, next.length()).trim();
+                value = next.substring(1).trim();
               }
             }
             else {
               //check if the value is in the first bit too
               if (equals < text.length() - 1) {
                 //we have stuff after equals, great
-                value = text.substring(equals + 1, text.length()).trim();
+                value = text.substring(equals + 1).trim();
               }
               else {
                 //nothing after equals, so we just get the next element

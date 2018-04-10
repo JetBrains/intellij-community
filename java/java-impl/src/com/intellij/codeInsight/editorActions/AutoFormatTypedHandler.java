@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -47,7 +48,7 @@ import java.util.List;
 public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   private static boolean myIsEnabledInTests;
   
-  private static char[] NO_SPACE_AFTER = { 
+  private static final char[] NO_SPACE_AFTER = {
     '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' ' 
   };
 
@@ -185,7 +186,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     PsiFile file = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
     if (file != null) {
       Language language = file.getLanguage();
-      CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+      CodeStyleSettings settings = CodeStyle.getSettings(editor);
       CommonCodeStyleSettings common = settings.getCommonSettings(language);
       return common.SPACE_AROUND_ASSIGNMENT_OPERATORS;
     }

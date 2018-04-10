@@ -1,35 +1,20 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
 import java.util.*;
 
 /**
- * This class provides a generic graph infrastructure with ability to store particular data. The main purpose is to 
+ * This class provides a generic graph infrastructure with ability to store particular data. The main purpose is to
  * allow easy extensible data domain construction.
  * <p/>
  * Example: we might want to describe project model like 'project' which has multiple 'module' children where every
@@ -109,7 +94,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
    * the right class loader.
    * <p/>
    * This method is a no-op if the content is already built.
-   *  
+   *
    * @param loaders  class loaders which are assumed to be able to build object of the target content class
    */
   @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed"})
@@ -117,84 +102,16 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
     if (myData != null) {
       return;
     }
-    ObjectInputStream oIn = null;
+
     try {
-      oIn = new ObjectInputStream(new ByteArrayInputStream(myRawData)) {
-        @Override
-        protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
-          String name = desc.getName();
-          for (ClassLoader loader : loaders) {
-            try {
-              return Class.forName(name, false, loader);
-            }
-            catch (ClassNotFoundException e) {
-              // Ignore
-            }
-          }
-          return super.resolveClass(desc);
-        }
-
-        @Override
-        protected Class<?> resolveProxyClass(String[] interfaces) throws IOException, ClassNotFoundException {
-          for (ClassLoader loader : loaders) {
-            try {
-              return doResolveProxyClass(interfaces, loader);
-            }
-            catch (ClassNotFoundException e) {
-              // Ignore
-            }
-          }
-          return super.resolveProxyClass(interfaces);
-        }
-        
-        private Class<?> doResolveProxyClass(@NotNull String[] interfaces, @NotNull ClassLoader loader) throws ClassNotFoundException {
-          ClassLoader nonPublicLoader = null;
-          boolean hasNonPublicInterface = false;
-
-          // define proxy in class loader of non-public interface(s), if any
-          Class[] classObjs = new Class[interfaces.length];
-          for (int i = 0; i < interfaces.length; i++) {
-            Class cl = Class.forName(interfaces[i], false, loader);
-            if ((cl.getModifiers() & Modifier.PUBLIC) == 0) {
-              if (hasNonPublicInterface) {
-                if (nonPublicLoader != cl.getClassLoader()) {
-                  throw new IllegalAccessError(
-                    "conflicting non-public interface class loaders");
-                }
-              } else {
-                nonPublicLoader = cl.getClassLoader();
-                hasNonPublicInterface = true;
-              }
-            }
-            classObjs[i] = cl;
-          }
-          try {
-            return Proxy.getProxyClass(hasNonPublicInterface ? nonPublicLoader : loader, classObjs);
-          }
-          catch (IllegalArgumentException e) {
-            throw new ClassNotFoundException(null, e);
-          }
-        }
-      };
-      myData = (T)oIn.readObject();
-      myRawData = null;
-
+      myData = getSerializer().readData(myRawData, loaders);
       assert myData != null;
-    }
-    catch (IOException e) {
+      myRawData = null;
+    } catch (IOException|ClassNotFoundException e) {
       throw new IllegalStateException(
-        String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
-        e
-      );
-    }
-    catch (ClassNotFoundException e) {
-      throw new IllegalStateException(
-        String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
-        e
-      );
-    }
-    finally {
-      StreamUtil.closeStream(oIn);
+            String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
+            e
+          );
     }
   }
 
@@ -275,20 +192,20 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
     myUserData = new UserDataHolderBase();
   }
 
-  public byte[] getDataBytes() throws IOException {
-    if (myRawData != null) return myRawData;
-
-    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-    ObjectOutputStream oOut = new ObjectOutputStream(bOut);
+  public void checkIsSerializable() throws IOException {
+    if (myRawData != null) return;
+    ObjectOutputStream oOut = new ObjectOutputStream(NoopOutputStream.getInstance());
     try {
       oOut.writeObject(myData);
-      final byte[] bytes = bOut.toByteArray();
-      myRawData = bytes;
-      return bytes;
     }
     finally {
       oOut.close();
     }
+  }
+
+  public byte[] getDataBytes() throws IOException {
+    if (myRawData != null) return myRawData;
+    return getSerializer().getBytes(myData);
   }
 
   @Override
@@ -338,6 +255,22 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
     myParent = null;
     myRawData = null;
     myChildren.clear();
+  }
+
+  private DataNodeSerializer<T> getSerializer() {
+    switch (Registry.stringValue("ext.project.data.serializer")) {
+      case "auto":
+        if (SystemInfo.IS_AT_LEAST_JAVA9) {
+          return JDKSerializer.getInstance();
+        } else {
+          return FSTSerializer.getInstance();
+        }
+      case "jdk":
+        return JDKSerializer.getInstance();
+      case "fst":
+        return FSTSerializer.getInstance();
+    }
+    return JDKSerializer.getInstance();
   }
 
   @NotNull
@@ -406,5 +339,20 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
       copy.addChild(copy(child, copy));
     }
     return copy;
+  }
+
+  private static class NoopOutputStream extends OutputStream {
+
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    private static final NoopOutputStream ourInstance = new NoopOutputStream();
+
+    public static NoopOutputStream getInstance() {
+      return ourInstance;
+    }
+
+    private NoopOutputStream() {}
+
+    @Override
+    public void write(int b) throws IOException {}
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.dashboard.hyperlink;
 
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
@@ -25,6 +26,8 @@ import java.awt.event.MouseEvent;
  * @author Konstantin Aleev
  */
 public interface RunDashboardHyperlinkComponent {
+  Key<Object> AIMED_OBJECT = Key.create("RunDashboardAimedObject") ;
+
   void onClick(@NotNull MouseEvent event);
 
   void setAimed(boolean aimed);

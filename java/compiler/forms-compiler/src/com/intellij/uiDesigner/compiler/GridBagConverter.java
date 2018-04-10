@@ -15,9 +15,9 @@
  */
 package com.intellij.uiDesigner.compiler;
 
+import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.lw.*;
 
@@ -123,7 +123,7 @@ public class GridBagConverter {
       results.add(convert((JComponent) myComponents.get(i), (GridConstraints) myConstraints.get(i)));
     }
     //addFillerPanels(results);
-    final Result[] resultArray = (Result[])results.toArray(new Result[results.size()]);
+    final Result[] resultArray = (Result[])results.toArray(new Result[0]);
     if (myHGap > 0 || myVGap > 0) {
       applyGaps(resultArray);
     }

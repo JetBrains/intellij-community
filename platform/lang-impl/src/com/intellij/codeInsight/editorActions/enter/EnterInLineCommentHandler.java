@@ -17,7 +17,10 @@
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.editorActions.EnterHandler;
-import com.intellij.lang.*;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.Commenter;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -27,8 +30,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
@@ -45,11 +46,8 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
                                                       ? (CodeDocumentationAwareCommenter)languageCommenter : null;
     if (commenter == null) return Result.Continue;
     int caretOffset = caretOffsetRef.get().intValue();
-    if (isInLineComment(editor, caretOffset, commenter.getLineCommentTokenType())) {
-      Document document = editor.getDocument();
-      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-      PsiElement psiAtOffset = file.findElementAt(caretOffset);
-      if (psiAtOffset != null && psiAtOffset.getTextOffset() < caretOffset) {
+    if (isInLineComment(editor, caretOffset, commenter)) {
+        Document document = editor.getDocument();
         CharSequence text = document.getText();
         final int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
         if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
@@ -72,15 +70,16 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
           }
           return Result.Default;
         }
-      }
     }
     return Result.Continue;
   }
   
-  private static boolean isInLineComment(@NotNull Editor editor, int offset, IElementType lineCommentType) {
+  private static boolean isInLineComment(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
     if (offset < 1) return false;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-    return iterator.getTokenType() == lineCommentType;
+    String prefix = commenter.getLineCommentPrefix();
+    return iterator.getTokenType() == commenter.getLineCommentTokenType() 
+           && (iterator.getStart() + (prefix == null ?  0 : prefix.length())) <= offset;
   }
 }

@@ -65,7 +65,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   private void registerComponentInDisposer(@Nullable Object o) {
-    if (o instanceof Disposable && o != this) {
+    if (o instanceof Disposable && o != this && !(o instanceof MessageBus)) {
       if (myDisposableComponents.add(o))
         Disposer.register(this, (Disposable)o);
     }
@@ -140,7 +140,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   public void dispose() {
-    myMessageBus.dispose();
+    Disposer.dispose(myMessageBus);
     myDisposed = true;
   }
 

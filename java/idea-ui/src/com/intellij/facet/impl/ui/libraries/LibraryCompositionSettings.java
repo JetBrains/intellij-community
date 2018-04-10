@@ -52,7 +52,7 @@ public class LibraryCompositionSettings implements Disposable {
   private Library mySelectedLibrary;
   private boolean myDownloadLibraries;
   private LibraryDownloadSettings myDownloadSettings;
-  private Map<Library, ExistingLibraryEditor> myExistingLibraryEditors =
+  private final Map<Library, ExistingLibraryEditor> myExistingLibraryEditors =
     ContainerUtil.newIdentityTroveMap();
   private FrameworkLibraryProvider myLibraryProvider;
 

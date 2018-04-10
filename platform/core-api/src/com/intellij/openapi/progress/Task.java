@@ -91,9 +91,9 @@ public abstract class Task implements TaskInfo, Progressive {
    * <p>
    * Callback executed when run() throws an exception (except PCE).
    */
-  @SuppressWarnings("deprecation")
   public void onThrowable(@NotNull Throwable error) {
     if (error instanceof Exception) {
+      //noinspection deprecation
       onError((Exception)error);
     }
     else {
@@ -113,11 +113,6 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public final void queue() {
     ProgressManager.getInstance().run(this);
-  }
-
-  @Override
-  public String getProcessId() {
-    return "<unknown>";
   }
 
   @Override
@@ -237,7 +232,6 @@ public abstract class Task implements TaskInfo, Progressive {
     /**
      * to remove in IDEA 16
      */
-    @SuppressWarnings("deprecation")
     @Deprecated
     public DumbModeAction getDumbModeAction() {
       return DumbModeAction.NOTHING;

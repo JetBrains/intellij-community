@@ -1,10 +1,14 @@
 package com.jetbrains.env.python.dotNet;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.TestEnv;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -15,16 +19,13 @@ import java.io.IOException;
  *
  * @author Ilya.Kazakevich
  */
+@EnvTestTagsRequired(tags = "iron", skipOnOSes = {TestEnv.LINUX, TestEnv.MAC})
 public final class PyIronPythonTest extends PyEnvTestCase {
 
   /**
    * IronPython tag
    */
   static final String IRON_TAG = "iron";
-
-  public PyIronPythonTest() {
-    super(IRON_TAG);
-  }
 
   /**
    * Tests skeleton generation
@@ -104,8 +105,8 @@ public final class PyIronPythonTest extends PyEnvTestCase {
       null
     ) {
       @Override
-      public void runTestOn(@NotNull final String sdkHome) throws IOException, InvalidSdkException {
-        super.runTestOn(sdkHome);
+      public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws IOException, InvalidSdkException {
+        super.runTestOn(sdkHome, existingSdk);
         ApplicationManager.getApplication().runReadAction(() -> {
           final PyFile skeleton = (PyFile)myFixture.getFile();
           Assert.assertNotNull("System.Web does not contain class AspNetHostingPermissionLevel. Error generating stub? It has classes  " +

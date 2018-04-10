@@ -41,11 +41,13 @@ public class TemporaryPlacesInjector implements MultiHostInjector {
     myRegistry = registry;
   }
 
+  @Override
   @NotNull
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(PsiLanguageInjectionHost.class);
   }
 
+  @Override
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
     if (!(context instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost)context).isValidHost()) return;
     PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
@@ -60,7 +62,7 @@ public class TemporaryPlacesInjector implements MultiHostInjector {
     List<Trinity<PsiLanguageInjectionHost, InjectedLanguage,TextRange>> trinities =
       Collections.singletonList(Trinity.create(host, injectedLanguage, manipulator.getRangeInElement(host)));
     InjectorUtils.registerInjection(language, trinities, containingFile, registrar);
-    InjectorUtils.registerSupport(myRegistry.getLanguageInjectionSupport(), false, registrar);
+    InjectorUtils.registerSupport(myRegistry.getLanguageInjectionSupport(), false, context, language);
   }
 
 }

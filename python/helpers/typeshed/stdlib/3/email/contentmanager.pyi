@@ -2,13 +2,9 @@
 
 from typing import Any, Callable
 import sys
-import email.message
 from email.message import Message
 
 if sys.version_info >= (3, 4):
-
-    EmailMessage = email.message.EmailMessage
-    MIMEPart = email.message.MIMEPart
 
     class ContentManager:
         def __init__(self) -> None: ...

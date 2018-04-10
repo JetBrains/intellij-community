@@ -47,7 +47,7 @@ public abstract class FacetModelBase implements FacetModel {
         for (Facet facet : allFacets) {
           addUnderlyingFacets(facets, facet);
         }
-        mySortedFacets = facets.toArray(new Facet[facets.size()]);
+        mySortedFacets = facets.toArray(Facet.EMPTY_ARRAY);
       }
     }
     return mySortedFacets;

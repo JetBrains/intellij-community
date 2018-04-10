@@ -15,103 +15,247 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.checkin.StepIntersection;
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author irengrig
- *         Date: 2/18/11
- *         Time: 9:25 AM
- */
 public class IntersectionTest extends TestCase {
+  public void testEmpty() {
+    assertResult(
+      createData(
+      ),
+      createArea(
+        1, 1,  // 0
+        2, 2,  // 1
+        21, 21 // 2
+      )
+    );
+
+    assertResult(
+      createData(
+        10, 19, // 0
+        20, 21, // 1
+        22, 30  // 2
+      ),
+      createArea(
+      )
+    );
+  }
+
   public void testSimple() {
-    final Data second = new Data("second", 20, 21);
-    final Data third = new Data("third", 22, 30);
-    final Data[] data = {new Data("first", 10,19), second, third};
-    final Area[] areas = {new Area("Afirst", 1,1), new Area("Asecond", 2,2), new Area("Athird", 21,21)};
-    final StepIntersection<Data, Area> intersection = createIntersection(areas);
-    final List<Data> result = intersection.process(Arrays.asList(data));
-    Assert.assertTrue(result.size() == 1);
-    Assert.assertTrue(result.contains(second));
+    assertResult(
+      createData(
+        10, 19, // 0
+        20, 21, // 1
+        22, 30  // 2
+      ),
+      createArea(
+        1, 1,  // 0
+        2, 2,  // 1
+        21, 21 // 2
+      ),
+      1, 2
+    );
   }
 
   public void testAllBefore() {
-    final Data second = new Data("second", 20, 21);
-    final Data third = new Data("third", 22, 30);
-    final Data[] data = {new Data("first", 10,19), second, third};
-    final Area[] areas = {new Area("Afirst", 100,100), new Area("Asecond", 101,102), new Area("Athird", 210,210)};
-    final StepIntersection<Data, Area> intersection = createIntersection(areas);
-    final List<Data> result = intersection.process(Arrays.asList(data));
-    Assert.assertTrue(result.size() == 0);
+    assertResult(
+      createData(
+        10, 19, // 0
+        20, 21, // 1
+        22, 30  // 2
+      ),
+      createArea(
+        100, 100, // 0
+        101, 102, // 1
+        210, 210  // 2
+      )
+    );
   }
 
   public void testAllAfter() {
-    final Data second = new Data("second", 20, 21);
-    final Data third = new Data("third", 22, 30);
-    final Data[] data = {new Data("first", 10,19), second, third};
-    final Area[] areas = {new Area("Afirst", 1,1), new Area("Asecond", 2,2), new Area("Athird", 3,3)};
-    final StepIntersection<Data, Area> intersection = createIntersection(areas);
-    final List<Data> result = intersection.process(Arrays.asList(data));
-    Assert.assertTrue(result.size() == 0);
+    assertResult(
+      createData(
+        10, 19, // 0
+        20, 21, // 1
+        22, 30  // 2
+      ),
+      createArea(
+        1, 1, // 0
+        2, 2, // 1
+        3, 3  // 2
+      )
+    );
   }
 
   public void testChangeIterators() {
-    final Data first = new Data("first", 10, 20);
-    final Data fourth = new Data("fourth", 70, 80);
-    final Data[] data = {first, new Data("second", 30,40), new Data("third", 50,60), fourth, new Data("fifth", 90,100)};
-    final Area[] areas = {new Area("Afirst", 1,1), new Area("Asecond", 11,12), new Area("Athird", 21,21),
-      new Area("Afourth", 41,41), new Area("Afifth", 61,61), new Area("Asixth", 71,71)};
-    final StepIntersection<Data, Area> intersection = createIntersection(areas);
-    final List<Data> result = intersection.process(Arrays.asList(data));
-    Assert.assertTrue(result.size() == 2);
-    Assert.assertTrue(result.contains(first));
-    Assert.assertTrue(result.contains(fourth));
+    assertResult(
+      createData(
+        10, 20, // 0
+        30, 40, // 1
+        50, 60, // 2
+        70, 80, // 3
+        90, 100 // 4
+      ),
+      createArea(
+        1, 1,   // 0
+        11, 12, // 1
+        21, 21, // 2
+        41, 41, // 3
+        61, 61, // 4
+        71, 71  // 5
+      ),
+      0, 1,
+      3, 5
+    );
   }
 
   public void testAreasOneAfterAnother() {
-    final Data first = new Data("first", 77, 87);
-    final Data fourth = new Data("fourth", 140, 158);
-    final Data third = new Data("third", 225, 238);
-    final Data fifth = new Data("fifth", 449, 456);
-    final Data[] data = {first, fourth, third, fifth};
-    final Area[] areas = {new Area("Afirst", 0,204), new Area("Asecond", 205,238), new Area("Athird", 239,457)};
-    final StepIntersection<Data, Area> intersection = createIntersection(areas);
-    final List<Data> result = intersection.process(Arrays.asList(data));
-    Assert.assertEquals(4, result.size());
-    Assert.assertTrue(result.contains(third));
-    Assert.assertTrue(result.contains(first));
-    Assert.assertTrue(result.contains(fourth));
-    Assert.assertTrue(result.contains(fifth));
+    assertResult(
+      createData(
+        77, 87,   // 0
+        140, 158, // 1
+        225, 238, // 2
+        449, 456  // 3
+      ),
+      createArea(
+        0, 204,   // 0
+        205, 238, // 1
+        239, 457  // 2
+      ),
+      0, 0,
+      1, 0,
+      2, 1,
+      3, 2
+    );
   }
 
-  private StepIntersection<Data, Area> createIntersection(Area[] areas) {
-    return new StepIntersection<>(o -> o.getTextRange(), o -> o.getTextRange(), Arrays.asList(areas));
+  public void testMultipleIntersections() {
+    assertResult(
+      createData(
+        15, 100  // 0
+      ),
+      createArea(
+        0, 10,   // 0
+        12, 39,  // 1
+        10, 20,  // 2
+        25, 40,  // 3
+        60, 105, // 4
+        110, 120 // 5
+      ),
+      0, 1,
+      0, 2,
+      0, 3,
+      0, 4
+    );
+
+    assertResult(
+      createData(
+        0, 10,   // 0
+        12, 39,  // 1
+        10, 20,  // 2
+        25, 40,  // 3
+        60, 105, // 4
+        110, 120 // 5
+      ),
+      createArea(
+        15, 100  // 0
+      ),
+      1, 0,
+      2, 0,
+      3, 0,
+      4, 0
+    );
+  }
+
+  public void testSuspiciousCase() {
+    assertResult(
+      createData(
+        17, 34, // 0
+        39, 41, // 1
+        48, 51  // 2
+      ),
+      createArea(
+        3, 9,   // 0
+        10, 11, // 1
+        13, 26, // 2
+        32, 46, // 3
+        66, 69  // 4
+      ),
+      0, 2,
+      0, 3,
+      1, 3
+    );
+  }
+
+
+  private static List<Data> createData(int... values) {
+    assert values.length % 2 == 0;
+
+    List<Data> result = new ArrayList<>();
+    for (int i = 0; i < values.length / 2; i++) {
+      result.add(new Data(i, values[2 * i], values[2 * i + 1]));
+    }
+    return result;
+  }
+
+  private static List<Area> createArea(int... values) {
+    assert values.length % 2 == 0;
+
+    List<Area> result = new ArrayList<>();
+    for (int i = 0; i < values.length / 2; i++) {
+      result.add(new Area(i, values[2 * i], values[2 * i + 1]));
+    }
+    return result;
+  }
+
+  private static void assertResult(List<Data> datas, List<Area> areas, int... values) {
+    List<Pair<Data, Area>> result = new ArrayList<>();
+    StepIntersection.processIntersections(datas, areas, it -> it.getTextRange(), it -> it.getTextRange(),
+                                          (data, area) -> result.add(Pair.create(data, area)));
+
+    assert values.length % 2 == 0;
+    assertEquals(values.length / 2, result.size());
+    for (int i = 0; i < values.length / 2; i++) {
+      Pair<Integer, Integer> expected = Pair.create(values[2 * i], values[2 * i + 1]);
+      Pair<Integer, Integer> actual = Pair.create(result.get(i).first.index, result.get(i).second.index);
+      assertEquals(expected, actual);
+    }
   }
 
   private static class Data {
-    private final String myName;
-    private final int myFirst;
-    private final int mySecond;
+    private final int index;
+    private final int first;
+    private final int second;
 
-    protected Data(String name, int first, int second) {
-      myName = name;
-      myFirst = first;
-      mySecond = second;
+    protected Data(int index, int first, int second) {
+      this.index = index;
+      this.first = first;
+      this.second = second;
     }
 
     public TextRange getTextRange() {
-      return new TextRange(myFirst, mySecond);
+      return new TextRange(first, second);
     }
   }
 
-  private static class Area extends Data{
-    private Area(String name, int first, int second) {
-      super(name, first, second);
+  private static class Area {
+    private final int index;
+    private final int first;
+    private final int second;
+
+    protected Area(int index, int first, int second) {
+      this.index = index;
+      this.first = first;
+      this.second = second;
+    }
+
+    public TextRange getTextRange() {
+      return new TextRange(first, second);
     }
   }
 }

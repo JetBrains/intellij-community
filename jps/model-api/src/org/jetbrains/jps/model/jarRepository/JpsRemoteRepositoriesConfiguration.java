@@ -21,7 +21,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 25-Apr-17
  */
 public interface JpsRemoteRepositoriesConfiguration extends JpsElement {
   List<JpsRemoteRepositoryDescription> getRepositories();

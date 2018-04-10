@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -227,7 +226,7 @@ public class GrIntroduceFieldProcessor {
       anchor = PsiTreeUtil.getParentOfType(variable, GrStatement.class);
     }
     else {
-      anchor = GrIntroduceHandlerBase.findAnchor(replaced.toArray(new PsiElement[replaced.size()]), container);
+      anchor = GrIntroduceHandlerBase.findAnchor(replaced.toArray(PsiElement.EMPTY_ARRAY), container);
       GrIntroduceHandlerBase.assertStatement(anchor, myContext.getScope());
     }
 

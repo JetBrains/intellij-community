@@ -81,4 +81,6 @@ public abstract class GroovyQuickFixFactory {
   public abstract IntentionAction createInvestigateFix(String reason);
 
   public abstract GroovyFix createMultipleAssignmentFix(int size);
+
+  public abstract GroovyFix createSpreadArgumentFix(int size);
 }

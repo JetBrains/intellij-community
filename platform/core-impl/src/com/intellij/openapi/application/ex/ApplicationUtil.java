@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.Callable;
@@ -42,7 +41,7 @@ public class ApplicationUtil {
 
   public static void tryRunReadAction(@NotNull final Runnable computable) throws CannotRunReadActionException {
     if (!((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(computable)) {
-      throw new CannotRunReadActionException();
+      throw CannotRunReadActionException.create();
     }
   }
 
@@ -92,17 +91,16 @@ public class ApplicationUtil {
   }
 
   public static class CannotRunReadActionException extends ProcessCanceledException {
-    public CannotRunReadActionException() {
-    }
-
-    // NB. When &@$ing ForkJoinTask joins task which was exceptionally completed from the other thread
+    // When ForkJoinTask joins task which was exceptionally completed from the other thread
     // it tries to re-create that exception (by reflection) and sets its cause to the original exception.
     // That horrible hack causes all sorts of confusion when we try to analyze the exception cause, e.g. in GlobalInspectionContextImpl.inspectFile().
-    // To prevent creation of unneeded wrapped exception we supply this method as a bait which stupid ForkJoinTask calls and immediately poisons itself,
-    // causing the original exception to be used unwrapped. (see ForkJoinTask.getThrowableException())
-    @SuppressWarnings("unused")
-    public CannotRunReadActionException(@Nullable Throwable cause) {
-      throw this;
+    // To prevent creation of unneeded wrapped exception we restrict constructor visibility to private so that stupid ForkJoinTask has no choice
+    // but to use the original exception. (see ForkJoinTask.getThrowableException())
+    public static CannotRunReadActionException create() {
+      return new CannotRunReadActionException();
     }
+    private CannotRunReadActionException() {
+    }
+
   }
 }

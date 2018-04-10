@@ -23,12 +23,11 @@ import java.io.*;
 /**
  * @author peter
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class Timings {
   private static final int IO_PROBES = 42;
 
   public static final long CPU_TIMING;
-  private static final CpuTimings CPU_TIMING_DATA;
   public static final long IO_TIMING;
 
   /**
@@ -38,40 +37,28 @@ public class Timings {
   public static final long REFERENCE_IO_TIMING = 100;
 
   static {
-    CPU_TIMING_DATA = CpuTimings.calcStableCpuTiming();
-    CPU_TIMING = CPU_TIMING_DATA.average;
+    CPU_TIMING = CpuTimings.calcStableCpuTiming();
 
     long start = System.currentTimeMillis();
     for (int i = 0; i < IO_PROBES; i++) {
       try {
         final File tempFile = FileUtil.createTempFile("test", "test" + i);
 
-        final FileWriter writer = new FileWriter(tempFile);
-        try {
+        try (FileWriter writer = new FileWriter(tempFile)) {
           for (int j = 0; j < 15; j++) {
             writer.write("test" + j);
             writer.flush();
           }
         }
-        finally {
-          writer.close();
-        }
 
-        final FileReader reader = new FileReader(tempFile);
-        try {
-          while (reader.read() >= 0) {}
-        }
-        finally {
-          reader.close();
+        try (FileReader reader = new FileReader(tempFile)) {
+          while (reader.read() >= 0) {
+          }
         }
 
         if (i == IO_PROBES - 1) {
-          final FileOutputStream stream = new FileOutputStream(tempFile);
-          try {
+          try (FileOutputStream stream = new FileOutputStream(tempFile)) {
             stream.getFD().sync();
-          }
-          finally {
-            stream.close();
           }
         }
 
@@ -92,12 +79,12 @@ public class Timings {
    * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
    */
   public static int adjustAccordingToMySpeed(int value, boolean isParallelizable) {
-    return Math.max(1, (int)(1.0 * value * REFERENCE_CPU_TIMING / CPU_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.CORES_COUNT : 1));
+    return Math.max(1, (int)(1.0 * value * REFERENCE_CPU_TIMING / CPU_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.getJobPoolParallelism() : 1));
   }
 
   public static String getStatistics() {
-    return String.format("CPU=%d (%d%% reference CPU, sd=%.2f), I/O=%d (%d%% reference IO), %d cores",
-                         CPU_TIMING_DATA.average, CPU_TIMING * 100 / REFERENCE_CPU_TIMING, CPU_TIMING_DATA.stdDev,
+    return String.format("CPU=%d (%d%% reference CPU), I/O=%d (%d%% reference IO), %d cores",
+                         CPU_TIMING, CPU_TIMING * 100 / REFERENCE_CPU_TIMING,
                          IO_TIMING, IO_TIMING * 100 / REFERENCE_IO_TIMING, Runtime.getRuntime().availableProcessors());
   }
 }

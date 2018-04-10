@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -53,6 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
+import static org.jetbrains.plugins.groovy.intentions.base.IntentionUtils.createTemplateForMethod;
+
 /**
  * @author ilyas
  */
@@ -68,19 +55,10 @@ public abstract class CreateClassFix {
         GroovyFileBase groovyFile = (GroovyFileBase)file;
         final PsiManager manager = myRefElement.getManager();
 
-        final String qualifier;
-        final String name;
-        final Module module;
-        final AccessToken accessToken = ReadAction.start();
-        try {
-          qualifier = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
-          name = myRefElement.getReferenceName();
-          assert name != null;
-          module = ModuleUtilCore.findModuleForPsiElement(file);
-        }
-        finally {
-          accessToken.finish();
-        }
+        final String qualifier = ReadAction.compute(() -> groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "");
+        final String name = ReadAction.compute(() -> myRefElement.getReferenceName());
+        assert name != null;
+        final Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(file));
 
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module, getText());
         if (targetDirectory == null) return;
@@ -104,13 +82,7 @@ public abstract class CreateClassFix {
 
   @Nullable
   private static PsiType[] getArgTypes(GrReferenceElement refElement) {
-    final AccessToken accessToken = ReadAction.start();
-    try {
-      return PsiUtil.getArgumentTypes(refElement, false);
-    }
-    finally {
-      accessToken.finish();
-    }
+    return ReadAction.compute(() -> PsiUtil.getArgumentTypes(refElement, false));
   }
 
   private static void generateConstructor(@NotNull PsiElement refElement,
@@ -136,7 +108,7 @@ public abstract class CreateClassFix {
 
       method = (GrMethod)targetClass.addBefore(method, null);
       final PsiElement context = PsiTreeUtil.getParentOfType(refElement, PsiMethod.class, PsiClass.class, PsiFile.class);
-      IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, targetClass, TypeConstraint.EMPTY_ARRAY, true, context);
+      createTemplateForMethod(paramTypesExpressions, method, targetClass, TypeConstraint.EMPTY_ARRAY, true, context);
     });
   }
 

@@ -106,9 +106,9 @@ public class PyExecuteSelectionAction extends AnAction {
   public static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @Nullable final String selectionText) {
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     Project project = e.getProject();
-    Module module = e.getData(LangDataKeys.MODULE);
+    final boolean requestFocusToConsole = selectionText == null;
 
-    findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, selectionText, editor), editor, project, module);
+    findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, selectionText, editor), editor, project, requestFocusToConsole);
   }
 
   private static String getLineUnderCaret(Editor editor) {
@@ -143,7 +143,7 @@ public class PyExecuteSelectionAction extends AnAction {
     Presentation presentation = e.getPresentation();
 
     boolean enabled = false;
-    if (editor != null && isPython(editor)) {
+    if (isPython(editor)) {
       String text = getSelectionText(editor);
       if (text != null) {
         presentation.setText(EXECUTE_SELECTION_IN_CONSOLE);
@@ -162,7 +162,7 @@ public class PyExecuteSelectionAction extends AnAction {
     presentation.setVisible(enabled);
   }
 
-  private static boolean isPython(Editor editor) {
+  public static boolean isPython(Editor editor) {
     if (editor == null) {
       return false;
     }
@@ -178,7 +178,9 @@ public class PyExecuteSelectionAction extends AnAction {
   }
 
   private static void selectConsole(@NotNull DataContext dataContext, @NotNull Project project,
-                                    @NotNull final Consumer<PyCodeExecutor> consumer, @Nullable Editor editor) {
+                                    @NotNull final Consumer<PyCodeExecutor> consumer,
+                                    @Nullable Editor editor,
+                                    boolean requestFocusToConsole) {
     Collection<RunContentDescriptor> consoles = getConsoles(project);
 
     ExecutionHelper
@@ -193,8 +195,14 @@ public class PyExecuteSelectionAction extends AnAction {
               ContentManager contentManager = currentSession.getUI().getContentManager();
               Content content = contentManager.findContent("Console");
               contentManager.setSelectedContent(content);
-              if (editor != null) {
-                IdeFocusManager.findInstance().requestFocus(editor.getContentComponent(), true);
+              // It's necessary to request focus again after tab selection
+              if (requestFocusToConsole) {
+                ((PythonDebugLanguageConsoleView)console).getPydevConsoleView().requestFocus();
+              }
+              else {
+                if (editor != null) {
+                  IdeFocusManager.findInstance().requestFocus(editor.getContentComponent(), true);
+                }
               }
             }
           }
@@ -238,24 +246,23 @@ public class PyExecuteSelectionAction extends AnAction {
     return processHandler != null && !processHandler.isProcessTerminated();
   }
 
-  private static void findCodeExecutor(@NotNull AnActionEvent e,
-                                       @NotNull Consumer<PyCodeExecutor> consumer,
-                                       @Nullable Editor editor,
-                                       @Nullable Project project,
-                                       @Nullable Module module) {
+  public static void findCodeExecutor(@NotNull AnActionEvent e,
+                                      @NotNull Consumer<PyCodeExecutor> consumer,
+                                      @Nullable Editor editor,
+                                      @Nullable Project project,
+                                      boolean requestFocusToConsole) {
     if (project != null) {
       if (canFindConsole(e)) {
-        selectConsole(e.getDataContext(), project, consumer, editor);
+        selectConsole(e.getDataContext(), project, consumer, editor, requestFocusToConsole);
       }
       else {
-        startConsole(project, consumer, module);
+        startConsole(project, consumer);
       }
     }
   }
 
   private static void startConsole(final Project project,
-                                   final Consumer<PyCodeExecutor> consumer,
-                                   Module context) {
+                                   final Consumer<PyCodeExecutor> consumer) {
     final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
     if (toolWindow != null && toolWindow.getConsoleContentDescriptors().size() > 0) {
@@ -282,7 +289,7 @@ public class PyExecuteSelectionAction extends AnAction {
           }
         }
       });
-      runner.run();
+      runner.run(false);
     }
   }
 

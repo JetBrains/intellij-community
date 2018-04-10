@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInspection.ui;
@@ -24,16 +12,14 @@ import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.IntSupplier;
-
-import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END;
 
 /**
  * @author max
@@ -47,13 +33,12 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolPresentation presentation) {
-    this(element, descriptor, presentation, true, null);
+    this(element, descriptor, presentation, null);
   }
 
   protected ProblemDescriptionNode(@Nullable RefEntity element,
                                    CommonProblemDescriptor descriptor,
                                    @NotNull InspectionToolPresentation presentation,
-                                   boolean doInit,
                                    @Nullable IntSupplier lineNumberCounter) {
     super(descriptor, presentation);
     myElement = element;
@@ -63,10 +48,18 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile.getErrorLevel(HighlightDisplayKey.find(shortName), ((ProblemDescriptor)descriptor).getStartElement())
               : profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
-    if (doInit) {
-      init(presentation.getContext().getProject());
-    }
-    myLineNumber = myDescriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)myDescriptor).getLineNumber() : (lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt());
+    myLineNumber = myDescriptor instanceof ProblemDescriptor
+                   ? ((ProblemDescriptor)myDescriptor).getLineNumber()
+                   : lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt();
+  }
+
+  @Nullable
+  public String getToolTipText() {
+    if (!isValid()) return null;
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor == null) return null;
+    PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+    return ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, false);
   }
 
   @Override
@@ -88,19 +81,37 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return getPresentation().getToolWrapper();
   }
 
+  @Override
   @Nullable
   public RefEntity getElement() {
     return myElement;
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor getDescriptor() {
     return myDescriptor;
   }
 
   @Override
-  public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
-    if (!isExcluded() && !isQuickFixAppliedFromView() && !isAlreadySuppressedFromView()) {
+  public void excludeElement() {
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor != null) {
+      getPresentation().exclude(descriptor);
+    }
+  }
+
+  @Override
+  public void amnestyElement() {
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor != null) {
+      getPresentation().amnesty(descriptor);
+    }
+  }
+
+  @Override
+  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+    if (isValid() && !isExcluded() && !isQuickFixAppliedFromView() && !isAlreadySuppressedFromView()) {
       counter.put(myLevel, counter.get(myLevel) + 1);
     }
   }
@@ -117,11 +128,11 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  protected void dropCache(Project project) {
-    if (!isQuickFixAppliedFromView()) {
-      super.dropCache(project);
-    }
+  public boolean isExcluded() {
+    return getPresentation().isExcluded(getDescriptor());
   }
+
+  private static final WeakStringInterner NAME_INTERNER = new WeakStringInterner();
 
   @NotNull
   @Override
@@ -130,23 +141,20 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
-    return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, TRIM_AT_TREE_END));
+    String name = XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element,
+                                                                                         ProblemDescriptorUtil.TRIM_AT_TREE_END));
+    return NAME_INTERNER.intern(name);
   }
 
   @Override
   public boolean isQuickFixAppliedFromView() {
-    return (myDescriptor != null && getPresentation().isProblemResolved(myDescriptor)) && !isAlreadySuppressedFromView();
+    return myDescriptor != null && getPresentation().isProblemResolved(myDescriptor) && !isAlreadySuppressedFromView();
   }
 
   @Nullable
   @Override
   public String getTailText() {
-    if (isQuickFixAppliedFromView()) {
-      return "";
-    }
-    else {
-      final String text = super.getTailText();
-      return text == null ? "" : text;
-    }
+    final String text = super.getTailText();
+    return text == null ? "" : text;
   }
 }

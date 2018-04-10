@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -45,7 +46,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
   private static final Logger LOG = Logger.getInstance(StaticImportMethodQuestionAction.class);
   private final Project myProject;
   private final Editor myEditor;
-  private List<T> myCandidates;
+  private final List<T> myCandidates;
   private final SmartPsiElementPointer<? extends PsiElement> myRef;
 
   public StaticImportMethodQuestionAction(Project project,
@@ -91,6 +92,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     final Project project = toImport.getProject();
     final PsiElement element = myRef.getElement();
     if (element == null) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.import"), null, () ->
       AddSingleMemberStaticImportAction.bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass()));
   }
@@ -122,8 +124,9 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
           if (finalChoice) {
             return doFinalStep(() -> {
               PsiDocumentManager.getInstance(project).commitAllDocuments();
-              LOG.assertTrue(selectedValue.isValid());
-              doImport(selectedValue);
+              if (selectedValue.isValid()) {
+                doImport(selectedValue);
+              }
             });
           }
 
@@ -160,6 +163,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
             return PsiClassListCellRenderer.getContainerTextStatic(element);
           }
 
+          @Override
           public int getIconFlags() {
             return 0;
           }

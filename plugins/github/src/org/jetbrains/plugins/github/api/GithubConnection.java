@@ -313,7 +313,7 @@ public class GithubConnection {
   }
 
   public static abstract class PagedRequestBase<T> implements PagedRequest<T> {
-    @NotNull private String myPath;
+    @NotNull private final String myPath;
     @NotNull private final Collection<Header> myHeaders;
 
     private boolean myFirstRequest = true;

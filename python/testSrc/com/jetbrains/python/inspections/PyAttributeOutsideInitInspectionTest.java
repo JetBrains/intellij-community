@@ -15,9 +15,10 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class PyAttributeOutsideInitInspectionTest extends PyTestCase {
+public class PyAttributeOutsideInitInspectionTest extends PyInspectionTestCase {
 
   public void testTruePositive() {
     doTest();
@@ -32,10 +33,12 @@ public class PyAttributeOutsideInitInspectionTest extends PyTestCase {
   }
 
   public void testTestClass() {
+    myFixture.configureByFile("unittest.py");
     doTest();
   }
 
   public void testUnitTest() {
+    myFixture.configureByFile("unittest.py");
     doTest();
   }
 
@@ -67,10 +70,9 @@ public class PyAttributeOutsideInitInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile("unittest.py");
-    myFixture.configureByFile("inspections/PyAttributeOutsideInitInspection/" + getTestName(true) + ".py");
-    myFixture.enableInspections(PyAttributeOutsideInitInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyAttributeOutsideInitInspection.class;
   }
 }

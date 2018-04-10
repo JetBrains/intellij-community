@@ -8,7 +8,8 @@ class X {
   public void foo(Class<?> cls)
   {
     Stream.of(cls.getMethods())
-      .filter(method -> {
+      .filter(method ->//my comment to keep
+      {
           Class<?> c = method.getReturnType();
           return Collection.class.isAssignableFrom(c) || Map.class.isAssignableFrom(c);
       })

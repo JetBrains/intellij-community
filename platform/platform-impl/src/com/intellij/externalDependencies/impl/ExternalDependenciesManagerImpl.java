@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -26,8 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +39,7 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
     //noinspection unchecked
     return ((Comparable)o1).compareTo(o2);
   };
-  private List<ProjectExternalDependency> myDependencies = new ArrayList<>();
+  private final List<ProjectExternalDependency> myDependencies = new ArrayList<>();
   
   @NotNull
   @Override
@@ -85,11 +71,11 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
   }
 
   @Override
-  public void loadState(ExternalDependenciesState state) {
+  public void loadState(@NotNull ExternalDependenciesState state) {
     ArrayList<ProjectExternalDependency> oldDependencies = new ArrayList<>(myDependencies);
     myDependencies.clear();
     for (DependencyOnPluginState dependency : state.myDependencies) {
-      myDependencies.add(new DependencyOnPlugin(dependency.myId, dependency.myMinVersion, dependency.myMaxVersion, dependency.myChannel));
+      myDependencies.add(new DependencyOnPlugin(dependency.myId, dependency.myMinVersion, dependency.myMaxVersion));
     }
     if (!oldDependencies.equals(myDependencies) && !myDependencies.isEmpty()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
@@ -99,7 +85,7 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
 
   public static class ExternalDependenciesState {
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     public List<DependencyOnPluginState> myDependencies = new ArrayList<>();
   }
 }

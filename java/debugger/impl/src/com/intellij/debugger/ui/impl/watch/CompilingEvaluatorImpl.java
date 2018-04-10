@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,15 +23,18 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.io.File;
@@ -54,28 +45,29 @@ import java.util.function.Function;
 // todo: consider batching compilations in order not to start a separate process for every class that needs to be compiled
 public class CompilingEvaluatorImpl extends CompilingEvaluator {
   private Collection<ClassObject> myCompiledClasses;
+  private final Module myModule;
 
   public CompilingEvaluatorImpl(@NotNull Project project,
                                 @NotNull PsiElement context,
                                 @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
     super(project, context, data);
+    myModule = ModuleUtilCore.findModuleForPsiElement(context);
   }
 
   @Override
   @NotNull
   protected Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
     if (myCompiledClasses == null) {
-      Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(myPsiContext));
       List<String> options = new ArrayList<>();
       options.add("-encoding");
       options.add("UTF-8");
       List<File> platformClasspath = new ArrayList<>();
       List<File> classpath = new ArrayList<>();
       AnnotationProcessingConfiguration profile = null;
-      if (module != null) {
-        assert myProject.equals(module.getProject()) : module + " is from another project";
-        profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(module);
-        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      if (myModule != null) {
+        assert myProject.equals(myModule.getProject()) : myModule + " is from another project";
+        profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(myModule);
+        ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
         for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
           classpath.add(new File(s));
         }
@@ -89,8 +81,8 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
       // if compiler or debuggee version or both are unknown, let source and target be the compiler's defaults
       if (buildRuntimeVersion != null && debuggeeVersion != null) {
-        JavaSdkVersion minVersion = buildRuntimeVersion.ordinal() > debuggeeVersion.ordinal() ? debuggeeVersion : buildRuntimeVersion;
-        String sourceOption = getSourceOption(minVersion.getMaxLanguageLevel());
+        JavaSdkVersion minVersion = debuggeeVersion.compareTo(buildRuntimeVersion) < 0 ? debuggeeVersion : buildRuntimeVersion;
+        String sourceOption = JpsJavaSdkType.complianceOption(minVersion.getMaxLanguageLevel().toJavaVersion());
         options.add("-source");
         options.add(sourceOption);
         options.add("-target");
@@ -130,11 +122,6 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     return myCompiledClasses;
   }
 
-  @NotNull
-  private static String getSourceOption(@NotNull LanguageLevel languageLevel) {
-    return "1." + Integer.valueOf(3 + languageLevel.ordinal());
-  }
-
   private File generateTempSourceFile(File workingDir) throws IOException {
     Pair<String, String> fileData = ReadAction.compute(() -> {
       PsiFile file = myData.getGeneratedInnerClass().getContainingFile();
@@ -159,11 +146,14 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
       return ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
         try {
+          XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
+          JavaSdkVersion javaVersion = getJavaVersion(currentSession);
           ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
             project,
             findPhysicalContext(psiContext),
             fragmentFactory.apply(psiContext),
-            getGeneratedClassName());
+            getGeneratedClassName(),
+            javaVersion);
           if (data != null) {
             return new CompilingEvaluatorImpl(project, psiContext, data);
           }
@@ -187,5 +177,18 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       element = context;
     }
     return element;
+  }
+
+  @Nullable
+  public static JavaSdkVersion getJavaVersion(@Nullable XDebugSession session) {
+    if (session != null) {
+      XSuspendContext suspendContext = session.getSuspendContext();
+      if (suspendContext instanceof SuspendContextImpl) {
+        DebugProcessImpl debugProcess = ((SuspendContextImpl)suspendContext).getDebugProcess();
+        return JavaSdkVersion.fromVersionString(debugProcess.getVirtualMachineProxy().version());
+      }
+    }
+
+    return null;
   }
 }

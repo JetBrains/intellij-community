@@ -2,6 +2,8 @@ kwargs = {'foo': 'bar'}
 
 
 class Foo(object):
+    def __init__(self, **kwargs):
+        pass
 
     @classmethod
     def test(cls):

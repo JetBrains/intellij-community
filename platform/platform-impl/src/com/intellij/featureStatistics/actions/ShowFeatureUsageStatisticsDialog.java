@@ -40,8 +40,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.io.IOException;
-import java.io.StringReader;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -175,24 +173,19 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     splitter.setFirstComponent(topPanel);
 
-    final JEditorPane browser = TipUIUtil.createTipBrowser();
-    splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(browser));
+    final TipUIUtil.Browser browser = TipUIUtil.createBrowser();
+    splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(browser.getComponent()));
 
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         Collection selection = table.getSelection();
-        try {
-          if (selection.isEmpty()) {
-            browser.read(new StringReader(""), null);
-          }
-          else {
-            FeatureDescriptor feature = (FeatureDescriptor)selection.iterator().next();
-            TipUIUtil.openTipInBrowser(feature.getTipFileName(), browser, feature.getProvider());
-          }
+        if (selection.isEmpty()) {
+          browser.setText("");
         }
-        catch (IOException ex) {
-          LOG.info(ex);
+        else {
+          FeatureDescriptor feature = (FeatureDescriptor)selection.iterator().next();
+          TipUIUtil.openTipInBrowser(feature.getTipFileName(), browser, null);
         }
       }
     });

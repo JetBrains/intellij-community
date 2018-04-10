@@ -37,7 +37,7 @@ def list_tuple(cond):
 
 "%s %s" % named_tuple_func(True)
 "%s %s" % named_tuple_func(False)
-"%s %s %s" % named_tuple_func(False)
+"%s %s %s" % <warning descr="Too few arguments for format string">named_tuple_func(False)</warning>
 
 "%s" % primitive_types_func(True)
 "%s %s" % <warning descr="Too few arguments for format string">primitive_types_func(True)</warning>

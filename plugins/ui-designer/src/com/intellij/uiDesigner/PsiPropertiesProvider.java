@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.lw.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,14 +63,14 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
     for (final PsiMethod method : methods) {
       // it's a setter candidate.. try to find getter
 
-      if (!PropertyUtil.isSimplePropertySetter(method)) {
+      if (!PropertyUtilBase.isSimplePropertySetter(method)) {
         continue;
       }
-      final String name = PropertyUtil.getPropertyName(method);
+      final String name = PropertyUtilBase.getPropertyName(method);
       if (name == null) {
         throw new IllegalStateException();
       }
-      final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, name, false, true);
+      final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, name, false, true);
       if (getter == null) {
         continue;
       }

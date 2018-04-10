@@ -48,8 +48,8 @@ public class JarFileSystemImpl extends JarFileSystem {
   }
 
   @Override
-  public void setNoCopyJarForPath(String pathInJar) {
-    if (myNoCopyJarPaths == null || pathInJar == null) return;
+  public void setNoCopyJarForPath(@NotNull String pathInJar) {
+    if (myNoCopyJarPaths == null) return;
     int index = pathInJar.indexOf(JAR_SEPARATOR);
     if (index < 0) return;
     String path = FileUtil.toSystemIndependentName(pathInJar.substring(0, index));
@@ -119,7 +119,7 @@ public class JarFileSystemImpl extends JarFileSystem {
   @NotNull
   @Override
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
-    boolean useNewJarHandler = Registry.is("vfs.use.new.jar.handler");
+    boolean useNewJarHandler = Registry.is("vfs.use.new.jar.handler") && SystemInfo.isWindows;
     return VfsImplUtil.getHandler(this, entryFile, useNewJarHandler ? BasicJarHandler::new : JarHandler::new);
   }
 

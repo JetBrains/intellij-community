@@ -4,6 +4,20 @@ import java.util.*;
 
 public class TooBroadScope
 {
+
+    void noClassCastException() {
+        <error descr="Cannot resolve symbol 'a'">a</error> b;
+        <error descr="Unknown class: 'b'">b</error> renderer = new <error descr="Cannot resolve symbol 'b'">b</error>();
+    }
+
+    void looseThreads() {
+        Map before = Thread.getAllStackTraces();
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println(before);
+    }
+
     // Option "Only report variables that can be moved to inner blocks" is OFF
     public void test() {
         // Example #1
@@ -221,5 +235,27 @@ class T {
 
     private void reinitArray() {
         array = new String[5];
+    }
+}
+
+class TryWithResources {
+
+    void m() throws Throwable {
+        AutoCloseable <warning descr="Scope of variable 'closeable1' is too broad">closeable1</warning> = null;
+        try (closeable1) {}
+
+        AutoCloseable <warning descr="Scope of variable 'closeable2' is too broad">closeable2</warning> = null;
+        try (closeable2) {
+            System.out.println(closeable2);
+        }
+
+        AutoCloseable closeable3 = null;
+        try (closeable3) {
+            System.out.println(closeable3);
+        }
+        System.out.println(closeable3);
+
+        String s = "file.name";
+        try (java.io.FileInputStream in = new java.io.FileInputStream(s)) {}
     }
 }

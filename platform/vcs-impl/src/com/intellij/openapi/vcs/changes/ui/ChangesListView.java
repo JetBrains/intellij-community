@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CopyProvider;
@@ -34,6 +20,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -42,14 +29,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeListener;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
@@ -59,10 +48,11 @@ import static java.util.stream.Collectors.toList;
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
 public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAware {
   private final Project myProject;
-  private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
+  @NotNull private final ChangesGroupingSupport myGroupingSupport;
 
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
+  @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
   @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<Stream<VirtualFile>> IGNORED_FILES_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
@@ -70,6 +60,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   public ChangesListView(@NotNull Project project) {
     myProject = project;
+    myGroupingSupport = new ChangesGroupingSupport(myProject, this);
 
     setModel(TreeModelBuilder.buildEmpty(project));
 
@@ -79,7 +70,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
     myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
 
-    ChangesBrowserNodeRenderer renderer = new ChangesBrowserNodeRenderer(project, () -> myShowFlatten, true);
+    ChangesBrowserNodeRenderer renderer = new ChangesBrowserNodeRenderer(project, this::isShowFlatten, true);
     setCellRenderer(renderer);
 
     new TreeSpeedSearch(this, TO_TEXT_CONVERTER);
@@ -92,50 +83,66 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     return (DefaultTreeModel)super.getModel();
   }
 
-  public boolean isShowFlatten() {
-    return myShowFlatten;
+  public void addGroupingChangeListener(@NotNull PropertyChangeListener listener) {
+    myGroupingSupport.addPropertyChangeListener(listener);
   }
 
-  public void setShowFlatten(final boolean showFlatten) {
-    myShowFlatten = showFlatten;
+  public void removeGroupingChangeListener(@NotNull PropertyChangeListener listener) {
+    myGroupingSupport.removePropertyChangeListener(listener);
+  }
+
+  @NotNull
+  public ChangesGroupingSupport getGroupingSupport() {
+    return myGroupingSupport;
+  }
+
+  @NotNull
+  public ChangesGroupingPolicyFactory getGrouping() {
+    return myGroupingSupport.getGrouping();
+  }
+
+  public boolean isShowFlatten() {
+    return !myGroupingSupport.isDirectory();
   }
 
   public void updateModel(@NotNull DefaultTreeModel newModel) {
     TreeState state = TreeState.createOn(this, getRoot());
     state.setScrollToSelection(false);
-    DefaultTreeModel oldModel = getModel();
+    ChangesBrowserNode oldRoot = getRoot();
     setModel(newModel);
     ChangesBrowserNode newRoot = getRoot();
     expandPath(new TreePath(newRoot.getPath()));
     state.applyTo(this, newRoot);
-    expandDefaultChangeList(oldModel, newRoot);
+    expandDefaultChangeList(oldRoot, newRoot);
   }
 
-  private void expandDefaultChangeList(DefaultTreeModel oldModel, ChangesBrowserNode root) {
-    if (((ChangesBrowserNode)oldModel.getRoot()).getFileCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 1) {
-      TreeNode toExpand = null;
-      for (int i = 0; i < root.getChildCount(); i++) {
-        TreeNode node = root.getChildAt(i);
-        if (node instanceof ChangesBrowserChangeListNode && node.getChildCount() > 0) {
-          ChangeList object = ((ChangesBrowserChangeListNode)node).getUserObject();
-          if (object instanceof LocalChangeList) {
-            if (((LocalChangeList)object).isDefault()) {
-              toExpand = node;
-              break;
-            }
-          }
-        }
-      }
+  private void expandDefaultChangeList(ChangesBrowserNode oldRoot, ChangesBrowserNode root) {
+    if (oldRoot.getFileCount() != 0) return;
+    if (TreeUtil.collectExpandedPaths(this).size() != 1) return;
 
-      if (toExpand != null) {
-        expandPath(new TreePath(new Object[] {root, toExpand}));
+    //noinspection unchecked
+    Iterator<ChangesBrowserNode> nodes = ContainerUtil.<ChangesBrowserNode>iterate(root.children());
+    ChangesBrowserNode defaultListNode = ContainerUtil.find(nodes, node -> {
+      if (node instanceof ChangesBrowserChangeListNode) {
+        ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
+        return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
       }
-    }
+      return false;
+    });
+
+    if (defaultListNode == null) return;
+    if (defaultListNode.getChildCount() == 0) return;
+    if (defaultListNode.getChildCount() > 10000) return; // expanding lots of nodes is a slow operation (and result is not very useful)
+
+    expandPath(new TreePath(new Object[]{root, defaultListNode}));
   }
 
   @Override
   public void calcData(DataKey key, DataSink sink) {
-    if (key == VcsDataKeys.CHANGES) {
+    if (key == DATA_KEY) {
+      sink.put(DATA_KEY, this);
+    }
+    else if (key == VcsDataKeys.CHANGES) {
       sink.put(VcsDataKeys.CHANGES, getSelectedChanges().toArray(Change[]::new));
     }
     else if (key == VcsDataKeys.CHANGE_LEAD_SELECTION) {
@@ -151,13 +158,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       sink.put(VcsDataKeys.VIRTUAL_FILE_STREAM, getSelectedFiles());
     }
     else if (key == CommonDataKeys.NAVIGATABLE) {
-      VirtualFile file = getIfSingle(getSelectedFiles());
+      VirtualFile file = getIfSingle(getNavigatableFiles());
       if (file != null && !file.isDirectory()) {
         sink.put(CommonDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, file, 0));
       }
     }
     else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles()));
     }
     else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
       if (getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))) {
@@ -203,10 +210,23 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
         }
       }
     }
+    else if (key == ChangesGroupingSupport.KEY) {
+      sink.put(ChangesGroupingSupport.KEY, myGroupingSupport);
+    }
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedUnversionedFiles() {
+  public Stream<VirtualFile> getUnversionedFiles() {
+    //noinspection unchecked
+    Enumeration<ChangesBrowserNode> nodes = getRoot().children();
+    ChangesBrowserUnversionedFilesNode node = ContainerUtil.findInstance(ContainerUtil.iterate(nodes),
+                                                                         ChangesBrowserUnversionedFilesNode.class);
+    if (node == null) return Stream.empty();
+    return node.getFilesUnderStream();
+  }
+
+  @NotNull
+  public Stream<VirtualFile> getSelectedUnversionedFiles() {
     return getSelectedVirtualFiles(UNVERSIONED_FILES_TAG);
   }
 
@@ -221,7 +241,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
+  protected Stream<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
     return getSelectionNodesStream(tag)
       .flatMap(ChangesBrowserNode::getFilesUnderStream)
       .distinct();
@@ -276,7 +296,8 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       .map(file -> toHijackedChange(project, file))
       .filter(Objects::nonNull);
 
-    return Stream.concat(changes, hijackedChanges).distinct();
+    return Stream.concat(changes, hijackedChanges)
+      .filter(new DistinctChangePredicate());
   }
 
   @Nullable
@@ -302,7 +323,15 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   @NotNull
-  protected Stream<VirtualFile> getSelectedFiles() {
+  private Stream<VirtualFile> getSelectedFiles() {
+    return Stream.concat(
+      getAfterRevisionsFiles(getSelectedChanges()),
+      getSelectedVirtualFiles(null)
+    ).distinct();
+  }
+
+  @NotNull
+  private Stream<VirtualFile> getNavigatableFiles() {
     return Stream.concat(
       getFiles(getSelectedChanges()),
       getSelectedVirtualFiles(null)
@@ -321,7 +350,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       .filter(node -> node instanceof ChangesBrowserChangeNode)
       .map(ChangesBrowserChangeNode.class::cast)
       .map(ChangesBrowserChangeNode::getUserObject)
-      .distinct();
+      .filter(new DistinctChangePredicate());
   }
 
   @NotNull
@@ -388,5 +417,14 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   @Override
   public void dropSelectionButUnderPoint(final Point point) {
     TreeUtil.dropSelectionButUnderPoint(this, point);
+  }
+
+  private static class DistinctChangePredicate implements Predicate<Change> {
+    private final Set<Object> seen = ContainerUtil.newTroveSet(ChangeListChange.HASHING_STRATEGY);
+
+    @Override
+    public boolean test(Change change) {
+      return seen.add(change);
+    }
   }
 }

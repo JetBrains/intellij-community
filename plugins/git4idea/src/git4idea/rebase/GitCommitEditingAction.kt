@@ -15,8 +15,10 @@
  */
 package git4idea.rebase
 
+import com.intellij.dvcs.repo.Repository.State.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
@@ -33,6 +35,7 @@ import git4idea.GitUtil.getRepositoryManager
  */
 abstract class GitCommitEditingAction : DumbAwareAction() {
 
+  private val LOG = logger<GitCommitEditingAction>()
   private val COMMIT_NOT_IN_HEAD = "The commit is not in the current branch"
 
   override fun update(e: AnActionEvent) {
@@ -59,7 +62,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       return
     }
 
-    // editing merge commit is not allowed
+    // editing merge commit or root commit is not allowed
     val parents = commit.parents.size
     if (parents != 1) {
       e.presentation.isEnabled = false
@@ -133,4 +136,26 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
   private fun commitPushedToProtectedBranchError(protectedBranch: String)
     = "The commit is already pushed to protected branch '$protectedBranch'"
+
+  protected fun prohibitRebaseDuringRebase(e: AnActionEvent, operation: String, allowRebaseIfHeadCommit: Boolean = false) {
+    if (e.presentation.isEnabledAndVisible) {
+      val state = getRepository(e).state
+      if (state == NORMAL || state == DETACHED) return
+      if (state == REBASING && allowRebaseIfHeadCommit && isHeadCommit(e)) return
+
+      e.presentation.isEnabled = false
+      e.presentation.description = when (state) {
+        REBASING -> "Can't $operation during rebase"
+        MERGING -> "Can't $operation during merge"
+        else -> {
+          LOG.error(IllegalStateException("Unexpected state: $state"))
+          "Can't $operation during $state"
+        }
+      }
+    }
+  }
+
+  protected fun isHeadCommit(e: AnActionEvent): Boolean {
+    return getSelectedCommit(e).id.asString() == getRepository(e).currentRevision
+  }
 }

@@ -4,7 +4,7 @@ interface Main<A, B> {
   List<A> foo();
 }
 
-class MainImpl implements Main<Integer,String> {
+class MainImpl implements Main<Integer, String> {
   @Override
   public List<Integer> foo() {
     return bar();

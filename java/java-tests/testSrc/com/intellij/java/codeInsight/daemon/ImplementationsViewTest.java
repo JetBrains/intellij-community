@@ -140,7 +140,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     all.add(psiClass);
     all.addAll(classes);
     final ImplementationViewComponent component =
-      new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+      new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
     try {
       final String[] visibleFiles = component.getVisibleFiles();
       assertTrue(visibleFiles.length > 0);
@@ -171,7 +171,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     List<PsiElement> all = new ArrayList<>();
     all.add(psiClass);
     all.addAll(classes);
-    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
     assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
   }
 
@@ -188,7 +188,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     List<PsiElement> all = new ArrayList<>();
     all.add(psiClass);
     all.addAll(classes);
-    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
     assertContent(component, new String[]{"a.java (AFoo)", "a.java (Anonymous in IMPL in AFoo)"});
   }
 
@@ -209,10 +209,16 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     List<PsiElement> all = new ArrayList<>();
     all.add(psiMethod);
     all.addAll(methods);
-    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
     assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
   }
 
+  public void testOnVarKeyword() {
+    myFixture.configureByText("a.java", "class a {{ v<caret>ar s = \"\";}}");
+    PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+    assertInstanceOf(element, PsiClass.class);
+  }
+  
   public void testDefaultMethodOfFunctionalInterface() {
     myFixture.configureByText("a.java", "interface AFoo{\n" +
                                         "    default boolean a<caret>aa(){}\n" +
@@ -231,7 +237,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     List<PsiElement> all = new ArrayList<>();
     all.add(psiMethod);
     all.addAll(methods);
-    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
     assertContent(component, new String[]{"a.java (AFoo)"});
   }
 
@@ -271,7 +277,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     Collections.sort(all, (o1, o2) -> o1.getContainingClass().getQualifiedName()
       .compareTo(o2.getContainingClass().getQualifiedName()));
     final ImplementationViewComponent component =
-      new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+      new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
     assertContent(component, new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"});
   }
 

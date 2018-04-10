@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.svn.upgrade;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -11,7 +26,6 @@ import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,9 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
 
   private static final String STATUS = "\\s*(.+?)\\s*";
@@ -47,7 +58,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     FileStatusResultParser parser = new FileStatusResultParser(CHANGED_PATH, handler, new UpgradeStatusConvertor());
     UpgradeLineCommandListener listener = new UpgradeLineCommandListener(parser);
 
-    execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.upgrade, parameters, listener);
+    execute(myVcs, Target.on(path), SvnCommandName.upgrade, parameters, listener);
     listener.throwIfException();
   }
 

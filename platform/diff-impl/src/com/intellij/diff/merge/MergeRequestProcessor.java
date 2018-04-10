@@ -25,6 +25,8 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -224,7 +226,8 @@ public abstract class MergeRequestProcessor implements Disposable {
       myRequest.applyResult(result);
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.warn(e);
+      new Notification("Merge", "Can't Finish Merge Resolve", e.getMessage(), NotificationType.ERROR).notify(myProject);
     }
   }
 
@@ -326,13 +329,12 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Misc
   //
 
-  private boolean isFocused() {
-    return DiffUtil.isFocusedComponent(myProject, myPanel);
+  private boolean isFocusedInWindow() {
+    return DiffUtil.isFocusedComponentInWindow(myPanel);
   }
 
-  private void requestFocusInternal() {
-    JComponent component = getPreferredFocusedComponent();
-    if (component != null) component.requestFocusInWindow();
+  private void requestFocusInWindow() {
+    DiffUtil.requestFocusInWindow(getPreferredFocusedComponent());
   }
 
   //
@@ -458,13 +460,13 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
 
     @Override
-    public boolean isFocused() {
-      return MergeRequestProcessor.this.isFocused();
+    public boolean isFocusedInWindow() {
+      return MergeRequestProcessor.this.isFocusedInWindow();
     }
 
     @Override
-    public void requestFocus() {
-      MergeRequestProcessor.this.requestFocusInternal();
+    public void requestFocusInWindow() {
+      MergeRequestProcessor.this.requestFocusInWindow();
     }
 
     @Override

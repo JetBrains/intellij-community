@@ -136,12 +136,11 @@ public class ModifierChooser {
 
   private static boolean shouldSuggestModifiers(PsiElement element) {
     PsiElement parent = element.getParent();
-    while (parent != null && (parent instanceof PsiJavaCodeReferenceElement ||
-                              parent instanceof PsiErrorElement || parent instanceof PsiTypeElement ||
-                              parent instanceof PsiMethod || parent instanceof PsiVariable ||
-                              parent instanceof PsiDeclarationStatement || parent instanceof PsiImportList ||
-                              parent instanceof PsiDocComment ||
-                              element.getText().equals(parent.getText()))) {
+    while (parent instanceof PsiJavaCodeReferenceElement ||
+           parent instanceof PsiErrorElement || parent instanceof PsiTypeElement ||
+           parent instanceof PsiMethod || parent instanceof PsiVariable ||
+           parent instanceof PsiDeclarationStatement || parent instanceof PsiImportList ||
+           parent instanceof PsiDocComment) {
       parent = parent.getParent();
       if (parent instanceof JspClassLevelDeclarationStatement) {
         parent = parent.getContext();
@@ -150,14 +149,7 @@ public class ModifierChooser {
 
     if (parent == null) return false;
 
-    PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
-
-    if (parent instanceof PsiJavaFile || parent instanceof PsiClass) {
-      if (prev == null || JavaKeywordCompletion.END_OF_BLOCK.getValue().isAcceptable(element, prev.getParent())) {
-        return true;
-      }
-    }
-
-    return false;
+    return (parent instanceof PsiJavaFile || parent instanceof PsiClass) && 
+           JavaKeywordCompletion.isEndOfBlock(element);
   }
 }

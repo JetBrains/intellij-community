@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
@@ -119,7 +118,7 @@ public class PyRefactoringUtil {
       final int endOffset = element2.getTextOffset() + element2.getTextLength() - parent.getTextOffset();
 
       final String prefix = parentText.substring(0, startOffset);
-      final String suffix = parentText.substring(endOffset, parentText.length());
+      final String suffix = parentText.substring(endOffset);
       final TextRange textRange = TextRange.from(startOffset, endOffset - startOffset);
       final PsiElement fakeExpression = generator.createExpressionFromText(langLevel, prefix + "python" + suffix);
       if (PsiUtilCore.hasErrorElementChild(fakeExpression)) {

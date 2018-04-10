@@ -89,7 +89,6 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     final ChangeListChooser chooser =
       new ChangeListChooser(project, changeListManager.getChangeListsCopy(), changeListManager.getDefaultChangeList(),
                             VcsBundle.message("unshelve.changelist.chooser.title"), suggestedName) {
-        @Nullable
         @Override
         protected JComponent createDoNotAskCheckbox() {
           return createRemoveFilesStrategyCheckbox(project);

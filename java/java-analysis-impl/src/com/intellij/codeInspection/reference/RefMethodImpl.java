@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
@@ -33,7 +32,6 @@ import java.util.*;
 
 /**
  * @author max
- * Date: Oct 21, 2001
  */
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final List<RefMethod> EMPTY_METHOD_LIST = Collections.emptyList();
@@ -232,7 +230,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   private void initializeSuperMethods(PsiMethod method) {
-    if (getRefManager().isOfflineView()) return;
+    if (getRefManager().isOfflineView() || !getRefManager().isDeclarationsFound()) return;
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (getRefManager().belongsToScope(psiSuperMethod)) {
         RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(psiSuperMethod);
@@ -292,7 +290,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     checkForSuperCall(method);
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
-    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.getStatements().length == 0));
+    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.isEmpty()));
 
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
 
@@ -320,31 +318,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         myUnThrownExceptions = unThrownExceptions;
       }
     }
-
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) return;
-
-    final Collection<PsiClassType> exceptionTypes = getUnhandledExceptions(body, method, method.getContainingClass());
-    for (final PsiClassType exceptionType : exceptionTypes) {
-      updateThrowsList(exceptionType);
-    }
-  }
-
-  public static Set<PsiClassType> getUnhandledExceptions(PsiCodeBlock body, PsiMethod method, PsiClass containingClass) {
-    Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method, false);
-    Set<PsiClassType> unhandled = new HashSet<>(types);
-    if (method.isConstructor()) {
-      // there may be field initializer throwing exception
-      // that exception must be caught in the constructor
-      PsiField[] fields = containingClass.getFields();
-      for (final PsiField field : fields) {
-        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-        PsiExpression initializer = field.getInitializer();
-        if (initializer == null) continue;
-        unhandled.addAll(ExceptionUtil.collectUnhandledExceptions(initializer, field));
-      }
-    }
-    return unhandled;
   }
 
   public synchronized void removeUnThrownExceptions(PsiClass unThrownException) {
@@ -636,7 +609,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       PsiClass element = facade.findClass(exception, GlobalSearchScope.allScope(myManager.getProject()));
       if (element != null) result.add(element);
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
 

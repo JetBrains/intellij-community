@@ -40,6 +40,8 @@ public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement
 
   void addModule(@NotNull JpsModule module);
 
+  void removeModule(@NotNull JpsModule module);
+
   @NotNull
   List<JpsModule> getModules();
 

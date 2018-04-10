@@ -108,11 +108,11 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   public void apply() throws ConfigurationException {
     stopEditing();
     if (arePatternsModified()) {
-      TodoPattern[] patterns = myPatterns.toArray(new TodoPattern[myPatterns.size()]);
+      TodoPattern[] patterns = myPatterns.toArray(new TodoPattern[0]);
       TodoConfiguration.getInstance().setTodoPatterns(patterns);
     }
     if (areFiltersModified()) {
-      TodoFilter[] filters = myFilters.toArray(new TodoFilter[myFilters.size()]);
+      TodoFilter[] filters = myFilters.toArray(new TodoFilter[0]);
       TodoConfiguration.getInstance().setTodoFilters(filters);
     }
   }

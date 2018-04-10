@@ -1,21 +1,11 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -42,6 +32,8 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   private JPanel myMainPanel;
   private JCheckBox myTemporaryCheckBox;
   private JPanel myExpressionPanel;
+  private JPanel myLanguageChooserPanel;
+  private JCheckBox myLogStack;
   private XDebuggerExpressionComboBox myLogExpressionComboBox;
 
   public void init(Project project, XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
@@ -52,9 +44,11 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
           onCheckboxChanged();
         }
       };
-      myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, LOG_EXPRESSION_HISTORY_ID, myBreakpoint.getSourcePosition(), true);
-      JComponent logExpressionComponent = myLogExpressionComboBox.getComponent();
-      myLogExpressionPanel.add(logExpressionComponent, BorderLayout.CENTER);
+      myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, LOG_EXPRESSION_HISTORY_ID,
+                                                                myBreakpoint.getSourcePosition(), true, false);
+      myLanguageChooserPanel.add(myLogExpressionComboBox.getLanguageChooser(), BorderLayout.CENTER);
+      myLogExpressionPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myLogExpressionCheckBox)));
+      myLogExpressionPanel.add(myLogExpressionComboBox.getComponent(), BorderLayout.CENTER);
       myLogExpressionComboBox.setEnabled(false);
       boolean isLineBreakpoint = breakpoint instanceof XLineBreakpoint;
       myTemporaryCheckBox.setVisible(isLineBreakpoint);
@@ -71,7 +65,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
 
   @Override
   public boolean lightVariant(boolean showAllOptions) {
-    if (!showAllOptions && !myBreakpoint.isLogMessage() && myBreakpoint.getLogExpression() == null &&
+    if (!showAllOptions && !myBreakpoint.isLogMessage() && !myBreakpoint.isLogStack() && myBreakpoint.getLogExpression() == null &&
         (!(myBreakpoint instanceof XLineBreakpoint) || !((XLineBreakpoint)myBreakpoint).isTemporary()) ) {
       myMainPanel.setVisible(false);
       return true;
@@ -90,6 +84,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   @Override
   void loadProperties() {
     myLogMessageCheckBox.setSelected(myBreakpoint.isLogMessage());
+    myLogStack.setSelected(myBreakpoint.isLogStack());
 
     if (myBreakpoint instanceof XLineBreakpoint) {
       myTemporaryCheckBox.setSelected(((XLineBreakpoint)myBreakpoint).isTemporary());
@@ -106,6 +101,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   @Override
   void saveProperties() {
     myBreakpoint.setLogMessage(myLogMessageCheckBox.isSelected());
+    myBreakpoint.setLogStack(myLogStack.isSelected());
 
     if (myBreakpoint instanceof XLineBreakpoint) {
       ((XLineBreakpoint)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected());

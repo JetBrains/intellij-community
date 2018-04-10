@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.Condition;
@@ -26,10 +12,13 @@ import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UMethod;
-import org.jetbrains.uast.visitor.AbstractUastVisitor;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectionTool {
-  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions.and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class), Conditions.notInstanceOf(PsiTypeParameter.class));
+
+  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
+    Conditions.and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class),
+                   Conditions.notInstanceOf(PsiTypeParameter.class));
 
   /**
    * Override this to report problems at method level.
@@ -73,27 +62,27 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new UastVisitorAdapter(new AbstractUastVisitor() {
+    return new UastVisitorAdapter(new AbstractUastNonRecursiveVisitor() {
       @Override
-      public boolean visitClass(UClass node) {
+      public boolean visitClass(@NotNull UClass node) {
         addDescriptors(checkClass(node, holder.getManager(), isOnTheFly));
         return true;
       }
 
       @Override
-      public boolean visitMethod(UMethod node) {
+      public boolean visitMethod(@NotNull UMethod node) {
         addDescriptors(checkMethod(node, holder.getManager(), isOnTheFly));
         return true;
       }
 
       @Override
-      public boolean visitField(UField node) {
+      public boolean visitField(@NotNull UField node) {
         addDescriptors(checkField(node, holder.getManager(), isOnTheFly));
         return true;
       }
 
       @Override
-      public boolean visitFile(UFile node) {
+      public boolean visitFile(@NotNull UFile node) {
         addDescriptors(checkFile(node.getPsi(), holder.getManager(), isOnTheFly));
         return true;
       }
@@ -105,11 +94,11 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
           }
         }
       }
-    });
+    }, true);
   }
 
   @Override
-  public PsiNamedElement getProblemElement(final PsiElement psiElement) {
+  public PsiNamedElement getProblemElement(@NotNull final PsiElement psiElement) {
     return (PsiNamedElement)PsiTreeUtil.findFirstParent(psiElement, PROBLEM_ELEMENT_CONDITION);
   }
 }

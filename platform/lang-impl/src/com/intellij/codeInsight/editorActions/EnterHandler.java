@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
@@ -43,7 +44,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedIndentAdjuster;
@@ -301,6 +302,32 @@ public class EnterHandler extends BaseEnterHandler {
     return commenter.isDocumentationComment(comment);
   }
 
+  /**
+   * Adjusts indentation of the line with {@code offset} in {@code document}.
+   * 
+   * @param language used for code style extraction 
+   * @param document for indent adjustment
+   * @param editor   used for code style extraction
+   * @param offset   in {@code document} for indent adjustment
+   * @return new offset in the {@code document} after commit-free indent adjustment or 
+   *         {@code -1} if commit-free indent adjustment is unavailable in position.   
+   */
+  public static int adjustLineIndentNoCommit(Language language, @NotNull Document document, @NotNull Editor editor, int offset) {
+    final CharSequence docChars = document.getCharsSequence();
+    int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n") + 1;
+    int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
+    String newIndent = CodeStyleFacade.getInstance(editor.getProject()).getLineIndent(editor, language, offset, false);
+    if (newIndent == null) {
+      return -1;
+    }
+    if (newIndent == LineIndentProvider.DO_NOT_ADJUST) {
+      return offset;
+    }
+    int delta = newIndent.length() - (indentEnd - indentStart);
+    document.replaceString(indentStart, indentEnd, newIndent);
+    return offset <= indentEnd ? (indentStart + newIndent.length()) : (offset + delta);
+  }
+
   private static class DoEnterAction implements Runnable {
     
     private final DataContext myDataContext;
@@ -437,8 +464,12 @@ public class EnterHandler extends BaseEnterHandler {
         if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk
             || commentContext.slashSlash) 
         {
-          myOffset = adjustLineIndent(myDocument.getCharsSequence());
-          
+          final int offset = adjustLineIndentNoCommit(getLanguage(myDataContext), myDocument, myEditor, myOffset);
+          if (offset >= 0) {
+            myOffset = offset;
+            myIsIndentAdjustmentNeeded = false;
+          }
+
           if (commentContext.docAsterisk && !StringUtil.isEmpty(indentInsideJavadoc) && myOffset < myDocument.getTextLength()) {
             myDocument.insertString(myOffset + 1, indentInsideJavadoc);
             myOffset += indentInsideJavadoc.length();
@@ -446,7 +477,7 @@ public class EnterHandler extends BaseEnterHandler {
           }
 
           if (myForceIndent && indentInsideJavadoc != null) {
-            int indentSize = CodeStyleSettingsManager.getSettings(myProject).getIndentSize(myFile.getFileType());
+            int indentSize = CodeStyle.getSettings(myFile).getIndentSize(myFile.getFileType());
             myDocument.insertString(myOffset + 1, StringUtil.repeatSymbol(' ', indentSize));
             myCaretAdvance += indentSize;
           }
@@ -483,18 +514,6 @@ public class EnterHandler extends BaseEnterHandler {
         LogicalPosition pos = new LogicalPosition(caretPosition.line, caretPosition.column + myCaretAdvance);
         caretModel.moveToLogicalPosition(pos);
       }
-    }
-    
-    private int adjustLineIndent(CharSequence docChars) {
-      Language language = getLanguage(myDataContext);
-      int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, myOffset - 1, "\n") + 1;
-      int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
-      String newIndent = CodeStyleFacade.getInstance(getProject()).getLineIndent(myEditor, language, myOffset);
-      if (newIndent == null) return myOffset;
-      int delta = newIndent.length() - (indentEnd - indentStart);
-      myDocument.replaceString(indentStart, indentEnd, newIndent);
-      myIsIndentAdjustmentNeeded = false;
-      return myOffset <= indentEnd ? indentStart + newIndent.length() : myOffset + delta;
     }
 
     private void generateJavadoc(CodeDocumentationAwareCommenter commenter) throws IncorrectOperationException {

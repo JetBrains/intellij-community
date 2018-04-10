@@ -17,8 +17,6 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.reflectiveAccess.JavaReflectionMemberAccessInspection
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -31,11 +29,11 @@ class JavaReflectionMemberAccessTest : LightCodeInsightFixtureTestCase() {
 
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_5
     myFixture.enableInspections(inspection)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_1_5
+  override fun getProjectDescriptor(): LightProjectDescriptor =
+    LightCodeInsightFixtureTestCase.JAVA_8 // older mock JREs are missing some bits
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/javaReflectionMemberAccess"
 
@@ -48,6 +46,7 @@ class JavaReflectionMemberAccessTest : LightCodeInsightFixtureTestCase() {
   fun testConstructorExists() = doTest(true)
 
   fun testNewInstance() = doTest(true)
+  fun testBugs() = doTest(true)
 
 
   private fun doTest(checkExists: Boolean = false) {

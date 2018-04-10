@@ -33,10 +33,9 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -161,7 +160,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
         for (Map.Entry<PyExpression, PyCallableParameter> entry : result.getMappedParameters().entrySet()) {
           final PyType parameterType = entry.getValue().getArgumentType(context);
           final PyType argumentType = context.getType(entry.getKey());
-          if (!PyTypeChecker.match(parameterType, argumentType, context, new HashMap<>())) {
+          if (!PyTypeChecker.match(parameterType, argumentType, context)) {
             matched = false;
           }
         }
@@ -213,6 +212,34 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   public ASTNode getNameElement() {
     final PsiElement op = getPsiOperator();
     return op != null ? op.getNode() : null;
+  }
+
+  @Nullable
+  @Override
+  public PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    return isRightOperator(resolvedCallee) ? getRightExpression() : getChainedComparisonAwareLeftExpression();
+  }
+
+  @NotNull
+  @Override
+  public List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
+    return Collections.singletonList(isRightOperator(resolvedCallee) ? getChainedComparisonAwareLeftExpression() : getRightExpression());
+  }
+
+  public boolean isRightOperator(@Nullable PyCallable resolvedCallee) {
+    return resolvedCallee != null && PyNames.isRightOperatorName(getReferencedName(), resolvedCallee.getName());
+  }
+
+  @Nullable
+  private PyExpression getChainedComparisonAwareLeftExpression() {
+    final PyExpression leftOperand = getLeftExpression();
+    if (PyTokenTypes.COMPARISON_OPERATIONS.contains(getOperator())) {
+      final PyBinaryExpression leftBinaryExpr = as(leftOperand, PyBinaryExpression.class);
+      if (leftBinaryExpr != null && PyTokenTypes.COMPARISON_OPERATIONS.contains(leftBinaryExpr.getOperator())) {
+        return leftBinaryExpr.getRightExpression();
+      }
+    }
+    return leftOperand;
   }
 
   private static boolean operandIsKnown(@Nullable PyExpression operand, @NotNull TypeEvalContext context) {

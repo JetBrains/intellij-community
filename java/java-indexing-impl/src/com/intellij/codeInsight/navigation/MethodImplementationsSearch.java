@@ -58,6 +58,6 @@ public class MethodImplementationsSearch implements QueryExecutor<PsiElement, De
   public static PsiMethod[] getMethodImplementations(final PsiMethod method, SearchScope scope) {
     List<PsiMethod> result = new ArrayList<>();
     processOverridingMethods(method, scope, new CommonProcessors.CollectProcessor<>(result));
-    return result.toArray(new PsiMethod[result.size()]);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 }

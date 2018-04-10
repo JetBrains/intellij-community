@@ -1,20 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.execution.util;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -26,13 +25,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +53,7 @@ public class ExecUtil {
       throw new IOException("Template '" + templateName + "' not found by " + loader);
     }
 
-    String template = FileUtil.loadTextAndClose(new InputStreamReader(stream, CharsetToolkit.UTF8));
+    String template = FileUtil.loadTextAndClose(new InputStreamReader(stream, StandardCharsets.UTF_8));
     if (variables == null || variables.size() == 0) {
       return template;
     }
@@ -74,7 +73,7 @@ public class ExecUtil {
   public static File createTempExecutableScript(@NotNull String prefix, @NotNull String suffix, @NotNull String content) throws IOException, ExecutionException {
     File tempDir = new File(PathManager.getTempPath());
     File tempFile = FileUtil.createTempFile(tempDir, prefix, suffix, true, true);
-    FileUtil.writeToFile(tempFile, content.getBytes(CharsetToolkit.UTF8));
+    FileUtil.writeToFile(tempFile, content.getBytes(StandardCharsets.UTF_8));
     if (!tempFile.setExecutable(true, true)) {
       throw new ExecutionException("Failed to make temp file executable: " + tempFile);
     }
@@ -93,12 +92,18 @@ public class ExecUtil {
 
   @NotNull
   public static String getWindowsShellName() {
-    return SystemInfo.isWin2kOrNewer ? "cmd.exe" : "command.com";
+    return CommandLineUtil.getWinShellName();
   }
 
   @NotNull
   public static ProcessOutput execAndGetOutput(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new CapturingProcessHandler(commandLine).runProcess();
+  }
+
+  @NotNull
+  public static ProcessOutput execAndGetOutput(@NotNull GeneralCommandLine commandLine, int timeoutInMilliseconds)
+    throws ExecutionException {
+    return new CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds);
   }
 
   @Nullable

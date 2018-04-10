@@ -17,6 +17,7 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
 
 import java.util.Collections;
 
@@ -32,6 +33,7 @@ public class JsonSchemaSelfHighligthingTest extends JsonSchemaHeavyAbstractTest 
   }
 
   public void testPatterns() throws Exception {
+    enableInspectionTool(new JsonSchemaComplianceInspection());
     skeleton(new Callback() {
       @Override
       public void registerSchemes() {

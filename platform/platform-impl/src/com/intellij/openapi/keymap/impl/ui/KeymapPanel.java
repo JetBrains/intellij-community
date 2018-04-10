@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,10 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.keymap.*;
+import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.keymap.KeyboardSettingsExternalizable;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
@@ -46,17 +49,24 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.SystemSettingsTouchBar;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -96,7 +106,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           );
         }
       });
-      preferKeyPositionOverCharOption.setBorder(new EmptyBorder(0, 0, 0, 0));
+      preferKeyPositionOverCharOption.setBorder(JBUI.Borders.empty());
       keymapPanel.add(preferKeyPositionOverCharOption, BorderLayout.SOUTH);
     }
 
@@ -202,6 +212,17 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         }
       }
     });
+
+    if (TouchBarsManager.isTouchBarAvailable()) {
+      final JCheckBox useFn = new JCheckBox("Always show FN-keys at TouchBar", SystemSettingsTouchBar.isShowFnKeysEnabled());
+      useFn.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent e) {
+          SystemSettingsTouchBar.setShowFnKeysEnabled(useFn.isSelected());
+        }
+      });
+      panel.add(useFn, BorderLayout.SOUTH);
+    }
+
     return panel;
   }
 
@@ -210,27 +231,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     DefaultActionGroup group = new DefaultActionGroup();
     final JComponent toolbar = ActionManager.getInstance().createActionToolbar("KeymapEdit", group, true).getComponent();
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
-    final TreeExpander treeExpander = new TreeExpander() {
-      @Override
-      public void expandAll() {
-        TreeUtil.expandAll(myActionsTree.getTree());
-      }
-
-      @Override
-      public boolean canExpand() {
-        return true;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeUtil.collapseAll(myActionsTree.getTree(), 0);
-      }
-
-      @Override
-      public boolean canCollapse() {
-        return true;
-      }
-    };
+    final TreeExpander treeExpander = createTreeExpander(myActionsTree);
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
 
@@ -251,7 +252,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
 
-    panel.add(toolbar, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8, 0, 0, 0), 0, 0));
+    panel.add(toolbar, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsTop(8), 0, 0));
     group = new DefaultActionGroup();
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Keymap", group, true);
     actionToolbar.setReservePlaceAutoPopupIcon(false);
@@ -281,7 +282,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     };
     myFilterComponent.reset();
 
-    panel.add(myFilterComponent, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(8, 0, 0, 0), 0, 0));
+    panel.add(myFilterComponent, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+                                                        JBUI.insetsTop(8), 0, 0));
 
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.shortcut.action.text"),
                                   KeyMapBundle.message("filter.shortcut.action.text"),
@@ -290,7 +292,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       public void actionPerformed(@NotNull AnActionEvent e) {
         myFilterComponent.reset();
         currentKeymapChanged();
-        myFilteringPanel.showPopup(searchToolbar);
+        myFilteringPanel.showPopup(searchToolbar, e.getInputEvent().getComponent());
       }
     });
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
@@ -313,16 +315,42 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
 
-    panel.add(searchToolbar, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(8, 0, 0, 0), 0, 0));
+    panel.add(searchToolbar, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, JBUI.insetsTop(8), 0, 0));
     return panel;
   }
 
+  @NotNull
+  public static TreeExpander createTreeExpander(ActionsTree actionsTree) {
+    return new TreeExpander() {
+      @Override
+      public void expandAll() {
+        TreeUtil.expandAll(actionsTree.getTree());
+      }
+
+      @Override
+      public boolean canExpand() {
+        return true;
+      }
+
+      @Override
+      public void collapseAll() {
+        TreeUtil.collapseAll(actionsTree.getTree(), 0);
+      }
+
+      @Override
+      public boolean canCollapse() {
+        return true;
+      }
+    };
+  }
+
   private void filterTreeByShortcut(Shortcut shortcut) {
-    myTreeExpansionMonitor.freeze();
+    boolean wasFreezed = myTreeExpansionMonitor.isFreeze();
+    if (!wasFreezed) myTreeExpansionMonitor.freeze();
     myActionsTree.filterTree(shortcut, myQuickLists);
     final JTree tree = myActionsTree.getTree();
     TreeUtil.expandAll(tree);
-    myTreeExpansionMonitor.restore();
+    if (!wasFreezed) myTreeExpansionMonitor.restore();
   }
 
   public void showOption(String option) {

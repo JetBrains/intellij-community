@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -33,6 +21,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
+import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,12 +47,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   @Override
-  @NotNull
-  public Object[] getParametersForDocumentation(Pair<PyCallExpression, PyMarkedCallee> callAndCallee, ParameterInfoContext context) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  @Override
   @Nullable
   public PyArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     final PyArgumentList argumentList = findArgumentList(context, -1);
@@ -76,9 +59,8 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
         context.setItemsToShow(
           PyUtil
-            .filterTopPriorityResults(call.multiResolveRatedCallee(resolveContext))
+            .filterTopPriorityResults(call.multiResolveCallee(resolveContext))
             .stream()
-            .map(PyCallExpression.PyRatedMarkedCallee::getMarkedCallee)
             .filter(markedCallee -> markedCallee.getCallableType().getParameters(typeEvalContext) != null)
             .map(markedCallee -> Pair.createNonNull(call, markedCallee))
             .toArray()
@@ -156,17 +138,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     }
 
     context.setCurrentParameter(offset);
-  }
-
-  @NotNull
-  @Override
-  public String getParameterCloseChars() {
-    return ",()"; // lpar may mean a nested tuple param, so it's included
-  }
-
-  @Override
-  public boolean tracksParameterIndex() {
-    return false;
   }
 
   @Override
@@ -256,7 +227,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         highlightIndex = marked.getImplicitOffset(); // no args, highlight first (PY-3690)
       }
       else if (lastParamIndex < parameterList.size() - 1) { // lastParamIndex not at end, or no args
-        if (indexToNamedParameter.get(lastParamIndex).isPositionalContainer()) {
+        if (!indexToNamedParameter.containsKey(lastParamIndex) || indexToNamedParameter.get(lastParamIndex).isPositionalContainer()) {
           highlightIndex = lastParamIndex; // stick to *arg
         }
         else {
@@ -406,7 +377,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) {
           indexToNamedParameter.put(currentParameterIndex[0], parameter);
           final StringBuilder stringBuilder = new StringBuilder();
-          stringBuilder.append(parameter.getPresentableText(true, context));
+          stringBuilder.append(parameter.getPresentableText(true, context, type -> type == null || type instanceof PyStructuralType));
           if (!last) stringBuilder.append(", ");
           final int hintIndex = hintsList.size();
           parameterToHintIndex.put(parameter, hintIndex);

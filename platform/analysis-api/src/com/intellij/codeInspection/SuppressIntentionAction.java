@@ -73,7 +73,6 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
    * @param project the project in which the file is opened.
    * @param editor  the editor for the file.
    * @param element the element under cursor.
-   * @throws IncorrectOperationException
    *
    */
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;

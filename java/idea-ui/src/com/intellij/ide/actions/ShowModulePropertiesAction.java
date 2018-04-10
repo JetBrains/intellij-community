@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 8, 2004
  */
 public class ShowModulePropertiesAction extends AnAction{
 

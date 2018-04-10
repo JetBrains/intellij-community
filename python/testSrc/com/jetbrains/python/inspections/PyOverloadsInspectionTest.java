@@ -15,10 +15,11 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
-public class PyOverloadsInspectionTest extends PyTestCase {
+public class PyOverloadsInspectionTest extends PyInspectionTestCase {
 
   // PY-22971
   public void testCorrect() {
@@ -40,15 +41,14 @@ public class PyOverloadsInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final String path = "inspections/PyOverloadsInspection/" + getTestName(true) + ".py";
-        myFixture.configureByFile(path);
-        myFixture.enableInspections(PyOverloadsInspection.class);
-        myFixture.checkHighlighting(true, false, true);
-      }
-    );
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyOverloadsInspection.class;
+  }
+
+  @Override
+  protected void doTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> super.doTest());
   }
 }

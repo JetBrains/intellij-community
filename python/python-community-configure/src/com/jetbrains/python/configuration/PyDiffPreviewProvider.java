@@ -44,7 +44,10 @@ public class PyDiffPreviewProvider extends DiffPreviewProvider {
                                                     "  def bar(self, a, b)\n" +
                                                     "\n" +
                                                     "    print a\n" +
-                                                    "    print b";
+                                                    "    print b\n" +
+                                                    "\n" +
+                                                    "\n" +
+                                                    "\n";
   @NonNls private static final String CENTER_TEXT = "class MyClass\n" +
                                                     "  value = 123\n" +
                                                     "\n" +
@@ -57,7 +60,10 @@ public class PyDiffPreviewProvider extends DiffPreviewProvider {
                                                     "  def bar(self, a, b)\n" +
                                                     "\n" +
                                                     "    print a\n" +
-                                                    "    print b";
+                                                    "    print b\n" +
+                                                    "\n" +
+                                                    "\n" +
+                                                    "\n";
   @NonNls private static final String RIGHT_TEXT =  "class MyClass\n" +
                                                     "  value = -123\n" +
                                                     "\n" +
@@ -71,5 +77,8 @@ public class PyDiffPreviewProvider extends DiffPreviewProvider {
                                                     "  def bar(self, a, b)\n" +
                                                     "    print a\n" +
                                                     "\n" +
-                                                    "    print b";
+                                                    "    print b\n" +
+                                                    "\n" +
+                                                    "\n" +
+                                                    "\n";
 }

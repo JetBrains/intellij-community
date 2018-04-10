@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
@@ -25,6 +12,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -103,6 +91,10 @@ public class DfaPsiUtil {
       return Nullness.NOT_NULL;
     }
 
+    if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
+      return Nullness.UNKNOWN;
+    }
+
     Nullness fromType = getTypeNullability(resultType);
     if (fromType != Nullness.UNKNOWN) return fromType;
 
@@ -110,23 +102,59 @@ public class DfaPsiUtil {
       return inferParameterNullability((PsiParameter)owner);
     }
 
+    if (owner instanceof PsiMethod) {
+      PsiField field = PropertyUtil.getFieldOfGetter((PsiMethod)owner);
+      if (field != null && getElementNullability(resultType, field) == Nullness.NULLABLE) {
+        return Nullness.NULLABLE;
+      }
+    }
+
     return Nullness.UNKNOWN;
+  }
+
+  private static boolean isMapMethodWithUnknownNullity(@NotNull PsiMethod method) {
+    String name = method.getName();
+    if (!"get".equals(name) && !"remove".equals(name)) return false;
+    PsiMethod superMethod = DeepestSuperMethodsSearch.search(method).findFirst();
+    return ("java.util.Map." + name).equals(PsiUtil.getMemberQualifiedName(superMethod != null ? superMethod : method));
   }
 
   @NotNull
   public static Nullness inferParameterNullability(@NotNull PsiParameter parameter) {
     PsiElement parent = parameter.getParent();
-    if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression) {
-      return getFunctionalParameterNullability((PsiLambdaExpression)parent.getParent(), ((PsiParameterList)parent).getParameterIndex(parameter));
+    if (parent instanceof PsiParameterList) {
+      PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiLambdaExpression) {
+        return getFunctionalParameterNullability((PsiLambdaExpression)gParent, ((PsiParameterList)parent).getParameterIndex(parameter));
+      } else if (gParent instanceof PsiMethod && DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodMatches((PsiMethod)gParent)) {
+        return Nullness.NULLABLE;
+      }
     }
     if (parent instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)parent).getIteratedValue();
-      if (iteratedValue != null) {
-        return getTypeNullability(JavaGenericsUtil.getCollectionItemType(iteratedValue));
-      }
+      return getTypeNullability(inferLoopParameterTypeWithNullability((PsiForeachStatement)parent));
     }
     return Nullness.UNKNOWN;
   }
+
+  @Nullable
+  private static PsiType inferLoopParameterTypeWithNullability(PsiForeachStatement loop) {
+    PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(loop.getIteratedValue());
+    if (iteratedValue == null) return null;
+
+    PsiType iteratedType = iteratedValue.getType();
+    if (iteratedValue instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)iteratedValue).resolve();
+      if (target instanceof PsiParameter && target.getParent() instanceof PsiForeachStatement) {
+        PsiForeachStatement targetLoop = (PsiForeachStatement)target.getParent();
+        if (PsiTreeUtil.isAncestor(targetLoop, loop, true) &&
+            !HighlightControlFlowUtil.isReassigned((PsiParameter)target, new HashMap<>())) {
+          iteratedType = inferLoopParameterTypeWithNullability(targetLoop);
+        }
+      }
+    }
+    return JavaGenericsUtil.getCollectionItemType(iteratedType, iteratedValue.getResolveScope());
+  }
+
 
   @NotNull
   public static Nullness getTypeNullability(@Nullable PsiType type) {
@@ -134,14 +162,14 @@ public class DfaPsiUtil {
 
     Ref<Nullness> result = Ref.create(Nullness.UNKNOWN);
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
-      result.set(getTypeOwnNullability(result, eachType));
+      result.set(getTypeOwnNullability(eachType));
       return result.get() == Nullness.UNKNOWN;
     });
     return result.get();
   }
 
   @NotNull
-  private static Nullness getTypeOwnNullability(Ref<Nullness> result, PsiType eachType) {
+  private static Nullness getTypeOwnNullability(PsiType eachType) {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
@@ -278,7 +306,7 @@ public class DfaPsiUtil {
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = ContainerUtil.newHashMap();
-        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, false) {
+        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, null) {
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction) ||
@@ -324,7 +352,7 @@ public class DfaPsiUtil {
             if (isCallExposingNonInitializedFields(instruction) ||
                 instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
               for (PsiField field : containingClass.getFields()) {
-                if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field, false))) {
+                if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field))) {
                   map.put(field, false);
                 } else if (!map.containsKey(field)) {
                   map.put(field, true);
@@ -362,8 +390,7 @@ public class DfaPsiUtil {
 
   private static MultiMap<PsiField, PsiExpression> getAllConstructorFieldInitializers(final PsiClass psiClass) {
     if (psiClass instanceof PsiCompiledElement) {
-      //noinspection unchecked
-      return MultiMap.EMPTY;
+      return MultiMap.empty();
     }
 
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MultiMap<PsiField, PsiExpression>>() {

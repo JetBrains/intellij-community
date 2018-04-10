@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +29,8 @@ import java.util.Set;
  *   These roots won't be indexed and will be handled as {@link LibraryEx#getExcludedRoots()}</li>
  *   <br>
  *   Generally, {@link #getSourceRoots()} are handled similarly to {@code library.getFiles(OrderRootType.SOURCES)}.
- *   <li>An item in "External Libraries" in Project view if library is instance of {@link ItemPresentation}</li>.
+ *   <li>An item in "External Libraries" in Project view if library returns true on {@link #isShowInExternalLibrariesNode()} and
+ *   is instance of {@link ItemPresentation}</li>.
  * </ul>
  * <p/>
  * To decorate a child node of "External Libraries" node in Project view consider implementing corresponding interfaces:
@@ -60,16 +49,13 @@ public abstract class SyntheticLibrary {
   public abstract Collection<VirtualFile> getSourceRoots();
 
   @NotNull
-  public Set<VirtualFile> getExcludedRoots() {
-    return Collections.emptySet();
+  public Collection<VirtualFile> getBinaryRoots() {
+    return Collections.emptyList();
   }
 
-  /**
-   * @deprecated use getExcludeFileCondition instead
-   */
-  @Nullable
-  public Condition<CharSequence> getExcludeCondition() {
-    return null;
+  @NotNull
+  public Set<VirtualFile> getExcludedRoots() {
+    return Collections.emptySet();
   }
 
   /**
@@ -80,13 +66,18 @@ public abstract class SyntheticLibrary {
    * <p>
    * NOTE: The condition is participating in building indexing and project model,
    * it must be bloody fast in order not to affect overall IDE performance.
+   * <p>
+   * NOTE 2: Try not to use file.getFileType() method since it might load file's content to know the type,
+   * which will try to load encoding and guess files project which is lead to SOE.
    */
   @Nullable
   public Condition<VirtualFile> getExcludeFileCondition() {
-    Condition<CharSequence> condition = getExcludeCondition();
-    return condition != null ? (f) -> condition.value(f.getNameSequence()) : null;
+    return null;
   }
 
+  public boolean isShowInExternalLibrariesNode() {
+    return this instanceof ItemPresentation;
+  }
 
   /**
    * This method is vital if this library is shown under "External Libraries" (the library should implement ItemPresentation for that).
@@ -119,46 +110,55 @@ public abstract class SyntheticLibrary {
   public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots,
                                                      @NotNull Set<VirtualFile> excludedRoots,
                                                      @Nullable Condition<VirtualFile> excludeCondition) {
-    return new SyntheticLibrary() {
-      @NotNull
-      @Override
-      public Collection<VirtualFile> getSourceRoots() {
+    return newImmutableLibrary(sourceRoots, Collections.emptySet(), excludedRoots, excludeCondition);
+  }
+
+  @NotNull
+  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots,
+                                                     @NotNull Collection<VirtualFile> binaryRoots,
+                                                     @NotNull Set<VirtualFile> excludedRoots,
+                                                     @Nullable Condition<VirtualFile> excludeCondition) {
+    return new ImmutableSyntheticLibrary(sourceRoots, binaryRoots, excludedRoots, excludeCondition);
+  }
+
+  @NotNull
+  public final Collection<VirtualFile> getAllRoots() {
+    return getRoots(true, true);
+  }
+
+  @NotNull
+  private Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
+    if (includeSources && includeBinaries) {
+      Collection<VirtualFile> sourceRoots = getSourceRoots();
+      Collection<VirtualFile> binaryRoots = getBinaryRoots();
+      if (binaryRoots.isEmpty()) {
         return sourceRoots;
       }
-
-      @NotNull
-      @Override
-      public Set<VirtualFile> getExcludedRoots() {
-        return excludedRoots;
+      if (sourceRoots.isEmpty()) {
+        return binaryRoots;
       }
+      return ContainerUtil.union(sourceRoots, binaryRoots);
+    }
+    if (includeSources) {
+      return getSourceRoots();
+    }
+    if (includeBinaries) {
+      return getBinaryRoots();
+    }
+    return Collections.emptySet();
+  }
 
-      @Nullable
-      @Override
-      public Condition<VirtualFile> getExcludeFileCondition() {
-        return excludeCondition;
-      }
+  public final boolean contains(@NotNull VirtualFile file, boolean includeSources, boolean includeBinaries) {
+    Set<VirtualFile> roots = asSet(getRoots(includeSources, includeBinaries));
+    return VfsUtilCore.isUnder(file, roots) && !VfsUtilCore.isUnder(file, getExcludedRoots());
+  }
 
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SyntheticLibrary library = (SyntheticLibrary)o;
-        if (!sourceRoots.equals(library.getSourceRoots())) return false;
-        if (!excludedRoots.equals(library.getExcludedRoots())) return false;
-        if (excludeCondition != null ? !excludeCondition.equals(library.getExcludeFileCondition())
-                                     : library.getExcludeFileCondition() != null) {
-          return false;
-        }
-        return true;
-      }
+  public final boolean contains(@NotNull VirtualFile file) {
+    return contains(file, true, true);
+  }
 
-      @Override
-      public int hashCode() {
-        int result = sourceRoots.hashCode();
-        result = 31 * result + excludedRoots.hashCode();
-        result = 31 * result + (excludeCondition != null ? excludeCondition.hashCode() : 0);
-        return result;
-      }
-    };
+  @NotNull
+  private static Set<VirtualFile> asSet(@NotNull Collection<VirtualFile> collection) {
+    return collection instanceof Set ? (Set)collection : ContainerUtil.newTroveSet(collection);
   }
 }

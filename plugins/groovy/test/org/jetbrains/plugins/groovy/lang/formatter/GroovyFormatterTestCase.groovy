@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.formatter
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
@@ -23,13 +24,13 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
+
 /**
  * @author peter
  */
@@ -63,7 +64,7 @@ abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
 
   protected void setSettings(Project project) {
     assertNull(myTempSettings)
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project)
+    CodeStyleSettings settings = CodeStyle.getSettings(project)
     myTempSettings = settings.clone()
 
     CommonCodeStyleSettings.IndentOptions gr = myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE)
@@ -73,17 +74,16 @@ abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
     gr.TAB_SIZE = 2
     myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3
 
-    CodeStyleSettingsManager.getInstance(project).setTemporarySettings(myTempSettings)
+    CodeStyle.setTemporarySettings(project, myTempSettings)
   }
 
   protected void setSettingsBack() {
-    final CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance(getProject())
     myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).INDENT_SIZE = 200
     myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).CONTINUATION_INDENT_SIZE = 200
     myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).TAB_SIZE = 200
 
     myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5
-    manager.dropTemporarySettings()
+    CodeStyle.dropTemporarySettings(getProject())
     myTempSettings = null
   }
 

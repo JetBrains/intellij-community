@@ -20,17 +20,16 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
-*/
 public class ShowAutoImportPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public ShowAutoImportPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
@@ -47,6 +46,10 @@ public class ShowAutoImportPassFactory extends AbstractProjectComponent implemen
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    return new ShowAutoImportPass(myProject, file, editor);
+    PsiManager manager = file.getManager();
+    if (manager != null && manager.isInProject(file) || ScratchFileService.isInScratchRoot(file.getVirtualFile())) {
+      return new ShowAutoImportPass(myProject, file, editor);
+    }
+    return null;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.*;
@@ -22,21 +8,18 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * {@code NestingTreeStructureProvider} moves some files in the Project View to be shown as children of another peer file. Standard use
@@ -52,60 +35,6 @@ import java.util.*;
 public class NestingTreeStructureProvider implements TreeStructureProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance(NestingTreeStructureProvider.class);
 
-  private long myBaseListModCount = -1;
-  private Set<NestingRule> myNestingRules;
-
-  @NotNull
-  private Collection<NestingRule> getNestingRules() {
-    final ProjectViewFileNestingService fileNestingService = ProjectViewFileNestingService.getInstance();
-    final List<NestingRule> baseRules = fileNestingService.getRules();
-    final long modCount = fileNestingService.getModificationCount();
-
-    if (myNestingRules == null || myBaseListModCount != modCount) {
-      myNestingRules = new THashSet<>();
-      myBaseListModCount = modCount;
-
-      final MultiMap<String, String> childToParentSuffix = new MultiMap<>();
-      final MultiMap<String, String> parentToChildSuffix = new MultiMap<>();
-
-      for (NestingRule rule : baseRules) {
-        final String parentFileSuffix = rule.getParentFileSuffix();
-        final String childFileSuffix = rule.getChildFileSuffix();
-        if (parentFileSuffix.isEmpty() || childFileSuffix.isEmpty()) continue; // shouldn't happen, checked on component loading and in UI
-        if (parentFileSuffix.equals(childFileSuffix)) continue; // shouldn't happen, checked on component loading and in UI
-
-        myNestingRules.add(rule);
-        childToParentSuffix.putValue(childFileSuffix, parentFileSuffix);
-        parentToChildSuffix.putValue(parentFileSuffix, childFileSuffix);
-
-        // for all cases like A -> B -> C we also add a rule A -> C
-        for (String s : parentToChildSuffix.get(childFileSuffix)) {
-          myNestingRules.add(new NestingRule(parentFileSuffix, s));
-          parentToChildSuffix.putValue(parentFileSuffix, s);
-          childToParentSuffix.putValue(s, parentFileSuffix);
-        }
-
-        for (String s : childToParentSuffix.get(parentFileSuffix)) {
-          myNestingRules.add(new NestingRule(s, childFileSuffix));
-          parentToChildSuffix.putValue(s, childFileSuffix);
-          childToParentSuffix.putValue(childFileSuffix, s);
-        }
-      }
-    }
-
-    return myNestingRules;
-  }
-
-  @NotNull
-  private static Collection<NestingRule> getNestingRulesStatic(@NotNull final Project project) {
-    for (TreeStructureProvider provider : Extensions.getExtensions(TreeStructureProvider.EP_NAME, project)) {
-      if (provider instanceof NestingTreeStructureProvider) {
-        return ((NestingTreeStructureProvider)provider).getNestingRules();
-      }
-    }
-    return Collections.emptyList();
-  }
-
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull final AbstractTreeNode parent,
@@ -114,10 +43,19 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     if (!(settings instanceof ProjectViewSettings) || !((ProjectViewSettings)settings).isUseFileNestingRules()) return children;
     if (!(parent instanceof PsiDirectoryNode)) return children;
 
-    final Collection<NestingRule> rules = getNestingRules();
-    if (rules.isEmpty()) return children;
+    final ArrayList<PsiFileNode> childNodes = new ArrayList<>();
+    for (AbstractTreeNode node : children) {
+      if (!(node instanceof PsiFileNode)) continue;
+      childNodes.add((PsiFileNode)node);
+    }
 
-    final MultiMap<PsiFileNode, PsiFileNode> parentToChildren = calcParentToChildren(children, rules);
+    Function<PsiFileNode, String> fileNameFunc = psiFileNode -> {
+      final PsiFile file = psiFileNode.getValue();
+      if (file == null) return null;
+      return file.getName();
+    };
+    FileNestingBuilder fileNestingBuilder = FileNestingBuilder.getInstance();
+    final MultiMap<PsiFileNode, PsiFileNode> parentToChildren = fileNestingBuilder.mapParentToChildren(childNodes, fileNameFunc);
     if (parentToChildren.isEmpty()) return children;
 
     // initial ArrayList size may be not exact, not a big problem
@@ -160,7 +98,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     final VirtualFile dir = parentFile.getParent();
     if (dir == null) return Collections.emptyList();
 
-    final Collection<NestingRule> rules = getNestingRulesStatic(project);
+    final Collection<NestingRule> rules = FileNestingBuilder.getInstance().getNestingRules();
     if (rules.isEmpty()) return Collections.emptyList();
 
     final VirtualFile[] children = dir.getChildren();
@@ -181,7 +119,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
       for (NestingRule rule : rulesWhereItCanBeChild) {
         final String childName = child.getName();
 
-        final Couple<Boolean> c = checkMatchingAsParentOrChild(rule, childName);
+        final Couple<Boolean> c = FileNestingBuilder.checkMatchingAsParentOrChild(rule, childName);
         final boolean matchesParent = c.first;
 
         if (matchesParent) {
@@ -195,7 +133,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
       for (NestingRule rule : rulesWhereItCanBeParent) {
         final String childName = child.getName();
 
-        final Couple<Boolean> c = checkMatchingAsParentOrChild(rule, childName);
+        final Couple<Boolean> c = FileNestingBuilder.checkMatchingAsParentOrChild(rule, childName);
         final boolean matchesChild = c.second;
 
         if (matchesChild) {
@@ -220,7 +158,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
                                                      final boolean parentNotChild) {
     final SmartList<NestingRule> result = new SmartList<>();
     for (NestingRule rule : rules) {
-      final Couple<Boolean> c = checkMatchingAsParentOrChild(rule, fileName);
+      final Couple<Boolean> c = FileNestingBuilder.checkMatchingAsParentOrChild(rule, fileName);
       final boolean matchesParent = c.first;
       final boolean matchesChild = c.second;
 
@@ -236,112 +174,6 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     }
 
     return result;
-  }
-
-  /*
-    This is a graph theory problem. PsiFileNodes are graph nodes.
-    Edges go from parent file to child file according to NestingRules, for example foo.js->foo.min.js.
-    Parent may have several children. Child may have several parents.
-    There may be cycles with 3 or more nodes, but cycle with 2 nodes (A->B and B->A) is impossible because parentFileSuffix != childFileSuffix
-    For each child its outbound edges are removed. For example in case of a cycle all edges that form it are removed. In case of A->B->C only A->B remains.
-    As a result we get a number of separated parent-to-many-children sub-graphs, and use them to nest child files under parent file in Project View.
-    One child still may have more than one parent. For real use cases it is not expected to happen, but anyway it's not a big problem, it will be shown as a subnode more than once.
-   */
-  @NotNull
-  private static MultiMap<PsiFileNode, PsiFileNode> calcParentToChildren(@NotNull final Collection<AbstractTreeNode> nodes,
-                                                                         @NotNull final Collection<NestingRule> rules) {
-    // result that will contain number of separated parent-to-many-children sub-graphs
-    MultiMap<PsiFileNode, PsiFileNode> parentToChildren = null;
-
-    Set<PsiFileNode> allChildNodes = null; // helps to remove all outbound edges of a node that has inbound edge itself
-    Map<Pair<String, NestingRule>, Edge<PsiFileNode>> baseNameAndRuleToEdge = null; // temporary map for building edges
-
-    for (AbstractTreeNode node : nodes) {
-      if (!(node instanceof PsiFileNode)) continue;
-
-      final PsiFile file = ((PsiFileNode)node).getValue();
-      if (file == null) continue;
-
-      for (NestingRule rule : rules) {
-        final String fileName = file.getName();
-
-        final Couple<Boolean> c = checkMatchingAsParentOrChild(rule, fileName);
-        final boolean matchesParent = c.first;
-        final boolean matchesChild = c.second;
-
-        if (!matchesChild && !matchesParent) continue;
-
-        if (baseNameAndRuleToEdge == null) {
-          baseNameAndRuleToEdge = new THashMap<>();
-          parentToChildren = new MultiMap<>();
-          allChildNodes = new THashSet<>();
-        }
-
-        if (matchesParent) {
-          final String baseName = fileName.substring(0, fileName.length() - rule.getParentFileSuffix().length());
-          final Edge<PsiFileNode> edge = getOrCreateEdge(baseNameAndRuleToEdge, baseName, rule);
-          edge.from = (PsiFileNode)node;
-          updateInfoIfEdgeComplete(parentToChildren, allChildNodes, edge);
-        }
-
-        if (matchesChild) {
-          final String baseName = fileName.substring(0, fileName.length() - rule.getChildFileSuffix().length());
-          final Edge<PsiFileNode> edge = getOrCreateEdge(baseNameAndRuleToEdge, baseName, rule);
-          edge.to = (PsiFileNode)node;
-          updateInfoIfEdgeComplete(parentToChildren, allChildNodes, edge);
-        }
-      }
-    }
-
-    return parentToChildren == null ? MultiMap.empty() : parentToChildren;
-  }
-
-  private static Couple<Boolean> checkMatchingAsParentOrChild(@NotNull final NestingRule rule, @NotNull final String fileName) {
-    boolean matchesParent = !fileName.equals(rule.getParentFileSuffix()) && fileName.endsWith(rule.getParentFileSuffix());
-    boolean matchesChild = !fileName.equals(rule.getChildFileSuffix()) && fileName.endsWith(rule.getChildFileSuffix());
-
-    if (matchesParent && matchesChild) {
-      if (rule.getParentFileSuffix().length() > rule.getChildFileSuffix().length()) {
-        matchesChild = false;
-      }
-      else {
-        matchesParent = false;
-      }
-    }
-
-    return Couple.of(matchesParent, matchesChild);
-  }
-
-  @NotNull
-  private static Edge<PsiFileNode> getOrCreateEdge(@NotNull final Map<Pair<String, NestingRule>, Edge<PsiFileNode>> baseNameAndRuleToEdge,
-                                                   @NotNull final String baseName,
-                                                   @NotNull final NestingRule rule) {
-    final Pair<String, NestingRule> baseNameAndRule = Pair.create(baseName, rule);
-
-    Edge<PsiFileNode> edge = baseNameAndRuleToEdge.get(baseNameAndRule);
-    if (edge == null) {
-      edge = new Edge<>();
-      baseNameAndRuleToEdge.put(baseNameAndRule, edge);
-    }
-    return edge;
-  }
-
-  private static void updateInfoIfEdgeComplete(@NotNull final MultiMap<PsiFileNode, PsiFileNode> parentToChildren,
-                                               @NotNull final Set<PsiFileNode> allChildNodes,
-                                               @NotNull final Edge<PsiFileNode> edge) {
-    if (edge.from != null && edge.to != null) { // if edge complete
-      allChildNodes.add(edge.to);
-      parentToChildren.remove(edge.to); // nodes that appear as a child shouldn't be a parent of another edge, corresponding edges removed
-      if (!allChildNodes.contains(edge.from)) {
-        parentToChildren.putValue(edge.from, edge.to);
-      }
-    }
-  }
-
-
-  private static class Edge<T> {
-    @Nullable private T from;
-    @Nullable private T to;
   }
 
   public static class ChildFileInfo {

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
 public abstract class CompositeConfigurable<T extends UnnamedConfigurable> extends BaseConfigurable {
@@ -54,8 +56,10 @@ public abstract class CompositeConfigurable<T extends UnnamedConfigurable> exten
     }
   }
 
+  @NotNull
   protected abstract List<T> createConfigurables();
 
+  @NotNull
   public List<T> getConfigurables() {
     if (myConfigurables == null) {
       myConfigurables = createConfigurables();

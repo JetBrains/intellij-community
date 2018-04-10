@@ -20,10 +20,12 @@ import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class XPathTypedHandler extends TypedHandlerDelegate {
+  @NotNull
   @Override
-  public Result checkAutoPopup(char charTyped, Project project, Editor editor, PsiFile file) {
+  public Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (charTyped == '$') {
       if (!(file instanceof XPathFile)) return Result.CONTINUE;
 

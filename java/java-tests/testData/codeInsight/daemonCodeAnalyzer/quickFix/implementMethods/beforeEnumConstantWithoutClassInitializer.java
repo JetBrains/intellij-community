@@ -1,6 +1,6 @@
 // "Implement methods" "true"
 enum E {
-    <caret>A;
+    <caret>A, B {};
 
     public abstract int foo();
 }

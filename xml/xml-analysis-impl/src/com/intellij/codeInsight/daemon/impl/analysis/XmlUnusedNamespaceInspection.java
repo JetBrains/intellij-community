@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.editor.Document;
@@ -196,12 +194,6 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
   private static String getNamespaceFromReference(PsiReference reference) {
     return reference.getRangeInElement().substring(reference.getElement().getText());
-  }
-
-  @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
   }
 
   @Override

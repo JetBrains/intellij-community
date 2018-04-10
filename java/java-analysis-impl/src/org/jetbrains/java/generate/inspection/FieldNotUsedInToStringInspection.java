@@ -18,7 +18,7 @@ package org.jetbrains.java.generate.inspection;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,11 +67,6 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
     }
 
     @Override
-    public void visitField(PsiField field) {
-      super.visitField(field);
-    }
-
-    @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       @NonNls final String methodName = method.getName();
@@ -79,7 +74,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
+      if (!parameterList.isEmpty()) {
         return;
       }
       final PsiType returnType = method.getReturnType();
@@ -105,13 +100,13 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
       for (PsiField field : visitor.getUnusedFields()) {
         final String fieldName = field.getName();
         myHolder.registerProblem(field.getNameIdentifier(), "Field '" + fieldName + "' is not used in 'toString()' method",
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, GenerateToStringQuickFix.getInstance());
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(myHolder));
       }
       for (PsiMethod unusedMethod : visitor.getUnusedMethods()) {
         final PsiIdentifier identifier = unusedMethod.getNameIdentifier();
         final PsiElement target = identifier == null ? unusedMethod : identifier;
         myHolder.registerProblem(target, "Method '" + unusedMethod.getName() + "' is not used in 'toString()' method",
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, GenerateToStringQuickFix.getInstance());
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(myHolder));
       }
     }
   }
@@ -145,7 +140,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         }
         else {
           myUnusedMethods.remove(method);
-          final PsiField field = PropertyUtil.findPropertyFieldByMember(method);
+          final PsiField field = PropertyUtilBase.findPropertyFieldByMember(method);
           myUnusedFields.remove(field);
         }
       }

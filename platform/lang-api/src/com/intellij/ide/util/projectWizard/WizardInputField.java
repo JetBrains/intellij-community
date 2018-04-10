@@ -26,7 +26,6 @@ import java.util.Map;
 /**
  * @see ProjectTemplateParameterFactory
  * @author Dmitry Avdeev
- *         Date: 2/1/13
  */
 public abstract class WizardInputField<T extends JComponent> {
 

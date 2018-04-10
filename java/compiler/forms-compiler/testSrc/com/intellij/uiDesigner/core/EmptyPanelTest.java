@@ -41,35 +41,22 @@ public final class EmptyPanelTest extends TestCase {
 
     // add component 
     final JButton button = new JButton();
-    button.setPreferredSize(new Dimension(100, 20));
+    button.setPreferredSize(new Dimension(100, 40));
     panel.add(button,
               new GridConstraints(0, 1, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_GROW,
-                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null,
-                                  0));
+                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     // wisdom
     layoutManager.invalidateLayout(panel);
 
-    if (SystemInfo.isMac) {
-      assertEquals(new Dimension(100, 29), panel.getPreferredSize());
-      panel.setSize(panel.getPreferredSize());
-      panel.doLayout();
-      assertEquals(100, button.getWidth());
-      assertEquals(29, panel.getHeight());
+    assertEquals(new Dimension(100, 40), panel.getPreferredSize());
+    panel.setSize(panel.getPreferredSize());
+    panel.doLayout();
+    assertEquals(100, button.getWidth());
+    assertEquals(40, panel.getHeight());
 
-      assertTrue(Arrays.equals(new int[]{0, 29}, layoutManager.getYs()));
-      assertTrue(Arrays.equals(new int[]{29, 0}, layoutManager.getHeights()));
-    }
-    else {
-      assertEquals(new Dimension(100, 20), panel.getPreferredSize());
-      panel.setSize(panel.getPreferredSize());
-      panel.doLayout();
-      assertEquals(100, button.getWidth());
-      assertEquals(20, panel.getHeight());
-
-      assertTrue(Arrays.equals(new int[]{0, 20}, layoutManager.getYs()));
-      assertTrue(Arrays.equals(new int[]{20, 0}, layoutManager.getHeights()));
-    }
+    assertTrue(Arrays.equals(new int[]{0, 40}, layoutManager.getYs()));
+    assertTrue(Arrays.equals(new int[]{40, 0}, layoutManager.getHeights()));
 
     assertTrue(Arrays.equals(new int[]{0, 0, 100}, layoutManager.getXs()));
     assertTrue(Arrays.equals(new int[]{0, 100, 0}, layoutManager.getWidths()));

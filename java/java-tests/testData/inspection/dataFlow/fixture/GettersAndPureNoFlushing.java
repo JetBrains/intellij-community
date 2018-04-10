@@ -12,10 +12,11 @@ class Doo {
   boolean pureSomething() { return false;}
 
   public void main2() {
+    // isSomething is non-pure: flush
     if (getMethod() == null && !isSomething()) {
       return;
     } else {
-      System.out.println(getMethod().<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+      System.out.println(getMethod().hashCode());
     }
   }
 

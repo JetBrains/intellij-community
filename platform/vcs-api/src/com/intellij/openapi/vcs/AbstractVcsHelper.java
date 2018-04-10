@@ -16,7 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -51,7 +51,7 @@ public abstract class AbstractVcsHelper {
 
   @NotNull
   public static AbstractVcsHelper getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, AbstractVcsHelper.class);
+    return ServiceManager.getService(project, AbstractVcsHelper.class);
   }
 
   public abstract void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName);
@@ -139,16 +139,12 @@ public abstract class AbstractVcsHelper {
     return showMergeDialog(files, provider);
   }
 
-  public abstract void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
-                                       @NotNull FilePath path,
-                                       @NotNull AbstractVcs vcs,
-                                       @Nullable String repositoryPath);
+  public abstract void showFileHistory(@NotNull VcsHistoryProvider historyProvider, @NotNull FilePath path, @NotNull AbstractVcs vcs);
 
   public abstract void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
                                        @Nullable AnnotationProvider annotationProvider,
                                        @NotNull FilePath path,
-                                       @Nullable String repositoryPath,
-                                       @NotNull final AbstractVcs vcs);
+                                       @NotNull AbstractVcs vcs);
   
   /**
    * Shows the "Rollback Changes" dialog with the specified list of changes.

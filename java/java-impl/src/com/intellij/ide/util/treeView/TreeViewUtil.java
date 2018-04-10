@@ -31,7 +31,6 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 6, 2004
  */
 public class TreeViewUtil {
   private static final int SUBPACKAGE_LIMIT = 2;

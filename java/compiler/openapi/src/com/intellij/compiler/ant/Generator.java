@@ -21,7 +21,6 @@ import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 16, 2004
  */
 public abstract class Generator {
   private static int ourIndent = 0;

@@ -1,110 +1,106 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.openapi.util.Getter;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
+import com.intellij.util.containers.Queue;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.IntStream;
 
-/**
- * @author anna
- * @since 14-May-2009
- */
 public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
-  private final ClearableLazyValue<Boolean> myProperSetting = new ClearableLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      ToolDescriptors descriptors = getDescriptors();
-      if (descriptors != null) {
-        final Descriptor defaultDescriptor = descriptors.getDefaultDescriptor();
-        return defaultDescriptor.getInspectionProfile().isProperSetting(defaultDescriptor.getToolWrapper().getShortName());
-      }
-      for (int i = 0; i < getChildCount(); i++) {
-        InspectionConfigTreeNode node = (InspectionConfigTreeNode)getChildAt(i);
-        if (node.isProperSetting()) {
-          return true;
-        }
-      }
-      return false;
-    }
-  };
+  private final ClearableLazyValue<Boolean> myProperSetting = ClearableLazyValue.create(this::calculateIsProperSettings);
 
   public static class Group extends InspectionConfigTreeNode {
     public Group(@NotNull String label) {
       setUserObject(label);
     }
+
+    @Override
+    protected boolean calculateIsProperSettings() {
+      return IntStream.range(0, getChildCount()).mapToObj(i -> (InspectionConfigTreeNode)getChildAt(i)).anyMatch(InspectionConfigTreeNode::isProperSetting);
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return getGroupName();
+    }
+
+    @NotNull
+    public String getGroupName() {
+      return (String)getUserObject();
+    }
   }
 
   public static class Tool extends InspectionConfigTreeNode {
-    @NotNull private final HighlightDisplayKey myKey;
-    @NotNull private final SingleInspectionProfilePanel myPanel;
+    private final Getter<ToolDescriptors> myGetter;
 
-    public Tool(@NotNull HighlightDisplayKey key, @NotNull SingleInspectionProfilePanel panel) {
-      myKey = key;
-      myPanel = panel;
+    public Tool(Getter<ToolDescriptors> getter) {
+      myGetter = getter;
     }
 
     @Override
     public Object getUserObject() {
-      return myPanel.getInitialToolDescriptors().get(myKey);
+      return myGetter.get();
+    }
+
+    @Override
+    protected boolean calculateIsProperSettings() {
+      final Descriptor defaultDescriptor = getDescriptors().getDefaultDescriptor();
+      return defaultDescriptor.getInspectionProfile().isProperSetting(defaultDescriptor.getToolWrapper().getShortName());
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return getDefaultDescriptor().getText();
+    }
+
+    public HighlightDisplayKey getKey() {
+      return getDefaultDescriptor().getKey();
+    }
+
+    @NotNull
+    public Descriptor getDefaultDescriptor() {
+      return getDescriptors().getDefaultDescriptor();
+    }
+
+    @NotNull
+    public ToolDescriptors getDescriptors() {
+      return (ToolDescriptors)getUserObject();
+    }
+
+
+    @Nullable
+    public String getScopeName() {
+      return getDescriptors().getDefaultScopeToolState().getScopeName();
     }
   }
 
-  public HighlightDisplayKey getKey() {
-    return getDefaultDescriptor().getKey();
-  }
 
-  @Nullable
-  public Descriptor getDefaultDescriptor() {
-    final ToolDescriptors descriptors = getDescriptors();
-    return descriptors == null ? null : descriptors.getDefaultDescriptor();
-  }
-
-  @Nullable
-  public ToolDescriptors getDescriptors() {
-    final Object userObject = getUserObject();
-    return userObject instanceof String ? null : (ToolDescriptors)userObject;
-  }
-
-  @Nullable
-  public String getGroupName() {
-
-    return userObject instanceof String ? (String)userObject : null;
-  }
-
-  @Nullable
-  public String getScopeName() {
-    final ToolDescriptors descriptors = getDescriptors();
-    return descriptors != null ? descriptors.getDefaultScopeToolState().getScopeName() : null;
-  }
-
-  public boolean isProperSetting() {
+  public final boolean isProperSetting() {
     return myProperSetting.getValue();
   }
 
-  public void dropCache() {
+  public final void dropCache() {
     myProperSetting.drop();
   }
+
+  protected abstract boolean calculateIsProperSettings();
+
+  @NotNull
+  public abstract String getText();
 
   @Override
   public String toString() {
@@ -116,5 +112,27 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
       return ((Descriptor)userObject).getText();
     }
     return super.toString();
+  }
+
+  public static void updateUpHierarchy(@NotNull InspectionConfigTreeNode node) {
+    updateUpHierarchy(Collections.singletonList(node));
+  }
+
+  public static void updateUpHierarchy(List<? extends InspectionConfigTreeNode> nodes) {
+    Queue<InspectionConfigTreeNode> q = new Queue<>(nodes.size());
+    Set<InspectionConfigTreeNode> alreadyUpdated = new THashSet<>();
+    for (InspectionConfigTreeNode node : nodes) {
+      q.addLast(node);
+    }
+    while (!q.isEmpty()) {
+      final InspectionConfigTreeNode inspectionConfigTreeNode = q.pullFirst();
+      if (!alreadyUpdated.add(inspectionConfigTreeNode)) continue;
+      inspectionConfigTreeNode.dropCache();
+      final TreeNode parent = inspectionConfigTreeNode.getParent();
+      if (parent != null && parent.getParent() != null) {
+        q.addLast((InspectionConfigTreeNode)parent);
+      }
+    }
+
   }
 }

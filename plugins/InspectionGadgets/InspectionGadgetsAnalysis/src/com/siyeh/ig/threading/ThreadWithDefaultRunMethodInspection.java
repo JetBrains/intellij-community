@@ -100,7 +100,7 @@ public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
       final PsiMethod[] methods = aClass.findMethodsByName(HardcodedMethodConstants.RUN, false);
       for (final PsiMethod method : methods) {
         final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() == 0) {
+        if (parameterList.isEmpty()) {
           return true;
         }
       }

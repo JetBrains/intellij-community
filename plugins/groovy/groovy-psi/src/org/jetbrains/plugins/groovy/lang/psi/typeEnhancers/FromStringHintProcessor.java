@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
@@ -25,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.resolve.ImplicitImportsKt;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
@@ -43,21 +30,23 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
                                                  @NotNull final PsiSubstitutor substitutor,
                                                  @NotNull String[] options) {
     PsiElement context = createContext(method);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     return ContainerUtil.map(options, value -> {
-        String[] params = value.split(",");
-        return ContainerUtil.map(params, param -> {
-          try {
-            PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, context);
-            return substitutor.substitute(original);
-          }
-          catch (IncorrectOperationException e) {
-            //do nothing. Just don't throw an exception
-          }
-          return PsiType.NULL;
-        }, new PsiType[params.length]);
+      try {
+        PsiType original = factory.createTypeFromText("SomeUnexpectedDummyClass<" + value + ">", context);
+        if (original instanceof PsiClassType) {
+          PsiType[] parameters = ((PsiClassType)original).getParameters();
+          return ContainerUtil.map(parameters, substitutor::substitute).toArray(new PsiType[parameters.length]) ;
+        }
+      }
+      catch (IncorrectOperationException e) {
+        //do nothing. Just don't throw an exception
+      }
+      return new PsiType[]{PsiType.NULL};
     });
   }
 
+  @NotNull
   public static PsiElement createContext(@NotNull PsiMethod method) {
     return new FromStringLightElement(method);
   }
@@ -87,30 +76,13 @@ class FromStringLightElement extends LightElement {
 
     PsiClass containingClass = myMethod.getContainingClass();
     if (containingClass != null) {
-    PsiTypeParameter[] parameters = containingClass.getTypeParameters();
+      PsiTypeParameter[] parameters = containingClass.getTypeParameters();
       for (PsiTypeParameter parameter : parameters) {
         if (!ResolveUtil.processElement(processor, parameter, state)) return false;
       }
     }
 
-    if (!ImplicitImportsKt.processImplicitImports(processor, state, lastParent, place, myFile)) {
-      return false;
-    }
-
-    // Suppose place is 'MyClass<T>' and MyClass belongs to default package.
-    // This reference will not be resolved, because context has no parents (it has no parents at all.
-    // See com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.OurGenericsResolver.resolve()
-    if (place instanceof PsiQualifiedReference) {
-      PsiQualifiedReference reference = (PsiQualifiedReference)place;
-      if (reference.getQualifier() == null && reference.getReferenceName() != null) {
-        PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(reference.getReferenceName(), getResolveScope());
-        if (aClass != null && !ResolveUtil.processElement(processor, aClass, state)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+    return myFile.processDeclarations(processor, state, lastParent, place);
   }
 
   @Override

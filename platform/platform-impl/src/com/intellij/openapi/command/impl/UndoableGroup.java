@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,8 +23,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class UndoableGroup {
+class UndoableGroup implements Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
+  private static final int BULK_MODE_ACTION_THRESHOLD = 50;
 
   private final String myCommandName;
   private final boolean myGlobal;
@@ -48,6 +36,7 @@ class UndoableGroup {
   private EditorAndState myStateAfter;
   private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
+  private boolean myTemporary;
 
   private boolean myValid;
 
@@ -71,6 +60,7 @@ class UndoableGroup {
     myTransparent = transparent;
     myValid = valid;
     composeStartFinishGroup(manager.getUndoStacksHolder());
+    myTemporary = transparent;
   }
 
   public boolean isGlobal() {
@@ -79,6 +69,20 @@ class UndoableGroup {
 
   public boolean isTransparent() {
     return myTransparent;
+  }
+
+  /**
+   * We allow transparent actions to be performed while we're in the middle of undo stack, without breaking it (i.e. without dropping
+   * redo stack contents). Such actions are stored in undo stack as 'temporary' actions, and are dropped (not further kept in stacks)
+   * on undo/redo. If a non-transparent action is performed after a temporary one, the latter is converted to normal (permanent) action,
+   * and redo stack is cleared.
+   */
+  public boolean isTemporary() {
+    return myTemporary;
+  }
+
+  public void makePermanent() {
+    myTemporary = false;
   }
 
   public boolean isUndoable() {
@@ -97,6 +101,9 @@ class UndoableGroup {
   }
 
   private void undoOrRedo(boolean isUndo) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Performing " + (isUndo ? "undo" : "redo") + " for " + dumpState());
+    }
     LocalHistoryAction action;
     if (myProject != null && isGlobal()) {
       String actionName = CommonBundle.message(isUndo ? "local.vcs.action.name.undo.command" : "local.vcs.action.name.redo.command", myCommandName);
@@ -115,45 +122,80 @@ class UndoableGroup {
   }
 
   private void doUndoOrRedo(final boolean isUndo) {
-    final boolean wrapInBulkUpdate = myActions.size() > 50;
     // perform undo action by action, setting bulk update flag if possible
     // if multiple consecutive actions share a document, then set the bulk flag only once
     final UnexpectedUndoException[] exception = {null};
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final Set<DocumentEx> bulkDocuments = new THashSet<>();
       try {
-        for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
-          if (wrapInBulkUpdate) {
-            DocumentEx newDocument = getDocumentToSetBulkMode(action);
-            if (newDocument == null) {
-              for (DocumentEx document : bulkDocuments) {
-                document.setInBulkUpdate(false);
-              }
-              bulkDocuments.clear();
+        List<UndoableAction> actionsList = isUndo ? ContainerUtil.reverse(myActions) : myActions;
+        int toProcess = 0; // index of first action not yet performed
+        int toProcessInBulk = 0; // index of first action that can be executed in bulk mode
+        int actionCount = actionsList.size();
+        for (int i = 0; i < actionCount; i++) {
+          UndoableAction action = actionsList.get(i);
+          DocumentEx newDocument = getDocumentToSetBulkMode(action);
+          if (newDocument == null) {
+            if (i - toProcessInBulk > BULK_MODE_ACTION_THRESHOLD) {
+              performActions(actionsList.subList(toProcess, toProcessInBulk), isUndo, false);
+              performActions(actionsList.subList(toProcessInBulk, i), isUndo, true);
+              toProcess = i;
             }
-            else if (bulkDocuments.add(newDocument)) {
-              newDocument.setInBulkUpdate(true);
-            }
+            toProcessInBulk = i + 1;
           }
-
-          if (isUndo) {
-            action.undo();
-          }
-          else {
-            action.redo();
-          }
+        }
+        if (actionCount - toProcessInBulk > BULK_MODE_ACTION_THRESHOLD) {
+          performActions(actionsList.subList(toProcess, toProcessInBulk), isUndo, false);
+          performActions(actionsList.subList(toProcessInBulk, actionCount), isUndo, true);
+        }
+        else {
+          performActions(actionsList.subList(toProcess, actionCount), isUndo, false);
         }
       }
       catch (UnexpectedUndoException e) {
         exception[0] = e;
       }
-      finally {
-        for (DocumentEx bulkDocument : bulkDocuments) {
-          bulkDocument.setInBulkUpdate(false);
-        }
-      }
     });
     if (exception[0] != null) reportUndoProblem(exception[0], isUndo);
+  }
+
+  private static void performActions(@NotNull Collection<UndoableAction> actions, boolean isUndo, boolean useBulkMode)
+    throws UnexpectedUndoException {
+    Set<DocumentEx> bulkDocuments = new THashSet<>();
+    try {
+      for (UndoableAction action : actions) {
+        if (useBulkMode) {
+          DocumentEx newDocument = getDocumentToSetBulkMode(action);
+          if (newDocument == null) {
+            for (DocumentEx document : bulkDocuments) {
+              document.setInBulkUpdate(false);
+            }
+            bulkDocuments.clear();
+          }
+          else if (bulkDocuments.add(newDocument)) {
+            newDocument.setInBulkUpdate(true);
+          }
+        }
+        if (isUndo) {
+          action.undo();
+        }
+        else {
+          action.redo();
+        }
+      }
+    }
+    finally {
+      for (DocumentEx bulkDocument : bulkDocuments) {
+        bulkDocument.setInBulkUpdate(false);
+      }
+    }
+  }
+
+  @NotNull
+  @Override
+  public String dumpState() {
+    return "UndoableGroup[project=" + myProject + ", name=" + myCommandName + ", global=" + myGlobal + ", transparent=" + myTransparent +
+           ", stamp=" + myCommandTimestamp + ", policy=" + myConfirmationPolicy + ", temporary=" + myTemporary + ", valid=" + myValid +
+           ", actions=" + myActions + ", documents=" + getAffectedDocuments() + "]";
   }
 
   private static DocumentEx getDocumentToSetBulkMode(UndoableAction action) {

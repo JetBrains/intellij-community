@@ -50,7 +50,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     IElementType i = child.getElementType();
     if (i == JavaElementType.TYPE) {
       return ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST;

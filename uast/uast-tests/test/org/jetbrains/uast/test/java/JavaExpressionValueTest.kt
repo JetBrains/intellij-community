@@ -19,6 +19,7 @@ import org.junit.Test
 
 class JavaExpressionValueTest : AbstractJavaExpressionValueTest() {
 
-  @Test fun testColor() = doTest("Expression/Color.java")
+  @Test
+  fun testColor() = doTest("Expression/Color.java")
 
 }

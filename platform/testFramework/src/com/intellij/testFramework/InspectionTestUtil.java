@@ -48,12 +48,12 @@ public class InspectionTestUtil {
     List<Element> expectedProblems = new ArrayList<>(expectedDoc.getRootElement().getChildren("problem"));
     List<Element> reportedProblems = new ArrayList<>(doc.getRootElement().getChildren("problem"));
 
-    Element[] expectedArray = expectedProblems.toArray(new Element[expectedProblems.size()]);
+    Element[] expectedArray = expectedProblems.toArray(new Element[0]);
     boolean failed = false;
 
     expected:
     for (Element expectedProblem : expectedArray) {
-      Element[] reportedArrayed = reportedProblems.toArray(new Element[reportedProblems.size()]);
+      Element[] reportedArrayed = reportedProblems.toArray(new Element[0]);
       for (Element reportedProblem : reportedArrayed) {
         if (compareProblemWithExpected(reportedProblem, expectedProblem, checkRange)) {
           expectedProblems.remove(expectedProblem);

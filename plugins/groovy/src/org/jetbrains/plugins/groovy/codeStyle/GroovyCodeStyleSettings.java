@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
    */
   public boolean USE_FLYING_GEESE_BRACES = false;
 
+  public boolean SPACE_IN_NAMED_ARGUMENT_BEFORE_COLON = false;
   public boolean SPACE_IN_NAMED_ARGUMENT = true;
   public boolean ALIGN_MULTILINE_LIST_OR_MAP = true;
   public boolean SPACE_WITHIN_LIST_OR_MAP = false;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosImpl
@@ -35,7 +21,8 @@ import org.jdom.Element
 private class ApplicationPathMacroManager : BasePathMacroManager(null)
 
 const val APP_CONFIG = "\$APP_CONFIG$"
-private val FILE_STORAGE_DIR = "options"
+private const val FILE_STORAGE_DIR = "options"
+private const val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
 
 class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager? = null) : ComponentStoreImpl() {
   override val storageManager = ApplicationStorageManager(application, pathMacroManager)
@@ -66,10 +53,6 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
 }
 
 class ApplicationStorageManager(application: Application, pathMacroManager: PathMacroManager? = null) : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
-  companion object {
-    private val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
-
-  }
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     return if (component is NamedJDOMExternalizable) {
@@ -83,6 +66,9 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
   override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == "${PathMacrosImpl.EXT_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
 
   override val isUseXmlProlog: Boolean
+    get() = false
+
+  override val isUseVfsForWrite: Boolean
     get() = false
 
   override fun providerDataStateChanged(storage: FileBasedStorage, element: Element?, type: DataStateChanged) {

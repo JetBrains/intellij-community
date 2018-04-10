@@ -7,7 +7,6 @@ import java.util.UUID;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 7/3/13
 */
 abstract class DelegatingMessageHandler implements BuilderMessageHandler {
 

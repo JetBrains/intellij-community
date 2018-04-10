@@ -48,7 +48,7 @@ public final class PyToxTestLocator implements SMTestLocator {
                                     @NotNull final String path,
                                     @NotNull final Project project,
                                     @NotNull final GlobalSearchScope scope) {
-    final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.PYTHON24, DUMMY_FILE_PADDING);
+    final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.PYTHON27, DUMMY_FILE_PADDING);
     file.putUserData(ENV_NAME_KEY, path);
     @SuppressWarnings("unchecked")
     final List<Location> locations = Collections.singletonList(new PsiLocation(file));

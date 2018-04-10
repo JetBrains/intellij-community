@@ -103,7 +103,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
             aClass,
             new Settings(true, addClassParameter ? "anObject" : null,
                          parametersForFields.toArray(
-                           new VariableData[parametersForFields.size()]))).run();
+                           new VariableData[0]))).run();
     checkResultByFile(TEST_ROOT + getTestName(false) + "_after.java");
   }
 }

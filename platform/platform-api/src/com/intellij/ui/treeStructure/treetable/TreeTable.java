@@ -1,20 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.ui.treeStructure.treetable;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ObjectUtils;
@@ -46,6 +46,7 @@ import java.util.List;
  * @author Scott Violet
  */
 public class TreeTable extends JBTable {
+  private static final Logger LOG = Logger.getInstance(TreeTable.class);
   /** A subclass of JTree. */
   private TreeTableTree myTree;
   private TreeTableModel myTableModel;
@@ -181,10 +182,23 @@ public class TreeTable extends JBTable {
     boolean treeHasFocus = selColumn == -1 || selColumn >= 0 && isTreeColumn(selColumn);
     boolean oneRowSelected = getSelectedRowCount() == 1;
     if(treeHasFocus && oneRowSelected && ((keyCode == KeyEvent.VK_LEFT) || (keyCode == KeyEvent.VK_RIGHT))){
-      myTree._processKeyEvent(e);
-      int rowToSelect = ObjectUtils.notNull(myTree.getSelectionRows())[0];
-      getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
-      TableUtil.scrollSelectionToVisible(this);
+      try {
+        myTree._processKeyEvent(e);
+        int rowToSelect = ObjectUtils.notNull(myTree.getSelectionRows())[0];
+        getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
+        TableUtil.scrollSelectionToVisible(this);
+      }
+      catch (ArrayIndexOutOfBoundsException ex) {
+        // diagnostic for EA-106780
+        List<Container> hierarchy = new ArrayList<>();
+        Container current = this;
+        while (current != null) {
+          hierarchy.add(current);
+          current = current.getParent();
+        }
+        LOG.error(StringUtil.join(hierarchy, " -> "), ex);
+        throw ex;
+      }
     }
     else{
       super.processKeyEvent(e);
@@ -299,7 +313,7 @@ public class TreeTable extends JBTable {
               }
             }
             if (!selectionPaths.isEmpty()) {
-              addSelectionPaths(selectionPaths.toArray(new TreePath[selectionPaths.size()]));
+              addSelectionPaths(selectionPaths.toArray(new TreePath[0]));
             }
           }
         }

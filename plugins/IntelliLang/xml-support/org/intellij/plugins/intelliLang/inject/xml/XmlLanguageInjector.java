@@ -67,11 +67,13 @@ public final class XmlLanguageInjector implements MultiHostInjector {
     mySupport = InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
   }
 
+  @Override
   @NotNull
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Arrays.asList(XmlTag.class, XmlAttributeValue.class);
   }
 
+  @Override
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement host) {
     final XmlElement xmlElement = (XmlElement) host;
     if (!isInIndex(xmlElement)) return;
@@ -89,9 +91,9 @@ public final class XmlLanguageInjector implements MultiHostInjector {
         ranges.add(textRange.shiftRight(host1.getTextRange().getStartOffset()));
       }
       InjectorUtils.registerInjection(language, list, containingFile, registrar);
-      InjectorUtils.registerSupport(mySupport, true, registrar);
+      InjectorUtils.registerSupport(mySupport, true, list.get(0).getFirst(), language);
       if (Boolean.TRUE.equals(unparsableRef.get())) {
-        InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
+        InjectorUtils.putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
       }
       return true;
     });

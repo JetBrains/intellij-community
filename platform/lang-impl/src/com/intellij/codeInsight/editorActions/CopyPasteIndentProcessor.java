@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -31,7 +32,6 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
@@ -108,7 +108,7 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
       @Override
       public void run() {
         final boolean useTabs =
-          CodeStyleSettingsManager.getSettings(project).useTabCharacter(psiFile.getFileType());
+          CodeStyle.getSettings(psiFile).useTabCharacter(psiFile.getFileType());
         CharFilter NOT_INDENT_FILTER = new CharFilter() {
           @Override
           public boolean accept(char ch) {
@@ -156,7 +156,7 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
         int indent = toIndent - fromIndent;
         if (useTabs)       // indent is counted in tab units
           indent *=
-            CodeStyleSettingsManager.getSettings(project).getTabSize(psiFile.getFileType());
+            CodeStyle.getSettings(psiFile).getTabSize(psiFile.getFileType());
         // don't indent single-line text
         if (!StringUtil.startsWithWhitespace(pastedText) && !StringUtil.endsWithLineBreak(pastedText) &&
              !(StringUtil.splitByLines(pastedText).length > 1))

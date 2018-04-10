@@ -91,13 +91,9 @@ public class FileAttribute {
   }
 
   public void writeAttributeBytes(VirtualFile file, byte[] bytes, int offset, int len) throws IOException {
-    final DataOutputStream stream = writeAttribute(file);
-    try {
+    try (DataOutputStream stream = writeAttribute(file)) {
       stream.writeInt(len);
       stream.write(bytes, offset, len);
-    }
-    finally {
-      stream.close();
     }
   }
 

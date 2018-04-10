@@ -1,26 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.other;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import groovy.lang.Closure;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -83,32 +68,23 @@ public class GrSortMapKeysIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
-        PsiElement parent = element.getParent();
-        if (parent instanceof GrArgumentLabel &&
-            ((GrArgumentLabel)parent).getNameElement().equals(element) &&
-            parent.getParent() != null &&
-            parent.getParent().getParent() instanceof GrListOrMap) {
-          GrListOrMap map = DefaultGroovyMethods.asType(parent.getParent().getParent(), GrListOrMap.class);
-          if (!ErrorUtil.containsError(map) && map.getInitializers().length == 0 && isLiteralKeys(map.getNamedArguments())) {
-            return true;
-          }
-        }
+        final PsiElement parent = element.getParent();
+        if (!(parent instanceof GrArgumentLabel)) return false;
+        if (((GrArgumentLabel)parent).getNameElement() != element) return false;
 
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent == null) return false;
 
-        return false;
+        final PsiElement grandGrandParent = grandParent.getParent();
+        if (!(grandGrandParent instanceof GrListOrMap)) return false;
+
+        final GrListOrMap map = (GrListOrMap)grandGrandParent;
+        return !ErrorUtil.containsError(map) && map.getInitializers().length == 0 && isLiteralKeys(map.getNamedArguments());
       }
     };
   }
 
   private static boolean isLiteralKeys(GrNamedArgument[] args) {
-    return DefaultGroovyMethods.find(args, new Closure<Boolean>(null, null) {
-      public Boolean doCall(GrNamedArgument it) {
-        return it.getLabel().getNameElement() == null;
-      }
-
-      public Boolean doCall() {
-        return doCall(null);
-      }
-    }) == null;
+    return ContainerUtil.and(args, it -> it.getLabel() != null);
   }
 }

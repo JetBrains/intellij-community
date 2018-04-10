@@ -19,6 +19,9 @@ import com.intellij.openapi.application.PathManager
 
 object GuiTestOptions {
 
+  val RESUME_LABEL = "idea.gui.test.resume.label"
+  val RESUME_TEST = "idea.gui.test.resume.testname"
+
   fun getConfigPath(): String = getSystemProperty("idea.config.path", getConfigDefaultPath())
   fun getSystemPath(): String = getSystemProperty("idea.system.path", getSystemDefaultPath())
   fun isDebug(): Boolean = getSystemProperty("idea.debug.mode", false)
@@ -27,9 +30,12 @@ object GuiTestOptions {
   fun useAppleScreenMenuBar(): Boolean = getSystemProperty("apple.laf.useScreenMenuBar", false)
 
   fun getDebugPort(): Int = getSystemProperty("idea.gui.test.debug.port", 5009)
-  fun getBootClasspath(): String = getSystemProperty("idea.gui.test.bootclasspath", "../out/classes/production/boot")
+  fun getBootClasspath(): String = getSystemProperty("idea.gui.test.bootclasspath", "../out/classes/production/intellij.platform.boot")
   fun getEncoding(): String = getSystemProperty("idea.gui.test.encoding", "UTF-8")
   fun getXmxSize(): Int = getSystemProperty("idea.gui.test.xmx", 512)
+  //used for restarted and resumed test to qualify from what point to start
+  fun getResumeInfo(): String = getSystemProperty(RESUME_LABEL, "DEFAULT")
+  fun getResumeTestName(): String = getSystemProperty(RESUME_TEST, "undefined")
 
   fun getConfigDefaultPath(): String {
     try {

@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
@@ -120,8 +121,8 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     popup.showCenteredInCurrentWindow(project);
   }
 
-  private static ListPopupImpl createPopup(final DataContext dataContext,
-                                           @Nullable final Runnable onDispose,
+  private static ListPopupImpl createPopup(@NotNull DataContext dataContext,
+                                           @Nullable Runnable onDispose,
                                            boolean withTitle) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
@@ -137,8 +138,9 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
           return FINAL_CHOICE;
         }
         ActionGroup group = createActionsStep(selectedValues, project, shiftPressed);
-        return JBPopupFactory.getInstance()
-          .createActionsStep(group, DataManager.getInstance().getDataContext(componentRef.get()), false, false, null, null, true);
+        DataContext dataContext = DataManager.getInstance().getDataContext(componentRef.get());
+        return JBPopupFactory.getInstance().createActionsStep(
+          group, dataContext, null, false, false, null, null, true, 0, false);
       }
 
       @Override
@@ -205,19 +207,19 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     final TaskManager manager = TaskManager.getManager(project);
     final LocalTask task = tasks.get(0).getTask();
     if (tasks.size() == 1 && task != null) {
-      group.add(new AnAction("&Switch to") {
+      group.add(new DumbAwareAction("&Switch to") {
         public void actionPerformed(AnActionEvent e) {
           manager.activateTask(task, !shiftPressed.get());
         }
       });
-      group.add(new AnAction("&Edit") {
+      group.add(new DumbAwareAction("&Edit") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           EditTaskDialog.editTask((LocalTaskImpl)task, project);
         }
       });
     }
-    final AnAction remove = new AnAction("&Remove") {
+    final AnAction remove = new DumbAwareAction("&Remove") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         for (TaskListItem item : tasks) {

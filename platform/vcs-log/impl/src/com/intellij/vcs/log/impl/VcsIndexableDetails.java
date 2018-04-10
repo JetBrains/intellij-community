@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +28,5 @@ public interface VcsIndexableDetails extends VcsFullCommitDetails {
   @NotNull
   Collection<Couple<String>> getRenamedPaths(int parent);
 
-  @NotNull
-  Collection<Change> getChanges(int parent);
+  boolean hasRenames();
 }

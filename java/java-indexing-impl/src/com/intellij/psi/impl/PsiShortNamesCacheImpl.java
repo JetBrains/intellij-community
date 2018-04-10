@@ -27,8 +27,10 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.util.*;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -107,18 +109,13 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
     if (hiddenClassesToRemove != null) result.removeAll(hiddenClassesToRemove);
 
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @Override
   @NotNull
   public String[] getAllClassNames() {
     return ArrayUtil.toStringArray(JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject()));
-  }
-
-  @Override
-  public void getAllClassNames(@NotNull HashSet<String> set) {
-    processAllClassNames(Processors.cancelableCollectProcessor(set));
   }
 
   @Override
@@ -175,11 +172,6 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   }
 
   @Override
-  public void getAllMethodNames(@NotNull HashSet<String> set) {
-    JavaMethodNameIndex.getInstance().processAllKeys(myManager.getProject(), Processors.cancelableCollectProcessor(set));
-  }
-
-  @Override
   @NotNull
   public PsiField[] getFieldsByNameIfNotMoreThan(@NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
     List<PsiField> fields = new SmartList<>();
@@ -204,11 +196,6 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @NotNull
   public String[] getAllFieldNames() {
     return ArrayUtil.toStringArray(JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject()));
-  }
-
-  @Override
-  public void getAllFieldNames(@NotNull HashSet<String> set) {
-    JavaFieldNameIndex.getInstance().processAllKeys(myManager.getProject(), Processors.cancelableCollectProcessor(set));
   }
 
   @Override

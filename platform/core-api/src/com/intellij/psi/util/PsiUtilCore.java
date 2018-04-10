@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -265,7 +251,7 @@ public class PsiUtilCore {
       throw createException();
     }
 
-    protected PsiInvalidElementAccessException createException() {
+    PsiInvalidElementAccessException createException() {
       return new PsiInvalidElementAccessException(this, toString(), null);
     }
 
@@ -354,9 +340,7 @@ public class PsiUtilCore {
 
   @NotNull
   public static PsiElement[] toPsiElementArray(@NotNull Collection<? extends PsiElement> collection) {
-    if (collection.isEmpty()) return PsiElement.EMPTY_ARRAY;
-    //noinspection SSBasedInspection
-    return collection.toArray(new PsiElement[collection.size()]);
+    return collection.isEmpty() ? PsiElement.EMPTY_ARRAY : collection.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   public static Language getNotAnyLanguage(ASTNode node) {
@@ -428,7 +412,6 @@ public class PsiUtilCore {
     return elt;
   }
 
-  @Nullable
   public static PsiFile getTemplateLanguageFile(@Nullable PsiElement element) {
     if (element == null) return null;
     final PsiFile containingFile = element.getContainingFile();
@@ -441,8 +424,7 @@ public class PsiUtilCore {
   @NotNull
   public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
     if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
-    //noinspection SSBasedInspection
-    return collection.toArray(new PsiFile[collection.size()]);
+    return collection.toArray(PsiFile.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -457,7 +439,6 @@ public class PsiUtilCore {
   /**
    * @return name for element using element structure info
    */
-  @Nullable
   public static String getName(PsiElement element) {
     String name = null;
     if (element instanceof PsiMetaOwner) {
@@ -482,13 +463,13 @@ public class PsiUtilCore {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
 
-  protected static Language narrowLanguage(final Language language, final Language candidate) {
+  static Language narrowLanguage(final Language language, @NotNull Language candidate) {
     if (candidate.isKindOf(language)) return candidate;
     return language;
   }
 
   /**
-   * Checks if the element is valid. If not, throws {@link com.intellij.psi.PsiInvalidElementAccessException} with
+   * Checks if the element is valid. If not, throws {@link PsiInvalidElementAccessException} with
    * a meaningful message that points to the reasons why the element is not valid and may contain the stack trace
    * when it was invalidated.
    */

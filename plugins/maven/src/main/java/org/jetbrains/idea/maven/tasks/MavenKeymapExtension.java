@@ -84,7 +84,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
           int index1 = projectGoals.indexOf(goal1);
           int index2 = projectGoals.indexOf(goal2);
           if (index1 == index2) return goal1.compareToIgnoreCase(goal2);
-          return (index1 < index2 ? -1 : 1);
+          return index1 < index2 ? -1 : 1;
         });
         projectToActionsMapping.put(mavenProject, actions);
       }
@@ -184,8 +184,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
   }
 
   private static List<String> collectGoals(MavenProject project) {
-    LinkedHashSet<String> result = new LinkedHashSet<>(); // may contains similar plugins or somethig
-    result.addAll(MavenConstants.PHASES);
+    LinkedHashSet<String> result = new LinkedHashSet<>(MavenConstants.PHASES); // may contains similar plugins or something
 
     for (MavenPlugin each : project.getDeclaredPlugins()) {
       collectGoals(project.getLocalRepository(), each, result);
@@ -231,6 +230,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
       MavenExplicitProfiles explicitProfiles = projectsManager.getExplicitProfiles();
       MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                myMavenProject.getDirectory(),
+                                                               myMavenProject.getFile().getName(),
                                                                Collections.singletonList(myGoal),
                                                                explicitProfiles.getEnabledProfiles(),
                                                                explicitProfiles.getDisabledProfiles());

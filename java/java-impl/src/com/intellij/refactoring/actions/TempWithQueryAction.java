@@ -38,6 +38,7 @@ public class TempWithQueryAction extends BaseRefactoringAction{
     return new TempWithQueryHandler();
   }
 
+  @Override
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     return element instanceof PsiLocalVariable && ((PsiLocalVariable) element).getInitializer() != null; 
   }

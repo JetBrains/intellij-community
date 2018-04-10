@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
@@ -52,11 +51,11 @@ public class GitRebaseUpdater extends GitUpdater {
 
   public GitRebaseUpdater(@NotNull Project project,
                           @NotNull Git git,
-                          @NotNull VirtualFile root,
+                          @NotNull GitRepository repository,
                           @NotNull GitBranchPair branchAndTracked,
                           @NotNull ProgressIndicator progressIndicator,
                           @NotNull UpdatedFiles updatedFiles) {
-    super(project, git, root, branchAndTracked, progressIndicator, updatedFiles);
+    super(project, git, repository, branchAndTracked, progressIndicator, updatedFiles);
     myRebaser = new GitRebaser(myProject, git, myProgressIndicator);
     myChangeListManager = ChangeListManager.getInstance(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);

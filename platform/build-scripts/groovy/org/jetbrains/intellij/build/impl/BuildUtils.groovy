@@ -26,6 +26,8 @@ import org.apache.tools.ant.Project
 import org.apache.tools.ant.types.Path
 import org.apache.tools.ant.util.SplitClassLoader
 import org.codehaus.groovy.tools.RootLoader
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.jps.model.library.JpsOrderRootType
 
 /**
  * @author nik
@@ -86,11 +88,17 @@ class BuildUtils {
     }
   }
 
-  /**
+  static void defineFtpTask(BuildContext context) {
+    List<File> commonsNetJars = context.project.libraryCollection.findLibrary("commons-net").getFiles(JpsOrderRootType.COMPILED) +
+      [new File(context.paths.communityHome, "lib/ant/lib/ant-commons-net.jar")]
+    defineFtpTask(context.ant, commonsNetJars)
+  }
+
+    /**
    * Defines ftp task using libraries from IntelliJ IDEA project sources.
    */
   @CompileDynamic
-  static void defineFtpTask(AntBuilder ant, String communityLib) {
+  static void defineFtpTask(AntBuilder ant, List<File> commonsNetJars) {
     def ftpTaskLoaderRef = "FTP_TASK_CLASS_LOADER"
     if (ant.project.hasReference(ftpTaskLoaderRef)) return
 
@@ -100,8 +108,9 @@ class BuildUtils {
       Probably we could call FTPClient directly to avoid this hack.
      */
     Path ftpPath = new Path(ant.project)
-    ftpPath.createPathElement().setLocation(new File("$communityLib/commons-net-3.3.jar"))
-    ftpPath.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-commons-net.jar"))
+    commonsNetJars.each {
+      ftpPath.createPathElement().setLocation(it)
+    }
     ant.project.addReference(ftpTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), ftpPath, ant.project,
                                                                     ["FTP", "FTPTaskConfig"] as String[]))
     ant.taskdef(name: "ftp", classname: "org.apache.tools.ant.taskdefs.optional.net.FTP", loaderRef: ftpTaskLoaderRef)
@@ -111,13 +120,17 @@ class BuildUtils {
    * Defines sshexec task using libraries from IntelliJ IDEA project sources.
    */
   @CompileDynamic
-  static void defineSshTask(AntBuilder ant, String communityLib) {
+  static void defineSshTask(BuildContext context) {
+    List<File> jschJars = context.project.libraryCollection.findLibrary("JSch").getFiles(JpsOrderRootType.COMPILED) +
+                                [new File(context.paths.communityHome, "lib/ant/lib/ant-jsch.jar")]
+    def ant = context.ant
     def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER"
     if (ant.project.hasReference(sshTaskLoaderRef)) return
     
     Path pathSsh = new Path(ant.project)
-    pathSsh.createPathElement().setLocation(new File("$communityLib/jsch-0.1.54.jar"))
-    pathSsh.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-jsch.jar"))
+    jschJars.each {
+      pathSsh.createPathElement().setLocation(it)
+    }
     ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
                                                                     ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
     ant.taskdef(name: "sshexec", classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec", loaderRef: sshTaskLoaderRef)

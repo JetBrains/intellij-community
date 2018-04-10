@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -106,15 +105,11 @@ public class MavenRehighlighter {
   }
 
   public static void rehighlight(@NotNull Project project, @Nullable MavenProject mavenProject) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       if (!project.isDisposed()) {
         ServiceManager.getService(project, MavenRehighlighter.class).queue.queue(new MyUpdate(project, mavenProject));
       }
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   private static class MyUpdate extends Update {

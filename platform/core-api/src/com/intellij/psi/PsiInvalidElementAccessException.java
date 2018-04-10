@@ -108,7 +108,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
   private static Object getPsiInvalidationTrace(@NotNull PsiElement element) {
     Object trace = getInvalidationTrace(element);
     if (trace != null) return trace;
-    
+
     if (element instanceof PsiFile) {
       return getInvalidationTrace(((PsiFile)element).getOriginalFile());
     }
@@ -167,7 +167,9 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
   @NonNls
   @NotNull
   public static String findOutInvalidationReason(@NotNull PsiElement root) {
-    if (root == PsiUtilCore.NULL_PSI_ELEMENT) return "NULL_PSI_ELEMENT";
+    if (root == PsiUtilCore.NULL_PSI_ELEMENT) {
+      return "NULL_PSI_ELEMENT";
+    }
 
     PsiElement element = root instanceof PsiFile ? root : root.getParent();
     if (element == null) {
@@ -188,11 +190,15 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
 
     while (element != null && !(element instanceof PsiFile)) element = element.getParent();
     PsiFile file = (PsiFile)element;
-    if (file == null) return "containing file is null";
+    if (file == null) {
+      return "containing file is null";
+    }
 
     FileViewProvider provider = file.getViewProvider();
     VirtualFile vFile = provider.getVirtualFile();
-    if (!vFile.isValid()) return vFile + " is invalid";
+    if (!vFile.isValid()) {
+      return vFile + " is invalid";
+    }
     if (!provider.isPhysical()) {
       PsiElement context = file.getContext();
       if (context != null && !context.isValid()) {
@@ -206,15 +212,23 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     }
 
     PsiManager manager = file.getManager();
-    if (manager.getProject().isDisposed()) return "project is disposed";
+    if (manager.getProject().isDisposed()) {
+      return "project is disposed";
+    }
 
     Language language = file.getLanguage();
-    if (language != provider.getBaseLanguage()) return "File language:" + language + " != Provider base language:" + provider.getBaseLanguage();
+    if (language != provider.getBaseLanguage()) {
+      return "File language:" + language + " != Provider base language:" + provider.getBaseLanguage();
+    }
 
     FileViewProvider p = manager.findViewProvider(vFile);
-    if (provider != p) return "different providers: " + provider + "(" + id(provider) + "); " + p + "(" + id(p) + ")";
+    if (provider != p) {
+      return "different providers: " + provider + "(" + id(provider) + "); " + p + "(" + id(p) + ")";
+    }
 
-    if (!provider.isPhysical()) return "non-physical provider: " + provider; // "dummy" file?
+    if (!provider.isPhysical()) {
+      return "non-physical provider: " + provider; // "dummy" file?
+    }
 
     return "psi is outdated";
   }

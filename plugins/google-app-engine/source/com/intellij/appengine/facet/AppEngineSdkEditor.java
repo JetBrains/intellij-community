@@ -32,7 +32,7 @@ import javax.swing.*;
  * @author nik
  */
 public class AppEngineSdkEditor {
-  private ComboboxWithBrowseButton myPathEditor;
+  private final ComboboxWithBrowseButton myPathEditor;
 
   public AppEngineSdkEditor(final @Nullable Project project) {
     myPathEditor = new ComboboxWithBrowseButton(new ComboBox(100));

@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AnonymousClassElementBase extends ClassElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.AnonymousClassElement");
@@ -52,7 +53,7 @@ public abstract class AnonymousClassElementBase extends ClassElement {
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaElementType.JAVA_CODE_REFERENCE) {

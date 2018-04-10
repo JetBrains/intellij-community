@@ -27,7 +27,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 23, 2010
  */
 public class AntPropertyExpansionTest extends TestCase{
 

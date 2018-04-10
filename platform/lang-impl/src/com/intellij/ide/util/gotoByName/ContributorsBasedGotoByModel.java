@@ -117,7 +117,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         return true;
       }
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, indicator, true, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, indicator, processor)) {
       throw new ProcessCanceledException();
     }
     if (indicator != null) {
@@ -225,7 +225,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
       }
       return true;
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, true, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, processor)) {
       canceled.cancel();
     }
     canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here
@@ -254,7 +254,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   @Override
   public String getElementName(Object element) {
     if (!(element instanceof NavigationItem)) {
-      throw new AssertionError(element + " of " + element.getClass());
+      throw new AssertionError((element == null ? "null" : element + " of " + element.getClass()) + " in " + this + " of " + getClass());
     }
     return ((NavigationItem)element).getName();
   }
@@ -286,5 +286,10 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
 
   public @NotNull String removeModelSpecificMarkup(@NotNull String pattern) {
     return pattern;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.SystemProperties;
 
@@ -316,16 +317,6 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    try {
-      defaultSettings();
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
-  @Override
   protected String getBasePath() {
     return BASE_PATH;
   }
@@ -359,16 +350,16 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
-  public void testDontKeepLineBreaksInText() {
-    final CodeStyleSettings settings = getSettings();
-    final XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
-    settings.setDefaultRightMargin(15);
+  public void testDontKeepLineBreaksInText() throws Throwable {
+    final HtmlCodeStyleSettings htmlSettings = getSettings().getCustomSettings(HtmlCodeStyleSettings.class);
+    final XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
+    getSettings().setDefaultRightMargin(15);
 
-    settings.HTML_KEEP_LINE_BREAKS_IN_TEXT = false;
+    htmlSettings.HTML_KEEP_LINE_BREAKS_IN_TEXT = false;
     xmlSettings.XML_KEEP_LINE_BREAKS_IN_TEXT = false;
     doTextTest("<tag>aaa\nbbb\nccc\nddd\n</tag>", "<tag>aaa bbb\n    ccc ddd\n</tag>");
 
-    settings.HTML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    htmlSettings.HTML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     xmlSettings.XML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     doTextTest("<tag>aaa\nbbb\nccc\nddd\n</tag>", "<tag>aaa bbb ccc ddd\n</tag>");
   }

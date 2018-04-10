@@ -31,40 +31,39 @@ public class JavaInheritedMembersNodeProvider extends InheritedMembersNodeProvid
   @NotNull
   @Override
   public Collection<TreeElement> provideNodes(@NotNull TreeElement node) {
-    if (node instanceof JavaClassTreeElement) {
-      final PsiClass aClass = ((JavaClassTreeElement)node).getElement();
-      if (aClass == null) return Collections.emptyList();
+    if (!(node instanceof JavaClassTreeElement)) return Collections.emptyList();
 
-      Collection<PsiElement> inherited = new LinkedHashSet<>();
-      Collection<PsiElement> ownChildren = JavaClassTreeElement.getOwnChildren(aClass);
+    JavaClassTreeElement classNode = (JavaClassTreeElement)node;
+    final PsiClass aClass = classNode.getElement();
+    if (aClass == null) return Collections.emptyList();
 
-      aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
-      inherited.removeAll(ownChildren);
-      if (aClass instanceof PsiAnonymousClass) {
-        final PsiElement element = ((PsiAnonymousClass)aClass).getBaseClassReference().resolve();
-        if (element instanceof PsiClass) {
-          ContainerUtil.addAll(inherited, ((PsiClass)element).getInnerClasses());
-        }
+    Collection<PsiElement> inherited = new LinkedHashSet<>();
+    Collection<PsiElement> ownChildren = JavaClassTreeElement.getOwnChildren(aClass);
+
+    aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
+    inherited.removeAll(ownChildren);
+    if (aClass instanceof PsiAnonymousClass) {
+      final PsiElement element = ((PsiAnonymousClass)aClass).getBaseClassReference().resolve();
+      if (element instanceof PsiClass) {
+        ContainerUtil.addAll(inherited, ((PsiClass)element).getInnerClasses());
       }
-      List<TreeElement> array = new ArrayList<>();
-      for (PsiElement child : inherited) {
-        if (!child.isValid()) continue;
-        final Set<PsiClass> parents = ((JavaClassTreeElement)node).getParents();
-        if (child instanceof PsiClass && !parents.contains(child)) {
-          array.add(new JavaClassTreeElement((PsiClass)child, true, parents));
-        }
-        else if (child instanceof PsiField) {
-          array.add(new PsiFieldTreeElement((PsiField)child, true));
-        }
-        else if (child instanceof PsiMethod) {
-          array.add(new PsiMethodTreeElement((PsiMethod)child, true));
-        }
-        else if (child instanceof PsiClassInitializer) {
-          array.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
-        }
-      }
-      return array;
     }
-    return Collections.emptyList();
+    List<TreeElement> array = new ArrayList<>();
+    for (PsiElement child : inherited) {
+      if (!child.isValid()) continue;
+      if (child instanceof PsiClass) {
+        array.add(new JavaClassTreeElement((PsiClass)child, true));
+      }
+      else if (child instanceof PsiField) {
+        array.add(new PsiFieldTreeElement((PsiField)child, true));
+      }
+      else if (child instanceof PsiMethod) {
+        array.add(new PsiMethodTreeElement((PsiMethod)child, true));
+      }
+      else if (child instanceof PsiClassInitializer) {
+        array.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
+      }
+    }
+    return array;
   }
 }

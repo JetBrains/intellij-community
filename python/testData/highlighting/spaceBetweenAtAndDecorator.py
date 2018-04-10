@@ -1,8 +1,8 @@
-<info descr="null">@</info> <info descr="null">foo</info>
-def <info descr="null">f</info>():
+<info descr="PY.DECORATOR">@</info> <info descr="PY.DECORATOR">foo</info>
+def <info descr="PY.FUNC_DEFINITION">f</info>():
     pass
 
 
-<info descr="null">@</info> <info descr="null">bar</info>(1, 2, 3)
-def <info descr="null">g</info>():
+<info descr="PY.DECORATOR">@</info> <info descr="PY.DECORATOR">bar</info>(1, 2, 3)
+def <info descr="PY.FUNC_DEFINITION">g</info>():
     pass

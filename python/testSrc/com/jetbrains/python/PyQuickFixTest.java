@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -315,6 +301,16 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
   }
 
+  // PY-24942
+  public void testChainedComparison8() {
+    doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
+  }
+
+  // PY-29121
+  public void testChainedComparison9() {
+    doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
+  }
+
   // PY-1362, PY-2585
   public void testStatementEffect() {
     doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
@@ -323,11 +319,6 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-1265
   public void testStatementEffectIntroduceVariable() {
     doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect.introduce.variable"), true, true);
-  }
-
-  // PY-2083
-  public void testUnresolvedWith() {
-    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference.add.future"), true, true));
   }
 
   // PY-2092
@@ -609,6 +600,14 @@ public class PyQuickFixTest extends PyTestCase {
                      true, true);
   }
 
+  public void testImplementAbstractOrder() {
+    doInspectionTest("ImplementAbstractOrder.py",
+                     PyAbstractClassInspection.class,
+                     PyBundle.message("QFIX.NAME.implement.methods"),
+                     true,
+                     true);
+  }
+
   public void testRemovingUnderscoresInNumericLiterals() {
     myFixture.configureByText(PythonFileType.INSTANCE, "1_0_0");
 
@@ -659,9 +658,10 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-8174
   public void testChangeSignatureAddKeywordOnlyParameter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
-      doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(x, *args, foo, <b>bar</b>)</html>", true, true);
-    });
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(x, *args, foo, <b>bar</b>)</html>", true, true)
+    );
   }
 
   // PY-8174
@@ -748,6 +748,6 @@ public class PyQuickFixTest extends PyTestCase {
   private static String graftBeforeExt(String name, String insertion) {
     int dotpos = name.indexOf('.');
     if (dotpos < 0) dotpos = name.length();
-    return name.substring(0, dotpos) + insertion + name.substring(dotpos, name.length());
+    return name.substring(0, dotpos) + insertion + name.substring(dotpos);
   }
 }

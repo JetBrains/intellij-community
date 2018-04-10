@@ -23,6 +23,12 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Register implementation of this class as 'com.intellij.codeInsight.unresolvedReferenceQuickFixProvider' extension to provide additional
+ * quick fixes for 'Unresolved reference' problems.
+ *
+ * @param <T> type of element you want register quick fixes for; for example, in Java language it may be {@link com.intellij.psi.PsiJavaCodeReferenceElement}
+ */
 public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference> {
   public static <T extends PsiReference> void registerReferenceFixes(@NotNull T ref, @NotNull QuickFixActionRegistrar registrar) {
     final boolean dumb = DumbService.getInstance(ref.getElement().getProject()).isDumb();
@@ -33,6 +39,7 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
         continue;
       }
       if (ReflectionUtil.isAssignable(each.getReferenceClass(), referenceClass)) {
+        //noinspection unchecked
         each.registerFixes(ref, registrar);
       }
     }

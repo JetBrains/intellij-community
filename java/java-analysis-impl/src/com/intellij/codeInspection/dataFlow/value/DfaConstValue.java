@@ -16,9 +16,13 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,15 +41,16 @@ public class DfaConstValue extends DfaValue {
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
-      dfaNull = new DfaConstValue(null, factory, null);
-      dfaFalse = new DfaConstValue(Boolean.FALSE, factory, null);
-      dfaTrue = new DfaConstValue(Boolean.TRUE, factory, null);
-      dfaFail = new DfaConstValue(ourThrowable, factory, null);
+      dfaNull = new DfaConstValue(null, PsiType.NULL, factory, null);
+      dfaFalse = new DfaConstValue(Boolean.FALSE, PsiType.BOOLEAN, factory, null);
+      dfaTrue = new DfaConstValue(Boolean.TRUE, PsiType.BOOLEAN, factory, null);
+      dfaFail = new DfaConstValue(ourThrowable, PsiType.VOID, factory, null);
     }
 
     @Nullable
     public DfaValue create(PsiLiteralExpression expr) {
       PsiType type = expr.getType();
+      if (type == null) return null;
       if (PsiType.NULL.equals(type)) return dfaNull;
       Object value = expr.getValue();
       if (value == null) return null;
@@ -54,6 +59,7 @@ public class DfaConstValue extends DfaValue {
 
     @Nullable
     public DfaValue create(PsiVariable variable) {
+      if (DfaUtil.ignoreInitializer(variable)) return null;
       Object value = variable.computeConstantValue();
       PsiType type = variable.getType();
       if (value == null) {
@@ -62,9 +68,12 @@ public class DfaConstValue extends DfaValue {
           DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
           return myFactory.getBoxedFactory().createBoxed(unboxed);
         }
-        PsiExpression initializer = variable.getInitializer();
+        PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
         if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
           return dfaNull;
+        }
+        if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
+          return createFromValue(variable, type, variable);
         }
         return null;
       }
@@ -80,22 +89,35 @@ public class DfaConstValue extends DfaValue {
       return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
     }
 
+    /**
+     * Creates a constant which corresponds to the default value of given type
+     *
+     * @param type type to get the default value for
+     * @return a constant (e.g. 0 from int, false for boolean, null for reference type).
+     */
     @NotNull
-    public DfaConstValue createFromValue(Object value, final PsiType type, @Nullable PsiVariable constant) {
+    public DfaConstValue createDefault(@NotNull PsiType type) {
+      return createFromValue(PsiTypesUtil.getDefaultValue(type), type, null);
+    }
+
+    @NotNull
+    public DfaConstValue createFromValue(Object value, @NotNull PsiType type, @Nullable PsiVariable constant) {
       if (value == Boolean.TRUE) return dfaTrue;
       if (value == Boolean.FALSE) return dfaFalse;
+      if (value == null) return dfaNull;
 
       if (TypeConversionUtil.isNumericType(type) && !TypeConversionUtil.isFloatOrDoubleType(type)) {
-        value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
+        type = PsiType.LONG;
+        value = TypeConversionUtil.computeCastTo(value, type);
       }
       if (value instanceof Double || value instanceof Float) {
         double doubleValue = ((Number)value).doubleValue();
         if (doubleValue == -0.0) doubleValue = +0.0;
-        value = new Double(doubleValue);
+        value = doubleValue;
       }
       DfaConstValue instance = myValues.get(value);
       if (instance == null) {
-        instance = new DfaConstValue(value, myFactory, constant);
+        instance = new DfaConstValue(value, type, myFactory, constant);
         myValues.put(value, instance);
       }
 
@@ -121,10 +143,12 @@ public class DfaConstValue extends DfaValue {
 
   private final Object myValue;
   @Nullable private final PsiVariable myConstant;
+  @NotNull private final PsiType myType;
 
-  private DfaConstValue(Object value, DfaValueFactory factory, @Nullable PsiVariable constant) {
+  private DfaConstValue(Object value, @NotNull PsiType type, DfaValueFactory factory, @Nullable PsiVariable constant) {
     super(factory);
     myValue = value;
+    myType = type;
     myConstant = constant;
   }
 
@@ -132,6 +156,11 @@ public class DfaConstValue extends DfaValue {
   public String toString() {
     if (myValue == null) return "null";
     return myValue.toString();
+  }
+
+  @NotNull
+  public PsiType getType() {
+    return myType;
   }
 
   public Object getValue() {

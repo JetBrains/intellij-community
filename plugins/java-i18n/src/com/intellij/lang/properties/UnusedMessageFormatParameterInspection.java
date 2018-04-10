@@ -36,10 +36,6 @@ import java.util.Set;
 
 public class UnusedMessageFormatParameterInspection extends PropertiesInspectionBase {
   public static final String REGEXP = "regexp";
-  @NotNull
-  public String getGroupDisplayName() {
-    return PropertiesBundle.message("properties.files.inspection.group.display.name");
-  }
 
   @NotNull
   public String getDisplayName() {
@@ -102,6 +98,6 @@ public class UnusedMessageFormatParameterInspection extends PropertiesInspection
         }
       }
     }
-    return problemDescriptors.isEmpty() ? null : problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]);
+    return problemDescriptors.isEmpty() ? null : problemDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 }

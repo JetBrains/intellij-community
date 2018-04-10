@@ -57,4 +57,12 @@ public abstract class FileIncludeProvider {
   public int getVersion() {
     return 0;
   }
+
+  /**
+   * @return  Possible name in included paths. For example if a provider returns FileIncludeInfos without file extensions 
+   */
+  @NotNull
+  public String getIncludeName(@NotNull PsiFile file, @NotNull String originalName) {
+    return originalName;
+  }
 }

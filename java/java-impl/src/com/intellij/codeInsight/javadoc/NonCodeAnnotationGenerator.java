@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNamedElement;
@@ -41,12 +42,12 @@ public class NonCodeAnnotationGenerator {
     MultiMap<PsiModifierListOwner, AnnotationDocGenerator> generators = getSignatureNonCodeAnnotations(myOwner);
     if (generators.isEmpty()) return;
 
-    myOutput.append("\n");
-    myOutput.append(getNonCodeHeader(generators.values())).append(":<br>\n");
-    myOutput.append("<ul>\n");
+    myOutput.append(DocumentationMarkup.SECTION_HEADER_START);
+    myOutput.append(getNonCodeHeader(generators.values())).append(":");
+    myOutput.append(DocumentationMarkup.SECTION_SEPARATOR);
 
     generators.keySet().forEach(owner -> {
-      myOutput.append("<li>");
+      myOutput.append("<p>");
       if (generators.size() > 1) {
         myOutput.append(getKind(owner)).append(" <code>").append(((PsiNamedElement)owner).getName()).append("</code>: ");
       }
@@ -55,10 +56,8 @@ public class NonCodeAnnotationGenerator {
         if (i > 0) myOutput.append(" ");
         annotations.get(i).generateAnnotation(myOutput, AnnotationFormat.JavaDocComplete);
       }
-      
-      myOutput.append("</li>\n");
     });
-    myOutput.append("</ul>\n");
+    myOutput.append(DocumentationMarkup.SECTION_END);
   }
 
   @NotNull
@@ -89,7 +88,7 @@ public class NonCodeAnnotationGenerator {
     boolean hasExternal = values.stream().anyMatch(AnnotationDocGenerator::isExternal);
     boolean hasInferred = values.stream().anyMatch(AnnotationDocGenerator::isInferred);
 
-    return (hasExternal && hasInferred ? "External and <i>inferred</i>" : hasExternal ? "External" : "<i>Inferred</i>") + " annotations available";
+    return (hasExternal && hasInferred ? "External and <i>inferred</i>" : hasExternal ? "External" : "<i>Inferred</i>") + " annotations";
   }
 
   private static String getKind(PsiModifierListOwner owner) {

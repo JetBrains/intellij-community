@@ -86,3 +86,12 @@ class Y {
   }
 
 }
+class Autoboxing {
+  Boolean b = Boolean.FALSE;
+
+  public int hashCode() {
+    Boolean b1 = true;
+    Byte b2 = 8;
+    return !b ? 0 : 1;
+  }
+}

@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -45,7 +46,7 @@ public class DirectoryAsPackageRenameHandler extends DirectoryAsPackageRenameHan
 
   @Override
   protected PsiPackage getPackage(PsiDirectory psiDirectory) {
-    return JavaDirectoryService.getInstance().getPackage(psiDirectory);
+    return JavaDirectoryService.getInstance().getPackageInSources(psiDirectory);
   }
 
   @Override
@@ -64,6 +65,7 @@ public class DirectoryAsPackageRenameHandler extends DirectoryAsPackageRenameHan
         return newQName;
       }
 
+      @NotNull
       @Override
       protected String getCommandName() {
         return RefactoringBundle.message(dirsToRename.length == 1 ? "rename.directory.command.name" : "rename.directories.command.name");

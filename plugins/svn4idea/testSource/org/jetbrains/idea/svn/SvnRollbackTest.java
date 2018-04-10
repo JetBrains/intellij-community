@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,21 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.ignore.FileGroupInfo;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.api.Revision.WORKING;
 
 public class SvnRollbackTest extends Svn17TestCase {
 
@@ -249,13 +247,16 @@ public class SvnRollbackTest extends Svn17TestCase {
     final Change fantomDelete1 = new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(wasLowestDir, true), "2"),
                                             new SimpleContentRevision("1", VcsUtil.getFilePath(wasLowestDirAfter, true), "2"));
     final Change fantomDelete2 = new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFile1, false), "2"),
-                                            new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFile1After, false), SVNRevision.WORKING.getName()));
+                                            new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFile1After, false),
+                                                                      WORKING.toString()));
 
     rollbackIMpl(Arrays.asList(change),
                  Arrays.asList(new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFile, false), "2"),
-                                          new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFileAfter, false), SVNRevision.WORKING.getName())),
+                                          new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFileAfter, false),
+                                                                    WORKING.toString())),
                                new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(inner2Before, true), "2"),
-                                          new SimpleContentRevision("1", VcsUtil.getFilePath(inner2After, true), SVNRevision.WORKING.getName())),
+                                          new SimpleContentRevision("1", VcsUtil.getFilePath(inner2After, true),
+                                                                    WORKING.toString())),
                                fantomDelete1, fantomDelete2));
     Assert.assertTrue(wasU2.exists());
   }
@@ -291,25 +292,22 @@ public class SvnRollbackTest extends Svn17TestCase {
 
     rollbackIMpl(Arrays.asList(change),
                  Arrays.asList(new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(innerBefore, true), "2"),
-                                          new SimpleContentRevision("1", VcsUtil.getFilePath(innerAfter, true), SVNRevision.WORKING.getName())),
+                                          new SimpleContentRevision("1", VcsUtil.getFilePath(innerAfter, true),
+                                                                    WORKING.toString())),
                                new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(fileBefore, false), "2"),
-                                          new SimpleContentRevision("1", VcsUtil.getFilePath(fileAfter, false), SVNRevision.WORKING.getName()))));
+                                          new SimpleContentRevision("1", VcsUtil.getFilePath(fileAfter, false),
+                                                                    WORKING.toString()))));
     Assert.assertEquals("cde", getProperty(fileAfter, "abc"));
   }
 
-  private String getProperty(File file, String name) throws SVNException {
-    final SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
-    final SVNPropertyData data = client.doGetProperty(file, name, SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    return data == null ? null : new String(data.getValue().getBytes());
+  private String getProperty(File file, String name) throws SvnBindException {
+    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), name, false, WORKING);
+
+    return PropertyValue.toString(value);
   }
 
-  private void setProperty(final File file, final String name, final String value) throws SVNException {
-    final SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
-    client.doSetProperty(file, (path, properties) -> {
-      final SVNProperties result = new SVNProperties();
-      result.put(name, SVNPropertyValue.create(value));
-      return result;
-    }, true, SVNDepth.EMPTY, null, null);
+  private void setProperty(final File file, final String name, final String value) throws SvnBindException {
+    myVcs.getFactory(file).createPropertyClient().setProperty(file, name, PropertyValue.create(value), Depth.EMPTY, true);
   }
 
   @Test
@@ -510,7 +508,7 @@ public class SvnRollbackTest extends Svn17TestCase {
 
     final FilePath fp = VcsUtil.getFilePath(was2, false);
     rollbackIMpl(Arrays.asList(dirChange, s1Change), Arrays.asList(new Change(
-      new SimpleContentRevision("1", fp, "1"), new SimpleContentRevision("1", fp, SVNRevision.WORKING.getName()))));
+      new SimpleContentRevision("1", fp, "1"), new SimpleContentRevision("1", fp, WORKING.toString()))));
   }
 
   @Test

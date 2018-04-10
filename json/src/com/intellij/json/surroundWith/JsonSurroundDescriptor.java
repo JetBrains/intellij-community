@@ -55,7 +55,7 @@ public class JsonSurroundDescriptor implements SurroundDescriptor {
         }
         nextSibling = nextSibling.getNextSibling();
       }
-      return properties.toArray(new PsiElement[properties.size()]);
+      return properties.toArray(PsiElement.EMPTY_ARRAY);
     }
 
     final JsonValue value = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, JsonValue.class);

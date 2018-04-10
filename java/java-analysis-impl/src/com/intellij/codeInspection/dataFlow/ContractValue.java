@@ -15,12 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Tagir Valeev
@@ -32,6 +30,13 @@ public abstract class ContractValue {
   }
 
   abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
+
+  /**
+   * @return true if this contract value represents a bounds-checking condition
+   */
+  public boolean isBoundCheckingCondition() {
+    return false;
+  }
 
   public static ContractValue qualifier() {
     return Qualifier.INSTANCE;
@@ -45,7 +50,7 @@ public abstract class ContractValue {
     return new Spec(this, field);
   }
 
-  public static ContractValue constant(Object value, PsiType type) {
+  public static ContractValue constant(Object value, @NotNull PsiType type) {
     return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type, null), String.valueOf(value));
   }
 
@@ -92,7 +97,13 @@ public abstract class ContractValue {
 
     @Override
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
-      return arguments.myArguments.length <= myIndex ? DfaUnknownValue.getInstance() : arguments.myArguments[myIndex];
+      if (arguments.myArguments.length <= myIndex) {
+        return DfaUnknownValue.getInstance();
+      }
+      else {
+        DfaValue arg = arguments.myArguments[myIndex];
+        return arg instanceof DfaBoxedValue ? ((DfaBoxedValue)arg).getWrappedValue() : arg;
+      }
     }
 
     @Override
@@ -106,11 +117,10 @@ public abstract class ContractValue {
     static final IndependentValue TRUE = new IndependentValue(factory -> factory.getConstFactory().getTrue(), "true");
     static final IndependentValue FALSE = new IndependentValue(factory -> factory.getConstFactory().getFalse(), "false");
     static final IndependentValue OPTIONAL_PRESENT =
-      new IndependentValue(factory -> factory.getOptionalFactory().getOptional(true), "present");
+      new IndependentValue(factory -> factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true), "present");
     static final IndependentValue OPTIONAL_ABSENT =
-      new IndependentValue(factory -> factory.getOptionalFactory().getOptional(false), "empty");
-    static final IndependentValue ZERO =
-      new IndependentValue(factory -> factory.getConstFactory().createFromValue(0, PsiType.INT, null), "0");
+      new IndependentValue(factory -> factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false), "empty");
+    static final IndependentValue ZERO = new IndependentValue(factory -> factory.getInt(0), "0");
 
     private final Function<DfaValueFactory, DfaValue> mySupplier;
     private final String myPresentation;
@@ -159,6 +169,19 @@ public abstract class ContractValue {
       myLeft = left;
       myRight = right;
       myRelationType = type;
+    }
+
+    @Override
+    public boolean isBoundCheckingCondition() {
+      switch (myRelationType) {
+        case LE:
+        case LT:
+        case GE:
+        case GT:
+          return true;
+        default:
+          return false;
+      }
     }
 
     @Override

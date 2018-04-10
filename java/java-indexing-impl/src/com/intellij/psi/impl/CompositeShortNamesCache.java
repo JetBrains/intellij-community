@@ -26,7 +26,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -138,13 +137,6 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public void getAllClassNames(@NotNull HashSet<String> dest) {
-    for (PsiShortNamesCache cache : myCaches) {
-      cache.getAllClassNames(dest);
-    }
-  }
-
-  @Override
   @NotNull
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiMethod> merger = null;
@@ -221,13 +213,6 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public void getAllMethodNames(@NotNull HashSet<String> set) {
-    for (PsiShortNamesCache cache : myCaches) {
-      cache.getAllMethodNames(set);
-    }
-  }
-
-  @Override
   @NotNull
   public PsiField[] getFieldsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiField> merger = null;
@@ -255,13 +240,6 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     }
     String[] result = merger == null ? null : merger.getResult();
     return result == null ? ArrayUtil.EMPTY_STRING_ARRAY : result;
-  }
-
-  @Override
-  public void getAllFieldNames(@NotNull HashSet<String> set) {
-    for (PsiShortNamesCache cache : myCaches) {
-      cache.getAllFieldNames(set);
-    }
   }
 
   @Override

@@ -37,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
- *         Date: 3/17/11
- *         Time: 7:51 PM
  */
 public class VcsAnnotationCachedProxy implements AnnotationProvider {
   private final VcsHistoryCache myCache;

@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -31,7 +30,9 @@ import java.awt.*;
 
 /**
  * Handler utilities that allow running handlers with progress indicators
+ * @deprecated use {@link GitImpl}
  */
+@Deprecated
 public class GitHandlerUtil {
 
   private GitHandlerUtil() {
@@ -121,10 +122,6 @@ public class GitHandlerUtil {
     handler.runInCurrentThread(postStartAction);
   }
 
-  public static String formatOperationName(String operation, @NotNull VirtualFile root) {
-    return operation + " '" + root.getName() + "'...";
-  }
-
   /**
    * A base class for handler listener that implements error handling logic
    */
@@ -169,7 +166,7 @@ public class GitHandlerUtil {
      * {@inheritDoc}
      */
     public void processTerminated(final int exitCode) {
-      if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
+      if (exitCode != 0) {
         ensureError(exitCode);
         if (myShowErrors) {
           EventQueue.invokeLater(() -> GitUIUtil.showOperationErrors(myHandler.project(), myHandler.errors(), myOperationName));

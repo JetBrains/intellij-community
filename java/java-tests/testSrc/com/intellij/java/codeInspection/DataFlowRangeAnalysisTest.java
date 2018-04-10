@@ -57,14 +57,12 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   }
 
   public void testLongRangeKnownMethods() {
-    myFixture.addClass("package java.time;\n" +
-                       "\n" +
-                       "public interface LocalDateTime {\n" +
-                       "  int getHour();\n" +
-                       "  int getMinute();\n" +
-                       "  int getSecond();\n" +
-                       "}");
     doTest();
   }
 
+  public void testLongRangeMod() { doTest(); }
+  public void testLongRangeDivShift() { doTest(); }
+
+  public void testLongRangePlusMinus() { doTest(); }
+  public void testFebruary31() { doTest(); }
 }

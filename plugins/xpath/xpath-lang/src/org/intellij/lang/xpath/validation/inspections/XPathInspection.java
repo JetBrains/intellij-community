@@ -113,7 +113,7 @@ public abstract class XPathInspection extends LocalInspectionTool implements Cus
 
     @Nullable
     private ProblemDescriptor[] getProblems() {
-      return myProblems == null ? null : myProblems.toArray(new ProblemDescriptor[myProblems.size()]);
+      return myProblems == null ? null : myProblems.toArray(ProblemDescriptor.EMPTY_ARRAY);
     }
 
     void addProblem(ProblemDescriptor problem) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -22,15 +8,16 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaExecutionStack;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.unscramble.ThreadState;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xdebugger.XDebugSession;
@@ -115,6 +102,7 @@ class ReloadClassesWorker {
     final Project project = debugProcess.getProject();
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
     breakpointManager.disableBreakpoints(debugProcess);
+    StackCapturingLineBreakpoint.deleteAll(debugProcess);
 
     //virtualMachineProxy.suspend();
     if (LOG.isDebugEnabled()) {
@@ -124,7 +112,8 @@ class ReloadClassesWorker {
 
     if (Registry.is("debugger.resume.yourkit.threads")) {
       virtualMachineProxy.allThreads().stream()
-        .filter(t -> t.isSuspended() && t.name().startsWith("YJPAgent-"))
+        .filter(ThreadReferenceProxyImpl::isResumeOnHotSwap)
+        .filter(ThreadReferenceProxyImpl::isSuspended)
         .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> t.resume()));
     }
 
@@ -227,6 +216,7 @@ class ReloadClassesWorker {
     if (!project.isDisposed()) {
       try {
         breakpointManager.enableBreakpoints(debugProcess);
+        StackCapturingLineBreakpoint.createAll(debugProcess);
       }
       catch (Exception e) {
         processException(e);
@@ -242,14 +232,7 @@ class ReloadClassesWorker {
     if (reason == null || reason.length() == 0) {
       reason = DebuggerBundle.message("error.io.error");
     }
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(qualifiedName).append(" : ").append(reason);
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, buf.toString());
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, qualifiedName + " : " + reason);
   }
 
   private static class RedefineProcessor {

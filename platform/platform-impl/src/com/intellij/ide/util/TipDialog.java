@@ -20,8 +20,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,10 +54,24 @@ public class TipDialog extends DialogWrapper{
       setCancelButtonText(CommonBundle.getCloseButtonText());
       myTipPanel = new TipPanel();
       myTipPanel.nextTip();
+      setDoNotAskOption(myTipPanel);
       setHorizontalStretch(1.33f);
       setVerticalStretch(1.25f);
       init();
     }
+
+  @NotNull
+  @Override
+  protected DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
+  }
+
+  @Override
+  protected JComponent createSouthPanel() {
+    JComponent component = super.createSouthPanel();
+    component.setBorder(JBUI.Borders.empty(8, 12));
+    return component;
+  }
 
   @NotNull
   protected Action[] createActions(){

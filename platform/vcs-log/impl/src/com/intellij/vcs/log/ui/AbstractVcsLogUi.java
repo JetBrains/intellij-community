@@ -22,6 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -64,10 +66,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull protected VisiblePack myVisiblePack;
 
   public AbstractVcsLogUi(@NotNull VcsLogData logData,
-                          @NotNull Project project,
                           @NotNull VcsLogColorManager manager,
                           @NotNull VisiblePackRefresher refresher) {
-    myProject = project;
+    myProject = logData.getProject();
     myLogData = logData;
     myRefresher = refresher;
     myColorManager = manager;
@@ -114,17 +115,8 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public abstract Component getMainComponent();
 
-  protected abstract VcsLogFilterCollection getFilters();
-
   @NotNull
   public abstract VcsLogUiProperties getProperties();
-
-  public abstract boolean isShowRootNames();
-
-  @Override
-  public boolean areGraphActionsEnabled() {
-    return getTable().getRowCount() > 0;
-  }
 
   @NotNull
   public VisiblePackRefresher getRefresher() {
@@ -135,12 +127,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   public VcsLogColorManager getColorManager() {
     return myColorManager;
   }
-
-  @NotNull
-  public Project getProject() {
-    return myProject;
-  }
-
+  
   @NotNull
   public VcsLog getVcsLog() {
     return myLog;
@@ -149,6 +136,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public VcsLogData getLogData() {
     return myLogData;
+  }
+
+  public void requestMore(@NotNull Runnable onLoaded) {
+    myRefresher.moreCommitsNeeded(onLoaded);
+    getTable().setPaintBusy(true);
   }
 
   @Override
@@ -232,12 +224,18 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     }
   }
 
-  public void invokeOnChange(@NotNull final Runnable runnable) {
+  public void invokeOnChange(@NotNull Runnable runnable) {
+    invokeOnChange(runnable, Conditions.alwaysTrue());
+  }
+
+  protected void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<VcsLogDataPack> condition) {
     addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-        runnable.run();
-        removeLogListener(this);
+        if (condition.value(dataPack)) {
+          runnable.run();
+          removeLogListener(this);
+        }
       }
     });
   }

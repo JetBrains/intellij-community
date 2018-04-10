@@ -24,11 +24,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -48,6 +50,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
+import java.net.URL;
 import java.util.*;
 
 public class MavenFoldersImporter {
@@ -102,10 +105,14 @@ public class MavenFoldersImporter {
       configOutputFolders();
     }
     configGeneratedFolders();
-    if (!updateTargetFoldersOnly
-        && !FileUtil.namesEqual("pom", myMavenProject.getFile().getNameWithoutExtension())
-        && MavenUtil.streamPomFiles(myModel.getModule().getProject(), myMavenProject.getDirectoryFile()).skip(1).findAny().isPresent()) {
-      generateNewContentRoots();
+    if (!updateTargetFoldersOnly) {
+      if (!FileUtil.namesEqual("pom", myMavenProject.getFile().getNameWithoutExtension()) &&
+          MavenUtil.streamPomFiles(myModel.getModule().getProject(), myMavenProject.getDirectoryFile()).skip(1).findAny().isPresent()) {
+        generateNewContentRoots(false);
+      }
+      else {
+        generateNewContentRoots(true);
+      }
     }
     configExcludedFolders();
   }
@@ -212,7 +219,7 @@ public class MavenFoldersImporter {
     }
   }
 
-  private void generateNewContentRoots() {
+  private void generateNewContentRoots(boolean orphansOnly) {
     Map<String, SourceFolder> sourceFoldersMap = new TreeMap<>(FileUtil::comparePaths);
     for (String sourceRootUrl : myModel.getSourceRootUrls(true)) {
       String sourceRootPath = FileUtil.toSystemDependentName(VfsUtil.urlToPath(sourceRootUrl));
@@ -223,8 +230,16 @@ public class MavenFoldersImporter {
     }
 
     ModifiableRootModel rootModel = myModel.getRootModel();
-    for (ContentEntry contentEntry : rootModel.getContentEntries()) {
-      rootModel.removeContentEntry(contentEntry);
+
+    if (orphansOnly) {
+      for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+        sourceFoldersMap.keySet().removeIf(root -> FileUtil.isAncestor(contentEntry.getUrl(), root, false));
+      }
+    }
+    else {
+      for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+        rootModel.removeContentEntry(contentEntry);
+      }
     }
 
     Set<String> topLevelSourceFolderUrls = ContainerUtil.newHashSet();
@@ -235,6 +250,8 @@ public class MavenFoldersImporter {
     }
 
     for (String sourceFolderUrl : topLevelSourceFolderUrls) {
+      if (isAlreadyContentRoot(sourceFolderUrl, rootModel.getProject())) continue;
+
       ContentEntry contentEntry = rootModel.addContentEntry(sourceFolderUrl);
       for (Map.Entry<String, SourceFolder> entry : sourceFoldersMap.entrySet()) {
         if (FileUtil.isAncestor(sourceFolderUrl, entry.getKey(), false)) {
@@ -244,6 +261,28 @@ public class MavenFoldersImporter {
         }
       }
     }
+  }
+
+  private static boolean isAlreadyContentRoot(String sourceFolderUrl, Project project) {
+    URL url = VfsUtilCore.convertToURL(sourceFolderUrl);
+    if (url == null) return false;
+
+    VirtualFile sourceFolder = VfsUtil.findFileByURL(url);
+    if (sourceFolder == null) return false;
+
+    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
+    MavenProject containingProject = mavenProjectsManager.findContainingProject(sourceFolder);
+    if (containingProject != null) {
+      Module module = mavenProjectsManager.findModule(containingProject);
+      if (module == null) return false;
+
+      for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+        if (contentEntry.getUrl().equals(sourceFolderUrl)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private void configExcludedFolders() {

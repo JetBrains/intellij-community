@@ -33,7 +33,7 @@ public class FileIconPatcherImpl implements FileIconProvider {
   @Override
   @Nullable
   public Icon getIcon(@NotNull final VirtualFile file, final int flags, final Project project) {
-    if (project == null) return null;
+    if (project == null || project.isDisposed()) return null;
 
     final PsiFileSystemItem psiFile = file.isDirectory() ? PsiManager.getInstance(project).findDirectory(file)
                                                          : PsiManager.getInstance(project).findFile(file);

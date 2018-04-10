@@ -28,7 +28,7 @@ import java.util.Set;
  * @author Svetlana.Zemlyanskaya
  */
 public class ArrangementSectionRulesValidator extends ArrangementMatchingRulesValidator {
-  private ArrangementSectionRuleManager mySectionRuleManager;
+  private final ArrangementSectionRuleManager mySectionRuleManager;
 
   public ArrangementSectionRulesValidator(ArrangementMatchingRulesModel model, ArrangementSectionRuleManager sectionRuleManager) {
     super(model);

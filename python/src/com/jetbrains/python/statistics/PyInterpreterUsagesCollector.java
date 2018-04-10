@@ -56,7 +56,7 @@ public class PyInterpreterUsagesCollector extends AbstractProjectsUsagesCollecto
           versionString += " [virtualenv]";
         }
 
-        if (PythonSdkType.isCondaVirtualEnv(pythonSdk)) {
+        if (PythonSdkType.isConda(pythonSdk)) {
           versionString += " [condavenv]";
         }
         result.add(new UsageDescriptor(versionString, 1));

@@ -35,7 +35,7 @@ abstract class HgAbstractFilesAction extends AnAction {
   protected abstract boolean isEnabled(Project project, HgVcs vcs, VirtualFile file);
 
   protected abstract void batchPerform(Project project, final HgVcs activeVcs,
-    List<VirtualFile> files, DataContext context) throws VcsException;
+    List<VirtualFile> files, DataContext context);
 
   public final void actionPerformed(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();

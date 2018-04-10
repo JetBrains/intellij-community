@@ -80,6 +80,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected static final Key<String> NULL_TEXT = KeyWithDefaultValue.create("NULL_TEXT", "<None>");
   protected static final Key<Boolean> ADD_PROJECT_MAPPING = KeyWithDefaultValue.create("ADD_PROJECT_MAPPING", Boolean.TRUE);
   protected static final Key<Boolean> ONLY_DIRECTORIES = KeyWithDefaultValue.create("ONLY_DIRECTORIES", Boolean.FALSE);
+  protected static final Key<Boolean> SORT_VALUES = KeyWithDefaultValue.create("SORT_VALUES", Boolean.TRUE);
 
   protected final Project myProject;
   protected final PerFileMappings<T> myMappings;
@@ -758,12 +759,15 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
     SimpleColoredText text = new SimpleColoredText();
     List<T> values = new ArrayList<>(getValueVariants(target));
-    Function<T, String> toString = o -> {
-      text.clear();
-      renderValue(target, o, text);
-      return text.toString();
-    };
-    Collections.sort(values, (o1, o2) -> StringUtil.naturalCompare(toString.fun(o1), toString.fun(o2)));
+
+    if (param(SORT_VALUES)) {
+      Function<T, String> toString = o -> {
+        text.clear();
+        renderValue(target, o, text);
+        return text.toString();
+      };
+      Collections.sort(values, (o1, o2) -> StringUtil.naturalCompare(toString.fun(o1), toString.fun(o2)));
+    }
     for (T t : values) {
       group.add(choseAction.fun(t));
     }

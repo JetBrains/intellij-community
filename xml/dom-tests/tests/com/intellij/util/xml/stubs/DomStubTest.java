@@ -35,7 +35,6 @@ import com.intellij.util.xml.stubs.model.Foo;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/8/12
  */
 public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
 

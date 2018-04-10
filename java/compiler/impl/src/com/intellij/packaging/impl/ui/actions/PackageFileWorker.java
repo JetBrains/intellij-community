@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,8 +45,7 @@ import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -82,18 +80,16 @@ public class PackageFileWorker {
         try {
           for (final VirtualFile file : files) {
             indicator.checkCanceled();
-            new ReadAction() {
-              @Override
-              protected void run(@NotNull final Result result) {
-                try {
-                  packageFile(file, project, artifacts, packIntoArchives);
-                }
-                catch (IOException e) {
-                  String message = CompilerBundle.message("message.tect.package.file.io.error", e.toString());
-                  Notifications.Bus.notify(new Notification("Package File", "Cannot package file", message, NotificationType.ERROR));
-                }
+            ReadAction.run(() -> {
+              try {
+                packageFile(file, project, artifacts, packIntoArchives);
               }
-            }.execute();
+              catch (IOException e) {
+                LOG.info(e);
+                String message = CompilerBundle.message("message.tect.package.file.io.error", e.toString());
+                Notifications.Bus.notify(new Notification("Package File", "Cannot package file", message, NotificationType.ERROR));
+              }
+            });
             callback.setDone();
           }
         }
@@ -167,7 +163,7 @@ public class PackageFileWorker {
       try {
         final String fullPathInArchive = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, myRelativeOutputPath));
         final JBZipEntry entry = file.getOrCreateEntry(fullPathInArchive);
-        entry.setData(FileUtil.loadFileBytes(myFile));
+        entry.setDataFromFile(myFile);
       }
       finally {
         file.close();
@@ -186,10 +182,12 @@ public class PackageFileWorker {
         final File tempFile = FileUtil.createTempFile("packageFile" + FileUtil.sanitizeFileName(nextPathInArchive),
                                                       FileUtilRt.getExtension(PathUtil.getFileName(nextPathInArchive)));
         if (entry.getSize() != -1) {
-          FileUtil.writeToFile(tempFile, entry.getData());
+          try (OutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile))) {
+            entry.writeDataTo(output);
+          }
         }
         packFile(FileUtil.toSystemIndependentName(tempFile.getAbsolutePath()), "", parentsTrail);
-        entry.setData(FileUtil.loadFileBytes(tempFile));
+        entry.setDataFromFile(tempFile);
         FileUtil.delete(tempFile);
       }
       finally {

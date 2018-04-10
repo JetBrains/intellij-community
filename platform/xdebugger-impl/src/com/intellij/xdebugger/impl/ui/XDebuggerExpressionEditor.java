@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
@@ -66,10 +52,18 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         editor.setHorizontalScrollbarVisible(multiline);
         editor.setVerticalScrollbarVisible(multiline);
         editor.getSettings().setUseSoftWraps(isUseSoftWraps());
+        editor.getSettings().setLineCursorWidth(EditorUtil.getDefaultCaretWidth());
         editor.getColorsScheme().setEditorFontName(getFont().getFontName());
         editor.getColorsScheme().setEditorFontSize(getFont().getSize());
         if (multiline) {
           editor.getContentComponent().setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2)));
+          editor.setContextMenuGroupId("XDebugger.Evaluate.Code.Fragment.Editor.Popup");
+        }
+        else {
+          foldNewLines(editor);
+          if (showEditor) {
+            setExpandable(editor);
+          }
         }
         return editor;
       }
@@ -88,7 +82,14 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
       myEditorTextField.setFontInheritedFromLAF(false);
       myEditorTextField.setFont(EditorUtil.getEditorFont());
     }
+
+    if (multiline) {
+      DumbAwareAction.create(e -> goForward()).registerCustomShortcutSet(CommonShortcuts.MOVE_UP, myEditorTextField);
+      DumbAwareAction.create(e -> goBackward()).registerCustomShortcutSet(CommonShortcuts.MOVE_DOWN, myEditorTextField);
+    }
+
     myComponent = decorate(myEditorTextField, multiline, showEditor);
+    setExpression(myExpression);
   }
 
   @Override
@@ -133,19 +134,5 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   @Override
   public void selectAll() {
     myEditorTextField.selectAll();
-  }
-
-  private static final String SOFT_WRAPS_KEY = "XDebuggerExpressionEditor_Use_Soft_Wraps";
-
-  public boolean isUseSoftWraps() {
-    return PropertiesComponent.getInstance().getBoolean(SOFT_WRAPS_KEY);
-  }
-
-  public void setUseSoftWraps(boolean use) {
-    PropertiesComponent.getInstance().setValue(SOFT_WRAPS_KEY, use);
-    Editor editor = getEditor();
-    if (editor != null) {
-      AbstractToggleUseSoftWrapsAction.toggleSoftWraps(editor, null, use);
-    }
   }
 }

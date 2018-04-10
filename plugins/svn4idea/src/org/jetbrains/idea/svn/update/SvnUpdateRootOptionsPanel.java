@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +9,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -30,14 +18,15 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.update.SvnUpdateRootOptionsPanel.SvnUpdateRootOptionsPanel");
@@ -53,7 +42,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private JLabel myBranchLabel;
   private JLabel myUrlLabel;
   private JLabel myCopyType;
-  @Nullable private SVNURL mySourceUrl;
+  @Nullable private Url mySourceUrl;
 
   public SvnUpdateRootOptionsPanel(FilePath root, final SvnVcs vcs, Collection<FilePath> roots) {
     myRoot = root;
@@ -103,7 +92,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       }
     });
 
-    myRevisionText.setText(SVNRevision.HEAD.toString());
+    myRevisionText.setText(Revision.HEAD.toString());
     myRevisionText.getTextField().selectAll();
     myRevisionText.setEnabled(myRevisionBox.isSelected());
     myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
@@ -144,20 +133,26 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       }
       else {
         try {
-          myURLText.setText(SVNURL.parseURIEncoded(url).appendPath(branchRelativeUrl, true).toDecodedString());
+          myURLText.setText(append(createUrl(url), branchRelativeUrl, true).toDecodedString());
         }
-        catch (SVNException e) {
+        catch (SvnBindException e) {
           LOG.error(e);
         }
-        myBranchField.setText(SVNPathUtil.tail(url));
+        myBranchField.setText(Url.tail(url));
       }
-    }, SvnBundle.message("select.branch.popup.general.title"), myPanel);
+    }, message("select.branch.popup.general.title"), myPanel);
   }
 
   private void chooseUrl() {
-    SVNURL selected = SelectLocationDialog.selectLocation(myVcs.getProject(), myURLText.getText());
-    if (selected != null) {
-      myURLText.setText(selected.toDecodedString());
+    try {
+      Url url = createUrl(myURLText.getText(), false);
+      Url selected = SelectLocationDialog.selectLocation(myVcs.getProject(), url);
+      if (selected != null) {
+        myURLText.setText(selected.toDecodedString());
+      }
+    }
+    catch (SvnBindException e) {
+      showErrorDialog(myVcs.getProject(), e.getMessage(), message("dialog.title.select.repository.location"));
     }
   }
 
@@ -166,7 +161,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   }
 
   @Nullable
-  private SVNURL getBranchForUrl(@Nullable SVNURL url) {
+  private Url getBranchForUrl(@Nullable Url url) {
     final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot.getIOFile());
 
     return rootInfo != null && url != null ? SvnUtil.getBranchForUrl(myVcs, rootInfo.getVirtualFile(), url) : null;
@@ -183,9 +178,9 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
 
     mySourceUrl = rootInfo.getUrl();
-    SVNURL branchUrl = getBranchForUrl(mySourceUrl);
+    Url branchUrl = getBranchForUrl(mySourceUrl);
     if (branchUrl != null) {
-      myBranchField.setText(SVNPathUtil.tail(branchUrl.toDecodedString()));
+      myBranchField.setText(branchUrl.getTail());
     }
 
     myURLText.setText(mySourceUrl != null ? mySourceUrl.toDecodedString() : "");
@@ -201,7 +196,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
     if (myUpdateToSpecificUrl.isSelected()) {
       try {
-        rootInfo.setUrl(SvnUtil.createUrl(myURLText.getText(), false));
+        rootInfo.setUrl(createUrl(myURLText.getText(), false));
       }
       catch (SvnBindException e) {
         throw new ConfigurationException("Invalid url: " + myURLText.getText());
@@ -209,9 +204,9 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     }
 
     rootInfo.setUpdateToRevision(myRevisionBox.isSelected());
-    final SVNRevision revision = SVNRevision.parse(myRevisionText.getText());
+    final Revision revision = Revision.parse(myRevisionText.getText());
      if (!revision.isValid()) {
-      throw new ConfigurationException(SvnBundle.message("invalid.svn.revision.error.message", myRevisionText.getText()));
+       throw new ConfigurationException(message("invalid.svn.revision.error.message", myRevisionText.getText()));
     }
     rootInfo.setRevision(revision);
   }

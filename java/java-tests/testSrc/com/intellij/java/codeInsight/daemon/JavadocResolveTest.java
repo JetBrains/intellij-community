@@ -1,46 +1,31 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 
 public class JavadocResolveTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/javaDoc/resolve";
 
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new JavaDocLocalInspection(), new JavaDocReferenceInspection()};
+  public void testSee0() { doTest(); }
+  public void testSee1() { doTest(); }
+  public void testSee2() { doTest(); }
+  public void testSee3() { doTest(); }
+  public void testPackageInfo() { doTest("/pkg/package-info.java"); }
+  public void testBrokenPackageInfo() { doTest("/pkg1/package-info.java"); }
+  public void testModuleInfo() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("/module-info.java"); }
+
+  private void doTest() {
+    doTest("/pkg/" + getTestName(false) + ".java");
   }
 
-  public void testSee0() throws Exception { doTest(); }
-  public void testSee1() throws Exception { doTest(); }
-  public void testSee2() throws Exception { doTest(); }
-  public void testSee3() throws Exception { doTest(); }
-  public void testPackageInfo() throws Exception { doTest(BASE_PATH + "/pkg/package-info.java", BASE_PATH, false, false); }
-  public void testBrokenPackageInfo() throws Exception { doTest(BASE_PATH + "/pkg1/package-info.java", BASE_PATH, false, false); }
-  public void testModuleInfo() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
-    doTest(BASE_PATH + "/pkg/module-info.java", BASE_PATH, false, false); }
-
-  private void doTest() throws Exception {
-    doTest(BASE_PATH + "/pkg/" + getTestName(false) + ".java", BASE_PATH, false, false);
+  private void doTest(String testFileName) {
+    enableInspectionTools(new JavaDocLocalInspection(), new JavaDocReferenceInspection());
+    try {
+      doTest(BASE_PATH + testFileName, BASE_PATH, false, false);
+    }
+    catch (Exception e) { throw new RuntimeException(e); }
   }
 }

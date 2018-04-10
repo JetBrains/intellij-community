@@ -33,11 +33,10 @@ except:  # ImportError or AttributeError.
         return a + '/' + b
 
 
-IS_PYTHON_3K = 0
+IS_PYTHON_3_ONWARDS = 0
 
 try:
-    if sys.version_info[0] == 3:
-        IS_PYTHON_3K = 1
+    IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
 except:
     # That's OK, not all versions of python have sys.version_info
     pass
@@ -116,7 +115,7 @@ def getfilesystemencoding():
 
 file_system_encoding = getfilesystemencoding()
 
-if IS_PYTHON_3K:
+if IS_PYTHON_3_ONWARDS:
     unicode_type = str
     bytes_type = bytes
 
@@ -246,7 +245,7 @@ if __name__ == '__main__':
     contents.append(tounicode('</xml>'))
     unic = tounicode('\n').join(contents)
     inasciixml = toasciimxl(unic)
-    if IS_PYTHON_3K:
+    if IS_PYTHON_3_ONWARDS:
         # This is the 'official' way of writing binary output in Py3K (see: http://bugs.python.org/issue4571)
         sys.stdout.buffer.write(inasciixml)
     else:

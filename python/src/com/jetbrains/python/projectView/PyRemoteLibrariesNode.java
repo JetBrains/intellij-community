@@ -120,7 +120,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
 
   public static class PyRemoteRootNode extends PsiDirectoryNode {
 
-    private String myRemotePath;
+    private final String myRemotePath;
 
     public PyRemoteRootNode(String remotePath, Project project, PsiDirectory value, ViewSettings viewSettings) {
       super(project, value, viewSettings);

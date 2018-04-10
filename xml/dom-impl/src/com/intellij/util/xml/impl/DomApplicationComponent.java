@@ -42,7 +42,7 @@ import static com.intellij.util.containers.ContainerUtil.newArrayList;
  * @author peter
  */
 public class DomApplicationComponent {
-  private final Map<String, Set<DomFileDescription>> myRootTagName2FileDescription = FactoryMap.createMap(key -> new THashSet<>());
+  private final Map<String, Set<DomFileDescription>> myRootTagName2FileDescription = FactoryMap.create(key -> new THashSet<>());
   private final Set<DomFileDescription> myAcceptingOtherRootTagNamesDescriptions = new THashSet<>();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache(DomImplementationClassEP.EP_NAME);
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();

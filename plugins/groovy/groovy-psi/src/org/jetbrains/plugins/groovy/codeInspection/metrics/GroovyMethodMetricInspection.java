@@ -15,19 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
-
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 
 public abstract class GroovyMethodMetricInspection extends BaseInspection {
 
-    @SuppressWarnings({"PublicField", "WeakerAccess"})
-    public int m_limit = getDefaultLimit();
+  public int m_limit;
 
-    protected abstract int getDefaultLimit();
+  public GroovyMethodMetricInspection(int defaultLimit) {
+    m_limit = defaultLimit;
+  }
 
-    protected abstract String getConfigurationLabel();
-
-    protected int getLimit() {
-        return m_limit;
-    }
+  protected int getLimit() {
+    return m_limit;
+  }
 }

@@ -63,7 +63,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
   private JBCheckBox myCbEffects;
   private JBCheckBox myCbErrorStripe;
 
-  private Map<String, EffectType> myEffectsMap;
+  private final Map<String, EffectType> myEffectsMap;
   {
     Map<String, EffectType> map = ContainerUtil.newLinkedHashMap();
     map.put(ApplicationBundle.message("combobox.effect.underscored"), EffectType.LINE_UNDERSCORE);

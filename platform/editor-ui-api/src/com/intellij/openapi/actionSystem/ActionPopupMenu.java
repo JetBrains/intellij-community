@@ -29,4 +29,9 @@ public interface ActionPopupMenu {
    * @return visual presentation of the popup menu
    */
   JPopupMenu getComponent();
+
+  /**
+   * Will be used for data-context retrieval.
+   */
+  void setTargetComponent(JComponent component);
 }

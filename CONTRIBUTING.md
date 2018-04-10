@@ -7,7 +7,8 @@ Opening a PR, please make sure you've read these articles:
 - [Contribute Code](http://www.jetbrains.org/display/IJOS/Contribute#Contribute-ContributeCode)
 
 Additionally, you **NEED** to have a signed CLA sent to JetBrains before your
-code can be merged, you can download one from [Contributor License Agreement](http://www.jetbrains.org/display/IJOS/Contributor+Agreement)
+code can be merged. You can either [sign it electronically](https://www.jetbrains.com/agreements/cla/)
+or download one from [Contributor License Agreement](https://www.jetbrains.org/display/IJOS/Contributor+Agreement).
 
 Building the IDE
 ==

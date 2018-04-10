@@ -128,7 +128,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
     new MoveInstanceMethodDialog(
       method,
-      suitableVariables.toArray(new PsiVariable[suitableVariables.size()])).show();
+      suitableVariables.toArray(new PsiVariable[0])).show();
   }
 
   private static void showErrorHint(Project project, DataContext dataContext, String message) {

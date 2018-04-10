@@ -1,8 +1,9 @@
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 public class JavaDocCodeStyleImpl extends JavaDocCodeStyle {
   private final Project myProject;
@@ -13,13 +14,13 @@ public class JavaDocCodeStyleImpl extends JavaDocCodeStyle {
 
   @Override
   public boolean spaceBeforeComma() {
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
+    CommonCodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject).getCommonSettings(JavaLanguage.INSTANCE);
     return styleSettings.SPACE_BEFORE_COMMA;
   }
 
   @Override
   public boolean spaceAfterComma() {
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
+    CommonCodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject).getCommonSettings(JavaLanguage.INSTANCE);
     return styleSettings.SPACE_AFTER_COMMA;
   }
 }

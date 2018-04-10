@@ -17,6 +17,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.jediterm.pty.PtyProcessTtyConnector;
+import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.TtyConnector;
 
 /**
@@ -67,5 +68,12 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
   @Override
   public boolean overrideIdeShortcuts() {
     return TerminalOptionsProvider.Companion.getInstance().overrideIdeShortcuts();
+  }
+
+  @Override
+  public HyperlinkStyle.HighlightMode getHyperlinkHighlightingMode() {
+    return TerminalOptionsProvider.Companion.getInstance().highlightHyperlinks()
+           ? HyperlinkStyle.HighlightMode.ALWAYS
+           : HyperlinkStyle.HighlightMode.HOVER;
   }
 }

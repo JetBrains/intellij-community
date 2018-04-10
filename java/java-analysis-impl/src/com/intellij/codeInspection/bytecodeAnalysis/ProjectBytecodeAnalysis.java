@@ -92,11 +92,8 @@ public class ProjectBytecodeAnalysis {
           return annotation;
         }
       }
-      return null;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   @NotNull
@@ -108,22 +105,11 @@ public class ProjectBytecodeAnalysis {
                                               () -> CachedValueProvider.Result.create(collectInferredAnnotations(listOwner), listOwner));
   }
 
-  /**
-   * Ignore inside android.jar because all class files there are dummy and contain no code at all.
-   * Rely on the fact that it's always located at .../platforms/android-.../android.jar!/
-   */
-  private static boolean isInsideDummyAndroidJar(@Nullable PsiFile psiFile) {
-    VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
-    if (file == null) return false;
-
-    String path = file.getPath();
-    int index = path.indexOf("/android.jar!/");
-    return index > 0 && path.lastIndexOf("platforms/android-", index) > 0;
-  }
-
   @NotNull
   private PsiAnnotation[] collectInferredAnnotations(PsiModifierListOwner listOwner) {
-    if (isInsideDummyAndroidJar(listOwner.getContainingFile())) return PsiAnnotation.EMPTY_ARRAY;
+    PsiFile psiFile = listOwner.getContainingFile();
+    VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
+    if (file != null && ClassDataIndexer.isFileExcluded(file)) return PsiAnnotation.EMPTY_ARRAY;
 
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
@@ -286,7 +272,7 @@ public class ProjectBytecodeAnalysis {
       (Value.NotNull == notNullSolutions.get(notNullKey)) || (Value.NotNull == notNullSolutions.get(notNullKey.mkUnstable()));
 
     final Solver nullableSolver = new Solver(new ELattice<>(Value.Null, Value.Top), Value.Top);
-    final EKey nullableKey = new EKey(notNullKey.method, notNullKey.dirKey + 1, true, false);
+    final EKey nullableKey = new EKey(notNullKey.member, notNullKey.dirKey + 1, true, false);
     collectEquations(Collections.singletonList(nullableKey), nullableSolver);
     Map<EKey, Value> nullableSolutions = nullableSolver.solve();
     // subtle point
@@ -304,7 +290,7 @@ public class ProjectBytecodeAnalysis {
 
     Map<EKey, Effects> puritySolutions = puritySolver.solve();
 
-    int arity = owner.getParameterList().getParameters().length;
+    int arity = owner.getParameterList().getParametersCount();
     BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, owner.isConstructor());
 
     EKey failureKey = key.withDirection(Throw);
@@ -338,18 +324,18 @@ public class ProjectBytecodeAnalysis {
   }
 
   private static EKey withStability(EKey key, boolean stability) {
-    return new EKey(key.method, key.dirKey, stability, false);
+    return new EKey(key.member, key.dirKey, stability, false);
   }
 
   private void collectPurityEquations(EKey key, PuritySolver puritySolver)
     throws EquationsLimitException {
     HashSet<EKey> queued = new HashSet<>();
-    Stack<EKey> queue = new Stack<>();
+    ArrayDeque<EKey> queue = new ArrayDeque<>();
 
     queue.push(key);
     queued.add(key);
 
-    while (!queue.empty()) {
+    while (!queue.isEmpty()) {
       if (queued.size() > EQUATIONS_LIMIT) {
         throw new EquationsLimitException();
       }
@@ -358,7 +344,7 @@ public class ProjectBytecodeAnalysis {
 
       boolean stable = true;
       Effects combined = null;
-      for (Equations equations : myEquationProvider.getEquations(curKey.method)) {
+      for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
         stable &= equations.stable;
         Effects effects = (Effects)equations.find(curKey.getDirection())
           .orElseGet(() -> new Effects(DataValue.UnknownDataValue1, Effects.TOP_EFFECTS));
@@ -369,6 +355,7 @@ public class ProjectBytecodeAnalysis {
         puritySolver.addEquation(withStability(curKey, stable), combined);
       }
     }
+    puritySolver.addPlainFieldEquations(md -> true);
   }
 
   private void collectEquations(List<EKey> keys, Solver solver) throws EquationsLimitException {
@@ -387,7 +374,7 @@ public class ProjectBytecodeAnalysis {
       ProgressManager.checkCanceled();
       EKey curKey = queue.pop();
 
-      for (Equations equations : myEquationProvider.getEquations(curKey.method)) {
+      for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
         Result result = equations.find(curKey.getDirection()).orElseGet(solver::getUnknownResult);
         solver.addEquation(new Equation(withStability(curKey, equations.stable), result));
         result.dependencies().filter(queued::add).forEach(queue::push);
@@ -395,10 +382,10 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
-  private void collectSingleEquation(EKey curKey, Solver solver) throws EquationsLimitException {
+  private void collectSingleEquation(EKey curKey, Solver solver) {
     ProgressManager.checkCanceled();
 
-    for (Equations equations : myEquationProvider.getEquations(curKey.method)) {
+    for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
       Result result = equations.find(curKey.getDirection()).orElseGet(solver::getUnknownResult);
       solver.addEquation(new Equation(withStability(curKey, equations.stable), result));
     }
@@ -412,7 +399,7 @@ public class ProjectBytecodeAnalysis {
     return annotation;
   }
 
-  static abstract class EquationProvider<T extends MethodDescriptor> {
+  static abstract class EquationProvider<T extends MemberDescriptor> {
     final Map<T, List<Equations>> myEquationCache = ContainerUtil.createConcurrentSoftValueMap();
     final Project myProject;
 
@@ -423,28 +410,28 @@ public class ProjectBytecodeAnalysis {
 
     abstract EKey adaptKey(@NotNull EKey key, MessageDigest messageDigest);
 
-    abstract List<Equations> getEquations(MethodDescriptor method);
+    abstract List<Equations> getEquations(MemberDescriptor method);
   }
 
   /**
    * PlainEquationProvider (used for debug purposes)
    * All EKey's are not hashed; persistent index is not used to store equations
    */
-  static class PlainEquationProvider extends EquationProvider<Method> {
+  static class PlainEquationProvider extends EquationProvider<Member> {
     PlainEquationProvider(Project project) {
       super(project);
     }
 
     @Override
     public EKey adaptKey(@NotNull EKey key, MessageDigest messageDigest) {
-      assert key.method instanceof Method;
+      assert key.member instanceof Member;
       return key;
     }
 
     @Override
-    public List<Equations> getEquations(MethodDescriptor methodDescriptor) {
-      assert methodDescriptor instanceof Method;
-      Method method = (Method)methodDescriptor;
+    public List<Equations> getEquations(MemberDescriptor memberDescriptor) {
+      assert memberDescriptor instanceof Member;
+      Member method = (Member)memberDescriptor;
       List<Equations> equations = myEquationCache.get(method);
       return equations == null ? loadEquations(method) : equations;
     }
@@ -467,20 +454,20 @@ public class ProjectBytecodeAnalysis {
       String classFileName = className + ".class";
       for (PsiDirectory directory : aPackage.getDirectories()) {
         VirtualFile file = directory.getVirtualFile().findChild(classFileName);
-        if (file != null) {
+        if (file != null && !ClassDataIndexer.isFileExcluded(file)) {
           return file;
         }
       }
       return null;
     }
 
-    private List<Equations> loadEquations(Method method) {
+    private List<Equations> loadEquations(Member method) {
       VirtualFile file = findClassFile(method.internalClassName);
       if (file == null) return Collections.emptyList();
       try {
         Map<EKey, Equations> map =
           ClassDataIndexer.processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
-        Map<Method, List<Equations>> groups = EntryStream.of(map).mapKeys(key -> (Method)key.method).grouping();
+        Map<Member, List<Equations>> groups = EntryStream.of(map).mapKeys(key -> (Member)key.member).grouping();
         myEquationCache.putAll(groups);
         return groups.getOrDefault(method, Collections.emptyList());
       }
@@ -494,7 +481,7 @@ public class ProjectBytecodeAnalysis {
    * IndexedEquationProvider (used normally)
    * All EKey's are hashed after processing in ClassDataIndexer; persistent index is used to store equations
    */
-  static class IndexedEquationProvider extends EquationProvider<HMethod> {
+  static class IndexedEquationProvider extends EquationProvider<HMember> {
     IndexedEquationProvider(Project project) {
       super(project);
     }
@@ -505,8 +492,8 @@ public class ProjectBytecodeAnalysis {
     }
 
     @Override
-    public List<Equations> getEquations(MethodDescriptor method) {
-      HMethod key = method.hashed(null);
+    public List<Equations> getEquations(MemberDescriptor method) {
+      HMember key = method.hashed(null);
       return myEquationCache.computeIfAbsent(key, m -> BytecodeAnalysisIndex.getEquations(ProjectScope.getLibrariesScope(myProject), m));
     }
   }

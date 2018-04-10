@@ -24,7 +24,7 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static java.util.Collections.sort;
 import static java.util.Comparator.comparing;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
 public class UniqueRootsFilter {
 
@@ -53,6 +53,6 @@ public class UniqueRootsFilter {
   private static <T extends RootUrlPair> boolean isSameSupposedUrl(@NotNull T child, @NotNull T parent) {
     String relativePath = getRelativePath(child.getVirtualFile(), parent.getVirtualFile(), '/');
 
-    return relativePath != null && append(parent.getUrl(), relativePath).equals(child.getUrl());
+    return relativePath != null && relativePath.equals(getRelativeUrl(parent.getUrl(), child.getUrl()));
   }
 }

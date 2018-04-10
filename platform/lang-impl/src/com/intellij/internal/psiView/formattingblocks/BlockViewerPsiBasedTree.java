@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.psiView.formattingblocks;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.formatting.ASTBlock;
@@ -34,14 +35,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -207,7 +206,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   public class BlockTreeSelectionListener implements TreeSelectionListener {
     @NotNull
-    private PsiElement myRootElement;
+    private final PsiElement myRootElement;
 
     public BlockTreeSelectionListener(@NotNull PsiElement rootElement) {
       myRootElement = rootElement;
@@ -277,7 +276,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   @Nullable
   private static Block buildBlocks(@NotNull PsiElement rootElement) {
     FormattingModelBuilder formattingModelBuilder = LanguageFormatting.INSTANCE.forContext(rootElement);
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(rootElement.getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(rootElement.getContainingFile());
     if (formattingModelBuilder != null) {
       FormattingModel formattingModel = formattingModelBuilder.createModel(rootElement, settings);
       return formattingModel.getRootBlock();
@@ -289,7 +288,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   private void initMap(BlockTreeNode rootBlockNode, PsiElement psiEl) {
     myPsiToBlockMap = new HashMap<>();
-    JBTreeTraverser<BlockTreeNode> traverser = new JBTreeTraverser<>(o -> JBIterable.of(o.getChildren()));
+    JBTreeTraverser<BlockTreeNode> traverser = JBTreeTraverser.of(BlockTreeNode::getChildren);
     for (BlockTreeNode block : traverser.withRoot(rootBlockNode)) {
       PsiElement currentElem = null;
       if (block.getBlock() instanceof ASTBlock) {

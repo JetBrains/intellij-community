@@ -33,7 +33,6 @@ import java.util.Map;
 
 /**
  * @author anna
- * Date: 04-Apr-2008
  */
 public class TypeMigrationReplacementUtil {
   public static final Logger LOG = Logger.getInstance(TypeMigrationReplacementUtil.class);

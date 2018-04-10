@@ -5,7 +5,6 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 3/27/12
 */
 public class InstrumenterClassWriter extends ClassWriter {
   private final InstrumentationClassFinder myFinder;

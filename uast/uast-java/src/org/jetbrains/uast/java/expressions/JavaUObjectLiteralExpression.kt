@@ -17,33 +17,33 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UObjectLiteralExpression
-import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.*
 
 class JavaUObjectLiteralExpression(
-        override val psi: PsiNewExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UObjectLiteralExpression {
-    override val declaration by lz { JavaUClass.create(psi.anonymousClass!!, this) }
+  override val psi: PsiNewExpression,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression, UCallExpressionEx {
+  override val declaration by lz { JavaUClass.create(psi.anonymousClass!!, this) }
 
-    override val classReference by lz {
-        psi.classReference?.let { ref ->
-            JavaConverter.convertReference(ref, { this }, null) as? UReferenceExpression
-        }
+  override val classReference by lz {
+    psi.classReference?.let { ref ->
+      JavaConverter.convertReference(ref, this, null) as? UReferenceExpression
     }
+  }
 
-    override val valueArgumentCount: Int
-        get() = psi.argumentList?.expressions?.size ?: 0
+  override val valueArgumentCount: Int
+    get() = psi.argumentList?.expressions?.size ?: 0
 
-    override val valueArguments by lz {
-        psi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
-    }
+  override val valueArguments by lz {
+    psi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
+  }
 
-    override val typeArgumentCount by lz { psi.classReference?.typeParameters?.size ?: 0 }
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
-    override val typeArguments: List<PsiType>
-        get() = psi.classReference?.typeParameters?.toList() ?: emptyList()
+  override val typeArgumentCount by lz { psi.classReference?.typeParameters?.size ?: 0 }
 
-    override fun resolve() = psi.resolveMethod()
+  override val typeArguments: List<PsiType>
+    get() = psi.classReference?.typeParameters?.toList() ?: emptyList()
+
+  override fun resolve() = psi.resolveMethod()
 }

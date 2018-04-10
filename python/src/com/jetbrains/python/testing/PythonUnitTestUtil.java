@@ -30,7 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ThreeState;
-import com.jetbrains.extensions.PyClassExtKt;
+import com.jetbrains.extensions.python.PyClassExtKt;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -74,10 +74,18 @@ public final class PythonUnitTestUtil {
     if (isTestCaseClassRequired(file, testCaseClassRequired)) {
       return false;
     }
-    return file.getTopLevelFunctions().stream().anyMatch(o -> isTestFunction(o, testCaseClassRequired, context));
+    return file.getName().startsWith("test_") ||
+           file.getTopLevelFunctions().stream().anyMatch(o -> isTestFunction(o, testCaseClassRequired, context));
   }
 
-
+  /**
+   * @deprecated this method is short-cut for backward compatibility only. Use {@link #isTestClass(PyClass, ThreeState, TypeEvalContext)}
+   * instead
+   */
+  @Deprecated
+  public static boolean isTestCaseClass(@NotNull final PyClass cls, @Nullable final TypeEvalContext context) {
+    return isTestClass(cls, ThreeState.YES, context);
+  }
 
   public static boolean isTestClass(@NotNull final PyClass cls,
                                     @NotNull final ThreeState testCaseClassRequired,

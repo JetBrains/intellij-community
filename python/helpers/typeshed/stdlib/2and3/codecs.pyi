@@ -4,9 +4,9 @@ import sys
 from typing import (
     BinaryIO,
     Callable,
+    Generator,
     IO,
     Iterable,
-    Iterator,
     List,
     Optional,
     Text,
@@ -80,9 +80,9 @@ def open(filename: str, mode: str = ..., encoding: str = ..., errors: str = ...,
 def EncodedFile(file: IO[_encoded], data_encoding: str, file_encoding: str = ..., errors: str = ...) -> 'StreamRecoder':
     ...
 
-def iterencode(iterator: Iterable[_decoded], encoding: str, errors: str = ...) -> Iterator[_encoded]:
+def iterencode(iterator: Iterable[_decoded], encoding: str, errors: str = ...) -> Generator[_encoded, None, None]:
     ...
-def iterdecode(iterator: Iterable[_encoded], encoding: str, errors: str = ...) -> Iterator[_decoded]:
+def iterdecode(iterator: Iterable[_encoded], encoding: str, errors: str = ...) -> Generator[_decoded, None, None]:
     ...
 
 BOM = b''

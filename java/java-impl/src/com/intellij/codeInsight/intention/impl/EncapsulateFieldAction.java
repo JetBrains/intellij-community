@@ -65,12 +65,12 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
 
   @Nullable
   protected static PsiField getField(@Nullable PsiElement element) {
-    if (element == null || !(element instanceof PsiIdentifier)) {
+    if (!(element instanceof PsiIdentifier)) {
       return null;
     }
 
     final PsiElement parent = element.getParent();
-    if (parent == null || !(parent instanceof PsiReferenceExpression)) {
+    if (!(parent instanceof PsiReferenceExpression)) {
       return null;
     }
     final PsiReferenceExpression ref = (PsiReferenceExpression)parent;
@@ -80,7 +80,7 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
     }
 
     final PsiElement resolved = ref.resolve();
-    if (resolved == null || !(resolved instanceof PsiField)) {
+    if (!(resolved instanceof PsiField)) {
       return null;
     }
     return (PsiField)resolved;

@@ -18,7 +18,6 @@ package com.intellij.util.xml.converters;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.util.CommonProcessors;
@@ -114,7 +113,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
     Processor<PsiMethod> processor = CommonProcessors.notNullProcessor(Processors.cancelableCollectProcessor(methodList));
     processMethods(context, processor, s -> {
       final List<PsiMethod> list = ContainerUtil.findAll(getVariants(s), object -> acceptMethod(object, context));
-      return list.toArray(new PsiMethod[list.size()]);
+      return list.toArray(PsiMethod.EMPTY_ARRAY);
     });
     return methodList;
   }

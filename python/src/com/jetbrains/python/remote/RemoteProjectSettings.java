@@ -21,8 +21,8 @@ import com.jetbrains.python.newProject.PyNewProjectSettings;
 * @author traff
 */
 public class RemoteProjectSettings extends PyNewProjectSettings {
-  private String myDeploymentName;
-  private String myRemoteRoot;
+  private final String myDeploymentName;
+  private final String myRemoteRoot;
 
 
   public RemoteProjectSettings(String deploymentName, String remoteRoot) {

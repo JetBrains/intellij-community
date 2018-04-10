@@ -259,7 +259,7 @@ public class DirectoryChooser extends DialogWrapper {
       else list.add(new PathFragment(special, false));
     }
     if (tail != null) list.add(new PathFragment(tail, true));
-    return list.toArray(new PathFragment[list.size()]);
+    return list.toArray(new PathFragment[0]);
   }
 
   private static abstract class FragmentBuilder {

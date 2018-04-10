@@ -74,7 +74,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
       .setTitle("Select branch to compare")
       .setItemChoosenCallback(new OnBranchChooseRunnable(project, file, presentableRevisionName, list))
       .setAutoselectOnMouseMove(true)
-      .setFilteringEnabled(o -> o.toString())
+      .setNamerForFiltering(o -> o.toString())
       .createPopup()
       .showCenteredInCurrentWindow(project);
   }

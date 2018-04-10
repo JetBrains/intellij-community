@@ -46,7 +46,7 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
   private CloudApplicationConfiguration myApplicationConfiguration;
   private FrameworkSupportModelBase myFrameworkSupportModel;
 
-  private Map<ServerType<?>, CloudModuleBuilderContribution> myCloudType2Contribution;
+  private final Map<ServerType<?>, CloudModuleBuilderContribution> myCloudType2Contribution;
   private Project myProject;
 
   public CloudModuleBuilder() {

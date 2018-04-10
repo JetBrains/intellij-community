@@ -22,13 +22,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PySignatureCacheManagerImpl;
+import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -38,8 +39,8 @@ import java.io.IOException;
  */
 
 public class PyDynamicTypesTest extends PyEnvTestCase {
-  
-  @Staging
+
+  @EnvTestTagsRequired(tags = {}, skipOnFlavors = IronPythonSdkFlavor.class)
   @Test
   public void test1() {
     doTest(getTestName(true) + ".py");

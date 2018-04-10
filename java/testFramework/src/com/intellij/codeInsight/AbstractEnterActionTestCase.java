@@ -3,11 +3,11 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -17,15 +17,15 @@ public abstract class AbstractEnterActionTestCase extends LightCodeInsightTestCa
   private static final String TEST_PATH = "/codeInsight/enterAction/";
 
   protected static CodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).clone();
+    return CodeStyle.getSettings(getProject()).clone();
   }
   protected static void setCodeStyleSettings(CodeStyleSettings settings) {
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
+    CodeStyle.setTemporarySettings(getProject(), settings);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    CodeStyle.dropTemporarySettings(getProject());
     super.tearDown();
   }
 

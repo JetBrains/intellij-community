@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,7 @@ public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntentio
     final StringBuilder newExpression = new StringBuilder();
     newExpression.append(lhs.getText()).append(signText).append('=');
     boolean token = false;
+    CommentTracker commentTracker = new CommentTracker();
     for (int i = 1; i < operands.length; i++) {
       final PsiExpression operand = operands[i];
       if (token) {
@@ -63,8 +65,8 @@ public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntentio
       else {
         token = true;
       }
-      newExpression.append(operand.getText());
+      newExpression.append(commentTracker.text(operand));
     }
-    PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
+    PsiReplacementUtil.replaceExpression(expression, newExpression.toString(), commentTracker);
   }
 }

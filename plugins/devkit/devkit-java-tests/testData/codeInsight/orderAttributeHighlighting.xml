@@ -1,0 +1,18 @@
+<idea-plugin>
+  <id>com.intellij</id>
+
+  <extensionPoints>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="myEp"
+                    beanClass="java.lang.String"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <myEp id="id1" order="first"/>
+    <myEp id="id2" order="last"/>
+    <myEp id="id3" order="after id1, before <error descr="Cannot resolve 'wrongId' myEp extension">wrongId</error>"/>
+    <myEp id="id4" order="before id2, after id1"/>
+    <myEp id="id5" order="before id2, after <error descr="Cannot resolve 'wrongId' myEp extension">wrongId</error>"/>
+    <myEp id="id6" order="before id6, before id5, after id1, before <error descr="Cannot resolve 'wrongId' myEp extension">wrongId</error>"/>
+  </extensions>
+</idea-plugin>

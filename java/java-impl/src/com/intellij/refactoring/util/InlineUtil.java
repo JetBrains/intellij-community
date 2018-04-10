@@ -53,11 +53,15 @@ public class InlineUtil {
                                              PsiJavaCodeReferenceElement ref,
                                              PsiExpression thisAccessExpr)
     throws IncorrectOperationException {
+    final PsiElement parent = ref.getParent();
+    if (parent instanceof PsiResourceExpression) {
+      LOG.error("Unable to inline resource reference");
+      return (PsiExpression)ref;
+    }
     PsiManager manager = initializer.getManager();
 
     PsiClass thisClass = RefactoringChangeUtil.getThisClass(initializer);
     PsiClass refParent = RefactoringChangeUtil.getThisClass(ref);
-    final PsiElement parent = ref.getParent();
     final PsiType varType = variable.getType();
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
     if (initializer instanceof PsiPolyadicExpression) {
@@ -311,12 +315,15 @@ public class InlineUtil {
 
   public static TailCallType getTailCallType(@NotNull final PsiReference psiReference) {
     PsiElement element = psiReference.getElement();
-    if (element instanceof PsiMethodReferenceExpression) return TailCallType.None;
+    if (element instanceof PsiMethodReferenceExpression) return TailCallType.Return;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (methodCall == null) return TailCallType.None;
-    if (methodCall.getParent() instanceof PsiReturnStatement) return TailCallType.Return;
-    if (methodCall.getParent() instanceof PsiExpressionStatement) {
-      PsiStatement callStatement = (PsiStatement) methodCall.getParent();
+    PsiElement callParent = methodCall.getParent();
+    if (callParent instanceof PsiReturnStatement || callParent instanceof PsiLambdaExpression) {
+      return TailCallType.Return;
+    }
+    if (callParent instanceof PsiExpressionStatement) {
+      PsiStatement callStatement = (PsiStatement)callParent;
       PsiMethod callerMethod = PsiTreeUtil.getParentOfType(callStatement, PsiMethod.class);
       if (callerMethod != null) {
         final PsiStatement[] psiStatements = callerMethod.getBody().getStatements();

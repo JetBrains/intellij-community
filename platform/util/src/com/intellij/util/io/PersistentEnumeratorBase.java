@@ -290,13 +290,14 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
     try {
       id = enumerateImpl(value, onlyCheckForExisting, saveNewValue);
     }
-    catch (IOException io) {
-      markCorrupted();
-      throw io;
-    }
     catch (Throwable e) {
-      markCorrupted();
-      LOG.info(e);
+      if (!isCorrupted()) {
+        markCorrupted();
+        LOG.info("Marking corrupted:" + myFile, e);
+      }
+
+      //noinspection InstanceofCatchParameter
+      if (e instanceof IOException) throw (IOException)e;
       throw new IOException(e);
     }
 

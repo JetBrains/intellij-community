@@ -46,10 +46,10 @@ public abstract class AbstractProjectImportErrorHandler {
     return GradleExecutionErrorHandler.createUserFriendlyError(msg, location, quickFixes);
   }
 
-  @Nullable
+  @NotNull
   public String parseMissingMethod(@NotNull String rootCauseText) {
     Matcher matcher = GradleExecutionErrorHandler.MISSING_METHOD_PATTERN.matcher(rootCauseText);
-    return matcher.find() ? matcher.group(1) : null;
+    return matcher.find() ? matcher.group(1) : "";
   }
 
   /**

@@ -38,7 +38,7 @@ public class InvalidUsageNoteProjectNode extends ProjectViewNodeWithChildrenList
   protected void update(PresentationData presentation) {
     final List<TextChunk> text = getValue().getText();
     if (!text.isEmpty()) {
-      UsageProjectTreeNode.updatePresentationWithTextChunks(presentation, text.toArray(new TextChunk[text.size()]));
+      UsageProjectTreeNode.updatePresentationWithTextChunks(presentation, text.toArray(TextChunk.EMPTY_ARRAY));
     }
   }
 }

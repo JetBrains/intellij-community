@@ -47,7 +47,7 @@ public class IdTableBuilding {
     void run(CharSequence chars, @Nullable char[] charsArray, int start, int end);
   }
 
-  private static final Map<FileType, FileTypeIdIndexer> ourIdIndexers = new HashMap<>();
+  private static final Map<FileType, IdIndexer> ourIdIndexers = new HashMap<>();
 
   @Deprecated
   public static void registerIdIndexer(@NotNull FileType fileType, FileTypeIdIndexer indexer) {
@@ -60,21 +60,21 @@ public class IdTableBuilding {
 
 
   @Nullable
-  public static FileTypeIdIndexer getFileTypeIndexer(FileType fileType) {
-    final FileTypeIdIndexer idIndexer = ourIdIndexers.get(fileType);
+  public static IdIndexer getFileTypeIndexer(FileType fileType) {
+    final IdIndexer idIndexer = ourIdIndexers.get(fileType);
 
     if (idIndexer != null) {
       return idIndexer;
     }
 
-    final FileTypeIdIndexer extIndexer = IdIndexers.INSTANCE.forFileType(fileType);
+    final IdIndexer extIndexer = IdIndexers.INSTANCE.forFileType(fileType);
     if (extIndexer != null) {
       return extIndexer;
     }
 
     final WordsScanner customWordsScanner = CacheBuilderRegistry.getInstance().getCacheBuilder(fileType);
     if (customWordsScanner != null) {
-      return new WordsScannerFileTypeIdIndexerAdapter(customWordsScanner);
+      return createDefaultIndexer(customWordsScanner);
     }
 
     if (fileType instanceof LanguageFileType) {
@@ -84,14 +84,19 @@ public class IdTableBuilding {
       if (scanner == null) {
         scanner = new SimpleWordsScanner();
       }
-      return new WordsScannerFileTypeIdIndexerAdapter(scanner);
+      return createDefaultIndexer(scanner);
     }
 
     if (fileType instanceof CustomSyntaxTableFileType) {
-      return new WordsScannerFileTypeIdIndexerAdapter(createCustomFileTypeScanner(((CustomSyntaxTableFileType)fileType).getSyntaxTable()));
+      return createDefaultIndexer(createCustomFileTypeScanner(((CustomSyntaxTableFileType)fileType).getSyntaxTable()));
     }
 
     return null;
+  }
+
+  @NotNull
+  public static WordsScannerFileTypeIdIndexerAdapter createDefaultIndexer(WordsScanner customWordsScanner) {
+    return new WordsScannerFileTypeIdIndexerAdapter(customWordsScanner);
   }
 
   public static WordsScanner createCustomFileTypeScanner(SyntaxTable syntaxTable) {
@@ -103,7 +108,7 @@ public class IdTableBuilding {
 
   }
 
-  private static class WordsScannerFileTypeIdIndexerAdapter extends FileTypeIdIndexer {
+  private static class WordsScannerFileTypeIdIndexerAdapter implements IdIndexer {
     private final WordsScanner myScanner;
 
     public WordsScannerFileTypeIdIndexerAdapter(@NotNull final WordsScanner scanner) {

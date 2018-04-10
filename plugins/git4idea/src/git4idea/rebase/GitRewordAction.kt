@@ -15,8 +15,6 @@
  */
 package git4idea.rebase
 
-import com.intellij.dvcs.repo.Repository
-import com.intellij.dvcs.repo.Repository.State.*
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
@@ -38,7 +36,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
-import com.intellij.vcs.log.impl.VcsLogUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
 import git4idea.repo.GitRepository
 
@@ -47,19 +45,7 @@ class GitRewordAction : GitCommitEditingAction() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-
-    if (e.presentation.isEnabledAndVisible) {
-      val state = getRepository(e).state
-      if (state != Repository.State.NORMAL) {
-        e.presentation.isEnabled = false
-        e.presentation.description = when (state) {
-          REBASING -> "Can't reword during rebase"
-          MERGING -> "Can't reword during merge"
-          DETACHED -> "Can't reword in detached HEAD state"
-          else -> throw IllegalStateException("Unexpected state: $state")
-        }
-      }
-    }
+    prohibitRebaseDuringRebase(e, "reword", true)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

@@ -1,32 +1,41 @@
 # coding=utf-8
+
 __author__ = 'Ilya.Kazakevich'
-import sys, os
+import fnmatch
+import os
+import sys
+
 
 class FileChangesTracker(object):
     """
      On the instantiation the class records the timestampts of files stored in the folder.
      #get_changed_files() return the list of files that have a timestamp different from the one they had during the class instantiation
 
+
     """
-    def __init__(self, folder):
-        self.old_files = self._get_changes_from(folder)
+
+    def __init__(self, folder, patterns="*"):
+        self.old_files = self._get_changes_from(folder, patterns)
         self.folder = folder
+        self.patterns = patterns
 
     def get_changed_files(self):
         assert self.folder, "No changes recorded"
-        new_files = self._get_changes_from(self.folder)
+        new_files = self._get_changes_from(self.folder, patterns=self.patterns)
         return filter(lambda f: f not in self.old_files or self.old_files[f] != new_files[f], new_files.keys())
 
     @staticmethod
-    def _get_changes_from(folder):
+    def _get_changes_from(folder, patterns):
         result = {}
-        for tmp_folder, _, files in os.walk(folder):
-            for file in map(lambda f: os.path.join(tmp_folder, f), files):
-                try:
-                    result.update({file: os.path.getmtime(file)})
-                except OSError:  # on Windows long path may lead to it: PY-23386
-                    message = "PyCharm can't check if the following file been updated: {0}\n".format(str(file))
-                    sys.stderr.write(message)
+        for tmp_folder, sub_dirs, files in os.walk(folder):
+            sub_dirs[:] = [s for s in sub_dirs if not s.startswith(".")]
+            if any(fnmatch.fnmatch(os.path.basename(tmp_folder), p) for p in patterns):
+                for file in map(lambda f: os.path.join(tmp_folder, f), files):
+                    try:
+                        result.update({file: os.path.getmtime(file)})
+                    except OSError:  # on Windows long path may lead to it: PY-23386
+                        message = "PyCharm can't check if the following file been updated: {0}\n".format(str(file))
+                        sys.stderr.write(message)
         return result
 
 
@@ -45,10 +54,12 @@ class OptionDescription(object):
     """
     Wrapper for argparse/optparse option (see VersionAgnosticUtils#get_options)
     """
+
     def __init__(self, name, description, action=None):
         self.name = name
         self.description = description
         self.action = action
+
 
 class VersionAgnosticUtils(object):
     """
@@ -96,10 +107,9 @@ class _Py2Utils(VersionAgnosticUtils):
         if isinstance(obj, unicode):
             return obj
         try:
-            return unicode(obj) # Obj may have its own __unicode__
+            return unicode(obj)  # Obj may have its own __unicode__
         except (UnicodeDecodeError, AttributeError):
-            return unicode(str(obj).decode("utf-8")) # or it may have __str__
-
+            return unicode(str(obj).decode("utf-8"))  # or it may have __str__
 
     def get_options(self, *args):
         import optparse

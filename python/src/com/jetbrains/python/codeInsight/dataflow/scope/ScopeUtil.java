@@ -141,7 +141,7 @@ public class ScopeUtil {
   }
 
   @Nullable
-  public static ScopeOwner getDeclarationScopeOwner(PsiElement anchor, String name) {
+  public static ScopeOwner getDeclarationScopeOwner(@Nullable PsiElement anchor, @Nullable String name) {
     if (name != null) {
       final ScopeOwner originalScopeOwner = getScopeOwner(anchor);
       ScopeOwner scopeOwner = originalScopeOwner;

@@ -71,13 +71,15 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
   }
 
   protected Element merge(Map<String, Element> inspectionElements, boolean includeDefaults) {
-    LinkedHashMap<String, Element> scopes = null;
-    List<Element> content = null;
+    LinkedHashMap<String, Element> scopes = new LinkedHashMap<>();
+    LinkedHashMap<String, Set<String>> mentionedTools = new LinkedHashMap<>();
     boolean enabled = false;
     String level = null;
 
+    final Element toolElement = new Element(InspectionProfileImpl.INSPECTION_TOOL_TAG);
+
     for (String sourceToolName : getSourceToolNames()) {
-      Element sourceElement = inspectionElements.get(sourceToolName);
+      Element sourceElement = getSourceElement(inspectionElements, sourceToolName);
 
       if (sourceElement == null) {
         if (includeDefaults) {
@@ -95,12 +97,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
       }
 
       if (sourceElement != null) {
-        if (content == null) {
-          content = new ArrayList<>();
-          scopes = new LinkedHashMap<>();
-        }
-
-        collectContent(sourceElement, content, scopes);
+        collectContent(sourceToolName, sourceElement, toolElement, scopes, mentionedTools);
 
         enabled |= Boolean.parseBoolean(sourceElement.getAttributeValue(ToolsImpl.ENABLED_ATTRIBUTE));
         if (level == null) {
@@ -108,8 +105,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
         }
       }
     }
-    if (content != null && !content.isEmpty()) {
-      final Element toolElement = new Element(InspectionProfileImpl.INSPECTION_TOOL_TAG);
+    if (!toolElement.getChildren().isEmpty()) {
       toolElement.setAttribute(InspectionProfileImpl.CLASS_TAG, getMergedToolName());
       toolElement.setAttribute(ToolsImpl.ENABLED_ATTRIBUTE, String.valueOf(enabled));
       if (level != null) {
@@ -117,38 +113,75 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
       }
       toolElement.setAttribute(ToolsImpl.ENABLED_BY_DEFAULT_ATTRIBUTE, String.valueOf(enabled));
 
-      for (Element scopeEl : scopes.values()) {
+      for (String scopeName : scopes.keySet()) {
+        Element scopeEl = scopes.get(scopeName);
+        Set<String> toolsWithScope = mentionedTools.get(scopeName);
+        //copy default settings if tool has no such scope defined
+        for (String sourceToolName : getSourceToolNames()) {
+          if (!toolsWithScope.contains(sourceToolName)) {
+            copyDefaultSettings(scopeEl, inspectionElements, sourceToolName);
+          }
+        }
         toolElement.addContent(scopeEl);
       }
-      for (Element element : content) {
-        toolElement.addContent(element);
-      }
+      
       return toolElement;
     }
     return null;
+  }
+
+  protected Element getSourceElement(Map<String, Element> inspectionElements, String sourceToolName) {
+    return inspectionElements.get(sourceToolName);
+  }
+
+  private void copyDefaultSettings(Element targetElement, Map<String, Element> inspectionElements, String sourceToolName) {
+    Element oldElement = getSourceElement(inspectionElements, sourceToolName);
+    if (oldElement != null) {
+      Element defaultElement = wrapElement(sourceToolName, oldElement, targetElement);
+      oldElement.getChildren().stream()
+        .filter(child -> !"scope".equals(child.getName()))
+        .forEach(child -> defaultElement.addContent(child.clone()));
+    }
   }
 
   private static String getLevel(Element element) {
     return element != null ? element.getAttributeValue(ToolsImpl.LEVEL_ATTRIBUTE) : HighlightSeverity.WARNING.getName();
   }
 
-  protected static void collectContent(Element sourceElement, List<Element> options, Map<String, Element> scopes) {
+  protected void collectContent(String sourceToolName,
+                                Element sourceElement,
+                                Element toolElement,
+                                Map<String, Element> scopes,
+                                LinkedHashMap<String, Set<String>> mentionedTools) {
     if (sourceElement != null) {
+      Element wrapElement = wrapElement(sourceToolName, sourceElement, toolElement);
       for (Element element : sourceElement.getChildren()) {
         if ("scope".equals(element.getName())) {
           String scopeName = element.getAttributeValue("name");
-          if (scopes.containsKey(scopeName)) {
-            Element scopeElement = scopes.get(scopeName);
-            for (Element scopeEl : element.getChildren()) {
-              scopeElement.addContent(scopeEl.clone());
-            }
-          } else {
-            scopes.put(scopeName, element.clone());
+          if (scopeName != null) {
+            mentionedTools.computeIfAbsent(scopeName, s -> new HashSet<>()).add(sourceToolName);
+            copyScopeContent(sourceToolName, element, scopes.computeIfAbsent(scopeName, key -> {
+              Element scopeElement = element.clone();
+              scopeElement.removeContent();
+              return scopeElement;
+            }));
           }
-          continue;
         }
-        options.add(element.clone());
+        else {
+          wrapElement.addContent(element.clone());
+        }
       }
     }
+  }
+
+  private void copyScopeContent(String sourceToolName, Element element, Element scopeElement) {
+    Element wrappedScope = wrapElement(sourceToolName, element, scopeElement);
+    for (Element scopeEl : element.getChildren()) {
+      wrappedScope.addContent(scopeEl.clone());
+    }
+  }
+
+  protected Element wrapElement(String sourceToolName, Element sourceElement, Element toolElement) {
+    return toolElement;
   }
 }

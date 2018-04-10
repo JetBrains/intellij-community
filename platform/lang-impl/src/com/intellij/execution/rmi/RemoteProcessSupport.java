@@ -39,7 +39,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,10 +46,7 @@ import javax.rmi.PortableRemoteObject;
 import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
 
 /**
@@ -66,15 +62,22 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     RemoteServer.setupRMI();
   }
 
-  public RemoteProcessSupport(Class<EntryPoint> valueClass) {
+  public RemoteProcessSupport(@NotNull Class<EntryPoint> valueClass) {
     myValueClass = valueClass;
   }
 
   protected abstract void fireModificationCountChanged();
 
-  protected abstract String getName(Target target);
+  protected abstract String getName(@NotNull Target target);
 
-  protected void logText(Parameters configuration, ProcessEvent event, Key outputType, Object info) {
+  protected void logText(@NotNull Parameters configuration, @NotNull ProcessEvent event, @NotNull Key outputType) {
+    String text = StringUtil.notNullize(event.getText());
+    if (outputType == ProcessOutputTypes.STDERR) {
+      LOG.warn(text.trim());
+    }
+    else {
+      LOG.debug(text.trim());
+    }
   }
 
   public void stopAll() {
@@ -152,11 +155,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     if (ref.isNull()) throw new RuntimeException("Unable to acquire remote proxy for: " + getName(target));
     RunningInfo info = ref.get();
     if (info.handler == null) {
-      String message = info.name;
-      if (message != null && message.startsWith("ERROR: transport error 202:")) {
-        message = "Unable to start java process in debug mode: -Xdebug parameters are already in use.";
-      }
-      throw new ExecutionException(message);
+      String message = info instanceof FailedInfo ? ((FailedInfo)info).stderr : null;
+      Throwable cause = info instanceof FailedInfo ? ((FailedInfo)info).cause : null;
+      throw new ExecutionException(message, cause);
     }
     return acquire(info);
   }
@@ -189,7 +190,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
   }
 
-  private void startProcess(Target target, Parameters configuration, @NotNull Pair<Target, Parameters> key) {
+  private void startProcess(@NotNull Target target, @NotNull Parameters configuration, @NotNull Pair<Target, Parameters> key) {
     ProgramRunner runner = new DefaultProgramRunner() {
       @Override
       @NotNull
@@ -210,15 +211,15 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       //noinspection ConstantConditions
       processHandler = result.getProcessHandler();
     }
-    catch (Exception e) {
-      dropProcessInfo(key, e instanceof ExecutionException? e.getMessage() : ExceptionUtil.getUserStackTrace(e, LOG), null);
+    catch (Throwable e) {
+      dropProcessInfo(key, e, null);
       return;
     }
     processHandler.addProcessListener(getProcessListener(key));
     processHandler.startNotify();
   }
 
-  protected abstract RunProfileState getRunProfileState(Target target, Parameters configuration, Executor executor)
+  protected abstract RunProfileState getRunProfileState(@NotNull Target target, @NotNull Parameters configuration, @NotNull Executor executor)
     throws ExecutionException;
 
   private boolean getExistingInfo(@NotNull Ref<RunningInfo> ref, @NotNull Pair<Target, Parameters> key) {
@@ -253,7 +254,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   private EntryPoint acquire(final RunningInfo port) throws Exception {
     EntryPoint result = RemoteUtil.executeWithClassLoader(() -> {
-      Registry registry = LocateRegistry.getRegistry("localhost", port.port);
+      Registry registry = LocateRegistry.getRegistry(getLocalHost(), port.port);
       Remote remote = ObjectUtils.assertNotNull(registry.lookup(port.name));
 
       if (Remote.class.isAssignableFrom(myValueClass)) {
@@ -308,18 +309,11 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         String text = StringUtil.notNullize(event.getText());
-        if (outputType == ProcessOutputTypes.STDERR) {
-          LOG.warn(text.trim());
-        }
-        else {
-          LOG.debug(text.trim());
-        }
-
+        logText(key.second, event, outputType);
         RunningInfo result = null;
         PendingInfo info;
         synchronized (myProcMap) {
           Info o = myProcMap.get(key);
-          logText(key.second, event, outputType, o);
           if (o instanceof PendingInfo) {
             info = (PendingInfo)o;
             if (outputType == ProcessOutputTypes.STDOUT) {
@@ -347,7 +341,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           }
           fireModificationCountChanged();
           try {
-            RemoteDeadHand.TwoMinutesTurkish.startCooking("localhost", result.port);
+            RemoteDeadHand.TwoMinutesTurkish.startCooking(getLocalHost(), result.port);
           }
           catch (Throwable e) {
             LOG.warn("The cook failed to start due to " + ExceptionUtil.getRootCause(e));
@@ -357,7 +351,12 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     };
   }
 
-  private boolean dropProcessInfo(Pair<Target, Parameters> key, @Nullable String errorMessage, @Nullable ProcessHandler handler) {
+  @NotNull
+  private static String getLocalHost() {
+    return ObjectUtils.notNull(System.getProperty(RemoteServer.SERVER_HOSTNAME), "127.0.0.1");
+  }
+
+  private boolean dropProcessInfo(Pair<Target, Parameters> key, @Nullable Throwable error, @Nullable ProcessHandler handler) {
     Info info;
     synchronized (myProcMap) {
       info = myProcMap.get(key);
@@ -372,9 +371,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
     if (info instanceof PendingInfo) {
       PendingInfo pendingInfo = (PendingInfo)info;
-      if (pendingInfo.stderr.length() > 0 || pendingInfo.ref.isNull()) {
-        if (errorMessage != null) pendingInfo.stderr.append(errorMessage);
-        pendingInfo.ref.set(new RunningInfo(null, -1, pendingInfo.stderr.toString()));
+      if (error != null || pendingInfo.stderr.length() > 0 || pendingInfo.ref.isNull()) {
+        pendingInfo.ref.set(new FailedInfo(error, pendingInfo.stderr.toString()));
       }
       synchronized (pendingInfo.ref) {
         pendingInfo.ref.notifyAll();
@@ -420,6 +418,22 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     @Override
     public String toString() {
       return port + "/" + name;
+    }
+  }
+
+  private static class FailedInfo extends RunningInfo {
+    final Throwable cause;
+    final String stderr;
+
+    FailedInfo(Throwable cause, String stderr) {
+      super(null, -1, null);
+      this.cause = cause;
+      this.stderr = stderr;
+    }
+
+    @Override
+    public String toString() {
+      return "FailedInfo{" + cause + '}';
     }
   }
 

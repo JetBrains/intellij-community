@@ -41,7 +41,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 12, 2008
  */
 public class AntHectorConfigurable extends HectorComponentPanel {
   @NonNls

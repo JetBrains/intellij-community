@@ -19,7 +19,7 @@ import javax.swing.FocusManager;
 import java.awt.*;
 
 class MockFocusManager extends FocusManager {
-  private Component myFocusOwner;
+  private final Component myFocusOwner;
 
   MockFocusManager(Component focusOwner) {
     myFocusOwner = focusOwner;

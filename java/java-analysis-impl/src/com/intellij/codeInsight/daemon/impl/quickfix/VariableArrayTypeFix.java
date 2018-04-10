@@ -123,7 +123,7 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
   private static PsiVariable getFromAssignment(final PsiAssignmentExpression assignment) {
     final PsiExpression reference = assignment.getLExpression();
     final PsiElement referencedElement = reference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)reference).resolve() : null;
-    return referencedElement != null && referencedElement instanceof PsiVariable ? (PsiVariable)referencedElement : null;
+    return referencedElement instanceof PsiVariable ? (PsiVariable)referencedElement : null;
   }
 
   private static String getNewText(PsiElement myNewExpression, PsiArrayInitializerExpression myInitializer) {
@@ -158,8 +158,7 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
     return myVariable != null
            && myVariable.isValid()
            && myVariable.getManager().isInProject(myVariable)
-           && myTargetType.isValid()
-           && myInitializer.isValid();
+           && myTargetType.isValid();
   }
 
   @Override

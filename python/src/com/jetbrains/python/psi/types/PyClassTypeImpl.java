@@ -1,22 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -40,11 +24,11 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveProcessor;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
+import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,12 +47,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @NotNull protected final PyClass myClass;
   protected final boolean myIsDefinition;
 
-  private static ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
-    @Override
-    protected Set<Pair<PyClass, String>> initialValue() {
-      return new HashSet<>();
-    }
-  };
+  private static final ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = ThreadLocal.withInitial(() -> new HashSet<>());
 
   /**
    * Describes a class-based type. Since everything in Python is an instance of some class, this type pretty much completes
@@ -97,6 +76,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @NotNull
   public PyClass getPyClass() {
     return myClass;
+  }
+
+
+  @NotNull
+  @Override
+  public PyQualifiedNameOwner getDeclarationElement() {
+    return getPyClass();
   }
 
   /**
@@ -178,7 +164,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                              boolean inherited) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     PsiElement classMember =
-      resolveByOverridingMembersProviders(this, name, location, context); //overriding members provers have priority to normal resolve
+      resolveByOverridingMembersProviders(this, name, location, resolveContext); //overriding members provers have priority to normal resolve
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -225,7 +211,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         .orElse(Collections.emptyList());
     }
 
-    classMember = resolveByOverridingAncestorsMembersProviders(this, name, location);
+    classMember = resolveByOverridingAncestorsMembersProviders(this, name, location, resolveContext);
     if (classMember != null) {
       final ResolveResultList list = new ResolveResultList();
       int rate = RatedResolveResult.RATE_NORMAL;
@@ -268,7 +254,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (inherited) {
       classMember =
         resolveByMembersProviders(this, name, location,
-                                  context);  //ask providers after real class introspection as providers have less priority
+                                  resolveContext);  //ask providers after real class introspection as providers have less priority
     }
 
     if (classMember != null) {
@@ -280,7 +266,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
           PsiElement superMember =
-            resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location, resolveContext.getTypeEvalContext());
+            resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location, resolveContext);
 
           if (superMember != null) {
             return ResolveResultList.to(superMember);
@@ -384,7 +370,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       );
     }
 
-    if (LanguageLevel.forElement(myClass).isOlderThan(LanguageLevel.PYTHON30) && !newStyleClass) {
+    if (LanguageLevel.forElement(myClass).isPython2() && !newStyleClass) {
       return classMembers;
     }
 
@@ -396,68 +382,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Nullable
   @Override
-  public PyClassLikeType getMetaClassType(@NotNull final TypeEvalContext context, boolean inherited) {
-    if (!inherited) {
-      return as(myClass.getMetaClassType(context), PyClassLikeType.class);
-    }
-    final List<PyClassLikeType> metaClassTypes = getAllExplicitMetaClassTypes(context);
-    final PyClassLikeType mostDerivedMeta = getMostDerivedClassType(metaClassTypes, context);
-    return mostDerivedMeta != null ? mostDerivedMeta : PyBuiltinCache.getInstance(myClass).getObjectType("type");
-  }
-
-  @Nullable
-  private static PyClassLikeType getMostDerivedClassType(@NotNull List<PyClassLikeType> classTypes,
-                                                         @NotNull final TypeEvalContext context) {
-    if (classTypes.isEmpty()) {
-      return null;
-    }
-    try {
-      final String abcMeta = "abc." + PyNames.ABC_META_CLASS;
-
-      return classTypes
-        .stream()
-        .filter(t -> !abcMeta.equals(t.getClassQName()))
-        .max(
-          (t1, t2) -> {
-            if (Objects.equals(t1, t2)) {
-              return 0;
-            }
-            else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
-              return 1;
-            }
-            else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
-              return -1;
-            }
-            else {
-              throw new NotDerivedClassTypeException();
-            }
-          }
-        )
-        .orElse(null);
-    }
-    catch (NotDerivedClassTypeException ignored) {
-      return null;
-    }
-  }
-
-  private static final class NotDerivedClassTypeException extends RuntimeException {
-  }
-
-  private List<PyClassLikeType> getAllExplicitMetaClassTypes(@NotNull TypeEvalContext context) {
-    final List<PyClassLikeType> results = Lists.newArrayList();
-    final PyClassLikeType ownMeta = getMetaClassType(context, false);
-    if (ownMeta != null) {
-      results.add(ownMeta);
-    }
-    for (PyClassLikeType ancestor : myClass.getAncestorTypes(context)) {
-      if (ancestor != null) {
-        final PyClassLikeType ancestorMeta = ancestor.getMetaClassType(context, false);
-        if (ancestorMeta != null) {
-          results.add(ancestorMeta);
-        }
-      }
-    }
-    return results;
+  public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited) {
+    return myClass.getMetaClassType(inherited, context);
   }
 
   @Override
@@ -475,9 +401,43 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return false;
   }
 
+  @Nullable
+  @Override
+  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+    final List<String> methodNames = isDefinition() ? Arrays.asList(PyNames.INIT, PyNames.NEW) : Collections.singletonList(PyNames.CALL);
+
+    return StreamEx
+      .of(methodNames)
+      .map(name -> getParametersOfMethod(name, context))
+      .findFirst(Objects::nonNull)
+      // If resolved parameters are empty, consider them as invalid and return null
+      .filter(parameters -> !parameters.isEmpty())
+      // Skip "self" for __init__/__call__ and "cls" for __new__
+      .map(parameters -> ContainerUtil.subList(parameters, 1))
+      .orElse(null);
+  }
+
+  @Nullable
+  private List<PyCallableParameter> getParametersOfMethod(@NotNull String name, @NotNull TypeEvalContext context) {
+    final List<? extends RatedResolveResult> results =
+      resolveMember(name, null, AccessDirection.READ, PyResolveContext.noImplicits().withTypeEvalContext(context), true);
+    if (results != null) {
+      return StreamEx.of(results)
+        .map(RatedResolveResult::getElement)
+        .select(PyCallable.class)
+        .map(func -> func.getParameters(context))
+        .findFirst()
+        .orElse(null);
+    }
+    return null;
+  }
+
+
   private static boolean isMethodType(@NotNull PyClassType type) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
-    return type.equals(builtinCache.getClassMethodType()) || type.equals(builtinCache.getStaticMethodType());
+    return type.equals(builtinCache.getClassMethodType()) ||
+           type.equals(builtinCache.getStaticMethodType()) ||
+           type.equals(builtinCache.getObjectType(PyNames.FUNCTION));
   }
 
   @Nullable
@@ -504,7 +464,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @NotNull
   @Override
-  public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+  public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
     return myClass.getAncestorTypes(context);
   }
 
@@ -512,9 +472,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static PsiElement resolveByMembersProviders(PyClassType aClass,
                                                       String name,
                                                       @Nullable PsiElement location,
-                                                      TypeEvalContext context) {
+                                                      @NotNull PyResolveContext resolveContext) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      final PsiElement resolveResult = provider.resolveMember(aClass, name, location, context);
+      final PsiElement resolveResult = provider.resolveMember(aClass, name, location, resolveContext);
       if (resolveResult != null) return resolveResult;
     }
 
@@ -525,10 +485,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass,
                                                                 String name,
                                                                 @Nullable PsiElement location,
-                                                                @NotNull final TypeEvalContext context) {
+                                                                @NotNull PyResolveContext resolveContext) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(aClass, name, location, context);
+        final PsiElement resolveResult = provider.resolveMember(aClass, name, location, resolveContext);
         if (resolveResult != null) return resolveResult;
       }
     }
@@ -537,10 +497,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private static PsiElement resolveByOverridingAncestorsMembersProviders(PyClassType type, String name, @Nullable PyExpression location) {
+  private static PsiElement resolveByOverridingAncestorsMembersProviders(PyClassType type,
+                                                                         String name,
+                                                                         @Nullable PyExpression location,
+                                                                         @NotNull PyResolveContext resolveContext) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingAncestorsClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(type, name, location, null);
+        final PsiElement resolveResult = provider.resolveMember(type, name, location, resolveContext);
         if (resolveResult != null) return resolveResult;
       }
     }
@@ -554,21 +517,29 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                                  @Nullable PyExpression location,
                                                                  @NotNull TypeEvalContext context) {
     final PyResolveProcessor processor = new PyResolveProcessor(name);
-    final Collection<PsiElement> result;
+    final Map<PsiElement, PyImportedNameDefiner> results;
 
     if (!isDefinition && !cls.processInstanceLevelDeclarations(processor, location)) {
-      result = processor.getElements();
+      results = processor.getResults();
     }
     else {
       cls.processClassLevelDeclarations(processor);
-      result = processor.getElements();
+      results = processor.getResults();
     }
 
-    return ContainerUtil.map(result, element -> new RatedResolveResult(PyReferenceImpl.getRate(element, context), element));
+    return EntryStream
+      .of(results)
+      .mapKeyValue(
+        (element, definer) -> {
+          final int rate = PyReferenceImpl.getRate(element, context);
+          return definer != null ? new ImportedResolveResult(element, rate, definer) : new RatedResolveResult(rate, element);
+        }
+      )
+      .toList();
   }
 
-  private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
-  public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
+  private static final Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
+  public static final Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
   @Override
   public Object[] getCompletionVariants(String prefix, PsiElement location, ProcessingContext context) {
@@ -668,11 +639,34 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         type.visitMembers(processor, false, context);
       }
     }
+
+    visitMetaClassMembers(processor, context);
+  }
+
+  private void visitMetaClassMembers(@NotNull Processor<PsiElement> processor, @NotNull TypeEvalContext context) {
+    if (!myClass.isNewStyleClass(context)) {
+      return;
+    }
+
+    final PyClassLikeType typeType = getMetaClassType(context, true);
+    if (typeType == null) {
+      return;
+    }
+
+    if (isDefinition()) {
+      typeType.visitMembers(processor, true, context);
+    }
+    else if (typeType instanceof PyClassType) {
+      ((PyClassType)typeType).getPyClass().getInstanceAttributes().forEach(processor::process);
+    }
   }
 
   @NotNull
   @Override
   public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+    // PyNamedTupleType.getMemberNames provide names that we are not able to visit,
+    // so this method could not be replaced with PyClassLikeType.visitMembers
+
     final Set<String> result = new LinkedHashSet<>();
 
     for (PyFunction function : myClass.getMethods()) {
@@ -703,9 +697,33 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
           result.addAll(ancestorType.getMemberNames(false, context));
         }
       }
+
+      result.addAll(getMetaClassMemberNames(context));
     }
 
     return result;
+  }
+
+  @NotNull
+  private Set<String> getMetaClassMemberNames(@NotNull TypeEvalContext context) {
+    if (!myClass.isNewStyleClass(context)) {
+      return Collections.emptySet();
+    }
+
+    final PyClassLikeType typeType = getMetaClassType(context, true);
+    if (typeType == null) {
+      return Collections.emptySet();
+    }
+
+    if (isDefinition()) {
+      return typeType.getMemberNames(true, context);
+    }
+    else if (typeType instanceof PyClassType) {
+      final List<PyTargetExpression> typeInstanceAttributes = ((PyClassType)typeType).getPyClass().getInstanceAttributes();
+      return ContainerUtil.map2SetNotNull(typeInstanceAttributes, PyTargetExpression::getName);
+    }
+
+    return Collections.emptySet();
   }
 
   private void addOwnClassMembers(PsiElement expressionHook,
@@ -717,7 +735,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (containingClass != null) {
       containingClass = CompletionUtil.getOriginalElement(containingClass);
     }
-    boolean withinOurClass = containingClass == getPyClass() || isInSuperCall(expressionHook);
+    final boolean withinOurClass = containingClass == PyiUtil.stubToOriginal(getPyClass(), PyClass.class) || isInSuperCall(expressionHook);
 
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(
       expressionHook, new FilterNotInstance(myClass), null, false, suppressParentheses
@@ -737,7 +755,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     for (LookupElement le : processor.getResultList()) {
       String name = le.getLookupString();
       if (namesAlready.contains(name)) continue;
-      if (!withinOurClass && isClassPrivate(name)) continue;
+      if (!withinOurClass && PyUtil.isClassPrivateName(name)) continue;
       if (!withinOurClass && isClassProtected(name) && prefix == null) continue;
       namesAlready.add(name);
       ret.add(le);
@@ -778,17 +796,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       Object[] ancestry = type.getCompletionVariants(name, expressionHook, context);
       for (Object ob : ancestry) {
         String inheritedName = ob.toString();
-        if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
+        if (!namesAlready.contains(inheritedName) && !PyUtil.isClassPrivateName(inheritedName)) {
           ret.add(ob);
           namesAlready.add(inheritedName);
         }
       }
       ContainerUtil.addAll(ret, ancestry);
     }
-  }
-
-  private static boolean isClassPrivate(String lookup_string) {
-    return lookup_string.startsWith("__") && !lookup_string.endsWith("__");
   }
 
   private static boolean isClassProtected(@NotNull final String lookupString) {

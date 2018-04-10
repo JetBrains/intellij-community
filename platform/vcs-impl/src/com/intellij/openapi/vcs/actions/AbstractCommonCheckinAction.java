@@ -25,16 +25,21 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ArrayUtil.isEmpty;
+import static com.intellij.util.containers.ContainerUtil.concat;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.UtilKt.stream;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toSet;
@@ -66,9 +71,20 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     LOG.debug("invoking commit dialog after update");
     LocalChangeList initialSelection = getInitiallySelectedChangeList(context, project);
     Change[] selectedChanges = context.getSelectedChanges();
-    Collection<Change> changesToCommit = !isEmpty(selectedChanges) ? asList(selectedChanges) : getChangesIn(project, roots);
+    List<Change> selectedChangesList = isEmpty(selectedChanges) ? emptyList() : asList(selectedChanges);
+    List<VirtualFile> selectedUnversioned = context.getSelectedUnversionedFiles();
+    Collection<Change> changesToCommit;
+    Collection<?> included;
+    if (!isEmpty(selectedChangesList) || !isEmpty(selectedUnversioned)) {
+      changesToCommit = selectedChangesList;
+      included = concat(selectedChangesList, selectedUnversioned);
+    }
+    else {
+      changesToCommit = getChangesIn(project, roots);
+      included = changesToCommit;
+    }
 
-    CommitChangeListDialog.commitChanges(project, changesToCommit, initialSelection, getExecutor(project), null);
+    CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialSelection, getExecutor(project), null);
   }
 
   @NotNull

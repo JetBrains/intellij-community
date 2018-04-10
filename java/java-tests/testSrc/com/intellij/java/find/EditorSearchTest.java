@@ -20,6 +20,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
+import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 
 public class EditorSearchTest extends LightPlatformCodeInsightFixtureTestCase {
@@ -54,7 +55,12 @@ public class EditorSearchTest extends LightPlatformCodeInsightFixtureTestCase {
 
     key = "abcde";
     i = THE_CODE.indexOf(key);
+    
     myFixture.getEditor().getSelectionModel().setSelection(i, i+key.length());
+    int selectionStart = myFixture.getEditor().getSelectionModel().getSelectionStart();
+    int selectionEnd = myFixture.getEditor().getSelectionModel().getSelectionEnd();
+    int caret = myFixture.getEditor().getCaretModel().getOffset();
+
     IdeEventQueue.getInstance().flushQueue();
     myFixture.performEditorAction("Find");
     IdeEventQueue.getInstance().flushQueue();
@@ -62,6 +68,14 @@ public class EditorSearchTest extends LightPlatformCodeInsightFixtureTestCase {
     assertEquals(key, getSearchTextComponent().getSelectedText());
     assertEquals(key.length(), getSearchTextComponent().getCaretPosition());
 
+    try {
+      getSearchTextComponent().getDocument().remove(0, getSearchTextComponent().getDocument().getLength());
+    } catch (BadLocationException ignore) {}
+    
+    IdeEventQueue.getInstance().flushQueue();
+    assertEquals(selectionStart, myFixture.getEditor().getSelectionModel().getSelectionStart());
+    assertEquals(selectionEnd, myFixture.getEditor().getSelectionModel().getSelectionEnd());
+    assertEquals(caret, myFixture.getEditor().getCaretModel().getOffset());
   }
 
   private EditorSearchSession getEditorSearchComponent() {

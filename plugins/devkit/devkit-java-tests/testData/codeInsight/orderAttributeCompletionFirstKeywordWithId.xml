@@ -1,0 +1,14 @@
+<idea-plugin>
+  <id>com.intellij</id>
+
+  <extensionPoints>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="myEp6"
+                    beanClass="java.lang.String"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <myEp6 id="id1"/>
+    <myEp6 id="id2" order="before id1, fi<caret>"/>
+  </extensions>
+</idea-plugin>

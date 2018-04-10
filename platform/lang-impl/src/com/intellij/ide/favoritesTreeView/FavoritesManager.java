@@ -575,8 +575,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   private static void iterateTreeItems(final Collection<TreeItem<Pair<AbstractUrl, String>>> coll,
                                        Consumer<TreeItem<Pair<AbstractUrl, String>>> consumer) {
-    final ArrayDeque<TreeItem<Pair<AbstractUrl, String>>> queue = new ArrayDeque<>();
-    queue.addAll(coll);
+    final ArrayDeque<TreeItem<Pair<AbstractUrl, String>>> queue = new ArrayDeque<>(coll);
     while (!queue.isEmpty()) {
       final TreeItem<Pair<AbstractUrl, String>> item = queue.removeFirst();
       consumer.consume(item);

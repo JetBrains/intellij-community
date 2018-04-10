@@ -6,6 +6,6 @@ import static org.junit.Assert.assertFalse;
 class X {
   @Test
   void t() {
-      assertFalse(!true);
+      assertFalse(false);
   }
 }

@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +64,6 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   FileEncodingConfigurable(@NotNull Project project) {
     super(project, createMappings(project));
     myBOMForUTF8Combo.setModel(new EnumComboBoxModel<>(EncodingProjectManagerImpl.BOMForNewUTF8Files.class));
-    myBOMForUTF8Combo.setRenderer((list, value, index, isSelected, cellHasFocus) -> new JLabel(value.toString()));
     myBOMForUTF8Combo.addItemListener(e -> updateExplanationLabelText());
     myExplanationLabel.setHyperlinkTarget("https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8");
   }
@@ -123,12 +121,11 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Override
   protected void renderValue(@Nullable Object target, @NotNull Charset t, @NotNull ColoredTextContainer renderer) {
     VirtualFile file = target instanceof VirtualFile ? (VirtualFile)target : null;
-    Pair<Charset, String> check = file == null || file.isDirectory() ? null : EncodingUtil.checkSomeActionEnabled(file);
-    String failReason = check == null ? null : check.second;
+    EncodingUtil.FailReason result = file == null || file.isDirectory() ? null : EncodingUtil.checkCanConvertAndReload(file);
 
     String encodingText = t.displayName();
-    SimpleTextAttributes attributes = failReason == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
-    renderer.append(encodingText + (failReason == null ? "" : " (" + failReason + ")"), attributes);
+    SimpleTextAttributes attributes = result == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
+    renderer.append(encodingText + (result == null ? "" : " (" + result + ")"), attributes);
   }
 
   @NotNull
@@ -256,7 +253,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Override
   protected boolean canEditTarget(@Nullable Object target, Charset value) {
     return target == null || target instanceof VirtualFile && (
-      ((VirtualFile)target).isDirectory() || EncodingUtil.checkSomeActionEnabled((VirtualFile)target) == null);
+      ((VirtualFile)target).isDirectory() || EncodingUtil.checkCanConvertAndReload((VirtualFile)target) == null);
   }
 
   @NotNull

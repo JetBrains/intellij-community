@@ -30,7 +30,7 @@ fun <T> deserializeState(stateElement: Element?, stateClass: Class<T>, mergeInto
     stateClass == Element::class.java -> stateElement as T?
     JDOMExternalizable::class.java.isAssignableFrom(stateClass) -> {
       if (mergeInto != null) {
-        LOG.error("State is ${stateClass.name}, merge into is ${mergeInto.toString()}, state element text is ${JDOMUtil.writeElement(stateElement)}")
+        LOG.error("State is ${stateClass.name}, merge into is $mergeInto, state element text is ${JDOMUtil.writeElement(stateElement)}")
       }
 
       val t = ReflectionUtil.newInstance(stateClass)

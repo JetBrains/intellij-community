@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchEP;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -25,9 +28,7 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -57,18 +58,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
-    executeAndApplyAdditionalInfo(localList, additionalInfo, commitContext, appliers);
-  }
-
-  protected ApplyPatchStatus executeAndApplyAdditionalInfo(@Nullable LocalChangeList localList,
-                                                           @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
-                                                           @NotNull CommitContext commitContext,
-                                                           @NotNull Collection<PatchApplier> appliers) {
-    final ApplyPatchStatus applyPatchStatus = PatchApplier.executePatchGroup(appliers, localList);
-    if (applyPatchStatus != ApplyPatchStatus.ABORT) {
-      applyAdditionalInfo(myProject, additionalInfo, commitContext);
-    }
-    return applyPatchStatus;
+    PatchApplier.executePatchGroup(appliers, localList);
   }
 
   @NotNull
@@ -79,7 +69,8 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     for (VirtualFile base : patchGroups.keySet()) {
       appliers.add(new PatchApplier<BinaryFilePatch>(myProject, base,
                                                      ContainerUtil
-                                                       .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList, null, commitContext));
+                                                       .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList,
+                                                     commitContext));
     }
     return appliers;
   }
@@ -88,54 +79,22 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
   public static void applyAdditionalInfoBefore(final Project project,
                                                @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                                @Nullable CommitContext commitContext) {
-    applyAdditionalInfoImpl(project, additionalInfo, commitContext,
-                            infoGroup -> infoGroup.myPatchEP.consumeContentBeforePatchApplied(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext));
-  }
-
-  private static void applyAdditionalInfo(final Project project,
-                                          @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
-                                          CommitContext commitContext) {
-    applyAdditionalInfoImpl(project, additionalInfo, commitContext,
-                            infoGroup -> infoGroup.myPatchEP.consumeContent(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext));
-  }
-
-  private static void applyAdditionalInfoImpl(final Project project,
-                                              @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
-                                              @Nullable CommitContext commitContext, final Consumer<InfoGroup> worker) {
     final PatchEP[] extensions = Extensions.getExtensions(PatchEP.EP_NAME, project);
-    if (extensions.length == 0) return;
-    if (additionalInfo != null) {
-      try {
-        for (Map.Entry<String, Map<String, CharSequence>> entry : additionalInfo.compute().entrySet()) {
-          final String path = entry.getKey();
-          final Map<String, CharSequence> innerMap = entry.getValue();
-
-          for (PatchEP extension : extensions) {
-            final CharSequence charSequence = innerMap.get(extension.getName());
-            if (charSequence != null) {
-              worker.consume(new InfoGroup(extension, path, charSequence, commitContext));
-            }
+    if (extensions.length == 0 || additionalInfo == null) return;
+    try {
+      Map<String, Map<String, CharSequence>> additionalInfoMap = additionalInfo.compute();
+      for (Map.Entry<String, Map<String, CharSequence>> entry : additionalInfoMap.entrySet()) {
+        for (PatchEP extension : extensions) {
+          final CharSequence charSequence = entry.getValue().get(extension.getName());
+          if (charSequence != null) {
+            extension.consumeContentBeforePatchApplied(entry.getKey(), charSequence, commitContext);
           }
         }
       }
-      catch (PatchSyntaxException e) {
-        VcsBalloonProblemNotifier
-          .showOverChangesView(project, "Can not apply additional patch info: " + e.getMessage(), MessageType.ERROR);
-      }
     }
-  }
-  
-  private static class InfoGroup {
-    private final PatchEP myPatchEP;
-    private final String myPath;
-    private final CharSequence myContent;
-   @Nullable private final CommitContext myCommitContext;
-
-    private InfoGroup(PatchEP patchEP, String path, CharSequence content, @Nullable CommitContext commitContext) {
-      myPatchEP = patchEP;
-      myPath = path;
-      myContent = content;
-      myCommitContext = commitContext;
+    catch (PatchSyntaxException e) {
+      VcsBalloonProblemNotifier
+        .showOverChangesView(project, "Can not apply additional patch info: " + e.getMessage(), MessageType.ERROR);
     }
   }
 

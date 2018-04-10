@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ReadAction;
@@ -25,7 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtilRt;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +56,17 @@ public class ModuleUtilCore {
   }
 
   @Nullable
+  public static Module findModuleForFile(@Nullable PsiFile containingFile) {
+    if (containingFile != null) {
+      VirtualFile vFile = containingFile.getVirtualFile();
+      if (vFile != null) {
+        return findModuleForFile(vFile, containingFile.getProject());
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public static Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
     return ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(file);
   }
@@ -108,7 +105,7 @@ public class ModuleUtilCore {
         for (OrderEntry orderEntry : orderEntries) {
           modules.add(orderEntry.getOwnerModule());
         }
-        final Module[] candidates = modules.toArray(new Module[modules.size()]);
+        final Module[] candidates = modules.toArray(Module.EMPTY_ARRAY);
         Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
         return candidates[0];
       }

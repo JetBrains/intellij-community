@@ -32,39 +32,50 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-class FindPopupDirectoryChooser extends JPanel {
+@SuppressWarnings("WeakerAccess")
+public class FindPopupDirectoryChooser extends JPanel {
   @NotNull private final FindUIHelper myHelper;
   @NotNull private final Project myProject;
   @NotNull private final FindPopupPanel myFindPopupPanel;
   @NotNull private final ComboBox<String> myDirectoryComboBox;
 
-  FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
+  @SuppressWarnings("WeakerAccess")
+  public FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
     super(new BorderLayout());
 
     myHelper = panel.getHelper();
     myProject = panel.getProject();
     myFindPopupPanel = panel;
     myDirectoryComboBox = new ComboBox<>(200);
+    myDirectoryComboBox.setEditable(true);
 
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
       JTextField field = (JTextField)editorComponent;
+      field.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          myFindPopupPanel.scheduleResultsUpdate();
+        }
+      });
       field.setColumns(40);
     }
-    myDirectoryComboBox.setEditable(true);
     myDirectoryComboBox.setMaximumRowCount(8);
 
     ActionListener restartSearchListener = e -> myFindPopupPanel.scheduleResultsUpdate();
@@ -77,12 +88,16 @@ class FindPopupDirectoryChooser extends JPanel {
     mySelectDirectoryButton.addActionListener(__ -> {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       descriptor.setForcedToUseIdeaFileChooser(true);
+      if (!Registry.is("ide.find.as.popup.show.dialogs.above.popup")) {
+        myFindPopupPanel.setWindowVisible(false);
+      }
       myFindPopupPanel.getCanClose().set(false);
-      FileChooser.chooseFiles(descriptor, myProject, myFindPopupPanel, null,
+      FileChooser.chooseFiles(descriptor, myProject, null, null,
                               new FileChooser.FileChooserConsumer() {
         @Override
         public void consume(List<VirtualFile> files) {
           ApplicationManager.getApplication().invokeLater(() -> {
+            myFindPopupPanel.setWindowVisible(true);
             myFindPopupPanel.getCanClose().set(true);
             IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
             myHelper.getModel().setDirectoryName(files.get(0).getPresentableUrl());
@@ -93,6 +108,7 @@ class FindPopupDirectoryChooser extends JPanel {
         @Override
         public void cancelled() {
           ApplicationManager.getApplication().invokeLater(() -> {
+            myFindPopupPanel.setWindowVisible(true);
             myFindPopupPanel.getCanClose().set(true);
             IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
           });
@@ -111,7 +127,8 @@ class FindPopupDirectoryChooser extends JPanel {
     add(buttonsPanel, BorderLayout.EAST);
   }
 
-  void initByModel(@NotNull FindModel findModel) {
+  @SuppressWarnings("WeakerAccess")
+  public void initByModel(@NotNull FindModel findModel) {
     final String directoryName = findModel.getDirectoryName();
     java.util.List<String> strings = FindInProjectSettings.getInstance(myProject).getRecentDirectories();
 
@@ -139,7 +156,7 @@ class FindPopupDirectoryChooser extends JPanel {
 
   @NotNull
   public String getDirectory() {
-    return (String)myDirectoryComboBox.getSelectedItem();
+    return (String)myDirectoryComboBox.getEditor().getItem();
   }
 
   @Nullable

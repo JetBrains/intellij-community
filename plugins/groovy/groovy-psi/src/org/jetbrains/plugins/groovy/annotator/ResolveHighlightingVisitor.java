@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessChecker;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -27,36 +26,39 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.List;
 
-class ResolveHighlightingVisitor extends GroovyRecursiveElementVisitor {
+public class ResolveHighlightingVisitor extends GroovyRecursiveElementVisitor {
   private final GrUnresolvedAccessChecker myReferenceChecker;
-  private final List<HighlightInfo> myInfos;
+  private final VisitorCallback myCallback;
+  private int myTriggerCounter = 0;
 
-  public ResolveHighlightingVisitor(@NotNull GroovyFileBase file, @NotNull Project project, @NotNull List<HighlightInfo> collector) {
+  public ResolveHighlightingVisitor(@NotNull GroovyFileBase file, @NotNull Project project, @NotNull VisitorCallback callback) {
+    myCallback = callback;
     myReferenceChecker = new GrUnresolvedAccessChecker(file, project);
-    myInfos = collector;
   }
 
   @Override
   public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
-    final int size = myInfos.size();
+    final int oldValue = myTriggerCounter;
     super.visitReferenceExpression(referenceExpression);
-    if (size == myInfos.size()) {
-      List<HighlightInfo> infos = myReferenceChecker.checkReferenceExpression(referenceExpression);
-      if (infos != null) {
-        ContainerUtil.addAllNotNull(myInfos, infos);
-      }
-    }
+    if (oldValue != myTriggerCounter) return;
+
+    List<HighlightInfo> infos = myReferenceChecker.checkReferenceExpression(referenceExpression);
+    if (infos == null) return;
+    infos.forEach(info -> {
+      myCallback.trigger(referenceExpression, info);
+      myTriggerCounter++;
+    });
   }
 
   @Override
   public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
-    final int size = myInfos.size();
+    final int oldValue = myTriggerCounter;
     super.visitCodeReferenceElement(refElement);
-    if (size == myInfos.size()) {
-      HighlightInfo info = myReferenceChecker.checkCodeReferenceElement(refElement);
-      if (info != null) {
-        myInfos.add(info);
-      }
+    if (oldValue != myTriggerCounter) return;
+    HighlightInfo info = myReferenceChecker.checkCodeReferenceElement(refElement);
+    if (info != null) {
+      myCallback.trigger(refElement, info);
+      myTriggerCounter++;
     }
   }
 }

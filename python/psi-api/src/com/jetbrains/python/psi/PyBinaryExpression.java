@@ -16,33 +16,12 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.PyNames;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author yole
  */
 public interface PyBinaryExpression extends PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
-
-  @Nullable
-  @Override
-  default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
-    return isRightOperator(resolvedCallee) ? getRightExpression() : getLeftExpression();
-  }
-
-  @NotNull
-  @Override
-  default List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
-    return Collections.singletonList(isRightOperator(resolvedCallee) ? getLeftExpression() : getRightExpression());
-  }
-
-  default boolean isRightOperator(@Nullable PyCallable resolvedCallee) {
-    return resolvedCallee != null && PyNames.isRightOperatorName(getReferencedName(), resolvedCallee.getName());
-  }
 
   PyExpression getLeftExpression();
   @Nullable PyExpression getRightExpression();
@@ -57,4 +36,6 @@ public interface PyBinaryExpression extends PyQualifiedExpression, PyCallSiteExp
 
   PyExpression getOppositeExpression(PyExpression expression)
       throws IllegalArgumentException;
+
+  boolean isRightOperator(@Nullable PyCallable resolvedCallee);
 }

@@ -24,6 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DfaInstructionState implements Comparable<DfaInstructionState> {
   public static final DfaInstructionState[] EMPTY_ARRAY = new DfaInstructionState[0];
@@ -93,6 +94,10 @@ class StateQueue {
       memoryStates.add((DfaMemoryStateImpl)anotherState);
     }
 
+    if (memoryStates.size() > 1) {
+      memoryStates = squash(memoryStates);
+    }
+
     if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
       MultiMap<Object, DfaMemoryStateImpl> groups = MultiMap.create();
       for (DfaMemoryStateImpl memoryState : memoryStates) {
@@ -109,13 +114,17 @@ class StateQueue {
     return ContainerUtil.map(memoryStates, state1 -> new DfaInstructionState(instruction, state1));
   }                                                                      
 
-  private static List<DfaMemoryStateImpl> mergeGroup(List<DfaMemoryStateImpl> group) {
+  private static List<DfaMemoryStateImpl> squash(List<DfaMemoryStateImpl> states) {
+    return states.stream().filter(left -> states.stream().noneMatch(right -> right != left && right.isSuperStateOf(left))).collect(Collectors.toList());
+  }
+
+  static List<DfaMemoryStateImpl> mergeGroup(List<DfaMemoryStateImpl> group) {
     if (group.size() < 2) {
       return group;
     }
 
     StateMerger merger = new StateMerger();
-    while (true) {
+    while (group.size() > 1) {
       List<DfaMemoryStateImpl> nextStates = merger.mergeByRanges(group);
       if (nextStates == null) nextStates = merger.mergeByFacts(group);
       if (nextStates == null) nextStates = merger.mergeByNullability(group);

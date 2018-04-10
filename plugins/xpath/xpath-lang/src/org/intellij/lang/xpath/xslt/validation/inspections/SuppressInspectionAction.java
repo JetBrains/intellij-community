@@ -109,8 +109,4 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
         assert newComment != null;
         return newComment;
     }
-
-    public boolean startInWriteAction() {
-        return true;
-    }
 }

@@ -43,6 +43,35 @@ from pydev_ipython.qt_loaders import (load_qt, QT_API_PYSIDE,
 def matplotlib_options(mpl):
     if mpl is None:
         return
+
+    # #PyDev-779: In pysrc/pydev_ipython/qt_for_kernel.py, matplotlib_options should be replaced with latest from ipython
+    # (i.e.: properly check backend to decide upon qt4/qt5).
+
+    backend = mpl.rcParams.get('backend', None)
+    if backend == 'Qt4Agg':
+        mpqt = mpl.rcParams.get('backend.qt4', None)
+        if mpqt is None:
+            return None
+        if mpqt.lower() == 'pyside':
+            return [QT_API_PYSIDE]
+        elif mpqt.lower() == 'pyqt4':
+            return [QT_API_PYQT_DEFAULT]
+        elif mpqt.lower() == 'pyqt4v2':
+            return [QT_API_PYQT]
+        raise ImportError("unhandled value for backend.qt4 from matplotlib: %r" %
+                          mpqt)
+
+    elif backend == 'Qt5Agg':
+        mpqt = mpl.rcParams.get('backend.qt5', None)
+        if mpqt is None:
+            return None
+        if mpqt.lower() == 'pyqt5':
+            return [QT_API_PYQT5]
+        raise ImportError("unhandled value for backend.qt5 from matplotlib: %r" %
+                          mpqt)
+
+
+    # Fallback without checking backend (previous code)
     mpqt = mpl.rcParams.get('backend.qt4', None)
     if mpqt is None:
         mpqt = mpl.rcParams.get('backend.qt5', None)
@@ -57,6 +86,7 @@ def matplotlib_options(mpl):
         return [QT_API_PYQT5]
     raise ImportError("unhandled value for qt backend from matplotlib: %r" %
                       mpqt)
+
 
 def get_options():
     """Return a list of acceptable QT APIs, in decreasing order of

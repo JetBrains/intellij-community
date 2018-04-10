@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.codeStyleSettings;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -34,13 +35,13 @@ public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    CodeStyle.dropTemporarySettings(getProject());
   }
 
   @Override
   public void tearDown() throws Exception {
     try {
-      CodeStyleSettingsManager.getSettings(getProject()).copyFrom(CodeStyleSettings.getDefaults());
+      CodeStyle.getSettings(getProject()).copyFrom(CodeStyleSettings.getDefaults());
     }
     finally {
       super.tearDown();

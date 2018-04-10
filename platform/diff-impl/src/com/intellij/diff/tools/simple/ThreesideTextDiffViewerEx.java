@@ -71,6 +71,10 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     myStatusPanel = new MyStatusPanel();
     myFoldingModel = new MyFoldingModel(toObjectArray(getEditors(), EditorEx.class), this);
 
+    for (ThreeSide side : ThreeSide.values()) {
+      DiffUtil.installLineConvertor(getEditor(side), getContent(side), myFoldingModel, side.getIndex());
+    }
+
     DiffUtil.registerAction(new PrevConflictAction(), myPanel);
     DiffUtil.registerAction(new NextConflictAction(), myPanel);
   }

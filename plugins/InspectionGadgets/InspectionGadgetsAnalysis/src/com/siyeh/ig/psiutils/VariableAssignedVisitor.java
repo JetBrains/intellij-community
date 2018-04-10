@@ -84,11 +84,11 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
   }
 
   @Override
-  public void visitPrefixExpression(@NotNull PsiPrefixExpression prefixExpression) {
+  public void visitUnaryExpression(@NotNull PsiUnaryExpression prefixExpression) {
     if (assigned) {
       return;
     }
-    super.visitPrefixExpression(prefixExpression);
+    super.visitUnaryExpression(prefixExpression);
     if (!checkUnaryExpressions) {
       return;
     }
@@ -97,28 +97,6 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
       return;
     }
     final PsiExpression operand = prefixExpression.getOperand();
-    for (PsiVariable variable : variables) {
-      if (VariableAccessUtils.evaluatesToVariable(operand, variable)) {
-        assigned = true;
-        break;
-      }
-    }
-  }
-
-  @Override
-  public void visitPostfixExpression(@NotNull PsiPostfixExpression postfixExpression) {
-    if (assigned) {
-      return;
-    }
-    super.visitPostfixExpression(postfixExpression);
-    if (!checkUnaryExpressions) {
-      return;
-    }
-    final IElementType tokenType = postfixExpression.getOperationTokenType();
-    if (!tokenType.equals(JavaTokenType.PLUSPLUS) && !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-      return;
-    }
-    final PsiExpression operand = postfixExpression.getOperand();
     for (PsiVariable variable : variables) {
       if (VariableAccessUtils.evaluatesToVariable(operand, variable)) {
         assigned = true;

@@ -28,7 +28,6 @@ import java.util.Properties;
 
 /**
  * @author MYakovlev
- * Date: Jul 24, 2002
  */
 public abstract class FileTemplateManager{
   public static final Key<Properties> DEFAULT_TEMPLATE_PROPERTIES = Key.create("DEFAULT_TEMPLATE_PROPERTIES");

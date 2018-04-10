@@ -28,6 +28,11 @@ public class UnaryPlusInspectionTest extends LightInspectionTestCase {
     doTest();
   }
 
+  public void testUnaryPlusConfusing() {
+    myFixture.enableInspections(new UnaryPlusInspection());
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

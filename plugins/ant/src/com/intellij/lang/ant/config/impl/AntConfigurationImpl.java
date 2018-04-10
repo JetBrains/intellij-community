@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -47,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -57,7 +42,6 @@ import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ValueProperty;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +100,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final List<AntBuildFileBase> myBuildFiles = new CopyOnWriteArrayList<>();
 
   private final Map<AntBuildFile, AntBuildModelBase> myModelToBuildFileMap = new HashMap<>();
-  private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new java.util.HashMap<>();
+  private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new HashMap<>();
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
   private final StartupManager myStartupManager;
 
@@ -212,7 +196,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     myIsInitialized = Boolean.FALSE;
 
     List<Pair<Element, String>> files = new ArrayList<>();
@@ -368,7 +352,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   @Override
   public AntBuildFile[] getBuildFiles() {
     //noinspection SuspiciousToArrayCall
-    return myBuildFiles.toArray(new AntBuildFileBase[myBuildFiles.size()]);
+    return myBuildFiles.toArray(new AntBuildFileBase[0]);
   }
 
   @Override
@@ -592,7 +576,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   public AntBuildModelBase getModel(@NotNull AntBuildFile buildFile) {
     AntBuildModelBase model = myModelToBuildFileMap.get(buildFile);
     if (model == null) {
-      model = createModel(buildFile);
+      model = new AntBuildModelImpl(buildFile);
       myModelToBuildFileMap.put(buildFile, model);
     }
     return model;
@@ -612,10 +596,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private AntBuildModelBase createModel(final AntBuildFile buildFile) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      // otherwise commitAllDocuments() must have been called before the whole process was started
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    }
     return new AntBuildModelImpl(buildFile);
   }
 
@@ -815,7 +795,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (!app.isDispatchThread() || task.isHeadless()) {
       // for headless tasks we need to ensure async execution. 
       // Otherwise calls to AntConfiguration.getInstance() from the task will cause SOE
-      app.invokeLater(task::queue, ModalityState.any());
+      app.invokeLater(task::queue);
     }
     else {
       task.queue();

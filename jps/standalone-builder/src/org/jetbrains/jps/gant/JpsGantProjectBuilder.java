@@ -48,7 +48,7 @@ import java.util.*;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
- * @deprecated use {@link org.jetbrains.intellij.build.CompilationTasks} from platform-build-scripts module for building IDEs based
+ * @deprecated use {@link org.jetbrains.intellij.build.CompilationTasks} from intellij.platform.buildScripts module for building IDEs based
  * on IntelliJ Platform. If you need to build another project use {@link Standalone} directly.
  */
 public class JpsGantProjectBuilder {
@@ -57,10 +57,10 @@ public class JpsGantProjectBuilder {
   private boolean myCompressJars;
   private boolean myBuildIncrementally;
   private File myDataStorageRoot;
-  private JpsModelLoader myModelLoader;
+  private final JpsModelLoader myModelLoader;
   private BuildInfoPrinter myBuildInfoPrinter = new DefaultBuildInfoPrinter();
-  private Set<String> myCompiledModules = new HashSet<>();
-  private Set<String> myCompiledModuleTests = new HashSet<>();
+  private final Set<String> myCompiledModules = new HashSet<>();
+  private final Set<String> myCompiledModuleTests = new HashSet<>();
   private boolean myStatisticsReported;
   private Logger.Factory myFileLoggerFactory;
 

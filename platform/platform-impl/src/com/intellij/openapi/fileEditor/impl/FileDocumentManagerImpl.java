@@ -17,7 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -50,10 +50,10 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.pom.core.impl.PomModelImpl;
+import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
@@ -113,7 +113,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
       if (project == null)
         project = ProjectUtil.guessProjectForFile(getFile(document));
-      String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
+      String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
 
       // avoid documents piling up during batch processing
@@ -232,7 +232,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private static Document createDocument(final CharSequence text, VirtualFile file) {
     boolean acceptSlashR = file instanceof LightVirtualFile && StringUtil.indexOf(text, '\r') >= 0;
-    boolean freeThreaded = Boolean.TRUE.equals(file.getUserData(SingleRootFileViewProvider.FREE_THREADED));
+    boolean freeThreaded = Boolean.TRUE.equals(file.getUserData(AbstractFileViewProvider.FREE_THREADED));
     return ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, freeThreaded);
   }
 
@@ -493,10 +493,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
     String lineSeparator = file == null ? null : LoadTextUtil.getDetectedLineSeparator(file);
     if (lineSeparator == null) {
-      CodeStyleFacade settingsManager = project == null
-                                        ? CodeStyleFacade.getInstance()
-                                        : CodeStyleFacade.getInstance(project);
-      lineSeparator = settingsManager.getLineSeparator();
+      lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
     }
     return lineSeparator;
   }
@@ -534,7 +531,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     }
 
     List<Document> list = new ArrayList<>(myUnsavedDocuments);
-    return list.toArray(new Document[list.size()]);
+    return list.toArray(Document.EMPTY_ARRAY);
   }
 
   @Override
@@ -627,7 +624,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
           @Override
           public void run() {
             if (!isBinaryWithoutDecompiler(file)) {
-              LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
+              LoadTextUtil.clearCharsetAutoDetectionReason(file);
               file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
               file.setCharset(null, null, false);
               boolean wasWritable = document.isWritable();
@@ -684,8 +681,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
 
-    if(ourConflictsSolverEnabled)
+    if (ourConflictsSolverEnabled) {
       myConflictResolver.beforeContentChange(event);
+    }
   }
 
   public static boolean recomputeFileTypeIfNecessary(@NotNull VirtualFile virtualFile) {

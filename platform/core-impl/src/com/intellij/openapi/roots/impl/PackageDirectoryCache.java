@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -28,16 +30,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.or;
+
 /**
  * @author peter
  */
 public class PackageDirectoryCache {
-  private final MultiMap<String, VirtualFile> myRootsByPackagePrefix;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.PackageDirectoryCache");
+  private final MultiMap<String, VirtualFile> myRootsByPackagePrefix = MultiMap.create();
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
 
   public PackageDirectoryCache(@NotNull MultiMap<String, VirtualFile> rootsByPackagePrefix) {
-    myRootsByPackagePrefix = rootsByPackagePrefix;
+    for (String prefix : rootsByPackagePrefix.keySet()) {
+      for (VirtualFile file : rootsByPackagePrefix.get(prefix)) {
+        if (!file.isValid()) {
+          LOG.error("Invalid root: " + file);
+        } else {
+          myRootsByPackagePrefix.putValue(prefix, file);
+        }
+      }
+    }
   }
 
   public void onLowMemory() {
@@ -94,6 +107,21 @@ public class PackageDirectoryCache {
   public Set<String> getSubpackageNames(@NotNull final String packageName) {
     final PackageInfo info = getPackageInfo(packageName);
     return info == null ? Collections.emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
+  }
+
+  public Set<String> getSubpackageNames(@NotNull final String packageName, @NotNull GlobalSearchScope scope) {
+    final PackageInfo info = getPackageInfo(packageName);
+    if (info == null) return Collections.emptySet();
+
+    final Set<String> result = new HashSet<>();
+    for (Map.Entry<String, Collection<VirtualFile>> entry : info.mySubPackages.getValue().entrySet()) {
+      final String shortName = entry.getKey();
+      final Collection<VirtualFile> directories = entry.getValue();
+      if (or(directories, scope::contains)) {
+        result.add(shortName);
+      }
+    }
+    return Collections.unmodifiableSet(result);
   }
 
   private class PackageInfo {

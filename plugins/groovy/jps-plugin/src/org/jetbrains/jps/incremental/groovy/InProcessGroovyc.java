@@ -80,7 +80,7 @@ class InProcessGroovyc implements GroovycFlavor {
 
     final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
     if (loader == null) {
-      parser.addCompilerMessage(parser.reportNoGroovy());
+      parser.addCompilerMessage(parser.reportNoGroovy(null));
       return null;
     }
 
@@ -175,11 +175,11 @@ class InProcessGroovyc implements GroovycFlavor {
   private JointCompilationClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws Exception {
     ClassLoader parent = obtainParentLoader(compilationClassPath);
 
-    ClassLoader groovyClassLoader = null;
+    ClassLoader groovyClassLoader;
     try {
       ClassLoader auxiliary = parent != null ? parent : buildCompilationClassLoader(compilationClassPath, null).get();
       Class<?> gcl = auxiliary.loadClass("groovy.lang.GroovyClassLoader");
-      groovyClassLoader = (ClassLoader)gcl.getConstructor(ClassLoader.class).newInstance(parent);
+      groovyClassLoader = (ClassLoader)gcl.getConstructor(ClassLoader.class).newInstance(parent != null ? parent : ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9());
     }
     catch (ClassNotFoundException e) {
       return null;

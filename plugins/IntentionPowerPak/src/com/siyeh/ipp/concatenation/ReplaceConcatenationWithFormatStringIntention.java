@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2017 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -48,16 +49,17 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     if (replaceWithPrintfExpression(expression, formatString, formatParameters)) {
       return;
     }
+    CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
     newExpression.append("java.lang.String.format(\"");
     newExpression.append(formatString);
     newExpression.append('\"');
     for (PsiExpression formatParameter : formatParameters) {
       newExpression.append(", ");
-      newExpression.append(formatParameter.getText());
+      newExpression.append(commentTracker.text(formatParameter));
     }
     newExpression.append(')');
-    PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
+    PsiReplacementUtil.replaceExpression(expression, newExpression.toString(), commentTracker);
   }
 
   private static boolean replaceWithPrintfExpression(PsiExpression expression, CharSequence formatString,
@@ -96,10 +98,11 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
         !"java.io.Printwriter".equals(qualifiedName)) {
       return false;
     }
+    CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier != null) {
-      newExpression.append(qualifier.getText()).append('.');
+      newExpression.append(commentTracker.text(qualifier)).append('.');
     }
     newExpression.append("printf(\"").append(formatString);
     if (insertNewline) {
@@ -107,10 +110,10 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     }
     newExpression.append('\"');
     for (PsiExpression formatParameter : formatParameters) {
-      newExpression.append(", ").append(formatParameter.getText());
+      newExpression.append(", ").append(commentTracker.text(formatParameter));
     }
     newExpression.append(')');
-    PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
+    PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
     return true;
   }
 }

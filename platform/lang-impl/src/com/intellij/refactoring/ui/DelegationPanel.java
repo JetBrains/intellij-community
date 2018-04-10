@@ -16,6 +16,8 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -32,12 +34,15 @@ public class DelegationPanel extends JPanel {
     final BoxLayout boxLayout = new BoxLayout(this, BoxLayout.X_AXIS);
     setLayout(boxLayout);
     add(new JLabel(RefactoringBundle.message("delegation.panel.method.calls.label")));
+    add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP)));
     myRbModifyCalls = new JRadioButton();
     myRbModifyCalls.setText(RefactoringBundle.message("delegation.panel.modify.radio"));
     add(myRbModifyCalls);
+    add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP)));
     myRbGenerateDelegate = new JRadioButton();
     myRbGenerateDelegate.setText(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     add(myRbGenerateDelegate);
+    add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP)));
     myRbModifyCalls.setSelected(true);
     final ButtonGroup bg = new ButtonGroup();
     bg.add(myRbModifyCalls);

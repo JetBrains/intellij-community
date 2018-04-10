@@ -147,12 +147,9 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
         result = ((PyRerunAwareConfiguration)configuration).getTestSpecsForRerun(myConsoleProperties.getScope(), failedTestLocations);
       }
       else {
-        final Collection<String> locations = new LinkedHashSet<>();
-        locations.addAll(failedTestLocations.stream()
-                           .map(o -> configuration.getTestSpec(o.first, o.second))
-                           .filter(o -> o != null)
-                           .collect(Collectors.toList()));
-        result = new ArrayList<>(locations);
+        result = failedTestLocations.stream()
+          .map(o -> configuration.getTestSpec(o.first, o.second))
+          .filter(Objects::nonNull).distinct().collect(Collectors.toList());
       }
 
       if (result.isEmpty()) {
@@ -175,6 +172,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
     @Override
     public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
+      super.customizeEnvironmentVars(envs, passParentEnvs);
       myState.customizeEnvironmentVars(envs, passParentEnvs);
     }
   }

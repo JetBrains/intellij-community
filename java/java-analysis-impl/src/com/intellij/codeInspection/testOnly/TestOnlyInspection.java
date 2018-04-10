@@ -1,26 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.testOnly;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +14,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+
+public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   @NotNull
   public String getDisplayName() {
@@ -141,14 +126,14 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
   private static boolean isInsideTestOnlyMethod(PsiElement e) {
     return isAnnotatedAsTestOnly(getTopLevelParentOfType(e, PsiMethod.class));
   }
-  
+
   private static boolean isInsideTestOnlyField(PsiElement e) {
     return isAnnotatedAsTestOnly(getTopLevelParentOfType(e, PsiField.class));
   }
 
   private static boolean isAnnotatedAsTestOnly(@Nullable PsiMember m) {
     if (m == null) return false;
-    return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, false, false)
+    return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, CHECK_EXTERNAL)
            || findVisibleForTestingAnnotation(m) != null
            || isAnnotatedAsTestOnly(m.getContainingClass());
   }

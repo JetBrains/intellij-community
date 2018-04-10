@@ -31,7 +31,6 @@ import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -41,6 +40,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -66,7 +66,8 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       super.actionPerformed(e);
     }
     else {
-      DumbService.getInstance(project).showDumbModeNotification(IdeBundle.message("go.to.class.dumb.mode.message"));
+      String message = IdeBundle.message("go.to.class.dumb.mode.message", GotoClassPresentationUpdater.getActionTitle());
+      DumbService.getInstance(project).showDumbModeNotification(message);
       AnAction action = ActionManager.getInstance().getAction(GotoFileAction.ID);
       InputEvent event = ActionCommand.getInputEvent(GotoFileAction.ID);
       Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
@@ -84,6 +85,9 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final GotoClassModel2 model = new GotoClassModel2(project);
+    String pluralKinds = StringUtil.capitalize(
+      StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), s -> StringUtil.pluralize(s), "/"));
+    String title = IdeBundle.message("go.to.class.toolwindow.title", pluralKinds);
     showNavigationPopup(e, model, new GotoActionCallback<Language>() {
       @Override
       protected ChooseByNameFilter<Language> createFilter(@NotNull ChooseByNamePopup popup) {
@@ -92,37 +96,39 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
-            PsiElement psiElement = getElement(((PsiElement)element), popup);
-            psiElement = psiElement.getNavigationElement();
-            VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
-
-            if (file != null && popup.getLinePosition() != -1) {
-              OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition());
-              Navigatable n = descriptor.setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
-              if (n.canNavigate()) {
-                n.navigate(true);
-                return;
-              }
-            }
-
-            if (file != null && popup.getMemberPattern() != null) {
-              NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
-              Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
-              if (member != null) {
-                member.navigate(true);
-              }
-            }
-
-            NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
-          }
-          else {
-            EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
-          }
-        });
+        handleSubMemberNavigation(popup, element);
       }
-    }, IdeBundle.message("go.to.class.toolwindow.title"), true);
+    }, title, true);
+  }
+
+  static void handleSubMemberNavigation(ChooseByNamePopup popup, Object element) {
+    if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
+      PsiElement psiElement = getElement(((PsiElement)element), popup);
+      psiElement = psiElement.getNavigationElement();
+      VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+
+      if (file != null && popup.getLinePosition() != -1) {
+        OpenFileDescriptor descriptor = new OpenFileDescriptor(psiElement.getProject(), file, popup.getLinePosition(), popup.getColumnPosition());
+        Navigatable n = descriptor.setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
+        if (n.canNavigate()) {
+          n.navigate(true);
+          return;
+        }
+      }
+
+      if (file != null && popup.getMemberPattern() != null) {
+        NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
+        Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
+        if (member != null) {
+          member.navigate(true);
+        }
+      }
+
+      NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
+    }
+    else {
+      EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
+    }
   }
 
   @Nullable

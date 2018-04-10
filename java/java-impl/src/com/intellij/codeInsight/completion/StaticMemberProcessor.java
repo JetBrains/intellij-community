@@ -30,7 +30,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author peter
@@ -90,7 +93,7 @@ public abstract class StaticMemberProcessor {
       return createLookupElement(method, containingClass, shouldImport);
     }
 
-    if (overloads.get(0).getParameterList().getParametersCount() == 0) {
+    if (overloads.get(0).getParameterList().isEmpty()) {
       overloads.add(0, overloads.remove(1));
     }
     return createLookupElement(overloads, containingClass, shouldImport);

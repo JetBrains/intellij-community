@@ -33,7 +33,7 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
   private static final Logger LOG = Logger.getInstance(HgFileRevisionLogParser.class);
   @NotNull private final HgFile myHgFile;
   @NotNull private final Project myProject;
-  @NotNull private HgVersion myVersion;
+  @NotNull private final HgVersion myVersion;
 
   public HgFileRevisionLogParser(@NotNull Project project, @NotNull HgFile hgFile, @NotNull HgVersion currentVersion) {
     myProject = project;

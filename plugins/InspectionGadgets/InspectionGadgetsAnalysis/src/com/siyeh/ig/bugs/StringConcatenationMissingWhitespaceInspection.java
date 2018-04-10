@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.siyeh.ig.bugs;
 
@@ -26,6 +14,7 @@ import com.siyeh.ig.psiutils.FormatUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -35,7 +24,7 @@ import javax.swing.*;
 public class StringConcatenationMissingWhitespaceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
-  public boolean ignoreNonStringLiterals = false;
+  public boolean ignoreNonStringLiterals = true;
 
   @Nls
   @NotNull
@@ -86,13 +75,10 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
     }
 
     private boolean isMissingWhitespace(PsiExpression lhs, PsiExpression rhs, boolean formatCall) {
-      @NonNls final String lhsLiteral = ExpressionUtils.getLiteralString(lhs);
+      @NonNls final String lhsLiteral = computeStringValue(lhs);
       if (lhsLiteral != null) {
         final int length = lhsLiteral.length();
-        if (length == 0) {
-          return false;
-        }
-        if (formatCall && lhsLiteral.endsWith("%n")) {
+        if (length == 0 || formatCall && lhsLiteral.endsWith("%n")) {
           return false;
         }
         final char c = lhsLiteral.charAt(length - 1);
@@ -100,15 +86,12 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
           return false;
         }
       }
-      else if (ignoreNonStringLiterals) {
+      else if (ignoreNonStringLiterals && ExpressionUtils.hasStringType(lhs)) {
         return false;
       }
-      @NonNls final String rhsLiteral = ExpressionUtils.getLiteralString(rhs);
+      @NonNls final String rhsLiteral = computeStringValue(rhs);
       if (rhsLiteral != null) {
-        if (rhsLiteral.isEmpty()) {
-          return false;
-        }
-        if (formatCall && rhsLiteral.startsWith("%n")) {
+        if (rhsLiteral.isEmpty() || formatCall && rhsLiteral.startsWith("%n")) {
           return false;
         }
         final char c = rhsLiteral.charAt(0);
@@ -116,10 +99,16 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
           return false;
         }
       }
-      else if (ignoreNonStringLiterals) {
+      else if (ignoreNonStringLiterals && ExpressionUtils.hasStringType(rhs)) {
         return false;
       }
       return true;
+    }
+
+    @Nullable
+    public String computeStringValue(@Nullable PsiExpression expression) {
+      final Object value = ExpressionUtils.computeConstantExpression(expression);
+      return value == null ? null : value.toString();
     }
   }
 }

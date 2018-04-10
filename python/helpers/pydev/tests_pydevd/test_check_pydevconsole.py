@@ -1,13 +1,9 @@
 import threading
 import unittest
 import os
-import sys
+import pytest
+import pydevconsole
 
-try:
-    import pydevconsole
-except:
-    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    import pydevconsole
 from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer
 from _pydev_bundle.pydev_localhost import get_localhost
 
@@ -16,12 +12,19 @@ try:
     raw_input_name = 'raw_input'
 except NameError:
     raw_input_name = 'input'
+    
+try:
+    from IPython import core  # @UnusedImport
+    has_ipython = True
+except:
+    has_ipython = False
+
 
 #=======================================================================================================================
 # Test
 #=======================================================================================================================
+@pytest.mark.skipif(os.environ.get('TRAVIS') == 'true' or not has_ipython, reason='Too flaky on Travis (and requires IPython).')
 class Test(unittest.TestCase):
-
 
     def start_client_thread(self, client_port):
         class ClientThread(threading.Thread):
@@ -60,26 +63,13 @@ class Test(unittest.TestCase):
 
 
     def get_free_addresses(self):
-        import socket
-        s = socket.socket()
-        s.bind(('', 0))
-        port0 = s.getsockname()[1]
-
-        s1 = socket.socket()
-        s1.bind(('', 0))
-        port1 = s1.getsockname()[1]
-        s.close()
-        s1.close()
-        return port0, port1
-
+        from _pydev_bundle.pydev_localhost import get_socket_names
+        socket_names = get_socket_names(2, close=True)
+        return [socket_name[1] for socket_name in socket_names]
 
     def test_server(self):
         # Just making sure that the singleton is created in this thread.
-        try:
-            from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
-        except:
-            sys.stderr.write('Skipped test because IPython could not be imported.')
-            return
+        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
         get_pydev_frontend(get_localhost(), 0)
 
         client_port, server_port = self.get_free_addresses()
@@ -117,13 +107,7 @@ class Test(unittest.TestCase):
                     raise AssertionError('Did not get the return asked before the timeout.')
                 time.sleep(.1)
             frame_xml = server.getFrame()
-            self.assert_('RequestInput' in frame_xml, 'Did not fid RequestInput in:\n%s' % (frame_xml,))
+            self.assertTrue('RequestInput' in frame_xml, 'Did not fid RequestInput in:\n%s' % (frame_xml,))
         finally:
             client_thread.shutdown()
-
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-if __name__ == '__main__':
-    unittest.main()
 

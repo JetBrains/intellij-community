@@ -32,7 +32,6 @@ import java.util.*;
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
  *
  * @author Eugene Zhuravlev
- *         Date: Dec 10, 2007
  */
 public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<>();

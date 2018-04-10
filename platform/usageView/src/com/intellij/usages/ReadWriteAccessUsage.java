@@ -17,7 +17,6 @@ package com.intellij.usages;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 17, 2005
  */
 public interface ReadWriteAccessUsage extends Usage{
   boolean isAccessedForWriting();

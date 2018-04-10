@@ -17,11 +17,11 @@ package org.intellij.lang.xpath.xslt.validation;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.SmartList;
@@ -29,13 +29,13 @@ import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
 
   private AnnotationHolder myHolder;
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     try {
       myHolder = holder;
@@ -55,9 +55,9 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
 
       final String s = value.getValue();
 
-      if (s == null || s.length() == 0) {
+      if (s == null || s.isEmpty()) {
         if (XsltSupport.isXPathAttribute((XmlAttribute)parent)) {
-          InjectedLanguageUtil.enumerate(value, (injectedPsi, places) -> {
+          InjectedLanguageManager.getInstance(value.getProject()).enumerate(value, (injectedPsi, places) -> {
             if (injectedPsi instanceof XPathFile) {
               if (injectedPsi.getTextLength() == 0) {
                 myHolder.createErrorAnnotation(value, "Empty XPath expression");
@@ -69,25 +69,18 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
         final List<Integer> singleBraces = collectClosingBraceOffsets(s);
 
         if (singleBraces != null) {
-          boolean enumerated = InjectedLanguageUtil.enumerate(value, (injectedPsi, places) -> {
+          InjectedLanguageManager.getInstance(value.getProject()).enumerate(value, (injectedPsi, places) -> {
             if (injectedPsi instanceof XPathFile) {
               for (PsiLanguageInjectionHost.Shred place : places) {
                 final TextRange range = place.getRangeInsideHost();
 
-                for (Iterator<Integer> iterator = singleBraces.iterator(); iterator.hasNext(); ) {
-                  final Integer brace = iterator.next();
-                  if (range.contains(brace)) {
-                    iterator.remove();
-                  }
-                }
+                singleBraces.removeIf(range::contains);
               }
             }
           });
 
-          if (enumerated) {
-            for (Integer brace : singleBraces) {
-              myHolder.createErrorAnnotation(TextRange.from(value.getTextOffset() + brace, 1), "Invalid single closing brace. Escape as '}}'");
-            }
+          for (Integer brace : singleBraces) {
+            myHolder.createErrorAnnotation(TextRange.from(value.getTextOffset() + brace, 1), "Invalid single closing brace. Escape as '}}'");
           }
         }
       }
@@ -109,15 +102,17 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
     return singleBraces;
   }
 
-  public static int getAVTEndOffset(String value, int i) {
+  private static int getAVTEndOffset(String value, int i) {
     do {
-      i = value.indexOf('}', i+1);
+      i = value.indexOf('}', i + 1);
       if (i != -1 && i == value.indexOf("}}", i)) {
         i += 2;
-      } else {
+      }
+      else {
         break;
       }
-    } while (i != -1);
+    }
+    while (i != -1);
     return i;
   }
 }

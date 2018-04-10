@@ -23,12 +23,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A PSI element representing a file.
  * <p/>
- * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Architectural+Overview">IntelliJ IDEA Architectural Overview </a>
+ * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
  * for high-level overview.
  *
  * @see com.intellij.openapi.actionSystem.LangDataKeys#PSI_FILE
- * @see com.intellij.psi.PsiElement#getContainingFile()
- * @see PsiManager#findFile(com.intellij.openapi.vfs.VirtualFile)
+ * @see PsiElement#getContainingFile()
+ * @see PsiManager#findFile(VirtualFile)
  * @see PsiDocumentManager#getPsiFile(com.intellij.openapi.editor.Document)
  */
 public interface PsiFile extends PsiFileSystemItem {
@@ -60,7 +60,7 @@ public interface PsiFile extends PsiFileSystemItem {
    * of the content of the file. Note that it is not related to the file modification time.
    *
    * @return the modification stamp value
-   * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
+   * @see VirtualFile#getModificationStamp()
    */
   long getModificationStamp();
 

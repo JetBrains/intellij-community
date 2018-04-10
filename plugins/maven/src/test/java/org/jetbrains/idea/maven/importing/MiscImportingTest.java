@@ -62,7 +62,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     });
   }
 
-  public void testRestarting() throws Exception {
+  public void testRestarting() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -112,7 +112,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
-  public void testImportingAllAvailableFilesIfNotInitialized() throws Exception {
+  public void testImportingAllAvailableFilesIfNotInitialized() {
     createModule("m1");
     createModule("m2");
     createProjectSubDirs("m1/src/main/java",
@@ -140,7 +140,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertSources("m2", "src/main/java");
   }
 
-  public void testImportingFiresRootChangesOnlyOnce() throws Exception {
+  public void testImportingFiresRootChangesOnlyOnce() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -148,7 +148,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
-  public void testResolvingFiresRootChangesOnlyOnce() throws Exception {
+  public void testResolvingFiresRootChangesOnlyOnce() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -156,7 +156,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
-  public void testImportingWithLibrariesAndFacetsFiresRootChangesOnlyOnce() throws Exception {
+  public void testImportingWithLibrariesAndFacetsFiresRootChangesOnlyOnce() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -178,7 +178,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
-  public void testFacetsDoNotFireRootsChanges() throws Exception {
+  public void testFacetsDoNotFireRootsChanges() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -187,7 +187,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
-  public void testDoNotRecreateModulesBeforeResolution() throws Exception {
+  public void testDoNotRecreateModulesBeforeResolution() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -258,7 +258,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertTrue(jarFile.exists());
   }
 
-  public void testClearUnresolvedPluginsAfterPluginResolution() throws Exception {
+  public void testClearUnresolvedPluginsAfterPluginResolution() {
     try {
       File repo = new File(myDir, "repo");
       setRepositoryPath(repo.getPath());
@@ -352,7 +352,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertEquals("throw!", mavenProject.getProblems().get(0).getDescription());
   }
 
-  public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() throws Exception {
+  public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() {
     if (ignore()) return;
 
     importProject("<groupId>test</groupId>" +
@@ -390,7 +390,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     });
   }
 
-  public void testUserPropertiesCanBeCustomizedByMavenImportersForMaven3() throws Exception {
+  public void testUserPropertiesCanBeCustomizedByMavenImportersForMaven3() {
     NameSettingMavenImporter extension = new NameSettingMavenImporter("name-from-properties");
     ExtensionPoint<MavenImporter> extensionPoint = Extensions.getRootArea().getExtensionPoint(MavenImporter.EXTENSION_POINT_NAME);
     extensionPoint.registerExtension(extension);
@@ -410,7 +410,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertEquals("name-from-properties", project.getName());
   }
 
-  public void testUserPropertiesCanBeCustomizedByMavenImportersForMaven2() throws Exception {
+  public void testUserPropertiesCanBeCustomizedByMavenImportersForMaven2() {
     NameSettingMavenImporter extension = new NameSettingMavenImporter("name-from-properties");
     ExtensionPoint<MavenImporter> extensionPoint = Extensions.getRootArea().getExtensionPoint(MavenImporter.EXTENSION_POINT_NAME);
     extensionPoint.registerExtension(extension);

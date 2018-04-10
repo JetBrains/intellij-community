@@ -1,0 +1,6 @@
+{
+  this.method();
+  {
+    this.method();
+  }
+}

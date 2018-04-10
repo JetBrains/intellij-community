@@ -19,69 +19,21 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class PsiSuperMethodUtil {
   private PsiSuperMethodUtil() {}
 
-  public static PsiMethod findConstructorInSuper(PsiMethod constructor) {
-    return findConstructorInSuper(constructor, new HashSet<>());
-  }
-
-  public static PsiMethod findConstructorInSuper(PsiMethod constructor, Set<PsiMethod> visited) {
-    if (visited.contains(constructor)) return null;
-    visited.add(constructor);
-    final PsiCodeBlock body = constructor.getBody();
-    if (body != null) {
-      PsiStatement[] statements = body.getStatements();
-      if (statements.length > 0) {
-        PsiElement firstChild = statements[0].getFirstChild();
-        if (firstChild instanceof PsiMethodCallExpression) {
-          PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)firstChild).getMethodExpression();
-          @NonNls final String text = methodExpr.getText();
-          if (text.equals("super")) {
-            PsiElement superConstructor = methodExpr.resolve();
-            if (superConstructor instanceof PsiMethod) {
-              return (PsiMethod)superConstructor;
-            }
-          } else if (text.equals("this")) {
-            final PsiElement resolved = methodExpr.resolve();
-            if (resolved instanceof PsiMethod) {
-              return findConstructorInSuper((PsiMethod)resolved, visited);
-            }
-            return null;
-          }
-        }
-      }
-    }
-
-    PsiClass containingClass = constructor.getContainingClass();
-    if (containingClass != null) {
-      PsiClass superClass = containingClass.getSuperClass();
-      if (superClass != null) {
-        MethodSignature defConstructor = MethodSignatureUtil.createMethodSignature(superClass.getName(), PsiType.EMPTY_ARRAY,
-                                                                                   PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, true);
-        return MethodSignatureUtil.findMethodBySignature(superClass, defConstructor, false);
-      }
-    }
-    return null;
-  }
-
   public static boolean isSuperMethod(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
     HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
-    List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
-    for (int i = 0, superSignaturesSize = superSignatures.size(); i < superSignaturesSize; i++) {
-      HierarchicalMethodSignature supsig = superSignatures.get(i);
+    for (HierarchicalMethodSignature supsig : signature.getSuperSignatures()) {
       PsiMethod supsigme = supsig.getMethod();
       if (superMethod.equals(supsigme) || isSuperMethod(supsigme, superMethod)) return true;
     }
@@ -97,7 +49,7 @@ public class PsiSuperMethodUtil {
     if (inRawContext) {
       Set<PsiTypeParameter> typeParams = superSubstitutor.getSubstitutionMap().keySet();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(superClass.getProject());
-      superSubstitutor = factory.createRawSubstitutor(derivedSubstitutor, typeParams.toArray(new PsiTypeParameter[typeParams.size()]));
+      superSubstitutor = factory.createRawSubstitutor(derivedSubstitutor, typeParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
     }
     Map<PsiTypeParameter, PsiType> map = null;
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(superClass)) {
@@ -176,14 +128,15 @@ public class PsiSuperMethodUtil {
     return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, resolveScope);
   }
 
-  @Contract("null, _ -> null")
-  public static PsiMethod correctMethodByScope(PsiMethod method, final GlobalSearchScope resolveScope) {
-    if (method == null) return null;
+  @NotNull
+  public static Optional<PsiMethod> correctMethodByScope(PsiMethod method, final GlobalSearchScope resolveScope) {
+    if (method == null) return Optional.empty();
     final PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return method;
+    if (aClass == null) return Optional.empty();
     final PsiClass correctedClass = correctClassByScope(aClass, resolveScope);
-    if (correctedClass == null || correctedClass == aClass) return method;
+    if (correctedClass == null) return Optional.empty();
+    else if (correctedClass == aClass) return Optional.of(method);
     final PsiMethod correctedClassMethodBySignature = correctedClass.findMethodBySignature(method, false);
-    return correctedClassMethodBySignature == null ? method : correctedClassMethodBySignature;
+    return correctedClassMethodBySignature == null ? Optional.empty() : Optional.of(correctedClassMethodBySignature);
   }
 }

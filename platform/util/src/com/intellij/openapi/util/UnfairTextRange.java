@@ -20,7 +20,6 @@ package com.intellij.openapi.util;
  * Please use with caution.
  *
  * @author Dmitry Avdeev
- *         Date: 30.08.13
  */
 public class UnfairTextRange extends TextRange {
 

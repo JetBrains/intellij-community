@@ -16,24 +16,23 @@
 
 package com.intellij.facet;
 
-import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.facet.ui.FacetEditorContext;
+import com.intellij.facet.ui.FacetEditorTab;
+import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.facet.ui.FacetEditorTab;
-import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.facet.ui.FacetValidatorsManager;
 import org.jdom.Element;
 
 /**
  * Implementations of this interface contain settings of a specific facet.
  *
  * <p>
- * Implement {@link com.intellij.openapi.components.PersistentStateComponent} instead of {@link com.intellij.openapi.util.JDOMExternalizable}
- * in your implementation of {@link com.intellij.facet.FacetConfiguration}
+ * Implement {@link com.intellij.openapi.components.PersistentStateComponent} instead of overriding {@link #readExternal(Element)} and
+ * {@link #writeExternal(Element)} methods in your implementation of {@link com.intellij.facet.FacetConfiguration}
  *
  * @author nik
  */
-public interface FacetConfiguration extends JDOMExternalizable {
+public interface FacetConfiguration {
 
   /**
    * Creates editor which will be used to edit this facet configuration
@@ -46,14 +45,14 @@ public interface FacetConfiguration extends JDOMExternalizable {
   /**
    * @deprecated implement {@link com.intellij.openapi.components.PersistentStateComponent#loadState(Object)} instead
    */
-  @Override
   @Deprecated
-  void readExternal(final Element element) throws InvalidDataException;
+  default void readExternal(final Element element) throws InvalidDataException {
+  }
 
   /**
    * @deprecated implement {@link com.intellij.openapi.components.PersistentStateComponent#getState()} instead
    */
-  @Override
   @Deprecated
-  void writeExternal(final Element element) throws WriteExternalException;
+  default void writeExternal(final Element element) throws WriteExternalException {
+  }
 }

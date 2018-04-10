@@ -263,6 +263,7 @@ final class Pending implements Result {
 
 final class Effects implements Result {
   static final Set<EffectQuantum> TOP_EFFECTS = Collections.singleton(EffectQuantum.TopEffectQuantum);
+  static final Effects VOLATILE_EFFECTS = new Effects(DataValue.UnknownDataValue2, Collections.singleton(EffectQuantum.TopEffectQuantum));
 
   @NotNull final DataValue returnValue;
   @NotNull final Set<EffectQuantum> effects;

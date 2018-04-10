@@ -18,13 +18,12 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-
-import java.io.File;
+import com.intellij.util.ArrayUtil;
 
 /**
  * @author Dmitry Batkovich
@@ -38,10 +37,7 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava-21.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
-                                 "guava-21.0.jar");
-    moduleBuilder.addLibraryJars("guava-21.0.jar-2", PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/",
-                                 "guava-21.0.jar");
+    moduleBuilder.addLibrary("guava", ArrayUtil.toStringArray(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Guava")));
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 

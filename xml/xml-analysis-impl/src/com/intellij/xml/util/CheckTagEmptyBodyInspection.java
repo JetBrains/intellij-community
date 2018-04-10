@@ -16,7 +16,10 @@
 
 package com.intellij.xml.util;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlInspectionGroupNames;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -71,7 +74,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
     final String name = tag.getName().toLowerCase();
     return tag.getLanguage() == XMLLanguage.INSTANCE ||
            "link".equals(name) || "br".equals(name) || "meta".equals(name) || "img".equals(name) || "input".equals(name) || "hr".equals(name) ||
-           XmlExtension.getExtensionByElement(tag).isCollapsibleTag(tag);
+           XmlExtension.isCollapsible(tag);
   }
 
   @Override

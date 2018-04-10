@@ -1,0 +1,12 @@
+package qqq;
+
+public class Util {
+  private static class Base {
+    String myMessage = "msg";
+  }
+
+  protected static class BaseImpl extends Base {
+    protected void init() {
+    }
+  }
+}

@@ -17,13 +17,6 @@
 
 package org.jetbrains.plugins.gradle.tooling.util;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.google.common.io.Files;
 import groovy.lang.MetaMethod;
 import groovy.lang.MetaProperty;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
@@ -43,6 +36,13 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.compile.AbstractCompile;
+import org.gradle.internal.impldep.com.google.common.base.Function;
+import org.gradle.internal.impldep.com.google.common.base.Predicate;
+import org.gradle.internal.impldep.com.google.common.collect.ArrayListMultimap;
+import org.gradle.internal.impldep.com.google.common.collect.Lists;
+import org.gradle.internal.impldep.com.google.common.collect.Multimap;
+import org.gradle.internal.impldep.com.google.common.collect.Sets;
+import org.gradle.internal.impldep.com.google.common.io.Files;
 import org.gradle.language.base.artifact.SourcesArtifact;
 import org.gradle.language.java.artifact.JavadocArtifact;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
@@ -62,10 +62,10 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Predicates.isNull;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterables.filter;
 import static org.codehaus.groovy.runtime.StringGroovyMethods.capitalize;
+import static org.gradle.internal.impldep.com.google.common.base.Predicates.isNull;
+import static org.gradle.internal.impldep.com.google.common.base.Predicates.not;
+import static org.gradle.internal.impldep.com.google.common.collect.Iterables.filter;
 
 /**
  * @author Vladislav.Soroka
@@ -73,13 +73,13 @@ import static org.codehaus.groovy.runtime.StringGroovyMethods.capitalize;
  */
 public class DependencyResolverImpl implements DependencyResolver {
 
-  private static boolean is4OrBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
-  private static boolean isJavaLibraryPluginSupported = is4OrBetter ||
-                                                        (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0);
-  private static boolean isDependencySubstitutionsSupported = isJavaLibraryPluginSupported ||
-                                                              (GradleVersion.current().compareTo(GradleVersion.version("2.5")) > 0);
-  private static boolean isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
-                                                              (GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0);
+  private static final boolean is4OrBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
+  private static final boolean isJavaLibraryPluginSupported = is4OrBetter ||
+                                                              (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0);
+  private static final boolean isDependencySubstitutionsSupported = isJavaLibraryPluginSupported ||
+                                                                    (GradleVersion.current().compareTo(GradleVersion.version("2.5")) > 0);
+  private static final boolean isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
+                                                                    (GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0);
 
   @NotNull
   private final Project myProject;
@@ -203,7 +203,7 @@ public class DependencyResolverImpl implements DependencyResolver {
 
         Set<ComponentArtifactsResult> componentResults = dependencyHandler.createArtifactResolutionQuery()
           .forComponents(components)
-          .withArtifacts(jvmLibrary, artifactTypes.toArray(new Class[artifactTypes.size()]))
+          .withArtifacts(jvmLibrary, artifactTypes.toArray(new Class[0]))
           .execute()
           .getResolvedComponents();
 
@@ -227,7 +227,8 @@ public class DependencyResolverImpl implements DependencyResolver {
           }
 
           for (ProjectDependency dep : configurationProjectDependencies.values()) {
-            final Set<File> intersection = new HashSet<File>(Sets.intersection(fileDeps, dep.resolve()));
+            Set<File> depFiles = getTargetConfiguration(dep).getAllArtifacts().getFiles().getFiles();
+            final Set<File> intersection = new HashSet<File>(Sets.intersection(fileDeps, depFiles));
             if (!intersection.isEmpty()) {
               DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(intersection);
               fileCollectionDependency.setScope(scope);
@@ -1180,14 +1181,14 @@ public class DependencyResolverImpl implements DependencyResolver {
 
                     ComponentArtifactsResult artifactsResult = componentResultsMap.get(componentIdentifier);
                     if (artifactsResult != null) {
-                      ArtifactResult sourcesResult = findMatchingArtifact(artifact, artifactsResult, SourcesArtifact.class);
-                      if (sourcesResult instanceof ResolvedArtifactResult) {
-                        ((DefaultExternalLibraryDependency)dependency).setSource(((ResolvedArtifactResult)sourcesResult).getFile());
+                      ResolvedArtifactResult sourcesResult = findMatchingArtifact(artifact, artifactsResult, SourcesArtifact.class);
+                      if (sourcesResult != null) {
+                        ((DefaultExternalLibraryDependency)dependency).setSource(sourcesResult.getFile());
                       }
 
-                      ArtifactResult javadocResult = findMatchingArtifact(artifact, artifactsResult, JavadocArtifact.class);
-                      if (javadocResult instanceof ResolvedArtifactResult) {
-                        ((DefaultExternalLibraryDependency)dependency).setJavadoc(((ResolvedArtifactResult)javadocResult).getFile());
+                      ResolvedArtifactResult javadocResult = findMatchingArtifact(artifact, artifactsResult, JavadocArtifact.class);
+                      if (javadocResult != null) {
+                        ((DefaultExternalLibraryDependency)dependency).setJavadoc(javadocResult.getFile());
                       }
                     }
                   }
@@ -1227,19 +1228,21 @@ public class DependencyResolverImpl implements DependencyResolver {
     }
   }
 
-  private static ArtifactResult findMatchingArtifact(ResolvedArtifact artifact,
-                                                     ComponentArtifactsResult componentArtifacts,
-                                                     Class<? extends Artifact> artifactType) {
+  @Nullable
+  private static ResolvedArtifactResult findMatchingArtifact(ResolvedArtifact artifact,
+                                                             ComponentArtifactsResult componentArtifacts,
+                                                             Class<? extends Artifact> artifactType) {
     String baseName = Files.getNameWithoutExtension(artifact.getFile().getName());
     Set<ArtifactResult> artifactResults = componentArtifacts.getArtifacts(artifactType);
 
     if (artifactResults.size() == 1) {
-      return artifactResults.iterator().next();
+      ArtifactResult artifactResult = artifactResults.iterator().next();
+      return artifactResult instanceof ResolvedArtifactResult ? (ResolvedArtifactResult)artifactResult : null;
     }
 
     for (ArtifactResult result : artifactResults) {
       if (result instanceof ResolvedArtifactResult && ((ResolvedArtifactResult)result).getFile().getName().startsWith(baseName)) {
-        return result;
+        return (ResolvedArtifactResult)result;
       }
     }
     return null;

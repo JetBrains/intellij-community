@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -164,7 +165,11 @@ public class IdeaGateway {
 
   @Nullable
   public VirtualFile findVirtualFile(@NotNull String path) {
-    return LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    if (file == null && ApplicationManager.getApplication().isUnitTestMode()) {
+      return TempFileSystem.getInstance().findFileByPath(path);
+    }
+    return file;
   }
 
   @NotNull

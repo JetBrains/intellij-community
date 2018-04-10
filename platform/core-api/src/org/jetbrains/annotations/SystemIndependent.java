@@ -27,6 +27,6 @@ import java.lang.annotation.*;
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.TYPE_USE, ElementType.PARAMETER})
+@Target({ElementType.TYPE_USE})
 public @interface SystemIndependent {
 }

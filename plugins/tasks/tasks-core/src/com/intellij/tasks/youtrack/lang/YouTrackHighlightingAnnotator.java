@@ -20,7 +20,7 @@ import static com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator.Que
  * @author Mikhail Golubev
  */
 public class YouTrackHighlightingAnnotator extends ExternalAnnotator<QueryInfo, List<HighlightRange>> {
-  private static Logger LOG = Logger.getInstance(YouTrackHighlightingAnnotator.class);
+  private static final Logger LOG = Logger.getInstance(YouTrackHighlightingAnnotator.class);
 
   @Nullable
   @Override

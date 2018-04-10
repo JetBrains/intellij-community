@@ -17,15 +17,20 @@ package com.intellij.ide;
 
 import com.intellij.mock.MockProject;
 import com.intellij.mock.MockProjectEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+
+import static org.junit.Assume.assumeFalse;
 
 public class ActivityMonitorTest extends LightPlatformTestCase {
   private UiActivityMonitorImpl myMonitor;
@@ -121,26 +126,39 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
   }
 
   public void testModalityState() {
+    assumeFalse("Test cannot be run in headless environment", GraphicsEnvironment.isHeadless());
+    assertTrue(ApplicationManager.getApplication() instanceof ApplicationImpl);
+    assertTrue(ApplicationManager.getApplication().isDispatchThread());
+
     assertReady(null);
 
     myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.NON_MODAL);
     assertBusy(null);
 
-    LaterInvocator.enterModal("dialog");
+    Dialog dialog = new Dialog(new Dialog((Window)null), "d", true);
+    LaterInvocator.enterModal(dialog);
     try {
       assertReady(null);
 
       myMonitor.addActivity(new UiActivity("non_modal2"), ModalityState.NON_MODAL);
       assertReady(null);
 
-      myMonitor.addActivity(new UiActivity("modal_1"), new ModalityStateEx(new Object[] {"dialog"}));
+      ModalityState m1 = ApplicationManager.getApplication().getModalityStateForComponent(dialog);
+      myMonitor.addActivity(new UiActivity("modal_1"), m1);
       assertBusy(null);
 
-      myMonitor.addActivity(new UiActivity("modal_2"), new ModalityStateEx(new Object[] {"dialog", "popup"}));
+      Dialog popup = new Dialog(dialog, "popup", true);
+      LaterInvocator.enterModal(popup);
+      ModalityState m2 = ApplicationManager.getApplication().getModalityStateForComponent(popup);
+      LaterInvocator.leaveModal(popup);
+
+      assertTrue("m1: "+m1+"; m2:"+m2, m2.dominates(m1));
+
+      myMonitor.addActivity(new UiActivity("modal_2"), m2);
       assertBusy(null);
     }
     finally {
-      LaterInvocator.leaveModal("dialog");
+      LaterInvocator.leaveModal(dialog);
     }
 
     assertBusy(null);

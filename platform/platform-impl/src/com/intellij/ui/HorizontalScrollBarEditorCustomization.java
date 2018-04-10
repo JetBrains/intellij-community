@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author irengrig
- *         Date: 12/6/10
- *         Time: 10:18 AM
  */
 public class HorizontalScrollBarEditorCustomization extends SimpleEditorCustomization {
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -84,7 +70,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     List<PsiPackageAccessibilityStatement> exports = ContainerUtil.newArrayList();
 
     VfsUtilCore.visitChildrenRecursively(myJarRoot, new VirtualFileVisitor() {
-      private JavaDirectoryService service = JavaDirectoryService.getInstance();
+      private final JavaDirectoryService service = JavaDirectoryService.getInstance();
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
@@ -275,10 +261,13 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   }
 
   /**
-   * Implements a name deriving for  automatic modules as described in ModuleFinder.of(Path...) method documentation.
+   * <p>Implements a name deriving for automatic modules as described in ModuleFinder.of(Path...) method documentation.</p>
+   *
+   * <p>Please note that the result may not be a valid module name when the source contains a sequence which starts with a digit
+   * (e.g. "org.7gnomes..."). One may validate the result with {@link PsiNameHelper#isValidModuleName}.</p>
    *
    * @param name a .jar file name without extension
-   * @see <a href="http://download.java.net/java/jdk9/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">ModuleFinder.of(Path...)</a>
+   * @see <a href="http://docs.oracle.com/javase/9/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">ModuleFinder.of(Path...)</a>
    */
   @NotNull
   public static String moduleName(@NotNull String name) {

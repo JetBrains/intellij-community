@@ -22,7 +22,7 @@ public class LoadSourceCommand extends AbstractCommand {
   }
 
   @Override
-  protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     myContent = ProtocolParser.parseSourceContent(response.getPayload());
   }

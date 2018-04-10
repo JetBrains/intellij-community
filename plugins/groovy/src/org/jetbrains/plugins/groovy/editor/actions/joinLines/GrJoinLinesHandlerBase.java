@@ -36,7 +36,7 @@ public abstract class GrJoinLinesHandlerBase implements JoinRawLinesHandlerDeleg
   private static final boolean FORWARD = false;
 
   @Override
-  public int tryJoinRawLines(Document document, PsiFile file, int start, int end) {
+  public int tryJoinRawLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
     if (!(file instanceof GroovyFileBase)) return CANNOT_JOIN;
     final PsiElement element = file.findElementAt(end);
     final GrStatementOwner statementOwner = PsiTreeUtil.getParentOfType(element, GrStatementOwner.class, true, GroovyFileBase.class);
@@ -59,7 +59,7 @@ public abstract class GrJoinLinesHandlerBase implements JoinRawLinesHandlerDeleg
   }
 
   @Override
-  public int tryJoinLines(Document document, PsiFile file, int start, int end) {
+  public int tryJoinLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
     return CANNOT_JOIN;
   }
 

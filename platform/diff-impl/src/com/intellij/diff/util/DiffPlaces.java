@@ -22,4 +22,5 @@ public interface DiffPlaces {
   String TESTS_FAILED_ASSERTIONS = "TestsFiledAssertions";
   String MERGE = "Merge";
   String DIR_DIFF = "DirDiff";
+  String EXTERNAL = "External";
 }

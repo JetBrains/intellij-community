@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.ide.FileIconPatcher;
@@ -30,8 +16,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUI.JBUIScaleUpdatable;
-import com.intellij.util.ui.JBUI.ScaleType;
+import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUI.ScaleContextAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +25,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+
+import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+import static java.lang.Math.round;
 
 
 /**
@@ -69,28 +58,35 @@ public class IconUtil {
       return icon;
     }
 
-    final int w = Math.min(icon.getIconWidth(), maxWidth);
-    final int h = Math.min(icon.getIconHeight(), maxHeight);
+    Image image = toImage(icon);
+    if (image == null) return icon;
 
-    final BufferedImage image = GraphicsEnvironment
-      .getLocalGraphicsEnvironment()
-      .getDefaultScreenDevice()
-      .getDefaultConfiguration()
-      .createCompatibleImage(icon.getIconWidth(), icon.getIconHeight(), Transparency.TRANSLUCENT);
-    final Graphics2D g = image.createGraphics();
-    icon.paintIcon(new JPanel(), g, 0, 0);
-    g.dispose();
+    double scale = 1f;
+    if (image instanceof JBHiDPIScaledImage) {
+      scale = ((JBHiDPIScaledImage)image).getScale();
+      image = ((JBHiDPIScaledImage)image).getDelegate();
+    }
+    BufferedImage bi = ImageUtil.toBufferedImage(image);
+    final Graphics2D g = bi.createGraphics();
+
+    int imageWidth = ImageUtil.getRealWidth(image);
+    int imageHeight = ImageUtil.getRealHeight(image);
+
+    maxWidth = maxWidth == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)round(maxWidth * scale);
+    maxHeight = maxHeight == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)round(maxHeight * scale);
+    final int w = Math.min(imageWidth, maxWidth);
+    final int h = Math.min(imageHeight, maxHeight);
 
     final BufferedImage img = UIUtil.createImage(g, w, h, Transparency.TRANSLUCENT);
-    final int offX = icon.getIconWidth() > maxWidth ? (icon.getIconWidth() - maxWidth) / 2 : 0;
-    final int offY = icon.getIconHeight() > maxHeight ? (icon.getIconHeight() - maxHeight) / 2 : 0;
+    final int offX = imageWidth > maxWidth ? (imageWidth - maxWidth) / 2 : 0;
+    final int offY = imageHeight > maxHeight ? (imageHeight - maxHeight) / 2 : 0;
     for (int col = 0; col < w; col++) {
       for (int row = 0; row < h; row++) {
-        img.setRGB(col, row, image.getRGB(col + offX, row + offY));
+        img.setRGB(col, row, bi.getRGB(col + offX, row + offY));
       }
     }
-
-    return new ImageIcon(img);
+    g.dispose();
+    return new JBImageIcon(RetinaImage.createFrom(img, scale, null));
   }
 
   @NotNull
@@ -401,13 +397,13 @@ public class IconUtil {
 
   @NotNull
   public static Icon scale(@NotNull final Icon source, double _scale) {
-    final int hiDPIscale;
+    final int hiDPIScale;
     if (source instanceof ImageIcon) {
       Image image = ((ImageIcon)source).getImage();
-      hiDPIscale = RetinaImage.isAppleHiDPIScaledImage(image) || image instanceof JBHiDPIScaledImage ? 2 : 1;
+      hiDPIScale = image instanceof JBHiDPIScaledImage ? 2 : 1;
     }
     else {
-      hiDPIscale = 1;
+      hiDPIScale = 1;
     }
     final double scale = Math.min(32, Math.max(.1, _scale));
     return new Icon() {
@@ -429,12 +425,12 @@ public class IconUtil {
 
       @Override
       public int getIconWidth() {
-        return (int)(source.getIconWidth() * scale) / hiDPIscale;
+        return (int)(source.getIconWidth() * scale) / hiDPIScale;
       }
 
       @Override
       public int getIconHeight() {
-        return (int)(source.getIconHeight() * scale) / hiDPIscale;
+        return (int)(source.getIconHeight() * scale) / hiDPIScale;
       }
     };
   }
@@ -466,8 +462,8 @@ public class IconUtil {
   @NotNull
   public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
     if (icon instanceof ScalableIcon) {
-      if (icon instanceof JBUI.JBUIScaleUpdatable) {
-        ((JBUI.JBUIScaleUpdatable)icon).updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
+      if (icon instanceof ScaleContextAware) {
+        ((ScaleContextAware)icon).updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
       }
       return ((ScalableIcon)icon).scale(scale);
     }
@@ -491,11 +487,11 @@ public class IconUtil {
   public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
     float scale = JBUI.getFontScale(fontSize);
     if (icon instanceof ScalableIcon) {
-      if (icon instanceof JBUIScaleUpdatable) {
-        JBUI.JBUIScaleUpdatable jbuiIcon = (JBUI.JBUIScaleUpdatable)icon;
-        jbuiIcon.updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
+      if (icon instanceof ScaleContextAware) {
+        ScaleContextAware ctxIcon = (ScaleContextAware)icon;
+        ctxIcon.updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
         // take into account the user scale of the icon
-        float usrScale = jbuiIcon.getJBUIScale(ScaleType.USR);
+        double usrScale = ctxIcon.getScaleContext().getScale(USR_SCALE);
         scale /= usrScale;
       }
       return ((ScalableIcon)icon).scale(scale);
@@ -555,9 +551,9 @@ public class IconUtil {
         }
       }
     }
-    return createImageIcon(img);
+    return createImageIcon((Image)img);
   }
-  
+
   private static abstract class Filter {
     @NotNull
     abstract int[] convert(@NotNull int[] rgba);
@@ -581,7 +577,7 @@ public class IconUtil {
       return new int[]{rgb >> 16 & 0xff, rgb >> 8 & 0xff, rgb & 0xff, rgba[3]};
     }
   }
-  
+
   private static class DesaturationFilter extends Filter {
     @NotNull
     @Override
@@ -635,8 +631,17 @@ public class IconUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link #createImageIcon(Image)}
+   */
+  @Deprecated
   @NotNull
   public static JBImageIcon createImageIcon(@NotNull final BufferedImage img) {
+    return createImageIcon((Image)img);
+  }
+
+  @NotNull
+  public static JBImageIcon createImageIcon(@NotNull final Image img) {
     return new JBImageIcon(img) {
       @Override
       public int getIconWidth() {

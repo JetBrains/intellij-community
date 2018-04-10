@@ -21,11 +21,12 @@ import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.PeekableIterator;
+import com.intellij.util.containers.PeekableIteratorWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class ComparisonMergeUtil {
@@ -43,12 +44,12 @@ public class ComparisonMergeUtil {
     @NotNull
     public List<MergeRange> execute(@NotNull FairDiffIterable fragments1,
                                     @NotNull FairDiffIterable fragments2) {
-      PeekIterator<Range> unchanged1 = new PeekIterator<>(fragments1.unchanged());
-      PeekIterator<Range> unchanged2 = new PeekIterator<>(fragments2.unchanged());
+      PeekableIterator<Range> unchanged1 = new PeekableIteratorWrapper<>(fragments1.unchanged());
+      PeekableIterator<Range> unchanged2 = new PeekableIteratorWrapper<>(fragments2.unchanged());
 
-      while (!unchanged1.atEnd() && !unchanged2.atEnd()) {
+      while (unchanged1.hasNext() && unchanged2.hasNext()) {
         Side side = add(unchanged1.peek(), unchanged2.peek());
-        side.select(unchanged1, unchanged2).advance();
+        side.select(unchanged1, unchanged2).next();
       }
       return finish(fragments1, fragments2);
     }
@@ -128,32 +129,6 @@ public class ComparisonMergeUtil {
       addChange(myIndex1, myIndex2, myIndex3, length1, length2, length3);
 
       return myChanges;
-    }
-  }
-
-  private static class PeekIterator<T> {
-    @NotNull private final Iterator<T> myIterator;
-    private T myValue = null;
-
-    public PeekIterator(@NotNull Iterator<T> iterator) {
-      myIterator = iterator;
-      advance();
-    }
-
-    public boolean atEnd() {
-      return myValue == null;
-    }
-
-    public boolean hasNext() {
-      return myIterator.hasNext();
-    }
-
-    public T peek() {
-      return myValue;
-    }
-
-    public void advance() {
-      myValue = myIterator.hasNext() ? myIterator.next() : null;
     }
   }
 

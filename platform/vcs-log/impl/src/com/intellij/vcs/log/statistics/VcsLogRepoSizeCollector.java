@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
-import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
@@ -45,7 +44,7 @@ public class VcsLogRepoSizeCollector extends AbstractProjectsUsagesCollector {
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
+  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogData logData = projectLog.getDataManager();
     if (logData != null) {

@@ -23,7 +23,6 @@ import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 21, 2010
  */
 public interface PropertiesProvider {
 

@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class MavenJGitBuildNumberTest extends MavenDomTestCase {
 
-  public void testCompletion() throws Exception {
+  public void testCompletion() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
                   "<version>1</version>\n" +
@@ -63,7 +63,7 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
     assertContain(variants, "git.commitsCount");
   }
 
-  public void testHighlighting() throws Exception {
+  public void testHighlighting() {
     createModulePom("m", "<artifactId>m</artifactId>\n" +
                          "<version>1</version>\n" +
                          "<parent>\n" +
@@ -109,7 +109,7 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
     checkHighlighting(pom, true, false, true);
   }
 
-  public void testNoPluginHighlighting() throws Exception {
+  public void testNoPluginHighlighting() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
                   "<version>1</version>\n" +

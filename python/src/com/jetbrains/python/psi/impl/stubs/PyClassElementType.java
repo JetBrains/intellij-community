@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
@@ -64,6 +63,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
                                parentStub,
                                getSuperClassQNames(psi),
                                ContainerUtil.map(getSubscriptedSuperClasses(psi), PsiElement::getText),
+                               ContainerUtil.map(psi.getSuperClassExpressions(), PsiElement::getText),
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
@@ -144,9 +144,13 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       QualifiedName.serialize(entry.getValue(), dataStream);
     }
 
-    final List<String> baseClassesText = pyClassStub.getSubscriptedSuperClasses();
+    final List<String> subscriptedBaseClassesText = pyClassStub.getSubscriptedSuperClasses();
+    final List<String> baseClassesText = pyClassStub.getSuperClassesText();
+
     dataStream.writeByte(baseClassesText.size());
     for (String text : baseClassesText) {
+      boolean isParametrized = subscriptedBaseClassesText.contains(text);
+      dataStream.writeBoolean(isParametrized);
       dataStream.writeName(text);
     }
 
@@ -160,7 +164,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
 
   @NotNull
   public PyClassStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    final String name = StringRef.toString(dataStream.readName());
+    final String name = dataStream.readNameString();
 
     final int superClassCount = dataStream.readByte();
     final Map<QualifiedName, QualifiedName> superClasses = new LinkedHashMap<>();
@@ -168,14 +172,18 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       superClasses.put(QualifiedName.deserialize(dataStream), QualifiedName.deserialize(dataStream));
     }
 
-    final byte parametrizedBaseClassesCount = dataStream.readByte();
+    final byte baseClassesCount = dataStream.readByte();
     final ArrayList<String> parametrizedBaseClasses = new ArrayList<>();
-    for (int i = 0; i < parametrizedBaseClassesCount; i++) {
-      final StringRef ref = dataStream.readName();
-      if (ref != null) {
-        parametrizedBaseClasses.add(ref.getString());
+    final ArrayList<String> baseClassesText = new ArrayList<>();
+    for (int i = 0; i < baseClassesCount; i++) {
+      final boolean isParametrized = dataStream.readBoolean();
+      String ref = dataStream.readNameString();
+      baseClassesText.add(ref);
+      if (ref != null && isParametrized) {
+        parametrizedBaseClasses.add(ref);
       }
     }
+
 
     final QualifiedName metaClass = QualifiedName.deserialize(dataStream);
 
@@ -184,7 +192,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     final String docStringInStub = dataStream.readUTFFast();
     final String docString = docStringInStub.length() > 0 ? docStringInStub : null;
 
-    return new PyClassStubImpl(name, parentStub, superClasses, parametrizedBaseClasses, metaClass, slots, docString, getStubElementType());
+    return new PyClassStubImpl(name, parentStub, superClasses, parametrizedBaseClasses, baseClassesText, metaClass, slots, docString,
+                               getStubElementType());
   }
 
   public void indexStub(@NotNull final PyClassStub stub, @NotNull final IndexSink sink) {
@@ -194,7 +203,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       sink.occurrence(PyClassNameIndexInsensitive.KEY, name.toLowerCase());
     }
 
-    for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(createPsi(stub))) {
+    for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(stub.getPsi())) {
       sink.occurrence(PyClassAttributesIndex.KEY, attribute);
     }
 

@@ -32,7 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AutoBoxingInspection extends BaseInspection {
 
@@ -131,6 +132,7 @@ public class AutoBoxingInspection extends BaseInspection {
       if (strippedExpression == null) {
         return;
       }
+      CommentTracker commentTracker = new CommentTracker();
       @NonNls final String expressionText = strippedExpression.getText();
       @NonNls final String newExpression;
       if ("true".equals(expressionText)) {
@@ -140,14 +142,15 @@ public class AutoBoxingInspection extends BaseInspection {
         newExpression = "java.lang.Boolean.FALSE";
       }
       else {
+        commentTracker.markUnchanged(strippedExpression);
         newExpression = classToConstruct + ".valueOf(" + expressionText + ')';
       }
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
-        PsiReplacementUtil.replaceExpression(typeCastExpression, newExpression);
+        PsiReplacementUtil.replaceExpression(typeCastExpression, newExpression, commentTracker);
       } else {
-        PsiReplacementUtil.replaceExpression(expression, newExpression);
+        PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
       }
     }
 
@@ -258,14 +261,8 @@ public class AutoBoxingInspection extends BaseInspection {
     }
 
     @Override
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
-      checkExpression(expression);
-    }
-
-    @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
       checkExpression(expression);
     }
 

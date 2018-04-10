@@ -72,6 +72,23 @@ class MethodExists {
     A.class.getMethod("a1", Integer.TYPE);
     A.class.getMethod(<warning descr="Method 'a2' is not public">"a2"</warning>, Integer.TYPE);
     A.class.getMethod(<warning descr="Cannot resolve method 'a1' with specified argument types">"a1"</warning>, Boolean.TYPE);
+
+    B.class.getMethod("noArg");
+    B.class.getMethod("noArg", new Class[0]);
+    B.class.getMethod("noArg", null);
+
+    A.class.getMethod(<warning descr="Cannot resolve method 'noArg'">"noArg"</warning>);
+    A.class.getMethod(<warning descr="Cannot resolve method 'noArg'">"noArg"</warning>, new Class[0]);
+    A.class.getMethod(<warning descr="Cannot resolve method 'noArg'">"noArg"</warning>, null);
+
+    B.class.getDeclaredMethod("noArg");
+    B.class.getDeclaredMethod("noArg", new Class[0]);
+    B.class.getDeclaredMethod("noArg", null);
+
+    A.class.getDeclaredMethod(<warning descr="Cannot resolve method 'noArg'">"noArg"</warning>);
+    A.class.getDeclaredMethod(<warning descr="Cannot resolve method 'noArg'">"noArg"</warning>, new Class[0]);
+    A.class.getDeclaredMethod(<warning descr="Cannot resolve method 'noArg'">"noArg"</warning>, null);
+
   }
 
   static class A {
@@ -94,6 +111,8 @@ class MethodExists {
     public String b5(String s) {return s;}
     public String b5(String s, String t) {return s;}
     protected String b5(String[] s) {return s[0];}
+
+    public String noArg() {return "";}
   }
 
   static final class C extends A {

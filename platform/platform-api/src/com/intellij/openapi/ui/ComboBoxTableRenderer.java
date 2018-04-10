@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.ui;
 
@@ -46,7 +32,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   private WeakReference<ListPopup> myPopupRef;
   private ChangeEvent myChangeEvent = null;
   private T myValue;
-  private boolean myPaintArrow = true;
 
   protected EventListenerList myListenerList = new EventListenerList();
 
@@ -85,10 +70,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return null;
   }
 
-  public void setPaintArrow(final boolean paintArrow) {
-    myPaintArrow = paintArrow;
-  }
-
   protected Runnable onChosen(@NotNull final T value) {
     stopCellEditing(value);
 
@@ -99,7 +80,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
-    if (!StringUtil.isEmpty(getText()) && myPaintArrow) {
+    if (!StringUtil.isEmpty(getText())) {
       final Rectangle r = getBounds();
       final Insets i = getInsets();
       final int x = r.width - i.right - AllIcons.General.ArrowDown.getIconWidth();
@@ -180,9 +161,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   protected void customizeComponent(final T value, final JTable table, final boolean isSelected) {
     setOpaque(true);
     setText(value == null ? "" : getTextFor(value));
-    if (value != null) {
-      setIcon(getIconFor(value));
-    }
+    setIcon(value == null ? null : getIconFor(value));
     setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
     setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
   }
@@ -270,7 +249,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     myListenerList.remove(CellEditorListener.class, l);
   }
 
-  private abstract static class ListStep<T> implements ListPopupStep<T> {
+  private abstract static class ListStep<T> implements ListPopupStep<T>, SpeedSearchFilter<T> {
     private final List<T> myValues;
     private final T mySelected;
 
@@ -292,7 +271,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     public boolean isSpeedSearchEnabled() {
-      return false;
+      return true;
     }
 
     public boolean isAutoSelectionEnabled() {
@@ -321,7 +300,17 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     public SpeedSearchFilter<T> getSpeedSearchFilter() {
-      return null;
+      return this;
+    }
+
+    @Override
+    public boolean canBeHidden(T value) {
+      return true;
+    }
+
+    @Override
+    public String getIndexedString(T value) {
+      return getTextFor(value);
     }
   }
 }

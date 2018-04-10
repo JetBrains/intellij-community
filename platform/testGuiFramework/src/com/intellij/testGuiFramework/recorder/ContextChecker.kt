@@ -85,6 +85,9 @@ private class ContextTree(val writeFun: (String) -> Unit) {
   fun getSize() = myContextsTree.size
 
   fun clear() {
+    while (lastContext != null){
+      removeLastContext()
+    }
     lastContext = null
     myContextsTree.clear()
   }
@@ -144,7 +147,7 @@ private class ContextTree(val writeFun: (String) -> Unit) {
             return (this.component == focusOwner || this.component.hasAsChild(focusOwner))
           }
           else -> {
-            return false;
+            return false
           }
         }
       }

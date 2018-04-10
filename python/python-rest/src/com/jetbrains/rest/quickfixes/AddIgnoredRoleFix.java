@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AddIgnoredRoleFix implements LocalQuickFix, LowPriorityAction {
   private final String myRole;
-  private RestRoleInspection myInspection;
+  private final RestRoleInspection myInspection;
 
   public AddIgnoredRoleFix(String role, RestRoleInspection visitor) {
     myRole = role;

@@ -86,11 +86,11 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JPanel myMainPanel;
   private JCheckBox myRunTargetCheckBox;
   private FixedSizeButton mySelectTargetButton;
-  private JBTable myPropertiesTable;
+  private final JBTable myPropertiesTable;
   private JPanel myPropertiesPanel;
   private AntBuildTarget myTarget;
   private final boolean myPostProcessing;
-  private UIPropertyBinding.TableListBinding<BuildFileProperty> myBinding;
+  private final UIPropertyBinding.TableListBinding<BuildFileProperty> myBinding;
   protected SinglePropertyContainer<ListProperty> myContainer;
 
   public AntArtifactPropertiesEditor(AntArtifactProperties properties, ArtifactEditorContext context, boolean postProcessing) {

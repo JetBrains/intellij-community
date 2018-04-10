@@ -1,32 +1,21 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.EngravedTextGraphics;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 public class BaseLabel extends JLabel {
   protected ToolWindowContentUi myUi;
@@ -39,24 +28,33 @@ public class BaseLabel extends JLabel {
     myUi = ui;
     setOpaque(false);
     myBold = bold;
+    addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        repaint();
+      }
+      @Override
+      public void focusLost(FocusEvent e) {
+        repaint();
+      }
+    });
   }
 
   @Override
   public void updateUI() {
     setActiveFg(JBColor.foreground());
-    setPassiveFg(new JBColor(Gray._75, UIUtil.getLabelDisabledForeground()));
+    setPassiveFg(JBColor.foreground());
     super.updateUI();
   }
 
   @Override
   public Font getFont() {
-    Font f = UIUtil.getLabelFont();
-    f = f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 2));
+    Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
     if (myBold) {
-      f = f.deriveFont(Font.BOLD);
+      font = font.deriveFont(Font.BOLD);
     }
 
-    return f;
+    return font;
   }
 
   public static Font getLabelFont() {
@@ -77,6 +75,10 @@ public class BaseLabel extends JLabel {
     setForeground(fore);
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     super.paintComponent(_getGraphics((Graphics2D)g));
+
+    if (isFocusOwner()) {
+      UIUtil.drawLabelDottedRectangle(this, g);
+    }
   }
 
   protected Graphics _getGraphics(Graphics2D g) {
@@ -115,6 +117,10 @@ public class BaseLabel extends JLabel {
 
       final boolean show = Boolean.TRUE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_ICON));
       if (show) {
+        ComponentOrientation componentOrientation = content.getUserData(Content.TAB_LABEL_ORIENTATION_KEY);
+        if(componentOrientation != null) {
+          setComponentOrientation(componentOrientation);
+        }
         if (isSelected) {
           setIcon(content.getIcon());
         }
@@ -132,5 +138,16 @@ public class BaseLabel extends JLabel {
 
   public Content getContent() {
     return null;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleBaseLabel();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleBaseLabel extends AccessibleJLabel {
   }
 }

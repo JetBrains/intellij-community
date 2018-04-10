@@ -12,7 +12,7 @@ public class SwitchStatementDensity
     public void fooBar()
     {
         final int bar = m_bar;
-        switch(bar)
+        <warning descr="'switch' has too low of a branch density (19%)">switch</warning>(bar)
         {
             case 3:
             case 4:

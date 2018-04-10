@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.unneededThrows;
 
@@ -25,10 +13,9 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -82,6 +69,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       if (unThrown == null) return null;
 
       PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+      if (psiMethod == null) return null;
       PsiClassType[] throwsList = psiMethod.getThrowsList().getReferencedTypes();
       PsiJavaCodeReferenceElement[] throwsRefs = psiMethod.getThrowsList().getReferenceElements();
       List<ProblemDescriptor> problems = null;
@@ -119,7 +107,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       }
 
       if (problems != null) {
-        return problems.toArray(new CommonProblemDescriptor[problems.size()]);
+        return problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
       }
     }
 
@@ -170,6 +158,12 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
   @Nullable
   public String getHint(@NotNull final QuickFix fix) {
     return fix instanceof MyQuickFix ? ((MyQuickFix)fix).myHint : null;
+  }
+
+  @Nullable
+  @Override
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+    return new RedundantThrowsGraphAnnotator(refManager);
   }
 
   private static class MyQuickFix implements LocalQuickFix {
@@ -256,15 +250,10 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       }
     }
 
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    private static void removeException(final RefMethod refMethod,
-                                        final PsiType exceptionType,
-                                        final List<PsiJavaCodeReferenceElement> refsToDelete,
-                                        final PsiMethod psiMethod) {
+    private void removeException(RefMethod refMethod,
+                                 PsiType exceptionType,
+                                 List<PsiJavaCodeReferenceElement> refsToDelete,
+                                 PsiMethod psiMethod) {
       PsiManager psiManager = psiMethod.getManager();
 
       PsiJavaCodeReferenceElement[] refs = psiMethod.getThrowsList().getReferenceElements();
@@ -276,21 +265,27 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       }
 
       if (refMethod != null) {
+        assert myProcessor != null;
+
         for (RefMethod refDerived : refMethod.getDerivedMethods()) {
           PsiModifierListOwner method = refDerived.getElement();
           if (method != null) {
             removeException(refDerived, exceptionType, refsToDelete, (PsiMethod)method);
           }
         }
+        ProblemDescriptionsProcessor.resolveAllProblemsInElement(myProcessor, refMethod);
       } else {
-        final Query<Pair<PsiMethod,PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
-        query.forEach(pair -> {
-          if (pair.first == psiMethod) {
-            removeException(null, exceptionType, refsToDelete, pair.second);
-          }
+        final Query<PsiMethod> query = OverridingMethodsSearch.search(psiMethod);
+        query.forEach(m -> {
+          removeException(null, exceptionType, refsToDelete, m);
           return true;
         });
       }
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 

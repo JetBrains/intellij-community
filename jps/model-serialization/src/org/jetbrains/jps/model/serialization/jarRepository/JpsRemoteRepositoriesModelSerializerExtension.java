@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 26-Apr-17
  */
 public class JpsRemoteRepositoriesModelSerializerExtension extends JpsModelSerializerExtension{
   private static final JpsRemoteRepositoriesConfigurationSerializer SERIALIZER_IMPL = new JpsRemoteRepositoriesConfigurationSerializer();

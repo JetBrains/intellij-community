@@ -3,7 +3,6 @@
     <importContributor implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackImportContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackTopLevelMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackDelegateMemberContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackAliasedImportedMemberContributor"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackDelegatesToProvider"/>
   </extensions>
 

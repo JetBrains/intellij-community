@@ -37,7 +37,7 @@ abstract class AbstractGraphCommit<CommitId> extends ImmutableList<CommitId> imp
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || !(o instanceof GraphCommit)) return false;
+    if (!(o instanceof GraphCommit)) return false;
     GraphCommit commit = (GraphCommit)o;
     return getId().equals(commit.getId());
   }

@@ -122,7 +122,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler,
 
     final Set<PsiClass> baseClasses = basesToMemberInfos.keySet();
     new InheritanceToDelegationDialog(project, aClass,
-                                      baseClasses.toArray(new PsiClass[baseClasses.size()]), basesToMemberInfos).show();
+                                      baseClasses.toArray(PsiClass.EMPTY_ARRAY), basesToMemberInfos).show();
   }
 
   private static List<MemberInfo> createBaseClassMemberInfos(PsiClass baseClass) {

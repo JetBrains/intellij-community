@@ -22,6 +22,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @NotNull
   private ProjectImportAction.AllModels myModels;
   private File myGradleUserHome;
+  @Nullable private String myProjectGradleVersion;
 
   public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
                                        @NotNull final String projectPath,
@@ -130,6 +132,11 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return mySettings == null || mySettings.isResolveModulePerSourceSet();
   }
 
+  @Override
+  public boolean isUseQualifiedModuleNames() {
+    return mySettings != null && mySettings.isUseQualifiedModuleNames();
+  }
+
   public File getGradleUserHome() {
     if (myGradleUserHome == null) {
       String serviceDirectory = mySettings == null ? null : mySettings.getServiceDirectory();
@@ -177,5 +184,16 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     if (myCancellationTokenSource != null && myCancellationTokenSource.token().isCancellationRequested()) {
       throw new ProcessCanceledException();
     }
+  }
+
+  @Override
+  public String getProjectGradleVersion() {
+    if (myProjectGradleVersion == null) {
+      final BuildEnvironment env = getModels().getBuildEnvironment();
+      if (env != null) {
+        myProjectGradleVersion = env.getGradle().getGradleVersion();
+      }
+    }
+    return myProjectGradleVersion;
   }
 }

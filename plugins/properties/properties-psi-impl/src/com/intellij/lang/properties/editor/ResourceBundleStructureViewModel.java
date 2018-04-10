@@ -17,7 +17,6 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.structureView.FileEditorPositionListener;
 import com.intellij.ide.structureView.ModelListener;
-import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class ResourceBundleStructureViewModel implements PropertiesGroupingStructureViewModel, StructureViewModel.ExpandInfoProvider {
+public class ResourceBundleStructureViewModel implements PropertiesGroupingStructureViewModel {
   private final ResourceBundle myResourceBundle;
   private final GroupByWordPrefixes myByWordPrefixesGrouper;
   private final ResourceBundleFileStructureViewElement myRoot;
@@ -116,15 +115,5 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
   @Override
   public boolean isAlwaysLeaf(final StructureViewTreeElement element) {
     return element instanceof ResourceBundlePropertyStructureViewElement;
-  }
-
-  @Override
-  public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
-    return getRoot() == element;
-  }
-
-  @Override
-  public boolean isSmartExpand() {
-    return false;
   }
 }

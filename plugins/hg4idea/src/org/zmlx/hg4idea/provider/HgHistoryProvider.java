@@ -73,13 +73,12 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     return null;
   }
 
-  public VcsHistorySession createSessionFor(FilePath filePath) throws VcsException {
+  public VcsHistorySession createSessionFor(FilePath filePath) {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
     if (vcsRoot == null) {
       return null;
     }
-    final List<VcsFileRevision> revisions = new ArrayList<>();
-    revisions.addAll(getHistory(filePath, vcsRoot, myProject));
+    final List<VcsFileRevision> revisions = new ArrayList<>(getHistory(filePath, vcsRoot, myProject));
     return createAppendableSession(vcsRoot, revisions, null);
   }
 

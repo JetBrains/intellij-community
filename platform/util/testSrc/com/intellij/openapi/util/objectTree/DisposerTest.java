@@ -44,11 +44,6 @@ public class DisposerTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    //if(!Disposer.getTree().isEmpty()) {
-    //  Disposer.assertIsEmpty();
-    //  fail("Clean leftovers from previous tests");
-    //  Disposer.getTree().clearAll();
-    //}
     myRoot = new MyDisposable("root");
 
     myFolder1 = new MyDisposable("folder1");
@@ -361,5 +356,24 @@ public class DisposerTest extends TestCase {
     assertTrue(Disposer.isDisposed(parent));
     assertTrue(Disposer.isDisposed(first));
     assertTrue(Disposer.isDisposed(last));
+  }
+
+  public void testMustNotAllowToRegisterDuringParentDisposal() {
+    DefaultLogger.disableStderrDumping(myRoot);
+    
+    Disposable parent = newDisposable("parent");
+    Disposable last = newDisposable("child");
+
+    Disposer.register(parent, () -> Disposer.register(parent, last));
+
+    try {
+      Disposer.dispose(parent);
+      fail("Must throw");
+    }
+    catch (Throwable e) {
+      assertEquals("Sorry but parent: parent is being disposed so the child: child will never be disposed", e.getMessage());
+    }
+
+    assertTrue(Disposer.isDisposed(parent));
   }
 }

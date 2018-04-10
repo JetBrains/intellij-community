@@ -15,139 +15,59 @@
  */
 package com.intellij.testGuiFramework.framework
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Ref
-import com.intellij.testGuiFramework.impl.GuiTestStarter
-import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.runIdeLocally
-import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
-import com.intellij.testGuiFramework.launcher.ide.IdeType
-import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
-import com.intellij.testGuiFramework.remote.transport.*
-import org.junit.Assert
-import org.junit.AssumptionViolatedException
-import org.junit.internal.runners.model.EachTestNotifier
 import org.junit.runner.Description
-import org.junit.runner.notification.Failure
-import org.junit.runner.notification.RunListener
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.BlockJUnit4ClassRunner
+import org.junit.runners.Suite
 import org.junit.runners.model.FrameworkMethod
-import org.junit.runners.model.InitializationError
-import kotlin.reflect.KClass
 
 
-class GuiTestLocalRunner @Throws(InitializationError::class)
-constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
+class GuiTestLocalRunner: BlockJUnit4ClassRunner, GuiTestRunnerInterface {
 
-  val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestLocalRunner")!!
-  val criticalError = Ref<Boolean>(false)
+  override val ide: Ide?
+  private val runner: GuiTestRunner
+  override var mySuiteClass: Class<*>? = null
+
+  constructor(testClass: Class<*>, suiteClass: Class<*>, ide: Ide?) : this(testClass, ide) {
+    mySuiteClass = suiteClass
+  }
+
+  constructor(testClass: Class<*>, ideFromTest: Ide?) : super(testClass) {
+    ide = ideFromTest
+    runner = GuiTestRunner(this)
+  }
+
+  constructor(testClass: Class<*>): this(testClass, null)
+
+  override fun getTestName(method: String): String {
+    return method
+  }
 
   override fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
-
-    if (!GuiTestStarter.isGuiTestThread())
-      runOnServerSide(method, notifier)
-    else
-      runOnClientSide(method, notifier)
+    runner.runChild(method, notifier)
   }
 
-  /**
-   * it suites only to test one test class. IntelliJ IDEA starting with "guitest" argument and list of tests. So we cannot calculate a list
-   * of tests on invoking of this method. Therefore could be launched one test only.
-   *
-   * We are not relaunching IDE if it has been already started. We assume that test argument passed and it is only one.
-   */
-  private fun runOnServerSide(method: FrameworkMethod, notifier: RunNotifier) {
-
-    val description = this@GuiTestLocalRunner.describeChild(method)
-    val eachNotifier = EachTestNotifier(notifier, description)
-    if (criticalError.get()) { eachNotifier.fireTestIgnored(); return }
-
-    SERVER_LOG.info("Starting test on server side: ${testClass.name}#${method.name}")
-    val server = JUnitServerHolder.getServer()
-
-    try {
-      if (!server.isConnected())
-        runIdeLocally(port = server.getPort(), ide = getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass))
-      val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
-      server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
-    }
-    catch (e: Exception) {
-      SERVER_LOG.error(e)
-      notifier.fireTestIgnored(description)
-      Assert.fail(e.message)
-    }
-    var testIsRunning = true
-    while(testIsRunning) {
-      val message = server.receive()
-      if (message.content is JUnitInfo && message.content.testClassAndMethodName == JUnitInfo.getClassAndMethodName(description)) {
-        when (message.content.type) {
-          Type.STARTED -> eachNotifier.fireTestStarted()
-          Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption((message.content.obj as Failure).exception as AssumptionViolatedException)
-          Type.IGNORED -> { eachNotifier.fireTestIgnored(); testIsRunning = false }
-          Type.FAILURE -> eachNotifier.addFailure(message.content.obj as Throwable)
-          Type.FINISHED -> { eachNotifier.fireTestFinished(); testIsRunning = false }
-          else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
-        }
-      }
-    }
+  override fun doRunChild(method: FrameworkMethod, notifier: RunNotifier) {
+    super.runChild(method, notifier)
   }
 
-  private fun runOnClientSide(method: FrameworkMethod, notifier: RunNotifier) {
-
-    val runListener: RunListener = object : RunListener() {
-      override fun testFailure(failure: Failure?) {
-        LOG.error("Test failed: '${testClass.name}.${method.name}'")
-        notifier.removeListener(this)
-        super.testFailure(failure)
-      }
-
-      override fun testFinished(description: Description?) {
-        LOG.info("Test finished: '${testClass.name}.${method.name}'")
-        notifier.removeListener(this)
-        super.testFinished(description)
-      }
-
-      override fun testIgnored(description: Description?) {
-        LOG.info("Test ignored: '${testClass.name}.${method.name}'")
-        notifier.removeListener(this)
-        super.testIgnored(description)
-      }
-    }
-
-    try {
-
-      notifier.addListener(runListener)
-
-      LOG.info("Starting test: '${testClass.name}.${method.name}'")
-      if (GuiTestUtil.doesIdeHaveFatalErrors()) {
-        notifier.fireTestIgnored(describeChild(method))
-        LOG.error("Skipping test '${method.name}': a fatal error has occurred in the IDE")
-        notifier.pleaseStop()
-      }
-      else {
-        if (!GuiTestStarter.isGuiTestThread())
-          runIdeLocally()
-        else
-          super.runChild(method, notifier)
-      }
-    } catch (e: Exception) {
-      LOG.error(e)
-      throw e
-    }
+  override fun describeChild(method: FrameworkMethod): Description {
+    return super.describeChild(method)
   }
 
-  companion object {
-    private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.framework.GuiTestRunner")
-
-    fun getIdeFromAnnotation(clazz: Class<*>): Ide {
-      val annotation = clazz.getAnnotation(RunWithIde::class.java)
-      val value = annotation?.value
-      val ideType = if(value != null) (value as KClass<out IdeType>).java.newInstance() else CommunityIde()
-      return Ide(ideType, 0, 0)
+  override fun getTestClassesNames(): List<String> {
+    return if (mySuiteClass != null) {
+      val annotation = mySuiteClass!!.getAnnotation(Suite.SuiteClasses::class.java)
+      if (annotation?.value !is Array<*>) throw Exception(
+        "Annotation @Suite.SuiteClasses for suite doesn't contain classes as value or is null")
+      val array = annotation.value
+      array.map {
+        it.java.canonicalName
+      }
+    }
+    else {
+      listOf(this.testClass.javaClass.canonicalName)
     }
   }
-
-
 }
-

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -140,10 +141,9 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
   @NotNull
   public static TimeStampedIndentOptions getDefaultIndentOptions(@NotNull PsiFile file, @NotNull Document document) {
-    Project project = file.getProject();
     FileType fileType = file.getFileType();
-    CodeStyleSettings manager = CodeStyleSettingsManager.getSettings(project);
-    return new TimeStampedIndentOptions(manager.getIndentOptions(fileType), document.getModificationStamp());
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
+    return new TimeStampedIndentOptions(settings.getIndentOptions(fileType), document.getModificationStamp());
   }
 
   

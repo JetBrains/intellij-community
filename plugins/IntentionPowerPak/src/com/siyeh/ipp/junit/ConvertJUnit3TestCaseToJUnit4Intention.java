@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2016 Bas Leijdekkers
+ * Copyright 2009-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ipp.junit;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.junit.JUnit4AnnotatedMethodInJUnit3TestCaseInspection;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -32,7 +31,7 @@ public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiClass)) {
       return;

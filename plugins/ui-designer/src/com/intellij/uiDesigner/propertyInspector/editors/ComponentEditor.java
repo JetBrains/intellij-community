@@ -18,8 +18,8 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 import com.intellij.openapi.util.Condition;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
+import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
@@ -82,7 +82,7 @@ public class ComponentEditor extends ComboBoxPropertyEditor<String> {
       }
     });
 
-    return result.toArray(new RadComponent[result.size()]);
+    return result.toArray(RadComponent.EMPTY_ARRAY);
   }
 
   @Override

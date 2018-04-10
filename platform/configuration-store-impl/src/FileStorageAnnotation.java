@@ -1,31 +1,26 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.*;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
-public final class FileStorageAnnotation implements Storage {
-  private String path;
+public class FileStorageAnnotation implements Storage {
+  protected final String path;
 
-  private boolean deprecated;
-  private final Class<? extends StateStorage> storageClass;
+  private final boolean deprecated;
 
   public FileStorageAnnotation(@NotNull String path, boolean deprecated) {
-    this(path, deprecated, StateStorage.class);
-  }
-
-  public FileStorageAnnotation(@NotNull String path, boolean deprecated, @Nullable Class<? extends StateStorage> storageClass) {
     this.path = path;
     this.deprecated = deprecated;
-    this.storageClass = storageClass;
   }
 
   @Override
-  public String id() {
-    return "default";
+  public ThreeState useSaveThreshold() {
+    return ThreeState.UNSURE;
   }
 
   @Override
@@ -60,7 +55,7 @@ public final class FileStorageAnnotation implements Storage {
 
   @Override
   public Class<? extends StateStorage> storageClass() {
-    return storageClass;
+    return StateStorage.class;
   }
 
   @Override

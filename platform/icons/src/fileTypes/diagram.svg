@@ -1,13 +1,11 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>diagram</title>
   <g>
-    <rect x="1" y="12" width="14" height="3" fill="#9aa7b0" opacity="0.7"/>
-    <rect x="1" y="1" width="14" height="3" fill="#9aa7b0" opacity="0.7"/>
-    <polygon points="7 7 2 7 4.5 4.379 7 7" fill="#40b6e0"/>
-    <rect x="4" y="6" width="1" height="6" fill="#40b6e0"/>
-    <polygon points="14 7 9 7 11.5 4.379 14 7" fill="#40b6e0"/>
-    <rect x="11" y="7" width="1" height="1" fill="#40b6e0"/>
-    <rect x="11" y="9" width="1" height="1" fill="#40b6e0"/>
-    <rect x="11" y="11" width="1" height="1" fill="#40b6e0"/>
+    <rect x="1" y="12" width="14" height="3" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+    <rect x="1" y="1" width="14" height="3" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+    <polygon points="4.5 4.379 2 7 4 7 4 12 5 12 5 7 7 7 4.5 4.379" fill="#40b6e0" opacity="0.9"/>
+    <polygon points="11.5 4.379 9 7 11 7 11 8 12 8 12 7 14 7 11.5 4.379" fill="#40b6e0" opacity="0.9"/>
+    <rect x="11" y="9" width="1" height="1" fill="#40b6e0" opacity="0.9"/>
+    <rect x="11" y="11" width="1" height="1" fill="#40b6e0" opacity="0.9"/>
   </g>
 </svg>

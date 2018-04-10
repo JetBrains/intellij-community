@@ -151,7 +151,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     doAssertContentFolders(rootUrl, contentRoots, rootType, expected);
   }
 
-  private static List<SourceFolder> doAssertContentFolders(@Nullable String rootUrl,
+  protected static List<SourceFolder> doAssertContentFolders(@Nullable String rootUrl,
                                                            ContentEntry[] contentRoots,
                                                            @NotNull JpsModuleSourceRootType<?> rootType,
                                                            String... expected) {

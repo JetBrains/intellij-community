@@ -167,7 +167,7 @@ public class MavenSelectProjectPopup {
       }
 
       private DefaultMutableTreeNode buildTree(List<MavenProject> projectList) {
-        MavenProject[] projects = projectList.toArray(new MavenProject[projectList.size()]);
+        MavenProject[] projects = projectList.toArray(new MavenProject[0]);
         Arrays.sort(projects, new MavenProjectNamer.MavenProjectComparator());
 
         Map<MavenProject, DefaultMutableTreeNode> projectsToNode = new HashMap<>();

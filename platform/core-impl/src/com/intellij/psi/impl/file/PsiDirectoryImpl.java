@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -147,7 +133,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         dirs.add(dir);
       }
     }
-    return dirs.toArray(new PsiDirectory[dirs.size()]);
+    return dirs.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   @Override
@@ -191,6 +177,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
     for (VirtualFile vFile : myFile.getChildren()) {
       ProgressManager.checkCanceled();
+      if (!vFile.isValid()) continue;
+
       boolean isDir = vFile.isDirectory();
       if (processor instanceof PsiFileSystemItemProcessor && !((PsiFileSystemItemProcessor)processor).acceptItem(vFile.getName(), isDir)) {
         continue;
@@ -364,7 +352,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       else {
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
-      if (copyVFile == null) throw new IncorrectOperationException("File was not copied: " + vFile);
 
       DumbService.getInstance(getProject()).completeJustSubmittedTasks();
 
@@ -542,11 +529,31 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   protected Icon getElementIcon(final int flags) {
-    return PlatformIcons.DIRECTORY_CLOSED_ICON;
+    return PlatformIcons.FOLDER_ICON;
   }
 
   @Override
   public void putInfo(@NotNull Map<String, String> info) {
     info.put("fileName", getName());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PsiDirectoryImpl directory = (PsiDirectoryImpl)o;
+
+    if (!myManager.equals(directory.myManager)) return false;
+    if (!myFile.equals(directory.myFile)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myManager.hashCode();
+    result = 31 * result + myFile.hashCode();
+    return result;
   }
 }

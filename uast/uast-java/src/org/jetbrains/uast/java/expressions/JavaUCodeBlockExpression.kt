@@ -20,8 +20,8 @@ import org.jetbrains.uast.UBlockExpression
 import org.jetbrains.uast.UElement
 
 class JavaUCodeBlockExpression(
-        override val psi: PsiCodeBlock,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UBlockExpression {
-    override val expressions by lz { psi.statements.map { JavaConverter.convertOrEmpty(it, this) } }
+  override val psi: PsiCodeBlock,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UBlockExpression {
+  override val expressions by lz { psi.statements.map { JavaConverter.convertOrEmpty(it, this) } }
 }

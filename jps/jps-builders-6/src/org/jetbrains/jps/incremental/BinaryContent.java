@@ -23,7 +23,6 @@ import java.util.Arrays;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 11/18/12
 */
 public final class BinaryContent {
   private final byte[] myBuffer;
@@ -66,9 +65,8 @@ public final class BinaryContent {
       if (parentFile == null) {
         throw e;
       }
-      if (!parentFile.mkdirs()) {
-        throw e;
-      }
+      //noinspection ResultOfMethodCallIgnored
+      parentFile.mkdirs();
       // second attempt
       _writeToFile(file, this);
     }

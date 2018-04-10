@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,8 +35,9 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     return element instanceof PsiPackage;
   }
 
+  @NotNull
   @Override
-  public RenameDialog createRenameDialog(final Project project, final PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+  public RenameDialog createRenameDialog(@NotNull final Project project, @NotNull final PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
 
     return new RenameDialog(project, element, nameSuggestionContext, editor) {
       @Override
@@ -113,6 +100,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
         return newName;
       }
 
+      @NotNull
       @Override
       protected String getCommandName() {
         return "Rename package";
@@ -120,9 +108,9 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     };
   }
 
-  public void renameElement(final PsiElement element,
-                            final String newName,
-                            final UsageInfo[] usages,
+  public void renameElement(@NotNull final PsiElement element,
+                            @NotNull final String newName,
+                            @NotNull final UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     final PsiPackage psiPackage = (PsiPackage)element;
     final String shortName = StringUtil.getShortName(newName);
@@ -130,7 +118,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     RenameUtil.doRenameGenericNamedElement(element, shortName, usages, listener);
   }
 
-  public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {
+  public String getQualifiedNameAfterRename(@NotNull final PsiElement element, @NotNull final String newName, final boolean nonJava) {
     return getPackageQualifiedNameAfterRename((PsiPackage)element, newName, nonJava);
   }
 
@@ -146,7 +134,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void findExistingNameConflicts(PsiElement element, String newName, MultiMap<PsiElement,String> conflicts) {
+  public void findExistingNameConflicts(@NotNull PsiElement element, @NotNull String newName, @NotNull MultiMap<PsiElement,String> conflicts) {
     final PsiPackage aPackage = (PsiPackage)element;
     final Project project = element.getProject();
     final String qualifiedNameAfterRename = getPackageQualifiedNameAfterRename(aPackage, newName, true);
@@ -156,7 +144,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     }
   }
 
-  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
+  public void prepareRenaming(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<PsiElement, String> allRenames) {
     preparePackageRenaming((PsiPackage)element, newName, allRenames);
   }
 
@@ -171,7 +159,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   }
 
   @Nullable
-  public Runnable getPostRenameCallback(final PsiElement element, final String newName, final RefactoringElementListener listener) {
+  public Runnable getPostRenameCallback(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final RefactoringElementListener listener) {
     final Project project = element.getProject();
     final PsiPackage psiPackage = (PsiPackage)element;
     final String newQualifiedName = PsiUtilCore.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName);
@@ -190,19 +178,19 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     return HelpID.RENAME_PACKAGE;
   }
 
-  public boolean isToSearchInComments(final PsiElement psiElement) {
+  public boolean isToSearchInComments(@NotNull final PsiElement psiElement) {
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE;
   }
 
-  public void setToSearchInComments(final PsiElement element, final boolean enabled) {
+  public void setToSearchInComments(@NotNull final PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = enabled;
   }
 
-  public boolean isToSearchForTextOccurrences(final PsiElement element) {
+  public boolean isToSearchForTextOccurrences(@NotNull final PsiElement element) {
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE;
   }
 
-  public void setToSearchForTextOccurrences(final PsiElement element, final boolean enabled) {
+  public void setToSearchForTextOccurrences(@NotNull final PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = enabled;
   }
 }

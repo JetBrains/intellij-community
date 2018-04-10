@@ -40,7 +40,7 @@ public class Javac2 extends Javac {
   private List myNestedFormPathList;
   private boolean instrumentNotNull = true;
   private String myNotNullAnnotations = "org.jetbrains.annotations.NotNull";
-  private List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
+  private final List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
 
   public Javac2() {
   }
@@ -564,7 +564,7 @@ public class Javac2 extends Javac {
       final String s = tokenizer.nextToken();
       urls.add(new File(s).toURI().toURL());
     }
-    final URL[] urlsArr = (URL[])urls.toArray(new URL[urls.size()]);
+    final URL[] urlsArr = (URL[])urls.toArray(new URL[0]);
     return new InstrumentationClassFinder(urlsArr);
   }
 

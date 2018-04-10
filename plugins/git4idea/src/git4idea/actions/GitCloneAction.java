@@ -23,19 +23,18 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
 public class GitCloneAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null && GitVcs.getInstance(e.getProject()) != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    GitVcs vcs = assertNotNull(GitVcs.getInstance(project));
-    vcs.getCheckoutProvider().doCheckout(project, ProjectLevelVcsManager.getInstance(project).getCompositeCheckoutListener());
+    GitVcs.getInstance(project)
+      .getCheckoutProvider()
+      .doCheckout(project, ProjectLevelVcsManager.getInstance(project).getCompositeCheckoutListener());
   }
 }

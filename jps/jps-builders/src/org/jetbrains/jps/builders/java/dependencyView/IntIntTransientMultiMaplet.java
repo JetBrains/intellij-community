@@ -22,7 +22,6 @@ import gnu.trove.TIntProcedure;
 
 /**
  * @author: db
- * Date: 08.03.11
  */
 class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
   private final TIntObjectHashMap<TIntHashSet> myMap = new TIntObjectHashMap<>();

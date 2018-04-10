@@ -32,7 +32,7 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
   @NotNull
   private Set<File> mySrcDirs;
   private File myOutputDir;
-  private List<File> myGradleOutputDirs;
+  private final List<File> myGradleOutputDirs;
   @NotNull
   private Set<String> myExcludes;
   @NotNull

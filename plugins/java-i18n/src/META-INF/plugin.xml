@@ -2,6 +2,7 @@
   <id>com.intellij.java-i18n</id>
   <name>I18n for Java</name>
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.platform</depends>
   <description>
     This plugin provides code inspections and corresponding quick fixes for code internationalization.
   </description>

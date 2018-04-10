@@ -25,10 +25,8 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 20, 2008
  */
-public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer implements IdAndToDoScannerBasedOnFilterLexer {
-  
+public abstract class LexerBasedIdIndexer implements LexingIdIndexer, IdAndToDoScannerBasedOnFilterLexer {
   @Override
   @NotNull
   public final Map<IdIndexEntry,Integer> map(@NotNull final FileContent inputData) {

@@ -17,14 +17,13 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
-
-import javax.swing.event.HyperlinkEvent;
 
 public class MavenImportNotifier extends MavenSimpleProjectComponent implements Disposable {
   private static final String MAVEN_IMPORT_NOTIFICATION_GROUP = "Maven Import";
@@ -36,7 +35,7 @@ public class MavenImportNotifier extends MavenSimpleProjectComponent implements 
 
   public MavenImportNotifier(Project p, MavenProjectsManager mavenProjectsManager) {
     super(p);
-    
+
     if (!isNormalProject()) return;
 
     NotificationsConfiguration.getNotificationsConfiguration().register(MAVEN_IMPORT_NOTIFICATION_GROUP,
@@ -93,25 +92,24 @@ public class MavenImportNotifier extends MavenSimpleProjectComponent implements 
     else {
       if (myNotification != null && !myNotification.isExpired()) return;
 
-      myNotification = new Notification(MAVEN_IMPORT_NOTIFICATION_GROUP,
-                                        ProjectBundle.message("maven.project.changed"),
-                                        "<a href='reimport'>" + ProjectBundle.message("maven.project.importChanged") + "</a>" +
-                                        " &nbsp;&nbsp;" +
-                                        "<a href='autoImport'>" + ProjectBundle.message("maven.project.enableAutoImport") + "</a>",
-                                        NotificationType.INFORMATION, new NotificationListener.Adapter() {
+      myNotification = new Notification(
+        MAVEN_IMPORT_NOTIFICATION_GROUP, ProjectBundle.message("maven.project.changed"), "", NotificationType.INFORMATION);
+      myNotification.addAction(new NotificationAction(ProjectBundle.message("maven.project.importChanged")) {
         @Override
-        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getDescription().equals("reimport")) {
-            myMavenProjectsManager.scheduleImportAndResolve();
-          }
-          if (event.getDescription().equals("autoImport")) {
-            myMavenProjectsManager.getImportingSettings().setImportAutomatically(true);
-          }
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          myMavenProjectsManager.scheduleImportAndResolve();
           notification.expire();
           myNotification = null;
         }
       });
-
+      myNotification.addAction(new NotificationAction(ProjectBundle.message("maven.project.enableAutoImport")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          myMavenProjectsManager.getImportingSettings().setImportAutomatically(true);
+          notification.expire();
+          myNotification = null;
+        }
+      });
       Notifications.Bus.notify(myNotification, myProject);
     }
   }

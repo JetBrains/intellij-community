@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.capitalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -26,23 +12,23 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author yole
  */
-public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
+public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public String getShortName() {
@@ -114,7 +100,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     }
     if (arg instanceof PsiMethodCallExpression) {
       PsiMethod psiMethod = ((PsiMethodCallExpression)arg).resolveMethod();
-      PsiExpression returnValue = PropertyUtil.getGetterReturnExpression(psiMethod);
+      PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(psiMethod);
       if (arg == returnValue) {
         return null;
       }
@@ -240,7 +226,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
       else if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
         final PsiMethod method = methodCallExpression.resolveMethod();
-        final PsiExpression returnValue = PropertyUtil.getGetterReturnExpression(method);
+        final PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(method);
         if (returnValue != null) {
           doFix(project, returnValue);
         }

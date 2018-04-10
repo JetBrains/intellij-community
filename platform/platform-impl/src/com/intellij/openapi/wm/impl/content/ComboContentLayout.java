@@ -100,10 +100,10 @@ class ComboContentLayout extends ContentLayout {
     myUi.removeAll();
 
     myUi.add(myIdLabel);
-    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi);
+    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true);
 
     myUi.add(myComboLabel);
-    ToolWindowContentUi.initMouseListeners(myComboLabel, myUi);
+    ToolWindowContentUi.initMouseListeners(myComboLabel, myUi, false);
   }
 
   boolean isToDrawCombo() {
@@ -116,11 +116,6 @@ class ComboContentLayout extends ContentLayout {
 
   @Override
   public void contentRemoved(ContentManagerEvent event) {
-  }
-
-  @Override
-  public boolean shouldDrawDecorations() {
-    return isToDrawCombo();
   }
 
   @Override

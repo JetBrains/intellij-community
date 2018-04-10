@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
@@ -32,12 +18,15 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
-import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
 
 /**
  * Visitor class to manage pattern matching
@@ -66,8 +55,9 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return myResult;
   }
 
-  public void setResult(boolean result) {
-    this.myResult = result;
+  @Contract("true->true;false->false")
+  public boolean setResult(boolean result) {
+    return this.myResult = result;
   }
 
   public MatchContext getMatchContext() {
@@ -81,6 +71,11 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       elements2,
       matchContext
     );
+  }
+
+  public boolean matchSingle(@Nullable PsiElement patternNode, @Nullable PsiElement matchNode) {
+    return patternNode == null && isLeftLooseMatching() ||
+           matchSequentially(newSingleNodeIterator(patternNode), newSingleNodeIterator(matchNode));
   }
 
   @NotNull
@@ -171,17 +166,13 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   /**
    * Matches tree segments starting with given elements to find equality
    *
-   * @param nodes the pattern element for matching
-   * @param nodes2 the tree element for matching
+   * @param patternNodes the pattern element for matching
+   * @param matchNodes the tree element for matching
    * @return if they are equal and false otherwise
    */
   @Override
-  public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
-    if (!nodes.hasNext()) {
-      return !nodes2.hasNext();
-    }
-
-    return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(nodes, nodes2, matchContext);
+  public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes) {
+    return matchContext.getPattern().getHandler(patternNodes.current()).matchSequentially(patternNodes, matchNodes, matchContext);
   }
 
   /**
@@ -227,7 +218,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
         matchContext.setResult(null);
 
         patternNodes.reset();
-        if (matchedNodes != null && matchedNodes.size() > 0 && matched) {
+        if (matchedNodes != null && !matchedNodes.isEmpty() && matched) {
           elements.rewind();
         }
       }
@@ -239,7 +230,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   private void dispatchMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
-    if (!matchContext.getOptions().isResultIsContextMatch() && doDispatch(result, result)) return;
+    if (doDispatch(result)) return;
 
     // There is no substitutions so show the context
 
@@ -247,15 +238,14 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     matchContext.getSink().newMatch(result);
   }
 
-  private boolean doDispatch(final MatchResult result, MatchResultImpl context) {
+  private boolean doDispatch(final MatchResult result) {
     boolean ret = false;
 
-    for (MatchResult r : result.getAllSons()) {
+    for (MatchResult r : result.getChildren()) {
       if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
-        ret |= doDispatch(r, context);
+        ret |= doDispatch(r);
       }
       else if (r.isTarget()) {
-        ((MatchResultImpl)r).setContext(context);
         matchContext.getSink().newMatch(r);
         ret = true;
       }
@@ -272,23 +262,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       result.setMatchImage(match.getText());
     }
     else {
-
       for (final PsiElement matchStatement : matchedNodes) {
-        result.getMatches().add(new MatchResultImpl(
-            MatchResult.LINE_MATCH,
-            matchStatement.getText(),
-            new SmartPsiPointer(matchStatement),
-            true
-          )
-        );
+        result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), new SmartPsiPointer(matchStatement), false));
       }
 
-      result.setMatchRef(
-        new SmartPsiPointer(match)
-      );
-      result.setMatchImage(
-        match.getText()
-      );
+      result.setMatchRef(new SmartPsiPointer(match));
+      result.setMatchImage(match.getText());
       result.setName(MatchResult.MULTI_LINE_MATCH);
     }
   }
@@ -308,15 +287,11 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   public boolean matchText(@Nullable PsiElement left, @Nullable PsiElement right) {
-    if (left == null) {
-      return right == null;
-    }
-    else if (right == null) {
-      return false;
-    }
-    final boolean caseSensitiveMatch = matchContext.getOptions().isCaseSensitiveMatch();
-    final String leftText = left.getText();
-    final String rightText = right.getText();
-    return caseSensitiveMatch ? leftText.equals(rightText) : leftText.equalsIgnoreCase(rightText);
+    if (left == null) return right == null;
+    return right != null && matchText(left.getText(), right.getText());
+  }
+
+  public boolean matchText(String left, String right) {
+    return matchContext.getOptions().isCaseSensitiveMatch() ? left.equals(right) : left.equalsIgnoreCase(right);
   }
 }

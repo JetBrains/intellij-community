@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -37,7 +23,7 @@ public class PyRainbowHighlightingTest extends PyTestCase {
   }
 
   public void testPositionalAndKeywordParameters() {
-    doTest("def foo(<rainbow color='ff000003'>*</rainbow><rainbow color='ff000003'>args</rainbow>, <rainbow color='ff000004'>**</rainbow><rainbow color='ff000004'>kwargs</rainbow>):\n" +
+    doTest("def foo(*<rainbow color='ff000003'>args</rainbow>, **<rainbow color='ff000004'>kwargs</rainbow>):\n" +
            "    print <rainbow color='ff000003'>args</rainbow>\n" +
            "    print <rainbow color='ff000004'>kwargs</rainbow>\n");
   }
@@ -104,7 +90,7 @@ public class PyRainbowHighlightingTest extends PyTestCase {
 
   public void testSameNameOuterAndNonLocalVariableAndItsReferenceHaveSameColors() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("def outer():\n" +
                    "    <rainbow color='ff000001'>another</rainbow> = None\n" +
                    "    <rainbow color='ff000002'>another2</rainbow> = None\n" +
@@ -118,7 +104,7 @@ public class PyRainbowHighlightingTest extends PyTestCase {
 
   public void testSameNameOuterAndNonLocalVariableAndItsReferenceAfterReassignmentHaveSameColors() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("def outer():\n" +
                    "    <rainbow color='ff000001'>another</rainbow> = None\n" +
                    "    <rainbow color='ff000002'>another2</rainbow> = None\n" +

@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.github.api.requests;
 
 import com.google.gson.annotations.SerializedName;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

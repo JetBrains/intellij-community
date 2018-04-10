@@ -15,16 +15,16 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
 public class BaseRevision {
   private final FilePath myPath;
   private final VcsRevisionNumber myRevision;
-  private final VcsKey myVcs;
+  private final AbstractVcs myVcs;
 
-  public BaseRevision(VcsKey vcs, VcsRevisionNumber revision, FilePath path) {
+  public BaseRevision(AbstractVcs vcs, VcsRevisionNumber revision, FilePath path) {
     myVcs = vcs;
     myRevision = revision;
     myPath = path;
@@ -42,7 +42,7 @@ public class BaseRevision {
     return myRevision;
   }
 
-  public VcsKey getVcs() {
+  public AbstractVcs getVcs() {
     return myVcs;
   }
 }

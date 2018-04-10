@@ -1,4 +1,4 @@
-import static a.A.*;
+import static a.B.foo;
 public class Test {
   {
     foo();

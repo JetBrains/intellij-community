@@ -16,11 +16,11 @@
 package com.intellij.openapi.diff.impl.processing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.Util;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +141,7 @@ public interface DiffCorrection {
     }
 
     public DiffFragment[] toArray() {
-      return myItems.toArray(new DiffFragment[myItems.size()]);
+      return myItems.toArray(new DiffFragment[0]);
     }
 
     protected int getIndex() { return myIndex; }

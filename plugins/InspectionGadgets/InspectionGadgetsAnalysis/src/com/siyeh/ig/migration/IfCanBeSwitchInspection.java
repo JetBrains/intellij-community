@@ -517,9 +517,14 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (switchExpression == null) {
         return;
       }
-      final ProblemHighlightType highlightType = shouldHighlight(switchExpression)
-                                                 ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                                                 : ProblemHighlightType.INFORMATION;
+      final ProblemHighlightType highlightType;
+      if (shouldHighlight(switchExpression)) {
+        highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+      }
+      else {
+        if (!isOnTheFly()) return;
+        highlightType = ProblemHighlightType.INFORMATION;
+      }
       registerError(statement.getFirstChild(), highlightType, switchExpression);
     }
 
@@ -544,10 +549,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         if (aClass == null) {
           return false;
         }
-        if (!suggestEnumSwitches && aClass.isEnum()) {
-          return false;
-        }
-        if (CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName())) {
+
+        if (aClass.isEnum() || CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName())) {
           final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(switchExpression);
           if (parent instanceof PsiExpressionList && onlySuggestNullSafe && !ExpressionUtils.isAnnotatedNotNull(switchExpression)) {
             final PsiElement grandParent = parent.getParent();
@@ -560,6 +563,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
             }
           }
           return !(parent instanceof PsiPolyadicExpression); // == expression
+        }
+        if (!suggestEnumSwitches && aClass.isEnum()) {
+          return false;
         }
       }
       return !SideEffectChecker.mayHaveSideEffects(switchExpression);

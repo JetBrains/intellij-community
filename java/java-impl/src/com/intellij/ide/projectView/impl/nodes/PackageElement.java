@@ -32,8 +32,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Sep 19, 2003
- * Time: 3:51:02 PM
  */
 public final class PackageElement implements Queryable, RootsProvider {
   public static final DataKey<PackageElement> DATA_KEY =  DataKey.create("package.element");

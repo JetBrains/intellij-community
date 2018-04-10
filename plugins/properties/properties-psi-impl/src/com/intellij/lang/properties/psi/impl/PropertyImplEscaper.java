@@ -8,12 +8,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author gregsh
  */
-public class PropertyImplEscaper extends LiteralTextEscaper<PropertyImpl> {
+class PropertyImplEscaper extends LiteralTextEscaper<PropertyImpl> {
   private static final Logger LOG = Logger.getInstance(PropertyImplEscaper.class);
 
   private int[] outSourceOffsets;
 
-  public PropertyImplEscaper(PropertyImpl value) {
+  PropertyImplEscaper(@NotNull PropertyImpl value) {
     super(value);
   }
 

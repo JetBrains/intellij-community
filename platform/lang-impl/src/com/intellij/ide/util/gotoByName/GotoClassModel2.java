@@ -16,6 +16,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameContributor;
@@ -24,6 +25,7 @@ import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,7 +63,7 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
   @Override
   @Nullable
   public String getPromptText() {
-    return IdeBundle.message("prompt.gotoclass.enter.class.name");
+    return IdeBundle.message("prompt.gotoclass.enter.class.name", StringUtil.toLowerCase(GotoClassPresentationUpdater.getActionTitle()));
   }
 
   @Override

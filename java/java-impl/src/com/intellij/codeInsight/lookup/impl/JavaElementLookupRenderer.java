@@ -68,7 +68,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
     return isDeprecated(item.getPsiElement());
   }
 
-  private static boolean isDeprecated(@Nullable PsiElement element) {
+  public static boolean isDeprecated(@Nullable PsiElement element) {
     return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
   }
 }

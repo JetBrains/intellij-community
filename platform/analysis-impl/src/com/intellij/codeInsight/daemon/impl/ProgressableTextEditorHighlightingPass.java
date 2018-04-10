@@ -127,6 +127,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     return myFinished;
   }
 
+  @Nullable("null means do not show progress")
   protected String getPresentableName() {
     return myPresentableName;
   }

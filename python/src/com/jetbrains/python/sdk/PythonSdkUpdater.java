@@ -44,7 +44,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +53,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
-  public static final int INITIAL_ACTIVITY_DELAY = 7000;
+  public static final int INITIAL_ACTIVITY_DELAY = 3000;
 
   private static final Object ourLock = new Object();
   private static final Set<String> ourScheduledToRefresh = Sets.newHashSet();
@@ -79,18 +79,19 @@ public class PythonSdkUpdater implements StartupActivity {
     if (application.isUnitTestMode()) {
       return;
     }
-    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        final Project project = getProject();
-        if (project.isDisposed()) {
-          return;
-        }
-        for (final Sdk sdk : getPythonSdks(project)) {
-          update(sdk, null, project, null);
-        }
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      if (project.isDisposed()) {
+        return;
       }
-    }), INITIAL_ACTIVITY_DELAY, TimeUnit.MILLISECONDS);
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          for (Sdk sdk : getPythonSdks(project)) {
+            update(sdk, null, project, null);
+          }
+        }
+      });
+    }, INITIAL_ACTIVITY_DELAY, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -113,12 +114,33 @@ public class PythonSdkUpdater implements StartupActivity {
     synchronized (ourLock) {
       ourScheduledToRefresh.add(key);
     }
+
+    final Application application = ApplicationManager.getApplication();
+
+    String sdkHome = sdk.getHomePath();
+    if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
+      final Future<?> updateSdkFeature = application.executeOnPooledThread(() -> {
+        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY,
+                        PythonSdkType.activateVirtualEnv(sdkHome)); // pre-cache virtualenv activated environment
+      });
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        // Running SDK update in background is inappropriate for tests: test may complete before update and updater thread will leak
+        try {
+          updateSdkFeature.get();
+        }
+        catch (final InterruptedException | java.util.concurrent.ExecutionException e) {
+          throw new AssertionError("Exception thrown while synchronizing with sdk updater ", e);
+        }
+      }
+    }
+
     if (!updateLocalSdkPaths(sdk, sdkModificator, project)) {
       return false;
     }
 
-
-    final Application application = ApplicationManager.getApplication();
+    if (project == null) {
+      return true;
+    }
 
     if (application.isUnitTestMode()) {
       // All actions we take after this line are dedicated to skeleton update process. Not all tests do need them. To find test API that
@@ -134,7 +156,10 @@ public class PythonSdkUpdater implements StartupActivity {
         }
         ourScheduledToRefresh.remove(key);
       }
-      if (project != null && project.isDisposed()) {
+      if (project.isDisposed()) {
+        return;
+      }
+      if (PythonSdkType.findSdkByKey(key) == null) {
         return;
       }
       ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.interpreter"), false) {
@@ -173,13 +198,7 @@ public class PythonSdkUpdater implements StartupActivity {
                 }
               }
               catch (InvalidSdkException e) {
-                if (PythonSdkType.isVagrant(sdkInsideTask)
-                    || new CredentialsTypeExChecker() {
-                  @Override
-                  protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
-                    return languageContribution.shouldNotifySdkSkeletonFail();
-                  }
-                }.check(sdkInsideTask)) {
+                if (PythonSdkType.isRemote(sdkInsideTask)) {
                   PythonSdkType.notifyRemoteSdkSkeletonsFail(e, () -> {
                     final Sdk sdkInsideNotify = PythonSdkType.findSdkByKey(key);
                     if (sdkInsideNotify != null) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -135,8 +121,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (results.isEmpty()) {
       PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
 
-      PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
-      PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);
+      PsiElement copyClass = copyClass(aClass);
+      PsiMethod result = (PsiMethod)copyClass.add(method1);
       if (PsiUtil.isAnnotationMethod(result)) {
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)result).getDefaultValue();
         if (defaultValue != null) {
@@ -160,6 +146,15 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
 
     return results;
+  }
+
+  private static PsiElement copyClass(PsiClass aClass) {
+    Object marker = new Object();
+    PsiTreeUtil.mark(aClass, marker);
+    PsiElement copy = aClass.getContainingFile().copy();
+    PsiElement copyClass = PsiTreeUtil.releaseMark(copy, marker);
+    LOG.assertTrue(copyClass != null);
+    return copyClass;
   }
 
   public static Consumer<PsiMethod> createDefaultDecorator(final PsiClass aClass,
@@ -241,7 +236,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden, boolean insertOverride) {
     if (insertOverride && canInsertOverride(overridden, targetClass)) {
       final String overrideAnnotationName = Override.class.getName();
-      if (!AnnotationUtil.isAnnotated(method, overrideAnnotationName, false, true)) {
+      if (!AnnotationUtil.isAnnotated(method, overrideAnnotationName, 0)) {
         AddAnnotationPsiFix.addPhysicalAnnotation(overrideAnnotationName, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
       }
     }
@@ -423,12 +418,10 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
     LOG.assertTrue(aClass.isValid());
-    new WriteCommandAction(project, aClass.getContainingFile()) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() -> {
+      overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
+                                             chooser.isInsertOverrideAnnotation());
+    });
   }
 
   /**

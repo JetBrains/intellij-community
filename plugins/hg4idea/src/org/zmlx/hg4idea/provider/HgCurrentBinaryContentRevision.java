@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 
 final public class HgCurrentBinaryContentRevision extends CurrentBinaryContentRevision {
-  @NotNull private VcsRevisionNumber myRevisionNumber;
-  @NotNull private VirtualFile myRepositoryRoot;
+  @NotNull private final VcsRevisionNumber myRevisionNumber;
+  @NotNull private final VirtualFile myRepositoryRoot;
 
   HgCurrentBinaryContentRevision(@NotNull HgFile hgFile, @NotNull VcsRevisionNumber revisionNumber) {
     super(hgFile.toFilePath());

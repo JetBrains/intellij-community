@@ -35,25 +35,35 @@ public class ResponseHolder {
     }
   }
 
+
   @Nullable
   public ProtocolFrame waitForResponse(final int sequence) {
     ProtocolFrame response;
     long until = System.currentTimeMillis() + RESPONSE_TIMEOUT;
 
     synchronized (myResponseQueue) {
+      boolean interrupted = false;
       do {
         try {
           myResponseQueue.wait(1000);
         }
-        catch (InterruptedException ignore) {
+        catch (InterruptedException e) {
+          // restore interrupted flag
+          Thread.currentThread().interrupt();
+
+          interrupted = true;
         }
         response = myResponseQueue.get(sequence);
       }
-      while (response == null && myTransport.isConnected() && System.currentTimeMillis() < until);
+      while (response == null && shouldWaitForResponse() && !interrupted && System.currentTimeMillis() < until);
       myResponseQueue.remove(sequence);
     }
 
     return response;
+  }
+
+  private boolean shouldWaitForResponse() {
+    return myTransport.isConnecting() || myTransport.isConnected();
   }
 
   public void cleanUp() {

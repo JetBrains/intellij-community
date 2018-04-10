@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class PlatformFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(ArchiveFileType.INSTANCE, "zip;jar;war;ear;swc;ane;egg;apk");
-    consumer.consume(PlainTextFileType.INSTANCE, "txt;sh;bat;cmd;policy;log;cgi;MF;jad;jam;htaccess;rb");
+    consumer.consume(PlainTextFileType.INSTANCE, "txt;sh;bat;cmd;policy;log;cgi;MF;jad;jam;htaccess;rb;opts");
     consumer.consume(NativeFileType.INSTANCE, "doc;docx;xls;xlsx;ppt;pptx;mdb;vsd;pdf;hlp;chm;odt");
     consumer.consume(UnknownFileType.INSTANCE, "lib;dll;a;so;dylib");
   }

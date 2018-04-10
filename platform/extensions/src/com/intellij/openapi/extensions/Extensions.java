@@ -30,27 +30,35 @@ import java.util.Map;
 
 public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<>("com.intellij.arealistener");
-  private static LogProvider ourLogger = new SimpleLogProvider();
   private static final Map<AreaInstance, ExtensionsAreaImpl> ourAreaInstance2area = ContainerUtil.newConcurrentMap();
   private static final Map<String, AreaClassConfiguration> ourAreaClass2Configuration = ContainerUtil.newConcurrentMap();
 
-  @NotNull private static ExtensionsAreaImpl ourRootArea = createRootArea();
+  @NotNull
+  private static ExtensionsAreaImpl ourRootArea = createRootArea();
 
   private Extensions() {
   }
 
   @NotNull
   private static ExtensionsAreaImpl createRootArea() {
-    ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
+    ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null);
     rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
     return rootArea;
   }
 
+  /**
+   * @return instance containing application-level extensions
+   */
   @NotNull
   public static ExtensionsArea getRootArea() {
     return ourRootArea;
   }
 
+  /**
+   * If {@code areaInstance} is a project returns instance containing project-level extensions for that project
+   * if {@code areaInstance} is a module returns instance containing module-level extensions for that module,
+   * if {@code areaInstance} is {@code null} returns instance containing application-level extensions.
+   */
   @NotNull
   public static ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
     if (areaInstance == null) {
@@ -68,35 +76,30 @@ public class Extensions {
     final ExtensionsAreaImpl oldRootArea = (ExtensionsAreaImpl)getRootArea();
     final ExtensionsAreaImpl newArea = createRootArea();
     ourRootArea = newArea;
-    oldRootArea.notifyAreaReplaced();
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ourRootArea = oldRootArea;
-        newArea.notifyAreaReplaced();
-      }
+    oldRootArea.notifyAreaReplaced(newArea);
+    Disposer.register(parentDisposable, () -> {
+      ourRootArea = oldRootArea;
+      newArea.notifyAreaReplaced(oldRootArea);
     });
   }
 
   @NotNull
-  public static Object[] getExtensions(@NonNls String extensionPointName) {
+  public static Object[] getExtensions(@NonNls @NotNull String extensionPointName) {
     return getExtensions(extensionPointName, null);
   }
 
   @NotNull
-  @SuppressWarnings("unchecked")
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return (T[])getExtensions(extensionPointName.getName(), null);
+    return getExtensions(extensionPointName, null);
   }
 
   @NotNull
-  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
-    // keep it until 1.7 JDK
-    return Extensions.getExtensions(extensionPointName.getName(), areaInstance);
+  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, @Nullable AreaInstance areaInstance) {
+    return getExtensions(extensionPointName.getName(), areaInstance);
   }
 
   @NotNull
-  public static <T> T[] getExtensions(String extensionPointName, @Nullable("null means root") AreaInstance areaInstance) {
+  public static <T> T[] getExtensions(@NotNull String extensionPointName, @Nullable("null means root") AreaInstance areaInstance) {
     ExtensionsArea area = getArea(areaInstance);
     ExtensionPoint<T> extensionPoint = area.getExtensionPoint(extensionPointName);
     return extensionPoint.getExtensions();
@@ -133,7 +136,7 @@ public class Extensions {
     if (!equals(parentArea.getAreaClass(), configuration.getParentClassName())) {
       throw new IllegalArgumentException("Wrong parent area. Expected class: " + configuration.getParentClassName() + " actual class: " + parentArea.getAreaClass());
     }
-    ExtensionsAreaImpl area = new ExtensionsAreaImpl(areaClass, areaInstance, parentArea.getPicoContainer(), ourLogger);
+    ExtensionsAreaImpl area = new ExtensionsAreaImpl(areaClass, areaInstance, parentArea.getPicoContainer());
     if (ourAreaInstance2area.put(areaInstance, area) != null) {
       throw new IllegalArgumentException("Area already instantiated for: " + areaInstance);
     }
@@ -180,11 +183,7 @@ public class Extensions {
   }
 
   private static boolean equals(@Nullable Object object1, @Nullable Object object2) {
-    return object1 == object2 || object1 != null && object2 != null && object1.equals(object2);
-  }
-
-  public static void setLogProvider(@NotNull LogProvider logProvider) {
-    ourLogger = logProvider;
+    return object1 == object2 || object1 != null && object1.equals(object2);
   }
 
   private static class AreaClassConfiguration {
@@ -211,41 +210,6 @@ public class Extensions {
     }
   }
 
-  @SuppressWarnings("CallToPrintStackTrace")
-  public static class SimpleLogProvider implements LogProvider {
-    @Override
-    public void error(String message) {
-      new Throwable(message).printStackTrace();
-    }
-
-    @Override
-    public void error(String message, @NotNull Throwable t) {
-      System.err.println(message);
-      t.printStackTrace();
-    }
-
-    @Override
-    public void error(@NotNull Throwable t) {
-      t.printStackTrace();
-    }
-
-    @Override
-    public void warn(String message) {
-      System.err.println(message);
-    }
-
-    @Override
-    public void warn(String message, @NotNull Throwable t) {
-      System.err.println(message);
-      t.printStackTrace();
-    }
-
-    @Override
-    public void warn(@NotNull Throwable t) {
-      t.printStackTrace();
-    }
-  }
-
   public static boolean isComponentSuitableForOs(@Nullable String os) {
     if (StringUtil.isEmpty(os)) {
       return true;
@@ -267,8 +231,7 @@ public class Extensions {
       return SystemInfoRt.isFreeBSD;
     }
     else {
-      ourLogger.warn("Unknown OS " + os);
-      return true;
+      throw new IllegalArgumentException("Unknown OS " + os);
     }
   }
 }

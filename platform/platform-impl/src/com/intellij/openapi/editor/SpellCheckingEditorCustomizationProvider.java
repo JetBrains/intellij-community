@@ -20,6 +20,9 @@ import com.intellij.ui.EditorCustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * @author nik
  */
@@ -42,5 +45,12 @@ public class SpellCheckingEditorCustomizationProvider {
   @Nullable
   public EditorCustomization getDisabledCustomization() {
     return null;
+  }
+
+  /**
+   * @return set containing {@link com.intellij.codeInspection.InspectionProfileEntry#getShortName()} values for spell checking inspections
+   */
+  public Set<String> getSpellCheckingToolNames() {
+    return Collections.emptySet();
   }
 }

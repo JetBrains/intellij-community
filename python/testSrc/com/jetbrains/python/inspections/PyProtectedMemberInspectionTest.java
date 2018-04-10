@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.intellij.psi.PsiFile;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
-@TestDataPath("$CONTENT_ROOT/../testData/inspections/PyProtectedMemberInspection")
-public class PyProtectedMemberInspectionTest extends PyTestCase {
+public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
 
   public void testTruePositive() {
     doTest();
@@ -60,36 +46,57 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
   }
 
   public void testAnnotation() {
-    setLanguageLevel(LanguageLevel.PYTHON34);
-    PyProtectedMemberInspection inspection = new PyProtectedMemberInspection();
-    inspection.ignoreAnnotations = true;
-    myFixture.configureByFile(getTestName(true) + ".py");
-    myFixture.checkHighlighting(false, false, true);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
+      PyProtectedMemberInspection inspection = new PyProtectedMemberInspection();
+      inspection.ignoreAnnotations = true;
+      myFixture.enableInspections(inspection);
+      final PsiFile currentFile = myFixture.configureByFile(getTestFilePath());
+      myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+      assertSdkRootsNotParsed(currentFile);
+    });
   }
 
   //PY-14234
   public void testImportFromTheSamePackage() {
-    String path = getTestName(true);
-    myFixture.copyDirectoryToProject(path + "/my_package", "./my_package");
-    myFixture.configureByFile("/my_package/my_public_module.py");
-    myFixture.enableInspections(PyProtectedMemberInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+    doMultiFileTest("my_package/my_public_module.py");
   }
 
   public void testModule() {
-    myFixture.configureByFiles(getTestName(true) + ".py", "tmp.py");
-    myFixture.enableInspections(PyProtectedMemberInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+    doMultiFileTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    myFixture.enableInspections(PyProtectedMemberInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+  // PY-14056
+  public void testDunderAll() {
+    doMultiFileTest();
   }
 
+  public void testClassInAnotherModule() {
+    doMultiFileTest();
+  }
+
+  // PY-26112
+  public void testMemberResolvedToStub() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+  }
+
+  // PY-27148
+  public void testTypingNamedTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26139
+  public void testProtectedModuleInSamePackage() {
+    doMultiFileTest("my_package/module2.py");
+  }
+
+  // PY-26139
+  public void testProtectedModuleInPackageAbove() {
+    doMultiFileTest("my_package/my_subpackage/module2.py");
+  }
+
+  @NotNull
   @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "/inspections/PyProtectedMemberInspection/";
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyProtectedMemberInspection.class;
   }
 }

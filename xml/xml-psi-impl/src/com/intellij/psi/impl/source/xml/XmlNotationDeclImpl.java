@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.tree.ChildRoleBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -31,7 +32,7 @@ public class XmlNotationDeclImpl extends XmlElementImpl implements XmlNotationDe
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == XML_ELEMENT_CONTENT_SPEC) {
       return XmlChildRole.XML_ELEMENT_CONTENT_SPEC;

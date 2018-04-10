@@ -27,17 +27,18 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManager</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.PartialLineStatusTrackerManagerState</implementation-class>
+      <option name="workspace" value="true"/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.changes.ChangeListManager</interface-class>
@@ -48,7 +49,6 @@
       <implementation-class>com.intellij.openapi.vcs.changes.ChangesViewManager</implementation-class>
       <headless-implementation-class>com.intellij.openapi.vcs.changes.DummyChangesView</headless-implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</interface-class>
@@ -67,39 +67,29 @@
       <implementation-class>com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager</implementation-class>
       <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.changes.ui.ChangesViewContentI</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager</implementation-class>
       <headless-implementation-class>com.intellij.openapi.vcs.changes.ui.DummyChangesViewContentManager</headless-implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.committed.CommittedChangesCache</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier</implementation-class>
-      <skipForDefaultProject/>
       <headless-implementation-class/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator</implementation-class>
       <headless-implementation-class/>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component><interface-class>com.intellij.openapi.vcs.impl.VcsBaseContentProvider</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
     </component>
-    <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotation</interface-class>
-    <implementation-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl</implementation-class></component>
-    <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl</implementation-class></component>
   </project-components>
 </idea-plugin>

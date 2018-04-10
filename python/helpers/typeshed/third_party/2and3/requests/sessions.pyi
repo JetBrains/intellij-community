@@ -1,8 +1,8 @@
 # Stubs for requests.sessions (Python 3)
 
-from typing import Any, Union, MutableMapping, Text, Optional, IO, Tuple, Callable
+from typing import Any, Union, List, MutableMapping, Text, Optional, IO, Tuple, Callable, Iterable
 from . import adapters
-from . import auth
+from . import auth as _auth
 from . import compat
 from . import cookies
 from . import models
@@ -57,19 +57,23 @@ class SessionRedirectMixin:
 
 _Data = Union[None, bytes, MutableMapping[Text, Text], IO]
 
+_Hook = Callable[[Response], Any]
+_Hooks = MutableMapping[Text, List[_Hook]]
+_HooksInput = MutableMapping[Text, Union[Iterable[_Hook], _Hook]]
+
 class Session(SessionRedirectMixin):
     __attrs__ = ...  # type: Any
-    headers = ...  # type: Optional[MutableMapping[Text, Text]]
-    auth = ...  # type: Union[None, Tuple[Text, Text], Callable[[Request], Request]]
-    proxies = ...  # type: Optional[MutableMapping[Text, Text]]
-    hooks = ...  # type: Optional[MutableMapping[Text, Callable[[Request], Any]]]
-    params = ...  # type: Union[None, bytes, MutableMapping[Text, Text]]
+    headers = ...  # type: MutableMapping[Text, Text]
+    auth = ...  # type: Union[None, Tuple[Text, Text], _auth.AuthBase, Callable[[Request], Request]]
+    proxies = ...  # type: MutableMapping[Text, Text]
+    hooks = ...  # type: _Hooks
+    params = ...  # type: Union[bytes, MutableMapping[Text, Text]]
     stream = ...  # type: bool
-    verify = ...  # type: bool
+    verify = ...  # type: Union[None, bool, Text]
     cert = ...  # type: Union[None, Text, Tuple[Text, Text]]
     max_redirects = ...  # type: int
     trust_env = ...  # type: bool
-    cookies = ...  # type: Union[None, RequestsCookieJar, MutableMapping[Text, Text]]
+    cookies = ...  # type: Union[RequestsCookieJar, MutableMapping[Text, Text]]
     adapters = ...  # type: MutableMapping
     redirect_cache = ...  # type: RecentlyUsedContainer
     def __init__(self) -> None: ...
@@ -82,13 +86,13 @@ class Session(SessionRedirectMixin):
                 headers: Optional[MutableMapping[Text, Text]] = ...,
                 cookies: Union[None, RequestsCookieJar, MutableMapping[Text, Text]] = ...,
                 files: Optional[MutableMapping[Text, IO]] = ...,
-                auth: Union[None, Tuple[Text, Text], Callable[[Request], Request]] = ...,
+                auth: Union[None, Tuple[Text, Text], _auth.AuthBase, Callable[[Request], Request]] = ...,
                 timeout: Union[None, float, Tuple[float, float]] = ...,
                 allow_redirects: Optional[bool] = ...,
                 proxies: Optional[MutableMapping[Text, Text]] = ...,
-                hooks: Optional[MutableMapping[Text, Callable[[Request], Any]]] = ...,
+                hooks: Optional[_HooksInput] = ...,
                 stream: Optional[bool] = ...,
-                verify: Optional[bool] = ...,
+                verify: Union[None, bool, Text] = ...,
                 cert: Union[Text, Tuple[Text, Text], None] = ...,
                 json: Optional[MutableMapping] = ...,
                 ) -> Response: ...

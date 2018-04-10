@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -177,13 +178,12 @@ public class NewMappings {
           list.add(vcs);
         }
       }
-      myActiveVcses = list.toArray(new AbstractVcs[list.size()]);
+      myActiveVcses = list.toArray(new AbstractVcs[0]);
     }
   }
 
   public void mappingsChanged() {
-    if (myProject.isDisposed()) return;
-    myProject.getMessageBus().syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
+    BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
     myFileStatusManager.fileStatusesChanged();
     myFileWatchRequestsManager.ping();
 
@@ -533,8 +533,7 @@ public class NewMappings {
     synchronized (myLock) {
       final String defaultVcs = haveDefaultMapping();
       if (defaultVcs == null) return Collections.emptyList();
-      final List<VirtualFile> list = new ArrayList<>();
-      list.addAll(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, defaultVcs));
+      final List<VirtualFile> list = new ArrayList<>(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, defaultVcs));
       if (StringUtil.isEmptyOrSpaces(defaultVcs)) {
         return AbstractVcs.filterUniqueRootsDefault(list, identity());
       }

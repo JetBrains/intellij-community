@@ -48,7 +48,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
           descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, aSuper, false));
         }
       }
-      return descriptors.toArray(new HierarchyNodeDescriptor[descriptors.size()]);
+      return descriptors.toArray(new HierarchyNodeDescriptor[0]);
     } else if (element instanceof PsiFunctionalExpression) {
       final PsiClass functionalInterfaceClass = PsiUtil.resolveClassInType(((PsiFunctionalExpression)element).getFunctionalInterfaceType());
       if (functionalInterfaceClass != null) {
@@ -87,7 +87,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
         }
       }
     }
-    return supers.toArray(new PsiClass[supers.size()]);
+    return supers.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static boolean isJavaLangAnnotation(@NotNull  PsiAnnotation annotation) {

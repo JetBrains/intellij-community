@@ -27,7 +27,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 4/29/13
  */
 public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
   private IdeDocumentHistoryImpl myHistory;

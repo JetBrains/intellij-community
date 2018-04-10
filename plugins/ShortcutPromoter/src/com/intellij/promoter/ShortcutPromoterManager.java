@@ -10,6 +10,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
@@ -61,14 +62,6 @@ public class ShortcutPromoterManager implements Disposable, AnActionListener, Pe
     }
   }
 
-  @Override
-  public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-  }
-
-  @Override
-  public void beforeEditorTyping(char c, DataContext dataContext) {
-  }
-
   @Nullable
   @Override
   public Element getState() {
@@ -83,7 +76,7 @@ public class ShortcutPromoterManager implements Disposable, AnActionListener, Pe
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     myState.clear();
     for (Element action : state.getChildren("action")) {
       try {

@@ -18,15 +18,12 @@ package com.intellij.dvcs.cherrypick;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public abstract class VcsCherryPicker {
 
@@ -55,15 +52,4 @@ public abstract class VcsCherryPicker {
    * Return true if cherry picker can manage all commits from roots
    */
   public abstract boolean canHandleForRoots(@NotNull Collection<VirtualFile> roots);
-
-  /**
-   * Return null if all selected commits can be cherry-picked without problems by this cherry-picker or error description otherwise.
-   *
-   * @param log     additional log information
-   * @param commits commits to cherry-pick, grouped by version control root
-   * @return
-   */
-  public String getInfo(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits) {
-    return null;
-  }
 }

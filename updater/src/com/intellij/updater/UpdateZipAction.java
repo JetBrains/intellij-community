@@ -123,8 +123,6 @@ public class UpdateZipAction extends BaseUpdateAction {
             patchOutput.closeEntry();
           }
           catch (IOException e) {
-            Runner.logger().error("Error building patch for .zip entry " + name);
-            Runner.printStackTrace(e);
             throw new IOException("Error building patch for .zip entry " + name, e);
           }
         }

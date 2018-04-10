@@ -1,35 +1,33 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.psi.PsiElement;
 
 public final class ParameterInfo {
-  private String name;
-  private int startIndex;
+  private final String name;
+  private final int startIndex;
+  private final boolean replacementVariable;
   private boolean argumentContext;
   private boolean methodParameterContext;
   private boolean statementContext;
-  private boolean variableInitializerContext;
   private int afterDelimiterPos;
   private boolean hasCommaBefore;
   private int beforeDelimiterPos;
   private boolean hasCommaAfter;
-  private boolean replacementVariable;
   private PsiElement myElement;
+
+  public ParameterInfo(String name, int startIndex, boolean replacementVariable) {
+    this.name = name;
+    this.startIndex = startIndex;
+    this.replacementVariable = replacementVariable;
+  }
 
   public String getName() {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
-
   public int getStartIndex() {
     return startIndex;
-  }
-
-  public void setStartIndex(int startIndex) {
-    this.startIndex = startIndex;
   }
 
   public boolean isArgumentContext() {
@@ -54,14 +52,6 @@ public final class ParameterInfo {
 
   public void setStatementContext(boolean statementContext) {
     this.statementContext = statementContext;
-  }
-
-  public boolean isVariableInitializerContext() {
-    return variableInitializerContext;
-  }
-
-  public void setVariableInitializerContext(boolean variableInitializerContext) {
-    this.variableInitializerContext = variableInitializerContext;
   }
 
   public int getAfterDelimiterPos() {
@@ -98,10 +88,6 @@ public final class ParameterInfo {
 
   public boolean isReplacementVariable() {
     return replacementVariable;
-  }
-
-  public void setReplacementVariable(boolean replacementVariable) {
-    this.replacementVariable = replacementVariable;
   }
 
   public PsiElement getElement() {

@@ -1,0 +1,5 @@
+public class Foo {
+    void m(Object o) {
+        <spot>o</spot>$key
+    }
+}

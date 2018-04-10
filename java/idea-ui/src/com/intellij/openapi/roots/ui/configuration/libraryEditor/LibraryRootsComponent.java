@@ -54,7 +54,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +68,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 11, 2004
  */
 public class LibraryRootsComponent implements Disposable, LibraryEditorComponent {
   static final UrlComparator ourUrlComparator = new UrlComparator();
@@ -548,7 +547,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       descriptor.setTitle("Exclude from Library");
       descriptor.setDescription("Select directories which should be excluded from the library content. Content of excluded directories won't be processed by IDE.");
       Set<VirtualFile> roots = getNotExcludedRoots();
-      descriptor.setRoots(roots.toArray(new VirtualFile[roots.size()]));
+      descriptor.setRoots(roots.toArray(VirtualFile.EMPTY_ARRAY));
       if (roots.size() < 2) {
         descriptor.withTreeRootVisible(true);
       }

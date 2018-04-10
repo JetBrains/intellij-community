@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
@@ -26,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -42,9 +29,11 @@ public interface Content extends UserDataHolder, ComponentContainer {
   @NonNls String PROP_DESCRIPTION = "description";
   @NonNls 
   String PROP_COMPONENT = "component";
+  String IS_CLOSABLE = "isClosable";
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
   Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  Key<ComponentOrientation> TAB_LABEL_ORIENTATION_KEY = Key.create("tabLabelComponentOrientation");
 
   String PROP_ALERT = "alerting";
 
@@ -132,4 +121,11 @@ public interface Content extends UserDataHolder, ComponentContainer {
    */
   void setExecutionId(long executionId);
   long getExecutionId();
+
+  default void setHelpId(@NonNls String helpId) {}
+
+  @Nullable
+  default String getHelpId() {
+    return null;
+  }
 }

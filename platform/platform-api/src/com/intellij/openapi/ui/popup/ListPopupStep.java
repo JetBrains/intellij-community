@@ -55,6 +55,10 @@ public interface ListPopupStep<T> extends PopupStep<T> {
   @Nullable
   Icon getIconFor(T aValue);
 
+  default Icon getSelectedIconFor(T value) {
+    return getIconFor(value);
+  }
+
   /**
    * Returns the text to display for the specified list item.
    *

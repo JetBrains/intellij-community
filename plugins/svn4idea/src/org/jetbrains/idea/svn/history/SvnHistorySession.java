@@ -20,8 +20,8 @@ import com.intellij.openapi.vcs.history.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.List;
@@ -56,7 +56,7 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
     if (myCommittedPath.isNonLocal()) {
       // technically, it does not make sense, since there's no "current" revision for non-local history (if look how it's used)
       // but ok, lets keep it for now
-      return new SvnRevisionNumber(SVNRevision.HEAD);
+      return new SvnRevisionNumber(Revision.HEAD);
     }
     return getCurrentCommittedRevision(myVcs, new File(myCommittedPath.getPath()));
   }

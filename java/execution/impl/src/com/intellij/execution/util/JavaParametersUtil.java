@@ -77,6 +77,12 @@ public class JavaParametersUtil {
   @MagicConstant(valuesFromClass = JavaParameters.class)
   public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,
                                      final boolean classMustHaveSource) throws CantRunException {
+    return getClasspathType(configurationModule, mainClassName, classMustHaveSource, false);
+  }
+
+  @MagicConstant(valuesFromClass = JavaParameters.class)
+  public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,
+                                     final boolean classMustHaveSource, final boolean includeProvidedDependencies) throws CantRunException {
     final Module module = configurationModule.getModule();
     if (module == null) throw CantRunException.noModuleConfigured(configurationModule.getModuleName());
     Boolean inProduction = isClassInProductionSources(mainClassName, module);
@@ -87,7 +93,9 @@ public class JavaParametersUtil {
       throw CantRunException.classNotFound(mainClassName, module);
     }
 
-    return inProduction ? JavaParameters.JDK_AND_CLASSES : JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+    return inProduction
+           ? (includeProvidedDependencies ? JavaParameters.JDK_AND_CLASSES_AND_PROVIDED : JavaParameters.JDK_AND_CLASSES)
+           : JavaParameters.JDK_AND_CLASSES_AND_TESTS;
   }
 
   @Nullable("null if class not found")

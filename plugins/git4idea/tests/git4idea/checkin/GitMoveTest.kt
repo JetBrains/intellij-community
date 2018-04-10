@@ -39,10 +39,10 @@ class GitMoveTest : GitSingleRepoTest() {
     echo(file, "some\ncontent\nere")
     addCommit("created $file")
 
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(myProjectPath + "/$file")!!
+    val vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectPath + "/$file")!!
 
     renameFile(vf, "ver-ren.txt")
-    assertTrue("File should versioned! All changes: " + getLogString(myProjectPath, changeListManager.allChanges),
+    assertTrue("File should versioned! All changes: " + getLogString(projectPath, changeListManager.allChanges),
                !changeListManager.isUnversioned(vf))
     val change = changeListManager.getChange(vf)!!
     assertTrue("Change should be rename: " + change, change.isRenamed)
@@ -53,8 +53,8 @@ class GitMoveTest : GitSingleRepoTest() {
     ADD.doNothing()
     val content = "original content"
     val fileName = "file.txt"
-    val originalDir = myProjectRoot.createDir("original")
-    val unversionedDir = myProjectRoot.createDir("unv")
+    val originalDir = projectRoot.createDir("original")
+    val unversionedDir = projectRoot.createDir("unv")
 
     val original = originalDir.createFile(fileName, content)
     val unversioned = unversionedDir.createFile(fileName, content)
@@ -66,7 +66,7 @@ class GitMoveTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     runInEdtAndWait {
-      CommandProcessor.getInstance().executeCommand(myProject, {
+      CommandProcessor.getInstance().executeCommand(project, {
         runWriteAction {
           original.delete(this)
         }
@@ -81,7 +81,7 @@ class GitMoveTest : GitSingleRepoTest() {
     assertFalse("Unversioned file shouldn't exist", unversionedFile.exists())
     updateChangeListManager()
     val change = changeListManager.getChange(VcsUtil.getFilePath(originalFile))
-    assertNull("There should be no change for $originalFile. Changes: ${getLogString(myProjectPath, changeListManager.allChanges)}", change)
+    assertNull("There should be no change for $originalFile. Changes: ${getLogString(projectPath, changeListManager.allChanges)}", change)
   }
 
   // IDEA-118140

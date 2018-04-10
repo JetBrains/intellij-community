@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * <b>Note</b>: This visitor handles all containing elements without consuming stack space, so it can be used even for very deep trees.
  * <b>Note 2</b>: This visitor works for source-based PSI only. Any elements implementing {@link PsiCompiledElement} will be rejected.
  */
-public abstract class JavaRecursiveElementWalkingVisitor extends JavaElementVisitor {
+public abstract class JavaRecursiveElementWalkingVisitor extends JavaElementVisitor implements PsiRecursiveVisitor {
   private final PsiWalkingState myWalkingState = new PsiWalkingState(this){
     @Override
     public void elementFinished(@NotNull PsiElement element) {

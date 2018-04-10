@@ -149,10 +149,7 @@ public class GitMergeUtil {
     if (!unmergedNames.isEmpty()) {
       List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
       GuiUtils.invokeLaterIfNeeded(() -> {
-        GitVcs vcs = GitVcs.getInstance(project);
-        if (vcs != null) {
-          AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, vcs.getMergeProvider());
-        }
+        AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider());
       }, ModalityState.defaultModalityState());
     }
   }

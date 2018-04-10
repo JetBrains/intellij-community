@@ -66,6 +66,9 @@ import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
+import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static java.lang.Math.ceil;
+
 public class Bookmark implements Navigatable, Comparable<Bookmark> {
   public static final Icon DEFAULT_ICON = new MyCheckedIcon();
 
@@ -384,12 +387,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public int getIconWidth() {
-      return scaleVal(DEFAULT_ICON.getIconWidth(), Scale.INSTANCE);
+      return (int)ceil(scaleVal(DEFAULT_ICON.getIconWidth(), OBJ_SCALE));
     }
 
     @Override
     public int getIconHeight() {
-      return scaleVal(DEFAULT_ICON.getIconHeight(), Scale.INSTANCE);
+      return (int)ceil(scaleVal(DEFAULT_ICON.getIconHeight(), OBJ_SCALE));
     }
 
     @Override
@@ -422,12 +425,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public int getIconWidth() {
-      return scaleVal(PlatformIcons.CHECK_ICON.getIconWidth(), Scale.INSTANCE);
+      return (int)ceil(scaleVal(PlatformIcons.CHECK_ICON.getIconWidth(), OBJ_SCALE));
     }
 
     @Override
     public int getIconHeight() {
-      return scaleVal(PlatformIcons.CHECK_ICON.getIconHeight(), Scale.INSTANCE);
+      return (int)ceil(scaleVal(PlatformIcons.CHECK_ICON.getIconHeight(), OBJ_SCALE));
     }
 
     @NotNull

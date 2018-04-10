@@ -62,7 +62,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     LOG.info("saving " + rootsToSave);
 
     for (VirtualFile root : rootsToSave) {
-      final String message = GitHandlerUtil.formatOperationName("Stashing changes from", root);
+      final String message = "Stashing changes from '" + root.getName() + "'...";
       LOG.info(message);
       final String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(message);
@@ -76,12 +76,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
           myStashedRoots.add(root);
         }
         else {
-          String error = "stash " + repository.getRoot() + ": " + result.getErrorOutputAsJoinedString();
           if (!result.success()) {
-            throw new VcsException(error);
+            throw new VcsException("Couldn't stash " + repository.getRoot() + ": " + result.getErrorOutputAsJoinedString());
           }
           else {
-            LOG.warn(error);
+            LOG.warn("There was nothing to stash in " + repository.getRoot());
           }
         }
       }

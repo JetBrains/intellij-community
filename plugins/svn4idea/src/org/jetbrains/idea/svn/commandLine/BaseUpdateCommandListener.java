@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -6,10 +21,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.jetbrains.idea.svn.api.BaseSvnClient.callHandler;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -23,7 +39,7 @@ public class BaseUpdateCommandListener extends LineCommandAdapter {
   private final ProgressTracker handler;
 
   @NotNull
-  private final AtomicReference<SVNException> exception;
+  private final AtomicReference<SvnBindException> exception;
 
   public BaseUpdateCommandListener(@NotNull File base, @Nullable ProgressTracker handler) {
     this.handler = handler;
@@ -38,9 +54,9 @@ public class BaseUpdateCommandListener extends LineCommandAdapter {
       if (event != null) {
         beforeHandler(event);
         try {
-          callHandler(event);
+          callHandler(handler, event);
         }
-        catch (SVNException e) {
+        catch (SvnBindException e) {
           cancel();
           exception.set(e);
         }
@@ -48,17 +64,11 @@ public class BaseUpdateCommandListener extends LineCommandAdapter {
     }
   }
 
-  private void callHandler(ProgressEvent event) throws SVNException {
-    if (handler != null) {
-      handler.consume(event);
-    }
-  }
-
   public void throwWrappedIfException() throws SvnBindException {
-    SVNException e = exception.get();
+    SvnBindException e = exception.get();
 
     if (e != null) {
-      throw new SvnBindException(e);
+      throw e;
     }
   }
 

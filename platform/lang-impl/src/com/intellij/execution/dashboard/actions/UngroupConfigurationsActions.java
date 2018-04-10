@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Aleev
  */
-public class UngroupConfigurationsActions extends RunDashboardTreeAction<GroupingNode> {
+public class UngroupConfigurationsActions extends RunDashboardTreeActionImpl<GroupingNode> {
   protected UngroupConfigurationsActions() {
     super(ExecutionBundle.message("run.dashboard.ungroup.configurations.action.name"), null, AllIcons.General.Remove);
   }

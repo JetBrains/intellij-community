@@ -144,6 +144,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     return "Tasks";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settings.project.tasks";
   }
@@ -151,9 +152,6 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   public JComponent createComponent() {
     bindAnnotations();
     return myPanel;
-  }
-
-  public void disposeUIResources() {
   }
 
   @NotNull
@@ -165,6 +163,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     return true;
   }
 
+  @NotNull
+  @Override
   public Configurable[] getConfigurables() {
     if (myConfigurables == null) {
       myConfigurables = new Configurable[] { new TaskRepositoriesConfigurable(myProject) };

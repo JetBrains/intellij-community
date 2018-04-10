@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.command.mq;
 
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,6 @@ import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgErrorUtil;
-import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.List;
 
@@ -36,7 +36,7 @@ public class HgQImportCommand {
   }
 
   public void execute(@NotNull final String startRevisionNumber) {
-    HgUtil.executeOnPooledThread(() -> executeInCurrentThread(startRevisionNumber), myRepository.getProject());
+    BackgroundTaskUtil.executeOnPooledThread(myRepository.getProject(), () -> executeInCurrentThread(startRevisionNumber));
   }
 
   public void executeInCurrentThread(@NotNull final String startRevisionNumber) {

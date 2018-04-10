@@ -221,7 +221,7 @@ public class ParametersFolder {
       PsiElement expression = reference.getElement();
       if (expressions == null) {
         expressions = new ArrayList<>();
-        while (expression != null) {
+        while (expression instanceof PsiExpression) {
           if (isAccessedForWriting((PsiExpression)expression)) {
             return null;
           }

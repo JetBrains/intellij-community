@@ -152,8 +152,7 @@ public class LinearFragmentGenerator {
     Set<Integer> blackNodes = new HashSet<>();
     blackNodes.add(startNode);
 
-    Set<Integer> grayNodes = new HashSet<>();
-    grayNodes.addAll(getNextNodes.fun(startNode));
+    Set<Integer> grayNodes = new HashSet<>(getNextNodes.fun(startNode));
 
     int endNode = -1;
     while (blackNodes.size() < SHORT_FRAGMENT_MAX_SIZE) {

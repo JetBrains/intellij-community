@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -129,13 +115,7 @@ public class PyRenameTest extends PyTestCase {
   }
 
   public void testRenameProperty() {  // PY-5948
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    try {
-      doTest("bar");
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest("bar"));
   }
 
   public void testClassNameConflict() {  // PY-2390
@@ -325,6 +305,22 @@ public class PyRenameTest extends PyTestCase {
   // PY-22971
   public void testOverloadsAndImplementationInImportedClassRenameCall() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("bar"));
+  }
+
+  // PY-28199
+  public void testCamelCaseToSnakeCaseTransformation() {
+    assertEquals("foo", PyNameSuggestionProvider.toUnderscores("foo"));
+    assertEquals("foo", PyNameSuggestionProvider.toUnderscores("Foo"));
+    assertEquals("foo", PyNameSuggestionProvider.toUnderscores("FOO"));
+    assertEquals("foo_bar", PyNameSuggestionProvider.toUnderscores("FooBar"));
+    assertEquals("foo_bar", PyNameSuggestionProvider.toUnderscores("foo_bar"));
+    assertEquals("foo_bar", PyNameSuggestionProvider.toUnderscores("FOO_BAR"));
+    assertEquals("__foo_bar", PyNameSuggestionProvider.toUnderscores("__Foo_Bar"));
+    assertEquals("foo42bar", PyNameSuggestionProvider.toUnderscores("foo42bar"));
+    assertEquals("foo42_bar", PyNameSuggestionProvider.toUnderscores("foo42Bar"));
+    assertEquals("foo42_bar", PyNameSuggestionProvider.toUnderscores("FOO42BAR"));
+    assertEquals("foo_bar", PyNameSuggestionProvider.toUnderscores("FOOBar"));
+    assertEquals("foo_bar_baz", PyNameSuggestionProvider.toUnderscores("foo_BarBAZ"));
   }
 
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {

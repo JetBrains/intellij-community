@@ -18,6 +18,8 @@ package com.intellij.debugger.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.debugger.impl.DebuggerSession;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -27,10 +29,12 @@ public abstract class HotSwapUI {
     return project.getComponent(HotSwapUI.class);
   }
 
-  public abstract void reloadChangedClasses(DebuggerSession session, boolean compileBeforeHotswap);
+  public abstract void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap);
+
+  public abstract void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap,
+                                            @Nullable HotSwapStatusListener callback);
 
   public abstract void dontPerformHotswapAfterThisCompilation();
-
 
   public abstract void addListener(HotSwapVetoableListener listener);
 

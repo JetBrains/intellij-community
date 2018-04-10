@@ -27,8 +27,9 @@ import org.junit.runner.manipulation.Filter;
 import org.junit.runners.Parameterized;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
@@ -51,7 +52,7 @@ public class JUnit4TestRunnerUtil {
         // all tests in the package specified
         try {
           final Map classMethods = new HashMap();
-          BufferedReader reader = new BufferedReader(new FileReader(suiteClassName.substring(1)));
+          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)), "UTF-8"));
           try {
             final String packageName = reader.readLine();
             if (packageName == null) return null;

@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
@@ -29,7 +15,6 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -91,17 +76,6 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testRelativePath() {
-    File testDataDir = new File(PathManagerEx.getTestDataPath(), "vfs/relativePath/subDir/subSubDir");
-    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(testDataDir);
-    assertNotNull(vDir);
-    VirtualFile vSubDir = vDir.getParent(), vTestRoot = vSubDir.getParent();
-    assertEquals("subDir", VfsUtilCore.getRelativePath(vSubDir, vTestRoot, '/'));
-    assertEquals("subDir/subSubDir", VfsUtilCore.getRelativePath(vDir, vTestRoot, '/'));
-    assertEquals("", VfsUtilCore.getRelativePath(vTestRoot, vTestRoot, '/'));
-  }
-
-  @Test
   public void testFindChildWithTrailingSpace() throws IOException {
     File tempDir = myTempDir.newFolder();
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
@@ -144,12 +118,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNotNull(file);
     String url = file.getPresentableUrl();
     assertNotNull(url);
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws IOException {
-        file.delete(this);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> file.delete(this));
     assertEquals(url, file.getPresentableUrl());
   }
 
@@ -231,6 +200,17 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testFindRootWithCrazySlashes() {
+    for (int i = 0; i < 10; i++) {
+      String path = StringUtil.repeat("/", i);
+      VirtualFile root = LocalFileSystem.getInstance().findFileByPathIfCached(path);
+      assertTrue(path, root == null || !root.getPath().contains("//"));
+      VirtualFile root2 = LocalFileSystem.getInstance().findFileByPath(path);
+      assertTrue(path, root2 == null || !root2.getPath().contains("//"));
+    }
+  }
+
+  @Test
   public void testNotCanonicallyNamedChild() throws IOException {
     File tempDir = myTempDir.newFolder();
     assertTrue(new File(tempDir, "libFiles").createNewFile());
@@ -285,12 +265,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
       assertTrue(child.isValid());
       String newName = "name" + i;
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          child.rename(this, newName);
-        }
-      }.execute();
+      WriteAction.runAndWait(() -> child.rename(this, newName));
       assertTrue(child.isValid());
 
       TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering

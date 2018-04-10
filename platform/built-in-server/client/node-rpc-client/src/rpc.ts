@@ -1,4 +1,5 @@
-import Promise = require("bluebird")
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+import Promise = require("bluebird");
 
 class PromiseCallback {
   constructor(public resolve: (value?: any) => void, public reject: (error?: any) => void) {
@@ -20,6 +21,8 @@ export interface Transport {
   sendResult(id: number, result: any):void
 
   sendError(id: number, error: any):void
+
+  close(): void;
 }
 
 interface Map<K, V> {
@@ -136,6 +139,10 @@ export class JsonRpc {
         }
       }
     }
+  }
+
+  close() {
+      this.transport.close()
   }
 }
 

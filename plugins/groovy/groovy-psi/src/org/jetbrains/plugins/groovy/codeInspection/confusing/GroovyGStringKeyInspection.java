@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
@@ -52,7 +51,7 @@ public class GroovyGStringKeyInspection extends BaseInspection {
     @Override
     public void visitNamedArgument(@NotNull GrNamedArgument namedArgument) {
       PsiElement parent = namedArgument.getParent();
-      if (parent == null || ! (parent instanceof  GrListOrMap) || !((GrListOrMap)parent).isMap()) return;
+      if (!(parent instanceof GrListOrMap) || !((GrListOrMap)parent).isMap()) return;
 
       final GrArgumentLabel argumentLabel = namedArgument.getLabel();
       if (argumentLabel == null) return;
@@ -66,13 +65,13 @@ public class GroovyGStringKeyInspection extends BaseInspection {
     @Override
     public void visitExpression(@NotNull GrExpression grExpression) {
       final PsiElement gstringParent = grExpression.getParent();
-      if (gstringParent == null || !(gstringParent instanceof GrArgumentList)) return;
+      if (!(gstringParent instanceof GrArgumentList)) return;
 
       GrExpression[] arguments = ((GrArgumentList)gstringParent).getExpressionArguments();
       if (arguments.length != 2 || !arguments[0].equals(grExpression)) return;
 
       final PsiElement grandparent = gstringParent.getParent();
-      if (grandparent == null || !(grandparent instanceof GrMethodCall)) {
+      if (!(grandparent instanceof GrMethodCall)) {
         return;
       }
 
@@ -100,11 +99,7 @@ public class GroovyGStringKeyInspection extends BaseInspection {
 
     private static boolean isGStringType(@NotNull GrExpression expression) {
       PsiType expressionType = expression.getType();
-      if (expressionType == null) {
-        return false;
-      }
-      PsiClassType type = TypesUtil.createTypeByFQClassName(GROOVY_LANG_GSTRING, expression);
-      return type.isAssignableFrom(expressionType);
+      return expressionType != null && expressionType.equalsToText(GROOVY_LANG_GSTRING);
     }
   }
 }

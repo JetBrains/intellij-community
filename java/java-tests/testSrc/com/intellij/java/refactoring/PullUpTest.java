@@ -141,6 +141,10 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
+  public void testUpdateStaticRefsForInterface() {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  }
+
   public void testRemoveOverrideFromPulledMethod() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
@@ -183,6 +187,10 @@ public class PullUpTest extends LightRefactoringTestCase {
 
   public void testOuterClassRefs() {
     doTest(false, "Method <b><code>bar()</code></b> uses field <b><code>Outer.x</code></b>, which is not moved to the superclass", new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class));
+  }
+
+  public void testRenameConflictingTypeParameters() {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, false));
   }
 
   public void testDefaultMethodAsAbstract() {

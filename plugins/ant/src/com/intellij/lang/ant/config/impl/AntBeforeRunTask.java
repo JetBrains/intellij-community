@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 18, 2009
  */
 public class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
   private String myTargetName;
@@ -50,7 +50,7 @@ public class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     myTargetName = targetName;
   }
 
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
     if (myAntFileUrl != null && myTargetName != null) {
       element.setAttribute("antfile", myAntFileUrl);
@@ -58,7 +58,7 @@ public class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     }
   }
 
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     final String url = element.getAttributeValue("antfile");
     final String targetName = element.getAttributeValue("target");

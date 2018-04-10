@@ -99,7 +99,7 @@ public class GrAccessibilityChecker {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    return fixes.toArray(new GroovyFix[fixes.size()]);
+    return fixes.toArray(GroovyFix.EMPTY_ARRAY);
   }
 
   @Nullable

@@ -35,11 +35,6 @@ public class MacPopupMenuUI extends BasicPopupMenuUI {
     return event.isPopupTrigger();
   }
 
-  @Override
-  public void installUI(JComponent c) {
-    super.installUI(c);
-  }
-
   public void paint(final Graphics g, final JComponent jcomponent) {
     if (!(g instanceof Graphics2D)) {
       super.paint(g, jcomponent);

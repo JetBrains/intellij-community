@@ -15,9 +15,19 @@
  */
 package com.intellij.remote
 
-/**
- * @author Alexander Koshevoy
- */
 enum class AuthType {
-  PASSWORD, KEY_PAIR, AUTH_AGENT
+  PASSWORD, KEY_PAIR,
+  /**
+   * Use the way OpenSSH `ssh` client authenticates:
+   * - read OpenSSH configuration files, get `IdentityFile` declared in it;
+   * - use identity files provided by authentication agent (ssh-agent or PuTTY).
+   */
+  OPEN_SSH;
+
+  val displayName: String
+    get() = when (this) {
+      PASSWORD -> "Password"
+      KEY_PAIR -> "Key pair (OpenSSH or PuTTY)"
+      OPEN_SSH -> "OpenSSH config and authentication agent"
+    }
 }

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 17, 2005
  */
 public class ImportFilteringRule extends com.intellij.usages.rules.ImportFilteringRule {
   @Override

@@ -20,15 +20,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
 import git4idea.GitApplyChangesProcess;
-import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -43,9 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-
-import static com.intellij.openapi.util.text.StringUtil.pluralize;
 
 public class GitCherryPicker extends VcsCherryPicker {
 
@@ -67,9 +59,9 @@ public class GitCherryPicker extends VcsCherryPicker {
       myGit.cherryPick(repository, commit.asString(), autoCommit, ArrayUtil.toObjectArray(listeners, GitLineHandlerListener.class)),
       result -> isNothingToCommitMessage(result),
       commit -> createCommitMessage(commit),
-      originalChanges -> GitUtil.findCorrespondentLocalChanges(ChangeListManager.getInstance(myProject), originalChanges),
       true,
-      repository -> cancelCherryPick(repository));
+      repository -> cancelCherryPick(repository)
+    );
     applyProcess.execute();
   }
 
@@ -126,24 +118,5 @@ public class GitCherryPicker extends VcsCherryPicker {
   @Override
   public boolean canHandleForRoots(@NotNull Collection<VirtualFile> roots) {
     return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRoot(r) != null);
-  }
-
-  @Override
-  public String getInfo(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits) {
-    int commitsNum = commits.values().size();
-    for (VirtualFile root : commits.keySet()) {
-      // all these roots already related to this cherry-picker
-      GitRepository repository = ObjectUtils.assertNotNull(myRepositoryManager.getRepositoryForRoot(root));
-      for (Hash commit : commits.get(root)) {
-        GitLocalBranch currentBranch = repository.getCurrentBranch();
-        Collection<String> containingBranches = log.getContainingBranches(commit, root);
-        if (currentBranch != null && containingBranches != null && containingBranches.contains(currentBranch.getName())) {
-          // already in the current branch
-          return String.format("The current branch already contains %s the selected %s", commitsNum > 1 ? "one of" : "",
-                               pluralize("commit", commitsNum));
-        }
-      }
-    }
-    return null;
   }
 }

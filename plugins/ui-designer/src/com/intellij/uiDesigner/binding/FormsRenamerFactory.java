@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.psi.PsiClass;
@@ -22,12 +8,13 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
 public class FormsRenamerFactory implements AutomaticRenamerFactory {
-  public boolean isApplicable(final PsiElement element) {
+  public boolean isApplicable(@NotNull final PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
     List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(element.getProject(), (PsiClass)element);
     return forms.size() > 0;
@@ -44,6 +31,7 @@ public class FormsRenamerFactory implements AutomaticRenamerFactory {
   public void setEnabled(final boolean enabled) {
   }
 
+  @NotNull
   public AutomaticRenamer createRenamer(final PsiElement element, final String newName, final Collection<UsageInfo> usages) {
     return new FormsRenamer((PsiClass) element, newName);
   }

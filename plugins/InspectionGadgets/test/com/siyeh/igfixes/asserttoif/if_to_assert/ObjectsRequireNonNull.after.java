@@ -19,6 +19,7 @@ import java.util.Objects;
 
 class Parentheses {
   void s(String s) {
+      //keep me
       Objects.requireNonNull(s);
   }
 }

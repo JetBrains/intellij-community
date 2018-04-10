@@ -32,7 +32,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
-  private final Map<Project, BusyContainer> myObjects = FactoryMap.createMap(this::create);
+  private final Map<Project, BusyContainer> myObjects = FactoryMap.create(this::create);
 
   @NotNull
   private BusyContainer create(Project key) {
@@ -229,7 +229,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
     private BusyImpl(@NotNull Set<UiActivity> toWatch, @NotNull BusyContainer container) {
       myToWatch = toWatch;
-      myToWatchArray = toWatch.toArray(new UiActivity[toWatch.size()]);
+      myToWatchArray = toWatch.toArray(new UiActivity[0]);
       myContainer = container;
     }
 
@@ -315,8 +315,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
     @NotNull
     public BusyImpl getOrCreateBusy(@NotNull UiActivity... activities) {
-      Set<UiActivity> key = new HashSet<>();
-      key.addAll(Arrays.asList(activities));
+      Set<UiActivity> key = new HashSet<>(Arrays.asList(activities));
 
       if (myActivities2Object.containsKey(key)) {
         return myActivities2Object.get(key);
@@ -351,7 +350,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     }
 
     public void clear() {
-      final UiActivity[] activities = myActivities.toArray(new UiActivity[myActivities.size()]);
+      final UiActivity[] activities = myActivities.toArray(new UiActivity[0]);
       for (UiActivity each : activities) {
         removeActivity(each);
       }

@@ -16,9 +16,14 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.ChangedPsiRangeUtil
+import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import com.intellij.psi.text.BlockSupport
 
 /**
  * @author peter
@@ -29,40 +34,38 @@ class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
   fun toTopLevelFile(): OffsetsInFile {
     val manager = InjectedLanguageManager.getInstance(file.project)
     val hostFile = manager.getTopLevelFile(file)
-    return if (hostFile == file) this else mapOffsets(hostFile) { manager.injectedToHost(file, it) }
+    if (hostFile == file) return this
+    return OffsetsInFile(hostFile, offsets.mapOffsets(hostFile.viewProvider.document!!) { manager.injectedToHost(file, it) })
   }
 
   fun toInjectedIfAny(offset: Int): OffsetsInFile {
     val injected = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset) ?: return this
     val documentWindow = InjectedLanguageUtil.getDocumentWindow(injected)!!
-    return mapOffsets(injected) { documentWindow.hostToInjected(it) }
-  }
-
-  fun toFileCopy(copyFile: PsiFile): OffsetsInFile {
-    CompletionAssertions.assertCorrectOriginalFile("Given ", file, copyFile)
-    assert(copyFile.viewProvider.document!!.textLength == file.viewProvider.document!!.textLength)
-    return mapOffsets(copyFile) { it }
-  }
-
-  private fun mapOffsets(newFile: PsiFile, offsetFun: (Int) -> Int): OffsetsInFile {
-    val map = OffsetMap(newFile.viewProvider.document!!)
-    for (key in offsets.allOffsets) {
-      map.addOffset(key, offsetFun(offsets.getOffset(key)))
-    }
-    return OffsetsInFile(newFile, map)
+    return OffsetsInFile(injected, offsets.mapOffsets(documentWindow) { documentWindow.hostToInjected(it) })
   }
 
   fun copyWithReplacement(startOffset: Int, endOffset: Int, replacement: String): OffsetsInFile {
-    val fileCopy = file.copy() as PsiFile
-    val document = fileCopy.viewProvider.document!!
-    document.setText(file.viewProvider.document!!.immutableCharSequence) // original file might be uncommitted
+    return replaceInCopy(file.copy() as PsiFile, startOffset, endOffset, replacement)
+  }
 
-    val result = toFileCopy(fileCopy)
-    document.replaceString(startOffset, endOffset, replacement)
+  fun replaceInCopy(fileCopy: PsiFile, startOffset: Int, endOffset: Int, replacement: String): OffsetsInFile {
+    val tempDocument = DocumentImpl(offsets.document.immutableCharSequence, true)
+    val tempMap = offsets.copyOffsets(tempDocument)
+    tempDocument.replaceString(startOffset, endOffset, replacement)
 
-    PsiDocumentManager.getInstance(file.project).commitDocument(document)
+    reparseFile(fileCopy, tempDocument.immutableCharSequence)
 
-    return result
+    val copyOffsets = tempMap.copyOffsets(fileCopy.viewProvider.document!!)
+    return OffsetsInFile(fileCopy, copyOffsets)
+  }
+
+  private fun reparseFile(file: PsiFile, newText: CharSequence) {
+    val node = file.node as FileElement
+    val range = ChangedPsiRangeUtil.getChangedPsiRange(file, node, newText) ?: return
+    val indicator = ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
+    val log = BlockSupport.getInstance(file.project).reparseRange(file, node, range, newText, indicator, file.viewProvider.contents)
+
+    ProgressManager.getInstance().executeNonCancelableSection { log.doActualPsiChange(file) }
   }
 
 }

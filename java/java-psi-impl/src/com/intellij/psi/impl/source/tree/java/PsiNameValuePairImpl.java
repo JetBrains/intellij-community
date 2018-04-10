@@ -40,7 +40,6 @@ import java.lang.ref.Reference;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/27/12
  */
 public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStub> implements PsiNameValuePair {
 
@@ -137,6 +136,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
         return target instanceof PsiClass ? (PsiClass)target : null;
       }
 
+      @NotNull
       @Override
       public PsiElement getElement() {
         PsiIdentifier nameIdentifier = getNameIdentifier();
@@ -146,6 +146,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
         return PsiNameValuePairImpl.this;
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         PsiIdentifier id = getNameIdentifier();

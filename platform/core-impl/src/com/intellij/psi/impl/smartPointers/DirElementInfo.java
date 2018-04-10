@@ -30,50 +30,45 @@ class DirElementInfo extends SmartPointerElementInfo {
   private final Project myProject;
 
 
-  public DirElementInfo(@NotNull PsiDirectory directory) {
+  DirElementInfo(@NotNull PsiDirectory directory) {
     myProject = directory.getProject();
     myVirtualFile = directory.getVirtualFile();
   }
 
   @Override
-  public PsiElement restoreElement() {
+  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
     return SelfElementInfo.restoreDirectoryFromVirtual(myVirtualFile, myProject);
   }
 
   @Override
-  public PsiFile restoreFile() {
+  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
     return null;
   }
 
   @Override
-  public int elementHashCode() {
+  int elementHashCode() {
     return myVirtualFile.hashCode();
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other,
+                                   @NotNull SmartPointerManagerImpl manager) {
     return other instanceof DirElementInfo && Comparing.equal(myVirtualFile, ((DirElementInfo)other).myVirtualFile);
   }
 
   @Override
-  public VirtualFile getVirtualFile() {
+  VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
   @Override
-  public Segment getRange() {
+  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
     return null;
-  }
-
-  @NotNull
-  @Override
-  public Project getProject() {
-    return myProject;
   }
 
   @Nullable
   @Override
-  public Segment getPsiRange() {
+  Segment getPsiRange(@NotNull SmartPointerManagerImpl manager) {
     return null;
   }
 

@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -35,10 +36,7 @@ import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.Secti
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeProviderBase;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,9 +56,9 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");
   private static final Pattern NUMPY_UNION_PATTERN = Pattern.compile("^\\{(.*)\\}$");
   private static final Pattern NUMPY_ARRAY_PATTERN = Pattern.compile("(\\(\\.\\.\\..*\\))(.*)");
-  public static String NDARRAY = "numpy.core.multiarray.ndarray";
+  public static final String NDARRAY = "numpy.core.multiarray.ndarray";
 
-  private static String NDARRAY_OR_ITERABLE = NDARRAY + " or collections.Iterable";
+  private static final String NDARRAY_OR_ITERABLE = NDARRAY + " or collections.Iterable or int or long or float";
 
   static {
     NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", NDARRAY);
@@ -95,7 +93,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("sequence", "collections.Iterable");
     NUMPY_ALIAS_TO_REAL_TYPE.put("set", "collections.Iterable");
     NUMPY_ALIAS_TO_REAL_TYPE.put("list", "collections.Iterable");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("tuple", "collections.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("tuple", "collections.Iterable or tuple");
 
     NUMPY_ALIAS_TO_REAL_TYPE.put("ints", "int");
     NUMPY_ALIAS_TO_REAL_TYPE.put("non-zero int", "int");
@@ -224,6 +222,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
               .map(typeName -> isUfuncType(function, typeName)
                                ? facade.parseTypeAnnotation("T", function)
                                : parseNumpyDocType(function, typeName))
+              .map(type -> PyTypingTypeProvider.toAsyncIfNeeded(function, type))
               .map(Ref::create)
               .orElse(null);
           default:
@@ -252,7 +251,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
             }
 
             final PyType type = unionMembers.isEmpty() ? facade.createTupleType(members, function) : facade.createUnionType(unionMembers);
-            return Ref.create(type);
+            return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(function, type));
         }
       }
     }
@@ -416,5 +415,19 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       .ofNullable(PyUtil.as(callable, PyFunction.class))
       .map(function -> getCallType(function, null, context))
       .orElse(null);
+  }
+
+  @Override
+  public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
+    if (referenceTarget instanceof PyFunction) {
+      if (NumpyUfuncs.isUFunc(((PyFunction)referenceTarget).getName()) && isInsideNumPy(referenceTarget)) {
+        // we intentionally looking here for the user stub class
+        final PyClass uFuncClass = PyPsiFacade.getInstance(referenceTarget.getProject()).findClass("numpy.core.ufunc");
+        if (uFuncClass != null) {
+          return new PyClassTypeImpl(uFuncClass, false);
+        }
+      }
+    }
+    return super.getReferenceType(referenceTarget, context, anchor);
   }
 }

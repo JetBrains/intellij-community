@@ -349,11 +349,11 @@ public class RecentProjectPanel extends JPanel {
     return title;
   }
 
-  private class MyList extends JBList {
+  private class MyList extends JBList<AnAction> {
     private final Dimension mySize;
     private Point myMousePoint;
 
-    private MyList(Dimension size, @NotNull Object ... listData) {
+    private MyList(Dimension size, @NotNull AnAction[] listData) {
       super(listData);
       mySize = size;
       setEmptyText("  No Project Open Yet  ");
@@ -393,11 +393,6 @@ public class RecentProjectPanel extends JPanel {
         }
       }
       return super.getToolTipText(event);
-    }
-
-    @Override
-    protected void processMouseEvent(MouseEvent e) {
-      super.processMouseEvent(e);
     }
 
     @Override
@@ -544,8 +539,9 @@ public class RecentProjectPanel extends JPanel {
 
   private static class FilePathChecker implements Disposable {
     private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
-    private final ScheduledExecutorService myService = AppExecutorUtil.createBoundedScheduledExecutorService("CheckRecentProjectPaths service", 2);
-    private Map<String, AtomicBoolean> myStates = ContainerUtil.newHashMap();
+    private final ScheduledExecutorService myService = AppExecutorUtil.createBoundedScheduledExecutorService(
+      "CheckRecentProjectPaths Service", 2);
+    private final Map<String, AtomicBoolean> myStates = ContainerUtil.newHashMap();
 
     private final Runnable myCallback;
     private final Collection<String> myPaths;

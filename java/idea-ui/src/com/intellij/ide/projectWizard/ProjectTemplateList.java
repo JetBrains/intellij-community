@@ -41,7 +41,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 12/24/13
  */
 public class ProjectTemplateList extends JPanel {
 

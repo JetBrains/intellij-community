@@ -17,25 +17,26 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author irengrig
- */
 public interface LineStatusTrackerManagerI {
   @Nullable
-  LineStatusTracker getLineStatusTracker(Document document);
+  LineStatusTracker<?> getLineStatusTracker(Document document);
 
-  class Dummy implements LineStatusTrackerManagerI {
-    private final static Dummy ourInstance = new Dummy();
+  @Nullable
+  LineStatusTracker<?> getLineStatusTracker(@NotNull VirtualFile file);
 
-    public static Dummy getInstance() {
-      return ourInstance;
-    }
+  @CalledInAwt
+  void requestTrackerFor(@NotNull Document document, @NotNull Object requester);
 
-    @Override
-    public LineStatusTracker getLineStatusTracker(final Document document) {
-      return null;
-    }
-  }
+  @CalledInAwt
+  void releaseTrackerFor(@NotNull Document document, @NotNull Object requester);
+
+
+  boolean arePartialChangelistsEnabled(@NotNull VirtualFile virtualFile);
+
+  void invokeAfterUpdate(@NotNull Runnable task);
 }

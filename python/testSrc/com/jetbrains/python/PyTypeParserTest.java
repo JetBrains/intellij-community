@@ -60,7 +60,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "dict from str to MyObject");
     assertNotNull(type);
     assertClassType(type, "dict");
-    final List<PyType> elementTypes = type.getElementTypes(getTypeEvalContext());
+    final List<PyType> elementTypes = type.getElementTypes();
     assertClassType(elementTypes.get(0), "str");
     assertClassType(elementTypes.get(1), "MyObject");
   }
@@ -210,7 +210,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyCollectionType collectionType = (PyCollectionType)type;
     assertNotNull(collectionType);
     assertEquals("dict", collectionType.getName());
-    final List<PyType> elementTypes = collectionType.getElementTypes(TypeEvalContext.codeInsightFallback(null));
+    final List<PyType> elementTypes = collectionType.getElementTypes();
     assertEquals(2, elementTypes.size());
     final PyType first = elementTypes.get(0);
     assertNotNull(first);

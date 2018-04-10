@@ -418,7 +418,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitPosixBracketExpression(RegExpPosixBracketExpression posixBracketExpression) {
     final String className = posixBracketExpression.getClassName();
-    if (!POSIX_CHARACTER_CLASSES.contains(className)) {
+    if (!POSIX_CHARACTER_CLASSES.contains(className) && !"<".equals(className) && !">".equals(className)) {
       final ASTNode node = posixBracketExpression.getNode().findChildByType(RegExpTT.NAME);
       if (node != null) {
         final Annotation annotation = myHolder.createErrorAnnotation(node, "Unknown POSIX character class");
@@ -541,12 +541,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         }
         stopAndReportError(quantifier, tokenText + " repetition not allowed inside lookbehind");
       }
-    }
-
-    @Override
-    public void visitRegExpBoundary(RegExpBoundary boundary) {
-      super.visitRegExpBoundary(boundary);
-      // is zero length
     }
 
     @Override

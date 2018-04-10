@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+import static com.intellij.vcs.log.VcsLogFilterCollection.BRANCH_FILTER;
+
 /**
  * Tells to filter by branches with given names.
  */
@@ -38,4 +40,10 @@ public interface VcsLogBranchFilter extends VcsLogFilter {
    */
   @NotNull
   Collection<String> getTextPresentation();
+
+  @NotNull
+  @Override
+  default VcsLogFilterCollection.FilterKey<VcsLogBranchFilter> getKey() {
+    return BRANCH_FILTER;
+  }
 }

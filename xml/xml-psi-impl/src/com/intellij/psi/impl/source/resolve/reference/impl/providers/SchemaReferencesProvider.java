@@ -71,11 +71,13 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       myElement = element;
     }
 
+    @NotNull
     @Override
     public PsiElement getElement() {
       return myElement;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       return ElementManipulators.getValueTextRange(myElement);
@@ -150,7 +152,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       }
 
       if (lastIndex != testLength - 1) result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, testLength - 1) ) );
-      return result.toArray(new PsiReference[result.size()]);
+      return result.toArray(PsiReference.EMPTY_ARRAY);
     } else {
       final PsiReference prefix = createSchemaPrefixReference(element);
       final PsiReference ref = createTypeOrElementOrAttributeReference(element, prefix == null ? null : prefix.getCanonicalText());

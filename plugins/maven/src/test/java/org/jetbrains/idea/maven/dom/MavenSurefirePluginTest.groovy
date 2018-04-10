@@ -15,13 +15,18 @@
  */
 package org.jetbrains.idea.maven.dom
 
-import org.jetbrains.idea.maven.MavenImportingTestCase
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 
 /**
  * @author Sergey Evdokimov
  */
 class MavenSurefirePluginTest extends MavenDomTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    setRepositoryPath(new MavenCustomRepositoryHelper(myDir, "plugins").getTestDataPath("plugins"));
+  }
 
   void testCompletion() {
     importProject("""

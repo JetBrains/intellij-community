@@ -21,10 +21,9 @@ package com.intellij.util.io.zip;
 
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.List;
 import java.util.zip.*;
 
@@ -48,7 +47,7 @@ class JBZipOutputStream {
 
   private final CRC32 crc = new CRC32();
 
-  long written = 0;
+  private long writtenOnDisk = 0;
 
   /**
    * The encoding to use for filenames and the file comment.
@@ -93,8 +92,7 @@ class JBZipOutputStream {
   public JBZipOutputStream(JBZipFile file, long currentCDOffset) throws IOException {
     myFile = file;
     raf = myFile.archive;
-    written = currentCDOffset;
-    raf.seek(currentCDOffset);
+    writtenOnDisk = currentCDOffset;
   }
 
   /**
@@ -129,12 +127,12 @@ class JBZipOutputStream {
    * @since 1.1
    */
   public void finish() throws IOException {
-    long cdOffset = written;
+    long cdOffset = getWritten();
     final List<JBZipEntry> entries = myFile.getEntries();
     for (int i = 0, entriesSize = entries.size(); i < entriesSize; i++) {
       writeCentralFileHeader(entries.get(i));
     }
-    long cdLength = written - cdOffset;
+    long cdLength = getWritten() - cdOffset;
     writeCentralDirectoryEnd(cdLength, cdOffset);
     flushBuffer();
     def.end();
@@ -209,7 +207,7 @@ class JBZipOutputStream {
    * @since 1.1
    */
   protected void writeLocalFileHeader(JBZipEntry ze) throws IOException {
-    ze.setHeaderOffset(written);
+    ze.setHeaderOffset(getWritten());
 
     writeOut(LFH_SIG);
 
@@ -236,6 +234,16 @@ class JBZipOutputStream {
     writeOut(name);
 
     writeOut(extra);
+  }
+
+  private void updateLocalFileHeader(JBZipEntry ze, long crc, long compressedSize) throws IOException {
+    ze.setCrc(crc);
+    ze.setCompressedSize(compressedSize);
+    flushBuffer();
+    long offset = ze.getHeaderOffset() + JBZipFile.LFH_OFFSET_FOR_CRC;
+    raf.seek(offset);
+    raf.write(ZipLong.getBytes(crc));
+    raf.write(ZipLong.getBytes(compressedSize));
   }
 
   private void writeOutShort(int s) throws IOException {
@@ -376,28 +384,25 @@ class JBZipOutputStream {
     if (myBuffer.size() > 8192) {
       flushBuffer();
     }
-    written += length;
+  }
+
+  void ensureFlushed(long end) throws IOException {
+    if (end > writtenOnDisk) flushBuffer();
   }
 
   private void flushBuffer() throws IOException {
+    raf.seek(writtenOnDisk);
     raf.write(myBuffer.getInternalBuffer(), 0, myBuffer.size());
+    writtenOnDisk += myBuffer.size();
     myBuffer.reset();
   }
 
   public void putNextEntryBytes(JBZipEntry entry, byte[] bytes) throws IOException {
-    entry.setSize(bytes.length);
+    prepareNextEntry(entry, bytes.length);
 
     crc.reset();
     crc.update(bytes);
     entry.setCrc(crc.getValue());
-
-    if (entry.getMethod() == -1) {
-      entry.setMethod(method);
-    }
-
-    if (entry.getTime() == -1) {
-      entry.setTime(System.currentTimeMillis());
-    }
 
     final byte[] outputBytes;
     final int outputBytesLength;
@@ -422,5 +427,76 @@ class JBZipOutputStream {
     entry.setCompressedSize(outputBytesLength);
     writeLocalFileHeader(entry);
     writeOut(outputBytes, 0, outputBytesLength);
+  }
+
+  void putNextEntryContent(JBZipEntry entry, long size, InputStream content) throws IOException {
+    prepareNextEntry(entry, size);
+    writeLocalFileHeader(entry);
+    flushBuffer();
+
+    RandomAccessFileOutputStream fileOutput = new RandomAccessFileOutputStream(raf);
+    OutputStream bufferedFileOutput = new BufferedOutputStream(fileOutput);
+
+    OutputStream output;
+    if (entry.getMethod() == ZipEntry.DEFLATED) {
+      def.setLevel(level);
+      output = new DeflaterOutputStream(bufferedFileOutput, def);
+    }
+    else {
+      output = bufferedFileOutput;
+    }
+
+    try {
+      final byte[] buffer = new byte[10 * 1024];
+      int count;
+      crc.reset();
+      while ((count = content.read(buffer)) > 0) {
+        output.write(buffer, 0, count);
+        crc.update(buffer, 0, count);
+      }
+    }
+    finally {
+      output.close();
+    }
+    writtenOnDisk += fileOutput.myWrittenBytes;
+
+    updateLocalFileHeader(entry, crc.getValue(), fileOutput.myWrittenBytes);
+  }
+
+  private void prepareNextEntry(JBZipEntry entry, long size) {
+    entry.setSize(size);
+
+    if (entry.getMethod() == -1) {
+      entry.setMethod(method);
+    }
+
+    if (entry.getTime() == -1) {
+      entry.setTime(System.currentTimeMillis());
+    }
+  }
+
+  long getWritten() {
+    return writtenOnDisk + myBuffer.size();
+  }
+
+  private static class RandomAccessFileOutputStream extends OutputStream {
+    private final RandomAccessFile myFile;
+    private long myWrittenBytes;
+
+    public RandomAccessFileOutputStream(RandomAccessFile file) {
+      myFile = file;
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+      myFile.write(b);
+      myWrittenBytes++;
+    }
+
+    @Override
+    public void write(@NotNull byte[] b, int off, int len) throws IOException {
+      myFile.write(b, off, len);
+      myWrittenBytes += len;
+    }
   }
 }

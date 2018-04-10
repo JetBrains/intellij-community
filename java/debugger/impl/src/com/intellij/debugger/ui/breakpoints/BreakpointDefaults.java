@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 8/30/12
 */
 public final class BreakpointDefaults {
   private String mySuspendPolicy = DebuggerSettings.SUSPEND_ALL;

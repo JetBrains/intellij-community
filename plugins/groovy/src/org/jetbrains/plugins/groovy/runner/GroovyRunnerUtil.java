@@ -43,7 +43,7 @@ public class GroovyRunnerUtil {
       if (lastDot == -1 || lastDot == qualifiedName.length() - 1) {
         return qualifiedName;
       }
-      return qualifiedName.substring(lastDot + 1, qualifiedName.length());
+      return qualifiedName.substring(lastDot + 1);
     }
   }
 }

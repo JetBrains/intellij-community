@@ -1,10 +1,11 @@
 __author__ = 'traff'
 
-import threading
 import os
 import sys
 import tempfile
-from _prof_imports import Stats, FuncStat, Function
+import threading
+
+from _prof_imports import pkgutil, Stats, FuncStat, Function
 
 try:
     execfile=execfile #Not in Py3k
@@ -41,6 +42,18 @@ def save_main_module(file, module_name):
     m.__file__ = file
 
     return m
+
+def get_fullname(mod_name):
+    try:
+        loader = pkgutil.get_loader(mod_name)
+    except:
+        return None
+    if loader is not None:
+        for attr in ("get_filename", "_get_filename"):
+            meth = getattr(loader, attr, None)
+            if meth is not None:
+                return meth(mod_name)
+    return None
 
 
 class ProfDaemonThread(threading.Thread):

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.documentation.AbstractExternalFilter;
@@ -22,6 +8,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -133,15 +120,17 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     }
 
     if (element instanceof PsiMethod) {
-      final String className = ApplicationManager.getApplication().runReadAction(
-        (NullableComputable<String>)() -> {
+      final Couple<String> classNameAndPresentation = ApplicationManager.getApplication().runReadAction(
+        (NullableComputable<Couple<String>>)() -> {
           PsiClass aClass = ((PsiMethod)element).getContainingClass();
-          return aClass == null ? null : aClass.getQualifiedName();
+          return aClass == null ? null : Couple.of(aClass.getQualifiedName(), 
+                                                   aClass.getQualifiedName() + JavaDocInfoGenerator.generateTypeParameters(aClass, true));
         }
       );
+      if (classNameAndPresentation == null) return externalDoc;
       Matcher matcher = ourMethodHeading.matcher(externalDoc);
       StringBuilder buffer = new StringBuilder("<h3>");
-      DocumentationManager.createHyperlink(buffer, className, className, false);
+      DocumentationManager.createHyperlink(buffer, classNameAndPresentation.first, classNameAndPresentation.second, false);
       return matcher.replaceFirst(buffer.append("</h3>").toString());
     }
     return externalDoc;

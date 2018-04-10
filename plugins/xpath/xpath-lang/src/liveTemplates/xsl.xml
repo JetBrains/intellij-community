@@ -232,7 +232,7 @@
       <option name="JAVA_COMMENT" value="false"/>
       <option name="JAVA_STRING" value="false"/>
       <option name="XML" value="false"/>
-      <option name="XSL_TEXT" value="true"/>
+      <option name="XSL_TEXT" value="false"/>
       <option name="HTML" value="false"/>
       <option name="JSP" value="false"/>
       <option name="COMPLETION" value="false"/>
@@ -265,7 +265,7 @@
       <option name="JAVA_COMMENT" value="false"/>
       <option name="JAVA_STRING" value="false"/>
       <option name="XML" value="false"/>
-      <option name="XSL_TEXT" value="true"/>
+      <option name="XSL_TEXT" value="false"/>
       <option name="HTML" value="false"/>
       <option name="JSP" value="false"/>
       <option name="COMPLETION" value="false"/>

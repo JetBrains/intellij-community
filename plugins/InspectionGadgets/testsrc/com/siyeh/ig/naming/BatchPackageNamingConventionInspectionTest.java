@@ -22,7 +22,7 @@ import com.siyeh.ig.IGInspectionTestCase;
  */
 public class BatchPackageNamingConventionInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/naming/batch_package_naming_convention", new PackageNamingConventionInspection());
   }
 }

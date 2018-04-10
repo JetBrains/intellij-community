@@ -94,7 +94,7 @@ class SyncCompletion extends CompletionThreadingBase {
 
 class AsyncCompletion extends CompletionThreadingBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.AsyncCompletion");
-  private ArrayList<CompletionResult> myBatchList = new ArrayList<>();
+  private final ArrayList<CompletionResult> myBatchList = new ArrayList<>();
   private final LinkedBlockingQueue<Computable<Boolean>> myQueue = new LinkedBlockingQueue<>();
 
   @Override

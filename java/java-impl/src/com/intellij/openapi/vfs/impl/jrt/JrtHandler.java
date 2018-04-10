@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -50,11 +37,12 @@ class JrtHandler extends ArchiveHandler {
     synchronized (this) {
       FileSystem fs = SoftReference.dereference(myFileSystem);
       if (fs != null) {
+        myFileSystem = null;
         try {
           fs.close();
           ClassLoader loader = fs.getClass().getClassLoader();
-          if (loader instanceof URLClassLoader && ((URLClassLoader)loader).getURLs().length == 1) {
-            ((URLClassLoader)loader).close();
+          if (loader instanceof MyClassLoader) {
+            ((MyClassLoader)loader).close();
           }
         }
         catch (IOException e) {
@@ -69,15 +57,13 @@ class JrtHandler extends ArchiveHandler {
     if (fs == null) {
       String path = getFile().getPath();
       try {
-        if (SystemInfo.isJavaVersionAtLeast("9")) {
+        if (SystemInfo.IS_AT_LEAST_JAVA9) {
           fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
         }
         else {
           File file = new File(path, "lib/jrt-fs.jar");
           if (!file.exists()) throw new IOException("Missing provider: " + file);
-          URL url = file.toURI().toURL();
-          ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
-          fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), loader);
+          fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), new MyClassLoader(file));
         }
         myFileSystem = new SoftReference<>(fs);
       }
@@ -137,5 +123,11 @@ class JrtHandler extends ArchiveHandler {
     if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
     Path path = getFileSystem().getPath("/modules/" + relativePath);
     return Files.readAllBytes(path);
+  }
+
+  private static class MyClassLoader extends URLClassLoader {
+    private MyClassLoader(File file) throws MalformedURLException {
+      super(new URL[]{file.toURI().toURL()}, null);
+    }
   }
 }

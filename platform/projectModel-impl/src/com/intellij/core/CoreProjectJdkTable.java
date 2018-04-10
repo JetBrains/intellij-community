@@ -51,7 +51,7 @@ public class CoreProjectJdkTable extends ProjectJdkTable {
   @Override
   public Sdk[] getAllJdks() {
     synchronized (mySdks) {
-      return mySdks.toArray(new Sdk[mySdks.size()]);
+      return mySdks.toArray(new Sdk[0]);
     }
   }
 

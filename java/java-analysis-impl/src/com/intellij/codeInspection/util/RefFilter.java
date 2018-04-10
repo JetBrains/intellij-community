@@ -26,7 +26,7 @@ public abstract class RefFilter {
   public int getElementProblemCount(@NotNull RefJavaElement refElement) {
     if (refElement instanceof RefParameter) return 0;
     RefEntity refOwner = refElement.getOwner();
-    if (refOwner == null || !(refOwner instanceof RefJavaElement)) return 1;
+    if (!(refOwner instanceof RefJavaElement)) return 1;
 
     return 1 - getElementProblemCount((RefJavaElement)refOwner);
   }

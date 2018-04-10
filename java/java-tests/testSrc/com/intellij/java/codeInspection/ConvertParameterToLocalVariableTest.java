@@ -17,14 +17,9 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.ParameterCanBeLocalInspection;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,24 +30,16 @@ public class ConvertParameterToLocalVariableTest extends LightQuickFixParameteri
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
+  @NotNull
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{new ParameterCanBeLocalInspection()};
+  }
+
+  
   public void test() {
     doAllTests();
   }
-
-  @Override
-  protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName) {
-
-    final LocalQuickFix fix = new ParameterCanBeLocalInspection.ConvertParameterToLocalQuickFix();
-    final int offset = getEditor().getCaretModel().getOffset();
-    final PsiElement psiElement = getFile().findElementAt(offset);
-    assert psiElement != null;
-    final InspectionManager manager = InspectionManager.getInstance(getProject());
-    final ProblemDescriptor descriptor = manager.createProblemDescriptor(psiElement, "", fix, ProblemHighlightType.LIKE_UNUSED_SYMBOL, true);
-    fix.applyFix(getProject(), descriptor);
-    final String expectedFilePath = getBasePath() + "/after" + testName;
-    checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
-  }
-
 
   @Override
   @NonNls

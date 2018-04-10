@@ -34,6 +34,8 @@ import com.intellij.openapi.diagnostic.CompositeLogger
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.Processor
+import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -45,7 +47,14 @@ import org.jetbrains.jps.build.Standalone
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.cmdline.JpsModelLoader
 import org.jetbrains.jps.incremental.MessageHandler
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType
+import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter
+import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil
 import org.jetbrains.jps.incremental.messages.*
+import org.jetbrains.jps.model.artifact.JpsArtifact
+import org.jetbrains.jps.model.artifact.JpsArtifactService
+import org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
@@ -64,31 +73,44 @@ class JpsCompilationRunner {
 
   void buildModules(List<JpsModule> modules) {
     Set<String> names = new LinkedHashSet<>()
-    context.messages.info("Collecting dependencies for ${modules.size()} modules")
+    context.messages.debug("Collecting dependencies for ${modules.size()} modules")
     for (JpsModule module : modules) {
       for (String dependency : getModuleDependencies(module, false)) {
         if (names.add(dependency)) {
-          context.messages.info(" adding $dependency required for $module.name")
+          context.messages.debug(" adding $dependency required for $module.name")
         }
       }
     }
-    runBuild(names, false, false, false)
+    runBuild(names, false, [], false, false)
   }
 
   void resolveProjectDependencies() {
-    runBuild([] as Set, false, false, true)
+    runBuild([] as Set, false, [], false, true)
   }
 
   void buildModuleTests(JpsModule module) {
-    runBuild(getModuleDependencies(module, true), false, true, false)
+    runBuild(getModuleDependencies(module, true), false, [], true, false)
   }
 
   void buildAll() {
-    runBuild(Collections.<String> emptySet(), true, true, false)
+    runBuild(Collections.<String> emptySet(), true, [], true, false)
   }
 
   void buildProduction() {
-    runBuild(Collections.<String> emptySet(), true, false, false)
+    runBuild(Collections.<String> emptySet(), true, [], false, false)
+  }
+
+  /**
+   * @deprecated use {@link #buildArtifacts(java.util.Collection, boolean)} instead
+   */
+  void buildArtifacts(Collection<String> artifactNames) {
+    buildArtifacts(artifactNames, true)
+  }
+
+  void buildArtifacts(Collection<String> artifactNames, boolean buildIncludedModules) {
+    Set<JpsArtifact> artifacts = getArtifactsWithIncluded(artifactNames)
+    Set<String> modules = buildIncludedModules ? getModulesIncludedInArtifacts(artifacts) : [] as Set<String>
+    runBuild(modules, false, artifacts.collect {it.name}, false, false)
   }
 
   private static Set<String> getModuleDependencies(JpsModule module, boolean includeTests) {
@@ -99,10 +121,30 @@ class JpsCompilationRunner {
     return enumerator.modules.collect(new HashSet<>()) { it.name } as Set<String>
   }
 
-  private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests, boolean resolveProjectDependencies) {
+  private Set<String> getModulesIncludedInArtifacts(Collection<JpsArtifact> artifacts) {
+    Set<String> modulesSet = new HashSet<>()
+    artifacts.each { artifact ->
+      JpsArtifactUtil.processPackagingElements(artifact.rootElement, { element ->
+        if (element instanceof JpsModuleOutputPackagingElement) {
+          modulesSet.addAll(getModuleDependencies(context.findRequiredModule(element.moduleReference.moduleName), false))
+        }
+        true
+      } as Processor<JpsPackagingElement>)
+    }
+    return modulesSet
+  }
+
+  private Set<JpsArtifact> getArtifactsWithIncluded(Collection<String> artifactNames) {
+    Set<String> artifactNamesSet = new HashSet<>(artifactNames)
+    def artifacts = JpsArtifactService.instance.getArtifacts(context.project).findAll { it.name in artifactNamesSet }
+    return ArtifactSorter.addIncludedArtifacts(artifacts)
+  }
+
+  private void runBuild(final Set<String> modulesSet, final boolean allModules, Collection<String> artifactNames, boolean includeTests,
+                        boolean resolveProjectDependencies) {
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
     final AntMessageHandler messageHandler = new AntMessageHandler()
-    AntLoggerFactory.ourMessageHandler = new AntMessageHandler()
+    AntLoggerFactory.ourMessageHandler = messageHandler
     AntLoggerFactory.ourFileLoggerFactory = compilationData.fileLoggerFactory
     Logger.setFactory(AntLoggerFactory.class)
     boolean forceBuild = !context.options.incrementalCompilation
@@ -130,12 +172,21 @@ class JpsCompilationRunner {
         }
       }
     }
-    if (resolveProjectDependencies) {
+    if (resolveProjectDependencies && !compilationData.projectDependenciesResolved) {
       scopes.add(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.newBuilder().setTypeId("project-dependencies-resolving").setForceBuild(false).setAllTargets(true).build())
+      compilationData.projectDependenciesResolved = true
+    }
+    Collection<String> artifactsToBuild = artifactNames - compilationData.builtArtifacts
+    if (!artifactsToBuild.isEmpty()) {
+      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.Builder builder = CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId()).setForceBuild(forceBuild)
+      scopes.add(builder.addAllTargetId(artifactsToBuild).build())
+      compilationData.builtArtifacts.addAll(artifactsToBuild)
     }
 
     context.messages.info("Starting build; incremental: $context.options.incrementalCompilation, cache directory: $compilationData.dataStorageRoot.absolutePath")
-    context.messages.info("Build scope: ${allModules ? "all" : modulesSet.size()} modules, ${includeTests ? "including tests" : "production only"}${resolveProjectDependencies ? ", resolve dependencies" : ""}")
+    String buildArtifactsMessage = !artifactsToBuild.isEmpty() ? ", ${artifactsToBuild.size()} artifacts" : ""
+    String resolveDependenciesMessage = resolveProjectDependencies ? ", resolve dependencies" : ""
+    context.messages.info("Build scope: ${allModules ? "all" : modulesSet.size()} modules, ${includeTests ? "including tests" : "production only"}$buildArtifactsMessage$resolveDependenciesMessage")
     long compilationStart = System.currentTimeMillis()
     context.messages.block("Compilation") {
       try {
@@ -146,7 +197,10 @@ class JpsCompilationRunner {
         context.messages.error("Compilation failed unexpectedly", e)
       }
     }
-    if (messageHandler.compilationFailed) {
+    if (!messageHandler.errorMessagesByCompiler.isEmpty()) {
+      for (Map.Entry<String, Collection<String>> entry : messageHandler.errorMessagesByCompiler.entrySet()) {
+        context.messages.compilationErrors(entry.key, (List<String>)entry.value)
+      }
       context.messages.error("Compilation failed")
     }
     else if (!compilationData.statisticsReported) {
@@ -156,7 +210,7 @@ class JpsCompilationRunner {
   }
 
   private class AntMessageHandler implements MessageHandler {
-    private boolean compilationFailed
+    private MultiMap<String, String> errorMessagesByCompiler = MultiMap.createLinked()
     private float progress = -1.0
 
     @Override
@@ -181,8 +235,7 @@ class JpsCompilationRunner {
             compilerName = ""
             messageText = text
           }
-          compilationFailed = true
-          context.messages.compilationError(compilerName, messageText)
+          errorMessagesByCompiler.putValue(compilerName, messageText)
           break
         case BuildMessage.Kind.WARNING:
           context.messages.warning(text)
@@ -219,7 +272,7 @@ class JpsCompilationRunner {
   }
 
   static class AntLoggerFactory implements Logger.Factory {
-    private static final String COMPILER_NAME = "build runner"
+    public static final String COMPILER_NAME = "build runner" //it's public to workaround Groovy bug (IDEA-179735)
     private static AntMessageHandler ourMessageHandler
     private static Logger.Factory ourFileLoggerFactory
 

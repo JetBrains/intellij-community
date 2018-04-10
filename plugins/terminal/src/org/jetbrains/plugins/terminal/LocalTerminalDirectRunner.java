@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -100,8 +99,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           }
         }
         if (resource != null) {
-          URI uri = resource.toURI();
-          return uri.getPath();
+          return resource.getPath();
         }
       }
       catch (Exception e) {

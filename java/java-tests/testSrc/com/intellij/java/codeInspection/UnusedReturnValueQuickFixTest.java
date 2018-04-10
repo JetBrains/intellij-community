@@ -16,14 +16,22 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.reference.EntryPoint;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -49,6 +57,37 @@ public class UnusedReturnValueQuickFixTest extends LightCodeInsightFixtureTestCa
         return false;
       }
     }, getTestRootDisposable());
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPoint() {
+      @Override
+      public void readExternal(Element element) throws InvalidDataException { }
+
+      @Override
+      public void writeExternal(Element element) throws WriteExternalException { }
+
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return "return value used";
+      }
+
+      @Override
+      public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
+        return isEntryPoint(psiElement);
+      }
+
+      @Override
+      public boolean isEntryPoint(@NotNull PsiElement psiElement) {
+        return psiElement instanceof PsiMethod && "provider".equals(((PsiMethod)psiElement).getName());
+      }
+
+      @Override
+      public boolean isSelected() {
+        return true;
+      }
+
+      @Override
+      public void setSelected(boolean selected) { }
+    }, getTestRootDisposable());
 
     myFixture.enableInspections(new UnusedReturnValue());
   }
@@ -58,6 +97,12 @@ public class UnusedReturnValueQuickFixTest extends LightCodeInsightFixtureTestCa
   public void testSideEffectsComplex2() { doTest(); }
   public void testRedundantReturn() { doTest(); }
   public void testNoChangeForImplicitRead() {
+    final String name = getTestName(false);
+    myFixture.configureByFile(name + ".java");
+    assertEmpty(myFixture.filterAvailableIntentions(InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix")));
+  }
+
+  public void testNoChangeForEntryPoint() {
     final String name = getTestName(false);
     myFixture.configureByFile(name + ".java");
     assertEmpty(myFixture.filterAvailableIntentions(InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix")));

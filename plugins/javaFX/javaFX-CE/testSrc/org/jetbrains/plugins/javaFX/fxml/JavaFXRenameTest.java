@@ -203,11 +203,11 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", false);
   }
 
-  public void testControllerStringProperty() throws Exception {
+  public void testControllerStringProperty() {
     doTestProperty("newName", false);
   }
 
-  public void testControllerBooleanProperty() throws Exception {
+  public void testControllerBooleanProperty() {
     doTestProperty("newName", true);
   }
 

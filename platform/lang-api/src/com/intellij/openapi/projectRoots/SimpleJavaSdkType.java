@@ -1,25 +1,17 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
 
@@ -27,6 +19,10 @@ import java.io.File;
  * @author Gregory.Shrago
  */
 public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
+  public static SimpleJavaSdkType getInstance() {
+    return SdkType.findInstance(SimpleJavaSdkType.class);
+  }
+
   public SimpleJavaSdkType() {
     super("SimpleJavaSdkType");
   }
@@ -52,8 +48,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   }
 
   @Override
-  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
-  }
+  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) { }
 
   @Override
   public String getBinPath(@NotNull Sdk sdk) {
@@ -82,11 +77,34 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
 
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
-    return currentSdkName;
+    return suggestJavaSdkName(this, currentSdkName, sdkHome);
+  }
+
+  public static String suggestJavaSdkName(JavaSdkType javaSdkType, String currentSdkName, String sdkHome) {
+    assert javaSdkType instanceof SdkType;
+    JavaVersion version = JavaVersion.tryParse(((SdkType)javaSdkType).getVersionString(sdkHome));
+    if (version == null) return currentSdkName;
+
+    StringBuilder suggested = new StringBuilder();
+    if (version.feature < 9) suggested.append("1.");
+    suggested.append(version.feature);
+    if (version.ea) suggested.append("-ea");
+    return suggested.toString();
   }
 
   @Override
   public final String getVersionString(final String sdkHome) {
-    return SdkVersionUtil.detectJdkVersion(sdkHome);
+    JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(sdkHome);
+    return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
+  }
+
+  @NotNull
+  public static Condition<SdkTypeId> notSimpleJavaSdkType() {
+    return sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType);
+  }
+
+  @NotNull
+  public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<SdkTypeId> condition) {
+    return sdkTypeId -> notSimpleJavaSdkType().value(sdkTypeId) && (condition == null || condition.value(sdkTypeId));
   }
 }

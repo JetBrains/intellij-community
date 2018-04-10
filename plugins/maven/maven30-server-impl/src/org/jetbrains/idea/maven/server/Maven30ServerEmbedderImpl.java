@@ -134,6 +134,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @Nullable private Properties myUserProperties;
 
+  @NotNull private RepositorySystem myRepositorySystem;
+
   public Maven30ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
     super(settings);
 
@@ -193,7 +195,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       Constructor constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
       //noinspection SSBasedInspection
-      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[commandLineOptions.size()]), classWorld);
+      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[0]), classWorld);
 
       for (String each : new String[]{"initialize", "cli", "logging", "properties", "container"}) {
         Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);
@@ -229,6 +231,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                     ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
 
     myLocalRepository = createLocalRepository();
+
+    myRepositorySystem = getComponent(RepositorySystem.class);
   }
 
   private static Settings buildSettings(SettingsBuilder builder,
@@ -1098,6 +1102,11 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       catch (InvalidRepositoryException e) {
         Maven3ServerGlobals.getLogger().warn(e);
       }
+    }
+    if (getComponent(LegacySupport.class).getRepositorySession() == null) {
+      myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
+      myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());
+      myRepositorySystem.injectAuthentication(result, myMavenSettings.getServers());
     }
     return result;
   }

@@ -38,9 +38,9 @@ public class PyTemporaryInjector extends PyInjectorBase {
     final PyInjectionUtil.InjectionResult result = registerInjection(registrar, context);
     if (result.isInjected()) {
       final TemporaryPlacesRegistry registry = TemporaryPlacesRegistry.getInstance(context.getProject());
-      InjectorUtils.registerSupport(registry.getLanguageInjectionSupport(), false, registrar);
+      InjectorUtils.registerSupport(registry.getLanguageInjectionSupport(), false, context, getInjectedLanguage(context));
       if (!result.isStrict()) {
-        InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
+        InjectorUtils.putInjectedFileUserData(context, getInjectedLanguage(context), InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
       }
     }
   }

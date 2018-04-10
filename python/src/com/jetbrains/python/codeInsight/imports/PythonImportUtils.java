@@ -22,7 +22,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,6 +34,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -87,11 +87,8 @@ public final class PythonImportUtils {
     Set<String> seenCandidateNames = new HashSet<>(); // true import names
 
     PsiFile existingImportFile = addCandidatesFromExistingImports(node, refText, fix, seenCandidateNames);
-    if (fix.getCandidates().isEmpty()|| fix.hasProjectImports() || Registry.is("python.import.always.ask")) {
-      // maybe some unimported file has it, too
-      ProgressManager.checkCanceled(); // before expensive index searches
-      addSymbolImportCandidates(node, refText, asName, fix, seenCandidateNames, existingImportFile);
-    }
+    ProgressManager.checkCanceled(); // before expensive index searches
+    addSymbolImportCandidates(node, refText, asName, fix, seenCandidateNames, existingImportFile);
 
     for(PyImportCandidateProvider provider: Extensions.getExtensions(PyImportCandidateProvider.EP_NAME)) {
       provider.addImportCandidates(reference, refText, fix);
@@ -159,8 +156,7 @@ public final class PythonImportUtils {
   private static void addSymbolImportCandidates(PyElement node, String refText, @Nullable String asName, AutoImportQuickFix fix,
                                                 Set<String> seenCandidateNames, PsiFile existingImportFile) {
     Project project = node.getProject();
-    List<PsiElement> symbols = new ArrayList<>();
-    symbols.addAll(PyClassNameIndex.find(refText, project, true));
+    List<PsiElement> symbols = new ArrayList<>(PyClassNameIndex.find(refText, project, true));
     GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(node);
     if (!isQualifier(node)) {
       symbols.addAll(PyFunctionNameIndex.find(refText, project, scope));
@@ -259,9 +255,9 @@ public final class PythonImportUtils {
   public static boolean isImportableModule(PsiFile targetFile, @NotNull PsiFileSystemItem file) {
     PsiDirectory parent = (PsiDirectory)file.getParent();
     return parent != null && file != targetFile &&
-           (parent.findFile(PyNames.INIT_DOT_PY) != null ||
-            ImportFromExistingAction.isRoot(parent) ||
-            parent == targetFile.getParent());
+           (ImportFromExistingAction.isRoot(parent) ||
+            parent == targetFile.getParent() ||
+            PyUtil.isPackage(parent, false, null));
   }
 
   private static boolean isIndexableTopLevel(PsiElement symbol) {

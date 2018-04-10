@@ -21,8 +21,7 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.FileObject;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
@@ -520,7 +519,7 @@ class OptimizedFileManager extends DefaultFileManager {
   }
 
   private static class ByteBufferCache {
-    private AtomicReference<ByteBuffer> myCached = new AtomicReference<ByteBuffer>(null);
+    private final AtomicReference<ByteBuffer> myCached = new AtomicReference<ByteBuffer>(null);
 
     ByteBuffer get(int capacity) {
       if (capacity < 20480) {

@@ -18,21 +18,20 @@ package com.intellij.tasks.context;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.xmlb.Accessor;
-import com.intellij.util.xmlb.SerializationFilter;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.BreakpointManagerState;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.configurationStore.XmlSerializer.deserialize;
+import static com.intellij.configurationStore.XmlSerializer.serialize;
+
 /**
  * @author Dmitry Avdeev
- *         Date: 7/12/13
  */
 public class XDebuggerBreakpointsContextProvider extends WorkingContextProvider {
-
   private final XBreakpointManagerImpl myBreakpointManager;
 
   public XDebuggerBreakpointsContextProvider(XDebuggerManager xDebuggerManager) {
@@ -53,21 +52,17 @@ public class XDebuggerBreakpointsContextProvider extends WorkingContextProvider 
 
   @Override
   public void saveContext(Element toElement) throws WriteExternalException {
-    XBreakpointManagerImpl.BreakpointManagerState state = myBreakpointManager.getState();
-    Element serialize = XmlSerializer.serialize(state, new SerializationFilter() {
-      @Override
-      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
-        return accessor.read(bean) != null;
-      }
-    });
-    toElement.addContent(serialize.removeContent());
+    BreakpointManagerState state = new BreakpointManagerState();
+    myBreakpointManager.saveState(state);
+    Element serialize = serialize(state);
+    if (serialize != null) {
+      toElement.addContent(serialize.removeContent());
+    }
   }
 
   @Override
   public void loadContext(Element fromElement) throws InvalidDataException {
-    XBreakpointManagerImpl.BreakpointManagerState state =
-      XmlSerializer.deserialize(fromElement, XBreakpointManagerImpl.BreakpointManagerState.class);
-    myBreakpointManager.loadState(state);
+    myBreakpointManager.loadState(deserialize(fromElement, BreakpointManagerState.class));
   }
 
   @Override

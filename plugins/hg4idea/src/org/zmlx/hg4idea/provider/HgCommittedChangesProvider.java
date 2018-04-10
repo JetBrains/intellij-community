@@ -57,11 +57,6 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     myVcs = vcs;
   }
 
-  @NotNull
-  public ChangeBrowserSettings createDefaultSettings() {
-    return new ChangeBrowserSettings();
-  }
-
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new HgVersionFilterComponent(showDateFilter);
   }
@@ -75,10 +70,6 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return new HgRepositoryLocation(repo.getUrl(), repo);
   }
 
-  public RepositoryLocation getLocationFor(FilePath root, String repositoryPath) {
-    return getLocationFor(root);
-  }
-
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     return null;
@@ -88,7 +79,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
                                    RepositoryLocation repositoryLocation,
                                    int maxCount,
-                                   final AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
+                                   final AsynchConsumer<CommittedChangeList> consumer) {
 
     try {
       List<CommittedChangeList> results = getCommittedChanges(changeBrowserSettings, repositoryLocation, maxCount);
@@ -103,7 +94,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
 
   public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
                                                        RepositoryLocation repositoryLocation,
-                                                       int maxCount) throws VcsException {
+                                                       int maxCount) {
     VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
 
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
@@ -189,7 +180,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   }
 
   @Override
-  public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) throws VcsException {
+  public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) {
     final ChangeBrowserSettings settings = createDefaultSettings();
     settings.USE_CHANGE_AFTER_FILTER = true;
     settings.USE_CHANGE_BEFORE_FILTER = true;

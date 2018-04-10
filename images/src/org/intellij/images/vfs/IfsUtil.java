@@ -29,9 +29,9 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.IconUtil;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
-import org.apache.sanselan.ImageReadException;
-import org.apache.sanselan.common.byteSources.ByteSourceArray;
-import org.apache.sanselan.formats.ico.IcoImageParser;
+import org.apache.commons.imaging.ImageReadException;
+import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
+import org.apache.commons.imaging.formats.ico.IcoImageParser;
 import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +89,7 @@ public final class IfsUtil {
 
         if (isScalableImage(file)) {
           try {
-            Icon icon = IconLoader.findIcon(new File(file.getPath()).toURI().toURL());
+            Icon icon = IconLoader.findIcon(new File(file.getPath()).toURI().toURL(), false);
             file.putUserData(FORMAT_KEY, SVG_FORMAT);
             file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> {
               Icon scaledIcon = IconUtil.scale(icon, null, zoom.floatValue());

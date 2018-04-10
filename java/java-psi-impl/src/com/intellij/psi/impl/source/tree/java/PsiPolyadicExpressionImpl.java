@@ -92,7 +92,7 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (OUR_OPERATIONS_BIT_SET.contains(child.getElementType())) {
       return ChildRole.OPERATION_SIGN;

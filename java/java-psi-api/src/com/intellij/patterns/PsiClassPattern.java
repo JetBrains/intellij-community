@@ -21,6 +21,8 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.patterns.StandardPatterns.string;
+
 /**
  * @author peter
  */
@@ -93,7 +95,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
     });
   }
 
-   public PsiClassPattern nonAnnotationType() {
+  public PsiClassPattern nonAnnotationType() {
     return with(new PatternCondition<PsiClass>("nonAnnotationType") {
       public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
         return !psiClass.isAnnotationType();
@@ -102,19 +104,10 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
   }
 
   public PsiClassPattern withQualifiedName(@NonNls @NotNull final String qname) {
-    return with(new PatternCondition<PsiClass>("withQualifiedName") {
-      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
-        return qname.equals(psiClass.getQualifiedName());
-      }
-    });
+    return with(new PsiClassNamePatternCondition(string().equalTo(qname)));
   }
+
   public PsiClassPattern withQualifiedName(@NonNls @NotNull final ElementPattern<String> qname) {
-    return with(new PatternCondition<PsiClass>("withQualifiedName") {
-      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
-        return qname.accepts(psiClass.getQualifiedName(), context);
-      }
-    });
+    return with(new PsiClassNamePatternCondition(qname));
   }
-
-
 }

@@ -126,7 +126,7 @@ public class MacroUtil {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    return array.toArray(new PsiExpression[array.size()]);
+    return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   @NotNull public static PsiExpression[] getStandardExpressionsOfType(PsiElement place, PsiType type) {
@@ -138,7 +138,7 @@ public class MacroUtil {
         array.add(expr);
       }
     }
-    return array.toArray(new PsiExpression[array.size()]);
+    return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   @NotNull public static PsiVariable[] getVariablesVisibleAt(@Nullable final PsiElement place, String prefix) {

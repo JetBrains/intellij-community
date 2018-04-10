@@ -24,10 +24,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -188,20 +190,6 @@ public class FileUtilLightTest {
     else {
       assertEquals("/a/b/.././c/", FileUtil.normalize("\\\\\\a\\\\//b//..///./c//"));
     }
-  }
-
-  @Test
-  public void testFileRelativePath() {
-    String relativePath = FileUtil.toSystemDependentName("relative/path.file");
-
-    File existingDir = IoTestUtil.createTestDir(UUID.randomUUID().toString());
-    assertEquals(relativePath, FileUtil.getRelativePath(existingDir, new File(existingDir, relativePath)));
-
-    File notExistingDir = new File("not/existing/path");
-    assertEquals(relativePath, FileUtil.getRelativePath(notExistingDir, new File(notExistingDir, relativePath)));
-
-    File existingFile = IoTestUtil.createTestFile(existingDir, "foo.file");
-    assertEquals(relativePath, FileUtil.getRelativePath(existingFile, new File(existingFile.getParent(), relativePath)));
   }
 
   @Test

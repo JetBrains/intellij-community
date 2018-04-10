@@ -1,5 +1,3 @@
-# Stubs for http.client (Python 3.4)
-
 from typing import (
     Any, Dict, IO, Iterable, List, Iterator, Mapping, Optional, Tuple, TypeVar,
     Union,
@@ -91,7 +89,6 @@ if sys.version_info >= (3, 5):
         def __init__(self, sock: socket, debuglevel: int = ...,
                      method: Optional[str] = ..., url: Optional[str] = ...) -> None: ...
         def read(self, amt: Optional[int] = ...) -> bytes: ...
-        def readinto(self, b: bytearray) -> int: ...
         @overload
         def getheader(self, name: str) -> Optional[str]: ...
         @overload
@@ -128,7 +125,14 @@ else:
                      exc_tb: Optional[types.TracebackType]) -> bool: ...
 
 class HTTPConnection:
-    if sys.version_info >= (3, 4):
+    if sys.version_info >= (3, 7):
+        def __init__(
+            self,
+            host: str, port: Optional[int] = ...,
+            timeout: int = ...,
+            source_address: Optional[Tuple[str, int]] = ..., blocksize: int = ...
+        ) -> None: ...
+    elif sys.version_info >= (3, 4):
         def __init__(
             self,
             host: str, port: Optional[int] = ...,
@@ -178,6 +182,7 @@ class HTTPSConnection(HTTPConnection):
                      check_hostname: Optional[bool] = ...) -> None: ...
 
 class HTTPException(Exception): ...
+error = HTTPException
 
 class NotConnected(HTTPException): ...
 class InvalidURL(HTTPException): ...

@@ -88,4 +88,4 @@ testlist1 = ...  # type: int
 encoding_decl = ...  # type: int
 yield_expr = ...  # type: int
 
-symbol = ...  # type: Dict[int, str]
+sym_name = ...  # type: Dict[int, str]

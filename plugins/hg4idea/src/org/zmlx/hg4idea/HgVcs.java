@@ -25,6 +25,7 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
@@ -144,7 +145,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public Configurable getConfigurable() {
-    return new HgProjectConfigurable(getProject(), projectSettings);
+    return new HgProjectConfigurable(myProject, globalSettings, projectSettings);
   }
 
   @NotNull
@@ -370,7 +371,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public HgExecutableValidator getExecutableValidator() {
     synchronized (myExecutableValidatorLock) {
       if (myExecutableValidator == null) {
-        myExecutableValidator = new HgExecutableValidator(myProject, this);
+        myExecutableValidator = new HgExecutableValidator(myProject);
       }
       return myExecutableValidator;
     }
@@ -402,10 +403,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    HgUtil.executeOnPooledThread(() -> {
+    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
       Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-      new HgIntegrationEnabler(HgVcs.this).enable(roots);
-    }, myProject);
+      new HgIntegrationEnabler(this).enable(roots);
+    });
   }
 
   @Override
@@ -418,7 +419,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
    * In the case of nullable or unsupported version reports the problem.
    */
   public void checkVersion() {
-    final String executable = getGlobalSettings().getHgExecutable();
+    final String executable = HgExecutableManager.getInstance().getHgExecutable(myProject);
     VcsNotifier vcsNotifier = VcsNotifier.getInstance(myProject);
     final String SETTINGS_LINK = "settings";
     final String UPDATE_LINK = "update";

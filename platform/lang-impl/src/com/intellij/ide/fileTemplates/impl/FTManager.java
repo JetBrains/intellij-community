@@ -15,15 +15,14 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 3/22/11
  */
 public class FTManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FTManager");
@@ -131,7 +129,7 @@ public class FTManager {
   }
 
   @NotNull
-  public FileTemplateBase addTemplate(String name, String extension) {
+  public FileTemplateBase addTemplate(@NotNull String name, @NotNull String extension) {
     final String qName = FileTemplateBase.getQualifiedName(name, extension);
     FileTemplateBase template = getTemplate(qName);
     if (template == null) {
@@ -238,7 +236,7 @@ public class FTManager {
     }
   }
 
-  private void addTemplateFromFile(String fileName, File file) {
+  private void addTemplateFromFile(@NotNull String fileName, @NotNull File file) {
     Pair<String,String> nameExt = decodeFileName(fileName);
     final String extension = nameExt.second;
     final String templateQName = nameExt.first;
@@ -287,7 +285,7 @@ public class FTManager {
     }
 
     if (!allNames.isEmpty()) {
-      final String lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
+      final String lineSeparator = CodeStyle.getDefaultSettings().getLineSeparator();
       for (String name : allNames) {
         final File customizedTemplateFile = templatesOnDisk.get(name);
         final FileTemplateBase templateToSave = templatesToSave.get(name);
@@ -365,7 +363,8 @@ public class FTManager {
     return myName + " file template manager";
   }
 
-  static String encodeFileName(String templateName, String extension) {
+  @NotNull
+  static String encodeFileName(@NotNull String templateName, @NotNull String extension) {
     String nameExtDelimiter = extension.contains(".") ? ENCODED_NAME_EXT_DELIMITER : ".";
     return templateName + nameExtDelimiter + extension;
   }

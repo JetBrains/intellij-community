@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -46,7 +31,7 @@ import java.util.List;
  */
 public class CompositeCommittedChangesProvider implements CommittedChangesProvider<CommittedChangeList, CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> {
   private final Project myProject;
-  private List<AbstractVcs> myBaseVcss = new ArrayList<>();
+  private final List<AbstractVcs> myBaseVcss;
 
   public CompositeCommittedChangesProvider(final Project project, final AbstractVcs... baseVcss) {
     myProject = project;
@@ -81,24 +66,20 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return null;
   }
 
-  public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
-    return getLocationFor(root);
-  }
-
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     throw new UnsupportedOperationException();
   }
 
   public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
-                                                       RepositoryLocation location, final int maxCount) throws VcsException {
+                                                       RepositoryLocation location, final int maxCount) {
     throw new UnsupportedOperationException();
   }
 
   public void loadCommittedChanges(CompositeChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
+                                   AsynchConsumer<CommittedChangeList> consumer) {
     throw new UnsupportedOperationException();
   }
 
@@ -115,7 +96,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         }
       }
     }
-    return columns.toArray(new ChangeListColumn[columns.size()]);
+    return columns.toArray(new ChangeListColumn[0]);
   }
 
   @Nullable

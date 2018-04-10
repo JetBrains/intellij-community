@@ -20,8 +20,24 @@
 package com.intellij.codeInspection.dataFlow;
 
 public enum RunnerResult {
+  /**
+   * Successful completion
+   */
   OK,
+  /**
+   * Method is too complex for analysis
+   */
   TOO_COMPLEX,
+  /**
+   * Cannot analyze (probably method in severely incomplete)
+   */
   NOT_APPLICABLE,
+  /**
+   * Analysis is explicitly cancelled via {@link DataFlowRunner#cancel()}
+   */
+  CANCELLED,
+  /**
+   * Aborted due to some internal error like corrupted stack
+   */
   ABORTED
 }

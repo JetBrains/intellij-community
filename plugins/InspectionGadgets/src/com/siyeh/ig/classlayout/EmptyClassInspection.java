@@ -47,7 +47,7 @@ public class EmptyClassInspection extends EmptyClassInspectionBase {
     final CheckBox checkBox2 = new CheckBox("Ignore subclasses of java.lang.Throwable", this, "ignoreThrowables");
     panel.add(checkBox2, constraints);
     constraints.gridy++;
-    final CheckBox checkBox3 = new CheckBox(InspectionGadgetsBundle.message("empty.catch.block.comments.option"), this, "commentsAreContent");
+    final CheckBox checkBox3 = new CheckBox(InspectionGadgetsBundle.message("comments.as.content.option"), this, "commentsAreContent");
     panel.add(checkBox3, constraints);
     return panel;
   }

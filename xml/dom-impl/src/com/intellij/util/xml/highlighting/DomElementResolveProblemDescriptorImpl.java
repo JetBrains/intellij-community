@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -35,7 +34,9 @@ import org.jetbrains.annotations.NotNull;
 class DomElementResolveProblemDescriptorImpl extends DomElementProblemDescriptorImpl implements DomElementResolveProblemDescriptor {
   @NotNull private final PsiReference myReference;
 
-  public DomElementResolveProblemDescriptorImpl(@NotNull final GenericDomValue domElement, @NotNull final PsiReference reference, LocalQuickFix... quickFixes) {
+  DomElementResolveProblemDescriptorImpl(@NotNull final GenericDomValue domElement,
+                                         @NotNull final PsiReference reference,
+                                         LocalQuickFix... quickFixes) {
      super(domElement, reference instanceof FileReference ? ProblemsHolder.unresolvedReferenceMessage(reference) : XmlHighlightVisitor.getErrorDescription(reference), HighlightSeverity.ERROR, quickFixes);
      myReference = reference;
   }
@@ -58,14 +59,7 @@ class DomElementResolveProblemDescriptorImpl extends DomElementProblemDescriptor
     final PsiReference reference = myReference;
     PsiElement element = reference.getElement();
     if (element instanceof XmlAttributeValue && element.getTextLength() == 0) return NO_PROBLEM;
-
-    final TextRange referenceRange = reference.getRangeInElement();
-    if (referenceRange.isEmpty()) {
-      int startOffset = referenceRange.getStartOffset();
-      return element instanceof XmlAttributeValue
-             ? Pair.create((TextRange)new UnfairTextRange(startOffset - 1, startOffset + 1), element)
-             : Pair.create(TextRange.from(startOffset, 1), element);
-    }
+    TextRange referenceRange = reference.getRangeInElement();
     return Pair.create(referenceRange, element);
   }
 }

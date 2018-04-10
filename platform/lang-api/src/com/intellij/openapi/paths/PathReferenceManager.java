@@ -17,9 +17,9 @@
 package com.intellij.openapi.paths;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
@@ -100,6 +100,6 @@ public abstract class PathReferenceManager {
   public static PsiReference[] getReferencesFromProvider(@NotNull PathReferenceProvider provider, @NotNull PsiElement psiElement, boolean soft) {
     final ArrayList<PsiReference> references = new ArrayList<>();
     provider.createReferences(psiElement, references, soft);
-    return references.toArray(new PsiReference[references.size()]);    
+    return references.toArray(PsiReference.EMPTY_ARRAY);
   }
 }

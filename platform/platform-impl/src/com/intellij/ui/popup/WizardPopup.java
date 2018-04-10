@@ -21,9 +21,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.popup.async.AsyncPopupImpl;
+import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
@@ -43,7 +46,6 @@ import java.util.Collections;
 public abstract class WizardPopup extends AbstractPopup implements ActionListener, ElementFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.WizardPopup");
 
-  private static final int AUTO_POPUP_DELAY = 750;
   private static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 600);
 
   protected static final int STEP_X_PADDING = 2;
@@ -53,7 +55,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   protected final PopupStep<Object> myStep;
   protected WizardPopup myChild;
 
-  private final Timer myAutoSelectionTimer = UIUtil.createNamedTimer("Wizard autoselection",AUTO_POPUP_DELAY, this);
+  private final Timer myAutoSelectionTimer = UIUtil.createNamedTimer(
+    "Wizard auto-selection", Registry.intValue("ide.popup.auto.delay", 500), this);
 
   private final MnemonicsSearch myMnemonicsSearch;
   private Object myParentValue;
@@ -91,7 +94,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
          isResizable(), aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.emptyList(),
-         null, null, false, true, true, true, null);
+         null, null, false, true, true, null, true, null);
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
       @Override
@@ -211,10 +214,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   protected void afterShow() {
     super.afterShow();
     registerAutoMove();
-
-    if (!myFocusTrackback.isMustBeShown()) {
-      cancel();
-    }
   }
 
   private void registerAutoMove() {
@@ -299,7 +298,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return false;
   }
 
-  private class MyContainer extends MyContentPanel {
+  private static class MyContainer extends MyContentPanel {
     private MyContainer(final boolean resizable, final PopupBorder border, final boolean drawMacCorner) {
       super(resizable, border, drawMacCorner);
       setOpaque(true);
@@ -346,7 +345,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final boolean dispatch(KeyEvent event) {
-    if (event.getID() != KeyEvent.KEY_PRESSED && event.getID() != KeyEvent.KEY_RELEASED) {
+    if (event.getID() != KeyEvent.KEY_PRESSED &&
+        event.getID() != KeyEvent.KEY_RELEASED &&
+        event.getID() != KeyEvent.KEY_TYPED) {
       // do not dispatch these events to Swing
       event.consume();
       return true;
@@ -354,7 +355,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     if (event.getID() == KeyEvent.KEY_PRESSED) {
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
-      if (proceedKeyEvent(event, stroke)) return false;
+      if (proceedKeyEvent(event, stroke)) return true;
     }
 
     if (event.getID() == KeyEvent.KEY_RELEASED) {
@@ -362,8 +363,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       return proceedKeyEvent(event, stroke);
     }
 
-    myMnemonicsSearch.process(event);
-    mySpeedSearch.process(event);
+    myMnemonicsSearch.processKeyEvent(event);
+    mySpeedSearch.processKeyEvent(event);
 
     if (event.isConsumed()) return true;
     process(event);
@@ -375,6 +376,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       final Action action = myActionMap.get(myInputMap.get(stroke));
       if (action != null && action.isEnabled()) {
         action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()));
+        event.consume();
         return true;
       }
     }
@@ -390,6 +392,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
+    if (step instanceof AsyncPopupStep) {
+      return new AsyncPopupImpl(parent, (AsyncPopupStep)step, parentValue);
+    }
     if (step instanceof ListPopupStep) {
       return new ListPopupImpl(parent, (ListPopupStep)step, parentValue);
     }
@@ -430,6 +435,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   public boolean shouldBeShowing(Object value) {
     if (!myStep.isSpeedSearchEnabled()) return true;
     SpeedSearchFilter<Object> filter = myStep.getSpeedSearchFilter();
+    if (filter == null) return true;
     if (!filter.canBeHidden(value)) return true;
     String text = filter.getIndexedString(value);
     return mySpeedSearch.shouldBeShowing(text);

@@ -1,23 +1,13 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.xmlb.annotations.*;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +16,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/20/12
  */
 public class MavenModuleResourceConfiguration {
   @NotNull
@@ -61,8 +50,7 @@ public class MavenModuleResourceConfiguration {
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
   public Map<String, String> properties = new HashMap<>();
 
-  @Tag("filtering-excluded-extensions")
-  @AbstractCollection(surroundWithTag = false, elementTag = "extension")
+  @XCollection(propertyElementName = "filtering-excluded-extensions", elementName = "extension")
   public Set<String> filteringExclusions = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
   @OptionTag
@@ -80,12 +68,10 @@ public class MavenModuleResourceConfiguration {
   @OptionTag
   public String testOutputDirectory = null;
 
-  @Tag("resources")
-  @AbstractCollection(surroundWithTag = false, elementTag = "resource")
+  @XCollection(propertyElementName = "resources", elementName = "resource")
   public List<ResourceRootConfiguration> resources = new ArrayList<>();
 
-  @Tag("test-resources")
-  @AbstractCollection(surroundWithTag = false, elementTag = "resource")
+  @XCollection(propertyElementName = "test-resources", elementName = "resource")
   public List<ResourceRootConfiguration> testResources = new ArrayList<>();
 
   public Set<String> getFilteringExcludedExtensions() {

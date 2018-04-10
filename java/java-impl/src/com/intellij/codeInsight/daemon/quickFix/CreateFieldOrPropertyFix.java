@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,13 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyMemberType;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,17 +94,9 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
     final PsiFile file = myClass.getContainingFile();
     final Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, myClass.getContainingFile(), myClass);
     if (editor != null) {
-      new WriteCommandAction(project, file) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          generateMembers(project, editor, file);
-        }
-
-        @Override
-        protected boolean isGlobalUndoAction() {
-          return true; // todo check
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project, file)
+                        .withGlobalUndo()
+                        .run(() -> generateMembers(project, editor, file));
     }
   }
 
@@ -126,7 +117,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
       boolean first = true;
       @NonNls final String TYPE_NAME_VAR = "TYPE_NAME_VAR";
       for (GenerationInfo prototype : prototypes) {
-        final PsiTypeElement typeElement = PropertyUtil.getPropertyTypeElement(prototype.getPsiMember());
+        final PsiTypeElement typeElement = PropertyUtilBase.getPropertyTypeElement(prototype.getPsiMember());
         if (first) {
           first = false;
           builder.replaceElement(typeElement, TYPE_NAME_VAR, expression, true);

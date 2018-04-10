@@ -75,26 +75,24 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
     final Project project = psiClass.getProject();
     final Ref<GrTypeDefinition> targetClass = new Ref<>();
 
-    new WriteCommandAction(project, getTitle(psiClass), getTitle(psiClass)) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    WriteCommandAction.writeCommandAction(project).withName(getTitle(psiClass)).withGroupId(getTitle(psiClass)).run(() -> {
+      IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-        final GrTypeParameterList oldTypeParameterList = psiClass.getTypeParameterList();
+      final GrTypeParameterList oldTypeParameterList = psiClass.getTypeParameterList();
 
-        try {
-          targetClass.set(CreateClassActionBase.createClassByType(targetDirectory, className, PsiManager.getInstance(project), psiClass, GroovyTemplates.GROOVY_CLASS, true));
-        }
-        catch (final IncorrectOperationException e) {
-          ApplicationManager.getApplication().invokeLater(
-            () -> Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
+      try {
+        targetClass.set(CreateClassActionBase.createClassByType(targetDirectory, className, PsiManager.getInstance(project), psiClass,
+                                                                GroovyTemplates.GROOVY_CLASS, true));
+      }
+      catch (final IncorrectOperationException e) {
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
                                                   "\n" + e.getLocalizedMessage(),
                                          CodeInsightBundle.message("intention.error.cannot.create.class.title")));
-          return;
-        }
-        startTemplate(oldTypeParameterList, project, psiClass, targetClass.get(), false);
+        return;
       }
-    }.execute();
+      startTemplate(oldTypeParameterList, project, psiClass, targetClass.get(), false);
+    });
 
     if (targetClass.get() == null) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !psiClass.hasTypeParameters()) {

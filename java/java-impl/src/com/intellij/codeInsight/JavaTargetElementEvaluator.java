@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInsight;
 
@@ -45,7 +33,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   }
 
   /**
-   * Accepts THIS or SUPER but not NEW_AS_CONSTRUCTOR.
+   * Accepts THIS or SUPER or USE_DFA but not NEW_AS_CONSTRUCTOR.
    */
   @Override
   public int getAdditionalDefinitionSearchFlags() {
@@ -89,6 +77,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   @Override
   @NotNull
   public ThreeState isAcceptableReferencedElement(@NotNull final PsiElement element, final PsiElement referenceOrReferencedElement) {
+    if (referenceOrReferencedElement instanceof SyntheticElement) return ThreeState.NO;
     if (isEnumConstantReference(element, referenceOrReferencedElement)) return ThreeState.NO;
     return super.isAcceptableReferencedElement(element, referenceOrReferencedElement);
   }
@@ -125,6 +114,11 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
           final PsiElement parent = element.getParent();
           if (parent instanceof PsiFunctionalExpression) {
             refElement = PsiUtil.resolveClassInType(((PsiFunctionalExpression)parent).getFunctionalInterfaceType());
+          }
+          else if (element instanceof PsiKeyword && 
+                   parent instanceof PsiTypeElement && 
+                   ((PsiTypeElement)parent).isInferredType()) {
+            refElement = PsiUtil.resolveClassInType(((PsiTypeElement)parent).getType());
           }
         } 
       }
@@ -255,7 +249,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   public PsiElement getGotoDeclarationTarget(@NotNull final PsiElement element, @Nullable final PsiElement navElement) {
     if (navElement == element && element instanceof PsiCompiledElement && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
-      if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
+      if (method.isConstructor() && method.getParameterList().isEmpty()) {
         PsiClass aClass = method.getContainingClass();
         PsiElement navClass = aClass == null ? null : aClass.getNavigationElement();
         if (aClass != navClass) return navClass;
@@ -346,6 +340,9 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   public SearchScope getSearchScope(Editor editor, @NotNull final PsiElement element) {
     final PsiReferenceExpression referenceExpression = editor != null ? findReferenceExpression(editor) : null;
     if (referenceExpression != null && element instanceof PsiMethod) {
+       if (!PsiUtil.canBeOverridden((PsiMethod)element)) {
+         return element.getUseScope();
+       }
       final PsiClass[] memberClass = getClassesWithMember(referenceExpression, (PsiMember)element);
       if (memberClass != null && memberClass.length == 1) {
         return CachedValuesManager.getCachedValue(memberClass[0], () -> {

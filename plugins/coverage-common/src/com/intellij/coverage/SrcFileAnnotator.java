@@ -355,7 +355,7 @@ public class SrcFileAnnotator implements Disposable {
         if (fileData != null) {
           final Object[] lines = fileData.getLines();
           if (lines != null) {
-            final Object[] postProcessedLines = suite.getCoverageEngine().postProcessExecutableLines(lines, editor);
+            final Object[] postProcessedLines = engine.postProcessExecutableLines(lines, editor);
             for (Object lineData : postProcessedLines) {
               if (lineData instanceof LineData) {
                 final int line = ((LineData)lineData).getLineNumber() - 1;
@@ -371,6 +371,7 @@ public class SrcFileAnnotator implements Disposable {
                   // use id mapping
                   lineNumberInCurrent = line;
                 }
+                if (engine.isGeneratedCode(myProject, qualifiedName, lineData)) continue;
                 executableLines.put(line, (LineData)lineData);
   
                 classLines.put(line, postProcessedLines);

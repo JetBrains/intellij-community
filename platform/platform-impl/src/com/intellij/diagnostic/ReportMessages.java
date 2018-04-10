@@ -16,8 +16,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Mar 18, 2003
- * Time: 1:25:33 PM
  */
 package com.intellij.diagnostic;
 

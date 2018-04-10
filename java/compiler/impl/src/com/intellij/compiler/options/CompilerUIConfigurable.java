@@ -315,6 +315,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     return "General";
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
@@ -326,9 +327,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   public JComponent createComponent() {
     return myPanel;
-  }
-
-  public void disposeUIResources() {
   }
 
   private void createUIComponents() {

@@ -80,7 +80,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     }
     final PsiMethod method = (PsiMethod)parent;
     final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() == 0) {
+    if (parameterList.isEmpty()) {
       return false;
     }
     final PsiClass containingClass = method.getContainingClass();

@@ -33,7 +33,6 @@ public class JBIntSpinner extends JSpinner {
     setModel(new SpinnerNumberModel(value, minValue, maxValue, 1));
     final NumberEditor editor = new NumberEditor(this, "#");
     JFormattedTextField textField = editor.getTextField();
-    setBackground(textField.getBackground());
     textField.setColumns(Math.max(4, textField.getColumns()));
 
     if (UIUtil.isUnderWin10LookAndFeel()) {

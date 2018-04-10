@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.jar.Attributes;
 
 /**
  * @author peter
@@ -35,4 +36,13 @@ class CachePoolImpl implements UrlClassLoader.CachePool {
     return myLoaderIndexCache.get(url);
   }
 
+  private final Map<URL, Attributes> myManifestData = new ConcurrentHashMap<URL, Attributes>();
+
+  Attributes getManifestData(URL url) {
+    return myManifestData.get(url);
+  }
+
+  void cacheManifestData(URL url, Attributes manifestAttributes) {
+    myManifestData.put(url, manifestAttributes);
+  }
 }

@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,19 +33,9 @@ public class IgnoredViewDialog extends SpecificFilesViewDialog {
   }
 
   @Override
-  protected void addCustomActions(@NotNull DefaultActionGroup group, @NotNull ActionToolbar actionToolbar) {
-    ActionManager actionManager = ActionManager.getInstance();
+  protected void addCustomActions(@NotNull DefaultActionGroup group) {
     AnAction deleteAction =
       EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView);
-    actionManager.addAnActionListener(new AnActionListener.Adapter() {
-      @Override
-      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (action.equals(deleteAction)) {
-          refreshView();
-          refreshChanges(myProject, getBrowserBase(myView));
-        }
-      }
-    }, myDisposable);
     group.add(deleteAction);
     myView.setMenuActions(new DefaultActionGroup(deleteAction));
   }

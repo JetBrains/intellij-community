@@ -98,6 +98,8 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testNotNullAnnotationChecksInChildClassMethods() { doTest(); }
 
   public void testGetterSetterProblems() { doTest(); }
+  public void testNonTrivialGettersSetters() { doTest(); }
+  
   public void testOverriddenMethods() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTest();
@@ -114,6 +116,13 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testNotNullParameterOverridesNotAnnotated() {
     myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
     doTest();
+  }
+
+  public void testNullableSiblingOverriding() { doTest(); }
+  
+  public void testNonAnnotatedSiblingOverriding() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    doTest(); 
   }
 
   public void testHonorSuperParameterDefault() {
@@ -229,6 +238,22 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testNotNullTypeArgumentWithNullableSuperType() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testNullableTypeArgumentSOE() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testTypeUseNotNullField() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testTypeUseNotNullOverriding() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }

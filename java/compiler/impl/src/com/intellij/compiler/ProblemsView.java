@@ -35,7 +35,6 @@ import java.util.UUID;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/18/12
  */
 public abstract class ProblemsView {
 

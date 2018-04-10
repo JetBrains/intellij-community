@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ipp.whileloop;
 import com.intellij.psi.*;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -39,13 +40,14 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
     final PsiElement parent = doWhileStatement.getParent();
     final PsiExpression condition = doWhileStatement.getCondition();
     @NonNls final StringBuilder replacementText = new StringBuilder();
+    CommentTracker commentTracker = new CommentTracker();
     if (BoolUtils.isTrue(condition)) {
       // no trickery needed
-      replacementText.append("while(").append(condition.getText()).append(')');
+      replacementText.append("while(").append(commentTracker.text(condition)).append(')');
       if (body != null) {
-        replacementText.append(body.getText());
+        replacementText.append(commentTracker.text(body));
       }
-      PsiReplacementUtil.replaceStatement(doWhileStatement, replacementText.toString());
+      PsiReplacementUtil.replaceStatement(doWhileStatement, replacementText.toString(), commentTracker);
       return;
     }
     final boolean noBraces = !(parent instanceof PsiCodeBlock);
@@ -55,7 +57,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
         if (child == doWhileStatement) {
           break;
         }
-        replacementText.append(child.getText());
+        replacementText.append(commentTracker.text(child));
       }
       replacementText.append('{');
     }
@@ -80,7 +82,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
             }
           }
           if (noBraces) {
-            replacementText.append(child.getText());
+            replacementText.append(commentTracker.text(child));
           }
           else {
             parent.addBefore(child, doWhileStatement);
@@ -90,7 +92,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
     }
     else if (body != null) {
       if (noBraces) {
-        replacementText.append(body.getText());
+        replacementText.append(commentTracker.text(body)).append("\n");
       }
       else {
         parent.addBefore(body, doWhileStatement);
@@ -98,7 +100,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
     }
     replacementText.append("while(");
     if (condition != null) {
-      replacementText.append(condition.getText());
+      replacementText.append(commentTracker.text(condition));
     }
     replacementText.append(')');
     if (body instanceof PsiBlockStatement) {
@@ -118,29 +120,29 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
                 final PsiVariable variable = (PsiVariable)declaredElement;
                 final PsiExpression initializer = variable.getInitializer();
                 if (initializer != null) {
-                  replacementText.append(variable.getName()).append(" = ").append(initializer.getText()).append(';');
+                  replacementText.append(variable.getName()).append(" = ").append(commentTracker.text(initializer)).append(';');
                 }
               }
             }
           }
           else {
-            replacementText.append(child.getText());
+            replacementText.append(commentTracker.text(child));
           }
         }
       }
       replacementText.append('}');
     }
     else if (body != null) {
-      replacementText.append(body.getText());
+      replacementText.append(commentTracker.text(body)).append("\n");
     }
     if (noBraces) {
       replacementText.append('}');
     }
     if (noBraces) {
-      PsiReplacementUtil.replaceStatement((PsiStatement)parent, replacementText.toString());
+      PsiReplacementUtil.replaceStatement((PsiStatement)parent, replacementText.toString(), commentTracker);
     }
     else {
-      PsiReplacementUtil.replaceStatement(doWhileStatement, replacementText.toString());
+      PsiReplacementUtil.replaceStatement(doWhileStatement, replacementText.toString(), commentTracker);
     }
   }
 }

@@ -28,10 +28,14 @@ import java.io.File;
 
 public class NewProjectFromVCSGroup extends CheckoutActionGroup {
 
+  public NewProjectFromVCSGroup() {
+    super("NewProjectFromVCS");
+  }
+
   @NotNull
   @Override
   protected AnAction createAction(CheckoutProvider provider) {
-    return new CheckoutAction(provider) {
+    return new CheckoutAction(provider, myIdPrefix) {
       @Override
       protected CheckoutProvider.Listener getListener(Project project) {
         return new CheckoutProvider.Listener() {

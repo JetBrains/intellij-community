@@ -61,7 +61,7 @@ public class AddAttributeValueIntentionFix extends LocalQuickFixAndIntentionActi
     final XmlAttribute attributeWithValue = XmlElementFactory.getInstance(project).createAttribute(attribute.getName(), "", startElement);
     final PsiElement newAttribute = attribute.replace(attributeWithValue);
 
-    if (editor != null && newAttribute != null && newAttribute instanceof XmlAttribute && newAttribute.isValid()) {
+    if (editor != null && newAttribute instanceof XmlAttribute && newAttribute.isValid()) {
       final XmlAttributeValue valueElement = ((XmlAttribute)newAttribute).getValueElement();
       if (valueElement != null) {
         editor.getCaretModel().moveToOffset(valueElement.getTextOffset());

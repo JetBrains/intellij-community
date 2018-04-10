@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -59,6 +58,30 @@ public class PsiTypesUtil {
   @NonNls private static final String GET_CLASS_METHOD = "getClass";
 
   private PsiTypesUtil() { }
+
+  public static Object getDefaultValue(PsiType type) {
+    if (!(type instanceof PsiPrimitiveType)) return null;
+    switch (type.getCanonicalText()) {
+      case "boolean":
+        return false;
+      case "byte":
+        return (byte)0;
+      case "char":
+        return '\0';
+      case "short":
+        return (short)0;
+      case "int":
+        return 0;
+      case "long":
+        return 0L;
+      case "float":
+        return 0F;
+      case "double":
+        return 0D;
+      default:
+        return null;
+    }
+  }
 
   @NotNull
   public static String getDefaultValueOfType(PsiType type) {
@@ -178,12 +201,12 @@ public class PsiTypesUtil {
         qualifierType = TypeConversionUtil.erasure(qualifier.getType());
       }
       else if (condition != null) {
-        ASTNode parent = call.getNode().getTreeParent();
-        while (parent != null && condition.value(parent.getElementType())) {
-          parent = parent.getTreeParent();
+        PsiElement parent = call.getContext();
+        while (parent != null && condition.value(parent.getNode().getElementType())) {
+          parent = parent.getContext();
         }
         if (parent != null) {
-          qualifierType = JavaPsiFacade.getInstance(project).getElementFactory().createType((PsiClass)parent.getPsi());
+          qualifierType = JavaPsiFacade.getInstance(project).getElementFactory().createType((PsiClass)parent);
         }
       }
       return createJavaLangClassType(methodExpression, qualifierType, true);
@@ -192,7 +215,11 @@ public class PsiTypesUtil {
   }
 
   public static boolean isGetClass(PsiMethod method) {
-    return GET_CLASS_METHOD.equals(method.getName()) && CommonClassNames.JAVA_LANG_OBJECT.equals(method.getContainingClass().getQualifiedName());
+    if (GET_CLASS_METHOD.equals(method.getName())) {
+      PsiClass aClass = method.getContainingClass();
+      return aClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
+    }
+    return false;
   }
 
   @Nullable
@@ -219,6 +246,10 @@ public class PsiTypesUtil {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
     if (parent instanceof PsiVariable) {
       if (PsiUtil.checkSameExpression(element, ((PsiVariable)parent).getInitializer())) {
+        PsiTypeElement typeElement = ((PsiVariable)parent).getTypeElement();
+        if (typeElement != null && typeElement.isInferredType()) {
+          return null;
+        }
         return ((PsiVariable)parent).getType();
       }
     }
@@ -255,8 +286,7 @@ public class PsiTypesUtil {
       }
       else if (gParent instanceof PsiArrayInitializerExpression) {
         final PsiType expectedTypeByParent = getExpectedTypeByParent(parent);
-        return expectedTypeByParent != null && expectedTypeByParent instanceof PsiArrayType
-               ? ((PsiArrayType)expectedTypeByParent).getComponentType() : null;
+        return expectedTypeByParent instanceof PsiArrayType ? ((PsiArrayType)expectedTypeByParent).getComponentType() : null;
       }
     }
     return null;
@@ -321,7 +351,7 @@ public class PsiTypesUtil {
         return arrayType.getComponentType().accept(this);
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Boolean visitWildcardType(PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
@@ -363,6 +393,32 @@ public class PsiTypesUtil {
   public static PsiTypeParameter[] filterUnusedTypeParameters(final PsiType superReturnTypeInBaseClassType,
                                                               @NotNull PsiTypeParameter[] typeParameters) {
     return filterUnusedTypeParameters(typeParameters, superReturnTypeInBaseClassType);
+  }
+
+  public static boolean isAccessibleAt(PsiTypeParameter parameter, PsiElement context) {
+    PsiTypeParameterListOwner owner = parameter.getOwner();
+    if(owner instanceof PsiMethod) {
+      return PsiTreeUtil.isAncestor(owner, context, false);
+    }
+    if(owner instanceof PsiClass) {
+      return PsiTreeUtil.isAncestor(owner, context, false) &&
+             InheritanceUtil.hasEnclosingInstanceInScope((PsiClass)owner, context, false, false);
+    }
+    return false;
+  }
+
+  public static boolean allTypeParametersResolved(PsiElement context, PsiType targetType) {
+    TypeParameterSearcher searcher = new TypeParameterSearcher();
+    targetType.accept(searcher);
+    Set<PsiTypeParameter> parameters = searcher.getTypeParameters();
+    return parameters.stream().allMatch(parameter -> isAccessibleAt(parameter, context));
+  }
+
+  public static PsiType createArrayType(PsiType newType, int arrayDim) {
+    for(int i = 0; i < arrayDim; i++){
+      newType = newType.createArrayType();
+    }
+    return newType;
   }
 
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {

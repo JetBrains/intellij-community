@@ -126,7 +126,7 @@ public class DefaultActionGroup extends ActionGroup {
    * Adds a separator to the tail.
    */
   public final void addSeparator() {
-    add(Separator.getInstance());
+    add(Separator.create());
   }
 
   /**
@@ -411,7 +411,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public void addSeparator(@Nullable String separatorText) {
-    add(new Separator(separatorText));
+    add(Separator.create(separatorText));
   }
 
   private static class ActionDuplicationException extends IllegalArgumentException {

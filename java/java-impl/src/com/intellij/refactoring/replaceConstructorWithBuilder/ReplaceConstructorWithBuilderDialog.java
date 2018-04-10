@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
@@ -154,7 +155,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
         final ParameterData data = myParametersMap.get(paramName);
         paramName = data.getParamName();
         final String propertyName = javaCodeStyleManager.variableNameToPropertyName(paramName, VariableKind.PARAMETER);
-        data.setSetterName(PropertyUtil.suggestSetterName(propertyName, setterPrefix));
+        data.setSetterName(PropertyUtilBase.suggestSetterName(propertyName, setterPrefix));
       }
       myTable.revalidate();
       myTable.repaint();

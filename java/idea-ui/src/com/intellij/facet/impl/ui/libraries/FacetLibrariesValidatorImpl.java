@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDia
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -112,7 +111,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
-    private CustomLibraryDescription myDescription;
+    private final CustomLibraryDescription myDescription;
 
     public LibrariesQuickFix(CustomLibraryDescription description) {
       super(IdeBundle.message("button.fix"));

@@ -106,10 +106,10 @@ public class BinaryDiffTool implements DiffTool {
   }
 
   private static class PanelCreator {
-    private boolean myCanCreatePanel;
+    private final boolean myCanCreatePanel;
     private final DiffRequest myData;
-    private VirtualFile mySrc;
-    private VirtualFile myTrg;
+    private final VirtualFile mySrc;
+    private final VirtualFile myTrg;
 
     private PanelCreator(final DiffRequest data) {
       myData = data;

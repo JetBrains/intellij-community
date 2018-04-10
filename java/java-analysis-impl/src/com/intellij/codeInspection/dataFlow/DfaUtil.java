@@ -1,22 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,12 +19,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 /**
  * @author Gregory.Shrago
@@ -191,6 +183,103 @@ public class DfaUtil {
     return Nullness.UNKNOWN;
   }
 
+  static DfaValue getPossiblyNonInitializedValue(@NotNull DfaValueFactory factory, @NotNull PsiField target, @NotNull PsiElement context) {
+    if (target.getType() instanceof PsiPrimitiveType) return null;
+    PsiMethod placeMethod = PsiTreeUtil.getParentOfType(context, PsiMethod.class, false, PsiClass.class, PsiLambdaExpression.class);
+    if (placeMethod == null) return null;
+
+    PsiClass placeClass = placeMethod.getContainingClass();
+    if (placeClass == null || placeClass != target.getContainingClass()) return null;
+    if (!placeMethod.hasModifierProperty(PsiModifier.STATIC) && target.hasModifierProperty(PsiModifier.STATIC)) return null;
+    if (getAccessOffset(placeMethod) >= getWriteOffset(target)) return null;
+
+    return factory.createTypeValue(target.getType(), Nullness.NULLABLE);
+  }
+
+  private static int getWriteOffset(PsiField target) {
+    // Final field: written either in field initializer or in class initializer block which directly writes this field
+    // Non-final field: written either in field initializer, in class initializer which directly writes this field or calls any method,
+    //    or in other field initializer which directly writes this field or calls any method
+    boolean isFinal = target.hasModifierProperty(PsiModifier.FINAL);
+    int offset = Integer.MAX_VALUE;
+    if (target.getInitializer() != null) {
+      offset = target.getInitializer().getTextRange().getStartOffset();
+      if (isFinal) return offset;
+    }
+    PsiClass aClass = Objects.requireNonNull(target.getContainingClass());
+    PsiClassInitializer[] initializers = aClass.getInitializers();
+    Predicate<PsiElement> writesToTarget = element ->
+      !PsiTreeUtil.processElements(element, e -> !(e instanceof PsiExpression) ||
+                                                 !PsiUtil.isAccessedForWriting((PsiExpression)e) ||
+                                                 !ExpressionUtils.isReferenceTo((PsiExpression)e, target));
+    Predicate<PsiElement> hasSideEffectCall = element -> !PsiTreeUtil.findChildrenOfType(element, PsiMethodCallExpression.class).stream()
+      .map(PsiMethodCallExpression::resolveMethod).allMatch(method -> method != null && ControlFlowAnalyzer.isPure(method));
+    for (PsiClassInitializer initializer : initializers) {
+      if (initializer.hasModifierProperty(PsiModifier.STATIC) != target.hasModifierProperty(PsiModifier.STATIC)) continue;
+      if (!isFinal && hasSideEffectCall.test(initializer)) {
+        // non-final field could be written indirectly (via method call), so assume it's written in the first applicable initializer
+        offset = Math.min(offset, initializer.getTextRange().getStartOffset());
+        break;
+      }
+      if (writesToTarget.test(initializer)) {
+        offset = Math.min(offset, initializer.getTextRange().getStartOffset());
+        if (isFinal) return offset;
+        break;
+      }
+    }
+    if (!isFinal) {
+      for (PsiField field : aClass.getFields()) {
+        if (field.hasModifierProperty(PsiModifier.STATIC) != target.hasModifierProperty(PsiModifier.STATIC)) continue;
+        if (hasSideEffectCall.test(field.getInitializer()) || writesToTarget.test(field)) {
+          offset = Math.min(offset, field.getTextRange().getStartOffset());
+          break;
+        }
+      }
+    }
+    return offset;
+  }
+
+  private static int getAccessOffset(PsiMethod referrer) {
+    PsiClass aClass = Objects.requireNonNull(referrer.getContainingClass());
+    boolean isStatic = referrer.hasModifierProperty(PsiModifier.STATIC);
+    for (PsiField field : aClass.getFields()) {
+      if (field.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
+      PsiExpression initializer = field.getInitializer();
+      Predicate<PsiExpression> callToMethod = (PsiExpression e) -> {
+        if (!(e instanceof PsiMethodCallExpression)) return false;
+        PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+        return call.getMethodExpression().isReferenceTo(referrer) &&
+               (isStatic || ExpressionUtil.isEffectivelyUnqualified(call.getMethodExpression()));
+      };
+      if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
+        // current method is definitely called from some field initialization
+        return field.getTextRange().getStartOffset();
+      }
+    }
+    return Integer.MAX_VALUE; // accessed after initialization or at unknown moment
+  }
+
+  public static boolean hasInitializationHacks(@NotNull PsiField field) {
+    PsiClass containingClass = field.getContainingClass();
+    return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());
+  }
+
+  public static boolean ignoreInitializer(PsiVariable variable) {
+    // Skip boolean constant fields as they usually used as control knobs to modify program logic
+    // it's better to analyze both true and false values even if it's predefined
+    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
+    return initializer != null &&
+           variable instanceof PsiField &&
+           variable.hasModifierProperty(PsiModifier.FINAL) &&
+           variable.getType().equals(PsiType.BOOLEAN) &&
+           (ExpressionUtils.isLiteral(initializer, Boolean.TRUE) || ExpressionUtils.isLiteral(initializer, Boolean.FALSE));
+  }
+
+  static boolean isEffectivelyUnqualified(DfaVariableValue variableValue) {
+    return variableValue.getQualifier() == null ||
+     variableValue.getQualifier().getSource() instanceof DfaExpressionFactory.ThisSource;
+  }
+
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
     final Map<PsiElement, PlaceResult> myResults = ContainerUtil.newHashMap();
 
@@ -205,20 +294,18 @@ public class DfaUtil {
       PsiExpression place = instruction.getPlace();
       if (place != null) {
         PlaceResult result = myResults.computeIfAbsent(place, __ -> new PlaceResult());
-        final Map<DfaVariableValue,DfaVariableState> map = ((ValuableDataFlowRunner.MyDfaMemoryState)memState).getVariableStates();
-        for (Map.Entry<DfaVariableValue, DfaVariableState> entry : map.entrySet()) {
-          ValuableDataFlowRunner.ValuableDfaVariableState state = (ValuableDataFlowRunner.ValuableDfaVariableState)entry.getValue();
-          DfaVariableValue variableValue = entry.getKey();
+        ((ValuableDataFlowRunner.MyDfaMemoryState)memState).forVariableStates((variableValue, value) -> {
+          ValuableDataFlowRunner.ValuableDfaVariableState state = (ValuableDataFlowRunner.ValuableDfaVariableState)value;
           final FList<PsiExpression> concatenation = state.myConcatenation;
-          if (!concatenation.isEmpty() && variableValue.getQualifier() == null) {
+          if (!concatenation.isEmpty() && isEffectivelyUnqualified(variableValue)) {
             PsiModifierListOwner element = variableValue.getPsiVariable();
             if (element instanceof PsiVariable) {
               result.myValues.put((PsiVariable)element, concatenation);
             }
           }
-        }
+        });
         DfaValue value = instruction.getValue();
-        if (value instanceof DfaVariableValue && ((DfaVariableValue)value).getQualifier() == null) {
+        if (value instanceof DfaVariableValue && isEffectivelyUnqualified((DfaVariableValue)value)) {
           PsiModifierListOwner element = ((DfaVariableValue)value).getPsiVariable();
           if (element instanceof PsiVariable) {
             if (memState.isNotNull(value)) {
@@ -254,7 +341,7 @@ public class DfaUtil {
         final ValuableDataFlowRunner.ValuableDfaVariableState curState = (ValuableDataFlowRunner.ValuableDfaVariableState)memState.getVariableState(var);
         final FList<PsiExpression> curValue = curState.myConcatenation;
         final FList<PsiExpression> nextValue;
-        if (type == JavaTokenType.PLUSEQ && !prevValue.isEmpty() && rightValue != null) {
+        if (type == JavaTokenType.PLUSEQ && !prevValue.isEmpty()) {
           nextValue = prevValue.prepend(rightValue);
         }
         else {
@@ -271,8 +358,7 @@ public class DfaUtil {
     if (concatenation.size() == 1) {
       return concatenation.getHead();
     }
-    String text = StringUtil
-      .join(ContainerUtil.reverse(new ArrayList<>(concatenation)), expression -> expression.getText(), "+");
+    String text = StringUtil.join(ContainerUtil.reverse(new ArrayList<>(concatenation)), PsiElement::getText, "+");
     try {
       return JavaPsiFacade.getElementFactory(concatenation.getHead().getProject()).createExpressionFromText(text, concatenation.getHead());
     }

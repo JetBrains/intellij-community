@@ -87,7 +87,7 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
                         OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
     final BackwardReferenceIndexWriter writer = BackwardReferenceIndexWriter.getInstance();
     if (writer != null) {
-      final Exception cause = writer.getRebuildRequestCause();
+      final Throwable cause = writer.getRebuildRequestCause();
       if (cause != null) {
         BackwardReferenceIndexWriter.closeIfNeed(true);
       }

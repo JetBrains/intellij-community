@@ -79,7 +79,7 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
       }
     });
 
-    GradleResourceRootDescriptor[] roots = files.keySet().toArray(new GradleResourceRootDescriptor[files.keySet().size()]);
+    GradleResourceRootDescriptor[] roots = files.keySet().toArray(new GradleResourceRootDescriptor[0]);
     Arrays.sort(roots, (r1, r2) -> {
       int res = r1.getIndexInPom() - r2.getIndexInPom();
       if (r1.isOverwrite()) {

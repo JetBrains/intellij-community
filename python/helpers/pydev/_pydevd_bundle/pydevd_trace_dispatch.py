@@ -3,7 +3,7 @@
 
 import os
 import sys
-from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED, SHOW_CYTHON_WARNING
+from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED, IS_PYCHARM
 
 
 use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
@@ -15,24 +15,25 @@ if not CYTHON_SUPPORTED or dirname.endswith('.egg'):
 
 
 def delete_old_compiled_extensions():
-    pydev_dir = os.path.dirname(os.path.dirname(__file__))
-    _pydevd_bundle_dir = os.path.dirname(__file__)
-    _pydevd_frame_eval_dir = os.path.join(pydev_dir, '_pydevd_frame_eval')
+    import _pydevd_bundle_ext
+    cython_extensions_dir = os.path.dirname(os.path.dirname(_pydevd_bundle_ext.__file__))
+    _pydevd_bundle_ext_dir = os.path.dirname(_pydevd_bundle_ext.__file__)
+    _pydevd_frame_eval_ext_dir = os.path.join(cython_extensions_dir, '_pydevd_frame_eval_ext')
     try:
         import shutil
-        for file in os.listdir(_pydevd_bundle_dir):
+        for file in os.listdir(_pydevd_bundle_ext_dir):
             if file.startswith("pydevd") and file.endswith(".so"):
-                os.remove(os.path.join(_pydevd_bundle_dir, file))
-        for file in os.listdir(_pydevd_frame_eval_dir):
+                os.remove(os.path.join(_pydevd_bundle_ext_dir, file))
+        for file in os.listdir(_pydevd_frame_eval_ext_dir):
             if file.startswith("pydevd") and file.endswith(".so"):
-                os.remove(os.path.join(_pydevd_frame_eval_dir, file))
-        build_dir = os.path.join(pydev_dir, "build")
+                os.remove(os.path.join(_pydevd_frame_eval_ext_dir, file))
+        build_dir = os.path.join(cython_extensions_dir, "build")
         if os.path.exists(build_dir):
-            shutil.rmtree(os.path.join(pydev_dir, "build"))
+            shutil.rmtree(os.path.join(cython_extensions_dir, "build"))
     except OSError:
         from _pydev_bundle.pydev_monkey import log_error_once
         log_error_once("warning: failed to delete old cython speedups. Please delete all *.so files from the directories "
-                       "\"%s\" and \"%s\"" % (_pydevd_bundle_dir, _pydevd_frame_eval_dir))
+                       "\"%s\" and \"%s\"" % (_pydevd_bundle_ext_dir, _pydevd_frame_eval_ext_dir))
 
 show_tracing_warning = False
 
@@ -66,7 +67,7 @@ elif use_cython is None:
         from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips  # @UnusedImport
         from _pydev_bundle.pydev_monkey import log_error_once
 
-        if SHOW_CYTHON_WARNING:
+        if not IS_PYCHARM:
             log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
                 sys.executable, os.path.join(dirname, 'setup_cython.py')))
         else:

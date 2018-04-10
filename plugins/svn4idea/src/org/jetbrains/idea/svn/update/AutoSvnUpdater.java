@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.jetbrains.idea.svn.api.Revision;
 
 import javax.swing.*;
 import java.util.LinkedHashMap;
@@ -68,7 +67,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
   }
 
   protected void configureUpdateRootInfo(@NotNull FilePath root, @NotNull UpdateRootInfo info) {
-    info.setRevision(SVNRevision.HEAD);
+    info.setRevision(Revision.HEAD);
     info.setUpdateToRevision(false);
   }
 

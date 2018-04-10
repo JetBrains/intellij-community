@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * <p>It is called "Hash", because in DVCSs it is represented by a SHA-hash value.</p>
  * <p>
- * TODO move to vcs-api
+ * TODO move to intellij.platform.vcs
  *
  * @author Kirill Likhodedov
  * @author erokhins

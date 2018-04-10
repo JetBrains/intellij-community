@@ -61,7 +61,7 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
       ContainerUtil.addAll(descriptors, descriptor.getRootElementsDescriptors(document));
     }
 
-    return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
+    return descriptors.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
   @Override

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.jsonRpc
 
 import com.google.gson.Gson
@@ -114,7 +115,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
     if (reader.hasNext()) {
       val list = SmartList<Any>()
       JsonUtil.readListBody(reader, list)
-      parameters = ArrayUtil.toObjectArray(list)
+      parameters = ArrayUtil.toObjectArray(list[0] as List<*>)
     }
     else {
       parameters = ArrayUtilRt.EMPTY_OBJECT_ARRAY
@@ -320,9 +321,9 @@ private class IntArrayListTypeAdapter<T> : TypeAdapter<T>() {
   override fun write(out: JsonWriter, value: T) {
     var error: IOException? = null
     out.beginArray()
-    (value as TIntArrayList).forEach { value ->
+    (value as TIntArrayList).forEach { intValue ->
       try {
-        out.value(value.toLong())
+        out.value(intValue.toLong())
       }
       catch (e: IOException) {
         error = e

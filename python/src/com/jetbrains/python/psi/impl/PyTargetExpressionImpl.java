@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -20,10 +6,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -36,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -62,10 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -73,7 +54,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
-  QualifiedName myQualifiedName;
+  @Nullable private volatile QualifiedName myQualifiedName;
 
   public PyTargetExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -156,15 +137,15 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return type;
       }
       if (!context.maySwitchToAST(this)) {
-        final PsiElement value = resolveAssignedValue(PyResolveContext.noImplicits().withTypeEvalContext(context));
-        if (value instanceof PyTypedElement) {
-          type = context.getType((PyTypedElement)value);
-          if (type instanceof PyNoneType) {
-            return null;
-          }
-          return type;
-        }
-        return null;
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+        final List<PyType> types = StreamEx
+          .of(multiResolveAssignedValue(resolveContext))
+          .select(PyTypedElement.class)
+          .map(context::getType)
+          .toList();
+
+        return PyUnionType.union(types);
       }
       type = getTypeFromComment(this);
       if (type != null) {
@@ -197,8 +178,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           final PyTupleExpression targetTuple = PsiTreeUtil.findChildOfType(lhs, PyTupleExpression.class, false);
           if (value != null && targetTuple != null) {
             final PyType assignedType = PyTypeChecker.toNonWeakType(context.getType(value), context);
-            if (assignedType instanceof PyTupleType) {
-              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTuple, (PyTupleType)assignedType);
+            if (assignedType != null) {
+              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTuple, assignedType, context);
               if (t != null) {
                 return t;
               }
@@ -285,7 +266,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (enter != null) {
       final PyType enterType = enter.getCallType(withExpression, Collections.emptyMap(), context);
       if (enterType != null) {
-        return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType, context)) : enterType;
+        return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType)) : enterType;
       }
       for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
         final PyType typeFromProvider = provider.getContextManagerVariableType(cls, withExpression, context);
@@ -442,7 +423,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
     final String nextMethodName = async
                                   ? PyNames.ANEXT
-                                  : LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30)
+                                  : !LanguageLevel.forElement(anchor).isPython2()
                                     ? PyNames.DUNDER_NEXT
                                     : PyNames.NEXT;
     final PyFunction next = findMethodByName(type, nextMethodName, context);
@@ -527,43 +508,47 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   @Override
   public PsiElement resolveAssignedValue(@NotNull PyResolveContext resolveContext) {
+    return ContainerUtil.getFirstItem(multiResolveAssignedValue(resolveContext));
+  }
+
+  @NotNull
+  @Override
+  public List<PsiElement> multiResolveAssignedValue(@NotNull PyResolveContext resolveContext) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
+
     if (context.maySwitchToAST(this)) {
       final PyExpression value = findAssignedValue();
-      if (value != null) {
-        final List<PsiElement> results = PyUtil.multiResolveTopPriority(value, resolveContext);
-        return !results.isEmpty() ? results.get(0) : null;
-      }
-      return null;
+      return value != null
+             ? ContainerUtil.filter(PyUtil.multiResolveTopPriority(value, resolveContext), Objects::nonNull)
+             : Collections.emptyList();
     }
     else {
       final QualifiedName qName = getAssignedQName();
-      if (qName != null) {
+
+      if (qName != null && qName.getComponentCount() != 0) {
         final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
         if (owner instanceof PyTypedElement) {
-          final List<String> components = qName.getComponents();
-          if (!components.isEmpty()) {
-            PsiElement resolved = owner;
-            for (String component : components) {
-              if (!(resolved instanceof PyTypedElement)) {
-                return null;
-              }
-              final PyType qualifierType = context.getType((PyTypedElement)resolved);
-              if (qualifierType == null) {
-                return null;
-              }
-              final List<? extends RatedResolveResult> results = qualifierType.resolveMember(component, null, AccessDirection.READ,
-                                                                                             resolveContext);
-              if (results == null || results.isEmpty()) {
-                return null;
-              }
-              resolved = results.get(0).getElement();
-            }
-            return resolved;
+          List<? extends RatedResolveResult> resolved =
+            Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, owner));
+
+          for (String component : qName.getComponents()) {
+            resolved = PyUtil.filterTopPriorityResults(
+              StreamEx
+                .of(resolved)
+                .map(ResolveResult::getElement)
+                .select(PyTypedElement.class)
+                .map(context::getType)
+                .nonNull()
+                .flatCollection(qualifier -> qualifier.resolveMember(component, null, AccessDirection.READ, resolveContext))
+                .toList()
+            );
           }
+
+          return ContainerUtil.mapNotNull(resolved, ResolveResult::getElement);
         }
       }
-      return null;
+
+      return Collections.emptyList();
     }
   }
 
@@ -587,6 +572,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           return pair.getSecond();
         }
       }
+    }
+    final PyImportElement importElement = PsiTreeUtil.getParentOfType(this, PyImportElement.class);
+    if (importElement != null) {
+      return importElement.getImportReferenceExpression();
     }
     return null;
   }
@@ -716,8 +705,9 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       @Override
       public String getLocationString() {
         final PyClass containingClass = getContainingClass();
-        if (containingClass != null) {
-          return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+        final String packageForFile = getPackageForFile(getContainingFile());
+        if (containingClass != null && packageForFile != null) {
+          return String.format("(%s in %s)", containingClass.getName(), packageForFile);
         }
         return super.getLocationString();
       }
@@ -801,5 +791,14 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Override
   public String getTypeCommentAnnotation() {
     return getTypeCommentAnnotationFromStubOrPsi(this);
+  }
+
+  @Override
+  public boolean hasAssignedValue() {
+    final PyTargetExpressionStub stub = getStub();
+    if (stub != null) {
+      return stub.hasAssignedValue();
+    }
+    return findAssignedValue() != null;
   }
 }

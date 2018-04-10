@@ -1,22 +1,10 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.jps.appengine.model.impl;
 
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.jps.appengine.model.PersistenceApi;
 
 import java.util.ArrayList;
@@ -32,8 +20,7 @@ public class AppEngineModuleExtensionProperties {
   @Tag("run-enhancer-on-make")
   public boolean myRunEnhancerOnMake = false;
 
-  @Tag("files-to-enhance")
-  @AbstractCollection(surroundWithTag = false, elementTag = "file", elementValueAttribute = "path")
+  @XCollection(propertyElementName = "files-to-enhance", elementName = "file", valueAttributeName = "path")
   public List<String> myFilesToEnhance = new ArrayList<>();
 
   @Tag("persistence-api")

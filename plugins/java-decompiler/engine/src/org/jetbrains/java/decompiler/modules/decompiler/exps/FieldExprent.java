@@ -1,24 +1,11 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -31,6 +18,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
@@ -167,7 +155,7 @@ public class FieldExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (o == null || !(o instanceof FieldExprent)) return false;
+    if (!(o instanceof FieldExprent)) return false;
 
     FieldExprent ft = (FieldExprent)o;
     return InterpreterUtil.equalObjects(name, ft.getName()) &&
@@ -196,30 +184,27 @@ public class FieldExprent extends Exprent {
   public String getName() {
     return name;
   }
-  
+
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************
-  
-  public boolean match(MatchNode matchNode, MatchEngine engine) {
 
-    if(!super.match(matchNode, engine)) {
+  @Override
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
-    
+
     RuleValue rule = matchNode.getRules().get(MatchProperties.EXPRENT_FIELD_NAME);
-    if(rule != null) {
-      if(rule.isVariable()) {
-        if(!engine.checkAndSetVariableValue((String)rule.value, this.name)) {
-          return false;
-        }
-      } else { 
-        if(!rule.value.equals(this.name)) {
-          return false;
-        }
+    if (rule != null) {
+      if (rule.isVariable()) {
+        return engine.checkAndSetVariableValue((String)rule.value, this.name);
+      }
+      else {
+        return rule.value.equals(this.name);
       }
     }
-    
+
     return true;
   }
 }

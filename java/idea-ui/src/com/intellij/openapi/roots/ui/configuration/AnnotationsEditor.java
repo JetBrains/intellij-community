@@ -36,8 +36,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Oct 4, 2003
- * Time: 6:54:57 PM
  */
 public class AnnotationsEditor extends ModuleElementsEditor {
   private JTable myTable;

@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 
 /**
@@ -26,7 +27,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 public class ImportProjectAction extends ImportModuleAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    doImport(null);
+    ApplicationManager.getApplication().invokeLater(() -> doImport(null));
   }
 
   @Override

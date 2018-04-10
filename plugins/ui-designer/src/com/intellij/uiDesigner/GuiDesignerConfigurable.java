@@ -61,6 +61,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     return UIDesignerBundle.message("title.gui.designer");
   }
 
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "project.propGUI";

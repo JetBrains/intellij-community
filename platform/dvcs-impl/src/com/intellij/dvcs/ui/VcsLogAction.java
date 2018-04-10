@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Map;
 
-import static com.intellij.vcs.log.impl.VcsLogUtil.MAX_SELECTED_COMMITS;
-import static com.intellij.vcs.log.impl.VcsLogUtil.collectFirstPack;
+import static com.intellij.vcs.log.util.VcsLogUtil.MAX_SELECTED_COMMITS;
+import static com.intellij.vcs.log.util.VcsLogUtil.collectFirstPack;
 
 public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
 
@@ -75,7 +75,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
 
   protected boolean isVisible(@NotNull Project project, @NotNull MultiMap<Repo, Hash> grouped) {
     RepositoryManager<Repo> manager = getRepositoryManager(project);
-    return grouped.keySet().stream().allMatch(repo -> !manager.isExternal(repo));
+    return grouped.keySet().stream().noneMatch(manager::isExternal);
   }
 
   @NotNull

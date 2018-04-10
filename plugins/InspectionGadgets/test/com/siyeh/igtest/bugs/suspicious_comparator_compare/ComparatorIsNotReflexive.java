@@ -27,4 +27,10 @@ class ComparatorIsNotReflexive implements Comparator<Integer> {
     if(b1.length != b2.length) return 0; // typo: == was intended
     return <warning descr="Comparator does not return 0 for equal elements">b1.length > b2.length ? 1 : -1</warning>;
   };
+
+  Comparator<String> cmp = (a,b) -> test();
+
+  static int test() {
+    throw new RuntimeException();
+  }
 }

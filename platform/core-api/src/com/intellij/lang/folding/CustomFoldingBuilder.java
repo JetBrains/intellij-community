@@ -62,7 +62,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     finally {
       ourCustomRegionElements.set(null);
     }
-    return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
+    return descriptors.toArray(FoldingDescriptor.EMPTY);
   }
 
   @NotNull

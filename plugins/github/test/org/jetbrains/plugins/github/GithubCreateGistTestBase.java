@@ -52,11 +52,6 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     deleteGist();
   }
 
-  @NotNull
-  protected GithubAuthDataHolder getAuthDataHolder() {
-    return new GithubAuthDataHolder(myGitHubSettings.getAuthData());
-  }
-
   protected void deleteGist() throws IOException {
     if (GIST_ID != null) {
       GithubApiUtil.deleteGist(new GithubConnection(myGitHubSettings.getAuthData()), GIST_ID);
@@ -100,25 +95,19 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   protected void checkGistPublic() {
     GithubGist result = getGist();
 
-    assertTrue("Gist does not public", result.isPublic());
+    assertTrue("Gist is not public", result.isPublic());
   }
 
-  protected void checkGistPrivate() {
+  protected void checkGistSecret() {
     GithubGist result = getGist();
 
-    assertFalse("Gist does not private", result.isPublic());
-  }
-
-  protected void checkGistAnonymous() {
-    GithubGist result = getGist();
-
-    assertTrue("Gist does not anonymous", result.getUser() == null);
+    assertFalse("Gist is not private", result.isPublic());
   }
 
   protected void checkGistNotAnonymous() {
     GithubGist result = getGist();
 
-    assertFalse("Gist does not anonymous", result.getUser() == null);
+    assertFalse("Gist is not anonymous", result.getUser() == null);
   }
 
   protected void checkGistDescription(@NotNull String expected) {
@@ -139,7 +128,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   }
 
   protected void registerCancelingLoginDialogHandler() {
-    myDialogManager.registerDialogHandler(GithubLoginDialog.class, new TestDialogHandler<GithubLoginDialog>() {
+    dialogManager.registerDialogHandler(GithubLoginDialog.class, new TestDialogHandler<GithubLoginDialog>() {
       @Override
       public int handleDialog(GithubLoginDialog dialog) {
         return DialogWrapper.CANCEL_EXIT_CODE;

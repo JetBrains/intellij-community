@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.XPathFile;
@@ -360,6 +361,6 @@ public class CompletionLists {
       ContainerUtil.addAll(set, clazz.getInterfaces());
       clazz = clazz.getSuperclass();
     } while (clazz != null);
-    return set.toArray(new Class[set.size()]);
+    return set.toArray(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 }

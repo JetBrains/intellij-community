@@ -132,7 +132,7 @@ public abstract class IntentionManager  {
    * @return "Fix all '' inspections problems for a file" intention if toolWrapper is local inspection or simple global one
    */
   @Nullable
-  public abstract IntentionAction createFixAllIntention(InspectionToolWrapper toolWrapper, IntentionAction action);
+  public abstract IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull IntentionAction action);
 
   /**
    * @return intention to start code cleanup on file

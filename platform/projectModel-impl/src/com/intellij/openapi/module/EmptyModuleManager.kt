@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.module
 
+import com.intellij.openapi.module.impl.createGrouper
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.NotNull
 
-class EmptyModuleManager(project: Project, messageBus: MessageBus) : ModuleManager() {
+class EmptyModuleManager(private val project: Project, messageBus: MessageBus) : ModuleManager() {
   override fun hasModuleGroups() = false
 
   override fun newModule(filePath: String, moduleTypeId: String) = throw UnsupportedOperationException()
@@ -52,9 +53,16 @@ class EmptyModuleManager(project: Project, messageBus: MessageBus) : ModuleManag
   override fun setUnloadedModules(unloadedModuleNames: MutableList<String>) {
   }
 
+  override fun getModuleGrouper(model: ModifiableModuleModel?): ModuleGrouper {
+    return createGrouper(project, model)
+  }
+
   override fun getAllModuleDescriptions() = emptyList<ModuleDescription>()
 
   override fun getUnloadedModuleDescriptions() = emptyList<UnloadedModuleDescription>()
 
   override fun getUnloadedModuleDescription(moduleName: String) = null
+
+  override fun removeUnloadedModules(unloadedModules: MutableCollection<UnloadedModuleDescription>) {
+  }
 }

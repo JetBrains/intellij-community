@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,14 +25,13 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.info.SvnInfoHandler;
 import org.jetbrains.idea.svn.status.CmdStatusClient;
 import org.jetbrains.idea.svn.status.PortableStatus;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -41,6 +41,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnParseCommandLineParseTest extends TestCase {
 
@@ -578,8 +580,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
       try {
         return createStubInfo(basePath + "1", "http://a.b.c");
       }
-      catch (SVNException e) {
-        //
+      catch (SvnBindException e) {
         throw new RuntimeException(e);
       }
     });
@@ -597,9 +598,9 @@ public class SvnParseCommandLineParseTest extends TestCase {
     return StringUtil.replace(s, "C:/", LINUX_ROOT);
   }
 
-  private Info createStubInfo(final String basePath, final String baseUrl) throws SVNException {
-    return new Info(basePath, SVNURL.parseURIEncoded(baseUrl), SVNRevision.HEAD, NodeKind.FILE, "",
-                           SVNURL.parseURIEncoded("http://a.b.c"), 1, new Date(), "me", null, Depth.EMPTY);
+  private Info createStubInfo(final String basePath, final String baseUrl) throws SvnBindException {
+    return new Info(basePath, createUrl(baseUrl), Revision.HEAD, NodeKind.FILE, "",
+                    createUrl("http://a.b.c"), 1, new Date(), "me", null, Depth.EMPTY);
   }
 
   public void testStatusInExternalMove() throws Exception {
@@ -650,7 +651,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
                           "</target>\n" +
                           "</status>";
     final String basePath = "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main";
-    final SvnStatusHandler[] handler = new SvnStatusHandler[1];
+    Ref<SvnStatusHandler> handler = Ref.create();
     final File baseFile = new File(basePath);
     final SvnStatusHandler.ExternalDataCallback callback = CmdStatusClient.createStatusCallback(status1 -> {
       System.out.println(status1.getURL());
@@ -663,21 +664,21 @@ public class SvnParseCommandLineParseTest extends TestCase {
         .equals(status1.getFile())) {
         Assert.assertEquals("http://external/src/com/slave/SomeOtherClass.java", status1.getURL().toString());
       }
-    }, baseFile, createStubInfo(basePath, "http://mainurl/"), handler);
-    handler[0] = new SvnStatusHandler(callback, baseFile, o -> {
+    }, baseFile, createStubInfo(basePath, "http://mainurl/"), () -> handler.get().getPending());
+    handler.set(new SvnStatusHandler(callback, baseFile, o -> {
       try {
         if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave").equals(o)) {
           return createStubInfo(o.getPath(), "http://external");
         }
         return createStubInfo(o.getPath(), "http://12345");
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         throw new RuntimeException(e);
       }
-    });
+    }));
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-    parser.parse(new ByteArrayInputStream(status.getBytes(CharsetToolkit.UTF8_CHARSET)), handler[0]);
-    final MultiMap<String,PortableStatus> changes = handler[0].getCurrentListChanges();
+    parser.parse(new ByteArrayInputStream(status.getBytes(CharsetToolkit.UTF8_CHARSET)), handler.get());
+    final MultiMap<String, PortableStatus> changes = handler.get().getCurrentListChanges();
   }
 
   public void testStatusWithSwitched() throws Exception {
@@ -751,8 +752,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
       try {
         return createStubInfo(basePath + "1", "http://a.b.c");
       }
-      catch (SVNException e) {
-        //
+      catch (SvnBindException e) {
         throw new RuntimeException(e);
       }
     });
@@ -838,8 +838,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
       try {
         return createStubInfo(basePath + "1", "http://a.b.c");
       }
-      catch (SVNException e) {
-        //
+      catch (SvnBindException e) {
         throw new RuntimeException(e);
       }
     });

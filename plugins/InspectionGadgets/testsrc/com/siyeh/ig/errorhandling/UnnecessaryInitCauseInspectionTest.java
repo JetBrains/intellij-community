@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -23,6 +9,18 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class UnnecessaryInitCauseInspectionTest extends LightInspectionTestCase {
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package java.util;" +
+      "public\n" +
+      "class MissingResourceException extends RuntimeException {" +
+      "  public MissingResourceException(String s, String className, String key) {}" +
+      "  MissingResourceException(String message, String className, String key, Throwable cause) {}" +
+      "}"
+    };
+  }
 
   public void testSplitDeclarationAssignment() {
     doMemberTest("void foo() {\n" +
@@ -67,6 +65,17 @@ public class UnnecessaryInitCauseInspectionTest extends LightInspectionTestCase 
            "  class YException extends Exception {" +
            "    public YException(String msg) { super(msg); }" +
            "    public YException(String msg, IOException cause) { super(msg, cause); }" +
+           "  }" +
+           "}");
+  }
+
+  public void testNotAccessible() {
+    doTest("import java.util.*;" +
+           "class X {" +
+           "  void z() {" +
+           "    RuntimeException cause = new RuntimeException();\n" +
+           "    MissingResourceException e = new MissingResourceException(\"asdf\", \"asdf\", \"asdf\");\n" +
+           "    e.initCause(cause);" +
            "  }" +
            "}");
   }

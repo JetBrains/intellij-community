@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -27,10 +13,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
@@ -39,12 +23,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -59,7 +43,6 @@ import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.BitUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -78,6 +61,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.*;
 
 /**
  * @author Anton Katilin
@@ -342,9 +327,13 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
+  /**
+   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
+   *                    component for which menu is invoked will be returned
+   */
   @Nullable
-  public Object getSelectedComponent() {
-    final TabInfo info = myTabs.getTargetInfo();
+  public Object getSelectedComponent(boolean ignorePopup) {
+    final TabInfo info = ignorePopup ? myTabs.getSelectedInfo() : myTabs.getTargetInfo();
     return info != null ? info.getComponent() : null;
   }
 
@@ -353,8 +342,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) return;
 
-    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file)
-      .setTabColor(calcTabColor(myProject, file)).setDragOutDelegate(myDragOutDelegate);
+    tab = new TabInfo(comp).setText(getPresentableNameForUI(myProject, file))
+                           .setTabColor(getFileTabBackgroundColor(myProject, file))
+                           .setIcon(icon)
+                           .setTooltipText(tooltip)
+                           .setObject(file)
+                           .setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
@@ -383,7 +376,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   private static class MyQueryable implements Queryable {
-
     private final TabInfo myTab;
 
     MyQueryable(TabInfo tab) {
@@ -396,36 +388,22 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  public static String calcTabTitle(final Project project, final VirtualFile file) {
-    for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
-      final String result = provider.getEditorTabTitle(project, file);
-      if (result != null) {
-        return result;
-      }
-    }
-
-    return file.getPresentableName();
-  }
-  public static String calcFileName(final Project project,final  VirtualFile file) {
-    for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
-      final String result = provider.getEditorTabTitle(project, file);
-      if (result != null) {
-        return result;
-      }
-    }
-    return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
+  /** @deprecated Use {@link VfsPresentationUtil#getPresentableNameForUI} */
+  @NotNull
+  public static String calcTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
+    return getPresentableNameForUI(project, file);
   }
 
+  /** @deprecated Use {@link VfsPresentationUtil#getUniquePresentableNameForUI} */
+  @NotNull
+  public static String calcFileName(@NotNull Project project, @NotNull VirtualFile file) {
+    return getUniquePresentableNameForUI(project, file);
+  }
+
+  /** @deprecated Use {@link VfsPresentationUtil#getFileBackgroundColor} */
   @Nullable
   public static Color calcTabColor(@NotNull Project project, @NotNull VirtualFile file) {
-    for (EditorTabColorProvider provider : Extensions.getExtensions(EditorTabColorProvider.EP_NAME)) {
-      final Color result = provider.getEditorTabColor(project, file);
-      if (result != null) {
-        return result;
-      }
-    }
-
-    return null;
+    return getFileTabBackgroundColor(project, file);
   }
 
   public Component getComponentAt(final int i) {
@@ -521,14 +499,15 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final VirtualFile file = (VirtualFile)selected.getObject();
     final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
 
-    AsyncResult<EditorWindow> window = mgr.getActiveWindow();
-    window.doWhenDone((Consumer<EditorWindow>)wnd -> {
-      if (wnd != null) {
-        if (wnd.findFileComposite(file) != null) {
-          mgr.closeFile(file, wnd);
+    mgr
+      .getActiveWindow()
+      .onSuccess(wnd -> {
+        if (wnd != null) {
+          if (wnd.findFileComposite(file) != null) {
+            mgr.closeFile(file, wnd);
+          }
         }
-      }
-    });
+      });
   }
 
   private boolean isFloating() {
@@ -579,11 +558,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     public void mouseClicked(MouseEvent e) {
       if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown() || !SystemInfo.isMac && e.isControlDown())) {
         final TabInfo info = myTabs.findInfo(e);
-        if (info != null && info.getObject() != null) {
-          final VirtualFile vFile = (VirtualFile)info.getObject();
-          if (vFile != null) {
-            ShowFilePathAction.show(vFile, e);
-          }
+        Object o = info == null ? null : info.getObject();
+        if (o instanceof VirtualFile) {
+          ShowFilePathAction.show((VirtualFile)o, e);
         }
       }
     }
@@ -707,7 +684,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       return myPinned;
     }
   }
-  
+
   private final class MyTransferHandler extends TransferHandler {
     private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
 
@@ -752,12 +729,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     private static void drawLine(Rectangle bounds, @Nullable Rectangle selectedBounds, Graphics g, int yShift) {
       if (selectedBounds != null) {
         if (selectedBounds.x > 0) {
-          g.drawLine(bounds.x, bounds.y + yShift, selectedBounds.x - 2, bounds.y + yShift);
+          UIUtil.drawLine(g, bounds.x, bounds.y + yShift, selectedBounds.x - 2, bounds.y + yShift);
         }
-        g.drawLine(selectedBounds.x + selectedBounds.width + 1, bounds.y + yShift, bounds.x + bounds.width, bounds.y + yShift);
+        UIUtil.drawLine(g, selectedBounds.x + selectedBounds.width + 1, bounds.y + yShift, bounds.x + bounds.width, bounds.y + yShift);
       }
       else {
-        g.drawLine(bounds.x, bounds.y + yShift, bounds.x + bounds.width, bounds.y + yShift);
+        UIUtil.drawLine(g, bounds.x, bounds.y + yShift, bounds.x + bounds.width, bounds.y + yShift);
       }
     }
 

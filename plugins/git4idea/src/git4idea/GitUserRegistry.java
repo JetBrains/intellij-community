@@ -95,11 +95,7 @@ public class GitUserRegistry implements Disposable, VcsListener {
 
   @Override
   public void directoryMappingChanged() {
-    GitVcs vcs = GitVcs.getInstance(myProject);
-    if (vcs == null) {
-      return;
-    }
-    final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
+    final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(GitVcs.getInstance(myProject));
     final Collection<VirtualFile> rootsToCheck = ContainerUtil.filter(roots, root -> getUser(root) == null);
     if (!rootsToCheck.isEmpty()) {
       Runnable task = () -> {
@@ -107,7 +103,7 @@ public class GitUserRegistry implements Disposable, VcsListener {
           getOrReadUser(root);
         }
       };
-      BackgroundTaskUtil.executeOnPooledThread(task, myProject);
+      BackgroundTaskUtil.executeOnPooledThread(myProject, task);
     }
   }
 }

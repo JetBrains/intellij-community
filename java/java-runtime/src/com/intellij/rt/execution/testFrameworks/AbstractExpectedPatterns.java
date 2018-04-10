@@ -18,7 +18,6 @@ package com.intellij.rt.execution.testFrameworks;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,8 +32,12 @@ public class AbstractExpectedPatterns {
   protected static ComparisonFailureData createExceptionNotification(String message, List patterns) {
     for (int i = 0; i < patterns.size(); i++) {
       final Matcher matcher = ((Pattern)patterns.get(i)).matcher(message);
-      if (matcher.matches()) {
-        return new ComparisonFailureData(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+      if (matcher.find()) {
+        String expected = matcher.group(1).replaceAll("\\\\n", "\n");
+        String actual = matcher.group(2).replaceAll("\\\\n", "\n");
+        if (!matcher.find()) {
+          return new ComparisonFailureData(expected, actual);
+        }
       }
     }
     return null;

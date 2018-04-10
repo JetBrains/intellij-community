@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
@@ -32,13 +31,12 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @NotNull private final VcsLogUiPropertiesImpl.MainVcsLogUiPropertiesListener myPropertiesListener;
 
   public VcsLogUiImpl(@NotNull VcsLogData logData,
-                      @NotNull Project project,
                       @NotNull VcsLogColorManager manager,
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VisiblePackRefresher refresher) {
-    super(logData, project, manager, refresher);
+    super(logData, manager, refresher);
     myUiProperties = uiProperties;
-    myMainFrame = new MainFrame(logData, this, project, uiProperties, myLog, myVisiblePack);
+    myMainFrame = new MainFrame(logData, this, uiProperties, myLog, myVisiblePack);
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
@@ -93,31 +91,22 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
 
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
-    if (getFilters().isEmpty()) {
+    if (getFilterUi().getFilters().isEmpty()) {
       super.handleCommitNotFound(commitId, rowGetter);
     }
     else {
       showWarningWithLink("Commit " + commitId.toString() + " does not exist or does not match active filters",
                           "Reset filters and search again.", () -> {
           getFilterUi().setFilter(null);
-          invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
+          invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()), pack -> pack.getFilters().isEmpty());
         });
     }
-  }
-
-  public boolean isShowRootNames() {
-    return myUiProperties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES);
   }
 
   @Override
   public boolean isHighlighterEnabled(@NotNull String id) {
     VcsLogHighlighterProperty property = VcsLogHighlighterProperty.get(id);
     return myUiProperties.exists(property) && myUiProperties.get(property);
-  }
-
-  @Override
-  public boolean isMultipleRoots() {
-    return myColorManager.isMultipleRoots(); // somewhy color manager knows about this
   }
 
   public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
@@ -128,12 +117,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @Override
   public VcsLogGraphTable getTable() {
     return myMainFrame.getGraphTable();
-  }
-
-  @Override
-  @NotNull
-  protected VcsLogFilterCollection getFilters() {
-    return myMainFrame.getFilterUi().getFilters();
   }
 
   @NotNull
@@ -209,6 +192,10 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     @Override
     public void onColumnOrderChanged() {
       myMainFrame.getGraphTable().onColumnOrderSettingChanged();
+    }
+
+    @Override
+    public void onShowChangesFromParentsChanged() {
     }
 
     @Override

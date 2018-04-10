@@ -75,11 +75,6 @@ public class IdeRepaintManager extends RepaintManager {
   }
 
   @Override
-  public void validateInvalidComponents() {
-    super.validateInvalidComponents();
-  }
-
-  @Override
   public void addInvalidComponent(final JComponent invalidComponent) {
     checkThreadViolations(invalidComponent);
 

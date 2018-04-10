@@ -215,6 +215,88 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                ") {}");
   }
 
+  public void testEnter_AfterStatementWithLabel() throws IOException {
+    // as prev
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "lb:\n" +
+               "        while (true) break lb;<caret>\n" +
+               "    }\n" +
+               "}\n",
+               "class T {\n" +
+               "    void test() {\n" +
+               "lb:\n" +
+               "        while (true) break lb;\n" +
+               "        <caret>\n" +
+               "    }\n" +
+               "}\n");
+
+    // as block
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "lb:  while (true) break lb;<caret>\n" +
+               "    }\n" +
+               "}\n",
+               "class T {\n" +
+               "    void test() {\n" +
+               "lb:  while (true) break lb;\n" +
+               "        <caret>\n" +
+               "    }\n" +
+               "}\n");
+  }
+
+  public void testEnter_inlineComment() throws IOException {
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        /<caret>/\n" +
+               "    }\n" +
+               "}\n",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        /\n" +
+               "        <caret>/\n" +
+               "    }\n" +
+               "}\n");
+
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        <caret>//\n" +
+               "    }\n" +
+               "}\n",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        \n" +
+               "        <caret>//\n" +
+               "    }\n" +
+               "}\n");
+
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        //a<caret>b\n" +
+               "    }\n" +
+               "}\n",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        //a\n" +
+               "        // <caret>b\n" +
+               "    }\n" +
+               "}\n");
+
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        //<caret>",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        //\n" +
+               "    <caret>");
+    }  
+  
   public void testEnter_NewArgumentWithTabsNoAlign() throws IOException {
     CodeStyleSettings settings = getCodeStyleSettings();
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -233,5 +315,65 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                "\t\t\tint a,\n" +
                "\t\t\t<caret>\n" +
                ") {}");
+  }
+
+  public void testIdea179073() throws IOException {
+    doTextTest("java",
+               "ArrayList<String> strings = new ArrayList<>();\n" +
+               "    strings.stream()\n" +
+               "        .forEach((e) -> {<caret>\n" +
+               "        });",
+
+               "ArrayList<String> strings = new ArrayList<>();\n" +
+               "    strings.stream()\n" +
+               "        .forEach((e) -> {\n" +
+               "            <caret>\n" +
+               "        });");
+  }
+
+  public void testIdea187535() throws IOException {
+    doTextTest(
+      "java",
+
+      "public class Main {\n" +
+      "    void foo() {\n" +
+      "        {\n" +
+      "            int a = 1;\n" +
+      "        }\n" +
+      "        int b = 2;<caret>\n" +
+      "    }\n" +
+      "}"
+      ,
+      "public class Main {\n" +
+      "    void foo() {\n" +
+      "        {\n" +
+      "            int a = 1;\n" +
+      "        }\n" +
+      "        int b = 2;\n" +
+      "        <caret>\n" +
+      "    }\n" +
+      "}");
+  }
+
+  public void testIdea189059() throws IOException {
+    doTextTest(
+      "java",
+
+      "public class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        String[] s =\n" +
+      "                new String[] {<caret>};\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        String[] s =\n" +
+      "                new String[] {\n" +
+      "                        <caret>\n" +
+      "                };\n" +
+      "    }\n" +
+      "}"
+    );
   }
 }

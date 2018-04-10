@@ -130,7 +130,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyTupleExpression(final PyTupleExpression node) {
-      if (node.isEmpty()) {
+      if (node.isEmpty() && LanguageLevel.forElement(node).isPython2()) {
         getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.parens"));
       }
       else if (myOp == Operation.AugAssign) {
@@ -153,10 +153,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyListLiteralExpression(final PyListLiteralExpression node) {
-      if (node.isEmpty()) {
-        getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.brackets"));
-      }
-      else if (myOp == Operation.AugAssign) {
+      if (myOp == Operation.AugAssign) {
         getHolder().createErrorAnnotation(node, message("ANN.cant.aug.assign.to.list.or.comprh"));
       }
       else {
@@ -197,10 +194,12 @@ public class AssignTargetAnnotator extends PyAnnotator {
       checkLiteral(node);
     }
 
+    @Override
     public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
       checkLiteral(node);
     }
 
+    @Override
     public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
       checkLiteral(node);
     }
@@ -209,6 +208,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
       getHolder().createErrorAnnotation(node, message(myOp == Operation.Delete? "ANN.cant.delete.literal" : "ANN.cant.assign.to.literal"));
     }
 
+    @Override
     public void visitPyLambdaExpression(final PyLambdaExpression node) {
       getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.lambda"));
     }

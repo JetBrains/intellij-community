@@ -1,33 +1,21 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Jan 22, 2003
- * Time: 2:25:31 PM
  */
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
+import com.intellij.compiler.HelpID;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -78,6 +66,7 @@ public class CompilerTask extends Task.Backgroundable {
   private static final String APP_ICON_ID = "compiler";
   @NotNull
   private final Object myContentId = new IDObject("content_id");
+  private final boolean myModal;
 
   @NotNull
   private Object mySessionId = myContentId; // by default sessionID should be unique, just as content ID
@@ -105,12 +94,18 @@ public class CompilerTask extends Task.Backgroundable {
 
   public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
                       boolean waitForPreviousSession, boolean compilationStartedAutomatically) {
+    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, compilationStartedAutomatically, false);
+  }
+
+  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
+                       boolean waitForPreviousSession, boolean compilationStartedAutomatically, boolean modal) {
     super(project, contentName);
     myContentName = contentName;
     myHeadlessMode = headlessMode;
     myForceAsyncExecution = forceAsync;
     myWaitForPreviousSession = waitForPreviousSession;
     myCompilationStartedAutomatically = compilationStartedAutomatically;
+    myModal = modal;
   }
 
   @NotNull
@@ -143,13 +138,13 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   @Override
-  public String getProcessId() {
-    return "compilation";
+  public boolean shouldStartInBackground() {
+    return !myModal;
   }
 
   @Override
-  public boolean shouldStartInBackground() {
-    return true;
+  public boolean isConditionalModal() {
+    return myModal;
   }
 
   public ProgressIndicator getIndicator() {
@@ -167,6 +162,7 @@ public class CompilerTask extends Task.Backgroundable {
   @Override
   public void run(@NotNull final ProgressIndicator indicator) {
     myIndicator = indicator;
+    myIndicator.setIndeterminate(false);
 
     final ProjectManager projectManager = ProjectManager.getInstance();
     projectManager.addProjectManagerListener(myProject, myCloseListener = new CloseListener());
@@ -335,7 +331,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
     else if (CompilerMessageCategory.ERROR.equals(messageCategory)) {
       myErrorCount += 1;
-      informWolf(message);
+      ReadAction.run(() -> informWolf(message));
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -464,6 +460,7 @@ public class CompilerTask extends Task.Backgroundable {
 
     final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(component, myContentName, true);
+    content.setHelpId(HelpID.COMPILER);
     CONTENT_ID_KEY.set(content, myContentId);
     SESSION_ID_KEY.set(content, mySessionId);
     messageView.getContentManager().addContent(content);

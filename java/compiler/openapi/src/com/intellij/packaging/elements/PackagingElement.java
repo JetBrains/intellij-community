@@ -25,6 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * Describes an element in artifact's output layout.
+ *
+ * @see com.intellij.packaging.artifacts.Artifact
+ * @see PackagingElementFactory
  * @author nik
  */
 public abstract class PackagingElement<S> implements PersistentStateComponent<S> {

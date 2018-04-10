@@ -21,9 +21,11 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ui.JBUI;
 
@@ -33,11 +35,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 /*
  * @author: MYakovlev
- * Date: Aug 22, 2002
- * Time: 1:31:43 PM
  */
 public class SelectTemplateDialog extends DialogWrapper{
-  private JComboBox myCbxTemplates;
+  private ComboBox myCbxTemplates;
   private FileTemplate mySelectedTemplate;
   private final Project myProject;
   private final PsiDirectory myDirectory;
@@ -83,7 +83,13 @@ public class SelectTemplateDialog extends DialogWrapper{
       }
     }
     if(myCbxTemplates == null){
-      myCbxTemplates = new JComboBox(model);
+      myCbxTemplates = new ComboBox(model);
+      new ComboboxSpeedSearch(myCbxTemplates) {
+        @Override
+        protected String getElementText(Object element) {
+          return element instanceof FileTemplate ? ((FileTemplate)element).getName() : null;
+        }
+      };
       myCbxTemplates.setRenderer(new ListCellRendererWrapper<FileTemplate>() {
         @Override
         public void customize(JList list, FileTemplate fileTemplate, int index, boolean selected, boolean hasFocus) {

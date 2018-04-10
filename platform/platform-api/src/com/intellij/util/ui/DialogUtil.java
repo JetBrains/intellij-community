@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.ide.ui.UISettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,13 +33,19 @@ public class DialogUtil{
 
   private DialogUtil() {}
 
-  public static void registerMnemonic(AbstractButton button) {
-    registerMnemonic(button, UIUtil.MNEMONIC);
+  public static void registerMnemonic(@NotNull AbstractButton button) {
+    setTextWithMnemonic(button, button.getText(), UIUtil.MNEMONIC);
   }
 
-  public static void registerMnemonic(final AbstractButton button, char mn) {
-    final String text = button.getText();
+  public static void registerMnemonic(@NotNull AbstractButton button, char mn) {
+    setTextWithMnemonic(button, button.getText(), mn);
+  }
 
+  public static void setTextWithMnemonic(@NotNull AbstractButton button, String text) {
+    setTextWithMnemonic(button, text, UIUtil.MNEMONIC);
+  }
+
+  public static void setTextWithMnemonic(@NotNull AbstractButton button, String text, char mn) {
     if (text != null) {
       final StringBuilder realText = new StringBuilder();
       char mnemonic = '\0';

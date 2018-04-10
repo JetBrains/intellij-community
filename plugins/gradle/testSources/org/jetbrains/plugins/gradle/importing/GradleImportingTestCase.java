@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -28,6 +26,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,8 +35,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.PathKt;
 import org.gradle.StartParameter;
+import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
 import org.gradle.wrapper.PathAssembler;
@@ -93,19 +92,16 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     myJdkHome = IdeaTestUtil.requireRealJdkHome();
     super.setUp();
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) {
-        Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
-        if (oldJdk != null) {
-          ProjectJdkTable.getInstance().removeJdk(oldJdk);
-        }
-        VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
-        Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, GRADLE_JDK_NAME);
-        assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
-        ProjectJdkTable.getInstance().addJdk(jdk);
+    WriteAction.runAndWait(() -> {
+      Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
+      if (oldJdk != null) {
+        ProjectJdkTable.getInstance().removeJdk(oldJdk);
       }
-    }.execute();
+      VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
+      Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, GRADLE_JDK_NAME);
+      assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
+      ProjectJdkTable.getInstance().addJdk(jdk);
+    });
     myProjectSettings = new GradleProjectSettings();
     GradleSettings.getInstance(myProject).setGradleVmOptions("-Xmx128m -XX:MaxPermSize=64m");
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
@@ -118,19 +114,14 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       //super.setUp() wasn't called
       return;
     }
+    Sdk jdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
+    if(jdk != null) {
+      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
+    }
 
     try {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          Sdk old = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
-          if (old != null) {
-            SdkConfigurationUtil.removeSdk(old);
-          }
-        }
-      }.execute();
       Messages.setTestDialog(TestDialog.DEFAULT);
-      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory());
+      deleteBuildSystemDirectory();
     }
     finally {
       super.tearDown();
@@ -142,6 +133,9 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
+
+    File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
+    roots.addAll(collectRootsInside(gradleUserHomeDir.getPath()));
   }
 
   @Override
@@ -150,7 +144,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-  public static Collection<Object[]> data() throws Throwable {
+  public static Collection<Object[]> data() {
     return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
   }
 
@@ -233,12 +227,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     assert wrapperJarFrom != null;
 
     final VirtualFile wrapperJarFromTo = createProjectSubFile("gradle/wrapper/gradle-wrapper.jar");
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        wrapperJarFromTo.setBinaryContent(wrapperJarFrom.contentsToByteArray());
-      }
-    }.execute().throwException();
+    WriteAction.runAndWait(() -> wrapperJarFromTo.setBinaryContent(wrapperJarFrom.contentsToByteArray()));
 
 
     Properties properties = new Properties();
@@ -277,5 +266,31 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @NotNull
   private static File wrapperJar() {
     return new File(PathUtil.getJarPathForClass(GradleWrapperMain.class));
+  }
+
+  protected void assertMergedModuleCompileLibDepScope(String moduleName, String depName) {
+    if (isGradleOlderThen_3_4() || isGradleNewerThen_4_5()) {
+      assertModuleLibDepScope(moduleName, depName, DependencyScope.COMPILE);
+    }
+    else {
+      assertModuleLibDepScope(moduleName, depName, DependencyScope.PROVIDED, DependencyScope.TEST, DependencyScope.RUNTIME);
+    }
+  }
+
+  protected void assertMergedModuleCompileModuleDepScope(String moduleName, String depName) {
+    if (isGradleOlderThen_3_4() || isGradleNewerThen_4_5()) {
+      assertModuleModuleDepScope(moduleName, depName, DependencyScope.COMPILE);
+    }
+    else {
+      assertModuleModuleDepScope(moduleName, depName, DependencyScope.PROVIDED, DependencyScope.TEST, DependencyScope.RUNTIME);
+    }
+  }
+
+  protected boolean isGradleOlderThen_3_4() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("3.4")) < 0;
+  }
+
+  protected boolean isGradleNewerThen_4_5() {
+    return GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("4.5")) > 0;
   }
 }

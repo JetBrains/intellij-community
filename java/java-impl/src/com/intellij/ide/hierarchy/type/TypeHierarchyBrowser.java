@@ -42,7 +42,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     super(project, psiClass);
   }
 
-  protected boolean isInterface(PsiElement psiElement) {
+  protected boolean isInterface(@NotNull PsiElement psiElement) {
     return psiElement instanceof PsiClass && ((PsiClass)psiElement).isInterface();
   }
 

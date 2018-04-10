@@ -15,8 +15,12 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +29,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class CollectionUtils {
+  private static final CallMatcher COLLECTION_MAP_SIZE =
+    CallMatcher.anyOf(
+      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "size").parameterCount(0),
+      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "size").parameterCount(0));
+
+  /**
+   * Matches a call which creates collection of the same size as the qualifier collection
+   */
+  public static final CallMatcher DERIVED_COLLECTION =
+    CallMatcher.anyOf(
+      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "keySet", "values", "entrySet").parameterCount(0),
+      CallMatcher.instanceCall("java.util.NavigableMap", "descendingKeySet", "descendingMap", "navigableKeySet").parameterCount(0),
+      CallMatcher.instanceCall("java.util.NavigableSet", "descendingSet").parameterCount(0)
+    );
 
   /**
    * @noinspection StaticCollection
@@ -152,15 +170,7 @@ public class CollectionUtils {
 
   @Contract("null -> false")
   public static boolean isConcreteCollectionClass(@Nullable PsiType type) {
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass resolved = classType.resolve();
-    if (resolved == null) {
-      return false;
-    }
-    return isConcreteCollectionClass(resolved);
+    return isConcreteCollectionClass(PsiUtil.resolveClassInClassTypeOnly(type));
   }
 
   @Contract("null -> false")
@@ -178,11 +188,7 @@ public class CollectionUtils {
   }
 
   public static boolean isCollectionClassOrInterface(@Nullable PsiType type) {
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass resolved = classType.resolve();
+    final PsiClass resolved = PsiUtil.resolveClassInClassTypeOnly(type);
     if (resolved == null) {
       return false;
     }
@@ -244,18 +250,6 @@ public class CollectionUtils {
     return ConstructionUtils.isEmptyArrayInitializer(initializer);
   }
 
-  public static boolean isArrayOrCollectionField(@NotNull PsiField field) {
-    final PsiType type = field.getType();
-    if (isCollectionClassOrInterface(type)) {
-      return true;
-    }
-    if (!(type instanceof PsiArrayType)) {
-      return false;
-    }
-    // constant empty arrays are ignored.
-    return !isConstantEmptyArray(field);
-  }
-
   public static String getInterfaceForClass(String name) {
     final int parameterStart = name.indexOf((int)'<');
     final String baseName;
@@ -266,5 +260,37 @@ public class CollectionUtils {
       baseName = name;
     }
     return s_interfaceForCollection.get(baseName);
+  }
+
+  /**
+   * Checks whether supplied expression represents a collection size. It handles some derived collections,
+   * e.g. it's known that {@code map.size()} is the size of {@code map.keySet()}.
+   *
+   * @param expression expression to test
+   * @param collection expected collection or map expression
+   * @return true if the supplied expression represents a collection size
+   */
+  @Contract("null, _ -> false")
+  public static boolean isCollectionOrMapSize(@Nullable PsiExpression expression, @NotNull PsiExpression collection) {
+    PsiMethodCallExpression sizeCall = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiMethodCallExpression.class);
+    if (!COLLECTION_MAP_SIZE.test(sizeCall)) return false;
+    PsiExpression sizeQualifier = sizeCall.getMethodExpression().getQualifierExpression();
+    if (sizeQualifier == null) return false;
+    sizeQualifier = getBaseCollection(sizeQualifier);
+    collection = getBaseCollection(collection);
+    return PsiEquivalenceUtil.areElementsEquivalent(sizeQualifier, collection);
+  }
+
+  private static @NotNull PsiExpression getBaseCollection(@NotNull PsiExpression derivedCollection) {
+    while(true) {
+      PsiMethodCallExpression derivedCall =
+        ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(derivedCollection), PsiMethodCallExpression.class);
+      if (DERIVED_COLLECTION.test(derivedCall)) {
+        derivedCollection = ExpressionUtils.getQualifierOrThis(derivedCall.getMethodExpression());
+      }
+      else {
+        return derivedCollection;
+      }
+    }
   }
 }

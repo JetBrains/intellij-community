@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyBinaryExpression;
@@ -35,8 +35,6 @@ import java.util.Map;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   26.03.2010
- * Time:   22:01:27
  */
 public class PyFlipComparisonIntention extends PyBaseIntentionAction {
   private static final Map<PyElementType, String> FLIPPED_OPERATORS = new HashMap<>(7);

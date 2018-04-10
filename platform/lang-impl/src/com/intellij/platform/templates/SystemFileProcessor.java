@@ -43,7 +43,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 2/15/13
  */
 public class SystemFileProcessor extends ProjectTemplateFileProcessor {
 

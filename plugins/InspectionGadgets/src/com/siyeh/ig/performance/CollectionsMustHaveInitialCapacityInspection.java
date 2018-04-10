@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,25 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -63,10 +67,10 @@ public class CollectionsMustHaveInitialCapacityInspection
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    JPanel p = new JPanel(new BorderLayout());
-    p.add(new SingleCheckboxOptionsPanel("don't report field's initializers", this, "myIgnoreFields"), BorderLayout.NORTH);
-    p.add(mySettings.createOptionsPanel(), BorderLayout.CENTER);
-    return p;
+    return new FormBuilder()
+      .addComponentFillVertically(mySettings.createOptionsPanel(), 0)
+      .addComponent(new CheckBox("Don't report field initializers", this, "myIgnoreFields"))
+      .getPanel();
   }
 
   @Pattern(VALID_ID_PATTERN)
@@ -95,8 +99,7 @@ public class CollectionsMustHaveInitialCapacityInspection
     return new CollectionInitialCapacityVisitor();
   }
 
-  private class CollectionInitialCapacityVisitor
-    extends BaseInspectionVisitor {
+  private class CollectionInitialCapacityVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
@@ -106,27 +109,14 @@ public class CollectionsMustHaveInitialCapacityInspection
       }
 
       final PsiType type = expression.getType();
-      if (!isCollectionWithInitialCapacity(type)) {
+      if (!mySettings.getCollectionClassesRequiringCapacity().contains(TypeUtils.resolvedClassName(type))) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null || argumentList.getExpressions().length != 0) {
+      if (argumentList == null || !argumentList.isEmpty()) {
         return;
       }
       registerNewExpressionError(expression);
-    }
-
-    private boolean isCollectionWithInitialCapacity(@Nullable PsiType type) {
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass resolved = classType.resolve();
-      if (resolved == null) {
-        return false;
-      }
-      final String className = resolved.getQualifiedName();
-      return mySettings.getCollectionClassesRequiringCapacity().contains(className);
     }
   }
 }

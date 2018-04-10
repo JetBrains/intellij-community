@@ -20,15 +20,14 @@ import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.RootAction;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitUtil;
+import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.config.GitVcsSettings;
+import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +43,7 @@ import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.util.containers.ContainerUtil.map;
+import static git4idea.GitUtil.getRepositoryManager;
 import static git4idea.branch.GitBranchUtil.getDisplayableBranchText;
 import static java.util.stream.Collectors.toList;
 
@@ -84,7 +84,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       }
       return false;
     };
-    return new GitBranchPopup(currentRepository, GitUtil.getRepositoryManager(project), vcsSettings, preselectActionCondition);
+    return new GitBranchPopup(currentRepository, getRepositoryManager(project), vcsSettings, preselectActionCondition);
   }
 
   @Nullable
@@ -100,12 +100,31 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
                          @NotNull Condition<AnAction> preselectActionCondition) {
     super(currentRepository, repositoryManager, new GitMultiRootBranchConfig(repositoryManager.getRepositories()), vcsSettings,
           preselectActionCondition, DIMENSION_SERVICE_KEY);
+
+    final GitBranchIncomingOutgoingManager gitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
+    if (gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
+      AnAction updateBranchInfoWithAuthenticationAction =
+        new AnAction("Authentication failed. Click to retry", null, AllIcons.General.Warning) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            gitBranchIncomingOutgoingManager.forceUpdateBranches(true);
+            myPopup.cancel();
+          }
+        };
+      updateBranchInfoWithAuthenticationAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.Warning);
+      myPopup.addToolbarAction(updateBranchInfoWithAuthenticationAction, false);
+    }
   }
 
   @Override
   protected void fillWithCommonRepositoryActions(@NotNull DefaultActionGroup popupGroup,
                                                  @NotNull AbstractRepositoryManager<GitRepository> repositoryManager) {
     List<GitRepository> allRepositories = repositoryManager.getRepositories();
+    GitRebaseSpec rebaseSpec = getRepositoryManager(myProject).getOngoingRebaseSpec();
+    // add rebase actions only if sync rebase action is in progress for all repos
+    if (rebaseSpec != null && rebaseSpec.getAllRepositories().size() == allRepositories.size()) {
+      popupGroup.addAll(GitBranchPopupActions.getRebaseActions());
+    }
     popupGroup.add(new GitBranchPopupActions.GitNewBranchAction(myProject, allRepositories));
     popupGroup.add(new GitBranchPopupActions.CheckoutRevisionActions(myProject, allRepositories));
 

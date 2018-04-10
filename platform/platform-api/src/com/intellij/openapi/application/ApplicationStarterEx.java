@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,5 +31,5 @@ public abstract class ApplicationStarterEx implements ApplicationStarter {
     return false;
   }
 
-  public void processExternalCommandLine(String[] args, @Nullable String currentDirectory) { }
+  public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) { }
 }

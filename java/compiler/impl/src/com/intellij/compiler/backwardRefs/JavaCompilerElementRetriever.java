@@ -23,14 +23,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFunctionalExpression;
-import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,18 +47,14 @@ public class JavaCompilerElementRetriever {
   @NotNull
   static PsiFunctionalExpression[] retrieveFunExpressionsByIndices(@NotNull TIntHashSet indices,
                                                                    @NotNull PsiFileWithStubSupport psiFile) {
-    StubTree tree = psiFile.getStubTree();
-    boolean foreign = tree == null;
-    if (foreign) {
-      tree = ((PsiFileImpl)psiFile).calcStubTree();
-    }
+    StubbedSpine spine = psiFile.getStubbedSpine();
 
     PsiFunctionalExpression[] result = new PsiFunctionalExpression[indices.size()];
     int resIdx = 0;
     int funExprIdx = 0;
-    for (StubElement<?> element : tree.getPlainList()) {
-      if (FUN_EXPR.contains(element.getStubType()) && indices.contains(funExprIdx++)) {
-        result[resIdx++] = (PsiFunctionalExpression)element.getPsi();
+    for (int i = 0; i < spine.getStubCount(); i++) {
+      if (FUN_EXPR.contains(spine.getStubType(i)) && indices.contains(funExprIdx++)) {
+        result[resIdx++] = (PsiFunctionalExpression)spine.getStubPsi(i);
       }
     }
 
@@ -88,7 +83,7 @@ public class JavaCompilerElementRetriever {
   }
 
   private interface InternalNameMatcher {
-    boolean matches(PsiClassStub stub);
+    boolean matches(PsiClass psiClass);
 
     class ByName implements InternalNameMatcher {
       private final String myName;
@@ -96,8 +91,8 @@ public class JavaCompilerElementRetriever {
       public ByName(String name) {myName = name;}
 
       @Override
-      public boolean matches(PsiClassStub stub) {
-        return myName.equals(stub.getName());
+      public boolean matches(PsiClass psiClass) {
+        return myName.equals(psiClass.getName());
       }
     }
 
@@ -107,8 +102,8 @@ public class JavaCompilerElementRetriever {
       public ByQualifiedName(String name) {myQName = name;}
 
       @Override
-      public boolean matches(PsiClassStub stub) {
-        return myQName.equals(stub.getQualifiedName());
+      public boolean matches(PsiClass psiClass) {
+        return myQName.equals(psiClass.getQualifiedName());
       }
     }
   }
@@ -127,35 +122,32 @@ public class JavaCompilerElementRetriever {
 
 
     private PsiClass[] retrieveClasses(PsiFileWithStubSupport file) {
-      StubTree tree = file.getStubTree();
-      boolean foreign = tree == null;
-      if (foreign) {
-        tree = ((PsiFileImpl)file).calcStubTree();
-      }
+      StubbedSpine spine = file.getStubbedSpine();
 
       List<PsiClass> result = new ArrayList<>(myClassNameMatchers.size() + (myAnonymousIndices == null ? 0 : myAnonymousIndices.size()));
       int anonymousId = 0;
-      for (StubElement<?> element : tree.getPlainList()) {
-        if (element instanceof PsiClassStub) {
-          if (((PsiClassStub)element).isAnonymous()) {
+      for (int i = 0; i < spine.getStubCount(); i++) {
+        if (Constants.CLASS_BIT_SET.contains(spine.getStubType(i))) {
+          PsiClass element = (PsiClass)spine.getStubPsi(i);
+          if (element instanceof PsiAnonymousClass) {
             if (myAnonymousIndices != null && !myAnonymousIndices.isEmpty()) {
               if (myAnonymousIndices.contains(anonymousId)) {
-                result.add((PsiClass)element.getPsi());
+                result.add(element);
               }
               anonymousId++;
             }
           }
-          else if (match((PsiClassStub)element, myClassNameMatchers)) {
-            result.add((PsiClass)element.getPsi());
+          else if (match(element, myClassNameMatchers)) {
+            result.add(element);
           }
         }
       }
       return result.toArray(PsiClass.EMPTY_ARRAY);
     }
 
-    private static boolean match(PsiClassStub stub, Collection<InternalNameMatcher> matchers) {
+    private static boolean match(PsiClass psiClass, Collection<InternalNameMatcher> matchers) {
       for (InternalNameMatcher matcher : matchers) {
-        if (matcher.matches(stub)) {
+        if (matcher.matches(psiClass)) {
           //qualified name is unique among file's classes
           if (matcher instanceof InternalNameMatcher.ByQualifiedName) {
             matchers.remove(matcher);

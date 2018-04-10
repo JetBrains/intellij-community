@@ -25,7 +25,7 @@ import java.util.Collection;
  * @author nik
  */
 public abstract class JpsBuilderArtifactService {
-  private static JpsBuilderArtifactService ourInstance = new JpsBuilderArtifactServiceImpl();
+  private static final JpsBuilderArtifactService ourInstance = new JpsBuilderArtifactServiceImpl();
 
   public static JpsBuilderArtifactService getInstance() {
     return ourInstance;

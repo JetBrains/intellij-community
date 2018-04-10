@@ -30,7 +30,6 @@ import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10-Apr-14
  */
 public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHashSet>{
   private static final DataExternalizer<TIntHashSet> DATA_EXTERNALIZER = new DataExternalizer<TIntHashSet>() {

@@ -110,8 +110,7 @@ public class ExternalSystemFacadeManager {
   @NotNull
   public RemoteExternalSystemFacade getFacade(@Nullable Project project,
                                               @NotNull String externalProjectPath,
-                                              @NotNull ProjectSystemId externalSystemId) throws Exception
-  {
+                                              @NotNull ProjectSystemId externalSystemId) {
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }

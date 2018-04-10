@@ -28,24 +28,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.Collection;
 import java.util.List;
 
 public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
-  private PsiElement myPsiElement;
-
   public MavenConfigurationProducer() {
     super(MavenRunConfigurationType.getInstance());
   }
 
   @Override
   public PsiElement getSourceElement() {
-    return myPsiElement;
+    return restoreSourceElement();
   }
 
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
-    myPsiElement = location.getPsiElement();
+    storeSourceElement(location.getPsiElement());
     final MavenRunnerParameters params = createBuildParameters(location);
     if (params == null) return null;
 
@@ -75,7 +72,7 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
     List<String> goals = ((MavenGoalLocation)l).getGoals();
     MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(l.getProject()).getExplicitProfiles();
 
-    return new MavenRunnerParameters(true, f.getParent().getPath(), goals, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
+    return new MavenRunnerParameters(true, f.getParent().getPath(), f.getName(), goals, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
   }
 
   public int compareTo(Object o) {

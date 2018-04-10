@@ -76,7 +76,7 @@ public class BuildoutUnresolvedPartInspection extends LocalInspectionTool {
         problems.add(d);
       }
     }
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private class Visitor extends PsiRecursiveElementVisitor {

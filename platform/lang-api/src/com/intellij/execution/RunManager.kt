@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution
 
 import com.intellij.execution.configurations.ConfigurationFactory
@@ -47,14 +33,20 @@ abstract class RunManager {
     fun suggestUniqueName(str: String, currentNames: Collection<String>): String {
       if (!currentNames.contains(str)) return str
 
-      val matcher = Pattern.compile("(.*?)\\s*\\(\\d+\\)").matcher(str)
-      val originalName = if (matcher.matches()) matcher.group(1) else str
+      val originalName = extractBaseName(str)
       var i = 1
       while (true) {
         val newName = String.format("%s (%d)", originalName, i)
         if (!currentNames.contains(newName)) return newName
         i++
       }
+    }
+
+    private val UNIQUE_NAME_PATTERN = Pattern.compile("(.*?)\\s*\\(\\d+\\)")
+    @JvmStatic
+    fun extractBaseName(uniqueName: String): String {
+      val matcher = UNIQUE_NAME_PATTERN.matcher(uniqueName)
+      return if (matcher.matches()) matcher.group(1) else uniqueName
     }
   }
 
@@ -166,7 +158,10 @@ abstract class RunManager {
    * @param isShared true if the configuration is marked as shared (stored in the versioned part of the project files), false if it's local
    * *                 (stored in the workspace file).
    */
-  abstract fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean)
+  fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {
+    settings.isShared = isShared
+    addConfiguration(settings)
+  }
 
   /**
    * Marks the specified run configuration as recently used (the temporary run configurations are deleted in LRU order).
@@ -214,7 +209,7 @@ abstract class RunManager {
   abstract fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?)
 }
 
-private val UNNAMED = "Unnamed"
+private const val UNNAMED = "Unnamed"
 
 val IS_RUN_MANAGER_INITIALIZED = Key.create<Boolean>("RunManagerInitialized")
 private  val LOG = Logger.getInstance(RunManager::class.java)

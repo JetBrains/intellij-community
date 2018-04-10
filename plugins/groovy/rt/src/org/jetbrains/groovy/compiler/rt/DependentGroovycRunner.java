@@ -262,7 +262,7 @@ public class DependentGroovycRunner {
     if (!patchers.isEmpty()) {
       for (CompilationUnitPatcher patcher : patchers) {
         try {
-          patcher.patchCompilationUnit(unit, loader, srcFiles.toArray(new File[srcFiles.size()]));
+          patcher.patchCompilationUnit(unit, loader, srcFiles.toArray(new File[0]));
         }
         catch (LinkageError e) {
           addExceptionInfo(compilerMessages, e, "Couldn't run " + patcher.getClass().getName());

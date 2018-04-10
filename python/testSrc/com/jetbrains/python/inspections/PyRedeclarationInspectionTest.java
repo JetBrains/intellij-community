@@ -15,10 +15,11 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
-public class PyRedeclarationInspectionTest extends PyTestCase {
+public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
 
   public void testRedeclaredClass() {
     doTest();
@@ -124,11 +125,67 @@ public class PyRedeclarationInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    final String path = "inspections/PyRedeclarationInspection/" + getTestName(true) + ".py";
+  // PY-26591
+  public void testQualifiedTarget() {
+    doTest();
+  }
 
-    myFixture.configureByFile(path);
-    myFixture.enableInspections(PyRedeclarationInspection.class);
-    myFixture.checkHighlighting(true, false, true);
+  // PY-19856
+  public void testPossiblyEmptyFor() {
+    doTest();
+  }
+
+  // PY-19856
+  public void testPossiblyEmptyWhile() {
+    doTest();
+  }
+
+  public void testIfFalseElse() {
+    doTest();
+  }
+
+  public void testIfTrue() {
+    doTest();
+  }
+
+  public void testPossiblyFalseIf() {
+    doTest();
+  }
+
+  public void testPossiblyTrueIf() {
+    doTest();
+  }
+
+  public void testAfterIfTrueElse() {
+    doTest();
+  }
+
+  public void testConditionalExpression() {
+    doTest();
+  }
+
+  // PY-28593
+  public void testRedeclarationInExcept() {
+    doTest();
+  }
+
+  // PY-23003
+  public void testVariableUsedInElIf() {
+    doTestByText(
+      "for file in ['test_file']:\n" +
+      "    block = False\n" +
+      "    if a:\n" +
+      "        block = True\n" +
+      "    elif block and b:\n" +
+      "        block = False\n" +
+      "    else:\n" +
+      "        print(c)"
+    );
+  }
+
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyRedeclarationInspection.class;
   }
 }

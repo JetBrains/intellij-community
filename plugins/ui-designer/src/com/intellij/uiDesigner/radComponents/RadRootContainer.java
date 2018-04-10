@@ -162,7 +162,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   }
 
   public RadButtonGroup[] getButtonGroups() {
-    return myButtonGroups.toArray(new RadButtonGroup[myButtonGroups.size()]);
+    return myButtonGroups.toArray(new RadButtonGroup[0]);
   }
 
   public String suggestGroupName() {
@@ -270,7 +270,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   }
 
   public LwInspectionSuppression[] getInspectionSuppressions() {
-    return myInspectionSuppressions.toArray(new LwInspectionSuppression[myInspectionSuppressions.size()]);
+    return myInspectionSuppressions.toArray(LwInspectionSuppression.EMPTY_ARRAY);
   }
 
   public void setInspectionSuppressions(final LwInspectionSuppression[] inspectionSuppressions) {

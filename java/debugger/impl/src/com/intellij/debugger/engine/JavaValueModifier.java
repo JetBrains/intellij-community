@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -25,12 +11,14 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +39,7 @@ public abstract class JavaValueModifier extends XValueModifier {
   @Override
   public void calculateInitialValueEditorText(final XInitialValueCallback callback) {
     final Value value = myJavaValue.getDescriptor().getValue();
-    if (value instanceof PrimitiveValue) {
+    if (value == null || value instanceof PrimitiveValue) {
       String valueString = myJavaValue.getValueString();
       int pos = valueString.lastIndexOf('('); //skip hex presentation if any
       if (pos > 1) {
@@ -102,10 +90,10 @@ public abstract class JavaValueModifier extends XValueModifier {
     //node.setState(context);
   }
 
-  protected abstract void setValueImpl(@NotNull String expression, @NotNull XModificationCallback callback);
+  protected abstract void setValueImpl(@NotNull XExpression expression, @NotNull XModificationCallback callback);
 
   @Override
-  public void setValue(@NotNull String expression, @NotNull XModificationCallback callback) {
+  public void setValue(@NotNull XExpression expression, @NotNull XModificationCallback callback) {
     final NodeDescriptorImpl descriptor = myJavaValue.getDescriptor();
     if(!((ValueDescriptorImpl)descriptor).canSetValue()) {
       return;
@@ -123,7 +111,7 @@ public abstract class JavaValueModifier extends XValueModifier {
     if (value != null && JAVA_LANG_STRING.equals(varType.name()) && !(value instanceof StringReference)) {
       String v = DebuggerUtils.getValueAsString(context, value);
       if (v != null) {
-        value = context.getSuspendContext().getDebugProcess().getVirtualMachineProxy().mirrorOf(v);
+        value = DebuggerUtilsEx.mirrorOfString(v, context.getDebugProcess().getVirtualMachineProxy(), context);
       }
     }
     if (value instanceof DoubleValue) {
@@ -159,7 +147,7 @@ public abstract class JavaValueModifier extends XValueModifier {
                                                                                             InvalidTypeException;
   }
 
-  private static void setValue(String expressionToShow, ExpressionEvaluator evaluator, EvaluationContextImpl evaluationContext, SetValueRunnable setValueRunnable) throws EvaluateException {
+  private static void setValue(ExpressionEvaluator evaluator, EvaluationContextImpl evaluationContext, SetValueRunnable setValueRunnable) throws EvaluateException {
     Value value;
     try {
       value = evaluator.evaluate(evaluationContext);
@@ -184,7 +172,7 @@ public abstract class JavaValueModifier extends XValueModifier {
         refType = setValueRunnable.loadClass(evaluationContext, ex.className());
         if (refType != null) {
           //try again
-          setValue(expressionToShow, evaluator, evaluationContext, setValueRunnable);
+          setValue(evaluator, evaluationContext, setValueRunnable);
         }
       }
       catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
@@ -196,7 +184,7 @@ public abstract class JavaValueModifier extends XValueModifier {
     }
   }
 
-  protected void set(@NotNull final String expression, final XModificationCallback callback, final DebuggerContextImpl debuggerContext, final SetValueRunnable setValueRunnable) {
+  protected void set(@NotNull final XExpression expression, final XModificationCallback callback, final DebuggerContextImpl debuggerContext, final SetValueRunnable setValueRunnable) {
     final ProgressWindow progressWindow = new ProgressWindow(true, debuggerContext.getProject());
     final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();
 
@@ -214,12 +202,12 @@ public abstract class JavaValueModifier extends XValueModifier {
           evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
               public ExpressionEvaluator compute() throws EvaluateException {
                 return EvaluatorBuilderImpl
-                  .build(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression), context, position, project);
+                  .build(TextWithImportsImpl.fromXExpression(expression), context, position, project);
               }
             });
 
 
-          setValue(expression, evaluator, evaluationContext, new SetValueRunnable() {
+          setValue(evaluator, evaluationContext, new SetValueRunnable() {
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException,

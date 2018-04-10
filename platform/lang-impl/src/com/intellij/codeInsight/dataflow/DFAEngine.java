@@ -18,12 +18,16 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.graph.DFSTBuilder;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 public class DFAEngine<E> {
   private static final Logger LOG = Logger.getInstance(DFAEngine.class.getName());
-  private static final double TIME_LIMIT = 10e9; // In nanoseconds, 10e9 = 1 sec
+  private static final long TIME_LIMIT = 1_000_000_000L; // In nanoseconds, 1_000_000_000 = 1 sec
 
   private final Instruction[] myFlow;
 
@@ -38,97 +42,99 @@ public class DFAEngine<E> {
     mySemilattice = semilattice;
   }
 
-
   public List<E> performDFA() throws DFALimitExceededException {
     final ArrayList<E> info = new ArrayList<>(myFlow.length);
-    return performDFA(info);
-  }
-
-  public List<E> performDFA(final List<E> info) throws DFALimitExceededException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Performing DFA\n" + "Instance: " + myDfa + " Semilattice: " + mySemilattice + "\nCon");
     }
 
 // initializing dfa
     final E initial = myDfa.initial();
-    for (int i = 0; i < myFlow.length; i++) {
+    final int length = myFlow.length;
+    for (int i = 0; i < length; i++) {
       info.add(i, initial);
     }
 
-    final boolean[] visited = new boolean[myFlow.length];
-
-    final int[] order = ControlFlowUtil.postOrder(myFlow);
-
-// Count limit for number of iterations per worklist
+// Count limit for loops
     final int limit = getIterationLimit();
-    int dfaCount = 0;
     final long startTime = System.nanoTime();
+    DFSTBuilder<Instruction> dfsTBuilder = new DFSTBuilder<>(ControlFlowUtil.createGraph(myFlow));
 
-    for (int i = 0; i < myFlow.length; i++) {
-      // Check if canceled
-      ProgressManager.checkCanceled();
+    int[] instructionNumToNNumber = new int[myFlow.length];
+    for (int i = 0; i < myFlow.length; ++i) {
+      instructionNumToNNumber[dfsTBuilder.getNodeByNNumber(i).num()] = i;
+    }
+    final int[] lastUpdate = new int[length];
+    int count = 0;
 
-      if (System.nanoTime() - startTime > TIME_LIMIT) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Time limit exceeded");
-        }
-        throw new DFALimitExceededException("Time limit exceeded");
-      }
-
-      // Iteration count per one worklist
-      int count = 0;
-      final Instruction instruction = myFlow[order[i]];
-      final int number = instruction.num();
-
-      if (!visited[number]) {
-        final Queue<Instruction> worklist = new LinkedList<>();
-        worklist.add(instruction);
-        visited[number] = true;
-
-        while (true) {
-          // Check if canceled
-          ProgressManager.checkCanceled();
-
-          // It is essential to apply this check!!!
-          // This gives us more chances that resulting info will be closer to expected result
-          // Also it is used as indicator that "equals" method is implemented correctly in E
-          count++;
-          if (count > limit) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Iteration count exceeded on worklist");
-            }
-            throw new DFALimitExceededException("Iteration count exceeded on worklist");
-          }
-
-          final Instruction currentInstruction = worklist.poll();
-          if (currentInstruction == null) {
-            break;
-          }
-
-          final int currentNumber = currentInstruction.num();
-          final E oldE = info.get(currentNumber);
-          final E joinedE = join(currentInstruction, info);
-          final E newE = myDfa.fun(joinedE, currentInstruction);
-          if (!mySemilattice.eq(newE, oldE)) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Number: " + currentNumber + " old: " + oldE.toString() + " new: " + newE.toString());
-            }
-            info.set(currentNumber, newE);
-            for (Instruction next : getNext(currentInstruction)) {
-              worklist.add(next);
-              visited[next.num()] = true;
-            }
-          }
+    List<Instruction> instructionsWithBackEdges = new ArrayList<>();
+    for (Collection<Instruction> component :  dfsTBuilder.getComponents()) {
+      List<Instruction> sortedInstructions = new ArrayList<>(component);
+      // component returns its instructions using getNodeByTNumber
+      // unfortunately its ordering is not suitable for dataflow goals because
+      // it does not start order in a SCC from entry nodes
+      // so We should resort nodes in a SCC by NNumber
+      sortedInstructions.sort(Comparator.comparingInt(it -> instructionNumToNNumber[it.num()]));
+      instructionsWithBackEdges.clear();
+      for (Instruction instruction : sortedInstructions) {
+        applyTransferFunction(info, instruction);
+        if (instruction.allPred().stream().anyMatch(predecessor ->
+          instructionNumToNNumber[predecessor.num()] > instructionNumToNNumber[instruction.num()])) {
+          instructionsWithBackEdges.add(instruction);
         }
       }
 
-      // Move to another worklist
-      dfaCount += count;
+      int iteration = 0;
+      while (true) {
+        ++iteration;
+        final int currentIteration = iteration;
+        boolean anyUpdates = false;
+        for (Instruction instruction : instructionsWithBackEdges) {
+          if (applyTransferFunction(info, instruction)) {
+            lastUpdate[instruction.num()] = currentIteration;
+            anyUpdates = true;
+            count++;
+          }
+        }
+        if (!anyUpdates) {
+          break;
+        }
+        for (Instruction instruction : sortedInstructions) {
+          if (instruction.allPred().stream().anyMatch(it -> lastUpdate[it.num()] == currentIteration)
+              && applyTransferFunction(info, instruction)) {
+            lastUpdate[instruction.num()] = currentIteration;
+            count++;
+          }
+        }
+
+        if (count > limit ||  (System.nanoTime() - startTime) > TIME_LIMIT) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Iteration count exceeded on worklist");
+          }
+          throw new DFALimitExceededException("Iteration count exceeded on worklist");
+        }
+      }
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Done in: " + (System.nanoTime() - startTime) / 10e6 + "ms. Ratio: " + dfaCount / myFlow.length);
+      LOG.debug("Done in: " + (System.nanoTime() - startTime) / 10e6 + "ms. Ratio: " + count / length);
     }
     return info;
+  }
+
+  private boolean applyTransferFunction(List<E> info, Instruction currentInstruction) {
+    ProgressManager.checkCanceled();
+    final int currentNumber = currentInstruction.num();
+    final E oldE = info.get(currentNumber);
+    final E joinedE = join(currentInstruction, info);
+    final E newE = myDfa.fun(joinedE, currentInstruction);
+    if (!mySemilattice.eq(newE, oldE)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Number: " + currentNumber + " old: " + oldE.toString() + " new: " + newE.toString());
+      }
+      info.set(currentNumber, newE);
+      return true;
+    }
+    return false;
   }
 
 
@@ -146,15 +152,11 @@ public class DFAEngine<E> {
   }
 
   private E join(final Instruction instruction, final List<E> info) {
-    final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.allPred() : instruction.allSucc();
+    final Iterable<? extends Instruction> prev = instruction.allPred();
     final ArrayList<E> prevInfos = new ArrayList<>();
     for (Instruction i : prev) {
       prevInfos.add(info.get(i.num()));
     }
     return mySemilattice.join(prevInfos);
-  }
-
-  private Collection<Instruction> getNext(final Instruction curr) {
-    return myDfa.isForward() ? curr.allSucc() : curr.allPred();
   }
 }

@@ -17,7 +17,10 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -48,7 +51,7 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
   }
 
   @NotNull
-  protected abstract ChangesTreeList getFileList();
+  protected abstract ChangesTree getFileList();
 
   @Nullable
   private JLabel createPromptLabel() {

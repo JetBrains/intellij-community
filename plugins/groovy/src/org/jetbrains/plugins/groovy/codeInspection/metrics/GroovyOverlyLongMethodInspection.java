@@ -23,6 +23,6 @@ public class GroovyOverlyLongMethodInspection extends GroovyOverlyLongMethodInsp
 
   @Override
   public JComponent createOptionsPanel() {
-    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", getConfigurationLabel());
+    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", "Maximum statements per method:");
   }
 }

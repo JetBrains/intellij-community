@@ -46,7 +46,7 @@ class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
 
   companion object {
     @JvmStatic
-    fun createFromPaths(paths: List<ModulePath>, parentDisposable: Disposable): List<UnloadedModuleDescriptionImpl> {
+    fun createFromPaths(paths: Collection<ModulePath>, parentDisposable: Disposable): List<UnloadedModuleDescriptionImpl> {
       val pathVariables = JpsGlobalLoader.computeAllPathVariables(PathManager.getOptionsPath())
       val modules = JpsProjectLoader.loadModules(paths.map { Paths.get(it.path) }, null, pathVariables)
       val pathsByName = paths.associateBy { it.moduleName }

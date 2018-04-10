@@ -22,6 +22,9 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -29,6 +32,8 @@ import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenResourceCompilerConfigurationGenerator;
@@ -38,6 +43,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author nik
@@ -96,7 +102,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
     for (String name : moduleNames) {
       modules.add(getModule(name));
     }
-    return new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
+    return new ModuleCompileScope(myProject, modules.toArray(Module.EMPTY_ARRAY), false);
   }
 
   protected static void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
@@ -119,5 +125,33 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
 
   protected void assertJar(String relativePath, TestFileSystemBuilder fileSystemBuilder) {
     fileSystemBuilder.build().assertFileEqual(new File(myProjectPom.getParent().getPath(), relativePath));
+  }
+
+  @Nullable
+  protected static String extractJdkVersion(@NotNull Module module) {
+    String jdkVersion = null;
+    Optional<Sdk> sdk = Optional.ofNullable(ModuleRootManager.getInstance(module).getSdk());
+
+    if (!sdk.isPresent()) {
+      Optional<JdkOrderEntry> jdkEntry =
+        Arrays.stream(ModuleRootManager.getInstance(module).getOrderEntries())
+          .filter(JdkOrderEntry.class::isInstance)
+          .map(JdkOrderEntry.class::cast)
+          .findFirst();
+      if (jdkEntry.isPresent()) {
+        jdkVersion = jdkEntry.get().getJdkName();
+      }
+    }
+    else {
+      jdkVersion = sdk.get().getVersionString();
+    }
+    if (jdkVersion != null) {
+      final int quoteIndex = jdkVersion.indexOf('"');
+      if (quoteIndex != -1) {
+        jdkVersion = jdkVersion.substring(quoteIndex + 1, jdkVersion.length() - 1);
+      }
+    }
+
+    return jdkVersion;
   }
 }

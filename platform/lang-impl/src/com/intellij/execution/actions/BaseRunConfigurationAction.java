@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
@@ -61,8 +62,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   private AnAction[] getChildren(DataContext dataContext) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    final RunnerAndConfigurationSettings existing = context.findExisting();
-    if (existing == null) {
+    if (Registry.is("suggest.all.run.configurations.from.context") || context.findExisting() == null) {
       final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
       if (producers.size() > 1) {
         final AnAction[] children = new AnAction[producers.size()];

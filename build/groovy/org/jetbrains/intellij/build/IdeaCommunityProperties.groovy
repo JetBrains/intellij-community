@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 
 /**
  * @author nik
@@ -27,23 +28,25 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     baseFileName = "idea"
     platformPrefix = "Idea"
     productCode = "IC"
-    applicationInfoModule = "community-resources"
+    applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + JAVA_API_MODULES
-    productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + JAVA_IMPLEMENTATION_MODULES +
-                                                  ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"] -
-                                                  ["jps-model-impl", "jps-model-serialization"]
-    productLayout.additionalPlatformJars.put("resources.jar", "community-resources")
+    productLayout.productApiModules = JAVA_API_MODULES
+    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES +
+                                                 ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.java.structuralSearch", "intellij.java.typeMigration", "intellij.platform.main"]
+    productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
-    productLayout.mainModules = ["community-main"]
+    productLayout.mainModules = ["intellij.idea.community.main"]
+    productLayout.compatiblePluginsToIgnore = PythonCommunityPluginModules.PYCHARM_ONLY_PLUGIN_MODULES
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
+
+    mavenArtifacts.forIdeModules = true
   }
 
   @Override
@@ -109,7 +112,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         associateIpr = true
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.jetbrains.intellij.ce"
-        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/communitydmg.png"
+        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
         icnsPathForEAP = "$projectHome/build/conf/ideaCE/mac/images/communityEAP.icns"
       }
 

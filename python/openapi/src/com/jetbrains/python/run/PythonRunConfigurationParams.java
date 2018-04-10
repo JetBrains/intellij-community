@@ -40,5 +40,12 @@ public interface PythonRunConfigurationParams {
 
   String getDebuggableExternalLibs();
   void setDebuggableExternalLibs(String debuggableExternalLibs);
+
+  default boolean isModuleMode() {
+    return false;
+  }
+
+  default void setModuleMode(boolean moduleMode) {
+  }
 }
 

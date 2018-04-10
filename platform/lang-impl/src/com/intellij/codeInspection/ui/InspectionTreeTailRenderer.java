@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -25,11 +11,9 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectIntHashMap;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -45,7 +29,6 @@ public abstract class InspectionTreeTailRenderer {
   private final Map<HighlightSeverity, String> myPluralizedSeverityNames = ContainerUtil.createSoftMap();
   private final Map<HighlightSeverity, String> myUnpluralizedSeverityNames = ContainerUtil.createSoftMap();
 
-  private final TObjectIntHashMap<HighlightDisplayLevel> myItemCounter = new TObjectIntHashMap<>();
   private final SeverityRegistrar myRegistrar;
   private final GlobalInspectionContextImpl myContext;
 
@@ -55,31 +38,27 @@ public abstract class InspectionTreeTailRenderer {
   }
 
   public void appendTailText(InspectionTreeNode node) {
-    appendText("  ");
     final String customizedTailText = node.getTailText();
     if (customizedTailText != null) {
-      appendText("  ");
-      appendText(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      if (!customizedTailText.isEmpty()) {
+        appendText("    ");
+        appendText(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      }
     }
     else {
-      myItemCounter.clear();
-      node.visitProblemSeverities(myItemCounter);
-      if (myItemCounter.size() > MAX_LEVEL_TYPES) {
-        appendText(InspectionsBundle.message("inspection.problem.descriptor.count", sum(myItemCounter.getValues()), SimpleTextAttributes.GRAYED_ATTRIBUTES));
+      appendText("  ");
+      LevelAndCount[] problemLevels = node.getProblemLevels();
+      if (problemLevels.length > MAX_LEVEL_TYPES) {
+        int sum = Arrays.stream(problemLevels).mapToInt(LevelAndCount::getCount).sum();
+        appendText(InspectionsBundle.message("inspection.problem.descriptor.count", sum, SimpleTextAttributes.GRAYED_ATTRIBUTES));
       }
       else {
-        Object[] levels = myItemCounter.keys();
-        Arrays.sort(levels, Comparator.comparing(l -> ((HighlightDisplayLevel) l).getSeverity()).reversed());
-        for (Object o : levels) {
-          HighlightDisplayLevel level = (HighlightDisplayLevel) o;
-
-          int occur = myItemCounter.get(level);
-
+        for (LevelAndCount levelAndCount : problemLevels) {
           SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
-          attrs = attrs.derive(-1, level == HighlightDisplayLevel.ERROR && !myContext.getUIOptions().GROUP_BY_SEVERITY
+          attrs = attrs.derive(-1, levelAndCount.getLevel() == HighlightDisplayLevel.ERROR && !myContext.getUIOptions().GROUP_BY_SEVERITY
                                    ? TREE_RED
                                    : TREE_GRAY, null, null);
-          appendText(occur + " " + getPresentableName(level, occur > 1) + " ", attrs);
+          appendText(levelAndCount.getCount() + " " + getPresentableName(levelAndCount.getLevel(), levelAndCount.getCount() > 1) + " ", attrs);
         }
       }
     }
@@ -108,13 +87,5 @@ public abstract class InspectionTreeTailRenderer {
       }
       return name;
     }
-  }
-
-  private static int sum(int[] numbers) {
-    int result = 0;
-    for (int number : numbers) {
-      result += number;
-    }
-    return result;
   }
 }

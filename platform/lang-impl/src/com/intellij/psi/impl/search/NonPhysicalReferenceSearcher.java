@@ -51,9 +51,8 @@ public class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference
     }
     final PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile virtualFile : FileEditorManager.getInstance(project).getOpenFiles()) {
-      if (virtualFile.getFileType().isBinary()) {
-        continue;
-      }
+      if (!virtualFile.isValid()) continue;
+      if (virtualFile.getFileType().isBinary()) continue;
       PsiFile file = psiManager.findFile(virtualFile);
       if (isApplicableTo(file)) {
         final LocalSearchScope fileScope = new LocalSearchScope(file);

@@ -37,7 +37,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -60,28 +59,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, IdeValidationHost {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
-  private static final UserDataCache<Boolean, PsiElement, Object> DO_NOT_VALIDATE =
-    new UserDataCache<Boolean, PsiElement, Object>("do not validate") {
-    @Override
-    protected Boolean compute(PsiElement parent, Object p) {
-      OuterLanguageElement element = PsiTreeUtil.getChildOfType(parent, OuterLanguageElement.class);
-
-      if (element == null) {
-        // JspOuterLanguageElement is located under XmlText
-        for (PsiElement child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
-          if (child instanceof XmlText) {
-            element = PsiTreeUtil.getChildOfType(child, OuterLanguageElement.class);
-            if (element != null) {
-              break;
-            }
-          }
-        }
-      }
-      if (element == null) return false;
-      PsiFile containingFile = parent.getContainingFile();
-      return containingFile.getViewProvider().getBaseLanguage() != containingFile.getLanguage();
-    }
-  };
   private static boolean ourDoJaxpTesting;
 
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new TextAttributes() {
@@ -295,16 +272,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   public static boolean isInjectedWithoutValidation(PsiElement element) {
-    PsiElement context = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element.getContainingFile());
-    return context != null && skipValidation(context);
+    return InjectedLanguageManager.FRANKENSTEIN_INJECTION.get(element.getContainingFile()) == Boolean.TRUE;
   }
 
   public static boolean skipValidation(PsiElement context) {
-    return DO_NOT_VALIDATE.get(context, null);
+    return context instanceof XmlElement && ((XmlElement)context).skipValidation();
   }
 
   public static void setSkipValidation(@NotNull PsiElement element) {
-    DO_NOT_VALIDATE.put(element, Boolean.TRUE);
+    element.putUserData(XmlElement.DO_NOT_VALIDATE, Boolean.TRUE);
   }
 
   @Override public void visitXmlAttribute(XmlAttribute attribute) {}

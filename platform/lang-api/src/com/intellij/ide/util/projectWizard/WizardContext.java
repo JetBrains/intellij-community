@@ -57,6 +57,7 @@ public class WizardContext extends UserDataHolderBase {
   private ModulesProvider myModulesProvider;
   private boolean myProjectFileDirectorySetExplicitly;
   private AbstractWizard myWizard;
+  private String myDefaultModuleName = "untitled";
 
   public void setProjectStorageFormat(StorageScheme format) {
     myProjectStorageFormat = format;
@@ -84,6 +85,14 @@ public class WizardContext extends UserDataHolderBase {
 
   public void setWizard(AbstractWizard wizard) {
     myWizard = wizard;
+  }
+
+  public void setDefaultModuleName(String defaultModuleName) {
+    myDefaultModuleName = defaultModuleName;
+  }
+
+  public String getDefaultModuleName() {
+    return myDefaultModuleName;
   }
 
   public interface Listener {

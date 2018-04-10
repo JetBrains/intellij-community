@@ -35,7 +35,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 4/25/12
 */
 @ChannelHandler.Sharable
 class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineRemoteProto.Message> {

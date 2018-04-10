@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.pyi;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsClassMembersProvider;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyOverridingAncestorsClassMembersProvider;
@@ -35,7 +22,7 @@ import java.util.Collections;
 public class PyiClassMembersProvider extends PyClassMembersProviderBase implements PyOverridingAncestorsClassMembersProvider {
   @NotNull
   @Override
-  public Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location, TypeEvalContext typeEvalContext) {
+  public Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location, @NotNull TypeEvalContext context) {
     final PyClass cls = classType.getPyClass();
     final PsiElement pythonStub = PyiUtil.getPythonStub(cls);
     if (pythonStub instanceof PyClass) {
@@ -46,12 +33,14 @@ public class PyiClassMembersProvider extends PyClassMembersProviderBase implemen
 
   @Nullable
   @Override
-  public PsiElement resolveMember(@NotNull PyClassType classType, @NotNull String name, @Nullable PsiElement location,
-                                  @Nullable TypeEvalContext context) {
-    final PyClass cls = classType.getPyClass();
+  public PsiElement resolveMember(@NotNull PyClassType type,
+                                  @NotNull String name,
+                                  @Nullable PsiElement location,
+                                  @NotNull PyResolveContext resolveContext) {
+    final PyClass cls = type.getPyClass();
     final PsiElement pythonStub = PyiUtil.getPythonStub(cls);
     if (pythonStub instanceof PyClass) {
-      return PyUserSkeletonsClassMembersProvider.findClassMember((PyClass)pythonStub, name, classType.isDefinition());
+      return PyUserSkeletonsClassMembersProvider.findClassMember((PyClass)pythonStub, name, type.isDefinition());
     }
     return null;
   }

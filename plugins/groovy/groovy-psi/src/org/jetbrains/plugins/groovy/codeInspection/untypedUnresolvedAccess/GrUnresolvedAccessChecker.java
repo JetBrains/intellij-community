@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -53,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
@@ -65,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -80,6 +66,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.psi.util.PsiUtil.isInnerClass;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.hasArguments;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.hasEnclosingInstanceInScope;
 
 public class GrUnresolvedAccessChecker {
   public static final Logger LOG = Logger.getInstance(GrUnresolvedAccessChecker.class);
@@ -142,46 +132,22 @@ public class GrUnresolvedAccessChecker {
       return info;
     }
 
-    if (refElement.getParent() instanceof GrNewExpression) {
-
-      boolean inStaticContext = GrStaticChecker.isInStaticContext(refElement);
-
-      if (!inStaticContext && GrUnresolvedAccessInspection.isSuppressed(refElement)) return null;
-
-      if (!inStaticContext) {
-        if (!myInspectionEnabled) return null;
-        assert myInspection != null;
-        if (!myInspection.myHighlightInnerClasses) return null;
-      }
-
+    if (refElement.getParent() instanceof GrNewExpression && GrStaticChecker.isInStaticContext(refElement)) {
       GrNewExpression newExpression = (GrNewExpression)refElement.getParent();
       if (resolved instanceof PsiClass) {
         PsiClass clazz = (PsiClass)resolved;
         final PsiClass outerClass = clazz.getContainingClass();
-        if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) &&
-            outerClass != null &&
-            newExpression.getArgumentList() != null &&
-            !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
-            !hasEnclosingInstanceInArgList(newExpression.getArgumentList(), outerClass)) {
+        if (outerClass != null && isInnerClass(clazz) &&
+            !hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
+            !hasArguments(newExpression)) {
           String qname = clazz.getQualifiedName();
           LOG.assertTrue(qname != null);
-          return createAnnotationForRef(refElement, inStaticContext, GroovyBundle.message("cannot.reference.non.static", qname));
+          return createAnnotationForRef(refElement, true, GroovyBundle.message("cannot.reference.non.static", qname));
         }
       }
     }
 
     return null;
-  }
-
-  private static boolean hasEnclosingInstanceInArgList(@NotNull GrArgumentList list, @NotNull PsiClass enclosingClass) {
-    if (PsiImplUtil.hasNamedArguments(list)) return false;
-
-    GrExpression[] args = list.getExpressionArguments();
-    if (args.length == 0) return false;
-
-    PsiType type = args[0].getType();
-    PsiClassType enclosingClassType = JavaPsiFacade.getElementFactory(list.getProject()).createType(enclosingClass);
-    return TypesUtil.isAssignableByMethodCallConversion(enclosingClassType, type, list);
   }
 
   @Nullable
@@ -193,7 +159,7 @@ public class GrUnresolvedAccessChecker {
     GroovyResolveResult resolveResult = getBestResolveResult(ref);
 
     if (resolveResult.getElement() != null) {
-      if (!GrUnresolvedAccessInspection.isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
+      if (!myInspectionEnabled) return null;
 
       if (!isStaticOk(resolveResult)) {
         String message = GroovyBundle.message("cannot.reference.non.static", ref.getReferenceName());
@@ -208,7 +174,7 @@ public class GrUnresolvedAccessChecker {
     }
 
     if (!inStaticContext) {
-      if (!GrUnresolvedAccessInspection.isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
+      if (!myInspectionEnabled) return null;
       assert myInspection != null;
 
       if (!myInspection.myHighlightIfGroovyObjectOverridden && areGroovyObjectMethodsOverridden(ref)) return null;

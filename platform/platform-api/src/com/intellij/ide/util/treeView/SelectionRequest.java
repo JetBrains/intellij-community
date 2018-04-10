@@ -46,7 +46,7 @@ class SelectionRequest {
   }
 
   void execute(AbstractTreeUi ui) {
-    ui._select(myElements, myOnDone, myAddToSelection, myCheckCurrentSelection, myCheckInInStructure, myScrollToVisible, myDeferred, myCanSmartExpand, false);    
+    if (ui != null) ui._select(myElements, myOnDone, myAddToSelection, myCheckCurrentSelection, myCheckInInStructure, myScrollToVisible, myDeferred, myCanSmartExpand, false);
   }
 
   void reject() {

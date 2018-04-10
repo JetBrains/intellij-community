@@ -31,7 +31,7 @@ public class AlignmentImpl extends Alignment {
   private final Anchor myAnchor;
   private List<LeafBlockWrapper> myOffsetRespBlocks = EMPTY;
   private AlignmentImpl myParentAlignment;
-  private ProbablyIncreasingLowerboundAlgorithm<LeafBlockWrapper> myOffsetRespBlocksCalculator;
+  private final ProbablyIncreasingLowerboundAlgorithm<LeafBlockWrapper> myOffsetRespBlocksCalculator;
 
   AlignmentImpl() {
     this(false, Anchor.LEFT);

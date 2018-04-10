@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 18, 2003
  */
 public abstract class FileIndexCompileScope extends ExportableUserDataHolderBase implements CompileScope {
 

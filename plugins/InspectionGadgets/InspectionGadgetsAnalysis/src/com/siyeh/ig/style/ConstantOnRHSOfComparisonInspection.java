@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +69,7 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiBinaryExpression expression = (PsiBinaryExpression)descriptor.getPsiElement();
       final PsiExpression rhs = expression.getROperand();
       if (rhs == null) {
@@ -80,9 +80,10 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();
-      final String rhsText = rhs.getText();
-      final String lhsText = lhs.getText();
-      PsiReplacementUtil.replaceExpression(expression, rhsText + ' ' + flippedComparison + ' ' + lhsText);
+      CommentTracker commentTracker = new CommentTracker();
+      final String rhsText = commentTracker.text(rhs);
+      final String lhsText = commentTracker.text(lhs);
+      PsiReplacementUtil.replaceExpression(expression, rhsText + ' ' + flippedComparison + ' ' + lhsText, commentTracker);
     }
   }
 

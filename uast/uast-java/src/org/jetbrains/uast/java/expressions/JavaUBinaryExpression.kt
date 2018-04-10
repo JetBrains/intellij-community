@@ -21,15 +21,15 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 
 class JavaUBinaryExpression(
-        override val psi: PsiBinaryExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UBinaryExpression {
-    override val leftOperand by lz { JavaConverter.convertOrEmpty(psi.lOperand, this) }
-    override val rightOperand by lz { JavaConverter.convertOrEmpty(psi.rOperand, this) }
-    override val operator by lz { psi.operationTokenType.getOperatorType() }
-    
-    override val operatorIdentifier: UIdentifier
-        get() = UIdentifier(psi.operationSign, this)
+  override val psi: PsiBinaryExpression,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UBinaryExpression {
+  override val leftOperand by lz { JavaConverter.convertOrEmpty(psi.lOperand, this) }
+  override val rightOperand by lz { JavaConverter.convertOrEmpty(psi.rOperand, this) }
+  override val operator by lz { psi.operationTokenType.getOperatorType() }
 
-    override fun resolveOperator() = null
+  override val operatorIdentifier: UIdentifier
+    get() = UIdentifier(psi.operationSign, this)
+
+  override fun resolveOperator() = null
 }

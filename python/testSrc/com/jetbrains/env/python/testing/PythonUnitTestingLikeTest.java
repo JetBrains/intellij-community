@@ -15,24 +15,24 @@
  */
 package com.jetbrains.env.python.testing;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyScriptTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
+import com.jetbrains.python.testing.PyUnitTestConfiguration;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
@@ -70,6 +70,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
    * Ensure that sys.path[0] is script folder, not helpers folder
    */
   @Test
+  @EnvTestTagsRequired(tags = {}, skipOnFlavors = {IronPythonSdkFlavor.class})
   public void testSysPath() throws Exception {
     runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<T>("testRunner/env/unit/sysPath", "test_sample.py", this::createTestRunner) {
 
@@ -330,59 +331,21 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
     });
   }
 
-  /**
-   * Run tests, delete file and click "rerun" should throw exception and display error since test ids do not point to correct PSI
-   * from that moment
-   */
   @Test
-  public void testCantRerun() throws Exception {
-    startMessagesCapture();
-
+  public void testMultipleCases() {
     runPythonTest(
-      new PyUnitTestLikeProcessWithConsoleTestTask<T>("/testRunner/env/unit", "test_with_skips_and_errors.py", this::createTestRunner) {
-
+      new CreateConfigurationMultipleCasesTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+                                                                        PyUnitTestConfiguration.class) {
         @Override
-        protected void checkTestResults(@NotNull final T runner,
-                                        @NotNull final String stdout,
-                                        @NotNull final String stderr,
-                                        @NotNull final String all) {
-          assert runner.getFailedTestsCount() > 0 : "We need failed tests to test broken rerun";
-
-          startMessagesCapture();
-
-          EdtTestUtil.runInEdtAndWait(() -> {
-            deleteAllTestFiles(myFixture);
-            runner.rerunFailedTests();
-          });
-
-          final List<Throwable> throwables = getCapturesMessages().first;
-          Assert.assertThat("Exception shall be thrown", throwables, not(emptyCollectionOf(Throwable.class)));
-          final Throwable exception = throwables.get(0);
-          Assert.assertThat("ExecutionException should be thrown", exception, instanceOf(ExecutionException.class));
-          Assert.assertThat("Wrong text", exception.getMessage(), equalTo(PyBundle.message("runcfg.tests.cant_rerun")));
-          Assert.assertThat("No messages displayed for exception", getCapturesMessages().second, not(emptyCollectionOf(String.class)));
-
-
-          stopMessageCapture();
+        protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {
+          // test_functions.py and test_foo do not contain any TestCase and can't be launched with unittest
+          final PsiFile file = element.getContainingFile();
+          if (file == null) {
+            return true;
+          }
+          final String name = file.getName();
+          return !(name.endsWith("test_functions.py") || name.endsWith("test_foo.py"));
         }
       });
-  }
-
-  /**
-   * Deletes all files in temp. folder
-   */
-  private static void deleteAllTestFiles(@NotNull final CodeInsightTestFixture fixture) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final VirtualFile testRoot = fixture.getTempDirFixture().getFile(".");
-      assert testRoot != null : "No temp path?";
-      try {
-        for (final VirtualFile child : testRoot.getChildren()) {
-          child.delete(null);
-        }
-      }
-      catch (final IOException e) {
-        throw new AssertionError(String.format("Failed to delete files in  %s : %s", testRoot, e));
-      }
-    });
   }
 }

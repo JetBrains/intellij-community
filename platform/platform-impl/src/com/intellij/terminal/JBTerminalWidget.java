@@ -15,6 +15,7 @@
  */
 package com.intellij.terminal;
 
+import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.List;
@@ -69,6 +71,12 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     setName("terminal");
 
     Disposer.register(parent, this);
+
+    for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
+      for (Filter filter: eachProvider.getDefaultFilters(project)) {
+        addMessageFilter(project, filter);
+      }
+    }
   }
 
   @Override
@@ -149,6 +157,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       }
 
       @Override
+      public boolean ignoreCase() {
+        return false;
+      }
+
+      @Override
       public JComponent getComponent() {
         myTextField.setOpaque(false);
         return myTextField;
@@ -162,6 +175,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       @Override
       public void addKeyListener(KeyListener listener) {
         myTextField.addKeyboardListener(listener);
+      }
+
+      @Override
+      public void addIgnoreCaseListener(ItemListener listener) {
+
       }
 
       @Override

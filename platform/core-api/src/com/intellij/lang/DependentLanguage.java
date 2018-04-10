@@ -16,8 +16,9 @@
 package com.intellij.lang;
 
 /**
- * A language that isn't meant to be a file's toplevel language, and it can't be injected. Probably,
- * it's a language of some chameleon (see {@link ChameleonTrasformer})
+ * A language that isn't meant to be user-visible. So it won't be shown in the popups suggesting a user to choose a language, e.g. for injection.
+ * This marker interface can be used for languages that are implementation details, e.g. languages of some lazy-parseable element type,
+ * or specific dialects chosen by a {@link com.intellij.psi.LanguageSubstitutor}.
  *
  * @see com.intellij.psi.templateLanguages.TemplateLanguage
  * @see InjectableLanguage

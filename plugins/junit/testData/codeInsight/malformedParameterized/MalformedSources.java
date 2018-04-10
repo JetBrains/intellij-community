@@ -1,6 +1,7 @@
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 class ValueSourcesTest {
   @ParameterizedTest
@@ -41,6 +42,17 @@ class ValueSourcesTest {
   <warning descr="Suspicious combination @Test and parameterized source">@org.junit.jupiter.api.Test</warning>
   void testWithTestAnnotationNoParameterized(int i) { }
 
+}
+
+@ExtendWith( String.class ) //fake extension
+@interface RunnerExtension { }
+
+@RunnerExtension
+abstract class AbstractValueSource {}
+class ValueSourcesWithCustomProvider extends AbstractValueSource {
+  @ParameterizedTest
+  @ValueSource(ints = {1})
+  void testWithIntValues(int i, String fromExtension) { }
 }
 
 class ParameterizedTestsDemo {

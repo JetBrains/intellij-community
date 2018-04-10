@@ -15,19 +15,18 @@
  */
 package com.intellij.openapi.diff.impl.patch.apply;
 
-import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
-import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryContentRevision;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 
+import java.io.File;
 import java.io.IOException;
 
 public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelvedBinaryFilePatch> {
@@ -41,24 +40,15 @@ public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelvedBinar
 
   protected Result applyChange(Project project, final VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<CharSequence> baseContents)
     throws IOException {
-    try {
-      ContentRevision contentRevision = myPatch.getShelvedBinaryFile().createChange(project).getAfterRevision();
-      if (contentRevision != null) {
-        assert (contentRevision instanceof ShelvedBinaryContentRevision);
-        byte[] binaryContent = ((ShelvedBinaryContentRevision)contentRevision).getBinaryContent();
-        //it may be new empty binary file
-        fileToPatch.setBinaryContent(binaryContent != null ? binaryContent : ArrayUtil.EMPTY_BYTE_ARRAY);
-      }
+    ShelvedBinaryFile shelvedBinaryFile = myPatch.getShelvedBinaryFile();
+    if (shelvedBinaryFile.SHELVED_PATH == null) {
+      fileToPatch.delete(this);
     }
-    catch (VcsException e) {
-      LOG.error("Couldn't apply shelved binary patch", e);
-      return new Result(ApplyPatchStatus.FAILURE) {
-
-        @Override
-        public ApplyPatchForBaseRevisionTexts getMergeData() {
-          return null;
-        }
-      };
+    else {
+      File fromFile = new File(shelvedBinaryFile.SHELVED_PATH);
+      File toFile = VfsUtilCore.virtualToIoFile(fileToPatch);
+      FileUtil.copyContent(fromFile, toFile);
+      VfsUtil.markDirty(false, false, fileToPatch);
     }
     return SUCCESS;
   }

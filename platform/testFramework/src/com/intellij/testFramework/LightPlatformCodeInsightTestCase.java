@@ -20,16 +20,15 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -86,12 +85,16 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       });
     }
     else {
-      new WriteCommandAction.Simple(getProject()){
-        @Override
-        protected void run() throws Throwable {
+      Ref<Throwable> e = new Ref<>();
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+        try {
           doRunTest();
         }
-      }.performCommand();
+        catch (Throwable throwable) {
+          e.set(throwable);
+        }
+      }, null, null);
+      if (e.get() != null) throw e.get();
     }
   }
 
@@ -167,48 +170,42 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static Document configureFromFileText(@NonNls @NotNull final String fileName,
                                                   @NonNls @NotNull final String fileText,
                                                   boolean checkCaret) {
-    return new WriteCommandAction<Document>(null) {
-      @Override
-      protected void run(@NotNull Result<Document> result) throws Throwable {
-        final Document fakeDocument = new DocumentImpl(fileText);
+    return WriteCommandAction.writeCommandAction(null).compute(() -> {
+      final Document fakeDocument = new DocumentImpl(fileText);
 
-        EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
-        if(checkCaret) {
-          assertTrue("No caret specified in " + fileName, caretsState.hasExplicitCaret());
-        }
-
-        String newFileText = fakeDocument.getText();
-        Document document;
-        try {
-          document = setupFileEditorAndDocument(fileName, newFileText);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        EditorTestUtil.setCaretsAndSelection(myEditor, caretsState);
-        setupEditorForInjectedLanguage();
-        result.setResult(document);
+      EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+      if (checkCaret) {
+        assertTrue("No caret specified in " + fileName, caretsState.hasExplicitCaret());
       }
-    }.execute().getResultObject();
+
+      String newFileText = fakeDocument.getText();
+      Document document;
+      try {
+        document = setupFileEditorAndDocument(fileName, newFileText);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      EditorTestUtil.setCaretsAndSelection(myEditor, caretsState);
+      setupEditorForInjectedLanguage();
+      return document;
+    });
   }
 
   @NotNull
   protected static Editor configureFromFileTextWithoutPSI(@NonNls @NotNull final String fileText) {
-    return new WriteCommandAction<Editor>(getProject()) {
-      @Override
-      protected void run(@NotNull Result<Editor> result) throws Throwable {
-        final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
-        EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+    return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+      final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
+      EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
 
-        String newFileText = fakeDocument.getText();
-        Document document = EditorFactory.getInstance().createDocument(newFileText);
-        final Editor editor = EditorFactory.getInstance().createEditor(document, getProject());
-        ((EditorImpl)editor).setCaretActive();
+      String newFileText = fakeDocument.getText();
+      Document document = EditorFactory.getInstance().createDocument(newFileText);
+      final Editor editor = EditorFactory.getInstance().createEditor(document, getProject());
+      ((EditorImpl)editor).setCaretActive();
 
-        EditorTestUtil.setCaretsAndSelection(editor, caretsState);
-        result.setResult(editor);
-      }
-    }.execute().getResultObject();
+      EditorTestUtil.setCaretsAndSelection(editor, caretsState);
+      return editor;
+    });
   }
 
   @NotNull
@@ -266,12 +263,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  private static void setupEditorForInjectedLanguage() {
+  protected static void setupEditorForInjectedLanguage() {
     if (myEditor != null) {
+      Editor hostEditor = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
+      PsiFile hostFile = myFile == null ? null : InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(myFile);
       final Ref<EditorWindow> editorWindowRef = new Ref<>();
-      myEditor.getCaretModel().runForEachCaret(caret -> {
-        Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
-        if (caret == myEditor.getCaretModel().getPrimaryCaret() && editor instanceof EditorWindow) {
+      hostEditor.getCaretModel().runForEachCaret(caret -> {
+        Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, hostFile);
+        if (caret == hostEditor.getCaretModel().getPrimaryCaret() && editor instanceof EditorWindow) {
           editorWindowRef.set((EditorWindow)editor);
         }
       });
@@ -687,7 +686,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @see FileBasedTestCaseHelperEx
    * @Parameterized.Parameter fields are injected on parameterized test creation.
    */
-  @Parameterized.Parameter(0)
+  @Parameterized.Parameter()
   public String myFileSuffix;
 
   /**
@@ -699,7 +698,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   public String myTestDataPath;
 
   @Parameterized.Parameters(name = "{0}")
-  public static List<Object[]> params() throws Throwable {
+  public static List<Object[]> params() {
     return Collections.emptyList();
   }
 

@@ -33,7 +33,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/24/11
  */
 class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager{
 
@@ -251,7 +250,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       }
     }
     // ensure processor's loader will not resolve against JPS classes and libraries used in JPS
-    return new URLClassLoader(urls.toArray(new URL[urls.size()]), myContext.getStandardFileManager().getClass().getClassLoader());
+    return new URLClassLoader(urls.toArray(new URL[0]), myContext.getStandardFileManager().getClass().getClassLoader());
   }
 
   private File getSingleOutputDirectory(final Location loc, final JavaFileObject sourceFile) {
@@ -341,7 +340,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return myContext;
   }
 
-  private static Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
+  private static final Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
 
   JavaFileManager getApiCallHandler(Method method) {
     Boolean isImplemented = ourImplStatus.get(method);

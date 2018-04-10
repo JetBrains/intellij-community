@@ -68,6 +68,6 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
       };
       children.add(action);
     }
-    return children.toArray(new AnAction[children.size()]);
+    return children.toArray(AnAction.EMPTY_ARRAY);
   }
 }

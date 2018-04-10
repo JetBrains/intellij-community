@@ -59,6 +59,16 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
   public void build(@NotNull ArtifactBuildTarget target,
                     @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException {
+    List<BuildTask> preprocessingTasks = createArtifactTasks(target.getArtifact(), ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
+    try {
+      if (!holder.hasRemovedFiles() && !holder.hasDirtyFiles() && preprocessingTasks.isEmpty()) {
+        return;
+      }
+    }
+    catch (IOException e) {
+      throw new ProjectBuildException(e);
+    }
+
     JpsArtifact artifact = target.getArtifact();
     String outputFilePath = artifact.getOutputFilePath();
     if (StringUtil.isEmpty(outputFilePath)) {
@@ -83,7 +93,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       context.processMessage(new ProgressMessage(messageText));
       LOG.debug(messageText);
 
-      runArtifactTasks(context, target.getArtifact(), ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
+      runArtifactTasks(preprocessingTasks, target.getArtifact(), context, ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
       final SourceToOutputMapping srcOutMapping = pd.dataManager.getSourceToOutputMap(target);
       final ArtifactOutputToSourceMapping outSrcMapping = pd.dataManager.getStorage(target, ArtifactOutToSourceStorageProvider.INSTANCE);
 
@@ -164,8 +174,10 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
       JarsBuilder builder = new JarsBuilder(changedJars, context, outputConsumer, outSrcMapping);
       builder.buildJars();
-      runArtifactTasks(context, artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase.FINISHING_BUILD);
-      runArtifactTasks(context, artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase.POST_PROCESSING);
+      runArtifactTasks(createArtifactTasks(artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase.FINISHING_BUILD), artifact, context,
+                       ArtifactBuildTaskProvider.ArtifactBuildPhase.FINISHING_BUILD);
+      runArtifactTasks(createArtifactTasks(artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase.POST_PROCESSING), artifact, context,
+                       ArtifactBuildTaskProvider.ArtifactBuildPhase.POST_PROCESSING);
     }
     catch (IOException e) {
       throw new ProjectBuildException(e);
@@ -186,15 +198,20 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     }
   }
 
-  private static void runArtifactTasks(CompileContext context, JpsArtifact artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase phase)
-    throws ProjectBuildException {
+  private static List<BuildTask> createArtifactTasks(JpsArtifact artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase phase) {
+    List<BuildTask> result = new ArrayList<>();
     for (ArtifactBuildTaskProvider provider : JpsServiceManager.getInstance().getExtensions(ArtifactBuildTaskProvider.class)) {
-      List<? extends BuildTask> tasks = provider.createArtifactBuildTasks(artifact, phase);
-      if (!tasks.isEmpty()) {
-        context.processMessage(new ProgressMessage("Running " + phase.getPresentableName() + " tasks for '" + artifact.getName() + "' artifact..."));
-        for (BuildTask task : tasks) {
-          task.build(context);
-        }
+      result.addAll(provider.createArtifactBuildTasks(artifact, phase));
+    }
+    return result;
+  }
+
+  private static void runArtifactTasks(List<BuildTask> tasks, JpsArtifact artifact, CompileContext context,
+                                       ArtifactBuildTaskProvider.ArtifactBuildPhase phase) throws ProjectBuildException {
+    if (!tasks.isEmpty()) {
+      context.processMessage(new ProgressMessage("Running " + phase.getPresentableName() + " tasks for '" + artifact.getName() + "' artifact..."));
+      for (BuildTask task : tasks) {
+        task.build(context);
       }
     }
   }

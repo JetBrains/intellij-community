@@ -21,7 +21,6 @@ package org.jetbrains.jps.incremental;
  * is treated as build progress message
  * 
  * @author Eugene Zhuravlev
- *         Date: 9/20/11
  */
 public class StopBuildException extends ProjectBuildException{
   public StopBuildException() {

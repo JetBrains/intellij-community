@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +17,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/6/11
  */
 public class ResourcePatterns {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns");
@@ -125,17 +110,7 @@ public class ResourcePatterns {
     if (slash >= 0) {
       dirPattern = wildcardPattern.substring(0, slash + 1);
       wildcardPattern = wildcardPattern.substring(slash + 1);
-      if (!dirPattern.startsWith("/")) {
-        dirPattern = "/" + dirPattern;
-      }
-      //now dirPattern starts and ends with '/'
-
-      dirPattern = normalizeWildcards(dirPattern);
-
-      dirPattern = StringUtil.replace(dirPattern, "/.*.*/", "(/.*)?/");
-      dirPattern = StringUtil.trimEnd(dirPattern, "/");
-
-      dirPattern = optimize(dirPattern);
+      dirPattern = optimizeDirPattern(dirPattern);
     }
 
     wildcardPattern = normalizeWildcards(wildcardPattern);
@@ -146,11 +121,26 @@ public class ResourcePatterns {
     return new CompiledPattern(compilePattern(wildcardPattern), dirCompiled, srcCompiled);
   }
 
+  public static String optimizeDirPattern(String dirPattern) {
+    if (!dirPattern.startsWith("/")) {
+      dirPattern = "/" + dirPattern;
+    }
+    //now dirPattern starts and ends with '/'
+
+    dirPattern = normalizeWildcards(dirPattern);
+
+    dirPattern = StringUtil.replace(dirPattern, "/.*.*/", "(/.*)?/");
+    dirPattern = StringUtil.trimEnd(dirPattern, "/");
+
+    dirPattern = optimize(dirPattern);
+    return dirPattern;
+  }
+
   private static String optimize(String wildcardPattern) {
     return wildcardPattern.replaceAll("(?:\\.\\*)+", ".*");
   }
 
-  private static String normalizeWildcards(String wildcardPattern) {
+  public static String normalizeWildcards(String wildcardPattern) {
     wildcardPattern = StringUtil.replace(wildcardPattern, "\\!", "!");
     wildcardPattern = StringUtil.replace(wildcardPattern, ".", "\\.");
     wildcardPattern = StringUtil.replace(wildcardPattern, "*?", ".+");

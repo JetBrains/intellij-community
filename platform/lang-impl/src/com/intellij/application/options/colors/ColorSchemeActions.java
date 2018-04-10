@@ -28,21 +28,22 @@ import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorColorsScheme> {
@@ -125,26 +126,19 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
         doImport(importer, schemeFiles.iterator().next());
         return;
       }
-      List<Pair<String, VirtualFile>> fileList = new ArrayList<>(schemeFiles.size());
+      List<ColorSchemeItem> fileList = new ArrayList<>(schemeFiles.size());
       for (VirtualFile file : schemeFiles) {
         Element root = SchemeImportUtil.loadSchemeDom(file);
         String name = StringUtil.trimStart(ColorSchemeImporter.getSchemeName(root), SchemeManager.EDITABLE_COPY_PREFIX);
-        fileList.add(Pair.create(name, file));
+        fileList.add(new ColorSchemeItem(name, file));
       }
-      ListPopup popup = JBPopupFactory.getInstance().createListPopup
-        (new BaseListPopupStep<Pair<String, VirtualFile>>("Choose scheme to import", fileList) {
-          @NotNull
-          @Override
-          public String getTextFor(Pair<String, VirtualFile> item) {
-            return item.first;
-          }
-
-          @Override
-          public PopupStep onChosen(Pair<String, VirtualFile> selectedValue, boolean finalChoice) {
-            return doFinalStep(() -> doImport(importer, selectedValue.second));
-          }
-        });
-      popup.showUnderneathOf(componentAbove);
+      ImportSchemeChooserDialog dialog = new ImportSchemeChooserDialog(mySchemesPanel, componentAbove, fileList);
+      if (dialog.showAndGet()) {
+        List<ColorSchemeItem> selectedItems = dialog.getSelectedItems();
+        for (ColorSchemeItem item : selectedItems) {
+          doImport(importer, item.getFile());
+        }
+      }
     }
     catch (SchemeImportException e) {
       handleError(e, jarFile);
@@ -205,10 +199,8 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
         schemeToExport = parent;
       }
     }
-    if (schemeToExport.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
-      schemeToExport = (EditorColorsScheme)schemeToExport.clone();
-      schemeToExport.setName(SchemeManager.getDisplayName(schemeToExport));
-    }
+    schemeToExport = (EditorColorsScheme)schemeToExport.clone();
+    schemeToExport.setName(SchemeManager.getDisplayName(schemeToExport));
     super.exportScheme(schemeToExport, exporterName);
   }
 
@@ -219,4 +211,71 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
   
   @NotNull
   protected abstract ColorAndFontOptions getOptions();
+
+  private static class ImportSchemeChooserDialog extends DialogWrapper {
+
+    private final Component myComponentAbove;
+    private final List<ColorSchemeItem> mySchemeItems;
+    private JBList<ColorSchemeItem> mySchemeList;
+
+    protected ImportSchemeChooserDialog(@NotNull Component parent,
+                                        @NotNull Component componentAbove,
+                                        @NotNull List<ColorSchemeItem> schemeItems) {
+      super(parent, false);
+      setTitle(ApplicationBundle.message("settings.editor.scheme.import.chooser.title"));
+      setOKButtonText(ApplicationBundle.message("settings.editor.scheme.import.chooser.button"));
+      myComponentAbove = componentAbove;
+      mySchemeItems = schemeItems;
+      init();
+    }
+
+    @Nullable
+    @Override
+    public Point getInitialLocation() {
+      Point location = myComponentAbove.getLocationOnScreen();
+      location.translate(0, myComponentAbove.getHeight() + JBUI.scale(20));
+      return location;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      JPanel schemesPanel = new JPanel(new BorderLayout());
+      mySchemeList = new JBList<>(mySchemeItems);
+      schemesPanel.add(mySchemeList, BorderLayout.CENTER);
+      return schemesPanel;
+    }
+
+    public List<ColorSchemeItem> getSelectedItems() {
+      int minIndex = mySchemeList.getMinSelectionIndex();
+      int maxIndex = mySchemeList.getMaxSelectionIndex();
+      if (minIndex >= 0 && maxIndex >= minIndex) {
+        return mySchemeItems.subList(minIndex, maxIndex +1);
+      }
+      return Collections.emptyList();
+    }
+  }
+
+  private static class ColorSchemeItem {
+    private final String myName;
+    private final VirtualFile myFile;
+
+    public ColorSchemeItem(String name, VirtualFile file) {
+      myName = name;
+      myFile = file;
+    }
+
+    public String getName() {
+      return myName;
+    }
+
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
+    @Override
+    public String toString() {
+      return myName;
+    }
+  }
 }

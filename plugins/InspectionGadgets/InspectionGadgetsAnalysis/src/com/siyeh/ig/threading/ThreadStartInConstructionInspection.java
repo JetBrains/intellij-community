@@ -93,7 +93,7 @@ public class ThreadStartInConstructionInspection extends BaseInspection {
         }
         final PsiParameterList parameterList =
           method.getParameterList();
-        if (parameterList.getParametersCount() != 0) {
+        if (!parameterList.isEmpty()) {
           return;
         }
         final PsiClass methodClass = method.getContainingClass();

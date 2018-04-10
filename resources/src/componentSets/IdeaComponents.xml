@@ -12,7 +12,7 @@
       <implementation-class>com.intellij.openapi.util.registry.RegistryState</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsComponent</implementation-class>
+      <implementation-class>com.intellij.internal.statistic.updater.StatisticsJobsScheduler</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.project.impl.ProjectStoreClassProvider</interface-class>

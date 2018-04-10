@@ -21,33 +21,30 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import java.awt.GridLayout;
-import java.util.TreeMap;
+import javax.swing.*;
+import java.awt.*;
+import java.util.HashMap;
 import java.util.Map.Entry;
 
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.openapi.application.ApplicationBundle.message;
+import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
+import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 import static javax.swing.SwingConstants.LEFT;
 
 /**
  * @author Sergey.Malenkov
  */
 final class BreadcrumbsConfigurable implements Configurable {
-  private final TreeMap<String, JCheckBox> map = new TreeMap<>();
+  private final HashMap<String, JCheckBox> map = new HashMap<>();
   private JComponent component;
   private JCheckBox show;
   private JRadioButton above;
@@ -76,8 +73,8 @@ final class BreadcrumbsConfigurable implements Configurable {
           }
         }
       }
-      JPanel boxes = new JPanel(new GridLayout(0, 3));
-      for (JCheckBox box : map.values()) boxes.add(box);
+      JPanel boxes = new JPanel(new GridLayout(0, 3, isUnderDarcula() ? JBUI.scale(10) : 0, 0));
+      map.values().stream().sorted((box1, box2) -> naturalCompare(box1.getText(), box2.getText())).forEach(box -> boxes.add(box));
 
       show = new JCheckBox(message("checkbox.show.breadcrumbs"));
       show.addItemListener(event -> updateEnabled());
@@ -90,9 +87,8 @@ final class BreadcrumbsConfigurable implements Configurable {
       group.add(below);
 
       placement = new JLabel(message("label.breadcrumbs.placement"));
-      placement.setBorder(JBUI.Borders.emptyRight(12));
 
-      JPanel placementPanel = new JPanel(new HorizontalLayout(0));
+      JPanel placementPanel = new JPanel(new HorizontalLayout(JBUI.scale(UIUtil.DEFAULT_HGAP)));
       placementPanel.setBorder(JBUI.Borders.emptyLeft(24));
       placementPanel.add(placement);
       placementPanel.add(above);
@@ -101,7 +97,7 @@ final class BreadcrumbsConfigurable implements Configurable {
       languages = new JLabel(message("label.breadcrumbs.languages"));
 
       JPanel languagesPanel = new JPanel(new VerticalLayout(JBUI.scale(6)));
-      languagesPanel.setBorder(JBUI.Borders.emptyLeft(24));
+      languagesPanel.setBorder(JBUI.Borders.empty(0, 24, 12, 0));
       languagesPanel.add(languages);
       languagesPanel.add(boxes);
 
@@ -140,7 +136,7 @@ final class BreadcrumbsConfigurable implements Configurable {
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     boolean modified = false;
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     if (settings.setBreadcrumbsAbove(isBreadcrumbsAbove())) modified = true;

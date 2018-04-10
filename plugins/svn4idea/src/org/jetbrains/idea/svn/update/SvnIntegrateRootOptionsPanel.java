@@ -1,32 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import javax.swing.*;
 
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.dialogs.SelectLocationDialog.selectLocation;
 
 public class SvnIntegrateRootOptionsPanel implements SvnPanel{
@@ -52,10 +41,16 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   private void setupUrlField(@NotNull TextFieldWithBrowseButton textField) {
     textField.setEditable(true);
     textField.addActionListener(e -> {
-      SVNURL selectedUrl = selectLocation(myVcs.getProject(), textField.getText());
+      try {
+        Url url = createUrl(textField.getText(), false);
+        Url selectedUrl = selectLocation(myVcs.getProject(), url);
 
-      if (selectedUrl != null) {
-        textField.setText(selectedUrl.toDecodedString());
+        if (selectedUrl != null) {
+          textField.setText(selectedUrl.toDecodedString());
+        }
+      }
+      catch (SvnBindException ex) {
+        showErrorDialog(myVcs.getProject(), ex.getMessage(), message("dialog.title.select.repository.location"));
       }
     });
   }
@@ -63,23 +58,23 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   private void setupRevisionField(@NotNull SvnRevisionPanel revisionField, @NotNull TextFieldWithBrowseButton textField) {
     revisionField.setProject(myVcs.getProject());
     revisionField.setRoot(myRoot.getVirtualFile());
-    revisionField.setUrlProvider(() -> textField.getText());
+    revisionField.setUrlProvider(() -> createUrl(textField.getText(), false));
   }
 
   @Override
   public void apply(@NotNull SvnConfiguration conf) throws ConfigurationException {
     if (isEmptyOrSpaces(myMergeText1.getText())) {
       myMergeText1.requestFocus();
-      throw new ConfigurationException(SvnBundle.message("source.url.could.not.be.empty.error.message"));
+      throw new ConfigurationException(message("source.url.could.not.be.empty.error.message"));
     }
 
     if (isEmptyOrSpaces(myMergeText2.getText())) {
       myMergeText2.requestFocus();
-      throw new ConfigurationException(SvnBundle.message("source.url.could.not.be.empty.error.message"));
+      throw new ConfigurationException(message("source.url.could.not.be.empty.error.message"));
     }
 
     if (myMergeText1.getText().equals(myMergeText2.getText()) && myRevision1.getRevisionText().equals(myRevision2.getRevisionText())) {
-      throw new ConfigurationException(SvnBundle.message("no.differences.between.sources.error.message"));
+      throw new ConfigurationException(message("no.differences.between.sources.error.message"));
     }
 
     MergeRootInfo rootInfo = conf.getMergeRootInfo(myRoot.getIOFile(), myVcs);

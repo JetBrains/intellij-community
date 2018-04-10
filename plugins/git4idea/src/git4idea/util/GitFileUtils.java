@@ -17,16 +17,13 @@ package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
-import git4idea.commands.GitBinaryHandler;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,11 +56,11 @@ public class GitFileUtils {
 
   private static void doDelete(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<String> paths,
                                String... additionalOptions) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RM);
     handler.addParameters(additionalOptions);
     handler.endOptions();
     handler.addParameters(paths);
-    handler.run();
+    Git.getInstance().runCommand(handler).getOutputOrThrow();
   }
 
   public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
@@ -128,23 +125,23 @@ public class GitFileUtils {
       if (paths.isEmpty()) {
         continue;
       }
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.ADD);
       handler.addParameters("--ignore-errors");
       handler.endOptions();
       handler.addParameters(paths);
-      handler.run();
+      Git.getInstance().runCommand(handler).getOutputOrThrow();
     }
   }
 
   @NotNull
   private static List<String> excludeIgnoredFiles(@NotNull Project project, @NotNull VirtualFile root,
                                                   @NotNull List<String> paths) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LS_FILES);
     handler.setSilent(true);
     handler.addParameters("--ignored", "--others", "--exclude-standard");
     handler.endOptions();
     handler.addParameters(paths);
-    String output = handler.run();
+    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
     List<String> nonIgnoredFiles = new ArrayList<>(paths.size());
     Set<String> ignoredPaths = new HashSet<>(Arrays.asList(StringUtil.splitByLines(output)));

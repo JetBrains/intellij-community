@@ -43,7 +43,7 @@ public class Extractor implements Disposable {
   private final SegmentedInputStream myStream;
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance(Extractor.class);
-  private final ExecutorService myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Ant Extractor pool");
+  private final ExecutorService myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Ant Extractor Pool");
   private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<>();
 
   public Extractor(@NotNull InputStream stream, @NotNull Charset charset) {

@@ -130,7 +130,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
   @Nullable
   public VirtualFile findFile(@NotNull String filePath) {
     VirtualFile file = LocalFileFinder.findFile(filePath);
-    if (file == null && myBaseDir != null) {
+    if (file == null && myBaseDir != null && myBaseDir.isValid()) {
       file = myBaseDir.findFileByRelativePath(filePath);
     }
     return file;

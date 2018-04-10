@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,12 +47,19 @@ public class DaemonTooltipUtil {
     if (info.getToolTip() == null) return;
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
 
-    Point bestPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
-    bestPoint.y += editor.getLineHeight() / 2;
-
-    if (!visibleArea.contains(bestPoint)) {
-      bestPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
+    Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
+    Point highlightEndPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(info.endOffset));
+    if (highlightEndPoint.y > point.y) {
+      if (highlightEndPoint.x > point.x) {
+        point = new Point(point.x, highlightEndPoint.y);
+      } else if (highlightEndPoint.y > point.y + editor.getLineHeight()) {
+        point = new Point(point.x, highlightEndPoint.y - editor.getLineHeight());
+      }
     }
+    
+    Point bestPoint = new Point(point);
+    bestPoint.y += editor.getLineHeight() / 2;
+    if (!visibleArea.contains(bestPoint)) bestPoint = point;
 
     Point p = SwingUtilities.convertPoint(
       editor.getContentComponent(),

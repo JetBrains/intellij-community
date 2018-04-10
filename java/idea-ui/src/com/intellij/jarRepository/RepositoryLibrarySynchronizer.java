@@ -40,7 +40,6 @@ import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
@@ -71,7 +70,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
   }
 
   private static Collection<Library> collectLibraries(final @NotNull Project project, final @NotNull Predicate<Library> predicate) {
-    final HashSet<Library> result = new HashSet<>();
+    final Set<Library> result = new HashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       if (project.isDisposed()) return;
       
@@ -176,9 +175,11 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
       }
     });
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      removeDuplicatedUrlsFromRepositoryLibraries(project);
-      syncTask.run();
-    });
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        removeDuplicatedUrlsFromRepositoryLibraries(project);
+        syncTask.run();
+      });
+    }
   }
 }

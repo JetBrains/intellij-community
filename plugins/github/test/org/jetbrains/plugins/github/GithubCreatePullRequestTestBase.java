@@ -22,6 +22,7 @@ import com.intellij.util.text.DateFormatUtil;
 import git4idea.actions.GitInit;
 import git4idea.commands.Git;
 import git4idea.repo.GitRepository;
+import git4idea.test.GitExecutor;
 import git4idea.test.TestDialogHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubFullPath;
@@ -33,7 +34,6 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 import java.util.Random;
 
 import static com.intellij.openapi.vcs.Executor.cd;
-import static git4idea.test.GitExecutor.git;
 
 /**
  * @author Aleksey Pivovarov
@@ -51,7 +51,7 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
 
     registerHttpAuthService();
 
-    cd(myProjectRoot.getPath());
+    cd(projectRoot.getPath());
     cloneRepo();
     createBranch();
     createChanges();
@@ -64,14 +64,14 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
   }
 
   protected void deleteRemoteBranch() {
-    GitRepository repository = GithubUtil.getGitRepository(myProject, myProjectRoot);
+    GitRepository repository = GithubUtil.getGitRepository(myProject, projectRoot);
     if (repository != null) {
       Git.getInstance().push(repository, "origin", PROJECT_URL, ":" + BRANCH_NAME, false);
     }
   }
 
   protected void registerDefaultCreatePullRequestDialogHandler(@NotNull final String branch, @NotNull final String user) {
-    myDialogManager.registerDialogHandler(GithubCreatePullRequestDialog.class, new TestDialogHandler<GithubCreatePullRequestDialog>() {
+    dialogManager.registerDialogHandler(GithubCreatePullRequestDialog.class, new TestDialogHandler<GithubCreatePullRequestDialog>() {
       @Override
       public int handleDialog(GithubCreatePullRequestDialog dialog) {
         dialog.testSetRequestTitle(BRANCH_NAME);
@@ -90,8 +90,8 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
     git("fetch");
     git("checkout -t origin/master");
 
-    setGitIdentity(myProjectRoot);
-    GitInit.refreshAndConfigureVcsMappings(myProject, myProjectRoot, myProjectRoot.getPath());
+    setGitIdentity(projectRoot);
+    GitInit.refreshAndConfigureVcsMappings(myProject, projectRoot, projectRoot.getPath());
   }
 
   protected void addRemote(@NotNull String user) {
@@ -104,7 +104,7 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
   }
 
   protected void createChanges() {
-    VfsTestUtil.createFile(myProjectRoot, "file.txt", "file.txt content");
+    VfsTestUtil.createFile(projectRoot, "file.txt", "file.txt content");
     git("add file.txt");
     git("commit -m changes");
   }

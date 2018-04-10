@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -33,7 +19,6 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -400,7 +385,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (MavenSimpleNode each : children) {
         if (each.isVisible()) result.add(each);
       }
-      return result.toArray(new MavenSimpleNode[result.size()]);
+      return result.toArray(new MavenSimpleNode[0]);
     }
 
     protected List<? extends MavenSimpleNode> doGetChildren() {
@@ -712,27 +697,28 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         return new NavigatableAdapter() {
           @Override
           public void navigate(final boolean requestFocus) {
-            final JBList list = new JBList(profiles);
-            list.setCellRenderer(new DefaultListCellRenderer() {
-              @Override
-              public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                @SuppressWarnings("unchecked") MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
-                XmlElement xmlElement = mavenDomProfile.getXmlElement();
-                if (xmlElement != null) {
-                  setText(xmlElement.getContainingFile().getVirtualFile().getPath());
+            JBPopupFactory.getInstance()
+              .createPopupChooserBuilder(profiles)
+              .setRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList list,
+                                                              Object value,
+                                                              int index,
+                                                              boolean isSelected,
+                                                              boolean cellHasFocus) {
+                  Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                  @SuppressWarnings("unchecked") MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
+                  XmlElement xmlElement = mavenDomProfile.getXmlElement();
+                  if (xmlElement != null) {
+                    setText(xmlElement.getContainingFile().getVirtualFile().getPath());
+                  }
+                  return result;
                 }
-                return result;
-              }
-            });
-            JBPopupFactory.getInstance().createListPopupBuilder(list)
+              })
               .setTitle("Choose file to open ")
-              .setItemChoosenCallback(() -> {
-                final Object value = list.getSelectedValue();
-                if (value instanceof MavenDomProfile) {
-                  final Navigatable navigatable = getNavigatable((MavenDomProfile)value);
-                  if (navigatable != null) navigatable.navigate(requestFocus);
-                }
+              .setItemChosenCallback((value) -> {
+                final Navigatable navigatable = getNavigatable(value);
+                if (navigatable != null) navigatable.navigate(requestFocus);
               }).createPopup().showInFocusCenter();
           }
         };
@@ -926,7 +912,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       String description = ObjectUtils.chooseNotNull(each.getDescription(), each.getPath());
       if (description == null) return "";
 
-      String text = StringUtil.replace(description, new String[]{"<", ">"}, new String[]{"&lt;", "&gt;"});
+      String text = StringUtil.replace(description, Arrays.asList("<", ">"), Arrays.asList("&lt;", "&gt;"));
       StringBuilder result = new StringBuilder();
       int count = 0;
       for (int i = 0; i < text.length(); i++) {
@@ -1376,7 +1362,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private String getToolTip() {
-      final StringBuilder myToolTip = new StringBuilder("");
+      final StringBuilder myToolTip = new StringBuilder();
       String scope = myArtifactNode.getOriginalScope();
 
       if (StringUtil.isNotEmpty(scope) && !MavenConstants.SCOPE_COMPILE.equals(scope)) {

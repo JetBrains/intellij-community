@@ -172,6 +172,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
+    protected void registerJavaFxPackagerInfo(String message) {
+      myCompileContext.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.INFO, message));
+    }
+
+    @Override
     protected String getHtmlTemplateFile() {
       return myProperties.myState.getHtmlTemplateFile();
     }
@@ -258,6 +263,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
       return myProperties.myState.getCustomManifestAttributes();
+    }
+
+    @Override
+    protected JavaFxPackagerConstants.MsgOutputLevel getMsgOutputLevel() {
+      return myProperties.myState.getMsgOutputLevel();
     }
 
     private JpsArtifact getPreloaderArtifact() {

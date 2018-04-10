@@ -189,7 +189,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
       final PsiCall call = RefactoringUtil.getCallExpressionByMethodReference(element);
       final PsiExpressionList argList = call.getArgumentList();
       if (argList != null) {
-        final int actualParamLength = argList.getExpressions().length;
+        final int actualParamLength = argList.getExpressionCount();
         if ((method.isVarArgs() && actualParamLength + 1 < parametersCount) ||
             (!method.isVarArgs() && actualParamLength < parametersCount)) {
           conflicts.putValue(call, "Incomplete call(" + call.getText() +"): " + parametersCount + " parameters expected but only " + actualParamLength + " found");

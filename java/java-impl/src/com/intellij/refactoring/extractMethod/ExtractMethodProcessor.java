@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInsight.intention.impl.AddNullableNotNullAnnotationFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
@@ -31,6 +17,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -40,10 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -73,13 +58,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.text.UniqueNameGenerator;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 public class ExtractMethodProcessor implements MatchProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodProcessor");
@@ -89,7 +74,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected final PsiElement[] myElements;
   private final PsiBlockStatement myEnclosingBlockStatement;
   private final PsiType myForcedReturnType;
-  private final String myRefactoringName;
+  protected final String myRefactoringName;
   protected final String myInitialMethodName;
   private final String myHelpId;
 
@@ -124,18 +109,24 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean myNeedChangeContext; // target class is not immediate container of the code to be extracted
 
   private boolean myShowErrorDialogs = true;
+  private boolean myIsPreviewSupported;
+  private boolean myPreviewDuplicates;
   protected boolean myCanBeStatic;
   protected boolean myCanBeChainedConstructor;
   protected boolean myIsChainedConstructor;
   private List<Match> myDuplicates;
+  private ParametrizedDuplicates myParametrizedDuplicates;
   @PsiModifier.ModifierConstant protected String myMethodVisibility = PsiModifier.PRIVATE;
   protected boolean myGenerateConditionalExit;
   protected PsiStatement myFirstExitStatementCopy;
-  private PsiMethod myExtractedMethod;
+  protected PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
+  private PsiBlockStatement myAddedToMethodCallLocation;
   protected boolean myNullConditionalCheck;
   protected boolean myNotNullConditionalCheck;
-  private Nullness myNullness;
+  protected Nullness myNullness;
+
+  private final CodeStyleSettings myStyleSettings;
 
   public ExtractMethodProcessor(Project project,
                                 Editor editor,
@@ -164,6 +155,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     myManager = PsiManager.getInstance(myProject);
     myElementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     myStyleManager = CodeStyleManager.getInstance(myProject);
+    myStyleSettings = editor != null ? CodeStyle.getSettings(editor) :
+                      CodeStyle.getSettings(elements[0].getContainingFile());
   }
 
   private static PsiElement[] processCodeBlockChildren(PsiElement[] codeBlockChildren) {
@@ -198,6 +191,14 @@ public class ExtractMethodProcessor implements MatchProvider {
     myShowErrorDialogs = showErrorDialogs;
   }
 
+  public void setPreviewSupported(boolean previewSupported) {
+    myIsPreviewSupported = previewSupported;
+  }
+
+  public boolean isPreviewDuplicates() {
+    return myPreviewDuplicates;
+  }
+
   public void setChainedConstructor(final boolean isChainedConstructor) {
     myIsChainedConstructor = isChainedConstructor;
   }
@@ -211,6 +212,7 @@ public class ExtractMethodProcessor implements MatchProvider {
    * Invoked in atomic action
    */
   public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
+    if (myElements.length == 0) return false;
     myExpression = null;
     if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
       final PsiExpression expression = (PsiExpression)myElements[0];
@@ -228,7 +230,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       myCodeFragmentMember = codeFragment.getParent();
     }
     if (myCodeFragmentMember == null) {
-      myCodeFragmentMember = ControlFlowUtil.findCodeFragment(codeFragment.getContext()).getParent();
+      PsiElement context = codeFragment.getContext();
+      LOG.assertTrue(context != null, "code fragment context is null");
+      myCodeFragmentMember = ControlFlowUtil.findCodeFragment(context).getParent();
     }
 
     myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
@@ -253,7 +257,12 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     myOutputVariables = myControlFlowWrapper.getOutputVariables();
 
-    return chooseTargetClass(codeFragment, pass);
+    PsiClass defaultTargetClass = Optional.ofNullable(myElements[0].getContainingFile())
+                                          .map(ExtractMethodSnapshot.SNAPSHOT_KEY::get)
+                                          .map(snapshot -> snapshot.myTargetClass)
+                                          .map(SmartPsiElementPointer::getElement)
+                                          .orElse(null);
+    return chooseTargetClass(codeFragment, pass, defaultTargetClass);
   }
 
   private boolean checkExitPoints() throws PrepareFailedException {
@@ -324,7 +333,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                                                                           elements);
     }
     List<PsiClassType> exceptions = ExceptionUtil.getThrownCheckedExceptions(myElements);
-    myThrownExceptions = exceptions.toArray(new PsiClassType[exceptions.size()]);
+    myThrownExceptions = exceptions.toArray(PsiClassType.EMPTY_ARRAY);
 
     if (container instanceof PsiMethod) {
       checkLocalClasses((PsiMethod) container);
@@ -432,8 +441,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
                                                          DataFlowRunner runner,
                                                          DfaMemoryState memState) {
-        PsiElement aReturn = instruction.getReturn();
-        if (aReturn instanceof PsiExpression && returnedExpressions.contains(aReturn)) {
+        if (returnedExpressions.contains(instruction.getReturn())) {
           myResult &= nullsExpected ? memState.isNull(memState.peek()) : memState.isNotNull(memState.peek());
         }
         return super.visitCheckReturnValue(instruction, runner, memState);
@@ -514,8 +522,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     });
     for(PsiClass localClass: localClasses) {
       final boolean classExtracted = isExtractedElement(localClass);
-      final List<PsiElement> extractedReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
-      final List<PsiElement> remainingReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
+      final List<PsiElement> extractedReferences = Collections.synchronizedList(new ArrayList<>());
+      final List<PsiElement> remainingReferences = Collections.synchronizedList(new ArrayList<>());
       ReferencesSearch.search(localClass).forEach(psiReference -> {
         final PsiElement element = psiReference.getElement();
         final boolean elementExtracted = isExtractedElement(element);
@@ -577,10 +585,21 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public boolean showDialog(final boolean direct) {
     AbstractExtractDialog dialog = createExtractMethodDialog(direct);
-    dialog.show();
-    if (!dialog.isOK()) return false;
-    apply(dialog);
-    return true;
+    Ref<Boolean> result = Ref.create(Boolean.FALSE);
+    Runnable showAndApply = () -> {
+      dialog.show();
+      if (dialog.isOK()) {
+        apply(dialog);
+        result.set(Boolean.TRUE);
+      }
+    };
+    if (dialog.showInTransaction()) {
+      TransactionGuard.getInstance().submitTransactionAndWait(showAndApply);
+    }
+    else {
+      showAndApply.run();
+    }
+    return result.get();
   }
 
   protected void apply(final AbstractExtractDialog dialog) {
@@ -594,6 +613,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (returnType != null) {
       myReturnType = returnType;
     }
+    myPreviewDuplicates = dialog.isPreviewUsages();
   }
 
   protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
@@ -603,7 +623,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, returnType, getTypeParameterList(),
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
-                                                         myRefactoringName, myHelpId, myNullness, myElements) {
+                                   myRefactoringName, myHelpId, myNullness, myElements,
+                                   () -> estimateDuplicatesCount()) {
       protected boolean areTypesDirected() {
         return direct;
       }
@@ -652,12 +673,17 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
         }
       }
+
+      @Override
+      protected boolean isPreviewSupported() {
+        return myIsPreviewSupported;
+      }
     };
   }
 
   public void setDataFromInputVariables() {
     final List<VariableData> variables = myInputVariables.getInputVariables();
-    myVariableDatum = variables.toArray(new VariableData[variables.size()]);
+    myVariableDatum = variables.toArray(new VariableData[0]);
   }
 
   public PsiExpression[] findOccurrences() {
@@ -672,7 +698,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, statement -> statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null);
     final List<PsiExpression> map = ContainerUtil.map(filter, statement -> ((PsiReturnStatement)statement).getReturnValue());
-    return map.toArray(new PsiExpression[map.size()]);
+    return map.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   private Nullness initNullness() {
@@ -755,7 +781,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public void testRun() throws IncorrectOperationException {
     testPrepare();
     testNullness();
-    ExtractMethodHandler.run(myProject, myEditor, this);
+    ExtractMethodHandler.extractMethod(myProject, this);
   }
 
   @TestOnly
@@ -859,31 +885,63 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
+  public void previewRefactoring() {
+    initDuplicates();
+    chooseAnchor();
+  }
+
   @Nullable
   private DuplicatesFinder initDuplicates() {
-    List<PsiElement> elements = new ArrayList<>();
-    for (PsiElement element : myElements) {
-      if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
-        elements.add(element);
-      }
-    }
+    PsiElement[] elements = StreamEx.of(myElements)
+      .filter(element -> !(element instanceof PsiWhiteSpace || element instanceof PsiComment))
+      .toArray(PsiElement[]::new);
 
     if (myExpression != null) {
-      DuplicatesFinder finder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
-                                                     new ArrayList<>());
+      DuplicatesFinder finder = new DuplicatesFinder(elements, myInputVariables.copy(), Collections.emptyList());
       myDuplicates = finder.findDuplicates(myTargetClass);
+      myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this);
       return finder;
     }
-    else if (elements.size() > 0){
-      DuplicatesFinder myDuplicatesFinder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
-                                                myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null,
-                                                Arrays.asList(myOutputVariables));
-      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
-      return myDuplicatesFinder;
+    else if (elements.length != 0) {
+      DuplicatesFinder finder = new DuplicatesFinder(elements, myInputVariables.copy(),
+                                                     myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null,
+                                                     Arrays.asList(myOutputVariables));
+      myDuplicates = finder.findDuplicates(myTargetClass);
+      myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this);
+      return finder;
     } else {
       myDuplicates = new ArrayList<>();
     }
     return null;
+  }
+
+  private int estimateDuplicatesCount() {
+    PsiElement[] elements = StreamEx.of(myElements)
+                                    .filter(element -> !(element instanceof PsiWhiteSpace || element instanceof PsiComment))
+                                    .toArray(PsiElement[]::new);
+
+    ReturnValue value;
+    List<PsiVariable> parameters;
+    if (myExpression != null) {
+      value = null;
+      parameters = Collections.emptyList();
+    }
+    else if (elements.length != 0) {
+      value = myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null;
+      parameters = Arrays.asList(myOutputVariables);
+    }
+    else {
+      return 0;
+    }
+    DuplicatesFinder finder = new DuplicatesFinder(elements, myInputVariables.copy(), value, parameters);
+    List<Match> myDuplicates = finder.findDuplicates(myTargetClass);
+    if (!ContainerUtil.isEmpty(myDuplicates)) return myDuplicates.size();
+    ParametrizedDuplicates parametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this);
+    if (parametrizedDuplicates != null) {
+      List<Match> duplicates = parametrizedDuplicates.getDuplicates();
+      return duplicates != null ? duplicates.size() : 0;
+    }
+    return 0;
   }
 
   public void doExtract() throws IncorrectOperationException {
@@ -903,7 +961,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiStatement exitStatementCopy = prepareMethodBody(newMethod, true);
 
     if (myExpression == null) {
-      if (myNeedChangeContext && isNeedToChangeCallContext()) {
+      if (isNeedToChangeCallContext()) {
         for (PsiElement element : myElements) {
           ChangeContextUtil.encodeContextInfo(element, false);
         }
@@ -927,12 +985,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
         }
         else if (myGenerateConditionalExit) {
-          if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
-            ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
-          }
-          else {
-            ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
-          }
+          ifStatement = generateConditionalExitStatement(varName);
         }
         else {
           ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return;", null);
@@ -943,7 +996,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       else if (myNotNullConditionalCheck) {
         String varName = myOutputVariable != null ? myOutputVariable.getName() : "x";
         varName = declareVariableAtMethodCallLocation(varName, myReturnType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)myReturnType).getBoxedType(myCodeFragmentMember) : myReturnType);
-        addToMethodCallLocation(myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null));
+        addToMethodCallLocation(generateNotNullConditionalStatement(varName));
+        declareVariableReusedAfterCall(myOutputVariable);
       }
       else if (myGenerateConditionalExit) {
         PsiIfStatement ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (a) b;", null);
@@ -1025,31 +1079,39 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (myNullness != null &&
         PsiUtil.resolveClassInType(newMethod.getReturnType()) != null &&
         PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)) {
-      final NullableNotNullManager notNullManager = NullableNotNullManager.getInstance(myProject);
-      AddNullableNotNullAnnotationFix annotationFix;
+      NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       switch (myNullness) {
         case NOT_NULL:
-          annotationFix = new AddNullableNotNullAnnotationFix(notNullManager.getDefaultNotNull(), newMethod);
+          updateAnnotations(newMethod, nullManager.getNullables(), nullManager.getDefaultNotNull(), nullManager.getNotNulls());
           break;
         case NULLABLE:
-          annotationFix = new AddNullableNotNullAnnotationFix(notNullManager.getDefaultNullable(), newMethod);
+          updateAnnotations(newMethod, nullManager.getNotNulls(), nullManager.getDefaultNullable(), nullManager.getNullables());
           break;
         default:
-          annotationFix = null;
-      }
-      if (annotationFix != null) {
-        annotationFix.invoke(myProject, myTargetClass.getContainingFile(), newMethod, newMethod);
       }
     }
 
     myExtractedMethod = addExtractedMethod(newMethod);
-    if (isNeedToChangeCallContext() && myNeedChangeContext) {
+    if (isNeedToChangeCallContext()) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
         final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
         RefactoringChangeUtil.qualifyReference(methodExpression, myExtractedMethod, PsiUtil.getEnclosingStaticElement(methodExpression, myTargetClass) != null ? myTargetClass : null);
       }
     }
+  }
+
+  @NotNull
+  private PsiIfStatement generateConditionalExitStatement(String varName) {
+    if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
+      return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
+    }
+    return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
+  }
+
+  @NotNull
+  private PsiStatement generateNotNullConditionalStatement(String varName) {
+    return myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null);
   }
 
   protected PsiExpression expressionToReplace(PsiExpression expression) {
@@ -1161,7 +1223,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   protected boolean isNeedToChangeCallContext() {
-    return true;
+    return myNeedChangeContext;
   }
 
   private void declareVariableAtMethodCallLocation(String name) {
@@ -1191,7 +1253,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     exc[0] = null;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length > 0) {
-      if (CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+      if (myStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
         method.accept(new JavaRecursiveElementVisitor() {
 
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -1247,6 +1309,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myDuplicates;
   }
 
+  public ParametrizedDuplicates getParametrizedDuplicates() {
+    return myParametrizedDuplicates;
+  }
+
   private static List<Match> filterChainedConstructorDuplicates(final List<Match> duplicates) {
     List<Match> result = new ArrayList<>();
     for(Match duplicate: duplicates) {
@@ -1271,7 +1337,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public PsiElement processMatch(Match match) throws IncorrectOperationException {
-    if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
+    if (PsiTreeUtil.isContextAncestor(myExtractedMethod.getContainingClass(), match.getMatchStart(), false) &&
+        RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       PsiUtil.setModifierProperty(myExtractedMethod, PsiModifier.STATIC, true);
     }
     final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression(), false);
@@ -1302,7 +1369,105 @@ public class ExtractMethodProcessor implements MatchProvider {
         methodCallExpression.getArgumentList().add(myElementFactory.createExpressionFromText(data.variable.getName(), methodCallExpression));
       }
     }
-    return match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
+    List<String> reusedVariables = findReusedVariables(match, myOutputVariable);
+    PsiElement replacedMatch = match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
+
+    PsiElement appendLocation = addNotNullConditionalCheck(match, replacedMatch);
+    declareReusedVariables(appendLocation, reusedVariables);
+    return replacedMatch;
+  }
+
+  @NotNull
+  private static List<String> findReusedVariables(@NotNull Match match, @Nullable PsiVariable outputVariable) {
+    Set<PsiLocalVariable> ignoreVariables = Collections.emptySet();
+    ReturnValue returnValue = match.getOutputVariableValue(outputVariable);
+    if (returnValue instanceof VariableReturnValue) {
+      PsiVariable returnedVariable = ((VariableReturnValue)returnValue).getVariable();
+      if (returnedVariable instanceof PsiLocalVariable) {
+        ignoreVariables = Collections.singleton((PsiLocalVariable)returnedVariable);
+      }
+    }
+    List<ReusedLocalVariable> reusedLocalVariables =
+      ReusedLocalVariablesFinder.findReusedLocalVariables(match.getMatchStart(), match.getMatchEnd(), ignoreVariables);
+    if (!reusedLocalVariables.isEmpty()) {
+      List<String> result = new ArrayList<>();
+      for (ReusedLocalVariable variable : reusedLocalVariables) {
+        if (!variable.reuseValue()) {
+          result.add(variable.getDeclarationText());
+        }
+      }
+      return result;
+    }
+
+    return Collections.emptyList();
+  }
+
+  private static void declareReusedVariables(@NotNull PsiElement appendLocation, @NotNull List<String> reusedVariables) {
+    if (reusedVariables.isEmpty()) {
+      return;
+    }
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(appendLocation.getProject());
+
+    for (String variable : reusedVariables) {
+      PsiStatement declaration = factory.createStatementFromText(variable, appendLocation);
+      appendLocation = appendLocation.getParent().addAfter(declaration, appendLocation);
+    }
+  }
+
+  private PsiElement addNotNullConditionalCheck(Match match, PsiElement replacedMatch) {
+    if ((myNotNullConditionalCheck || myGenerateConditionalExit) && myOutputVariable != null) {
+      ReturnValue returnValue = match.getOutputVariableValue(myOutputVariable);
+      if (returnValue instanceof VariableReturnValue) {
+        String varName = ((VariableReturnValue)returnValue).getVariable().getName();
+        LOG.assertTrue(varName != null, "returned variable name is null");
+        PsiStatement statement = PsiTreeUtil.getParentOfType(replacedMatch, PsiStatement.class, false);
+        if (statement != null) {
+          PsiStatement conditionalExit = myNotNullConditionalCheck ?
+                                         generateNotNullConditionalStatement(varName) : generateConditionalExitStatement(varName);
+          return statement.getParent().addAfter(conditionalExit, statement);
+        }
+      }
+    }
+    return replacedMatch;
+  }
+
+  @Nullable
+  protected PsiMethodCallExpression getMatchMethodCallExpression(PsiElement element) {
+    PsiMethodCallExpression methodCallExpression = null;
+    if (element instanceof PsiMethodCallExpression) {
+      methodCallExpression = (PsiMethodCallExpression)element;
+    }
+    else if (element instanceof PsiExpressionStatement) {
+      final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
+      if (expression instanceof PsiMethodCallExpression) {
+        methodCallExpression = (PsiMethodCallExpression)expression;
+      }
+      else if (expression instanceof PsiAssignmentExpression) {
+        final PsiExpression psiExpression = ((PsiAssignmentExpression)expression).getRExpression();
+        if (psiExpression instanceof PsiMethodCallExpression) {
+          methodCallExpression = (PsiMethodCallExpression)psiExpression;
+        }
+      }
+    }
+    else if (element instanceof PsiDeclarationStatement) {
+      final PsiElement[] declaredElements = ((PsiDeclarationStatement)element).getDeclaredElements();
+      for (PsiElement declaredElement : declaredElements) {
+        if (declaredElement instanceof PsiLocalVariable) {
+          final PsiExpression initializer = ((PsiLocalVariable)declaredElement).getInitializer();
+          if (initializer instanceof PsiMethodCallExpression) {
+            methodCallExpression = (PsiMethodCallExpression)initializer;
+            break;
+          }
+        }
+      }
+    }
+    else if (element instanceof PsiIfStatement) {
+      PsiExpression condition = ((PsiIfStatement)element).getCondition();
+      if (condition instanceof PsiMethodCallExpression) {
+        methodCallExpression = (PsiMethodCallExpression)condition;
+      }
+    }
+    return methodCallExpression;
   }
 
   protected void deleteExtracted() throws IncorrectOperationException {
@@ -1314,18 +1479,63 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected PsiElement addToMethodCallLocation(PsiStatement statement) throws IncorrectOperationException {
-    if (myEnclosingBlockStatement == null) {
-      PsiElement containingStatement = myElements[0] instanceof PsiComment ? myElements[0] : PsiTreeUtil.getParentOfType(myExpression != null ? myExpression : myElements[0], PsiStatement.class, false);
-      if (containingStatement == null) {
-        containingStatement = PsiTreeUtil.getParentOfType(myExpression != null ? myExpression : myElements[0], PsiComment.class, false);
-      }
+  protected PsiElement addToMethodCallLocation(PsiStatement newStatement) throws IncorrectOperationException {
+    if (myAddedToMethodCallLocation != null) {
+      PsiCodeBlock block = myAddedToMethodCallLocation.getCodeBlock();
+      return block.addBefore(newStatement, block.getRBrace());
+    }
 
-      return containingStatement.getParent().addBefore(statement, containingStatement);
+    PsiElement location;
+    PsiStatement oldStatement;
+    if (myEnclosingBlockStatement != null) {
+      location = oldStatement = myEnclosingBlockStatement;
     }
     else {
-      return myEnclosingBlockStatement.getParent().addBefore(statement, myEnclosingBlockStatement);
+      PsiElement element = myExpression != null ? myExpression : myElements[0];
+      PsiComment comment = PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
+
+      if (comment == null) {
+        location = oldStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
+      }
+      else {
+        location = comment;
+        oldStatement = StreamEx.of(myElements)
+          .filter(e -> !(e instanceof PsiComment) && !(e instanceof PsiWhiteSpace))
+          .map(e -> PsiTreeUtil.getParentOfType(e, PsiStatement.class, false))
+          .nonNull()
+          .findFirst()
+          .orElse(null);
+      }
     }
+
+    LOG.assertTrue(location != null, "Can't find statement/comment at the extracted location");
+
+    PsiElement parent = location.getParent();
+    if (isBranchOrBody(parent, oldStatement)) {
+      // The parent statement will be inconsistent until deleting the extracted part:
+      // the block statement is being added just before a then/else branch or loop body,
+      // but the original then/else branch or loop body will be deleted in the end so it's fine.
+      // Example: "if(..) oldStatement" -> "if(..) { newStatement } oldStatement" -> "if(..) { newStatement }"
+      myAddedToMethodCallLocation = (PsiBlockStatement)myElementFactory.createStatementFromText("{}", oldStatement);
+      myAddedToMethodCallLocation = (PsiBlockStatement)parent.addBefore(myAddedToMethodCallLocation, location);
+      PsiCodeBlock block = myAddedToMethodCallLocation.getCodeBlock();
+      return block.addBefore(newStatement, block.getRBrace());
+    }
+    return parent.addBefore(newStatement, location);
+  }
+
+  @Contract("_,null -> false; null,_ -> false")
+  private static boolean isBranchOrBody(PsiElement parent, PsiElement element) {
+    if (element == null) {
+      return false;
+    }
+    if (parent instanceof PsiIfStatement) {
+      return (((PsiIfStatement)parent).getThenBranch() == element || ((PsiIfStatement)parent).getElseBranch() == element);
+    }
+    if (parent instanceof PsiLoopStatement) {
+      return ((PsiLoopStatement)parent).getBody() == element;
+    }
+    return false;
   }
 
   private void renameInputVariables() throws IncorrectOperationException {
@@ -1385,7 +1595,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     PsiCodeBlock body = newMethod.getBody();
     LOG.assertTrue(body != null);
 
-    boolean isFinal = CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS;
+    boolean isFinal = myStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS;
     PsiParameterList list = newMethod.getParameterList();
     for (VariableData data : myVariableDatum) {
       if (data.passAsParameter) {
@@ -1451,73 +1661,108 @@ public class ExtractMethodProcessor implements MatchProvider {
     final List<String> notNullAnnotations = nullabilityManager.getNotNulls();
     final List<String> nullableAnnotations = nullabilityManager.getNullables();
 
-    if (AnnotationUtil.isAnnotated(variable, nullableAnnotations) ||
-        AnnotationUtil.isAnnotated(variable, notNullAnnotations) ||
+    if (AnnotationUtil.isAnnotated(variable, nullableAnnotations, CHECK_TYPE) ||
+        AnnotationUtil.isAnnotated(variable, notNullAnnotations, CHECK_TYPE) ||
         PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)) {
-
       final Boolean isNotNull = isNotNullAt(variable, myElements[0]);
       if (isNotNull != null) {
         final List<String> toKeep = isNotNull ? notNullAnnotations : nullableAnnotations;
-        final String[] toRemove = (!isNotNull ? notNullAnnotations : nullableAnnotations).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
-
-        AddAnnotationPsiFix.removePhysicalAnnotations(parm, toRemove);
-        if (!AnnotationUtil.isAnnotated(parm, toKeep)) {
-          final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
-          final PsiAnnotation added =
-            AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, parm.getModifierList());
-          JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(added);
-        }
+        final List<String> toRemove = isNotNull ? nullableAnnotations : notNullAnnotations;
+        final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
+        updateAnnotations(parm, toRemove, toAdd, toKeep);
       }
     }
   }
 
-  @Nullable
-  private static PsiElement getSurroundingMethodOrLambdaBody(@NotNull PsiVariable variable) {
-    if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
-      final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiLambdaExpression.class);
-      if (methodOrLambda instanceof PsiMethod) {
-        return ((PsiMethod)methodOrLambda).getBody();
-      }
-      else if (methodOrLambda instanceof PsiLambdaExpression) {
-        return ((PsiLambdaExpression)methodOrLambda).getBody();
-      }
+  private void updateAnnotations(PsiModifierListOwner owner, List<String> toRemove, String toAdd, List<String> toKeep) {
+    AddAnnotationPsiFix.removePhysicalAnnotations(owner, toRemove.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+    PsiModifierList modifierList = owner.getModifierList();
+    if (modifierList != null && !AnnotationUtil.isAnnotated(owner, toKeep, CHECK_TYPE)) {
+      PsiAnnotation annotation = AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, modifierList);
+      JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(annotation);
     }
-    return null;
   }
 
   @Nullable
   private static Boolean isNotNullAt(@NotNull PsiVariable variable, PsiElement startElement) {
-    final PsiElement methodOrLambdaBody = getSurroundingMethodOrLambdaBody(variable);
+    String variableName = variable.getName();
+    if (variableName == null) return null;
+
+    PsiElement methodOrLambdaBody = null;
+    if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
+      final PsiParameterListOwner methodOrLambda = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiLambdaExpression.class);
+      if (methodOrLambda != null) {
+        methodOrLambdaBody = methodOrLambda.getBody();
+      }
+    }
     if (methodOrLambdaBody instanceof PsiCodeBlock) {
-      final Set<PsiReferenceExpression> firstReadUsages = findFirstReadUsagesAt(variable, startElement);
-      return firstReadUsages != null &&
-             firstReadUsages.stream()
-               .map(firstReadUsage -> DfaUtil.checkNullness(variable, firstReadUsage, methodOrLambdaBody))
-               .allMatch(nullness -> nullness == Nullness.NOT_NULL);
+      PsiElement topmostLambdaOrAnonymousClass = null;
+      for (PsiElement element = startElement; element != null && element != methodOrLambdaBody; element = element.getParent()) {
+        if (element instanceof PsiLambdaExpression || element instanceof PsiAnonymousClass) {
+          topmostLambdaOrAnonymousClass = element;
+        }
+      }
+      if (topmostLambdaOrAnonymousClass != null) {
+        startElement = topmostLambdaOrAnonymousClass;
+      }
+
+      Project project = methodOrLambdaBody.getProject();
+      PsiFile file = methodOrLambdaBody.getContainingFile();
+      final PsiFile copy = PsiFileFactory.getInstance(project)
+        .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
+
+      PsiCodeBlock bodyCopy = findCopy(copy, methodOrLambdaBody, PsiCodeBlock.class);
+      PsiVariable variableCopy = findCopy(copy, variable, PsiVariable.class);
+      if (startElement instanceof PsiExpression) {
+        startElement = PsiTreeUtil.getParentOfType(startElement, PsiStatement.class);
+      }
+      if (startElement instanceof PsiStatement) {
+        PsiStatement startStatementCopy = findCopy(copy, startElement, PsiStatement.class);
+
+        try {
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+          startStatementCopy = wrapWithBlockStatementIfNeeded(startStatementCopy, factory);
+          String dummyName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("_Dummy_", startElement.getParent(), true);
+          PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)factory.createStatementFromText(
+            CommonClassNames.JAVA_LANG_OBJECT + " " + dummyName + " = " + variableName + ";", startStatementCopy);
+
+          PsiElement parent = startStatementCopy.getParent();
+          declarationStatement = (PsiDeclarationStatement)parent.addBefore(declarationStatement, startStatementCopy);
+          PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+          PsiExpression initializer = ((PsiVariable)declaredElements[0]).getInitializer();
+
+          Nullness nullness = DfaUtil.checkNullness(variableCopy, initializer, bodyCopy);
+          return nullness == Nullness.NOT_NULL;
+        }
+        catch (IncorrectOperationException ignore) {
+          return null;
+        }
+      }
     }
     return null;
   }
 
-  @Nullable
-  private static Set<PsiReferenceExpression> findFirstReadUsagesAt(@NotNull PsiVariable variable, PsiElement startElement) {
-    final PsiCodeBlock closestCodeBlock = PsiTreeUtil.getParentOfType(startElement, PsiCodeBlock.class);
-    if (closestCodeBlock != null) {
-      try {
-        final ControlFlow controlFlow = ControlFlowFactory.getInstance(closestCodeBlock.getProject())
-          .getControlFlow(closestCodeBlock, AllVariablesControlFlowPolicy.getInstance(), false, false);
+  private static <T extends PsiElement> T findCopy(@NotNull PsiFile copy, @NotNull PsiElement element, @NotNull Class<T> clazz) {
+    TextRange range = element.getTextRange();
+    return CodeInsightUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), clazz);
+  }
 
-        final int startOffset = controlFlow.getStartOffset(startElement);
-        final List<PsiReferenceExpression> readBeforeWrite = ControlFlowUtil.getReadBeforeWrite(controlFlow, startOffset);
-        final Set<PsiReferenceExpression> result = StreamEx.of(readBeforeWrite)
-          .filter(referenceExpression -> referenceExpression.isReferenceTo(variable))
-          .toSet();
-        return !result.isEmpty() ? result : null;
-      }
-      catch (AnalysisCanceledException e) {
-        return null;
+  private static PsiStatement wrapWithBlockStatementIfNeeded(@NotNull PsiStatement statement, @NotNull PsiElementFactory factory) {
+    PsiElement parent = statement.getParent();
+    if (parent instanceof PsiLoopStatement && ((PsiLoopStatement)parent).getBody() == statement ||
+        parent instanceof PsiIfStatement &&
+        (((PsiIfStatement)parent).getThenBranch() == statement || ((PsiIfStatement)parent).getElseBranch() == statement)) {
+      PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", statement);
+      blockStatement.getCodeBlock().add(statement);
+      blockStatement = (PsiBlockStatement)statement.replace(blockStatement);
+      return blockStatement.getCodeBlock().getStatements()[0];
+    }
+    if (parent instanceof PsiForStatement) {
+      if (((PsiForStatement)parent).getInitialization() == statement || ((PsiForStatement)parent).getUpdate() == statement) {
+        return wrapWithBlockStatementIfNeeded((PsiForStatement)parent, factory);
       }
     }
-    return null;
+    return statement;
   }
 
   @NotNull
@@ -1532,7 +1777,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     else {
       skipInstanceQualifier = instanceQualifier == null || instanceQualifier instanceof PsiThisExpression;
       if (skipInstanceQualifier) {
-        if (isNeedToChangeCallContext() && myNeedChangeContext) {
+        if (isNeedToChangeCallContext()) {
           boolean needsThisQualifier = false;
           PsiElement parent = myCodeFragmentMember;
           while (!myTargetClass.equals(parent)) {
@@ -1583,7 +1828,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     return (PsiMethodCallExpression)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(expr);
   }
 
-  private boolean chooseTargetClass(PsiElement codeFragment, final Pass<ExtractMethodProcessor> extractPass) throws PrepareFailedException {
+  private boolean chooseTargetClass(PsiElement codeFragment,
+                                    final Pass<ExtractMethodProcessor> extractPass,
+                                    @Nullable PsiClass defaultTargetClass) throws PrepareFailedException {
     final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment, myElements, myOutputVariables);
 
     myNeedChangeContext = false;
@@ -1627,8 +1874,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       classes.put(myTargetClass, null);
       PsiElement target = myTargetClass.getParent();
       PsiElement targetMember = myTargetClass;
-      while (true) {
-        if (target instanceof PsiFile) break;
+      while (!(target instanceof PsiFile)) {
         if (target instanceof PsiClass) {
           boolean success = true;
           final List<PsiVariable> array = new ArrayList<>();
@@ -1650,7 +1896,13 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       if (classes.size() > 1) {
-        final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
+        if (defaultTargetClass != null) {
+          return processor.execute(defaultTargetClass);
+        }
+        final PsiClass[] psiClasses = classes.keySet().toArray(PsiClass.EMPTY_ARRAY);
+        if (myEditor == null) {
+          return processor.execute(psiClasses[0]);
+        }
         final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
         NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor, preselection)
           .showInBestPositionFor(myEditor);
@@ -1661,19 +1913,30 @@ public class ExtractMethodProcessor implements MatchProvider {
     return applyChosenClassAndExtract(inputVariables, extractPass);
   }
 
-  private void declareNecessaryVariablesInsideBody(PsiCodeBlock body) throws IncorrectOperationException {
+  @NotNull
+  protected Set<PsiVariable> getEffectivelyLocalVariables() {
+    Set<PsiVariable> effectivelyLocal = new LinkedHashSet<>();
     List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariablesInBody(ControlFlowUtil.findCodeFragment(myElements[0]), myOutputVariables);
     for (PsiVariable variable : usedVariables) {
       boolean toDeclare = !isDeclaredInside(variable) && myInputVariables.toDeclareInsideBody(variable);
       if (toDeclare) {
-        String name = variable.getName();
-        PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, variable.getType(), null);
-        body.add(statement);
+        effectivelyLocal.add(variable);
       }
     }
 
     if (myArtificialOutputVariable instanceof PsiField && !myIsChainedConstructor) {
-      body.add(myElementFactory.createVariableDeclarationStatement(myArtificialOutputVariable.getName(), myArtificialOutputVariable.getType(), null));
+      effectivelyLocal.add(myArtificialOutputVariable);
+    }
+    return effectivelyLocal;
+  }
+
+  private void declareNecessaryVariablesInsideBody(PsiCodeBlock body) throws IncorrectOperationException {
+    Set<PsiVariable> effectivelyLocal = getEffectivelyLocalVariables();
+    for (PsiVariable variable : effectivelyLocal) {
+      String name = variable.getName();
+      LOG.assertTrue(name != null, "variable name is null");
+      PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, variable.getType(), null);
+      body.add(statement);
     }
   }
 
@@ -1801,10 +2064,23 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
+  private void declareVariableReusedAfterCall(PsiVariable variable) {
+    if (variable != null &&
+        variable.getName() != null &&
+        isDeclaredInside(variable) &&
+        myControlFlowWrapper.getUsedVariables().contains(variable) &&
+        !myControlFlowWrapper.needVariableValueAfterEnd(variable)) {
+
+      PsiDeclarationStatement declaration =
+        myElementFactory.createVariableDeclarationStatement(variable.getName(), variable.getType(), null);
+      addToMethodCallLocation(declaration);
+    }
+  }
+
   private void showMultipleExitPointsMessage() {
     if (myShowErrorDialogs) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-      PsiStatement[] exitStatementsArray = myExitStatements.toArray(new PsiStatement[myExitStatements.size()]);
+      PsiStatement[] exitStatementsArray = myExitStatements.toArray(PsiStatement.EMPTY_ARRAY);
       EditorColorsManager manager = EditorColorsManager.getInstance();
       TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
@@ -1867,37 +2143,41 @@ public class ExtractMethodProcessor implements MatchProvider {
     myMethodName = methodName;
   }
 
+  public PsiElement getAnchor() {
+    return myAnchor;
+  }
+
   public Boolean hasDuplicates() {
     List<Match> duplicates = getDuplicates();
     if (duplicates != null && !duplicates.isEmpty()) {
       return true;
     }
 
-    if (myExtractedMethod != null) {
-      final ExtractMethodSignatureSuggester suggester = new ExtractMethodSignatureSuggester(myProject, myExtractedMethod, myMethodCall, myVariableDatum);
-      duplicates = suggester.getDuplicates(myExtractedMethod, myMethodCall, myInputVariables.getFolding());
-      if (duplicates != null && !duplicates.isEmpty()) {
-        myDuplicates      = duplicates;
-        myExtractedMethod = suggester.getExtractedMethod();
-        myMethodCall      = suggester.getMethodCall();
-        myVariableDatum   = suggester.getVariableData();
+    if (initParametrizedDuplicates(true)) return null;
+    return false;
+  }
 
-        final List<PsiVariable> outputVariables = new ArrayList<>();
-        for (PsiReturnStatement statement : PsiUtil.findReturnStatements(myExtractedMethod)) {
-          final PsiExpression returnValue = statement.getReturnValue();
-          if (returnValue instanceof PsiReferenceExpression) {
-            final PsiElement resolve = ((PsiReferenceExpression)returnValue).resolve();
-            if (resolve instanceof PsiLocalVariable) {
-              outputVariables.add((PsiVariable)resolve);
-            }
-          }
+  public boolean initParametrizedDuplicates(boolean showDialog) {
+    if (myExtractedMethod != null && myParametrizedDuplicates != null) {
+      if (!showDialog ||
+          ApplicationManager.getApplication().isUnitTestMode() ||
+          new SignatureSuggesterPreviewDialog(myExtractedMethod, myParametrizedDuplicates.getParametrizedMethod(),
+                                              myMethodCall, myParametrizedDuplicates.getParametrizedCall(),
+                                              myParametrizedDuplicates.getSize()).showAndGet()) {
+
+        myDuplicates = myParametrizedDuplicates.getDuplicates();
+        Runnable replaceMethod = () -> {
+          myExtractedMethod = myParametrizedDuplicates.replaceMethod(myExtractedMethod);
+          myMethodCall = myParametrizedDuplicates.replaceCall(myMethodCall);
+        };
+        if (myExtractedMethod.isPhysical()) {
+          WriteCommandAction.runWriteCommandAction(myProject, replaceMethod);
         }
-
-        if (outputVariables.size() == 1) {
-          myOutputVariable = outputVariables.get(0);
+        else {
+          replaceMethod.run();
         }
-
-        return null;
+        myVariableDatum = myParametrizedDuplicates.getVariableDatum();
+        return true;
       }
     }
     return false;
@@ -1931,6 +2211,31 @@ public class ExtractMethodProcessor implements MatchProvider {
     return null;
   }
 
+  @NotNull
+  public UniqueNameGenerator getParameterNameGenerator(PsiElement scopeElement) {
+    UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
+    for (VariableData data : myInputVariables.getInputVariables()) {
+      if (data.variable != null) {
+        String name = data.variable.getName();
+        if (name != null) uniqueNameGenerator.addExistingName(name);
+      }
+    }
+    for (PsiVariable variable : myOutputVariables) {
+      String name = variable.getName();
+      if (name != null) uniqueNameGenerator.addExistingName(name);
+    }
+    PsiElement superParent = PsiTreeUtil.getParentOfType(scopeElement, PsiMember.class, PsiLambdaExpression.class);
+    if (superParent != null) {
+      SyntaxTraverser.psiTraverser().withRoot(superParent)
+        .filter(element -> element instanceof PsiVariable)
+        .forEach(element -> {
+          String name = ((PsiVariable)element).getName();
+          if (name != null) uniqueNameGenerator.addExistingName(name);
+        });
+    }
+    return uniqueNameGenerator;
+  }
+
   @Override
   public String getReplaceDuplicatesTitle(int idx, int size) {
     return RefactoringBundle.message("process.duplicates.title", idx, size);
@@ -1958,6 +2263,15 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public PsiElement[] getElements() {
     return myElements;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  public String getMethodName() {
+    return myMethodName;
   }
 
   public PsiVariable[] getOutputVariables() {

@@ -1,14 +1,12 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>custom</title>
   <g>
-    <g>
-      <polygon points="6 0 2 4 6 4 6 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-      <path d="M10.19531,10.38086A2.98249,2.98249,0,0,1,13,5.18408V0H7V5H2V15H7.06543A5.65969,5.65969,0,0,1,10.19531,10.38086Z" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-    </g>
+    <polygon points="7 1 3 5 7 5 7 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+    <path d="M10.19531,10.38086A2.98249,2.98249,0,0,1,13,5.18408V.99987H8v5H3V15H7.06543A5.65972,5.65972,0,0,1,10.19531,10.38086Z" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
     <g>
       <path d="M12,6a2,2,0,1,0,2,2A2.0001,2.0001,0,0,0,12,6Zm0,3a1,1,0,1,1,1-1A1,1,0,0,1,12,9Z" fill="#9aa7b0"/>
       <circle cx="12" cy="8" r="1" fill="#e6e7e8"/>
-      <path d="M12,11c-2.20923,0-4,2.03571-4,5h8C16,13.07143,14.20923,11,12,11Z" fill="#40b6e0"/>
+      <path d="M12,11c-2.20923,0-4,2.03571-4,5h8C16,13.07143,14.20923,11,12,11Z" fill="#40b6e0" opacity="0.9"/>
     </g>
   </g>
 </svg>

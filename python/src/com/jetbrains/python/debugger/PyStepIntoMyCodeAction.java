@@ -15,9 +15,6 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -28,7 +25,6 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
-import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -49,7 +45,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
 
       @Override
       public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
-        return super.isEnabled(project, event) && isPythonConfigurationSelected(project);
+        return super.isEnabled(project, event) && PyDebugSupportUtils.isCurrentPythonDebugProcess(project);
       }
     };
   }
@@ -60,21 +56,9 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
     return myStepIntoMyCodeHandler;
   }
 
-  protected boolean isPythonConfigurationSelected(Project project) {
-    if (project != null) {
-      RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
-      if (settings != null) {
-        RunConfiguration runConfiguration = settings.getConfiguration();
-        if (runConfiguration instanceof AbstractPythonRunConfiguration) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   @Override
   protected boolean isHidden(AnActionEvent event) {
-    return !isPythonConfigurationSelected(event.getData(CommonDataKeys.PROJECT));
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    return project == null || !PyDebugSupportUtils.isCurrentPythonDebugProcess(project);
   }
 }

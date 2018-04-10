@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,7 +10,6 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -34,13 +19,13 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.jetbrains.idea.svn.api.Url;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
@@ -68,10 +53,10 @@ public class SelectBranchPopup {
                           @Nullable String title,
                           @Nullable Component component) {
     SvnFileUrlMapping urlMapping = SvnVcs.getInstance(project).getSvnFileUrlMapping();
-    SVNURL svnurl = urlMapping.getUrlForFile(virtualToIoFile(file));
+    Url svnurl = urlMapping.getUrlForFile(virtualToIoFile(file));
 
     if (svnurl != null) {
-      RootUrlInfo rootUrlInfo = urlMapping.getWcRootForUrl(svnurl.toString());
+      RootUrlInfo rootUrlInfo = urlMapping.getWcRootForUrl(svnurl);
 
       if (rootUrlInfo != null) {
         // not vcs root but wc root is ok
@@ -112,7 +97,7 @@ public class SelectBranchPopup {
 
   @NotNull
   private static String getBranchName(@NotNull SvnBranchItem branch) {
-    return SVNPathUtil.tail(branch.getUrl());
+    return Url.tail(branch.getUrl());
   }
 
   private static class BranchBasesPopupStep extends BaseListPopupStep<String> {
@@ -160,11 +145,6 @@ public class SelectBranchPopup {
     }
 
     @Override
-    public boolean hasSubstep(String selectedValue) {
-      return false;
-    }
-
-    @Override
     public PopupStep onChosen(String selectedValue, boolean finalChoice) {
       if (CONFIGURE_MESSAGE.equals(selectedValue)) {
         return doFinalStep(() -> BranchConfigurationDialog.configureBranches(myProject, myVcsRoot));
@@ -202,26 +182,24 @@ public class SelectBranchPopup {
         return;
       }
 
-      Object[] items = new Object[branches.size() + 1];
-      System.arraycopy(branches.toArray(), 0, items, 0, branches.size());
-      items[items.length - 1] = REFRESH_MESSAGE;
-
-      JBList<Object> branchList = new JBList<>(items);
-      branchList.setCellRenderer(new BranchRenderer());
-      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(branchList)
-        .setTitle(SVNPathUtil.tail(selectedValue))
+      List<Object> items = new ArrayList<>();
+      branches.stream().collect(Collectors.toCollection(() -> items));
+      items.add(REFRESH_MESSAGE);
+      final JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(items)
+        .setTitle(Url.tail(selectedValue))
+        .setRenderer(new BranchRenderer())
         .setResizable(true)
-        .setItemChoosenCallback(() -> {
-          if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
+        .setItemChosenCallback((v) -> {
+          if (REFRESH_MESSAGE.equals(v)) {
             loadBranches(selectedValue, () -> showBranchPopup(selectedValue));
             return;
           }
-          SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();
+          SvnBranchItem item = (SvnBranchItem)v;
           if (item != null) {
             myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
           }
         })
-        .setFilteringEnabled(item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
+        .setNamerForFiltering(item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
         .createPopup();
       showPopupAt(popup);
     }

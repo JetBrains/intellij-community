@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.base.Preconditions;
@@ -295,30 +281,6 @@ public class PyPsiUtils {
   @Nullable
   public static PsiElement getParentRightBefore(@NotNull PsiElement element, @NotNull final PsiElement superParent) {
     return PsiTreeUtil.findFirstParent(element, false, element1 -> element1.getParent() == superParent);
-  }
-
-  public static List<PsiElement> collectElements(final PsiElement statement1, final PsiElement statement2) {
-    // Process ASTNodes here to handle all the nodes
-    final ASTNode node1 = statement1.getNode();
-    final ASTNode node2 = statement2.getNode();
-    final ASTNode parentNode = node1.getTreeParent();
-
-    boolean insideRange = false;
-    final List<PsiElement> result = new ArrayList<>();
-    for (ASTNode node : parentNode.getChildren(null)) {
-      // start
-      if (node1 == node) {
-        insideRange = true;
-      }
-      if (insideRange) {
-        result.add(node.getPsi());
-      }
-      // stop
-      if (node == node2) {
-        break;
-      }
-    }
-    return result;
   }
 
   public static int getElementIndentation(final PsiElement element) {

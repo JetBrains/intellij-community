@@ -23,8 +23,8 @@ import com.intellij.psi.PsiElement;
 public class NewSubClassData {
   public static final NewSubClassData ABORT_REFACTORING = new NewSubClassData(null, null);
 
-  private Object myContext;
-  private String myNewClassName;
+  private final Object myContext;
+  private final String myNewClassName;
 
   public NewSubClassData(PsiElement context, String newClassName) {
     myContext = context;

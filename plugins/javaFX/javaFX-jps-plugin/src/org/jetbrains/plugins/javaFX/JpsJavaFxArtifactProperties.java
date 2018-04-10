@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX;
 
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     myState.setNativeBundle(state.myNativeBundle);
     myState.setCustomManifestAttributes(state.myCustomManifestAttributes);
     myState.setIcons(state.myIcons);
+    myState.setMsgOutputLevel(state.myMsgOutputLevel);
   }
 
   @NotNull
@@ -78,6 +80,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     public JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
     private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<>();
     private JavaFxApplicationIcons myIcons = new JavaFxApplicationIcons();
+    private JavaFxPackagerConstants.MsgOutputLevel myMsgOutputLevel = JavaFxPackagerConstants.MsgOutputLevel.Default;
 
     public String getTitle() {
       return myTitle;
@@ -253,6 +256,14 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
 
     public void setCustomManifestAttributes(List<JavaFxManifestAttribute> customManifestAttributes) {
       myCustomManifestAttributes = customManifestAttributes;
+    }
+
+    public JavaFxPackagerConstants.MsgOutputLevel getMsgOutputLevel() {
+      return myMsgOutputLevel;
+    }
+
+    public void setMsgOutputLevel(JavaFxPackagerConstants.MsgOutputLevel msgOutputLevel) {
+      myMsgOutputLevel = msgOutputLevel;
     }
   }
 }

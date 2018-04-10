@@ -44,7 +44,7 @@
   <control name="dt" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="dt, dd"/>
   
   <control name="EM" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
-  <control name="embed" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="true" />
+  <control name="embed" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true" />
   <control name="FieldSet" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="font" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="form" type="HtmlForm" startTag="required" endTag="required" emptyAllowed="false">

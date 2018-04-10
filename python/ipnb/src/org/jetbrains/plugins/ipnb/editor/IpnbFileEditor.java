@@ -102,9 +102,12 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     new IpnbAddCellAboveAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift EQUALS")),
                                                                myIpnbFilePanel);
     new IpnbMarkdownCellAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift M")),
-                                                             myIpnbFilePanel);
-    new IpnbCodeCellAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift Y")),
                                                                myIpnbFilePanel);
+    new IpnbCodeCellAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift Y")),
+                                                           myIpnbFilePanel);
+
+    new IpnbMoveCellDownAction(this);
+    new IpnbMoveCellUpAction(this);
   }
 
   private void registerHeadingActions() {

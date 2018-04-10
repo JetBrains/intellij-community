@@ -25,6 +25,7 @@ import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,6 +43,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -98,6 +100,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     return LanguageQuoteHandling.INSTANCE.forLanguage(baseLanguage);
   }
 
+  @NotNull
   private static FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
     FileType fileType = file.getFileType();
     Language language = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
@@ -161,104 +164,105 @@ public class TypedHandler extends TypedActionHandlerBase {
 
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     final Document originalDocument = originalEditor.getDocument();
-    originalEditor.getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        if (psiDocumentManager.isDocumentBlockedByPsi(originalDocument)) {
-          psiDocumentManager.doPostponedOperationsAndUnblockDocument(originalDocument); // to clean up after previous caret processing
-        }
+    originalEditor.getCaretModel().runForEachCaret(caret -> {
+      if (psiDocumentManager.isDocumentBlockedByPsi(originalDocument)) {
+        psiDocumentManager.doPostponedOperationsAndUnblockDocument(originalDocument); // to clean up after previous caret processing
+      }
 
-        Editor editor = injectedEditorIfCharTypedIsSignificant(charTyped, originalEditor, originalFile);
-        PsiFile file = editor == originalEditor ? originalFile : psiDocumentManager.getPsiFile(editor.getDocument());
+      Editor editor = injectedEditorIfCharTypedIsSignificant(charTyped, originalEditor, originalFile);
+      PsiFile file = editor == originalEditor ? originalFile : psiDocumentManager.getPsiFile(editor.getDocument());
 
 
-        final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
+      final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
 
-        if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
-          boolean handled = false;
-          for (TypedHandlerDelegate delegate : delegates) {
-            final TypedHandlerDelegate.Result result = delegate.checkAutoPopup(charTyped, project, editor, file);
-            handled = result == TypedHandlerDelegate.Result.STOP;
-            if (result != TypedHandlerDelegate.Result.CONTINUE) {
-              break;
-            }
-          }
-
-          if (!handled) {
-            autoPopupCompletion(editor, charTyped, project, file);
-            autoPopupParameterInfo(editor, charTyped, project, file);
+      if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
+        boolean handled = false;
+        for (TypedHandlerDelegate delegate : delegates) {
+          final TypedHandlerDelegate.Result result = delegate.checkAutoPopup(charTyped, project, editor, file);
+          handled = result == TypedHandlerDelegate.Result.STOP;
+          if (result != TypedHandlerDelegate.Result.CONTINUE) {
+            break;
           }
         }
 
-        if (!editor.isInsertMode()) {
-          type(originalEditor, charTyped);
+        if (!handled) {
+          autoPopupCompletion(editor, charTyped, project, file);
+          autoPopupParameterInfo(editor, charTyped, project, file);
+        }
+      }
+
+      if (!editor.isInsertMode()) {
+        type(originalEditor, charTyped);
+        return;
+      }
+
+      for (TypedHandlerDelegate delegate : delegates) {
+        final TypedHandlerDelegate.Result result = delegate.beforeSelectionRemoved(charTyped, project, editor, file);
+        if (result == TypedHandlerDelegate.Result.STOP) {
           return;
         }
+        if (result == TypedHandlerDelegate.Result.DEFAULT) {
+          break;
+        }
+      }
 
-        for (TypedHandlerDelegate delegate : delegates) {
-          final TypedHandlerDelegate.Result result = delegate.beforeSelectionRemoved(charTyped, project, editor, file);
-          if (result == TypedHandlerDelegate.Result.STOP) {
-            return;
-          }
-          if (result == TypedHandlerDelegate.Result.DEFAULT) {
-            break;
-          }
-        }
+      EditorModificationUtil.deleteSelectedText(editor);
 
-        EditorModificationUtil.deleteSelectedText(editor);
+      FileType fileType = getFileType(file, editor);
 
-        FileType fileType = getFileType(file, editor);
+      for (TypedHandlerDelegate delegate : delegates) {
+        final TypedHandlerDelegate.Result result = delegate.beforeCharTyped(charTyped, project, editor, file, fileType);
+        if (result == TypedHandlerDelegate.Result.STOP) {
+          return;
+        }
+        if (result == TypedHandlerDelegate.Result.DEFAULT) {
+          break;
+        }
+      }
 
-        for (TypedHandlerDelegate delegate : delegates) {
-          final TypedHandlerDelegate.Result result = delegate.beforeCharTyped(charTyped, project, editor, file, fileType);
-          if (result == TypedHandlerDelegate.Result.STOP) {
-            return;
-          }
-          if (result == TypedHandlerDelegate.Result.DEFAULT) {
-            break;
-          }
+      if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
+        if (FileTypes.PLAIN_TEXT != fileType) {
+          if (handleRParen(editor, fileType, charTyped)) return;
         }
+      }
+      else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped/* || '/' == charTyped*/) {
+        if (handleQuote(editor, charTyped, file)) return;
+      }
 
-        if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
-          if (FileTypes.PLAIN_TEXT != fileType) {
-            if (handleRParen(editor, fileType, charTyped)) return;
-          }
-        }
-        else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped/* || '/' == charTyped*/) {
-          if (handleQuote(editor, charTyped, file)) return;
-        }
+      long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
+      type(originalEditor, charTyped);
+      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modificationStampBeforeTyping);
+      
+      if (editor.isDisposed()) { // can be that injected editor disappear
+        return;
+      }
 
-        long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
-        type(originalEditor, charTyped);
-        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modificationStampBeforeTyping);
+      if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
+          CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
+          fileType != FileTypes.PLAIN_TEXT) {
+        handleAfterLParen(editor, fileType, charTyped);
+      }
+      else if ('}' == charTyped) {
+        indentClosingBrace(project, editor);
+      }
+      else if (')' == charTyped) {
+        indentClosingParenth(project, editor);
+      }
 
-        if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
-            CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-            fileType != FileTypes.PLAIN_TEXT) {
-          handleAfterLParen(editor, fileType, charTyped);
+      for (TypedHandlerDelegate delegate : delegates) {
+        final TypedHandlerDelegate.Result result = delegate.charTyped(charTyped, project, editor, file);
+        if (result == TypedHandlerDelegate.Result.STOP) {
+          return;
         }
-        else if ('}' == charTyped) {
-          indentClosingBrace(project, editor);
+        if (result == TypedHandlerDelegate.Result.DEFAULT) {
+          break;
         }
-        else if (')' == charTyped) {
-          indentClosingParenth(project, editor);
-        }
-
-        for (TypedHandlerDelegate delegate : delegates) {
-          final TypedHandlerDelegate.Result result = delegate.charTyped(charTyped, project, editor, file);
-          if (result == TypedHandlerDelegate.Result.STOP) {
-            return;
-          }
-          if (result == TypedHandlerDelegate.Result.DEFAULT) {
-            break;
-          }
-        }
-        if ('{' == charTyped) {
-          indentOpenedBrace(project, editor);
-        }
-        else if ('(' == charTyped) {
-          indentOpenedParenth(project, editor);
-        }
+      }
+      if ('{' == charTyped) {
+        indentOpenedBrace(project, editor);
+      }
+      else if ('(' == charTyped) {
+        indentOpenedParenth(project, editor);
       }
     });
   }
@@ -291,8 +295,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     if (offset >= 0) {
       final PsiElement element = file.findElementAt(offset);
       if (element != null) {
-        final List<CompletionContributor> list = CompletionContributor.forLanguage(element.getLanguage());
-        for (CompletionContributor contributor : list) {
+        for (CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(element.getLanguage(), file.getProject())) {
           if (contributor.invokeAutoPopup(element, charTyped)) {
             LOG.debug(contributor + " requested completion autopopup when typing '" + charTyped + "'");
             return true;
@@ -338,7 +341,8 @@ public class TypedHandler extends TypedActionHandlerBase {
     // even for uncommitted document try to retrieve injected fragment that has been there recently
     // we are assuming here that when user is (even furiously) typing, injected language would not change
     // and thus we can use its lexer to insert closing braces etc
-    for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(oldFile)) {
+    List<DocumentWindow> injected = InjectedLanguageManager.getInstance(oldFile.getProject()).getCachedInjectedDocumentsInRange(oldFile, ProperTextRange.create(offset, offset));
+    for (DocumentWindow documentWindow : injected) {
       if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
         PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
         if (injectedFile != null) {

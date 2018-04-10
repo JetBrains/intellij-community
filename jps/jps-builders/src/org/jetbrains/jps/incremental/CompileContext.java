@@ -27,7 +27,6 @@ import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 7/8/12
  */
 public interface CompileContext extends UserDataHolder, MessageHandler {
   ProjectDescriptor getProjectDescriptor();

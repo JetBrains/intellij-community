@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -31,12 +32,12 @@ import java.util.List;
  */
 public class CustomFileTypeSelectWordHandler extends BraceMatcherBasedSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e.getContainingFile().getFileType() instanceof CustomSyntaxTableFileType;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> superResult = super.select(e, editorText, cursorOffset, editor);
 
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(cursorOffset);

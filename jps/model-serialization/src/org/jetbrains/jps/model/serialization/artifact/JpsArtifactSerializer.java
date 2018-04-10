@@ -35,7 +35,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsArtifactSerializer {
-  private static JpsPackagingElementSerializer<?>[] STANDARD_SERIALIZERS = {
+  private static final JpsPackagingElementSerializer<?>[] STANDARD_SERIALIZERS = {
     new ArtifactRootElementSerializer(),
     new DirectoryElementSerializer(),
     new ArchiveElementSerializer(),

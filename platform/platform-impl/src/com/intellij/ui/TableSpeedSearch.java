@@ -59,6 +59,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     return tableIsNotEmpty && !myComponent.isEditing() && super.isSpeedSearchEnabled();
   }
 
+  @NotNull
   @Override
   protected ListIterator<Object> getElementIterator(int startingIndex) {
     return new MyListIterator(startingIndex);
@@ -93,6 +94,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     return row > -1 && col > -1 ? row * myComponent.getColumnCount() + col : -1;
   }
 
+  @NotNull
   @Override
   protected Object[] getAllElements() {
     throw new UnsupportedOperationException("Not implemented");

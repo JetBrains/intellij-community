@@ -22,7 +22,7 @@ import java.awt.event.KeyEvent.*
  */
 object KeyUtil {
 
-  fun patch(ch: Char) =
+  fun patch(ch: Char): String =
     when (ch) {
       '\b' -> getKeyText(VK_BACK_SPACE)
       '\t' -> getKeyText(VK_TAB)

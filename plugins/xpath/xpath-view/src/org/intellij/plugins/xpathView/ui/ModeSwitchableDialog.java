@@ -121,9 +121,4 @@ public abstract class ModeSwitchableDialog extends DialogWrapper {
     //noinspection ConstantConditions
     return null;
   }
-
-  @Override
-  public boolean isOK() {
-    return getExitCode() == OK_EXIT_CODE;
-  }
 }

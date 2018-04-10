@@ -99,6 +99,10 @@ public final class CompressedDictionary implements Dictionary {
   }
 
   public void getWords(char first, int minLength, int maxLength, @NotNull Collection<String> result) {
+    getWords(first, minLength, maxLength, result::add);
+  }
+
+  public void getWords(char first, int minLength, int maxLength, @NotNull Consumer<String> consumer) {
     int index = alphabet.getIndex(first, false);
     if (index == -1) return;
 
@@ -108,14 +112,18 @@ public final class CompressedDictionary implements Dictionary {
       if (length < minLength || length > maxLength) continue;
       for (int x = 0; x < data.length; x += length) {
         if (encoder.getFirstLetterIndex(data[x]) == index) {
-          byte[] toTest = new byte[length];
-          System.arraycopy(data, x, toTest, 0, length);
-          String decoded = encoder.decode(toTest);
-          result.add(decoded);
+          String decoded = encoder.decode(data, x, x + length);
+          consumer.consume(decoded);
         }
       }
       i++;
     }
+  }
+
+
+  @Override
+  public void getSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {
+      getWords(word.charAt(0), 0, Integer.MAX_VALUE, consumer);
   }
 
   @NotNull
@@ -147,6 +155,7 @@ public final class CompressedDictionary implements Dictionary {
   }
 
   @Override
+  @NotNull
   public Set<String> getWords() {
     Set<String> words = new THashSet<>();
     for (int i = 0; i <= alphabet.getLastIndexUsed(); i++) {

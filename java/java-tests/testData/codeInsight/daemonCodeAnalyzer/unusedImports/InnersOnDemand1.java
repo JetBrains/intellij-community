@@ -1,11 +1,9 @@
-import <error descr="Cannot resolve symbol 'OuterClass'">OuterClass</error>.*;
+import <error descr="Class 'OuterClass' is in the default package">OuterClass</error>.*;
 
-class OuterClass{
-  class Inner{}
+class OuterClass {
+  class Inner { }
 }
 
-class X{
+class X {
   Inner inner;
 }
-
-

@@ -120,7 +120,7 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
 
   @Nullable
   @Override
-  public byte[] getContent() throws IOException, VcsException {
+  public byte[] getContent() {
     return myContent;
   }
 

@@ -119,7 +119,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   protected void doHelpAction() {
     String helpTopic = null;
     final Collection<Configurable> v = myEnvToConfMap.values();
-    final Configurable[] configurables = v.toArray(new Configurable[v.size()]);
+    final Configurable[] configurables = v.toArray(new Configurable[0]);
     if (myMainPanel instanceof JTabbedPane) {
       final int tabIndex = ((JTabbedPane)myMainPanel).getSelectedIndex();
       if (tabIndex >= 0 && tabIndex < configurables.length) {

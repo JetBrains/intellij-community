@@ -21,7 +21,6 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.ICustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -86,19 +85,18 @@ public class XmlParsing {
       final PsiBuilder.Marker rootTag = mark();
       error = mark();
       error.error(XmlErrorMessages.message("xml.parsing.absent.root.tag"));
-      rootTag.done(XmlElementType.XML_TAG);
+      rootTag.done(XML_TAG);
     }
 
-    document.done(XmlElementType.XML_DOCUMENT);
+    document.done(XML_DOCUMENT);
   }
 
   @Nullable
   private static PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
     if (error != null) {
       error.error(XmlErrorMessages.message("xml.parsing.unexpected.tokens"));
-      error = null;
     }
-    return error;
+    return null;
   }
 
   private void parseDoctype() {
@@ -136,7 +134,7 @@ public class XmlParsing {
         if (!tagName.equals(endName) && myTagNamesStack.contains(endName)) {
           footer.rollbackTo();
           myTagNamesStack.pop();
-          tag.doneBefore(XmlElementType.XML_TAG, content, XmlErrorMessages.message("named.element.is.not.closed", tagName));
+          tag.doneBefore(XML_TAG, content, XmlErrorMessages.message("named.element.is.not.closed", tagName));
           content.drop();
           return;
         }
@@ -163,7 +161,7 @@ public class XmlParsing {
 
     content.drop();
     myTagNamesStack.pop();
-    tag.done(XmlElementType.XML_TAG);
+    tag.done(XML_TAG);
   }
 
   @Nullable
@@ -206,7 +204,7 @@ public class XmlParsing {
     if (token() == XML_EMPTY_ELEMENT_END) {
       advance();
       myTagNamesStack.pop();
-      tag.done(XmlElementType.XML_TAG);
+      tag.done(XML_TAG);
       return null;
     }
 
@@ -216,13 +214,13 @@ public class XmlParsing {
     else {
       error(XmlErrorMessages.message("tag.start.is.not.closed"));
       myTagNamesStack.pop();
-      tag.done(XmlElementType.XML_TAG);
+      tag.done(XML_TAG);
       return null;
     }
 
     if (myTagNamesStack.size() > BALANCING_DEPTH_THRESHOLD) {
       error(XmlErrorMessages.message("way.too.unbalanced"));
-      tag.done(XmlElementType.XML_TAG);
+      tag.done(XML_TAG);
       return null;
     }
 
@@ -284,7 +282,6 @@ public class XmlParsing {
   private PsiBuilder.Marker startText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText == null) {
       xmlText = mark();
-      assert xmlText != null;
     }
     return xmlText;
   }
@@ -297,9 +294,8 @@ public class XmlParsing {
   private static PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText != null) {
       xmlText.done(XML_TEXT);
-      xmlText = null;
     }
-    return xmlText;
+    return null;
   }
 
   private void parseCData() {

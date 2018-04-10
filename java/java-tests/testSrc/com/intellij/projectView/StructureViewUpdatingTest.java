@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.projectView;
 
@@ -36,186 +24,176 @@ import com.intellij.util.IncorrectOperationException;
 import javax.swing.*;
 
 public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
+
   @Override
   protected String getTestPath() {
     return "structureView";
   }
 
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   public void testJavaClassStructure() {
-    final PsiClass psiClass = JavaDirectoryService.getInstance().getClasses(getPackageDirectory("com/package1"))[0];
-    final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    PsiClass psiClass = JavaDirectoryService.getInstance().getClasses(getPackageDirectory("com/package1"))[0];
+    VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     FileEditor[] fileEditors = fileEditorManager.openFile(virtualFile, false);
-    final FileEditor fileEditor = fileEditors[0];
-    try {
-      final StructureViewComponent structureViewComponent =
-        (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
-      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
-      structureViewComponent.setActionActive(InheritedMembersNodeProvider.ID, true);
-      PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(),
-                                       "-Class1.java\n" +
-                                       " -Class1\n" +
-                                       "  getValue(): int\n" +
-                                       "  getClass(): Class<?>\n" +
-                                       "  hashCode(): int\n" +
-                                       "  equals(Object): boolean\n" +
-                                       "  clone(): Object\n" +
-                                       "  toString(): String\n" +
-                                       "  notify(): void\n" +
-                                       "  notifyAll(): void\n" +
-                                       "  wait(long): void\n" +
-                                       "  wait(long, int): void\n" +
-                                       "  wait(): void\n" +
-                                       "  finalize(): void\n" +
-                                       "  myField1: boolean\n" +
-                                       "  myField2: boolean\n");
+    FileEditor fileEditor = fileEditors[0];
+    StructureViewComponent svc = (StructureViewComponent)fileEditor.getStructureViewBuilder()
+                                                                   .createStructureView(fileEditor, myProject);
+    Disposer.register(getTestRootDisposable(), svc);
+    fileEditorManager.closeFile(virtualFile);
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
+    svc.setActionActive(InheritedMembersNodeProvider.ID, true);
+    PlatformTestUtil.assertTreeEqual(
+      svc.getTree(),
+      "-Class1.java\n" +
+      " -Class1\n" +
+      "  getValue(): int\n" +
+      "  getClass(): Class<?>\n" +
+      "  hashCode(): int\n" +
+      "  equals(Object): boolean\n" +
+      "  clone(): Object\n" +
+      "  toString(): String\n" +
+      "  notify(): void\n" +
+      "  notifyAll(): void\n" +
+      "  wait(long): void\n" +
+      "  wait(long, int): void\n" +
+      "  wait(): void\n" +
+      "  finalize(): void\n" +
+      "  myField1: boolean\n" +
+      "  myField2: boolean\n");
 
-      new WriteCommandAction.Simple(getProject()) {
-        @Override
-        protected void run() {
-          final int offset = document.getLineStartOffset(5);
-          document.insertString(offset, "    boolean myNewField = false;\n");
-        }
-      }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      int offset = document.getLineStartOffset(5);
+      document.insertString(offset, "    boolean myNewField = false;\n");
+    });
 
+    PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
-      PsiDocumentManager.getInstance(myProject).commitDocument(document);
+    PlatformTestUtil.waitForAlarm(600);
 
-      PlatformTestUtil.waitForAlarm(600);
-
-      //TreeUtil.expand(structureViewComponent.getTree(), 3);
-
-      PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
-                                                                         " -Class1\n" + "  getValue(): int\n" +
-                                                                         "  getClass(): Class<?>\n" +
-                                                                         "  hashCode(): int\n" +
-                                                                         "  equals(Object): boolean\n" +
-                                                                         "  clone(): Object\n" +
-                                                                         "  toString(): String\n" +
-                                                                         "  notify(): void\n" +
-                                                                         "  notifyAll(): void\n" +
-                                                                         "  wait(long): void\n" +
-                                                                         "  wait(long, int): void\n" +
-                                                                         "  wait(): void\n" +
-                                                                         "  finalize(): void\n" +
-                                                                         "  myField1: boolean\n" +
-                                                                         "  myField2: boolean\n" +
-                                                                         "  myNewField: boolean = false\n");
-
-      Disposer.dispose(structureViewComponent);
-
-    }
-    finally {
-      fileEditorManager.closeFile(virtualFile);
-    }
+    PlatformTestUtil.assertTreeEqual(
+      svc.getTree(),
+      "-Class1.java\n" +
+      " -Class1\n" + "  getValue(): int\n" +
+      "  getClass(): Class<?>\n" +
+      "  hashCode(): int\n" +
+      "  equals(Object): boolean\n" +
+      "  clone(): Object\n" +
+      "  toString(): String\n" +
+      "  notify(): void\n" +
+      "  notifyAll(): void\n" +
+      "  wait(long): void\n" +
+      "  wait(long, int): void\n" +
+      "  wait(): void\n" +
+      "  finalize(): void\n" +
+      "  myField1: boolean\n" +
+      "  myField2: boolean\n" +
+      "  myNewField: boolean = false\n");
   }
 
   public void testShowClassMembers() {
-    final PsiClass psiClass = JavaDirectoryService.getInstance().getClasses(getPackageDirectory("com/package1"))[0];
-    final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    PsiClass psiClass = JavaDirectoryService.getInstance().getClasses(getPackageDirectory("com/package1"))[0];
+    VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     FileEditor[] fileEditors = fileEditorManager.openFile(virtualFile, false);
-    final FileEditor fileEditor = fileEditors[0];
-    final StructureViewComponent structureViewComponent =
-      (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
-    try {
-      PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
-                                                                         " -Class2\n" +
-                                                                         "  +InnerClass1\n" +
-                                                                         "  +InnerClass2\n" +
-                                                                         "  getValue(): int\n" +
-                                                                         "  myField1: boolean\n" +
-                                                                         "  myField2: boolean\n" +
-                                                                         "  myField3: boolean\n" +
-                                                                         "  myField4: boolean\n");
+    FileEditor fileEditor = fileEditors[0];
+    StructureViewComponent svc = (StructureViewComponent)fileEditor.getStructureViewBuilder()
+      .createStructureView(fileEditor, myProject);
+    Disposer.register(getTestRootDisposable(), svc);
+    fileEditorManager.closeFile(virtualFile);
+    PlatformTestUtil.waitForPromise(svc.rebuildAndUpdate());
+    PlatformTestUtil.assertTreeEqual(
+      svc.getTree(),
+      "-Class2.java\n" +
+      " -Class2\n" +
+      "  +InnerClass1\n" +
+      "  +InnerClass2\n" +
+      "  getValue(): int\n" +
+      "  myField1: boolean\n" +
+      "  myField2: boolean\n" +
+      "  myField3: boolean\n" +
+      "  myField4: boolean\n");
 
-      final PsiField innerClassField = psiClass.getInnerClasses()[0].getFields()[0];
+    PsiField innerClassField = psiClass.getInnerClasses()[0].getFields()[0];
 
-      structureViewComponent.select(innerClassField, true);
+    svc.select(innerClassField, true);
 
-      PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
-                                                                         " -Class2\n" +
-                                                                         "  -InnerClass1\n" +
-                                                                         "   +InnerClass12\n" +
-                                                                         "   myInnerClassField: int\n" +
-                                                                         "  +InnerClass2\n" +
-                                                                         "  getValue(): int\n" +
-                                                                         "  myField1: boolean\n" +
-                                                                         "  myField2: boolean\n" +
-                                                                         "  myField3: boolean\n" +
-                                                                         "  myField4: boolean\n");
+    PlatformTestUtil.waitWhileBusy(svc.getTree());
+    PlatformTestUtil.assertTreeEqual(
+      svc.getTree(),
+      "-Class2.java\n" +
+      " -Class2\n" +
+      "  -InnerClass1\n" +
+      "   +InnerClass12\n" +
+      "   myInnerClassField: int\n" +
+      "  +InnerClass2\n" +
+      "  getValue(): int\n" +
+      "  myField1: boolean\n" +
+      "  myField2: boolean\n" +
+      "  myField3: boolean\n" +
+      "  myField4: boolean\n");
 
-      CommandProcessor.getInstance().executeCommand(myProject, () -> WriteCommandAction.runWriteCommandAction(null, () -> {
-        try {
-          innerClassField.delete();
-        }
-        catch (IncorrectOperationException e) {
-          fail(e.getLocalizedMessage());
-        }
-      }), null, null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> WriteCommandAction.runWriteCommandAction(null, () -> {
+      try {
+        innerClassField.delete();
+      }
+      catch (IncorrectOperationException e) {
+        fail(e.getLocalizedMessage());
+      }
+    }), null, null);
 
-      PlatformTestUtil.waitForAlarm(600);
+    PlatformTestUtil.waitForAlarm(1000);
 
-      PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
-                                                                         " -Class2\n" +
-                                                                         "  -InnerClass1\n" +
-                                                                         "   +InnerClass12\n" +
-                                                                         "  +InnerClass2\n" +
-                                                                         "  getValue(): int\n" +
-                                                                         "  myField1: boolean\n" +
-                                                                         "  myField2: boolean\n" +
-                                                                         "  myField3: boolean\n" +
-                                                                         "  myField4: boolean\n");
-
-    }
-    finally {
-      Disposer.dispose(structureViewComponent);
-      fileEditorManager.closeFile(virtualFile);
-    }
+    PlatformTestUtil.assertTreeEqual(
+      svc.getTree(),
+      "-Class2.java\n" +
+      " -Class2\n" +
+      "  -InnerClass1\n" +
+      "   +InnerClass12\n" +
+      "  +InnerClass2\n" +
+      "  getValue(): int\n" +
+      "  myField1: boolean\n" +
+      "  myField2: boolean\n" +
+      "  myField3: boolean\n" +
+      "  myField4: boolean\n");
   }
 
   public void testExpandElementWithExitingName() {
 
-    final VirtualFile xmlVirtualFile = getContentRoot().findFileByRelativePath("test.xml");
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    VirtualFile xmlVirtualFile = getContentRoot().findFileByRelativePath("test.xml");
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     FileEditor[] fileEditors = fileEditorManager.openFile(xmlVirtualFile, false);
-    final FileEditor fileEditor = fileEditors[0];
-    try {
-      final StructureViewComponent structureViewComponent =
-        (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
+    FileEditor fileEditor = fileEditors[0];
+    StructureViewComponent svc = (StructureViewComponent)fileEditor.getStructureViewBuilder()
+      .createStructureView(fileEditor, myProject);
+    Disposer.register(getTestRootDisposable(), svc);
+    fileEditorManager.closeFile(xmlVirtualFile);
+    PlatformTestUtil.waitForPromise(svc.rebuildAndUpdate());
 
-      final JTree tree = structureViewComponent.getTree();
-      PlatformTestUtil.assertTreeEqual(tree, "-test.xml\n" +
-                                             " -test\n" +
-                                             "  +level1\n" +
-                                             "  +level1\n" +
-                                             "  +level1\n" +
-                                             "  +level1\n");
+    JTree tree = svc.getTree();
+    PlatformTestUtil.assertTreeEqual(
+      tree,
+      "-test.xml\n" +
+      " -test\n" +
+      "  +level1\n" +
+      "  +level1\n" +
+      "  +level1\n" +
+      "  +level1\n");
 
-      tree.expandPath(tree.getPathForRow(3));
+    tree.expandPath(tree.getPathForRow(3));
 
-      PlatformTestUtil.waitForAlarm(600);
-
-
-      PlatformTestUtil.assertTreeEqual(tree,
-                                       "-test.xml\n" +
-                                       " -test\n" +
-                                       "  +level1\n" +
-                                       "  -level1\n" +
-                                       "   +level2\n" +
-                                       "  +level1\n" +
-                                       "  +level1\n");
-
-      Disposer.dispose(structureViewComponent);
-    }
-    finally {
-      fileEditorManager.closeFile(xmlVirtualFile);
-    }
-
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    PlatformTestUtil.assertTreeEqual(
+      tree,
+      "-test.xml\n" +
+      " -test\n" +
+      "  +level1\n" +
+      "  -level1\n" +
+      "   +level2\n" +
+      "  +level1\n" +
+      "  +level1\n");
   }
 }

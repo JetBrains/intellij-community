@@ -4,5 +4,5 @@ interface Card {
 }
 
 enum E implements Card {
-    A<caret>
+    A{}, B<caret>
 }

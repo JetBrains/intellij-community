@@ -19,14 +19,20 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.function.IntFunction;
 
 /**
+ * Register implementation of this extension point to draw additional text fragments after end of a line in a file editor. If you need to do
+ * this in a particular {@link Editor} instance use {@link com.intellij.openapi.editor.ex.EditorEx#registerLineExtensionPainter(IntFunction)} instead.
+ *
  * @author Konstantin Bulenkov
  */
 public abstract class EditorLinePainter {
   public static final ExtensionPointName<EditorLinePainter> EP_NAME = ExtensionPointName.create("com.intellij.editor.linePainter");
 
+  @Nullable 
   public abstract Collection<LineExtensionInfo> getLineExtensions(@NotNull Project project, @NotNull VirtualFile file, int lineNumber);
 }

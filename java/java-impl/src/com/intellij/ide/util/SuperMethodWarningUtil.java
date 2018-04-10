@@ -15,10 +15,14 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -34,8 +38,8 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -49,11 +53,13 @@ public class SuperMethodWarningUtil {
 
   @NotNull
   public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return checkSuperMethods(method, actionString, Collections.emptyList());
   }
 
   @NotNull
   public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString, @NotNull Collection<PsiElement> ignore) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
 
@@ -78,7 +84,7 @@ public class SuperMethodWarningUtil {
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      return superMethods.toArray(new PsiMethod[superMethods.size()]);
+      return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
     }
     if (dialog.getExitCode() == SuperMethodWarningDialog.NO_EXIT_CODE) {
       return new PsiMethod[]{method};
@@ -88,16 +94,23 @@ public class SuperMethodWarningUtil {
   }
 
   @NotNull
-  public static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<PsiElement> ignore) {
+  static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<PsiElement> ignore) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
     superMethods.removeAll(ignore);
 
     if (superMethods.isEmpty()) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
       if (virtualFile != null && ProjectRootManager.getInstance(aClass.getProject()).getFileIndex().isInSourceContent(virtualFile)) {
-        PsiMethod siblingSuperMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
-        if (siblingSuperMethod != null) {
-          superMethods.add(siblingSuperMethod);
+        PsiMethod[] siblingSuperMethod = new PsiMethod[1];
+        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(()->{
+          siblingSuperMethod[0] = ReadAction.compute(()->FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
+        }, "Searching for sub-classes", true, aClass.getProject())) {
+          throw new ProcessCanceledException();
+        }
+        if (siblingSuperMethod[0] != null) {
+          superMethods.add(siblingSuperMethod[0]);
         }
       }
     }
@@ -106,6 +119,7 @@ public class SuperMethodWarningUtil {
 
 
   public static PsiMethod checkSuperMethod(@NotNull PsiMethod method, @NotNull String actionString) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return method;
 
@@ -134,6 +148,7 @@ public class SuperMethodWarningUtil {
                                       @NotNull String actionString,
                                       @NotNull final PsiElementProcessor<PsiMethod> processor,
                                       @NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) {
       processor.execute(method);
@@ -160,38 +175,36 @@ public class SuperMethodWarningUtil {
     final PsiMethod[] methods = {superMethods[0], method};
     final String renameBase = actionString + " base method" + (superMethods.length > 1 ? "s" : "");
     final String renameCurrent = actionString + " only current method";
-    final JBList<String> list = new JBList<>(renameBase, renameCurrent);
     String title = method.getName() +
-                   (superMethods.length > 1 ? " has super methods" 
-                                            : (containingClass.isInterface() && !aClass.isInterface() ? " implements" 
-                                                                                                      : " overrides") + 
+                   (superMethods.length > 1 ? " has super methods"
+                                            : (containingClass.isInterface() && !aClass.isInterface() ? " implements"
+                                                                                                      : " overrides") +
                                               " method of " + SymbolPresentationUtil.getSymbolPresentableText(containingClass));
-    JBPopupFactory.getInstance().createListPopupBuilder(list)
+    JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(renameBase, renameCurrent))
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(() -> {
-        final Object value = list.getSelectedValue();
-        if (value != null) {
-          if (value.equals(renameBase)) {
-            try {
-              methods[0].putUserData(SIBLINGS, superMethods);
-              processor.execute(methods[0]);
-            }
-            finally {
-              methods[0].putUserData(SIBLINGS, null);
-            }
+      .setItemChosenCallback((value) -> {
+        if (value.equals(renameBase)) {
+          try {
+            methods[0].putUserData(SIBLINGS, superMethods);
+            processor.execute(methods[0]);
           }
-          else {
-            processor.execute(methods[1]);
+          finally {
+            methods[0].putUserData(SIBLINGS, null);
           }
         }
-      }).createPopup().showInBestPositionFor(editor);
+        else {
+          processor.execute(methods[1]);
+        }
+      })
+      .createPopup().showInBestPositionFor(editor);
   }
 
   @Messages.YesNoCancelResult
   public static int askWhetherShouldAnnotateBaseMethod(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     String implement = !method.hasModifierProperty(PsiModifier.ABSTRACT) && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
                   ? InspectionsBundle.message("inspection.annotate.quickfix.implements")
                   : InspectionsBundle.message("inspection.annotate.quickfix.overrides");
@@ -199,7 +212,6 @@ public class SuperMethodWarningUtil {
                                                DescriptiveNameUtil.getDescriptiveName(method), implement,
                                                DescriptiveNameUtil.getDescriptiveName(superMethod));
     String title = InspectionsBundle.message("inspection.annotate.quickfix.overridden.method.warning");
-    return Messages.showYesNoCancelDialog(method.getProject(), message, title, Messages.getQuestionIcon());
-
+    return Messages.showYesNoCancelDialog(method.getProject(), message, title, "Annotate", "Don't Annotate", CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
   }
 }

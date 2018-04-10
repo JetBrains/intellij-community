@@ -132,7 +132,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
             }
           }
 
-          ourColors = colorsList.toArray(new ColorSampleLookupValue[colorsList.size()]);
+          ourColors = colorsList.toArray(new ColorSampleLookupValue[0]);
         }
       }
     }

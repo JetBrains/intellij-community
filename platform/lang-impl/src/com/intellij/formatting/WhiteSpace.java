@@ -161,7 +161,6 @@ public class WhiteSpace {
 
     if (!(model instanceof FormattingDocumentModelImpl)) return false;
     PsiFile psiFile = ((FormattingDocumentModelImpl)model).getFile();
-    if (psiFile == null) return false;
     PsiElement start = psiFile.findElementAt(myStart);
     PsiElement end = psiFile.findElementAt(myEnd-1);
     return start == end && start instanceof PsiWhiteSpace; // there maybe non-white text inside CDATA-encoded injected elements
@@ -286,6 +285,10 @@ public class WhiteSpace {
    * @param indent      new value for the {@link #getIndentSpaces()}  indentSpaces} property
    */
   public void setSpaces(final int spaces, final int indent) {
+    if (spaces < 0 || indent < 0) {
+      throw new IllegalStateException("Neither spaces: " + spaces + " or indent " + indent + " should be null");
+    }
+
     performModification(() -> {
       if (!isKeepFirstColumn() || getFlag(CONTAINS_SPACES_INITIALLY_MASK)) {
         mySpaces = spaces;
@@ -667,7 +670,7 @@ public class WhiteSpace {
       }
     }
     result.add(currentLine);
-    return result.toArray(new CharSequence[result.size()]);
+    return result.toArray(new CharSequence[0]);
   }
 
   /**

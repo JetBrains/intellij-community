@@ -92,8 +92,8 @@ public class JavaCompletionSorting {
     }
     Collections.addAll(afterStats, new PreferAccessible(position), new PreferSimple());
 
-    sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[afterStats.size()]));
-    sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[afterProximity.size()]));
+    sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[0]));
+    sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[0]));
     return result.withRelevanceSorter(sorter);
   }
 
@@ -103,9 +103,9 @@ public class JavaCompletionSorting {
       return ExpectedTypeInfo.EMPTY_ARRAY;
     }
 
-    ExpectedTypeInfo castExpectation = SmartCastProvider.getParenthesizedCastExpectationByOperandType(position);
-    if (castExpectation != null) {
-      return new ExpectedTypeInfo[]{castExpectation};
+    List<ExpectedTypeInfo> castExpectation = SmartCastProvider.getParenthesizedCastExpectationByOperandType(position);
+    if (!castExpectation.isEmpty()) {
+      return castExpectation.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
     return JavaSmartCompletionContributor.getExpectedTypes(parameters);
   }
@@ -457,7 +457,7 @@ public class JavaCompletionSorting {
     @Override
     public Comparable weigh(@NotNull LookupElement element) {
       final Object object = element.getObject();
-      if (object instanceof PsiMethod) {
+      if (object instanceof PsiMethod && !FunctionalExpressionCompletionProvider.isFunExprItem(element)) {
         PsiType type = ((PsiMethod)object).getReturnType();
         final JavaMethodCallElement callItem = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
         if (callItem != null) {

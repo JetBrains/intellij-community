@@ -84,7 +84,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
     }
 
     if (reference != null) {
-      final String errorMessage = InlineMethodProcessor.checkCalledInSuperOrThisExpr(methodBody, reference.getElement());
+      final String errorMessage = InlineMethodProcessor.checkUnableToInsertCodeBlock(methodBody, reference.getElement());
       if (errorMessage != null) {
         CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, REFACTORING_NAME, HelpID.INLINE_METHOD);
         return;
@@ -165,6 +165,10 @@ class InlineMethodHandler extends JavaInlineActionHandler {
     if (scope instanceof PsiMethodCallExpression){
       PsiMethod refMethod = (PsiMethod)((PsiMethodCallExpression)scope).getMethodExpression().resolve();
       if (method.equals(refMethod)) return true;
+    }
+
+    if (scope instanceof PsiMethodReferenceExpression) {
+      if (method.equals(((PsiMethodReferenceExpression)scope).resolve())) return true;
     }
 
     for(PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()){

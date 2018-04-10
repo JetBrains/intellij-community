@@ -31,12 +31,12 @@ class JavaReflectionClassNavigationTest : JavaReflectionClassNavigationTestBase(
 
   fun testPublicInnerClass() {
     myFixture.addClass("package foo.bar; public class PublicClass { public class PublicInnerClass {} }")
-    doTest("foo.bar.PublicClass.PublicInnerClass")
+    doTest("foo.bar.PublicClass\$PublicInnerClass")
   }
 
   fun testPublicInnerClass2() {
     myFixture.addClass("package foo.bar; public class PublicClass { public class PublicInnerClass {} }")
-    doTest("foo.bar.<caret>PublicClass.PublicInnerClass")
+    doTest("foo.bar.<caret>PublicClass\$PublicInnerClass")
   }
 
   fun testPackageLocalClass() {
@@ -46,17 +46,22 @@ class JavaReflectionClassNavigationTest : JavaReflectionClassNavigationTestBase(
 
   fun testPrivateInnerClass() {
     myFixture.addClass("package foo.bar; public class PublicClass { private class PrivateInnerClass {} }")
-    doTest("foo.bar.PublicClass.PrivateInnerClass")
+    doTest("foo.bar.PublicClass\$PrivateInnerClass")
   }
 
   fun testPrivateInnerClass2() {
     myFixture.addClass("package foo.bar; public class PublicClass { private class PrivateInnerClass {} }")
-    doTest("foo.bar.<caret>PublicClass.PrivateInnerClass")
+    doTest("foo.bar.<caret>PublicClass\$PrivateInnerClass")
   }
 
   fun testWithClassLoader() {
     myFixture.addClass("package foo.bar; public class PublicClass {}")
-    doTest("foo.bar.<caret>PublicClass.PrivateInnerClass", { "Thread.currentThread().getContextClassLoader().loadClass(\"$it\")" })
+    doTest("foo.bar.<caret>PublicClass\$PrivateInnerClass", { "Thread.currentThread().getContextClassLoader().loadClass(\"$it\")" })
+  }
+
+  fun testNestedClassDefaultPackage() {
+    myFixture.addClass("public class Outer { public static class Inner {} }")
+    doTest("Outer\$Inner")
   }
 }
 
@@ -73,11 +78,11 @@ abstract class JavaReflectionClassNavigationTestBase : LightCodeInsightFixtureTe
   protected fun doTest(className: String, usageFormatter: (String) -> String = { "Class.forName(\"$it\")" }) {
     val caretPos = className.indexOf("<caret>")
     val atCaret: String
-    var expectedName = className
+    var expectedName = className.replace('$', '.')
     if (caretPos >= 0) {
       atCaret = className
-      val dotPos = className.indexOf(".", caretPos + 1)
-      if (dotPos >= 0) expectedName = className.substring(0, dotPos).replace("<caret>", "")
+      val dotPos = expectedName.indexOf(".", caretPos + 1)
+      if (dotPos >= 0) expectedName = expectedName.substring(0, dotPos).replace("<caret>", "")
     }
     else {
       atCaret = className + "<caret>"

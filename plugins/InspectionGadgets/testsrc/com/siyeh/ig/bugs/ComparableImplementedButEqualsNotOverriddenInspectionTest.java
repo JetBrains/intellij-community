@@ -26,6 +26,10 @@ public class ComparableImplementedButEqualsNotOverriddenInspectionTest extends L
 
   public void testInterfaceImplementingComparable() { doTest(); }
   public void testSimple() { doTest(); }
+  public void testAbstractClass1() { doTest(); }
+  public void testAbstractClass2() { doTest(); }
+  public void testAbstractClass3() { doTest(); }
+  public void testNote() { doTest(); }
 
   @Nullable
   @Override

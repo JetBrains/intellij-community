@@ -49,3 +49,13 @@ class Four {
     throw new UnsupportedOperationException();
   }
 }
+class CloneableSingleton implements Cloneable {
+
+  private static final CloneableSingleton INSTANCE = new CloneableSingleton();
+
+  private CloneableSingleton() {}
+
+  public CloneableSingleton clone() {
+    return INSTANCE;
+  }
+}

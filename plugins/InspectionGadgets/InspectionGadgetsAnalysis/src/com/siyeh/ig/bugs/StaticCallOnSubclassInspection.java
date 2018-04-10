@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticCallOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -66,15 +67,27 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
-      final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiIdentifier name = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiIdentifier.class);
+      if (name == null) return;
+      final PsiReferenceExpression expression = ObjectUtils.tryCast(name.getParent(), PsiReferenceExpression.class);
       if (expression == null) {
         return;
       }
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();
-      final String methodName = expression.getReferenceName();
+      if (expression instanceof PsiMethodReferenceExpression) {
+        PsiElement resolve = expression.resolve();
+        if (resolve instanceof PsiMethod) {
+          PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
+          if (containingClass != null) {
+            PsiExpression qualifierExpression = expression.getQualifierExpression();
+            if (qualifierExpression instanceof PsiReferenceExpression) {
+              ((PsiReferenceExpression)qualifierExpression).bindToElement(containingClass);
+            }
+          }
+        }
+        return;
+      }
+      final PsiMethodCallExpression call = ObjectUtils.tryCast(expression.getParent(), PsiMethodCallExpression.class);
       if (call == null) {
         return;
       }
@@ -88,8 +101,11 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
         return;
       }
       final String containingClassName = containingClass.getQualifiedName();
-      final String argText = argumentList.getText();
-      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' + call.getTypeArgumentList().getText() + methodName + argText);
+      CommentTracker commentTracker = new CommentTracker();
+      final String argText = commentTracker.text(argumentList);
+      final String typeArgText = commentTracker.text(call.getTypeArgumentList());
+      final String methodName = expression.getReferenceName();
+      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' + typeArgText + methodName + argText, commentTracker);
     }
   }
 
@@ -98,24 +114,37 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
     return new StaticCallOnSubclassVisitor();
   }
 
-  private static class StaticCallOnSubclassVisitor
-    extends BaseInspectionVisitor {
+  private static class StaticCallOnSubclassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
-      final PsiReferenceExpression methodExpression =
-        call.getMethodExpression();
-      final PsiElement qualifier = methodExpression.getQualifier();
-      if (!(qualifier instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiMethod method = call.resolveMethod();
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
+       final PsiMethod method = call.resolveMethod();
       if (method == null) {
         return;
       }
+     
+      checkCallOnSubclass(method, methodExpression);
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      super.visitMethodReferenceExpression(expression);
+      if (PsiMethodReferenceUtil.isStaticallyReferenced(expression)) {
+        PsiElement resolve = expression.resolve();
+        if (resolve instanceof PsiMethod) {
+          checkCallOnSubclass((PsiMethod)resolve, expression);
+        }
+      }
+    }
+
+    private void checkCallOnSubclass(@NotNull PsiMethod method, PsiReferenceExpression methodExpression) {
       if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (!(qualifier instanceof PsiReferenceExpression)) {
         return;
       }
       final PsiElement referent = ((PsiReference)qualifier).resolve();
@@ -127,14 +156,18 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
       if (declaringClass == null) {
         return;
       }
-      if (declaringClass.equals(referencedClass)) {
+      if (declaringClass.equals(referencedClass) || declaringClass.isInterface()) {
         return;
       }
-      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(call.getProject()).getResolveHelper();
-      if (!resolveHelper.isAccessible(declaringClass, call, null)) {
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(methodExpression.getProject()).getResolveHelper();
+      if (!resolveHelper.isAccessible(declaringClass, methodExpression, null)) {
         return;
       }
-      registerMethodCallError(call, declaringClass, referencedClass);
+      PsiElement referenceNameElement = methodExpression.getReferenceNameElement();
+      if (referenceNameElement == null) {
+        return;
+      }
+      registerError(referenceNameElement, declaringClass, referencedClass);
     }
   }
 }

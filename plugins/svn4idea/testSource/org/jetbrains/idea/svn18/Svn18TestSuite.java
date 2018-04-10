@@ -22,13 +22,11 @@ public class Svn18TestSuite {
     @Override
     protected void before() {
       SvnTestCase.ourGlobalTestDataDir = "testData18";
-      SvnTestCase.ourGlobalUseNativeAcceleration = true;
     }
 
     @Override
     protected void after() {
       SvnTestCase.ourGlobalTestDataDir = null;
-      SvnTestCase.ourGlobalUseNativeAcceleration = null;
     }
   };
 }

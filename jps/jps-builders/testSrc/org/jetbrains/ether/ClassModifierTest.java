@@ -17,7 +17,6 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 09.08.11
  */
 public class ClassModifierTest extends IncrementalTestCase {
   public ClassModifierTest() {
@@ -49,6 +48,10 @@ public class ClassModifierTest extends IncrementalTestCase {
   }
 
   public void testSetFinal1() {
+    doTest();
+  }
+  
+  public void testChangeInnerClassModifiers() {
     doTest();
   }
 }

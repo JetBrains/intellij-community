@@ -38,7 +38,7 @@ public class MacroFactory {
 
   public static Macro[] getMacros() {
     final Collection<? extends Macro> values = myMacroTable.values();
-    return values.toArray(new Macro[values.size()]);
+    return values.toArray(new Macro[0]);
   }
 
   private static MultiMap<String, Macro> init() {

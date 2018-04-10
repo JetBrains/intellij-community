@@ -54,7 +54,7 @@ public class GrAnnotationCollector {
     }
 
 
-    return result.toArray(new GrAnnotation[result.size()]);
+    return result.toArray(GrAnnotation.EMPTY_ARRAY);
   }
 
   private static boolean hasAliases(@NotNull GrAnnotation[] rawAnnotations) {

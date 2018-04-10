@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -38,13 +24,15 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testAnnotation() = complete("@Dep<caret>", "@Deprecated<caret>")
   fun testAnnotationBeforeModule() = complete("@Dep<caret> module M { }", "@Deprecated<caret> module M { }")
   fun testNoCompletionInModuleName() = variants("module M<caret>")
+  fun testNoStatementsInModuleName() = variants("module test.module.<caret> { }")
 
   fun testStatementsInEmptyModule() = variants("module M { <caret> }", "requires", "exports", "opens", "uses", "provides")
   fun testStatementsAfterComment() = variants("module M { /*requires X;*/ <caret> }", "requires", "exports", "opens", "uses", "provides")
   fun testStatementsAfterStatement() = variants("module M { requires X; <caret> }", "requires", "exports", "opens", "uses", "provides")
   fun testStatementsUnambiguous() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
 
-  fun testRequiresBare() = variants("module M { requires <caret>", "transitive", "static", "M2", "java.base", "lib.multi.release", "lib.named")
+  fun testRequiresBare() =
+    variants("module M { requires <caret>", "transitive", "static", "M2", "java.base", "lib.multi.release", "lib.named", "lib.auto", "lib.claimed")
   fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
   fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
   fun testRequiresQualifiedName() = complete("module M { requires lib.m<caret> }", "module M { requires lib.multi.release;<caret> }")

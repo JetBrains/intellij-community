@@ -8,6 +8,7 @@ import java.util.Optional;
 public class Main {
   private static String test(List<String> list) {
       Optional<String> found = list.stream().filter(Objects::nonNull).findFirst();
+      // optional!
       return found.orElse(null);
   }
 

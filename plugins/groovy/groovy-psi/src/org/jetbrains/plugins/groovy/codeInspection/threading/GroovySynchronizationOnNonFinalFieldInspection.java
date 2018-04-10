@@ -59,7 +59,7 @@ public class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspecti
     public void visitSynchronizedStatement(@NotNull GrSynchronizedStatement synchronizedStatement) {
       super.visitSynchronizedStatement(synchronizedStatement);
       final GrExpression lock = synchronizedStatement.getMonitor();
-      if (lock == null || !(lock instanceof GrReferenceExpression)) {
+      if (!(lock instanceof GrReferenceExpression)) {
         return;
       }
       final PsiElement referent = ((PsiReference) lock).resolve();

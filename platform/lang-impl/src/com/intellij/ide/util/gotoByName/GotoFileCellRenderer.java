@@ -70,7 +70,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     if (project == null) {
       return virtualFile.getPresentableUrl();
     }
-    VirtualFile root = ProjectFileIndex.SERVICE.getInstance(project).getContentRootForFile(virtualFile);
+    VirtualFile root = getAnyRoot(virtualFile, project);
     if (root != null) {
       return getRelativePathFromRoot(virtualFile, root);
     }
@@ -86,6 +86,15 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
       }
     }
     return url;
+  }
+
+  @Nullable
+  public static VirtualFile getAnyRoot(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    VirtualFile root = index.getContentRootForFile(virtualFile);
+    if (root == null) root = index.getClassRootForFile(virtualFile);
+    if (root == null) root = index.getSourceRootForFile(virtualFile);
+    return root;
   }
 
   @NotNull

@@ -17,8 +17,10 @@
 
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
+import com.intellij.util.text.UniqueNameGenerator
 
 private val CHANGELIST_NAME_PATTERN = "\\s\\[(.*)\\]"
 private val STASH_MESSAGE_PATTERN = VcsBundle.message("stash.changes.message", ".*")
@@ -41,4 +43,13 @@ fun getPredefinedChangeList(shelvedList: ShelvedChangeList, changeListManager: C
 fun getChangeListNameForUnshelve(shelvedList: ShelvedChangeList): String {
   val defaultName = shelvedList.DESCRIPTION
   return if (shelvedList.isMarkedToDelete) getOriginalName(defaultName) else defaultName
+}
+
+fun createNameForChangeList(project: Project, commitMessage: String): String {
+  val changeListManager = ChangeListManager.getInstance(project)
+  val proposedName = commitMessage.trim()
+    .substringBefore('\n')
+    .trim()
+    .replace("[ ]{2,}".toRegex(), " ")
+  return UniqueNameGenerator.generateUniqueName(proposedName, "", "", "-", "", { changeListManager.findChangeList(it) == null })
 }

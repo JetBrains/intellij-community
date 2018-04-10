@@ -21,6 +21,7 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.DatatypeConverter;
@@ -46,7 +47,7 @@ class PasswordDatabase implements PersistentStateComponent<PasswordDatabase.Stat
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     String[][] db = state.PASSWORDS;
     String pi = state.MASTER_PASSWORD_INFO;
     try {

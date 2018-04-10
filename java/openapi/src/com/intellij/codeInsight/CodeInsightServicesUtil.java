@@ -21,8 +21,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 
 /**
- * @author ven
+ * Consider using instead
+ * {@link com.siyeh.ig.psiutils.BoolUtils#getNegatedExpressionText(com.intellij.psi.PsiExpression)}
+ * 
+ * to be deleted in 2018.2
  */
+@Deprecated
 public class CodeInsightServicesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightServicesUtil");
 

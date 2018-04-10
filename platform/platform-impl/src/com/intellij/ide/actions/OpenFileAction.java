@@ -1,26 +1,16 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -37,6 +27,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,26 +37,37 @@ import com.intellij.projectImport.ProjectAttachProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.EnumSet;
 import java.util.List;
 
 public class OpenFileAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getProject();
-    final boolean showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
-    final FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
-    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, showFiles);
+    final Project eventProject = e.getProject();
+    ApplicationManager.getApplication().invokeLater(() -> prepareFileChooserAndOpen(eventProject));
+  }
 
-    FileChooser.chooseFiles(descriptor, project, getPathToSelect(), files -> {
+  private void prepareFileChooserAndOpen(final Project eventProject) {
+    final boolean showFiles = eventProject != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
+    final FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
+
+    VirtualFile toSelect = null;
+    if (StringUtil.isNotEmpty(GeneralSettings.getInstance().getDefaultProjectDirectory())) {
+      toSelect = VfsUtil.findFileByIoFile(new File(GeneralSettings.getInstance().getDefaultProjectDirectory()), true);
+    }
+
+    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, toSelect == null && showFiles);
+
+    FileChooser.chooseFiles(descriptor, eventProject, toSelect != null ? toSelect : getPathToSelect(), files -> {
       for (VirtualFile file : files) {
         if (!descriptor.isFileSelectable(file)) {
           String message = IdeBundle.message("error.dir.contains.no.project", file.getPresentableUrl());
-          Messages.showInfoMessage(project, message, IdeBundle.message("title.cannot.open.project"));
+          Messages.showInfoMessage(eventProject, message, IdeBundle.message("title.cannot.open.project"));
           return;
         }
       }
-      doOpenFile(project, files);
+      doOpenFile(eventProject, files);
     });
   }
 
@@ -125,10 +127,8 @@ public class OpenFileAction extends AnAction implements DumbAware {
         openFile(file, project);
       }
       else {
-        PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
-        if (processor != null) {
-          processor.doOpenProject(file, null, false);
-        }
+        PlatformProjectOpenProcessor.doOpenProject(file, null, -1, null,
+                                                   EnumSet.of(PlatformProjectOpenProcessor.Option.TEMP_PROJECT));
       }
     }
   }

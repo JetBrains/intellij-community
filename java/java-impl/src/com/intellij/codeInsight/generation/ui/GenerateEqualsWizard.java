@@ -217,12 +217,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     for (MemberInfo info : infos) {
       list.add((PsiField)info.getMember());
     }
-    return list.toArray(new PsiField[list.size()]);
-  }
-
-  @Override
-  protected String getHelpID() {
-    return "editing.altInsert.equals";
+    return list.toArray(PsiField.EMPTY_ARRAY);
   }
 
   private void equalsFieldsSelected() {

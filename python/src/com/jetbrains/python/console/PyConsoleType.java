@@ -23,8 +23,8 @@ import com.jetbrains.python.PyBundle;
 public class PyConsoleType {
   public static PyConsoleType PYTHON = new PyConsoleType("py", PyBundle.message("python.console"));
 
-  private String myTypeId;
-  private String myTitle;
+  private final String myTypeId;
+  private final String myTitle;
 
   public PyConsoleType(String typeId, String title) {
     myTypeId = typeId;

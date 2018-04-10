@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -88,7 +87,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
 
   private static class ReplaceObsoleteAssertsFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement psiElement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (psiElement == null) {
         return;
@@ -147,6 +146,18 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
           styleManager.shortenClassReferences(methodExpression);
         }
       }
+
+      PsiMethod newTarget = methodCallExpression.resolveMethod();
+      if (newTarget != null && newTarget.isDeprecated()) {
+        PsiParameter[] parameters = newTarget.getParameterList().getParameters();
+        if (parameters.length > 0) {
+          PsiType paramType = parameters[parameters.length - 1].getType();
+          if (PsiType.DOUBLE.equals(paramType) || PsiType.FLOAT.equals(paramType)) {
+            methodCallExpression.getArgumentList().add(JavaPsiFacade.getElementFactory(project).createExpressionFromText("0.0", methodCallExpression));
+          }
+        }
+      }
+
       /*
           //refs can be optimized now but should we really?
           if (isImportUnused) {

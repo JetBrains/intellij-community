@@ -17,7 +17,6 @@ package org.jetbrains.plugins.terminal.vfs;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -44,7 +43,7 @@ import java.util.List;
  */
 public class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
 
-  private Project myProject;
+  private final Project myProject;
   private final TerminalSessionVirtualFileImpl myFile;
   private final TtyConnectorWaitFor myWaitFor;
 
@@ -142,12 +141,6 @@ public class TerminalSessionEditor extends UserDataHolderBase implements FileEdi
   @Nullable
   @Override
   public FileEditorLocation getCurrentLocation() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
 

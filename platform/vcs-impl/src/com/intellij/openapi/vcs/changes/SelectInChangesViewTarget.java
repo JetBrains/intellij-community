@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -42,6 +41,7 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
     return VcsBundle.message("changes.toolwindow.name");
   }
 
+  @Override
   public boolean canSelect(final SelectInContext context) {
     final VirtualFile file = context.getVirtualFile();
     FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(file);
@@ -49,6 +49,7 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
            !fileStatus.equals(FileStatus.NOT_CHANGED);
   }
 
+  @Override
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     final VirtualFile file = context.getVirtualFile();
     Runnable runnable = () -> {
@@ -65,10 +66,6 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
 
   public String getToolWindowId() {
     return ChangesViewContentManager.TOOLWINDOW_ID;
-  }
-
-  @Nullable public String getMinorViewId() {
-    return null;
   }
 
   public float getWeight() {

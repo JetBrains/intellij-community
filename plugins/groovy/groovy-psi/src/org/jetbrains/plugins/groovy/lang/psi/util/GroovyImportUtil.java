@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
@@ -19,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -30,13 +17,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 
 import java.util.Map;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.ImportKind.ON_DEMAND;
+import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil.unusedImports;
 
 public class GroovyImportUtil {
   public static void processFile(@Nullable final PsiFile file,
@@ -85,7 +70,7 @@ public class GroovyImportUtil {
           if (context instanceof GrImportStatement) {
             final GrImportStatement importStatement = (GrImportStatement)context;
 
-            if (usedImports != null && isImportUsed(refElement, resolved)) {
+            if (usedImports != null) {
               usedImports.add(importStatement);
             }
             if (GroovyImportHelper.isImplicitlyImported(resolved, refName, (GroovyFile)file)) {
@@ -166,22 +151,6 @@ public class GroovyImportUtil {
           }
         }
       }
-
-      /**
-       * checks if import for implicitly imported class is needed
-       */
-      private boolean isImportUsed(GrReferenceElement refElement, PsiElement resolved) {
-        if (GroovyImportHelper.isImplicitlyImported(resolved, refElement.getReferenceName(), (GroovyFile)file)) {
-          final ClassResolverProcessor processor =
-            new ClassResolverProcessor(refElement.getReferenceName(), refElement, ClassHint.RESOLVE_KINDS_CLASS);
-          GroovyImportHelper
-            .processImports(ResolveState.initial(), null, refElement, processor, ((GroovyFile)file).getImportStatements(), ON_DEMAND, null);
-          if (!processor.hasCandidates()) {
-            return false;
-          }
-        }
-        return true;
-      }
     });
 
     final Set<GrImportStatement> importsToCheck = ContainerUtil.newLinkedHashSet(PsiUtil.getValidImportStatements((GroovyFile)file));
@@ -243,6 +212,9 @@ public class GroovyImportUtil {
         }
       });
     }
+    if (usedImports != null) {
+      usedImports.removeAll(unusedImports((GroovyFile)file));
+    }
   }
 
   @Nullable
@@ -251,7 +223,10 @@ public class GroovyImportUtil {
       return ((PsiClass)element).getQualifiedName();
     }
     if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-      return ((PsiMethod)element).getContainingClass().getQualifiedName();
+      PsiClass aClass = ((PsiMethod)element).getContainingClass();
+      if (aClass != null) {
+        return aClass.getQualifiedName();
+      }
     }
     return null;
   }
@@ -267,11 +242,5 @@ public class GroovyImportUtil {
       return importReference.getClassNameText();
     }
     return null;
-  }
-
-  public static Set<GrImportStatement> findUsedImports(GroovyFile file) {
-    Set<GrImportStatement> usedImports = new HashSet<>();
-    processFile(file, null, null, usedImports, null, null, null, null, null);
-    return usedImports;
   }
 }

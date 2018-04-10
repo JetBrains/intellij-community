@@ -15,6 +15,10 @@
  */
 package git4idea.commands;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -22,106 +26,99 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.io.BaseDataReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Iterator;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
+
+import static java.util.Collections.singletonList;
 
 /**
  * The handler that is based on per-line processing of the text.
  */
 public class GitLineHandler extends GitTextHandler {
   /**
-   * the partial line from stdout stream
-   */
-  private final StringBuilder myStdoutLine = new StringBuilder();
-  /**
-   * the partial line from stderr stream
-   */
-  private final StringBuilder myStderrLine = new StringBuilder();
-  /**
    * Line listeners
    */
   private final EventDispatcher<GitLineHandlerListener> myLineListeners = EventDispatcher.create(GitLineHandlerListener.class);
+  private boolean myWithMediator = true;
+
+  /**
+   * Remote url which require authentication
+   */
+  @NotNull private Collection<String> myUrls = Collections.emptyList();
+  private boolean myIgnoreAuthenticationRequest;
 
   public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
   }
 
-  public GitLineHandler(@NotNull final Project project,
-                        @NotNull final VirtualFile vcsRoot,
-                        @NotNull final GitCommand command) {
+  public GitLineHandler(@NotNull Project project,
+                        @NotNull VirtualFile vcsRoot,
+                        @NotNull GitCommand command) {
     super(project, vcsRoot, command);
   }
 
-  public GitLineHandler(@NotNull final Project project,
-                        @NotNull final VirtualFile vcsRoot,
-                        @NotNull final GitCommand command,
+  public GitLineHandler(@NotNull Project project,
+                        @NotNull VirtualFile vcsRoot,
+                        @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
     super(project, vcsRoot, command, configParameters);
   }
 
-  protected void processTerminated(final int exitCode) {
-    // force newline
-    if (myStdoutLine.length() != 0) {
-      onTextAvailable("\n\r", ProcessOutputTypes.STDOUT);
-    }
-    else if (!isStderrSuppressed() && myStderrLine.length() != 0) {
-      onTextAvailable("\n\r", ProcessOutputTypes.STDERR);
-    }
+  public GitLineHandler(@Nullable Project project,
+                        @NotNull File directory,
+                        @NotNull String pathToExecutable,
+                        @NotNull GitCommand command,
+                        @NotNull List<String> configParameters) {
+    super(project, directory, pathToExecutable, command, configParameters);
   }
 
+  public void setUrl(@NotNull String url) {
+    setUrls(singletonList(url));
+  }
+
+  public void setUrls(@NotNull Collection<String> urls) {
+    myUrls = urls;
+  }
+
+  @NotNull
+  public Collection<String> getUrls() {
+    return myUrls;
+  }
+
+  protected boolean isRemote() {
+    return !myUrls.isEmpty();
+  }
+
+  public boolean isIgnoreAuthenticationRequest() {
+    return myIgnoreAuthenticationRequest;
+  }
+
+  public void setIgnoreAuthenticationRequest(boolean ignoreAuthenticationRequest) {
+    myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
+  }
+
+  public void setWithMediator(boolean value) {
+    myWithMediator = value;
+  }
+
+  protected void processTerminated(final int exitCode) {}
 
   public void addLineListener(GitLineHandlerListener listener) {
     super.addListener(listener);
     myLineListeners.addListener(listener);
   }
 
-  protected void onTextAvailable(final String text, final Key outputType) {
-    Iterator<String> lines = LineHandlerHelper.splitText(text).iterator();
-    if (ProcessOutputTypes.STDOUT == outputType) {
-      notifyLines(outputType, lines, myStdoutLine);
-    }
-    else if (ProcessOutputTypes.STDERR == outputType) {
-      notifyLines(outputType, lines, myStderrLine);
-    }
-  }
-
-  /**
-   * Notify listeners for each complete line. Note that in the case of stderr, the last line is saved.
-   *
-   * @param outputType  output type
-   * @param lines       line iterator
-   * @param lineBuilder a line builder
-   */
-  private void notifyLines(final Key outputType, final Iterator<String> lines, final StringBuilder lineBuilder) {
-    if (!lines.hasNext()) return;
-    if (lineBuilder.length() > 0) {
-      lineBuilder.append(lines.next());
-      if (lines.hasNext()) {
-        // line is complete
-        final String line = lineBuilder.toString();
-        notifyLine(line, outputType);
-        lineBuilder.setLength(0);
-      }
-    }
-    while (true) {
-      String line = null;
-      if (lines.hasNext()) {
-        line = lines.next();
-      }
-
-      if (lines.hasNext()) {
-        notifyLine(line, outputType);
-      }
-      else {
-        if (line != null && line.length() > 0) {
-          lineBuilder.append(line);
-        }
-        break;
-      }
-    }
+  protected void onTextAvailable(String text, Key outputType) {
+    notifyLine(text, outputType);
   }
 
   /**
@@ -130,27 +127,113 @@ public class GitLineHandler extends GitTextHandler {
    * @param line       a line to notify
    * @param outputType output type
    */
-  private void notifyLine(final String line, final Key outputType) {
-    String trimmed = LineHandlerHelper.trimLineSeparator(line);
-    // if line ends with return, then it is a progress line, ignore it
-    if (myVcs != null && !"\r".equals(line.substring(trimmed.length()))) {
-      if (outputType == ProcessOutputTypes.STDOUT) {
-        if (!isStdoutSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(line)) {
-          myVcs.showMessages(trimmed);
-          LOG.info(line.trim());
-        }
-        else {
-          OUTPUT_LOG.debug(line.trim());
-        }
-      }
-      else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(line)) {
-        myVcs.showErrorMessages(trimmed);
-        LOG.info(line.trim());
+  private void notifyLine(@NotNull String line, @NotNull Key outputType) {
+    String lineWithoutSeparator = LineHandlerHelper.trimLineSeparator(line);
+    // do not log git remote progress (progress lines are separated with CR by convention)
+    if (!line.endsWith("\r")) logOutput(lineWithoutSeparator, outputType);
+    myLineListeners.getMulticaster().onLineAvailable(lineWithoutSeparator, outputType);
+  }
+
+  private void logOutput(@NotNull String line, @NotNull Key outputType) {
+    String trimmedLine = line.trim();
+    if (outputType == ProcessOutputTypes.STDOUT) {
+      if (!isStdoutSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(trimmedLine)) {
+        LOG.info(trimmedLine);
       }
       else {
-        LOG.debug(line.trim());
+        OUTPUT_LOG.debug(trimmedLine);
       }
     }
-    myLineListeners.getMulticaster().onLineAvailable(trimmed, outputType);
+    else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(trimmedLine)) {
+      LOG.info(trimmedLine);
+    }
+    else {
+      LOG.debug(trimmedLine);
+    }
+  }
+
+  @Override
+  protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    return new MyOSProcessHandler(commandLine, myWithMediator) {
+      @NotNull
+      @Override
+      protected BaseDataReader createOutputDataReader() {
+        return new LineReader(createProcessOutReader(),
+                              readerOptions().policy(),
+                              new BufferingTextSplitter((line) -> this.notifyTextAvailable(line, ProcessOutputTypes.STDOUT)),
+                              myPresentableName);
+      }
+
+      @NotNull
+      @Override
+      protected BaseDataReader createErrorDataReader() {
+        return new LineReader(createProcessErrReader(),
+                              readerOptions().policy(),
+                              new BufferingTextSplitter((line) -> this.notifyTextAvailable(line, ProcessOutputTypes.STDERR)),
+                              myPresentableName);
+      }
+    };
+  }
+
+  /**
+   * Will not react to {@link com.intellij.util.io.BaseOutputReader.Options}
+   * other than {@link com.intellij.util.io.BaseOutputReader.Options#policy()} because we do not negotiate with terrorists
+   */
+  private static class LineReader extends BaseDataReader {
+    @NotNull private final Reader myReader;
+    @NotNull private final char[] myInputBuffer = new char[8192];
+
+    @NotNull private final BufferingTextSplitter myOutputProcessor;
+
+    public LineReader(@NotNull Reader reader,
+                      @NotNull SleepingPolicy sleepingPolicy,
+                      @NotNull BufferingTextSplitter outputProcessor,
+                      @NotNull String presentableName) {
+      super(sleepingPolicy);
+      myReader = reader;
+      myOutputProcessor = outputProcessor;
+      start(presentableName);
+    }
+
+    @Override
+    protected boolean readAvailableNonBlocking() throws IOException {
+      return read(true);
+    }
+
+    @Override
+    protected boolean readAvailableBlocking() throws IOException {
+      return read(false);
+    }
+
+    private boolean read(boolean checkReaderReady) throws IOException {
+      boolean read = false;
+      while (true) {
+        if (checkReaderReady && !myReader.ready()) break;
+        int n = myReader.read(myInputBuffer);
+        if (n < 0) break;
+        if (n > 0) {
+          read = true;
+          myOutputProcessor.process(myInputBuffer, n);
+        }
+      }
+      return read;
+    }
+
+
+    @NotNull
+    @Override
+    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+      return ProcessIOExecutorService.INSTANCE.submit(runnable);
+    }
+
+    @Override
+    protected void close() throws IOException {
+      try {
+        myReader.close();
+      }
+      finally {
+        myOutputProcessor.flush();
+      }
+    }
   }
 }

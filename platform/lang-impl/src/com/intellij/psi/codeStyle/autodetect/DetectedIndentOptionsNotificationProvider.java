@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -66,9 +67,9 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
         PsiFile psiFile = documentManager.getPsiFile(document);
         final Ref<FileIndentOptionsProvider> indentOptionsProviderRef = new Ref<>();
         if (psiFile != null) {
-          CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+          CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
           CommonCodeStyleSettings.IndentOptions userOptions = settings.getIndentOptions(psiFile.getFileType());
-          CommonCodeStyleSettings.IndentOptions detectedOptions = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(
+          CommonCodeStyleSettings.IndentOptions detectedOptions = CodeStyle.getSettings(psiFile).getIndentOptionsByFile(
             psiFile, null, false,
             provider -> {
               indentOptionsProviderRef.set(provider);

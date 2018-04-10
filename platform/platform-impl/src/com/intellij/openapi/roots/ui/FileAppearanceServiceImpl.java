@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class FileAppearanceServiceImpl extends FileAppearanceService {
-  private static CellAppearanceEx EMPTY = new CellAppearanceEx() {
+  private static final CellAppearanceEx EMPTY = new CellAppearanceEx() {
     @Override
     public void customize(@NotNull SimpleColoredComponent component) { }
 

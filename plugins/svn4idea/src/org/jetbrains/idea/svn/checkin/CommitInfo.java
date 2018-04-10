@@ -16,15 +16,10 @@
 package org.jetbrains.idea.svn.checkin;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 
 import javax.xml.bind.annotation.*;
 import java.util.Date;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CommitInfo {
 
   public static final CommitInfo EMPTY = new CommitInfo.Builder().setRevision(-1).build();
@@ -32,13 +27,11 @@ public class CommitInfo {
   private final long myRevision;
   private final Date myDate;
   private final String myAuthor;
-  @Nullable private final SVNErrorMessage myErrorMessage;
 
   private CommitInfo(@NotNull CommitInfo.Builder builder) {
     myRevision = builder.revision;
     myAuthor = builder.author;
     myDate = builder.date;
-    myErrorMessage = builder.error;
   }
 
   public long getRevision() {
@@ -51,11 +44,6 @@ public class CommitInfo {
 
   public Date getDate() {
     return myDate;
-  }
-
-  @Nullable
-  public SVNErrorMessage getErrorMessage() {
-    return myErrorMessage;
   }
 
   @XmlAccessorType(XmlAccessType.NONE)
@@ -71,8 +59,6 @@ public class CommitInfo {
 
     @XmlElement(name = "date")
     private Date date;
-
-    @Nullable private SVNErrorMessage error;
 
     public Builder() {
     }
@@ -110,12 +96,6 @@ public class CommitInfo {
     @NotNull
     public Builder setDate(Date date) {
       this.date = date;
-      return this;
-    }
-
-    @NotNull
-    public Builder setError(@Nullable SVNErrorMessage error) {
-      this.error = error;
       return this;
     }
 

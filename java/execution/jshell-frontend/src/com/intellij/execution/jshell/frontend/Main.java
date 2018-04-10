@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 12-Jun-17
  *
  * @noinspection UseOfSystemOutOrSystemErr
  */

@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameJavaMemberProcessor;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.util.Map;
 

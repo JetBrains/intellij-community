@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -148,19 +134,18 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
       ((JComboBox)component).setModel(new DefaultComboBoxModel(model));
     }
     else {
-      ((JBComboBoxTableCellEditorComponent)component).setOptions(model);
+      ((JBComboBoxTableCellEditorComponent)component).setOptions((Object[])model);
     }
   }
 
   protected NamedScope[] createModel() {
-    final Collection<NamedScope> model = new ArrayList<>();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(myProject);
-    model.addAll(Arrays.asList(manager.getScopes()));
+    final Collection<NamedScope> model = new ArrayList<>(Arrays.asList(manager.getScopes()));
     for (PackageSet unnamedScope : manager.getUnnamedScopes().values()) {
       model.add(new NamedScope.UnnamedScope(unnamedScope));
     }
-    model.remove(DefaultScopesProvider.getInstance(myProject).getProblemsScope());
-    return model.toArray(new NamedScope[model.size()]);
+    model.remove(ProblemsScope.INSTANCE);
+    return model.toArray(new NamedScope[0]);
   }
 
   @Nullable

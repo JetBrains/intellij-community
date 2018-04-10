@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -42,10 +30,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.pom.NonNavigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.DocumentUtil;
@@ -64,6 +53,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
+import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -82,6 +72,7 @@ import javax.swing.event.ListSelectionListener;
 import java.util.*;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
+import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
 /**
  * @author nik
@@ -103,22 +94,30 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     toggleAndReturnLineBreakpoint(project, file, line, temporary);
   }
 
-  @NotNull
-  public Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
-                                                                @NotNull final VirtualFile file,
-                                                                final int line,
-                                                                boolean temporary) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  @Nullable
+  public XLineBreakpointType<?> getBreakpointTypeByPosition(@NotNull final Project project,
+                                                            @NotNull final VirtualFile file,
+                                                            final int line) {
     XLineBreakpointType<?> typeWinner = null;
     for (XLineBreakpointType<?> type : getLineBreakpointTypes()) {
       if (type.canPutAt(file, line, project) && (typeWinner == null || type.getPriority() > typeWinner.getPriority())) {
         typeWinner = type;
       }
     }
+    return typeWinner;
+  }
+
+  @NotNull
+  public Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
+                                                                @NotNull final VirtualFile file,
+                                                                final int line,
+                                                                boolean temporary) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    final XLineBreakpointType<?> typeWinner = getBreakpointTypeByPosition(project, file, line);
     if (typeWinner != null) {
       return toggleAndReturnLineBreakpoint(project, typeWinner, file, line, temporary);
     }
-    return rejectedPromise();
+    return rejectedPromise(new RuntimeException("Cannot find appropriate breakpoint type"));
   }
 
   @Override
@@ -142,10 +141,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                                   final int line,
                                                                                                   final boolean temporary) {
     XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
-    if (position != null) {
-      return toggleAndReturnLineBreakpoint(project, type, position, temporary, null, true);
-    }
-    return rejectedPromise();
+    return toggleAndReturnLineBreakpoint(project, type, position, temporary, null, true);
   }
 
   @NotNull
@@ -155,24 +151,29 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                                          final boolean temporary,
                                                                                                          @Nullable final Editor editor,
                                                                                                          boolean canRemove) {
-    return new WriteAction<Promise<XLineBreakpoint>>() {
-      @Override
-      protected void run(@NotNull Result<Promise<XLineBreakpoint>> result) throws Throwable {
-        final VirtualFile file = position.getFile();
-        final int line = position.getLine();
-        final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-        XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
-        if (breakpoint != null) {
-          if (!temporary && canRemove) {
-            breakpointManager.removeBreakpoint(breakpoint);
+    final VirtualFile file = position.getFile();
+    final int line = position.getLine();
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+    if (breakpoint != null) {
+      if (!temporary && canRemove) {
+        WriteAction.run(() -> breakpointManager.removeBreakpoint(breakpoint));
+      }
+      return resolvedPromise();
+    }
+
+    Promise<List<? extends XLineBreakpointType<P>.XLineBreakpointVariant>> variantsPromise = type.computeVariantsAsync(project, position);
+    return variantsPromise
+      .thenAsync(variants -> {
+        final AsyncPromise<XLineBreakpoint> res = new AsyncPromise<>();
+        GuiUtils.invokeLaterIfNeeded(() -> {
+          XLineBreakpoint<P> alreadyAddedBreakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+          if (alreadyAddedBreakpoint != null) {
+            return;
           }
-        }
-        else {
-          List<? extends XLineBreakpointType<P>.XLineBreakpointVariant> variants = type.computeVariants(project, position);
           if (!variants.isEmpty() && editor != null) {
             RelativePoint relativePoint = DebuggerUIUtil.getPositionForPopup(editor, line);
             if (variants.size() > 1 && relativePoint != null) {
-              final AsyncPromise<XLineBreakpoint> res = new AsyncPromise<>();
               class MySelectionListener implements ListSelectionListener {
                 RangeHighlighter myHighlighter = null;
 
@@ -248,15 +249,14 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                   @Override
                   public void canceled() {
                     selectionListener.clearHighlighter();
+                    res.cancel();
                   }
 
                   @Override
                   public PopupStep onChosen(final XLineBreakpointType.XLineBreakpointVariant selectedValue, boolean finalChoice) {
                     selectionListener.clearHighlighter();
-                    WriteAction.run(() -> {
-                      P properties = (P)selectedValue.createProperties();
-                      res.setResult(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
-                    });
+                    P properties = (P)selectedValue.createProperties();
+                    insertBreakpoint(properties, res, breakpointManager, file, line, type, temporary);
                     return FINAL_CHOICE;
                   }
 
@@ -276,34 +276,34 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
               popup.addListSelectionListener(selectionListener);
               popup.show(relativePoint);
-              result.setResult(res);
               return;
             }
             else {
               P properties = variants.get(0).createProperties();
-              result.setResult(
-                Promise.resolve(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
+              insertBreakpoint(properties, res, breakpointManager, file, line, type, temporary);
               return;
             }
           }
           P properties = type.createBreakpointProperties(file, line);
-          result.setResult(
-            Promise.resolve(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
-          return;
-        }
-        result.setResult(rejectedPromise());
-      }
-    }.execute().getResultObject();
+          insertBreakpoint(properties, res, breakpointManager, file, line, type, temporary);
+        }, ModalityState.defaultModalityState());
+        return res;
+      });
+  }
+
+  private static <P extends XBreakpointProperties> void insertBreakpoint(P properties,
+                                                                         AsyncPromise<XLineBreakpoint> res,
+                                                                         XBreakpointManager breakpointManager,
+                                                                         VirtualFile file,
+                                                                         int line,
+                                                                         XLineBreakpointType<P> type,
+                                                                         Boolean temporary) {
+    res.setResult(WriteAction.compute(() -> breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
   }
 
   @Override
   public void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
-      }
-    }.execute();
+    WriteAction.run(() -> XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint));
   }
 
   @Override
@@ -328,14 +328,14 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   @Nullable
-  public XSourcePosition createPosition(final VirtualFile file, final int line) {
-    return XSourcePositionImpl.create(file, line);
+  public XSourcePosition createPosition(@Nullable VirtualFile file, int line) {
+    return file == null ? null : XSourcePositionImpl.create(file, line);
   }
 
   @Override
   @Nullable
-  public XSourcePosition createPosition(final VirtualFile file, final int line, final int column) {
-    return XSourcePositionImpl.create(file, line, column);
+  public XSourcePosition createPosition(@Nullable VirtualFile file, final int line, final int column) {
+    return file == null ? null : XSourcePositionImpl.create(file, line, column);
   }
 
   @Override
@@ -347,60 +347,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Override
   @Nullable
   public XSourcePosition createPositionByElement(PsiElement element) {
-    if (element == null) return null;
-
-    PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null) return null;
-
-    final VirtualFile file = psiFile.getVirtualFile();
-    if (file == null) return null;
-
-    final SmartPsiElementPointer<PsiElement> pointer =
-      SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
-
-    return new XSourcePosition() {
-      private volatile XSourcePosition myDelegate;
-
-      private XSourcePosition getDelegate() {
-        if (myDelegate == null) {
-          myDelegate = ReadAction.compute(() -> {
-            PsiElement elem = pointer.getElement();
-            return XSourcePositionImpl.createByOffset(pointer.getVirtualFile(), elem != null ? elem.getTextOffset() : -1);
-          });
-        }
-        return myDelegate;
-      }
-
-      @Override
-      public int getLine() {
-        return getDelegate().getLine();
-      }
-
-      @Override
-      public int getOffset() {
-        return getDelegate().getOffset();
-      }
-
-      @NotNull
-      @Override
-      public VirtualFile getFile() {
-        return file;
-      }
-
-      @NotNull
-      @Override
-      public Navigatable createNavigatable(@NotNull Project project) {
-        // no need to create delegate here, it may be expensive
-        if (myDelegate != null) {
-          return myDelegate.createNavigatable(project);
-        }
-        PsiElement elem = pointer.getElement();
-        if (elem instanceof Navigatable) {
-          return ((Navigatable)elem);
-        }
-        return NonNavigatable.INSTANCE;
-      }
-    };
+    return XSourcePositionImpl.createByElement(element);
   }
 
   @Override
@@ -586,11 +533,64 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @NotNull
   @Override
-  public XExpression createExpression(@NotNull String text, Language language, String custom, EvaluationMode mode) {
+  public XExpression createExpression(@NotNull String text, Language language, String custom, @NotNull EvaluationMode mode) {
     return new XExpressionImpl(text, language, custom, mode);
   }
 
   public static boolean isEmptyExpression(@Nullable XExpression expression) {
     return expression == null || StringUtil.isEmptyOrSpaces(expression.getExpression());
+  }
+
+  public void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session) {
+    XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
+    if (activeExecutionStack != null) {
+      activeExecutionStack.computeStackFrames(0, new XStackFrameContainerEx() {
+        List<XStackFrame> myFrames = new ArrayList<>();
+
+        @Override
+        public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {
+          myFrames.addAll(stackFrames);
+          if (last) {
+            print(null);
+          }
+        }
+
+        @Override
+        public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, @Nullable XStackFrame toSelect, boolean last) {
+          addStackFrames(stackFrames, last);
+        }
+
+        @Override
+        public void errorOccurred(@NotNull String errorMessage) {
+          print(errorMessage);
+        }
+
+        void print(@Nullable String errorMessage) {
+          ConsoleView view = session.getConsoleView();
+          Project project = session.getProject();
+          DebuggerUIUtil.invokeLater(() -> view.print("Stack: ", ConsoleViewContentType.SYSTEM_OUTPUT));
+          myFrames.forEach(f -> {
+            SimpleColoredText text = new SimpleColoredText();
+            ReadAction.run(() -> f.customizePresentation(text));
+            XSourcePosition position = f.getSourcePosition();
+            Navigatable navigatable = position != null ? position.createNavigatable(project) : null;
+            DebuggerUIUtil.invokeLater(() -> {
+              view.print("\n\t", ConsoleViewContentType.SYSTEM_OUTPUT);
+              view.printHyperlink(text.toString(), p -> {
+                if (navigatable != null) {
+                  navigatable.navigate(true);
+                }
+              });
+            });
+          });
+          DebuggerUIUtil.invokeLater(() -> {
+            if (errorMessage != null) {
+              view.print("\n\t" + errorMessage, ConsoleViewContentType.SYSTEM_OUTPUT);
+            }
+            view.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+          });
+        }
+      });
+    }
   }
 }

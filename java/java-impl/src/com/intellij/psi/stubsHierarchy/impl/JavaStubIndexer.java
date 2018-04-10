@@ -22,9 +22,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.compiled.ClassFileDecompilers;
-import com.intellij.psi.impl.java.stubs.*;
+import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
+import com.intellij.psi.impl.java.stubs.PsiImportListStub;
+import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
+import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.*;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.ClassDecl;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.Decl;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.MemberDecl;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.Unit;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.stubs.Stub;
@@ -82,8 +88,8 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
         processImport((PsiImportListStub) el, importList, usedNames);
       }
     }
-    ClassDecl[] classes = classList.isEmpty() ? ClassDecl.EMPTY_ARRAY : classList.toArray(new ClassDecl[classList.size()]);
-    IndexTree.Import[] imports = importList.isEmpty() ? IndexTree.Import.EMPTY_ARRAY : importList.toArray(new IndexTree.Import[importList.size()]);
+    ClassDecl[] classes = classList.isEmpty() ? ClassDecl.EMPTY_ARRAY : classList.toArray(ClassDecl.EMPTY_ARRAY);
+    IndexTree.Import[] imports = importList.isEmpty() ? IndexTree.Import.EMPTY_ARRAY : importList.toArray(IndexTree.Import.EMPTY_ARRAY);
     byte type = javaFileStub.isCompiled() ? IndexTree.BYTECODE : IndexTree.JAVA;
     return new Unit(javaFileStub.getPackageName(), type, imports, classes);
   }
@@ -100,7 +106,7 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
         innerList.add(innerDef);
       }
     }
-    return innerList.isEmpty() ? null : new MemberDecl(innerList.toArray(new Decl[innerList.size()]));
+    return innerList.isEmpty() ? null : new MemberDecl(innerList.toArray(Decl.EMPTY_ARRAY));
   }
 
   @NotNull
@@ -132,8 +138,8 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
       flags |= IndexTree.SUPERS_UNRESOLVED;
     }
     String[] supers = superList.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : ArrayUtil.toStringArray(superList);
-    Decl[] inners = innerList.isEmpty() ? Decl.EMPTY_ARRAY : innerList.toArray(new Decl[innerList.size()]);
-    return new ClassDecl(classStub.id, flags, classStub.getName(), supers, inners);
+    Decl[] inners = innerList.isEmpty() ? Decl.EMPTY_ARRAY : innerList.toArray(Decl.EMPTY_ARRAY);
+    return new ClassDecl(classStub.getStubId(), flags, classStub.getName(), supers, inners);
   }
 
   private static int translateFlags(PsiClassStubImpl<?> classStub) {

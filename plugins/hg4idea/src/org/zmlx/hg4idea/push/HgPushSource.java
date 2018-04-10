@@ -19,7 +19,7 @@ import com.intellij.dvcs.push.PushSource;
 import org.jetbrains.annotations.NotNull;
 
 public class HgPushSource implements PushSource {
-  @NotNull private String myBranch;
+  @NotNull private final String myBranch;
 
   public HgPushSource(@NotNull String branch) {
     myBranch = branch;

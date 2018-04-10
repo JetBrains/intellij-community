@@ -19,6 +19,7 @@ import com.intellij.openapi.components.service
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.GitHttpAuthService
 import git4idea.commands.GitHttpAuthenticator
+import git4idea.config.GitVersion
 import git4idea.test.GitHttpAuthTestService
 import git4idea.test.GitPlatformTest
 import java.io.File
@@ -41,13 +42,15 @@ class GitRemoteTest : GitPlatformTest() {
   }
 
   override fun tearDown() {
-    try{
+    try {
       authTestService.cleanup()
     }
     finally {
       super.tearDown()
     }
   }
+
+  override fun hasRemoteGitOperation() = true
 
   fun `test clone from http with username`() {
     val cloneWaiter = cloneOnPooledThread(makeUrl("gituser"))
@@ -78,20 +81,27 @@ class GitRemoteTest : GitPlatformTest() {
     authenticator.supplyPassword("incorrect")
 
     assertTrue("Clone didn't complete during the reasonable period of time", cloneWaiter.await(30, TimeUnit.SECONDS))
-    assertFalse("Repository directory shouldn't be created", File(myTestRoot, projectName).exists())
-    assertErrorNotification("Clone failed", "Authentication failed for '$url/'")
+    assertFalse("Repository directory shouldn't be created", File(testRoot, projectName).exists())
+
+    val expectedAuthFailureMessage = if (vcs.version.isLaterOrEqual(GitVersion(1, 8, 3, 0))) {
+      "Authentication failed for '$url/'"
+    }
+    else {
+      "Authentication failed"
+    }
+    assertErrorNotification("Clone failed", expectedAuthFailureMessage)
   }
 
   private fun makeUrl(username: String?) : String {
     val login = if (username == null) "" else "$username@"
-    return "http://${login}deb6-vm7-git/$projectName.git"
+    return "http://${login}deb6-vm7-git.labs.intellij.net/$projectName.git"
   }
 
   private fun cloneOnPooledThread(url: String): CountDownLatch {
     val cloneWaiter = CountDownLatch(1)
     executeOnPooledThread {
       val projectName = url.substring(url.lastIndexOf('/') + 1).replace(".git", "")
-      GitCheckoutProvider.doClone(myProject, myGit, projectName, myTestRoot.path, url)
+      GitCheckoutProvider.doClone(project, git, projectName, testRoot.path, url)
       cloneWaiter.countDown()
     }
     return cloneWaiter
@@ -99,7 +109,7 @@ class GitRemoteTest : GitPlatformTest() {
 
   private fun assertCloneSuccessful(cloneCompleted: CountDownLatch) {
     assertTrue("Clone didn't complete during the reasonable period of time", cloneCompleted.await(30, TimeUnit.SECONDS))
-    assertTrue("Repository directory was not found", File(myTestRoot, projectName).exists())
+    assertTrue("Repository directory was not found", File(testRoot, projectName).exists())
   }
 
   private fun assertPasswordAsked() {

@@ -21,7 +21,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import org.jetbrains.annotations.NotNull;
 
 public class DeferingPrinter implements Printer {
-  private CompositePrintable myCompositePrintable;
+  private final CompositePrintable myCompositePrintable;
 
   public DeferingPrinter() {
     myCompositePrintable = new CompositePrintable();

@@ -117,9 +117,13 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
       if (match.isExactMismatch() || match.isExactMatch()) {
         return;
       }
-      registerError(expression, ignoreSingleArgument && isOnlyArgumentOfMethodCall(match.getLeftDiff(), expression)
-                                ? ProblemHighlightType.INFORMATION
-                                : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      if (ignoreSingleArgument && isOnlyArgumentOfMethodCall(match.getLeftDiff(), expression)) {
+        if (!isOnTheFly()) return;
+        registerError(expression, ProblemHighlightType.INFORMATION);
+      }
+      else {
+        registerError(expression, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      }
     }
 
     private boolean isOnlyArgumentOfMethodCall(PsiElement element, PsiConditionalExpression conditional) {
@@ -131,7 +135,7 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
         return false;
       }
       final PsiExpressionList expressionList = (PsiExpressionList)parent;
-      if (expressionList.getExpressions().length != 1) {
+      if (expressionList.getExpressionCount() != 1) {
         return false;
       }
       final PsiElement grandParent = expressionList.getParent();

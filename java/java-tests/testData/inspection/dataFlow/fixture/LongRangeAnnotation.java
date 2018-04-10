@@ -6,6 +6,18 @@ public class LongRangeAnnotation {
     return new Random().nextInt(100);
   }
 
+  @Nonnegative int x;
+  @Nonnegative double y;
+
+  void testField() {
+    if(<warning descr="Condition 'x < 0' is always 'false'">x < 0</warning>) {
+      System.out.println("Impossible");
+    }
+    if(y < 0) {
+      System.out.println("Doubles are not supported yet");
+    }
+  }
+
   void testAnnotated() {
     int value = method();
     if(value == 0) {

@@ -23,6 +23,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +57,7 @@ public class PyDebugSupportUtils {
         if (!(element instanceof PyExpression) || element instanceof PyLiteralExpression) {
           element = PsiTreeUtil.getParentOfType(element, PyExpression.class);
         }
-        if (element != null && element instanceof PyLiteralExpression) {
+        if (element instanceof PyLiteralExpression) {
           return null;
         }
         if (element != null && isSimpleEnough(element) && isExpression(project, document.getText(element.getTextRange()))) {
@@ -112,5 +114,10 @@ public class PyDebugSupportUtils {
     }
 
     return false;
+  }
+
+  public static boolean isCurrentPythonDebugProcess(@NotNull Project project) {
+    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+    return session != null && session.getDebugProcess() instanceof PyDebugProcess;
   }
 }

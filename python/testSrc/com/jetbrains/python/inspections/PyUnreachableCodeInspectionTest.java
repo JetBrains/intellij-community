@@ -15,15 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class PyUnreachableCodeInspectionTest extends PyTestCase {
-  private static final String TEST_DIRECTORY = "inspections/PyUnreachableCodeInspection/";
-
+public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   // All previous unreachable tests, feel free to split them
   public void testUnreachable() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
@@ -34,9 +33,108 @@ public class PyUnreachableCodeInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
-  private void doTest() {
-    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyUnreachableCodeInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  // PY-25974
+  public void testExprOrSysExitAssignedToVar() {
+    doTest();
+  }
+
+  // PY-22184
+  public void testWhileTrueTryBreakFinally() {
+    doTest();
+  }
+
+  // PY-24750
+  public void testIfFalse() {
+    doTestByText(
+      "if False:\n" +
+      "    <warning descr=\"This code is unreachable\">a = 1</warning>\n" +
+      "\n" +
+      "if False:\n" +
+      "    <warning descr=\"This code is unreachable\">b = 1</warning>\n" +
+      "else:\n" +
+      "    pass\n" +
+      "\n" +
+      "if False:\n" +
+      "    <warning descr=\"This code is unreachable\">c = 1</warning>\n" +
+      "elif d:\n" +
+      "    pass\n" +
+      "else:\n" +
+      "    pass\n"
+    );
+  }
+
+  // PY-24750
+  public void testIfTrue() {
+    doTestByText(
+      "if True:\n" +
+      "    pass\n" +
+      "\n" +
+      "if True:\n" +
+      "    pass\n" +
+      "else:\n" +
+      "    <warning descr=\"This code is unreachable\">b = 1</warning>\n" +
+      "\n" +
+      "if True:\n" +
+      "    pass\n" +
+      "<warning descr=\"This code is unreachable\">elif c:\n" +
+      "    d = 1</warning>\n" +
+      "else:\n" +
+      "    <warning descr=\"This code is unreachable\">e = 1</warning>\n"
+    );
+  }
+
+  // PY-24750
+  public void testIfElifTrue() {
+    doTestByText(
+      "if c:\n" +
+      "    pass\n" +
+      "elif True:\n" +
+      "    pass\n" +
+      "\n" +
+      "if d:\n" +
+      "    pass\n" +
+      "elif True:\n" +
+      "    pass\n" +
+      "else:\n" +
+      "    <warning descr=\"This code is unreachable\">e = 1</warning>\n"
+    );
+  }
+
+  // PY-24750
+  public void testIfElifFalse() {
+    doTestByText(
+      "if c:\n" +
+      "    pass\n" +
+      "elif False:\n" +
+      "    <warning descr=\"This code is unreachable\">a = 1</warning>\n" +
+      "\n" +
+      "if d:\n" +
+      "    pass\n" +
+      "elif False:\n" +
+      "    <warning descr=\"This code is unreachable\">b = 1</warning>\n" +
+      "else:\n" +
+      "    pass"
+    );
+  }
+
+  // PY-28972
+  public void testWhileTrueElse() {
+    doTestByText(
+      "while True:\n" +
+      "    pass\n" +
+      "else:\n" +
+      "    <warning descr=\"This code is unreachable\">print(\"ok\")</warning>"
+    );
+  }
+
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyUnreachableCodeInspection.class;
+  }
+
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
   }
 }

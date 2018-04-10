@@ -106,7 +106,7 @@ public class ContentUtilEx extends ContentsUtil {
     }
     else {
       Object disposableByKey = contentComponent.getClientProperty(DISPOSABLE_KEY);
-      if (disposableByKey != null && disposableByKey instanceof Disposable) {
+      if (disposableByKey instanceof Disposable) {
         Disposer.register(content, (Disposable)disposableByKey);
       }
     }
@@ -182,6 +182,42 @@ public class ContentUtilEx extends ContentsUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static JComponent findContentComponent(@NotNull TabbedContent tabbedContent, @NotNull String fullTabName) {
+    for (Pair<String, JComponent> tab : tabbedContent.getTabs()) {
+      if (fullTabName.equals(getFullName(tabbedContent.getTitlePrefix(), tab.first))) {
+        return tab.second;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Closes content with specified full tab name (ie name with prefix).
+   * @return true if content was found and closed
+   */
+  public static boolean closeContentTab(@NotNull ContentManager manager, @NotNull String fullTabName) {
+    for (Content content : manager.getContents()) {
+      if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
+        TabbedContent tabbedContent = (TabbedContent)content;
+        if (fullTabName.startsWith(getFullPrefix(tabbedContent.getTitlePrefix()))) {
+          JComponent component = findContentComponent(tabbedContent, fullTabName);
+          if (component != null) {
+            tabbedContent.removeContent(component);
+            dispose(component);
+            return true;
+          }
+          return false;
+        }
+      }
+      else if (content.getTabName().equals(fullTabName)) {
+        manager.removeContent(content, true);
+        return true;
+      }
+    }
+    return false;
   }
 
   public static int getSelectedTab(@NotNull TabbedContent content) {

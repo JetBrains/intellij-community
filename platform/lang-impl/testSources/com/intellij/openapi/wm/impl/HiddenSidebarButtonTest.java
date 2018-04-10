@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.wm.impl;
 
@@ -26,8 +14,6 @@ import java.util.Arrays;
 /**
  * @author Vassiliy Kudryashov
  */
-
-
 public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
   private static final String LAYOUT = "<layout>" +
                                  "<window_info id=\"TODO\" active=\"false\" anchor=\"bottom\" auto_hide=\"false\" internal_type=\"DOCKED\" type=\"DOCKED\" visible=\"false\" show_stripe_button=\"false\" weight=\"0.42947903\" sideWeight=\"0.4874552\" order=\"6\" side_tool=\"false\" content_ui=\"tabs\" x=\"119\" y=\"106\" width=\"619\" height=\"748\"/>" +
@@ -58,8 +44,8 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
     for (int i = 0; i < IDS.length; i++) {
       assertTrue(layout.isToolWindowRegistered(IDS[i]));
       assertFalse(layout.isToolWindowUnregistered(IDS[i]));
-      assertTrue(ESTIMATED_TO_SHOW[i] == layout.getInfo(IDS[i], true).isShowStripeButton());
-      assertTrue(ESTIMATED_VISIBILITY[i] == myManager.getStripeButton(IDS[i]).isVisible());
+      assertEquals(ESTIMATED_TO_SHOW[i], layout.getInfo(IDS[i], true).isShowStripeButton());
+      assertEquals(ESTIMATED_VISIBILITY[i], myManager.getStripeButton(IDS[i]).isVisible());
     }
   }
 }

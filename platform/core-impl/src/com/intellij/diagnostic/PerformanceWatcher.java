@@ -198,6 +198,17 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
     SwingUtilities.invokeLater(new SwingThreadRunnable(millis));
   }
 
+  @NotNull
+  public static String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+    @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
+    String trace = headerMsg + ": "+thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
+    for (final StackTraceElement stackTraceElement : stackTrace) {
+      trace += " at "+stackTraceElement +"\n";
+    }
+    trace += "---\n";
+    return trace;
+  }
+
   private static int getSamplingInterval() {
     return Registry.intValue("performance.watcher.sampling.interval.ms");
   }

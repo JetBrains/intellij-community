@@ -53,7 +53,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/20/12
  */
 public class FormsInstrumenter extends FormsBuilder {
   public static final String BUILDER_NAME = "forms";
@@ -92,8 +91,7 @@ public class FormsInstrumenter extends FormsBuilder {
     try {
       final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false);
 
-      final List<File> classpath = new ArrayList<>();
-      classpath.addAll(ProjectPaths.getCompilationClasspath(chunk, false));
+      final List<File> classpath = new ArrayList<>(ProjectPaths.getCompilationClasspath(chunk, false));
       classpath.add(getResourcePath(GridConstraints.class)); // forms_rt.jar
       final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
       classpath.addAll(chunkSourcePath.keySet()); // sourcepath for loading forms resources

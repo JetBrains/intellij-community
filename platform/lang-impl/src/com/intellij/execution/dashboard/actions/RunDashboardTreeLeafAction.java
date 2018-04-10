@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.dashboard.DashboardNode;
+import com.intellij.execution.dashboard.RunDashboardNode;
 import com.intellij.execution.dashboard.tree.GroupingNode;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author konstantin.aleev
  */
-public abstract class RunDashboardTreeLeafAction<T extends DashboardNode> extends RunDashboardTreeAction<T> {
+public abstract class RunDashboardTreeLeafAction<T extends RunDashboardNode> extends RunDashboardTreeActionImpl<T> {
   protected RunDashboardTreeLeafAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /*
@@ -153,20 +141,22 @@ public class JavaResolveUtil {
         PsiClass topAccessClass = getTopLevelClass(accessObjectClass, memberClass);
         if (!manager.areElementsEquivalent(topMemberClass, topAccessClass)) return false;
         if (accessObjectClass instanceof PsiAnonymousClass && accessObjectClass.isInheritor(memberClass, true)) {
-          if (place instanceof PsiMethodCallExpression) {
+          if (!(place instanceof PsiAnonymousClass)) {
             return false;
           }
         }
       }
 
+      PsiClass memberTopLevelClass = getTopLevelClass(memberClass, null);
       if (fileResolveScope == null) {
         PsiClass placeTopLevelClass = getTopLevelClass(place, null);
-        PsiClass memberTopLevelClass = getTopLevelClass(memberClass, null);
         return manager.areElementsEquivalent(placeTopLevelClass, memberTopLevelClass) &&
                !isInClassAnnotationParameterList(place, placeTopLevelClass);
       }
       else {
-        return fileResolveScope instanceof PsiClass &&
+        PsiClass scopeTopLevelClass = getTopLevelClass(fileResolveScope, null);
+        return manager.areElementsEquivalent(scopeTopLevelClass, memberTopLevelClass) &&
+               fileResolveScope instanceof PsiClass &&
                !((PsiClass)fileResolveScope).isInheritor(memberClass, true);
       }
     }
@@ -196,7 +186,7 @@ public class JavaResolveUtil {
   private static boolean isInClassAnnotationParameterList(@NotNull PsiElement place, @Nullable PsiClass contextClass) {
     if (contextClass != null) {
       PsiAnnotation annotation = PsiTreeUtil.getContextOfType(place, PsiAnnotation.class, true);
-      if (annotation != null && contextClass.getModifierList() == annotation.getOwner()) {
+      if (annotation != null && PsiTreeUtil.isAncestor(contextClass.getModifierList(), annotation, false)) {
         return true;
       }
     }

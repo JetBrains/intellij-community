@@ -1,9 +1,8 @@
 // "Move 'return' closer to computation of the value of 'r'" "true"
 class T {
     String f() {
-        String r = "";
         do {
-            if (!hasNext()) return r;
+            if (!hasNext()) return "";
             String s = next();
             if (s != null) {
                 return s;

@@ -39,6 +39,10 @@
     <option name="DEPRECATION" value="false" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="-Xlint" />
     <option name="MAXIMUM_HEAP_SIZE" value="512" />
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="mod_1" options="-param_1" />
+      <module name="mod_2" options="-param_2" />
+    </option>
   </component>
   <component name="ProjectModuleManager">
     <modules>

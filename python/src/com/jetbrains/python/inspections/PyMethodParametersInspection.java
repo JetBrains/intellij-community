@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -23,6 +24,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.QualifiedName;
@@ -48,10 +50,18 @@ import java.awt.event.ActionListener;
  */
 public class PyMethodParametersInspection extends PyInspection {
   public String MCS = "mcs";
+
+  @Nullable
+  public static PyMethodParametersInspection getInstance(@NotNull PsiElement element) {
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
+    final String toolName = PyMethodParametersInspection.class.getSimpleName();
+    return (PyMethodParametersInspection)inspectionProfile.getUnwrappedTool(toolName, element);
+  }
+
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    ComboBox comboBox = new ComboBox(new String[] {"mcs", "metacls"});
+    ComboBox comboBox = new ComboBox<>(new String[] {"mcs", "metacls"});
     comboBox.setSelectedItem(MCS);
     comboBox.addActionListener(new ActionListener() {
       @Override
@@ -70,12 +80,14 @@ public class PyMethodParametersInspection extends PyInspection {
     return root;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.problematic.first.parameter");
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WEAK_WARNING;
@@ -205,9 +217,7 @@ public class PyMethodParametersInspection extends PyInspection {
                 );
               }
             }
-            else if (flags.isClassMethod() ||
-                     PyNames.NEW.equals(methodName) ||
-                     PyNames.INIT_SUBCLASS.equals(methodName) && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36)) {
+            else if (flags.isClassMethod() || PyNames.NEW.equals(methodName)) {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),

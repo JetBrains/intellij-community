@@ -31,6 +31,6 @@ public class DefaultConsoleFiltersProvider implements ConsoleFilterProviderEx {
   public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
     List<Filter> filters = ExceptionFilters.getFilters(scope);
     filters.add(new YourkitFilter(project));
-    return filters.toArray(new Filter[filters.size()]);
+    return filters.toArray(Filter.EMPTY_ARRAY);
   }
 }

@@ -45,9 +45,15 @@ sys.argv = argv
 
 cwd = os.getcwd()
 
-try:
-    main()
-finally:
-    if run_cov:
-        os.chdir(cwd)
-        main(["xml", "-o", coverage_file + ".xml", "--ignore-errors"])
+run_xml = os.getenv('PYCHARM_RUN_COVERAGE_XML')
+if run_xml:
+    os.chdir(cwd)
+    main(["xml", "-o", coverage_file + ".xml", "--ignore-errors"])
+else:
+    try:
+        main()
+    finally:
+        if run_cov:
+            os.chdir(cwd)
+            main(["xml", "-o", coverage_file + ".xml", "--ignore-errors"])
+

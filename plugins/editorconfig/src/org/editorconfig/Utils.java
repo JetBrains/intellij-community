@@ -1,6 +1,6 @@
 package org.editorconfig;
 
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -13,13 +13,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.LineSeparator;
+import org.editorconfig.configmanagement.DocumentSettingsManager;
 import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider;
-import org.editorconfig.configmanagement.EditorSettingsManager;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.core.EditorConfig.OutPair;
@@ -37,7 +36,8 @@ public class Utils {
   public static String configValueForKey(List<OutPair> outPairs, String key) {
     for (OutPair outPair : outPairs) {
       if (outPair.getKey().equals(key)) {
-        return outPair.getVal();
+        String val = outPair.getVal();
+        return "none".equals(val) || "unset".equals(val) ? "" : val;
       }
     }
     return "";
@@ -63,7 +63,7 @@ public class Utils {
   }
 
   public static void export(Project project) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final CodeStyleSettings settings = CodeStyle.getSettings(project);
     final CommonCodeStyleSettings.IndentOptions commonIndentOptions = settings.getIndentOptions();
     StringBuilder result = new StringBuilder();
     addIndentOptions(result, "*", commonIndentOptions, getEncoding(project) +
@@ -95,18 +95,18 @@ public class Utils {
   }
 
   private static String getEndOfFile() {
-    return EditorSettingsManager.insertFinalNewlineKey + "=" + EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF() + "\n";
+    return DocumentSettingsManager.insertFinalNewlineKey + "=" + EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF() + "\n";
   }
 
   private static String getTrailingSpaces() {
     final String spaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
-    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(spaces)) return EditorSettingsManager.trimTrailingWhitespaceKey + "=false\n";
-    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(spaces)) return EditorSettingsManager.trimTrailingWhitespaceKey + "=true\n";
+    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(spaces)) return DocumentSettingsManager.trimTrailingWhitespaceKey + "=false\n";
+    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(spaces)) return DocumentSettingsManager.trimTrailingWhitespaceKey + "=true\n";
     return "";
   }
 
   private static String getLineEndings(Project project) {
-    final String separator = CodeStyleFacade.getInstance(project).getLineSeparator();
+    final String separator = CodeStyle.getSettings(project).getLineSeparator();
     for (LineSeparator s : LineSeparator.values()) {
       if (separator.equals(s.getSeparatorString())) {
         return LineEndingsManager.lineEndingsKey + "=" + s.name().toLowerCase(Locale.US) + "\n";

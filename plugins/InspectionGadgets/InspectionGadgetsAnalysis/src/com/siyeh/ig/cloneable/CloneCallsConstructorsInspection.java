@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsConstructorsInspection extends BaseInspection {
@@ -28,15 +29,16 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "clone.instantiates.objects.with.constructor.display.name");
+    return InspectionGadgetsBundle.message("clone.instantiates.objects.with.constructor.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "clone.instantiates.objects.with.constructor.problem.descriptor");
+    final PsiType type = (PsiType)infos[0];
+    return type instanceof PsiArrayType
+           ? InspectionGadgetsBundle.message("clone.instantiates.new.array.problem.descriptor", type.getPresentableText())
+           : InspectionGadgetsBundle.message("clone.instantiates.objects.with.constructor.problem.descriptor");
   }
 
   @Override
@@ -44,8 +46,7 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
     return new CloneCallsConstructorVisitor();
   }
 
-  private static class CloneCallsConstructorVisitor
-    extends BaseInspectionVisitor {
+  private static class CloneCallsConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -59,25 +60,22 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
       method.accept(new JavaRecursiveElementWalkingVisitor() {
 
         @Override
-        public void visitNewExpression(
-          @NotNull PsiNewExpression newExpression) {
+        public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
           super.visitNewExpression(newExpression);
-          final PsiExpression[] arrayDimensions =
-            newExpression.getArrayDimensions();
-          if (arrayDimensions.length != 0) {
-            return;
-          }
-          if (newExpression.getArrayInitializer() != null) {
-            return;
-          }
           if (newExpression.getAnonymousClass() != null) {
             return;
           }
-          if (PsiTreeUtil.getParentOfType(newExpression,
-                                          PsiThrowStatement.class) != null) {
+          if (ParenthesesUtils.getParentSkipParentheses(newExpression) instanceof PsiThrowStatement) {
             return;
           }
-          registerNewExpressionError(newExpression);
+          final PsiType type = newExpression.getType();
+          if (type instanceof PsiClassType) {
+            final PsiClass clonedClass = ((PsiClassType) type).resolve();
+            if (clonedClass != aClass && !InheritanceUtil.isInheritor(clonedClass, CommonClassNames.JAVA_LANG_CLONEABLE)) {
+              return;
+            }
+          }
+          registerNewExpressionError(newExpression, type);
         }
       });
     }

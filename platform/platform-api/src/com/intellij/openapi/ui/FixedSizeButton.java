@@ -86,22 +86,18 @@ public class FixedSizeButton extends JButton {
   }
 
   public Dimension getPreferredSize() {
-    if (myComponent != null) {
-      int size = myComponent.getPreferredSize().height;
-      if (myComponent instanceof JComboBox &&
-          !(UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()) || UIUtil.isUnderDarcula()) {
-        // JComboBox's preferred height is 2px greater than JTextField's one, because
-        // javax.swing.DefaultListCellRenderer#getNoFocusBorder returns (1,1,1,1) border.
-        // Decrement to have equal sizes for pretty look when stacked vertically
-        // Mac default border is computed correctly, so don't account for on Mac.
-        size -= 2;
-      }
-      return new Dimension(size, size);
-    }
     if (mySize != -1) {
       return new Dimension(mySize, mySize);
     }
-    return super.getPreferredSize();
+
+    Dimension d = super.getPreferredSize();
+    int base = new JTextField().getPreferredSize().height;
+    if (base %2 == 1) base++;
+    d.width = Math.max(d.height, base);
+    int width = mySize == -1 ? d.width : mySize;
+    int height = myComponent != null ? myComponent.getPreferredSize().height : mySize != -1 ? mySize : base;
+
+    return new Dimension(width, height);
   }
 
   public void setAttachedComponent(JComponent component) {
@@ -114,20 +110,5 @@ public class FixedSizeButton extends JButton {
 
   public void setSize(int size) {
     mySize = size;
-  }
-
-  @Override
-  public void setBounds(int x, int y, int width, int height) {
-    int size = Math.min(width, height);
-    super.setBounds(x, y, size, size);
-  }
-
-  @Override
-  public void setBounds(Rectangle r) {
-    if (r.width != r.height) {
-      int size = Math.min(r.width, r.height);
-      r = new Rectangle(r.x, r.y, size, size);
-    }
-    super.setBounds(r);
   }
 }

@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/3/12
  */
 public class DomStubBuilderTest extends DomStubTest {
 
@@ -99,7 +98,7 @@ public class DomStubBuilderTest extends DomStubTest {
     VirtualFile file = psiFile.getVirtualFile();
     assertTrue(loader.canHaveStub(file));
     ObjectStubTree stubTree = loader.readFromVFile(getProject(), file);
-    assertNull(stubTree); // no stubs for invalid XML
+    assertNotNull(stubTree);
   }
 
   public void testInclusion() {

@@ -135,7 +135,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
     assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(myProject, f, "foo"));
   }
 
-  public void testHighlightingFromTag() throws Exception {
+  public void testHighlightingFromTag() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
                      "<<caret>version>1</version>" +

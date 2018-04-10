@@ -38,9 +38,9 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
 
   private final PsiElement myStartElement;
   private int myEndOffset = Integer.MAX_VALUE;
-  private Collection<StructureViewTreeElement> myChildElements = new ArrayList<>();
+  private final Collection<StructureViewTreeElement> myChildElements = new ArrayList<>();
   private final CustomFoldingProvider myProvider;
-  private CustomRegionTreeElement myParent;
+  private final CustomRegionTreeElement myParent;
   private List<CustomRegionTreeElement> mySubRegions;
 
   public CustomRegionTreeElement(@NotNull PsiElement startElement,
@@ -116,7 +116,7 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
   @Override
   public TreeElement[] getChildren() {
     if (mySubRegions == null || mySubRegions.isEmpty()) {
-      return myChildElements.toArray(new StructureViewTreeElement[myChildElements.size()]);
+      return myChildElements.toArray(StructureViewTreeElement.EMPTY_ARRAY);
     }
     StructureViewTreeElement[] allElements = new StructureViewTreeElement[myChildElements.size() + mySubRegions.size()];
     int index = 0;

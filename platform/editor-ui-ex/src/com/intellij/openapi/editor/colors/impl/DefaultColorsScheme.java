@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeManager;
@@ -69,7 +68,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   @Nullable
   public Color getColor(@NotNull ColorKey key, boolean useDefaults) {
     Color color = myColorsMap.get(key);
-    if (color != null) return color;
+    if (color != null) return color == NULL_COLOR_MARKER ? null : color;
 
     ColorKey fallbackKey = key.getFallbackColorKey();
     Color fallback = fallbackKey == null ? null : getFallbackColor(fallbackKey);
@@ -99,10 +98,6 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
 
   @Override
   public void setColor(ColorKey key, Color color) {
-  }
-
-  @Override
-  public void setFont(EditorFontType key, Font font) {
   }
 
   @Override

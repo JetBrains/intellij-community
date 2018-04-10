@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -37,31 +24,38 @@ import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author traff
  */
 public class PyConsoleTask extends PyExecutionFixtureTestTask {
+  private static final Logger LOG = Logger.getInstance("com.jetbrains.env.python.console.PyConsoleTask");
+
   private boolean myProcessCanTerminate;
 
   protected PyConsoleProcessHandler myProcessHandler;
   protected PydevConsoleCommunication myCommunication;
 
   private boolean shouldPrintOutput = false;
-  private PythonConsoleView myConsoleView;
+  private volatile PythonConsoleView myConsoleView;
   private Semaphore myCommandSemaphore;
   private Semaphore myConsoleInitSemaphore;
   private PythonConsoleExecuteActionHandler myExecuteHandler;
 
-  private Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
+  private final Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
 
   public PyConsoleTask() {
     super(null);
@@ -92,69 +86,96 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void tearDown() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+  public void tearDown() throws Exception {
+    // Prevents thread leak, see its doc
+    killRpcThread();
+
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         if (myConsoleView != null) {
           disposeConsole();
-          myCommunication.waitForTerminate();
         }
-        super.tearDown();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
       }
-    });
+    }, ModalityState.defaultModalityState());
+    super.tearDown();
   }
 
-  private void disposeConsole() {
+  /**
+   * Kill XML-Rpc thread
+   * Due to stupid bug in {@link LiteXmlRpcTransport#initConnection()} which has <strong>infinite</strong> loop that
+   * tries to connect to already dead process (already closed socket): See "tries" var.
+   */
+  private static void killRpcThread() throws InterruptedException {
+    final Optional<Thread> rpc = Thread.getAllStackTraces().keySet().stream()
+                                       .filter(o -> o.getClass().getName().contains("XmlRpc"))
+                                       .findFirst();
+    if (rpc.isPresent()) {
+      final Thread thread = rpc.get();
+      // There is no way to interrupt this thread with "interrupt": it has infinite loop (bug) which does not check ".isInterrupted()"
+      //noinspection CallToThreadStopSuspendOrResumeManager
+      thread.stop();
+      thread.join();
+    }
+  }
+
+  /**
+   * Disposes Python console and waits for Python console server thread to die.
+   */
+  private void disposeConsole() throws InterruptedException, ExecutionException {
+    try {
+      disposeConsoleAsync().get();
+    }
+    finally {
+      // Even if console failed in its side we need
+      if (myConsoleView != null) {
+        ApplicationManager.getApplication().invokeAndWait(() -> Disposer.dispose(myConsoleView), ModalityState.defaultModalityState());
+        myConsoleView = null;
+      }
+    }
+  }
+
+  @NotNull
+  private Future<Void> disposeConsoleAsync() {
+    Future<Void> shutdownFuture;
     if (myCommunication != null) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      shutdownFuture = UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
-          myCommunication.close();
+          return myCommunication.closeAsync();
         }
-        catch (Exception e) {
-          e.printStackTrace();
+        finally {
+          myCommunication = null;
         }
-        myCommunication = null;
       });
+    }
+    else {
+      shutdownFuture = CompletableFuture.completedFuture(null);
     }
 
     disposeConsoleProcess();
 
     if (!myContentDescriptorRef.isNull()) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> Disposer.dispose(myContentDescriptorRef.get()));
+      ApplicationManager.getApplication().invokeAndWait(() -> Disposer.dispose(myContentDescriptorRef.get()),
+                                                        ModalityState.defaultModalityState());
     }
 
     if (myConsoleView != null) {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          Disposer.dispose(myConsoleView);
-          myConsoleView = null;
-        }
-      }.execute();
+      WriteAction.runAndWait(() -> {
+        Disposer.dispose(myConsoleView);
+        myConsoleView = null;
+      });
     }
+
+    return shutdownFuture;
   }
 
   @Override
-  public void runTestOn(final String sdkHome) throws Exception {
-    final Project project = getProject();
-
-    final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
-
+  public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
     setProcessCanTerminate(false);
 
-    PydevConsoleRunner consoleRunner =
-      new PydevConsoleRunnerImpl(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.newHashMap(),
-                                 PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
-                                 (s) -> {
-                                 }, PydevConsoleRunnerImpl.CONSOLE_START_COMMAND) {
-        protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
-          myContentDescriptorRef.set(contentDescriptor);
-          super.showContentDescriptor(contentDescriptor);
-        }
-      };
+    PydevConsoleRunner consoleRunner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(getProject(), myFixture.getModule());
 
     before();
 
@@ -167,13 +188,14 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       }
     });
 
-    consoleRunner.run();
+    consoleRunner.run(true);
 
     waitFor(myConsoleInitSemaphore);
 
     myCommandSemaphore = new Semaphore(1);
 
     myConsoleView = consoleRunner.getConsoleView();
+    Disposer.register(myFixture.getProject(), myConsoleView);
     myProcessHandler = consoleRunner.getProcessHandler();
 
     myExecuteHandler = consoleRunner.getConsoleExecuteActionHandler();
@@ -183,6 +205,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
       public void commandExecuted(boolean more) {
+        LOG.debug("Some command executed");
         myCommandSemaphore.release();
       }
 
@@ -274,7 +297,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       if (count > 10) {
         Assert.fail("Console is not ready");
       }
-      Thread.sleep(300);
+      Thread.sleep(2000);
       count++;
     }
   }
@@ -326,25 +349,32 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   protected void exec(final String command) throws InterruptedException {
     waitForReady();
-    myCommandSemaphore.acquire(1);
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> myConsoleView.executeInConsole(command));
-    Assert.assertTrue(String.format("Command execution wasn't finished: `%s` \n" +
+    LOG.debug("Command " + command + " acquired lock");
+    Assert.assertTrue(String.format("Can't execute command: `%s`, because previous one wan't finished \n" +
                                     "Output: %s", command, output()), waitFor(myCommandSemaphore));
-    myCommandSemaphore.release();
+    LOG.debug("Command " + command + " got lock");
+    myConsoleView.executeInConsole(command);
   }
 
-  protected boolean hasValue(String varName, String value) throws PyDebuggerException {
+  protected boolean hasValue(String varName, String value) throws PyDebuggerException, InterruptedException {
     PyDebugValue val = getValue(varName);
     return val != null && value.equals(val.getValue());
   }
 
-  protected void setValue(String varName, String value) throws PyDebuggerException {
+  protected void setValue(String varName, String value) throws PyDebuggerException, InterruptedException {
     PyDebugValue val = getValue(varName);
+    assertThat(waitFor(myCommandSemaphore))
+      .describedAs(String.format("Can't change variable's value: `%s` \n" + "Output: %s", varName, output()))
+      .isTrue();
     myCommunication.changeVariable(val, value);
+    myCommandSemaphore.release();
   }
 
-  protected PyDebugValue getValue(String varName) throws PyDebuggerException {
+  protected PyDebugValue getValue(String varName) throws PyDebuggerException, InterruptedException {
+    Assert.assertTrue(String.format("Can't get value for variable: `%s` \n" +
+                                    "Output: %s", varName, output()), waitFor(myCommandSemaphore));
     XValueChildrenList l = myCommunication.loadFrame();
+    myCommandSemaphore.release();
 
     if (l == null) {
       return null;
@@ -377,7 +407,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   protected void execNoWait(final String command) {
-    UIUtil.invokeLaterIfNeeded(() -> myConsoleView.executeCode(command, null));
+    myConsoleView.executeCode(command, null);
   }
 
   protected void interrupt() {
@@ -386,10 +416,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
 
   public void addTextToEditor(final String text) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-                                   getConsoleView().setInputText(text);
-                                   PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-                                 }
-    );
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      getConsoleView().setInputText(text);
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    });
   }
 }

@@ -180,4 +180,16 @@ Enum constant ordinal: 0'''
     
     assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
   }
+
+  @Test
+  void "last element should have a hyperlink as well (WEB-17860)"() {
+    def header = '''ExternalModule.ts
+var abc: A &amp; B &amp; C'''
+
+    def fullText = '''<b>Type:</b> <code><a href="psi_element://A">A</a> &amp; <a href="psi_element://B">B</a> &amp; <a href="psi_element://C">C</a></code>'''
+
+    def expected = '''ExternalModule.ts<br/>var abc: <a href="psi_element://A">A</a> &amp; <a href="psi_element://B">B</a> &amp; <a href="psi_element://C">C</a>'''
+
+    assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
+  }
 }

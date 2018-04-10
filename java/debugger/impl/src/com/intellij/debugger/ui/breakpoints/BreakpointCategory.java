@@ -23,7 +23,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 18, 2007
  */
 public final class BreakpointCategory {
   private static final Map<String, Key> ourMap = new HashMap<>();

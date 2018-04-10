@@ -159,7 +159,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
           if (bookmark == null) {
             return;
           }
-          BookmarkManager.getInstance(project).editDescription(bookmark);
+          BookmarkManager.getInstance(project).editDescription(bookmark, component);
         }
         return;
       case REMOVE:

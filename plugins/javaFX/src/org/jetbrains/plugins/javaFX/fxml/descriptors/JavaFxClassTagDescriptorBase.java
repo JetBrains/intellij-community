@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -53,7 +54,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
       if (psiClass != null) {
         final List<XmlElementDescriptor> children = new ArrayList<>();
         collectWritableProperties(children,
-                                  member -> new JavaFxPropertyTagDescriptor(psiClass, PropertyUtil.getPropertyName(member), false));
+                                  member -> new JavaFxPropertyTagDescriptor(psiClass, PropertyUtilBase.getPropertyName(member), false));
 
         final JavaFxPropertyTagDescriptor defaultPropertyDescriptor = getDefaultPropertyDescriptor();
         if (defaultPropertyDescriptor != null) {
@@ -68,7 +69,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
         collectStaticElementDescriptors(context, children);
 
         if (!children.isEmpty()) {
-          return children.toArray(new XmlElementDescriptor[children.size()]);
+          return children.toArray(XmlElementDescriptor.EMPTY_ARRAY);
         }
       }
     }
@@ -100,7 +101,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
   protected static void collectStaticElementDescriptors(XmlTag context, List<XmlElementDescriptor> children) {
     collectParentStaticProperties(context, children, method -> {
       final PsiClass aClass = method.getContainingClass();
-      return new JavaFxPropertyTagDescriptor(aClass, PropertyUtil.getPropertyName(method.getName()), true);
+      return new JavaFxPropertyTagDescriptor(aClass, PropertyUtilBase.getPropertyName(method.getName()), true);
     });
   }
 
@@ -212,7 +213,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
   protected void collectInstanceProperties(List<XmlAttributeDescriptor> simpleAttrs) {
     final PsiClass psiClass = getPsiClass();
     final Set<String> propertyNames = collectWritableProperties(
-      simpleAttrs, member -> new JavaFxPropertyAttributeDescriptor(PropertyUtil.getPropertyName(member), psiClass));
+      simpleAttrs, member -> new JavaFxPropertyAttributeDescriptor(PropertyUtilBase.getPropertyName(member), psiClass));
 
     for (String name : JavaFxPsiUtil.getConstructorNamedArgProperties(psiClass)) {
       if (!propertyNames.contains(name)) {

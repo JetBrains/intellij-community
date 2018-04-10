@@ -17,13 +17,14 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.lang.Language;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.psi.codeStyle.DisplayPriority;
-import com.intellij.util.PlatformUtils;
+import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -42,6 +43,7 @@ public class PyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
         return new PyCodeStyleMainPanel(getCurrentSettings(), settings);
       }
 
+      @Override
       public String getHelpTopic() {
         return "reference.settingsdialog.codestyle.python";
       }
@@ -53,8 +55,9 @@ public class PyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
     return "Python";
   }
 
+  @Nullable
   @Override
-  public DisplayPriority getPriority() {
-    return PlatformUtils.isPyCharm() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
+  public Language getLanguage() {
+    return PythonLanguage.getInstance();
   }
 }

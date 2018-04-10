@@ -39,7 +39,7 @@ public class StringLiteralLexer extends LexerBase {
   private int myLastState;
   protected int myBufferEnd;
   protected final char myQuoteChar;
-  private final IElementType myOriginalLiteralToken;
+  protected final IElementType myOriginalLiteralToken;
   private final boolean myCanEscapeEolOrFramingSpaces;
   private final String myAdditionalValidEscapes;
   private boolean mySeenEscapedSpacesOnly;
@@ -105,7 +105,9 @@ public class StringLiteralLexer extends LexerBase {
       return myOriginalLiteralToken;
     }
 
-    if (myStart + 1 >= myEnd) return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
+    if (myStart + 1 >= myEnd) {
+      return handleSingleSlashEscapeSequence();
+    }
     char nextChar = myBuffer.charAt(myStart + 1);
     mySeenEscapedSpacesOnly &= nextChar == ' ';
     if (myCanEscapeEolOrFramingSpaces &&
@@ -153,6 +155,11 @@ public class StringLiteralLexer extends LexerBase {
   }
 
   @NotNull
+  protected IElementType handleSingleSlashEscapeSequence() {
+    return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
+  }
+
+  @NotNull
   protected IElementType getUnicodeEscapeSequenceType() {
     for (int i = myStart + 2; i < myStart + 6; i++) {
       if (i >= myEnd || !StringUtil.isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
@@ -188,7 +195,7 @@ public class StringLiteralLexer extends LexerBase {
     if (myState == AFTER_LAST_QUOTE) return start;
     int i = start;
     if (myBuffer.charAt(i) == '\\') {
-      LOG.assertTrue(myState == AFTER_FIRST_QUOTE);
+      LOG.assertTrue(myState == AFTER_FIRST_QUOTE, this);
       i++;
       if (i == myBufferEnd || myBuffer.charAt(i) == '\n' && !myCanEscapeEolOrFramingSpaces) {
         myState = AFTER_LAST_QUOTE;
@@ -208,13 +215,7 @@ public class StringLiteralLexer extends LexerBase {
       }
 
       if (myAllowHex && myBuffer.charAt(i) == 'x') {
-        i++;
-        for (; i < start + 4; i++) {
-          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar) {
-            return i;
-          }
-        }
-        return i;
+        return locateHexEscapeSequence(start, i);
       }
 
       if (myBuffer.charAt(i) == 'u') {
@@ -237,6 +238,16 @@ public class StringLiteralLexer extends LexerBase {
       myState = AFTER_FIRST_QUOTE;
     }
 
+    return i;
+  }
+
+  protected int locateHexEscapeSequence(int start, int i) {
+    i++;
+    for (; i < start + 4; i++) {
+      if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar) {
+        return i;
+      }
+    }
     return i;
   }
 

@@ -39,11 +39,11 @@ public class AdminReaderOnStoredRepositoryPath implements IAdminReader {
     myRepositoryPathProvider = adminWriter;
   }
 
-  public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
+  public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     return new ArrayList();
   }
 
-  public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) throws IOException {
+  public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
     return null;
   }
 
@@ -55,8 +55,7 @@ public class AdminReaderOnStoredRepositoryPath implements IAdminReader {
     return false;
   }
 
-  public String getRepositoryForDirectory(DirectoryObject directoryObject, String repository, ICvsFileSystem cvsFileSystem)
-    throws IOException {
+  public String getRepositoryForDirectory(DirectoryObject directoryObject, String repository, ICvsFileSystem cvsFileSystem) {
     return myRepositoryPathProvider.getRepositoryPath(repository);
   }
 

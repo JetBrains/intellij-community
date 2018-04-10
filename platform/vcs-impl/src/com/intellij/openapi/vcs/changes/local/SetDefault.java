@@ -19,41 +19,38 @@ import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class SetDefault implements ChangeListCommand {
   private final String myNewDefaultName;
+  private final boolean myAutomatic;
 
-  private String myPrevious;
+  private boolean myResult;
   private LocalChangeList myOldDefaultListCopy;
   private LocalChangeList myNewDefaultListCopy;
 
-  public SetDefault(@Nullable String newDefaultName) {
+  public SetDefault(@NotNull String newDefaultName, boolean automatic) {
     myNewDefaultName = newDefaultName;
+    myAutomatic = automatic;
   }
 
   public void apply(ChangeListWorker worker) {
     LocalChangeList list = worker.getChangeListByName(myNewDefaultName);
     if (list == null || list.isDefault()) {
       myOldDefaultListCopy = null;
-      myPrevious = null;
+      myResult = false;
       myNewDefaultListCopy = null;
       return;
     }
 
-    myOldDefaultListCopy = worker.getDefaultList().copy();
-    myPrevious = worker.setDefault(myNewDefaultName);
-    myNewDefaultListCopy = worker.getDefaultList().copy();
+    myOldDefaultListCopy = worker.getDefaultList();
+    myResult = worker.setDefaultList(myNewDefaultName);
+    myNewDefaultListCopy = worker.getDefaultList();
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
-    if (myPrevious != null) {
-      dispatcher.getMulticaster().defaultListChanged(myOldDefaultListCopy, myNewDefaultListCopy);
+    if (myResult) {
+      dispatcher.getMulticaster().defaultListChanged(myOldDefaultListCopy, myNewDefaultListCopy, myAutomatic);
     }
-  }
-
-  @Nullable
-  public String getPrevious() {
-    return myPrevious;
   }
 }

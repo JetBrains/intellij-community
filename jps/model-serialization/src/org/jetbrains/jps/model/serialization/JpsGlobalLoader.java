@@ -47,6 +47,9 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   private static final JpsGlobalExtensionSerializer[] SERIALIZERS = {
     new GlobalLibrariesSerializer(), new SdkTableSerializer(), new FileTypesSerializer()
   };
+  /**
+   * @deprecated this field will be removed when search for external usages in external build plugins will be implemented (PR-1063)
+   */
   public static final String FILE_TYPES_COMPONENT_NAME_KEY = "jps.file.types.component.name";
   private final JpsGlobal myGlobal;
 

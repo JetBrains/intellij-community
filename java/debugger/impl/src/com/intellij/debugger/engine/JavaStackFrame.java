@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -25,10 +11,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.DecompiledLocalVariable;
-import com.intellij.debugger.jdi.LocalVariableProxyImpl;
-import com.intellij.debugger.jdi.LocalVariablesUtil;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -82,7 +65,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   @Nullable private final XSourcePosition myXSourcePosition;
   private final NodeManagerImpl myNodeManager;
   @NotNull private final StackFrameDescriptorImpl myDescriptor;
-  private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
   private JavaDebuggerEvaluator myEvaluator = null;
   private final String myEqualityObject;
   private CapturePoint myInsertCapturePoint;
@@ -132,7 +114,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         }
       }
     }
-    FRAME_RENDERER.customizePresentation(myDescriptor, component, selectedDescriptor);
+    JavaFramesListRenderer.customizePresentation(myDescriptor, component, selectedDescriptor);
     if (myInsertCapturePoint != null) {
       component.setIcon(XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
     }
@@ -148,7 +130,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
 
       @Override
-      public void threadAction() {
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         if (node.isObsolete()) return;
         if (myInsertCapturePoint != null) {
           node.setMessage("Async stacktrace from " +
@@ -216,7 +198,15 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       // add last method return value if any
       final Pair<Method, Value> methodValuePair = debugProcess.getLastExecutedMethod();
       if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
-        ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
+        Value returnValue = methodValuePair.getSecond();
+        // try to keep the value as early as possible
+        try {
+          DebuggerUtilsEx.keep(returnValue, evaluationContext);
+        }
+        catch (ObjectCollectedException ignored) {
+        }
+        ValueDescriptorImpl returnValueDescriptor =
+          myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), returnValue);
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
       // add context exceptions
@@ -250,7 +240,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       //notifyCancelled();
     }
     catch (InternalException e) {
-      if (e.errorCode() == 35) {
+      if (e.errorCode() == JvmtiError.INVALID_SLOT) {
         node.setErrorMessage(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()));
         //myChildren.add(
         //  myNodeManager.createMessageNode(new MessageDescriptor(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()))));
@@ -320,8 +310,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         else {
           superBuildVariables(evaluationContext, children);
         }
-        final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.computeThisObject());
-        evalContextCopy.setAutoLoadClasses(false);
+        final EvaluationContextImpl evalContextCopy = evaluationContext.withAutoLoadClasses(false);
 
         if (sourcePosition != null) {
           Set<TextWithImports> extraVars = computeExtraVars(usedVars, sourcePosition, evaluationContext);

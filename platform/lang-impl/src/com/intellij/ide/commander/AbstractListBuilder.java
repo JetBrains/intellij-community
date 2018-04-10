@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 
 import javax.swing.*;

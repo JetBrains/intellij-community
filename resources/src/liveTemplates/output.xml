@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="output">
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.serr"
-            name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println(&quot;$END$&quot;);">
+            name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println($END$);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />

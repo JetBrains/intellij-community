@@ -56,7 +56,7 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
       }
     }
 
-    return result.toArray(new VirtualFile[result.size()]);
+    return result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Nullable

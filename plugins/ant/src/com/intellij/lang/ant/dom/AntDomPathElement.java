@@ -31,7 +31,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 22, 2010
  */
 public abstract class AntDomPathElement extends AntDomFilesProviderImpl{
 

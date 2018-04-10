@@ -39,7 +39,7 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
     for (XmlTagNameProvider tagNameProvider : XmlTagNameProvider.EP_NAME.getExtensions()) {
       tagNameProvider.addTagNameVariants(elements, tag, prefix);
     }
-    return elements.toArray(new LookupElement[elements.size()]);
+    return elements.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

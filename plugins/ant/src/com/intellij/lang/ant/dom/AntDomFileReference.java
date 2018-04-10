@@ -38,10 +38,6 @@ public class AntDomFileReference extends FileReference implements AntDomReferenc
     return text.endsWith("/")? text.substring(0, text.length() - "/".length()) : text;
   }
 
-  @NotNull public Object[] getVariants() {
-    return super.getVariants();
-  }
-
   @NotNull
   public AntDomFileReferenceSet getFileReferenceSet() {
     return (AntDomFileReferenceSet)super.getFileReferenceSet();

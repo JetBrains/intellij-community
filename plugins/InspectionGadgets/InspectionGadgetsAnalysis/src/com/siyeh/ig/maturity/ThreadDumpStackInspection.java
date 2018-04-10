@@ -60,7 +60,7 @@ public class ThreadDumpStackInspection extends BaseInspection {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList.getExpressions().length != 0) {
+      if (!argumentList.isEmpty()) {
         return;
       }
       final PsiReferenceExpression methodExpression =

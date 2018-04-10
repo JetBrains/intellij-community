@@ -1,3 +1,6 @@
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -115,7 +118,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
                                                                                             classType.getPresentableText()));
                   return;
                 }
-                final TypeMigrationRules myRules = new TypeMigrationRules();
+                final TypeMigrationRules myRules = new TypeMigrationRules(project);
                 final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, targetParam);
                 final PsiType targetClassType = elementFactory.createType(baseClass, substitutor);
                 myRules.setBoundScope(new LocalSearchScope(aClass));
@@ -130,10 +133,5 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
         });
       }
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

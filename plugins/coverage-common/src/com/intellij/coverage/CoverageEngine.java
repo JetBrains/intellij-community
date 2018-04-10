@@ -353,6 +353,14 @@ public abstract class CoverageEngine {
     return false;
   }
 
+  /**
+   * 
+   * @return true if highlighting should skip the line as it represents no actual source code
+   */
+  public boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
+    return false;
+  }
+
   public static String getEditorTitle() {
     return "Code Coverage";
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -54,9 +40,6 @@ public class SSAUConstructorSparseEx {
   // node id, var, version
   private final HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<>();
   //private HashMap<String, HashMap<Integer, FastSet<Integer>>> extraVarVersions = new HashMap<String, HashMap<Integer, FastSet<Integer>>>();
-
-  // (var, version), version
-  private final HashMap<VarVersionPair, HashSet<Integer>> phi = new HashMap<>();
 
   // var, version
   private final HashMap<Integer, Integer> lastversion = new HashMap<>();
@@ -358,7 +341,7 @@ public class SSAUConstructorSparseEx {
             if (calcLiveVars) {
               varMapToGraph(varpaar, varmap);
             }
-            setCurrentVar(varmap, varindex.intValue(), var.getVersion());
+            setCurrentVar(varmap, varindex, var.getVersion());
           }
       }
     }
@@ -373,7 +356,7 @@ public class SSAUConstructorSparseEx {
 
       int cardinality = vers.getCardinality();
       if (cardinality == 1) { // size == 1
-        if (current_vers.intValue() != 0) {
+        if (current_vers != 0) {
           if (calcLiveVars) {
             varMapToGraph(new VarVersionPair(varindex, current_vers), varmap);
           }
@@ -398,7 +381,7 @@ public class SSAUConstructorSparseEx {
       }
       else if (cardinality == 2) { // size > 1
 
-        if (current_vers.intValue() != 0) {
+        if (current_vers != 0) {
           if (calcLiveVars) {
             varMapToGraph(new VarVersionPair(varindex, current_vers), varmap);
           }
@@ -463,7 +446,7 @@ public class SSAUConstructorSparseEx {
 
       Integer tempver = getNextFreeVersion(phivar.var, stat);
 
-      VarVersionNode tempnode = new VarVersionNode(phivar.var, tempver.intValue());
+      VarVersionNode tempnode = new VarVersionNode(phivar.var, tempver);
 
       colnodes.add(tempnode);
       colpaars.add(new VarVersionPair(phivar.var, tempver.intValue()));
@@ -482,9 +465,6 @@ public class SSAUConstructorSparseEx {
     }
 
     ssuversions.addNodes(colnodes, colpaars);
-
-    // update phi node
-    phi.put(phivar, phiVers);
   }
 
   private void varMapToGraph(VarVersionPair varpaar, SFormsFastMapDirect varmap) {
@@ -597,7 +577,7 @@ public class SSAUConstructorSparseEx {
         }
 
         // false path?
-        boolean isFalsePath = true;
+        boolean isFalsePath;
 
         if (recFinally) {
           isFalsePath = !finwrap.destination.equals(nodeid);
@@ -813,10 +793,6 @@ public class SSAUConstructorSparseEx {
     }
 
     return null;
-  }
-
-  public HashMap<VarVersionPair, HashSet<Integer>> getPhi() {
-    return phi;
   }
 
   public VarVersionsGraph getSsuversions() {

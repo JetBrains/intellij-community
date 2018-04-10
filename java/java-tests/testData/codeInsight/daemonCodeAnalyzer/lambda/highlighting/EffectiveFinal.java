@@ -188,3 +188,39 @@ class NonInitializedButWrittenTwice {
     <error descr="Variable 's' might not have been initialized">s</error>++;
   }
 }
+
+class LocalInLoop {
+  // IDEA-154224
+  public static void main(String[] args) {
+    long i;
+    do {
+      i = System.currentTimeMillis() + 1;
+    } while (i < 3);
+    Runnable r = () -> {
+      System.out.println(<error descr="Variable used in lambda expression should be final or effectively final">i</error>); // <–ref an non final var
+    };
+    System.exit(0);
+  }
+
+  // IDEA-163280
+  private static void test() {
+    int a;
+    for(int i = 0; i < 2; i++) {
+      a = i;
+      Runnable r = () -> System.out.println(<error descr="Variable used in lambda expression should be final or effectively final">a</error>);
+      r.run();
+    }
+  }
+
+  // IDEA-171790
+  void test1() {
+    java.util.function.Supplier<String> supplier = () -> "Some new string";
+    String s;
+
+    while ((s = supplier.get()) != null) {
+      System.out.println(s);
+    }
+
+    Runnable r = () -> System.out.println(<error descr="Variable used in lambda expression should be final or effectively final">s</error>);
+  }
+}

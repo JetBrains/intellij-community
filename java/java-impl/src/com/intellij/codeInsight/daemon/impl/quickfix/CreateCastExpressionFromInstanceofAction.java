@@ -49,7 +49,9 @@ public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFrom
     assert instanceOfExpression.getContainingFile() == file : instanceOfExpression.getContainingFile() + "; file="+file;
     PsiElement decl = createAndInsertCast(instanceOfExpression, editor, file);
     if (decl == null) return;
-    decl = CodeStyleManager.getInstance(project).reformat(CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl));
+    decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
+    if (decl == null) return;
+    decl = CodeStyleManager.getInstance(project).reformat(decl);
     editor.getCaretModel().moveToOffset(decl.getTextRange().getEndOffset());
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -34,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -90,9 +77,9 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       final PyExpression operand = getOperand();
       if (operand != null) {
         final PyType operandType = context.getType(operand);
-        final PyType type = getGeneratorReturnType(operandType, context);
+        final Ref<PyType> type = getGeneratorReturnType(operandType);
         if (type != null) {
-          return type;
+          return type.get();
         }
       }
     }
@@ -101,7 +88,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     if (resolved instanceof PyCallable) {
       // TODO: Make PyPrefixExpression a PyCallSiteExpression, use getCallType() here and analyze it in PyTypeChecker.analyzeCallSite()
       final PyType returnType = ((PyCallable)resolved).getReturnType(context, key);
-      return isAwait ? getGeneratorReturnType(returnType, context) : returnType;
+      return isAwait ? Ref.deref(getGeneratorReturnType(returnType)) : returnType;
     }
     return null;
   }
@@ -124,7 +111,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Override
   public String getReferencedName() {
-    PyElementType t = getOperator();
+    final PyElementType t = getOperator();
     if (t == PyTokenTypes.PLUS) {
       return PyNames.POS;
     }
@@ -141,22 +128,34 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   }
 
   @Nullable
-  private static PyType getGeneratorReturnType(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  @Override
+  public PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    return getOperand();
+  }
+
+  @NotNull
+  @Override
+  public List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  private static Ref<PyType> getGeneratorReturnType(@Nullable PyType type) {
     if (type instanceof PyClassLikeType && type instanceof PyCollectionType) {
       if (type instanceof PyClassType && PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
-        return ((PyCollectionType)type).getIteratedItemType();
+        return Ref.create(((PyCollectionType)type).getIteratedItemType());
       }
       else {
-        return Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(type, context));
+        return PyTypingTypeProvider.coroutineOrGeneratorElementType(type);
       }
     }
     else if (type instanceof PyUnionType) {
       final List<PyType> memberReturnTypes = new ArrayList<>();
       final PyUnionType unionType = (PyUnionType)type;
       for (PyType member : unionType.getMembers()) {
-        memberReturnTypes.add(getGeneratorReturnType(member, context));
+        memberReturnTypes.add(Ref.deref(getGeneratorReturnType(member)));
       }
-      return PyUnionType.union(memberReturnTypes);
+      return Ref.create(PyUnionType.union(memberReturnTypes));
     }
     return null;
   }

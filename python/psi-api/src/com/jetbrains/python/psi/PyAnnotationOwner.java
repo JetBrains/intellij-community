@@ -32,5 +32,7 @@ public interface PyAnnotationOwner extends PsiElement {
    * but taken from the corresponding stub instead of AST.
    */
   @Nullable
-  String getAnnotationValue();
+  default String getAnnotationValue() {
+    return null;
+  }
 }

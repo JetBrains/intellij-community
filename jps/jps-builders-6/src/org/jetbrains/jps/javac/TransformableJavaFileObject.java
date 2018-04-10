@@ -27,7 +27,6 @@ import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/9/13
  */
 public class TransformableJavaFileObject implements JavaFileObject {
   private final JavaFileObject myOriginal;

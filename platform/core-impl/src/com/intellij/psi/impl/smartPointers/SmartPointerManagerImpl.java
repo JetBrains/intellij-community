@@ -52,7 +52,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   public void fastenBelts(@NotNull VirtualFile file) {
     SmartPointerTracker pointers = getTracker(file);
-    if (pointers != null) pointers.fastenBelts();
+    if (pointers != null) pointers.fastenBelts(this);
   }
 
   private static final Key<Reference<SmartPsiElementPointerImpl>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
@@ -82,11 +82,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
     SmartPointerTracker.processQueue();
     SmartPsiElementPointerImpl<E> pointer = getCachedPointer(element);
-    if (pointer != null && pointer.incrementAndGetReferenceCount(1) > 0) {
+    if (pointer != null &&
+        (!(pointer.getElementInfo() instanceof SelfElementInfo) || ((SelfElementInfo)pointer.getElementInfo()).isForInjected() == forInjected) &&
+        pointer.incrementAndGetReferenceCount(1) > 0) {
       return pointer;
     }
 
-    pointer = new SmartPsiElementPointerImpl<>(myProject, element, containingFile, forInjected);
+    pointer = new SmartPsiElementPointerImpl<>(this, element, containingFile, forInjected);
     if (containingFile != null) {
       trackPointer(pointer, containingFile.getViewProvider().getVirtualFile());
     }
@@ -119,7 +121,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
                                                           boolean forInjected) {
     PsiUtilCore.ensureValid(file);
     SmartPointerTracker.processQueue();
-    SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, ProperTextRange.create(range), forInjected);
+    SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(this, file, ProperTextRange.create(range), forInjected);
     trackPointer(pointer, file.getViewProvider().getVirtualFile());
 
     return pointer;

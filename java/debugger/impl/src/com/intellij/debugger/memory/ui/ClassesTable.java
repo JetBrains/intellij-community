@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.memory.component.InstancesTracker;
@@ -23,8 +9,7 @@ import com.intellij.debugger.memory.utils.AbstractTableModelWithColumns;
 import com.intellij.debugger.memory.utils.InstancesProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -48,7 +33,13 @@ import javax.swing.border.Border;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassesTable extends JBTable implements DataProvider, Disposable {
@@ -59,6 +50,14 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     DataKey.create("ClassesTable.ReferenceCountProvider");
 
   private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
+  private static final JBColor CLICKABLE_COLOR = new JBColor(new Color(250, 251, 252), new Color(62, 66, 69));
+  private static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
+
+  private static final SimpleTextAttributes LINK_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, SimpleTextAttributes.LINK_ATTRIBUTES.getFgColor());
+  private static final SimpleTextAttributes UNDERLINE_LINK_ATTRIBUTES = SimpleTextAttributes.LINK_ATTRIBUTES;
+  private static final String NO_LOADED_CLASSES_MESSAGE = "No classes loaded.";
+  private static final String LOAD_CLASS_LINK = "Load classes";
 
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
@@ -79,6 +78,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private volatile List<ReferenceType> myItems = Collections.unmodifiableList(new ArrayList<>());
   private boolean myIsShowCounts = true;
+  private MouseListener myMouseListener = null;
 
   public ClassesTable(@NotNull InstancesTracker tracker, @NotNull ClassesFilteredView parent, boolean onlyWithDiff,
                       boolean onlyWithInstances,
@@ -184,6 +184,78 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     return null;
   }
 
+  boolean isInClickableMode() {
+    return myMouseListener != null;
+  }
+
+  void makeClickable(@NotNull Runnable onClick) {
+    releaseMouseListener();
+
+    AnAction action = new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        onClick.run();
+        releaseMouseListener();
+      }
+    };
+
+    KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStroke('l', InputEvent.SHIFT_DOWN_MASK), null);
+    action.registerCustomShortcutSet(new CustomShortcutSet(shortcut), null);
+
+    MyMouseAdapter listener = new MyMouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        onClick.run();
+        releaseMouseListener();
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        updateTable(true);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        updateTable(false);
+      }
+
+      @Override
+      void updateTable(boolean mouseOnTable) {
+        setBackground(mouseOnTable ? CLICKABLE_COLOR : JBColor.background());
+        SimpleTextAttributes linkAttributes = mouseOnTable ? UNDERLINE_LINK_ATTRIBUTES : LINK_ATTRIBUTES;
+        getEmptyText().clear()
+                      .appendText(NO_LOADED_CLASSES_MESSAGE).appendText(" ")
+                      .appendText(LOAD_CLASS_LINK, linkAttributes).appendText(" ");
+      }
+    };
+
+    boolean mouseOnTable = !ApplicationManager.getApplication().isUnitTestMode() && getMousePosition() != null;
+    listener.updateTable(mouseOnTable);
+
+    myMouseListener = listener;
+    addMouseListener(myMouseListener);
+    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+  }
+
+  private abstract static class MyMouseAdapter extends MouseAdapter {
+    abstract void updateTable(boolean mouseOnTable);
+  }
+
+  void exitClickableMode() {
+    releaseMouseListener();
+    getEmptyText().setText(DEFAULT_EMPTY_TEXT);
+  }
+
+  private void releaseMouseListener() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (isInClickableMode()) {
+      removeMouseListener(myMouseListener);
+      myMouseListener = null;
+      setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      setBackground(JBColor.background());
+    }
+  }
+
   void setBusy(boolean value) {
     setPaintBusy(value);
   }
@@ -232,7 +304,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     updateCountsInternal(class2Count);
   }
 
-  void hideContent() {
+  void hideContent(@NotNull String emptyText) {
+    releaseMouseListener();
+    getEmptyText().setText(emptyText);
+
     myModel.hide();
   }
 
@@ -241,6 +316,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   private void updateCountsInternal(@NotNull Map<ReferenceType, Long> class2Count) {
+    releaseMouseListener();
+    getEmptyText().setText(DEFAULT_EMPTY_TEXT);
+
     final ReferenceType selectedClass = myModel.getSelectedClassBeforeHide();
     int newSelectedIndex = -1;
     final boolean isInitialized = !myItems.isEmpty();
@@ -295,8 +373,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     return null;
   }
 
-  public void clean() {
+  public void clean(@NotNull String emptyText) {
     clearSelection();
+    releaseMouseListener();
+    getEmptyText().setText(emptyText);
     myItems = Collections.emptyList();
     myCounts.clear();
     myModel.mySelectedClassWhenHidden = null;
@@ -305,7 +385,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().invokeLater(this::clean);
+    ApplicationManager.getApplication().invokeLater(() -> clean(""));
   }
 
   @Nullable

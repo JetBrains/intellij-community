@@ -105,7 +105,12 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
     @Override
     public boolean process(final T t) {
       ProgressManager.checkCanceled();
-      return !myProcessedElements.add(myMapper.fun(t)) || myConsumer.process(t);
+      // in case of exception do not mark the element as processed, we couldn't recover otherwise
+      M m = myMapper.fun(t);
+      if (myProcessedElements.contains(m)) return true;
+      boolean result = myConsumer.process(t);
+      myProcessedElements.add(m);
+      return result;
     }
   }
 

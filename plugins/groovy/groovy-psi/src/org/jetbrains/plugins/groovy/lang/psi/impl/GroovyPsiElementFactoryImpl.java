@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
@@ -27,7 +15,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1068,38 +1055,33 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrMethod createMethod(@NotNull @NonNls String name, PsiType returnType, PsiElement context) throws IncorrectOperationException {
-    StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append("def <T>");
-      if (returnType != null) {
-        builder.append(returnType.getCanonicalText());
-      }
-      builder.append(' ');
-      if (GroovyNamesUtil.isIdentifier(name)) {
-        builder.append(name);
-      }
-      else {
-        builder.append('"');
-        builder.append(GrStringUtil.escapeSymbolsForGString(name, true, false));
-        builder.append('"');
-      }
-      builder.append("(){}");
-      GrMethod method = createMethodFromText(builder.toString(), context);
-      PsiTypeParameterList typeParameterList = method.getTypeParameterList();
-      assert typeParameterList != null;
-      typeParameterList.getFirstChild().delete();
-      typeParameterList.getFirstChild().delete();
-      typeParameterList.getFirstChild().delete();
-
-      if (returnType != null) {
-        method.getModifierList().setModifierProperty(GrModifier.DEF, false);
-      }
-
-      return method;
+    final StringBuilder builder = new StringBuilder();
+    builder.append("def <T>");
+    if (returnType != null) {
+      builder.append(returnType.getCanonicalText());
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
+    builder.append(' ');
+    if (GroovyNamesUtil.isIdentifier(name)) {
+      builder.append(name);
     }
+    else {
+      builder.append('"');
+      builder.append(GrStringUtil.escapeSymbolsForGString(name, true, false));
+      builder.append('"');
+    }
+    builder.append("(){}");
+    GrMethod method = createMethodFromText(builder.toString(), context);
+    PsiTypeParameterList typeParameterList = method.getTypeParameterList();
+    assert typeParameterList != null;
+    typeParameterList.getFirstChild().delete();
+    typeParameterList.getFirstChild().delete();
+    typeParameterList.getFirstChild().delete();
+
+    if (returnType != null) {
+      method.getModifierList().setModifierProperty(GrModifier.DEF, false);
+    }
+
+    return method;
   }
 
   @NotNull
@@ -1130,7 +1112,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public PsiParameterList createParameterList(@NotNull @NonNls String[] names, @NotNull PsiType[] types) throws IncorrectOperationException {
-    StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    final StringBuilder builder = new StringBuilder();
     builder.append("def foo(");
     for (int i = 0; i < names.length; i++) {
       String name = names[i];

@@ -21,11 +21,11 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.SPACES_OT
  * @author Mikhail Golubev
  */
 public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  private static String[] ALIGN_OPTIONS = Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
-    .map(alignment -> alignment.getDescription())
-    .toArray(value -> new String[value]);
+  private static final String[] ALIGN_OPTIONS = Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
+                                                      .map(alignment -> alignment.getDescription())
+                                                      .toArray(value -> new String[value]);
 
-  private static int[] ALIGN_VALUES =
+  private static final int[] ALIGN_VALUES =
     ArrayUtil.toIntArray(Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
                            .map(alignment -> alignment.getId())
                            .collect(Collectors.toList()));

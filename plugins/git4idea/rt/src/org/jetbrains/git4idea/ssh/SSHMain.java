@@ -524,7 +524,7 @@ public class SSHMain implements GitExternalApp {
                                      final String instruction,
                                      final int numPrompts,
                                      final String[] prompt,
-                                     final boolean[] echo) throws Exception {
+                                     final boolean[] echo) {
       if (numPrompts == 0) {
         return ArrayUtilRt.EMPTY_STRING_ARRAY;
       }
@@ -556,7 +556,7 @@ public class SSHMain implements GitExternalApp {
     /**
      * {@inheritDoc}
      */
-    public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyAlgorithm, byte[] serverHostKey) throws Exception {
+    public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyAlgorithm, byte[] serverHostKey) {
       try {
         String s = System.getenv(GitSSHHandler.SSH_IGNORE_KNOWN_HOSTS_ENV);
         if (s != null && Boolean.parseBoolean(s)) {

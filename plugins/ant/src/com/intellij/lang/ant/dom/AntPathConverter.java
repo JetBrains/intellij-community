@@ -31,7 +31,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 26, 2010
  */
 public class AntPathConverter extends Converter<PsiFileSystemItem> implements CustomReferenceConverter<PsiFileSystemItem>{
 

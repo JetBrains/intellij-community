@@ -131,11 +131,8 @@ public class MavenProjectReader {
       if (result == null) {
         result = new MavenModel();
         result.setPackaging(MavenConstants.TYPE_JAR);
-        return new RawModelReadResult(result, problems, alwaysOnProfiles);
       }
-      else {
-        return new RawModelReadResult(result, problems, alwaysOnProfiles);
-      }
+      return new RawModelReadResult(result, problems, alwaysOnProfiles);
     }
 
     result = new MavenModel();

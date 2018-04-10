@@ -2,7 +2,7 @@
 
 # Based on http://docs.python.org/3.2/library/string.html
 
-from typing import Mapping, Sequence, Any, Optional, Union, List, Tuple, Iterable, AnyStr
+from typing import Mapping, Sequence, Any, Optional, Union, List, Tuple, Iterable
 
 ascii_letters = ...  # type: str
 ascii_lowercase = ...  # type: str

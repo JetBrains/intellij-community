@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="com.android.tools.analytics-library:tracker:26.0.0" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.android.tools.analytics-library:tracker:26.0.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/analytics-library/tracker/26.0.0/tracker-26.0.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

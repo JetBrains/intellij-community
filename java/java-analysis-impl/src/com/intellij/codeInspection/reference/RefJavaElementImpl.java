@@ -260,7 +260,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
     addInReference(refFrom);
     setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
-    getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting);
+    getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting, expressionFrom);
   }
 
   void setUsedQualifiedOutsidePackageFlag(RefElementImpl refFrom, PsiReferenceExpression expressionFrom) {

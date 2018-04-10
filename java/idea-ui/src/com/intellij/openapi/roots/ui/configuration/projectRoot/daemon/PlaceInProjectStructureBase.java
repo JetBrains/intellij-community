@@ -28,7 +28,7 @@ public class PlaceInProjectStructureBase extends PlaceInProjectStructure {
   private final Project myProject;
   private final Place myPlace;
   private final ProjectStructureElement myElement;
-  private boolean myCanNavigate;
+  private final boolean myCanNavigate;
 
   public PlaceInProjectStructureBase(Project project, Place place, ProjectStructureElement element) {
     this(project, place, element, true);

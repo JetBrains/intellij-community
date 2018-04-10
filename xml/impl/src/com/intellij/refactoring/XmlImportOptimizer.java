@@ -39,7 +39,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/7/11
  */
 public class XmlImportOptimizer implements ImportOptimizer {
   

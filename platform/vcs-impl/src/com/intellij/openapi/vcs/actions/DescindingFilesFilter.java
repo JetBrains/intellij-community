@@ -70,7 +70,7 @@ public class DescindingFilesFilter {
       result.addAll(filePaths);
     }
 
-    return result.toArray(new FilePath[result.size()]);
+    return result.toArray(new FilePath[0]);
   }
 
   private static class FilePathComparator implements Comparator<FilePath> {

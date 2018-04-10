@@ -28,7 +28,7 @@ import java.util.List;
  */
 public abstract class BuildTargetType<T extends BuildTarget<?>> {
   private final String myTypeId;
-  private boolean myFileBased;
+  private final boolean myFileBased;
 
   /**
    * Creates type of targets which are not {@link #isFileBased() file based}, consider using {@link #BuildTargetType(String, boolean)} instead

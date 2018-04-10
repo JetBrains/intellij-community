@@ -4,7 +4,7 @@ package com.jetbrains.python.debugger.pydev;
 import org.jetbrains.annotations.NotNull;
 
 public class SmartStepIntoCommand extends AbstractThreadCommand {
-  private String myFuncName;
+  private final String myFuncName;
 
   public SmartStepIntoCommand(@NotNull final RemoteDebugger debugger, String threadId,
                               String funcName) {

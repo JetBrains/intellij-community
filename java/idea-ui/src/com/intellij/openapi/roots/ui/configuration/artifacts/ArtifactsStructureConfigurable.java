@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
@@ -19,11 +7,12 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -95,10 +84,6 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
         if (deletedItem instanceof Library || deletedItem instanceof Module) {
           onElementDeleted();
         }
-      }
-
-      @Override
-      public void itemsExternallyChanged() {
       }
     };
     moduleStructureConfigurable.addItemsChangeListener(listener);
@@ -297,17 +282,11 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();
     final ModifiableArtifactModel modifiableModel = myPackagingEditorContext.getActualModifiableModel();
     if (modifiableModel != null) {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull final Result result) {
-          modifiableModel.commit();
-        }
-      }.execute();
-      myPackagingEditorContext.resetModifiableModel();
+      WriteAction.run(() -> modifiableModel.commit());
     }
-
-
-    reset(); // TODO: fix to not reset on apply!
+    myPackagingEditorContext.resetModifiableModel();
+    reloadTreeNodes();
+    restoreLastSelection();
   }
 
   @Override
@@ -344,15 +323,6 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
     return Collections.singletonList(new ArtifactRemoveHandler());
-  }
-
-  @Override
-  protected void processRemovedItems() {
-  }
-
-  @Override
-  protected boolean wasObjectStored(Object editableObject) {
-    return false;
   }
 
   @Override

@@ -16,7 +16,6 @@
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -92,11 +91,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     final PsiElement psiClass = getPsiClass();
 
     if (psiClass == null){
-      final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
-      if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
-        myHighlightedText.getBeginning().addText(invalidPrefix, HierarchyNodeDescriptor.getInvalidPrefixAttributes());
-      }
-      return true;
+      return invalidElement();
     }
 
     final Icon newRawIcon = psiClass.getIcon(flags);

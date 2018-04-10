@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -309,7 +309,7 @@ class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase {
     private final List<ThrownExceptionInfo> myInfos
 
     SimpleExceptionsGen(List<? extends ThrownExceptionInfo> infos = []) {
-      myInfos = infos
+      myInfos = infos as List<ThrownExceptionInfo>
     }
 
     @Override

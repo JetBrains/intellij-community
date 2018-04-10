@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import java.awt.*;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyListener;
@@ -22,106 +24,44 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
 public class ListenerUtil {
+
   public static void addFocusListener(Component component, FocusListener l) {
-    component.addFocusListener(l);
-    if (component instanceof Container) {
-      Container container = (Container)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        addFocusListener(container.getComponent(i), l);
-      }
-    }
+    UIUtil.uiTraverser(component).traverse().consumeEach(c -> c.addFocusListener(l));
   }
 
   public static void removeFocusListener(Component component, FocusListener l) {
-    component.removeFocusListener(l);
-    if (component instanceof Container) {
-      Container container = (Container)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        removeFocusListener(container.getComponent(i), l);
-      }
-    }
+    UIUtil.uiTraverser(component).traverse().consumeEach(c -> c.removeFocusListener(l));
   }
 
   public static void addMouseListener(Component component, MouseListener l) {
-    component.addMouseListener(l);
-    if (component instanceof Container) {
-      Container container = (Container)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        addMouseListener(container.getComponent(i), l);
-      }
-    }
-  }
-
-  public static void addClickListener(Component component, ClickListener l) {
-    l.installOn(component);
-
-    if (component instanceof Container) {
-      Container container = (Container)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        addClickListener(container.getComponent(i), l);
-      }
-    }
-  }
-
-  public static void removeClickListener(Component component, ClickListener l) {
-    l.uninstall(component);
-
-    if (component instanceof Container) {
-      Container container = (Container)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        removeClickListener(container.getComponent(i), l);
-      }
-    }
-  }
-
-  public static void addMouseMotionListener(Component c, MouseMotionListener l) {
-    c.addMouseMotionListener(l);
-    if (c instanceof Container) {
-      final Container container = (Container)c;
-      Component[] children = container.getComponents();
-      for (Component child : children) {
-        addMouseMotionListener(child, l);
-      }
-    }
+    UIUtil.uiTraverser(component).traverse().consumeEach(c -> c.addMouseListener(l));
   }
 
   public static void removeMouseListener(Component component, MouseListener l) {
-    component.removeMouseListener(l);
-    if (component instanceof Container) {
-      Container container = (Container)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        removeMouseListener(container.getComponent(i), l);
-      }
-    }
+    UIUtil.uiTraverser(component).traverse().consumeEach(c -> c.removeMouseListener(l));
+  }
+
+  public static void addClickListener(Component component, ClickListener l) {
+    UIUtil.uiTraverser(component).traverse().consumeEach(c -> l.installOn(c));
+  }
+
+  public static void removeClickListener(Component component, ClickListener l) {
+    UIUtil.uiTraverser(component).traverse().consumeEach(c -> l.uninstall(c));
+  }
+
+  public static void addMouseMotionListener(Component component, MouseMotionListener l) {
+    UIUtil.uiTraverser(component).traverse().consumeEach(c -> c.addMouseMotionListener(l));
+  }
+
+  public static void removeMouseMotionListener(Component component, MouseMotionListener l) {
+    UIUtil.uiTraverser(component).traverse().consumeEach(c -> c.removeMouseMotionListener(l));
   }
 
   public static void addKeyListener(Component component, KeyListener l) {
-    component.addKeyListener(l);
-    if (component instanceof Container) {
-      Container container = (Container)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        addKeyListener(container.getComponent(i), l);
-      }
-    }
+    UIUtil.uiTraverser(component).traverse().consumeEach(c -> c.addKeyListener(l));
   }
 
   public static void removeKeyListener(Component component, KeyListener l) {
-    component.removeKeyListener(l);
-    if (component instanceof Container) {
-      Container container = (Container)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        removeKeyListener(container.getComponent(i), l);
-      }
-    }
-  }
-
-  public static void removeMouseMotionListener(final Component component, final MouseMotionListener motionListener) {
-    component.removeMouseMotionListener(motionListener);
-    if (component instanceof Container) {
-      Container container = (Container)component;
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        removeMouseMotionListener(container.getComponent(i), motionListener);
-      }
-    }
+    UIUtil.uiTraverser(component).traverse().consumeEach(c -> c.removeKeyListener(l));
   }
 }

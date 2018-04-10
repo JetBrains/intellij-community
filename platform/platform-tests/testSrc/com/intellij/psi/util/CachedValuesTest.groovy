@@ -63,7 +63,7 @@ class CachedValuesTest extends LightPlatformTestCase {
       calcCount.set(0)
       dependency.incModificationCount()
 
-      List<Future> jobs = (0..<10).collect {
+      List<Future> jobs = (0..<4).collect {
         ApplicationManager.application.executeOnPooledThread {
           for (i in 0..10) {
             assert 'result' == getCached()

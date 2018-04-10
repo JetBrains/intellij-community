@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
@@ -25,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectGeneratorPeer;
 import org.jetbrains.annotations.NotNull;
@@ -34,23 +21,22 @@ import javax.swing.*;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 9/27/12
 */
 public class WebModuleBuilder<T> extends ModuleBuilder {
   public static final String GROUP_NAME = "Static Web";
   public static final Icon ICON = AllIcons.Nodes.PpWeb;
 
   private final WebProjectTemplate<T> myTemplate;
-  private final ProjectGeneratorPeer<T> myGeneratorPeer;
+  protected final NotNullLazyValue<ProjectGeneratorPeer<T>> myGeneratorPeerLazyValue;
 
   public WebModuleBuilder(@NotNull WebProjectTemplate<T> template) {
     myTemplate = template;
-    myGeneratorPeer = myTemplate.createLazyPeer().getValue();
+    myGeneratorPeerLazyValue = myTemplate.createLazyPeer();
   }
 
   public WebModuleBuilder() {
     myTemplate = null;
-    myGeneratorPeer = null;
+    myGeneratorPeerLazyValue = null;
   }
 
   @Override
@@ -100,7 +86,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
     if (contentRoots.length > 0 && contentRoots[0] != null) {
       dir = contentRoots[0];
     }
-    template.generateProject(module.getProject(), dir, myGeneratorPeer.getSettings(), module);
+    template.generateProject(module.getProject(), dir, myGeneratorPeerLazyValue.getValue().getSettings(), module);
   }
 
   @Nullable
@@ -109,7 +95,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
     if (myTemplate == null) {
       return super.modifySettingsStep(settingsStep);
     }
-    myGeneratorPeer.buildUI(settingsStep);
+    myGeneratorPeerLazyValue.getValue().buildUI(settingsStep);
     return new ModuleWizardStep() {
       @Override
       public JComponent getComponent() {
@@ -122,7 +108,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
 
       @Override
       public boolean validate() throws ConfigurationException {
-        ValidationInfo info = myGeneratorPeer.validate();
+        ValidationInfo info = myGeneratorPeerLazyValue.getValue().validate();
         if (info != null) throw new ConfigurationException(info.message);
         return true;
       }

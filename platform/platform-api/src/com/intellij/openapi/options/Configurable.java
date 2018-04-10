@@ -17,6 +17,8 @@ package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * This interface represents a named configurable component that provides a Swing form
@@ -165,7 +168,9 @@ public interface Configurable extends UnnamedConfigurable {
    * because it causes loading additional classes during the building a setting tree.
    * Use XML attributes instead if possible.
    */
+  @FunctionalInterface
   interface Composite {
+    @NotNull
     Configurable[] getConfigurables();
   }
 
@@ -212,5 +217,20 @@ public interface Configurable extends UnnamedConfigurable {
 
   default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
     return toggleButton.isSelected() != value;
+  }
+
+  default <T> boolean isModified(@NotNull ComboBox<T> comboBox, T value) {
+    return !Comparing.equal(comboBox.getSelectedItem(), value);
+  }
+
+  interface TopComponentController {
+    void setLeftComponent(@Nullable Component component);
+
+    void showProgress(boolean start);
+  }
+
+  interface TopComponentProvider {
+    @NotNull
+    Component getCenterComponent(@NotNull TopComponentController controller);
   }
 }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.devkit.builder;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleType;
 import org.jetbrains.jps.model.module.JpsModuleType;
@@ -26,6 +27,7 @@ import java.util.Set;
  * @author nik
  */
 public class PluginJavaBuilderExtension extends JavaBuilderExtension {
+  @NotNull
   @Override
   public Set<? extends JpsModuleType<?>> getCompilableModuleTypes() {
     return Collections.singleton(JpsPluginModuleType.INSTANCE);

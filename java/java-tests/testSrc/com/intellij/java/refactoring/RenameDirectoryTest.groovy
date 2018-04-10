@@ -15,8 +15,12 @@
  */
 package com.intellij.java.refactoring
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.refactoring.rename.RenameProcessor
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 /**
  * @author peter
@@ -24,7 +28,9 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 class RenameDirectoryTest extends JavaCodeInsightFixtureTestCase {
 
   void testRenameSrcRootWithTextOccurrences() {
-    VirtualFile srcRoot = myFixture.tempDirFixture.findOrCreateDir("")
+    VirtualFile srcRoot = myFixture.tempDirFixture.findOrCreateDir("src2")
+    PsiTestUtil.removeAllRoots(myModule, null)
+    PsiTestUtil.addSourceRoot(myModule, srcRoot)
 
     def fooClass = myFixture.addClass("""
 // PsiPackage:

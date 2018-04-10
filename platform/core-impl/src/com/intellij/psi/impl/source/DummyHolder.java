@@ -152,16 +152,13 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
+  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "MethodDoesntCallSuperMethod"})
   protected PsiFileImpl clone() {
-    final PsiFileImpl psiClone = cloneImpl(getTreeElement());
-    final DummyHolderViewProvider dummyHolderViewProvider = new DummyHolderViewProvider(getManager());
-    myViewProvider = dummyHolderViewProvider;
-    dummyHolderViewProvider.setDummyHolder((DummyHolder)psiClone);
-    final FileElement treeClone = (FileElement)calcTreeElement().clone();
-    psiClone.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
+    DummyHolder psiClone = (DummyHolder)cloneImpl((FileElement)calcTreeElement().clone());
+    DummyHolderViewProvider dummyHolderViewProvider = new DummyHolderViewProvider(getManager());
+    psiClone.myViewProvider = dummyHolderViewProvider;
+    dummyHolderViewProvider.setDummyHolder(psiClone);
     psiClone.myOriginalFile = isPhysical() ? this : myOriginalFile;
-    treeClone.setPsi(psiClone);
     return psiClone;
   }
 

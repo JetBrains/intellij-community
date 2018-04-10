@@ -29,7 +29,8 @@ public class TrelloUser extends TrelloModel {
 
   public static final String REQUIRED_FIELDS = "username";
 
-  private String username;
+  @NotNull
+  private String username = "";
 
   /**
    * Serialization constructor

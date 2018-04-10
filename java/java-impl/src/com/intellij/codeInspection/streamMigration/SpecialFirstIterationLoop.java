@@ -66,17 +66,6 @@ class SpecialFirstIterationLoop {
     return myVariable;
   }
 
-  @Nullable
-  private static PsiExpression getExpressionComparedEqWithZero(@NotNull PsiBinaryExpression binaryExpression) {
-    if (!binaryExpression.getOperationTokenType().equals(JavaTokenType.EQEQ)) return null;
-    PsiExpression rOperand = binaryExpression.getROperand();
-    if (rOperand == null) return null;
-    PsiExpression lOperand = binaryExpression.getLOperand();
-    if (ExpressionUtils.isZero(lOperand)) return rOperand;
-    if (ExpressionUtils.isZero(rOperand)) return lOperand;
-    return null;
-  }
-
   @Contract("null -> null")
   @Nullable
   static PsiExpression getExpressionComparedToZero(@Nullable PsiBinaryExpression condition) {
@@ -308,7 +297,7 @@ class SpecialFirstIterationLoop {
       PsiBinaryExpression binaryExpression = tryCast(condition, PsiBinaryExpression.class);
       if (binaryExpression == null) return ThreeState.UNSURE;
 
-      PsiExpression comparedEqWithZero = getExpressionComparedEqWithZero(binaryExpression);
+      PsiExpression comparedEqWithZero = ExpressionUtils.getValueComparedWithZero(binaryExpression);
       if (comparedEqWithZero != null) {
         if (!ExpressionUtils.isReferenceTo(comparedEqWithZero, loopVar)) return ThreeState.UNSURE;
         return ThreeState.YES;

@@ -24,6 +24,7 @@ import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -49,7 +50,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
@@ -292,8 +292,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     if (toCatchExceptions) {
+      PsiStatement statement;
       if (!(ref instanceof PsiReferenceExpression &&
-            JavaHighlightUtil.isSuperOrThisCall(PsiTreeUtil.getParentOfType(ref, PsiStatement.class), true, false))) {
+            (statement = PsiTreeUtil.getParentOfType(ref, PsiStatement.class)) != null &&
+            JavaHighlightUtil.isSuperOrThisCall(statement, true, false))) {
         if (needToCatchExceptions(changeInfo, caller)) {
           PsiClassType[] newExceptions =
             callee != null ? getCalleeChangedExceptionInfo(callee) : getPrimaryChangedExceptionInfo(changeInfo);
@@ -351,9 +353,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(ref.getProject());
         PsiTryStatement tryStatement = (PsiTryStatement)elementFactory.createStatementFromText("try {} catch (Exception e) {}", null);
         PsiStatement anchor;
-        PsiElement lambdaBody = context instanceof PsiLambdaExpression ? ((PsiLambdaExpression)context).getBody() : null;
-        if (lambdaBody instanceof PsiExpression) {
-          PsiCodeBlock codeBlock = (PsiCodeBlock)((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaBody)).getBody();
+        if (context instanceof PsiLambdaExpression) {
+          PsiCodeBlock codeBlock = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)context);
           LOG.assertTrue(codeBlock != null);
           anchor = codeBlock.getStatements()[0];
         }
@@ -384,7 +385,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     for (PsiClassType exceptionType : exceptions) {
       if (!ExceptionUtil.isUncheckedException(exceptionType)) result.add(exceptionType);
     }
-    return result.toArray(new PsiClassType[result.size()]);
+    return result.toArray(PsiClassType.EMPTY_ARRAY);
   }
 
   private static void adjustPossibleEmptyTryStatement(PsiTryStatement tryStatement) throws IncorrectOperationException {
@@ -418,7 +419,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     for (PsiClassType exception : exceptions) {
       if (!ExceptionUtil.isHandled(exception, place)) result.add(exception);
     }
-    return result.toArray(new PsiClassType[result.size()]);
+    return result.toArray(PsiClassType.EMPTY_ARRAY);
   }
 
   private static boolean isCatchParameterRedundant(PsiClassType catchParamType, Collection<PsiClassType> thrownTypes) {
@@ -847,7 +848,14 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
       else {
-        newParms[i] = createNewParameter(changeInfo, info, substitutor);
+        PsiElement parent = list.getParent();
+        if (parent instanceof PsiLambdaExpression && !((PsiLambdaExpression)parent).hasFormalParameterTypes()) {
+          PsiExpression dummyLambdaParam = factory.createExpressionFromText(info.getName() + "-> {}", list);
+          newParms[i] = ((PsiLambdaExpression)dummyLambdaParam).getParameterList().getParameters()[0];
+        }
+        else {
+          newParms[i] = createNewParameter(changeInfo, info, substitutor);
+        }
       }
     }
 
@@ -887,7 +895,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       for (JavaParameterInfo info : primaryNewParms) {
         if (info.getOldIndex() < 0) newParameters.add(createNewParameter(changeInfo, info, psiSubstitutor, substitutor));
       }
-      PsiParameter[] arrayed = newParameters.toArray(new PsiParameter[newParameters.size()]);
+      PsiParameter[] arrayed = newParameters.toArray(PsiParameter.EMPTY_ARRAY);
       boolean[] toRemoveParm = new boolean[arrayed.length];
       Arrays.fill(toRemoveParm, false);
       resolveParameterVsFieldsConflicts(arrayed, caller.getParameterList(), toRemoveParm, caller.getBody());
@@ -906,7 +914,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           newThrowns.add(ref);
         }
       }
-      PsiJavaCodeReferenceElement[] arrayed = newThrowns.toArray(new PsiJavaCodeReferenceElement[newThrowns.size()]);
+      PsiJavaCodeReferenceElement[] arrayed = newThrowns.toArray(PsiJavaCodeReferenceElement.EMPTY_ARRAY);
       boolean[] toRemoveParm = new boolean[arrayed.length];
       Arrays.fill(toRemoveParm, false);
       ChangeSignatureUtil.synchronizeList(throwsList, Arrays.asList(arrayed), ThrowsList.INSTANCE, toRemoveParm);
@@ -960,7 +968,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       type = psiSubstitutor.substitute(type);
     }
     PsiParameter parameter = factory.createParameter(newParm.getName(), type, list);
-    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+    if (JavaCodeStyleSettings.getInstance(list.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
       PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
     }
     return parameter;
@@ -1140,7 +1148,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     public static void searchForHierarchyConflicts(PsiMethod method, MultiMap<PsiElement, String> conflicts, final String modifier) {
-      SuperMethodsSearch.search(method, method.getContainingClass(), true, false).forEach(
+      SuperMethodsSearch.search(method, ReadAction.compute(() -> method.getContainingClass()), true, false).forEach(
         methodSignature -> {
           final PsiMethod superMethod = methodSignature.getMethod();
           if (!hasCompatibleVisibility(superMethod, true, modifier)) {
@@ -1228,8 +1236,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, method);
           }
           PsiParameter param = factory.createParameter(info.getName(), parameterType, method);
-          if (CodeStyleSettingsManager.getSettings(manager.getProject())
-            .getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+          if (JavaCodeStyleSettings.getInstance(method.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
             PsiUtil.setModifierProperty(param, PsiModifier.FINAL, true);
           }
           prototype.getParameterList().add(param);

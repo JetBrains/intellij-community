@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -53,25 +54,30 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void reloadFromXml() {
+    boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     try {
       readFromXml("file:///ProductivityFeaturesRegistry.xml");
     }
-    catch (Exception e) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(e);
-      }
+    catch (FileNotFoundException e) {
+      if (!testMode) LOG.error(e);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
     }
 
     try {
       readFromXml("file:///IdeSpecificFeatures.xml");
     }
-    catch (Exception e) {// ignore
+    catch (FileNotFoundException ignore) {
+    }
+    catch (Throwable e) {
+      LOG.error(e);
     }
   }
 
   private void readFromXml(String path) throws JDOMException, IOException {
-    final Document document = JDOMUtil.loadResourceDocument(new URL(path));
-    final Element root = document.getRootElement();
+    Document document = JDOMUtil.loadResourceDocument(new URL(path));
+    Element root = document.getRootElement();
     readGroups(root);
     readFilters(root);
   }
@@ -201,7 +207,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
         filters.add(pair.getSecond());
       }
     }
-    return filters.toArray(new ApplicabilityFilter[filters.size()]);
+    return filters.toArray(new ApplicabilityFilter[0]);
   }
 
   @Override

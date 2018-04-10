@@ -1,27 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
@@ -34,10 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.beans.Introspector;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.List;
 
@@ -66,10 +47,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
   public synchronized void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     assert myBindings == null;
 
+    Property classAnnotation = myBeanClass.getAnnotation(Property.class);
+
     List<MutableAccessor> accessors = getAccessors(myBeanClass);
     myBindings = new Binding[accessors.size()];
     for (int i = 0, size = accessors.size(); i < size; i++) {
-      Binding binding = createBinding(accessors.get(i), serializer);
+      Binding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OPTION_TAG : classAnnotation.style());
       binding.init(originalType, serializer);
       myBindings[i] = binding;
     }
@@ -89,8 +72,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   public Element serializeInto(@NotNull Object o, @Nullable Element element, @Nullable SerializationFilter filter) {
     for (Binding binding : myBindings) {
       Accessor accessor = binding.getAccessor();
-
-      if (o instanceof SerializationFilter && !((SerializationFilter)o).accepts(accessor,  o)) {
+      if (o instanceof SerializationFilter && !((SerializationFilter)o).accepts(accessor, o)) {
         continue;
       }
 
@@ -267,6 +249,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
         return name;
       }
     }
+
     String name = aClass.getSimpleName();
     if (name.isEmpty()) {
       name = aClass.getSuperclass().getSimpleName();
@@ -279,7 +262,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return name;
   }
 
-  private static String getTagNameFromAnnotation(Class<?> aClass) {
+  @Nullable
+  private static String getTagNameFromAnnotation(@NotNull Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
     return tag != null && !tag.value().isEmpty() ? tag.value() : null;
   }
@@ -291,17 +275,18 @@ public class BeanBinding extends NotNullDeserializeBinding {
       return accessors;
     }
 
-    accessors = ContainerUtil.newArrayList();
+    accessors = new ArrayList<MutableAccessor>();
 
     Map<String, Couple<Method>> nameToAccessors;
-    if (aClass != Rectangle.class) {   // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
-      nameToAccessors = collectPropertyAccessors(aClass, accessors);
-    }
-    else {
+    // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
+    if (aClass == Rectangle.class) {
       nameToAccessors = Collections.emptyMap();
     }
+    else {
+      nameToAccessors = collectPropertyAccessors(aClass, accessors);
+    }
 
-    int propertyAccessorCount  = accessors.size();
+    int propertyAccessorCount = accessors.size();
     collectFieldAccessors(aClass, accessors);
 
     // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter, but annotation moved to var, not to getter/setter
@@ -326,38 +311,48 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return accessors;
   }
 
+  private static class NameAndIsSetter {
+    final String name;
+    final boolean isSetter;
+
+    public NameAndIsSetter(String name, boolean isSetter) {
+      this.name = name;
+      this.isSetter = isSetter;
+    }
+  }
+
   @NotNull
   private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
-    final Map<String, Couple<Method>> candidates = ContainerUtilRt.newTreeMap(); // (name,(getter,setter))
+    final Map<String, Couple<Method>> candidates = new TreeMap<String, Couple<Method>>(); // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) {
         continue;
       }
 
-      Pair<String, Boolean> propertyData = getPropertyData(method.getName()); // (name,isSetter)
-      if (propertyData == null || propertyData.first.equals("class") ||
-          method.getParameterTypes().length != (propertyData.second ? 1 : 0)) {
+      NameAndIsSetter propertyData = getPropertyData(method.getName());
+      if (propertyData == null || propertyData.name.equals("class") ||
+          method.getParameterTypes().length != (propertyData.isSetter ? 1 : 0)) {
         continue;
       }
 
-      Couple<Method> candidate = candidates.get(propertyData.first);
+      Couple<Method> candidate = candidates.get(propertyData.name);
       if (candidate == null) {
         candidate = Couple.getEmpty();
       }
-      if ((propertyData.second ? candidate.second : candidate.first) != null) {
+      if ((propertyData.isSetter ? candidate.second : candidate.first) != null) {
         continue;
       }
-      candidate = Couple.of(propertyData.second ? candidate.first : method, propertyData.second ? method : candidate.second);
-      candidates.put(propertyData.first, candidate);
+      candidate = Couple.of(propertyData.isSetter ? candidate.first : method, propertyData.isSetter ? method : candidate.second);
+      candidates.put(propertyData.name, candidate);
     }
+
     for (Iterator<Map.Entry<String, Couple<Method>>> iterator = candidates.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<String, Couple<Method>> candidate = iterator.next();
-      Couple<Method> methods = candidate.getValue(); // (getter,setter)
-      if (methods.first != null && methods.second != null &&
-          methods.first.getReturnType().equals(methods.second.getParameterTypes()[0]) &&
-          methods.first.getAnnotation(Transient.class) == null &&
-          methods.second.getAnnotation(Transient.class) == null) {
-        accessors.add(new PropertyAccessor(candidate.getKey(), methods.first.getReturnType(), methods.first, methods.second));
+      Couple<Method> methods = candidate.getValue();
+      Method getter = methods.first;
+      Method setter = methods.second;
+      if (isAcceptableProperty(getter, setter)) {
+        accessors.add(new PropertyAccessor(candidate.getKey(), getter.getReturnType(), getter, setter));
       }
       else {
         iterator.remove();
@@ -366,45 +361,82 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return candidates;
   }
 
+  private static boolean isAcceptableProperty(@Nullable Method getter, @Nullable Method setter) {
+    if (getter == null || getter.getAnnotation(Transient.class) != null) {
+      return false;
+    }
+
+    if (setter == null) {
+      // check hasStoreAnnotations to ensure that this addition will not lead to regression (since there is a chance that there is some existing not-annotated list getters without setter)
+      return (Collection.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) && hasStoreAnnotations(getter);
+    }
+
+    if (setter.getAnnotation(Transient.class) != null || !getter.getReturnType().equals(setter.getParameterTypes()[0])) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private static boolean hasStoreAnnotations(@NotNull AccessibleObject object) {
+    //noinspection deprecation
+    return object.getAnnotation(OptionTag.class) != null ||
+           object.getAnnotation(Tag.class) != null ||
+           object.getAnnotation(Attribute.class) != null ||
+           object.getAnnotation(Property.class) != null ||
+           object.getAnnotation(Text.class) != null ||
+           object.getAnnotation(CollectionBean.class) != null ||
+           object.getAnnotation(MapAnnotation.class) != null ||
+           object.getAnnotation(XMap.class) != null ||
+           object.getAnnotation(XCollection.class) != null ||
+           object.getAnnotation(AbstractCollection.class) != null;
+  }
+
   private static void collectFieldAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
     Class<?> currentClass = aClass;
     do {
       for (Field field : currentClass.getDeclaredFields()) {
         int modifiers = field.getModifiers();
-        //noinspection deprecation
-        if (!Modifier.isStatic(modifiers) &&
-            (field.getAnnotation(OptionTag.class) != null ||
-             field.getAnnotation(Tag.class) != null ||
-             field.getAnnotation(Attribute.class) != null ||
-             field.getAnnotation(Property.class) != null ||
-             field.getAnnotation(Text.class) != null ||
-             field.getAnnotation(CollectionBean.class) != null ||
-             field.getAnnotation(MapAnnotation.class) != null ||
-             field.getAnnotation(AbstractCollection.class) != null ||
-             (Modifier.isPublic(modifiers) &&
-              // we don't want to allow final fields of all types, but only supported
-              (!Modifier.isFinal(modifiers) || Collection.class.isAssignableFrom(field.getType())) &&
-              !Modifier.isTransient(modifiers) &&
-              field.getAnnotation(Transient.class) == null))) {
-          accessors.add(new FieldAccessor(field));
+        if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
+          continue;
         }
+
+        if (!hasStoreAnnotations(field)) {
+          if (!(Modifier.isPublic(modifiers))) {
+            continue;
+          }
+
+          if (Modifier.isFinal(modifiers)) {
+            Class<?> fieldType = field.getType();
+            // we don't want to allow final fields of all types, but only supported
+            if (!(Collection.class.isAssignableFrom(fieldType) || Map.class.isAssignableFrom(fieldType))) {
+              continue;
+            }
+          }
+
+          if (field.getAnnotation(Transient.class) != null) {
+            continue;
+          }
+        }
+
+        accessors.add(new FieldAccessor(field));
       }
     }
     while ((currentClass = currentClass.getSuperclass()) != null && currentClass.getAnnotation(Transient.class) == null);
   }
 
   @Nullable
-  private static Pair<String, Boolean> getPropertyData(@NotNull String methodName) {
+  private static NameAndIsSetter getPropertyData(@NotNull String methodName) {
     String part = "";
     boolean isSetter = false;
     if (methodName.startsWith("get")) {
-      part = methodName.substring(3, methodName.length());
+      part = methodName.substring(3);
     }
     else if (methodName.startsWith("is")) {
-      part = methodName.substring(2, methodName.length());
+      part = methodName.substring(2);
     }
     else if (methodName.startsWith("set")) {
-      part = methodName.substring(3, methodName.length());
+      part = methodName.substring(3);
       isSetter = true;
     }
 
@@ -417,7 +449,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
       // see XmlSerializerTest.internalVar
       part = part.substring(0, suffixIndex);
     }
-    return Pair.create(Introspector.decapitalize(part), isSetter);
+    return new NameAndIsSetter(Introspector.decapitalize(part), isSetter);
   }
 
   public String toString() {
@@ -425,7 +457,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer) {
+  private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer, @NotNull Property.Style propertyStyle) {
     Binding binding = serializer.getBinding(accessor);
     if (binding instanceof JDOMElementBinding) {
       return binding;
@@ -447,7 +479,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     if (binding instanceof CompactCollectionBinding) {
-      return new AccessorBindingWrapper(accessor, binding, false);
+      return new AccessorBindingWrapper(accessor, binding, false, Property.Style.OPTION_TAG);
     }
 
     boolean surroundWithTag = true;
@@ -465,9 +497,26 @@ public class BeanBinding extends NotNullDeserializeBinding {
       if (binding == null || binding instanceof TextBinding) {
         throw new XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: " + accessor);
       }
-      return new AccessorBindingWrapper(accessor, binding, inline);
+      return new AccessorBindingWrapper(accessor, binding, inline, property.style());
     }
 
-    return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
+    XCollection xCollection = accessor.getAnnotation(XCollection.class);
+    if (xCollection != null && (!xCollection.propertyElementName().isEmpty() || xCollection.style() == XCollection.Style.v2)) {
+      return new TagBinding(accessor, xCollection.propertyElementName());
+    }
+
+    OptionTag optionTag = accessor.getAnnotation(OptionTag.class);
+
+    if (optionTag == null) {
+      XMap xMap = accessor.getAnnotation(XMap.class);
+      if (xMap != null) {
+        return new TagBinding(accessor, xMap.propertyElementName());
+      }
+    }
+
+    if (propertyStyle == Property.Style.ATTRIBUTE) {
+      return new AttributeBinding(accessor, null);
+    }
+    return new OptionTagBinding(accessor, optionTag);
   }
 }

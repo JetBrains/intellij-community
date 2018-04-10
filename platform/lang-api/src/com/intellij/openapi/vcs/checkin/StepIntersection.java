@@ -16,107 +16,89 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.Function;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.PeekableIteratorWrapper;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author irengrig
- *         Date: 2/18/11
- *         Time: 12:04 AM
- *
- *         keeps state (position in areas) between invocations
- */
-public class StepIntersection<Data, Area> {
-  private final Convertor<Data,TextRange> myDataConvertor;
-  private final Convertor<Area,TextRange> myAreasConvertor;
-  private TextRange myDataRange;
-  private TextRange myAreaRange;
-  private Data myCurData;
-  private Iterator<Data> myDataIterator;
-  private int myAreaIndex;
-  private Area myCurArea;
-  private final List<Area> myAreas;
-  private final HackSearch<Data,Area,TextRange> myHackSearch;
 
-  public StepIntersection(Convertor<Data, TextRange> dataConvertor,
-                          Convertor<Area, TextRange> areasConvertor,
-                          final List<Area> areas) {
-    myAreas = areas;
-    myAreaIndex = 0;
-    myDataConvertor = dataConvertor;
-    myAreasConvertor = areasConvertor;
-    myHackSearch = new HackSearch<>(myDataConvertor, myAreasConvertor,
-                                    (o1, o2) -> o1.intersects(o2) ? 0 : o1.getStartOffset() < o2.getStartOffset() ? -1 : 1);
-  }
+public class StepIntersection {
+  /**
+   * Iterate over intersected ranges in two lists, sorted by TextRange.
+   */
+  public static <T, V> void processIntersections(@NotNull List<T> elements1,
+                                                 @NotNull List<V> elements2,
+                                                 @NotNull Convertor<T, TextRange> convertor1,
+                                                 @NotNull Convertor<V, TextRange> convertor2,
+                                                 @NotNull PairConsumer<T, V> intersectionConsumer) {
+    PeekableIteratorWrapper<T> peekIterator1 = new PeekableIteratorWrapper<>(elements1.iterator());
 
-  public List<Data> process(final Iterable<Data> data) {
-    final List<Data> result = new ArrayList<>();
-    process(data, (data1, area) -> result.add(data1));
-    return result;
-  }
+    outerLoop:
+    for (V item2 : elements2) {
+      TextRange range2 = convertor2.convert(item2);
 
-  public void process(final Iterable<Data> data, final PairConsumer<Data, Area> consumer) {
-    myDataIterator = data.iterator();
+      while (peekIterator1.hasNext()) {
+        T item1 = peekIterator1.peek();
+        TextRange range1 = convertor1.convert(item1);
 
-    if (! myDataIterator.hasNext() || noMoreAreas()) return;
-    dataStep();
-    initArea();
-    while (! noMoreAreas()) {
-      final boolean intersects = myAreaRange.intersects(myDataRange);
-      if (intersects) {
-        consumer.consume(myCurData, myCurArea);
+        if (range1.intersects(range2)) {
+          intersectionConsumer.consume(item1, item2);
+        }
+
+        if (range2.getEndOffset() < range1.getEndOffset()) {
+          continue outerLoop;
+        }
+        else {
+          peekIterator1.next();
+        }
       }
-      // take next
-      if (! myDataIterator.hasNext() && noMoreAreas()) break;
-      if (! myDataIterator.hasNext()) {
-        areaStep();
-        continue;
-      }
-      if (noMoreAreas()) {
-        dataStep();
-        continue;
-      }
-      if (myDataRange.getEndOffset() < myAreaRange.getEndOffset()) {
-        dataStep();
-      } else {
-        areaStep();
-      }
+
+      break outerLoop;
     }
   }
 
-  private boolean noMoreAreas() {
-    return (myAreaIndex >= myAreas.size());
-  }
+  public static <T, V> void processElementIntersections(@NotNull T element1,
+                                                        @NotNull List<V> elements2,
+                                                        @NotNull Convertor<T, TextRange> convertor1,
+                                                        @NotNull Convertor<V, TextRange> convertor2,
+                                                        @NotNull PairConsumer<T, V> intersectionConsumer) {
+    TextRange range1 = convertor1.convert(element1);
+    int index = binarySearch(elements2, range1.getStartOffset(), value -> convertor2.convert(value).getEndOffset());
+    if (index < 0) index = -index - 1;
 
-  private void initArea() {
-    myAreaIndex = 0;
-    myCurArea = myAreas.get(myAreaIndex);
-    myAreaRange = myAreasConvertor.convert(myCurArea);
-  }
+    for (int i = index; i < elements2.size(); i++) {
+      V item2 = elements2.get(i);
+      TextRange range2 = convertor2.convert(item2);
 
-  private void areaStep() {
-    // a hack here
-    final int idx = myHackSearch.search(myAreas.subList(myAreaIndex + 1, myAreas.size()), myCurData);
-    myAreaIndex = myAreaIndex + 1 + idx;
-    if (myAreaIndex >= myAreas.size()) {
-      return;
+      if (range1.intersects(range2)) {
+        intersectionConsumer.consume(element1, item2);
+      }
+
+      if (range2.getStartOffset() > range1.getEndOffset()) break;
     }
-    /*assert myAreaRange == null || myAreaRange.getEndOffset() < myAreasConvertor.convert(myAreas.get(myAreaIndex)).getStartOffset() :
-      "Area ranges intersect: first: " + myAreaRange + ", second: " + myAreasConvertor.convert(myAreas.get(myAreaIndex)) + ", text: '" +
-      myDebugDocumentTextGetter.get() + "'";*/
-    myCurArea = myAreas.get(myAreaIndex);
-    myAreaRange = myAreasConvertor.convert(myCurArea);
   }
 
-  private void dataStep() {
-    myCurData = myDataIterator.next();
-    /*assert myDataRange == null || myDataRange.getEndOffset() < myDataConvertor.convert(myCurData).getStartOffset() :
-      "Data ranges intersect: first: " + myDataRange + ", second: " + myDataConvertor.convert(myCurData) + ", text: '" +
-      myDebugDocumentTextGetter.get() + "'";*/
-    myDataRange = myDataConvertor.convert(myCurData);
+  private static <T> int binarySearch(@NotNull List<T> elements, int value, @NotNull Function<T, Integer> convertor) {
+    int low = 0;
+    int high = elements.size() - 1;
+
+    while (low <= high) {
+      int mid = (low + high) / 2;
+
+      int midValue = convertor.fun(elements.get(mid));
+      if (midValue < value) {
+        low = mid + 1;
+      }
+      else if (midValue > value) {
+        high = mid - 1;
+      }
+      else {
+        return mid;
+      }
+    }
+    return -(low + 1);
   }
 }

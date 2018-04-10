@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +25,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgGlobalSettings;
+import org.zmlx.hg4idea.HgExecutableManager;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
@@ -102,12 +103,12 @@ public class HgCommandExecutor {
                       @NotNull final String operation,
                       @Nullable final List<String> arguments,
                       @Nullable final HgCommandResultHandler handler) {
-    HgUtil.executeOnPooledThread(() -> {
+    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
       HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
       if (handler != null) {
         handler.process(result);
       }
-    }, myProject);
+    });
   }
 
   @Nullable
@@ -160,10 +161,6 @@ public class HgCommandExecutor {
       processError(e);
       return false;
     }
-    catch (InterruptedException e) { // this may happen during project closing, no need to notify the user.
-      LOG.info(e.getMessage(), e);
-      return false;
-    }
   }
 
   private void processError(@NotNull ShellCommandException e) {
@@ -183,7 +180,7 @@ public class HgCommandExecutor {
     logCommand(operation, arguments);
 
     final List<String> cmdLine = new LinkedList<>();
-    cmdLine.add(myVcs.getGlobalSettings().getHgExecutable());
+    cmdLine.add(HgExecutableManager.getInstance().getHgExecutable(myProject));
     if (repo != null) {
       cmdLine.add("--repository");
       cmdLine.add(repo.getPath());
@@ -211,10 +208,9 @@ public class HgCommandExecutor {
     if (myProject.isDisposed()) {
       return;
     }
-    final HgGlobalSettings settings = myVcs.getGlobalSettings();
-    String exeName;
-    final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
-    exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
+    String exeName = HgExecutableManager.getInstance().getHgExecutable(myProject);
+    final int lastSlashIndex = exeName.lastIndexOf(File.separator);
+    exeName = exeName.substring(lastSlashIndex + 1);
 
     String str = String
       .format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.escapeStringCharacters(StringUtil.join(arguments, " ")));
@@ -230,39 +226,13 @@ public class HgCommandExecutor {
     }
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private void logResult(@NotNull HgCommandResult result) {
-    // log output if needed
-    if (!result.getRawOutput().isEmpty()) {
-      if (!myOutputAlwaysSuppressed) {
-        if (!myIsSilent && myShowOutput) {
-          LOG.info(result.getRawOutput());
-          myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT);
-        }
-        else {
-          LOG.debug(result.getRawOutput());
-        }
-      }
-    }
-
-    // log error
-    if (!result.getRawError().isEmpty()) {
-      if (!myIsSilent) {
-        LOG.info(result.getRawError());
-        myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT);
-      }
-      else {
-        LOG.debug(result.getRawError());
-      }
-    }
-  }
-
   protected void showError(Exception e) {
     final HgVcs vcs = HgVcs.getInstance(myProject);
     if (vcs == null) return;
-    String message = HgVcsMessages.message("hg4idea.command.executable.error", vcs.getGlobalSettings().getHgExecutable()) +
-                     "\nOriginal Error:\n" +
-                     e.getMessage();
+    String message =
+      HgVcsMessages.message("hg4idea.command.executable.error", HgExecutableManager.getInstance().getHgExecutable(myProject)) +
+      "\nOriginal Error:\n" +
+      e.getMessage();
     VcsImplUtil.showErrorMessage(myProject, message, HgVcsMessages.message("hg4idea.error"));
   }
 }

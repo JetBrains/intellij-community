@@ -74,7 +74,7 @@ public class ActionMacro {
   }
 
   public ActionDescriptor[] getActions() {
-    return myActions.toArray(new ActionDescriptor[myActions.size()]);
+    return myActions.toArray(new ActionDescriptor[0]);
   }
 
   public void readExternal(Element macro) {

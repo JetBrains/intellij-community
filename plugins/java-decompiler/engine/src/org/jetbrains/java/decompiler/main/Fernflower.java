@@ -1,55 +1,88 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
-import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
-import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.extern.*;
+import org.jetbrains.java.decompiler.modules.renamer.ConverterHelper;
 import org.jetbrains.java.decompiler.modules.renamer.IdentifierConverter;
+import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
 import org.jetbrains.java.decompiler.struct.IDecompiledData;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class Fernflower implements IDecompiledData {
-
   private final StructContext structContext;
-  private ClassesProcessor classesProcessor;
+  private final ClassesProcessor classProcessor;
+  private final IIdentifierRenamer helper;
+  private final IdentifierConverter converter;
 
-  public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> options, IFernflowerLogger logger) {
+  public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> customProperties, IFernflowerLogger logger) {
+    Map<String, Object> properties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
+    if (customProperties != null) {
+      properties.putAll(customProperties);
+    }
+
+    String level = (String)properties.get(IFernflowerPreferences.LOG_LEVEL);
+    if (level != null) {
+      try {
+        logger.setSeverity(IFernflowerLogger.Severity.valueOf(level.toUpperCase(Locale.US)));
+      }
+      catch (IllegalArgumentException ignore) { }
+    }
+
     structContext = new StructContext(saver, this, new LazyLoader(provider));
-    DecompilerContext.initContext(options);
-    DecompilerContext.setCounterContainer(new CounterContainer());
-    DecompilerContext.setLogger(logger);
+    classProcessor = new ClassesProcessor(structContext);
+
+    PoolInterceptor interceptor = null;
+    if ("1".equals(properties.get(IFernflowerPreferences.RENAME_ENTITIES))) {
+      helper = loadHelper((String)properties.get(IFernflowerPreferences.USER_RENAMER_CLASS), logger);
+      interceptor = new PoolInterceptor();
+      converter = new IdentifierConverter(structContext, helper, interceptor);
+    }
+    else {
+      helper = null;
+      converter = null;
+    }
+
+    DecompilerContext context = new DecompilerContext(properties, logger, structContext, classProcessor, interceptor);
+    DecompilerContext.setCurrentContext(context);
+  }
+
+  private static IIdentifierRenamer loadHelper(String className, IFernflowerLogger logger) {
+    if (className != null) {
+      try {
+        Class<?> renamerClass = Fernflower.class.getClassLoader().loadClass(className);
+        return (IIdentifierRenamer) renamerClass.getDeclaredConstructor().newInstance();
+      }
+      catch (Exception e) {
+        logger.writeMessage("Cannot load renamer '" + className + "'", IFernflowerLogger.Severity.WARN, e);
+      }
+    }
+
+    return new ConverterHelper();
+  }
+
+  public void addSource(File source) {
+    structContext.addSpace(source, true);
+  }
+
+  public void addLibrary(File library) {
+    structContext.addSpace(library, false);
   }
 
   public void decompileContext() {
-    if (DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
-      new IdentifierConverter().rename(structContext);
+    if (converter != null) {
+      converter.rename();
     }
 
-    classesProcessor = new ClassesProcessor(structContext);
-
-    DecompilerContext.setClassProcessor(classesProcessor);
-    DecompilerContext.setStructContext(structContext);
+    classProcessor.loadClasses(helper);
 
     structContext.saveContext();
   }
@@ -58,24 +91,18 @@ public class Fernflower implements IDecompiledData {
     DecompilerContext.setCurrentContext(null);
   }
 
-  public StructContext getStructContext() {
-    return structContext;
-  }
-
   @Override
   public String getClassEntryName(StructClass cl, String entryName) {
-    ClassNode node = classesProcessor.getMapRootClasses().get(cl.qualifiedName);
+    ClassNode node = classProcessor.getMapRootClasses().get(cl.qualifiedName);
     if (node.type != ClassNode.CLASS_ROOT) {
       return null;
     }
+    else if (converter != null) {
+      String simpleClassName = cl.qualifiedName.substring(cl.qualifiedName.lastIndexOf('/') + 1);
+      return entryName.substring(0, entryName.lastIndexOf('/') + 1) + simpleClassName + ".java";
+    }
     else {
-      if (DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
-        String simple_classname = cl.qualifiedName.substring(cl.qualifiedName.lastIndexOf('/') + 1);
-        return entryName.substring(0, entryName.lastIndexOf('/') + 1) + simple_classname + ".java";
-      }
-      else {
-        return entryName.substring(0, entryName.lastIndexOf(".class")) + ".java";
-      }
+      return entryName.substring(0, entryName.lastIndexOf(".class")) + ".java";
     }
   }
 
@@ -84,11 +111,11 @@ public class Fernflower implements IDecompiledData {
     try {
       TextBuffer buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
       buffer.append(DecompilerContext.getProperty(IFernflowerPreferences.BANNER).toString());
-      classesProcessor.writeClass(cl, buffer);
+      classProcessor.writeClass(cl, buffer);
       return buffer.toString();
     }
-    catch (Throwable ex) {
-      DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName + " couldn't be fully decompiled.", ex);
+    catch (Throwable t) {
+      DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName + " couldn't be fully decompiled.", t);
       return null;
     }
   }

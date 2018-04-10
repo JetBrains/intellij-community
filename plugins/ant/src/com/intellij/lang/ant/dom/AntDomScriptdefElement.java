@@ -20,7 +20,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 4, 2010
  */
 public abstract class AntDomScriptdefElement extends AntDomNamedElement {
   

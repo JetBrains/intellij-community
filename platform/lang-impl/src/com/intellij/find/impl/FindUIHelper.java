@@ -31,7 +31,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-class FindUIHelper implements Disposable {
+@SuppressWarnings("WeakerAccess")
+public class FindUIHelper implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private  FindModel myModel;
    FindModel myPreviousModel;
@@ -52,28 +53,33 @@ class FindUIHelper implements Disposable {
                                   myUI instanceof FindDialog && Registry.is("ide.find.as.popup") ||
                                   myUI == null;
     if (newInstanceRequired) {
+      JComponent component;
       if (Registry.is("ide.find.as.popup")) {
-        myUI = new FindPopupPanel(this);
+        FindPopupPanel panel = new FindPopupPanel(this);
+        component = panel;
+        myUI = panel;
       }
       else {
         FindDialog findDialog = new FindDialog(this);
-        registerAction("ReplaceInPath", true, findDialog);
-        registerAction("FindInPath", false, findDialog);
+        component = ((JDialog)findDialog.getWindow()).getRootPane();
         myUI = findDialog;
       }
+      
+      registerAction("ReplaceInPath", true, component, myUI);
+      registerAction("FindInPath", false, component, myUI);
       Disposer.register(myUI.getDisposable(), this);
     }
     return myUI;
   }
 
-  private void registerAction(String actionName, boolean replace, FindDialog findDialog) {
+  private void registerAction(String actionName, boolean replace, JComponent component, FindUI ui) {
     AnAction action = ActionManager.getInstance().getAction(actionName);
-    JRootPane findDialogRootComponent = ((JDialog)findDialog.getWindow()).getRootPane();
     new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        ui.saveSettings();
         myModel.setReplaceState(replace);
-        findDialog.initByModel();
+        ui.initByModel();
       }
       //@NotNull
       //private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
@@ -93,7 +99,7 @@ class FindUIHelper implements Disposable {
       //  };
       //}
 
-    }.registerCustomShortcutSet(action.getShortcutSet(), findDialogRootComponent);
+    }.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
 
 
@@ -135,6 +141,7 @@ class FindUIHelper implements Disposable {
   }
 
   void updateFindSettings() {
+    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myModel);
     FindSettings findSettings = FindSettings.getInstance();
     findSettings.setCaseSensitive(myModel.isCaseSensitive());
     if (myModel.isReplaceState()) {
@@ -212,7 +219,7 @@ class FindUIHelper implements Disposable {
   }
 
   public void doOKAction() {
-    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myModel);
+    updateFindSettings();
     myOkHandler.run();
   }
 }

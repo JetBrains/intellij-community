@@ -47,6 +47,6 @@ class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
         return false;
       }
     }
-    return !AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, true);
+    return !AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, 0);
   }
 }

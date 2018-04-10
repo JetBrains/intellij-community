@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
@@ -33,9 +18,9 @@ import com.intellij.util.CatchingConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PythonHelpersLocator;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +39,6 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class PyPIPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class);
@@ -98,7 +82,7 @@ public class PyPIPackageUtil {
    * 
    * @see #getAdditionalPackages() 
    */
-  private volatile Set<RepoPackage> myAdditionalPackages = null;
+  private volatile List<RepoPackage> myAdditionalPackages = null;
 
   /**
    * Contains cached package information retrieved through PyPI's JSON API.
@@ -116,13 +100,6 @@ public class PyPIPackageUtil {
       }
     });
   
-  /**
-   * Lowercased package names for fast check that some package is available in PyPI.
-   * TODO find the way to get rid of it, it's not a good idea to store 85k+ entries in memory twice
-   */
-  @Nullable private volatile Set<String> myPackageNames = null;
-
-
   /**
    * Prevents simultaneous updates of {@link PyPackageService#PY_PACKAGES}
    * because the corresponding response contains tons of data and multiple
@@ -176,15 +153,20 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  public Set<RepoPackage> getAdditionalPackages() throws IOException {
-    if (myAdditionalPackages == null) {
-      final Set<RepoPackage> packages = new TreeSet<>();
+  public List<RepoPackage> getAdditionalPackages() {
+    return myAdditionalPackages != null ? Collections.unmodifiableList(myAdditionalPackages) : Collections.emptyList();
+  }
+
+  @NotNull
+  public List<RepoPackage> loadAndGetAdditionalPackages(boolean alwaysRefresh) throws IOException {
+    if (myAdditionalPackages == null || alwaysRefresh) {
+      final Set<RepoPackage> uniquePackages = new TreeSet<>();
       for (String url : PyPackageService.getInstance().additionalRepositories) {
-        packages.addAll(getPackagesFromAdditionalRepository(url));
+        uniquePackages.addAll(getPackagesFromAdditionalRepository(url));
       }
-      myAdditionalPackages = packages;
+      myAdditionalPackages = new ArrayList<>(uniquePackages);
     }
-    return Collections.unmodifiableSet(myAdditionalPackages);
+    return Collections.unmodifiableList(myAdditionalPackages);
   }
 
   @NotNull
@@ -216,11 +198,6 @@ public class PyPIPackageUtil {
       }
     }
     return result;
-  }
-
-  public void clearPackagesCache() {
-    PyPackageService.getInstance().PY_PACKAGES.clear();
-    myAdditionalPackages = null;
   }
 
   public void fillPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<PackageDetails.Info, Exception> callback) {
@@ -269,7 +246,7 @@ public class PyPIPackageUtil {
                                                   boolean force) throws IOException {
     final PackageDetails details = refreshAndGetPackageDetailsFromPyPI(packageName, force);
     final List<String> result = details.getReleases();
-    result.sort(PackageVersionComparator.VERSION_COMPARATOR.reversed());
+    result.sort(PyPackageVersionComparator.getSTR_COMPARATOR().reversed());
     return Collections.unmodifiableList(result);
   }
 
@@ -277,9 +254,7 @@ public class PyPIPackageUtil {
   private String getLatestPackageVersionFromPyPI(@NotNull String packageName) throws IOException {
     LOG.debug("Requesting the latest PyPI version for the package " + packageName);
     final List<String> versions = getPackageVersionsFromPyPI(packageName, true);
-    final String latest = ContainerUtil.getFirstItem(versions);
-    getPyPIPackages().put(packageName, StringUtil.notNullize(latest));
-    return latest;
+    return ContainerUtil.getFirstItem(versions);
   }
 
   /**
@@ -310,9 +285,9 @@ public class PyPIPackageUtil {
 
   @Nullable
   public String fetchLatestPackageVersion(@NotNull String packageName) throws IOException {
-    String version = getPyPIPackages().get(packageName);
-    // Package is on PyPI but it's version is unknown
-    if (version != null && version.isEmpty()) {
+    String version = null;
+    // Package is on PyPI not a, say, some system package on Ubuntu
+    if (PyPIPackageCache.getInstance().containsPackage(packageName)) {
       version = getLatestPackageVersionFromPyPI(packageName);
     }
     if (!PyPackageService.getInstance().additionalRepositories.isEmpty()) {
@@ -348,7 +323,7 @@ public class PyPIPackageUtil {
           }
         }
       }, true);
-      versions.sort(PackageVersionComparator.VERSION_COMPARATOR.reversed());
+      versions.sort(PyPackageVersionComparator.getSTR_COMPARATOR().reversed());
       return versions;
     });
   }
@@ -364,27 +339,29 @@ public class PyPIPackageUtil {
     return repository + suffix;
   }
 
-  public void updatePyPICache(@NotNull PyPackageService service) throws IOException {
-    service.LAST_TIME_CHECKED = System.currentTimeMillis();
-
-    service.PY_PACKAGES.clear();
+  public void updatePyPICache() throws IOException {
+    final PyPackageService service = PyPackageService.getInstance();
     if (service.PYPI_REMOVED) return;
-    parsePyPIList(parsePyPIListFromWeb(PYPI_LIST_URL, true), service);
+    final List<String> decodedNames = parsePyPIList(parsePyPIListFromWeb(PYPI_LIST_URL, true));
+    PyPIPackageCache.reload(decodedNames);
+    service.LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 
-  private void parsePyPIList(@NotNull List<String> packages, @NotNull PyPackageService service) {
-    myPackageNames = null;
+  @NotNull
+  private static List<String> parsePyPIList(@NotNull List<String> packages) {
+    final List<String> decodedNames = new ArrayList<>();
     for (String pyPackage : packages) {
       try {
         final String packageName = URLDecoder.decode(pyPackage, "UTF-8");
         if (!packageName.contains(" ")) {
-          service.PY_PACKAGES.put(packageName, "");
+          decodedNames.add(packageName);
         }
       }
       catch (UnsupportedEncodingException e) {
         LOG.warn(e.getMessage());
       }
     }
+    return decodedNames;
   }
 
   @NotNull
@@ -433,37 +410,22 @@ public class PyPIPackageUtil {
     });
   }
 
-  @NotNull
-  public Collection<String> getPackageNames() {
-    final Map<String, String> pyPIPackages = getPyPIPackages();
-    final ArrayList<String> list = Lists.newArrayList(pyPIPackages.keySet());
-    Collections.sort(list);
-    return list;
-  }
-
-  @NotNull
-  public Map<String, String> loadAndGetPackages() throws IOException {
-    // The map returned by getPyPIPackages() is already thread-safe;
-    // this lock is solely to prevent multiple threads from updating
+  public void loadAndGetPackages() throws IOException {
+    // This lock is solely to prevent multiple threads from updating
     // the mammoth cache of PyPI packages simultaneously.
     synchronized (myPyPIPackageCacheUpdateLock) {
-      if (getPyPIPackages().isEmpty()) {
-        updatePyPICache(PyPackageService.getInstance());
+      final PyPIPackageCache cache = PyPIPackageCache.getInstance();
+      if (cache.getPackageNames().isEmpty()) {
+        updatePyPICache();
       }
-      return getPyPIPackages();
     }
   }
 
-  @NotNull
-  public static Map<String, String> getPyPIPackages() {
-    return PyPackageService.getInstance().PY_PACKAGES;
-  }
-
+  /**
+   * @see PyPIPackageCache#containsPackage(String)
+   */
   public boolean isInPyPI(@NotNull String packageName) {
-    if (myPackageNames == null) {
-      myPackageNames = getPyPIPackages().keySet().stream().map(name -> name.toLowerCase(Locale.ENGLISH)).collect(Collectors.toSet());
-    }
-    return myPackageNames != null && myPackageNames.contains(packageName.toLowerCase(Locale.ENGLISH));
+    return PyPIPackageCache.getInstance().containsPackage(packageName);
   }
 
   @SuppressWarnings("FieldMayBeFinal")
@@ -524,7 +486,11 @@ public class PyPIPackageUtil {
 
     @NotNull
     public List<String> getReleases() {
-      return new ArrayList<>(releases.keySet());
+      return EntryStream.of(releases).filterValues(PackageDetails::isNotBrokenRelease).keys().toList();
+    }
+
+    private static boolean isNotBrokenRelease(Object o) {
+      return !(o instanceof List) || !((List)o).isEmpty();
     }
   }
 }

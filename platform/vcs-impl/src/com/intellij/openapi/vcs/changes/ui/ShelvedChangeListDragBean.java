@@ -23,9 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ShelvedChangeListDragBean {
-  @NotNull private List<ShelvedChange> myShelvedChanges;
-  @NotNull private List<ShelvedBinaryFile> myBinaries;
-  @NotNull private List<ShelvedChangeList> myShelvedChangelists;
+  @NotNull private final List<ShelvedChange> myShelvedChanges;
+  @NotNull private final List<ShelvedBinaryFile> myBinaries;
+  @NotNull private final List<ShelvedChangeList> myShelvedChangelists;
 
   public ShelvedChangeListDragBean(@NotNull List<ShelvedChange> shelvedChanges,
                                    @NotNull List<ShelvedBinaryFile> binaries,

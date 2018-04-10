@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
- * Date: Oct 21, 2001
  */
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK = 0x10000;
@@ -77,7 +76,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     }
     
     setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
-    getRefManager().fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer, forReading, forWriting);
+    getRefManager().fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer, forReading, forWriting, expressionFrom);
   }
 
   @Override
@@ -124,14 +123,27 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
         refUtil.addReferences(psiField, this, psiField);
       }
 
-      if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant || RefUtil.isImplicitWrite(psiField)) {
-        if (!checkFlag(USED_FOR_WRITING_MASK)) {
-          setFlag(true, ASSIGNED_ONLY_IN_INITIALIZER_MASK);
-          setFlag(true, USED_FOR_WRITING_MASK);
-        }
+      if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant) {
+        setInitializerMasks();
       }
+      else if (RefUtil.isImplicitWrite(psiField)) {
+        putUserData(IMPLICITLY_WRITTEN, true);
+        setInitializerMasks();
+      }
+
+      if (RefUtil.isImplicitRead(psiField)) {
+        putUserData(IMPLICITLY_READ, true);
+      }
+
       refUtil.addTypeReference(psiField, psiField.getType(), getRefManager(), this);
       getRefManager().fireBuildReferences(this);
+    }
+  }
+
+  private void setInitializerMasks() {
+    if (!checkFlag(USED_FOR_WRITING_MASK)) {
+      setFlag(true, ASSIGNED_ONLY_IN_INITIALIZER_MASK);
+      setFlag(true, USED_FOR_WRITING_MASK);
     }
   }
 

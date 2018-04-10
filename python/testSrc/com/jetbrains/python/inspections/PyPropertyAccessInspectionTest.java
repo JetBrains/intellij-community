@@ -15,13 +15,13 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class PyPropertyAccessInspectionTest extends PyTestCase {
+public class PyPropertyAccessInspectionTest extends PyInspectionTestCase {
   public void testTest() {
     doTest();
   }
@@ -36,10 +36,25 @@ public class PyPropertyAccessInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    myFixture.configureByFile("inspections/PyPropertyAccessInspection/" + getTestName(true) + ".py");
-    myFixture.enableInspections(PyPropertyAccessInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  // PY-28206
+  public void testSlotOverridesProperty() {
+    doTestByText(
+      "class A(object):\n" +
+      "    @property\n" +
+      "    def name(self):\n" +
+      "        return 'a'\n" +
+      "\n" +
+      "class B(A):\n" +
+      "    __slots__ = ('name',)\n" +
+      "\n" +
+      "    def __init__(self, name):\n" +
+      "        self.name = name"
+    );
+  }
+
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyPropertyAccessInspection.class;
   }
 }

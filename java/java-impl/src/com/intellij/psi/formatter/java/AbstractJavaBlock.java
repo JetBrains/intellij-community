@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -69,7 +68,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private Map<IElementType, Wrap> myPreferredWraps;
   private AbstractJavaBlock myParentBlock;
 
-  private BlockFactory myBlockFactory = new BlockFactory() {
+  private final BlockFactory myBlockFactory = new BlockFactory() {
     @Override
     public Block createBlock(ASTNode node, Indent indent, Alignment alignment, Wrap wrap) {
       return new SimpleJavaBlock(node, wrap, AlignmentStrategy.wrap(alignment), indent, mySettings, myJavaSettings);
@@ -206,7 +205,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     if (child instanceof LeafElement || childPsi instanceof PsiJavaModuleReferenceElement) {
       if (child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
-        return new CStyleCommentBlock(child, indent);
+        return new CStyleCommentBlock(child, actualIndent);
       }
       final LeafBlock block = new LeafBlock(child, wrap, alignment, actualIndent);
       block.setStartOffset(startOffset);
@@ -811,7 +810,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    *
    * @param child   variable declaration child node which alignment is to be defined
    * @return        alignment to use for the given node
-   * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
+   * @see CommonCodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
    */
   private boolean shouldAlignFieldInColumns(@NotNull ASTNode child) {
     // The whole idea of variable declarations alignment is that complete declaration blocks which children are to be aligned hold
@@ -871,7 +870,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                           final boolean doAlign)
   {
     Indent externalIndent = Indent.getNoneIndent();
-    Indent internalIndent = Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);
+    Indent internalIndent = Indent.getContinuationWithoutFirstIndent(false);
 
     if (isInsideMethodCallParenthesis(child)) {
       internalIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION);

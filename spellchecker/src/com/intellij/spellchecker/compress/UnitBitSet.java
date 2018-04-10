@@ -85,16 +85,21 @@ class UnitBitSet {
 
   @NotNull
   public static String decode(@NotNull byte[] packed, @NotNull Alphabet alphabet) {
+    return decode(packed, 0, packed.length, alphabet);
+  }
+
+  @NotNull
+  public static String decode(@NotNull byte[] packed, int from, int to, @NotNull Alphabet alphabet) {
     int meaningfulBits = 32 - Integer.numberOfLeadingZeros(alphabet.getLastIndexUsed());
     assert meaningfulBits <= 8 : alphabet;
 
-    StringBuilder result = new StringBuilder(packed.length * 8 / meaningfulBits);
+    StringBuilder result = new StringBuilder((to - from) * 8 / meaningfulBits);
 
-    int curByte = packed[0];
-    int byteIndex = 0;
+    int curByte = packed[from];
+    int byteIndex = from;
     int bitOffset = 0;
 
-    while (byteIndex < packed.length) {
+    while (byteIndex < to) {
       int index = curByte & ((1 << meaningfulBits) - 1);
       char letter = alphabet.getLetter(index);
       if (letter == '\u0000') {
@@ -106,7 +111,7 @@ class UnitBitSet {
       bitOffset += meaningfulBits;
       assert bitOffset <= 8 : alphabet;
       if (bitOffset + meaningfulBits > 8) {
-        if (++byteIndex == packed.length) break;
+        if (++byteIndex == to) break;
         int leftOverBits = 8 - bitOffset;
         curByte = packed[byteIndex] << leftOverBits | (curByte & ((1 << leftOverBits) - 1));
         bitOffset = -leftOverBits;

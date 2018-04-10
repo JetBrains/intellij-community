@@ -171,7 +171,7 @@ public class ContainerUtilTest {
           list.add(ints.get(i));
         }
       }
-    }).assertTiming();
+    }).attempts(10).assertTiming();
     for (int i = 0; i < list.size(); i++) {
       assertEquals(i, list.get(i));
     }

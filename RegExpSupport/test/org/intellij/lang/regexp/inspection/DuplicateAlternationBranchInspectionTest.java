@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings({"RegExpDuplicateAlternationBranch", "RegExpEmptyAlternationBranch"})
 public class DuplicateAlternationBranchInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {

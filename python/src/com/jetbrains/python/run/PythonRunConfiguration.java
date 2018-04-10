@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.jetbrains.python.run;
 
@@ -19,11 +7,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,6 +24,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -49,6 +36,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String MULTIPROCESS = "MULTIPROCESS";
   public static final String SHOW_COMMAND_LINE = "SHOW_COMMAND_LINE";
   public static final String EMULATE_TERMINAL = "EMULATE_TERMINAL";
+  public static final String MODULE_MODE = "MODULE_MODE";
   public static final String MIXED_DEBUG_MODE = "MIXED_DEBUG_MODE";
   public static final String DEBUGGABLE_EXTERNAL_LIBS = "DEBUGGABLE_EXTERNAL_LIBS";
 
@@ -58,6 +46,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   private boolean myEmulateTerminal = false;
   private boolean myMixedDebugMode = false;
   private String myDebuggableExternalLibs;
+  private boolean myModuleMode = false;
+  private final Pattern myQualifiedNameRegex = Pattern.compile("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$");
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
@@ -73,11 +63,18 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     return new PythonScriptCommandLineState(this, env);
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
 
     if (StringUtil.isEmptyOrSpaces(myScriptName)) {
-      throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_script_name"));
+      throw new RuntimeConfigurationException(
+        PyBundle.message(isModuleMode() ? "runcfg.unittest.no_module_name" : "runcfg.unittest.no_script_name"));
+    }
+    else {
+      if (isModuleMode() && !myQualifiedNameRegex.matcher(myScriptName).matches()) {
+        throw new RuntimeConfigurationWarning("Provide a qualified name of a module");
+      }
     }
   }
 
@@ -145,7 +142,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myDebuggableExternalLibs = debuggableExternalLibs;
   }
 
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
     myScriptParameters = JDOMExternalizerUtil.readField(element, PARAMETERS);
@@ -153,9 +150,10 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myEmulateTerminal = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EMULATE_TERMINAL, "false"));
     myMixedDebugMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, MIXED_DEBUG_MODE, "false"));
     myDebuggableExternalLibs = JDOMExternalizerUtil.readField(element, DEBUGGABLE_EXTERNAL_LIBS);
+    myModuleMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, MODULE_MODE, "false"));
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, SCRIPT_NAME, myScriptName);
     JDOMExternalizerUtil.writeField(element, PARAMETERS, myScriptParameters);
@@ -163,6 +161,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     JDOMExternalizerUtil.writeField(element, EMULATE_TERMINAL, Boolean.toString(myEmulateTerminal));
     JDOMExternalizerUtil.writeField(element, MIXED_DEBUG_MODE, Boolean.toString(myMixedDebugMode));
     JDOMExternalizerUtil.writeField(element, DEBUGGABLE_EXTERNAL_LIBS, myDebuggableExternalLibs);
+    JDOMExternalizerUtil.writeField(element, MODULE_MODE, Boolean.toString(myModuleMode));
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -171,6 +170,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
 
   public static void copyParams(PythonRunConfigurationParams source, PythonRunConfigurationParams target) {
     AbstractPythonRunConfiguration.copyParams(source.getBaseParams(), target.getBaseParams());
+    target.setModuleMode(source.isModuleMode());
     target.setScriptName(source.getScriptName());
     target.setScriptParameters(source.getScriptParameters());
     target.setShowCommandLineAfterwards(source.showCommandLineAfterwards());
@@ -206,5 +206,15 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean isModuleMode() {
+    return myModuleMode;
+  }
+
+  @Override
+  public void setModuleMode(boolean moduleMode) {
+    myModuleMode = moduleMode;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -35,8 +21,8 @@ import java.util.Locale;
   name = "ExportableFileTemplateSettings",
   storages = @Storage(FileTemplateSettings.EXPORTABLE_SETTINGS_FILE)
 )
-public class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
-  public static final String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
+class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
+  static final String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
   private static final String ELEMENT_TEMPLATE = "template";
   private static final String ATTRIBUTE_NAME = "name";
@@ -44,7 +30,7 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
   private static final String ATTRIBUTE_LIVE_TEMPLATE = "live-template-enabled";
   private static final String ATTRIBUTE_ENABLED = "enabled";
 
-  public FileTemplateSettings(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
+  FileTemplateSettings(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
     super(typeManager, project);
   }
 
@@ -58,7 +44,8 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
       for (FileTemplateBase template : manager.getAllTemplates(true)) {
         // save only those settings that differ from defaults
         boolean shouldSave = template.isReformatCode() != FileTemplateBase.DEFAULT_REFORMAT_CODE_VALUE ||
-                             template.isLiveTemplateEnabled() != template.isLiveTemplateEnabledByDefault();
+                             // check isLiveTemplateEnabledChanged() first to avoid expensive loading all templates on exit
+                             template.isLiveTemplateEnabledChanged() && template.isLiveTemplateEnabled() != template.isLiveTemplateEnabledByDefault();
         if (template instanceof BundledFileTemplate) {
           shouldSave |= ((BundledFileTemplate)template).isEnabled() != FileTemplateBase.DEFAULT_ENABLED_VALUE;
         }
@@ -85,7 +72,7 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     for (final FTManager manager : getAllManagers()) {
       final Element templatesGroup = state.getChild(getXmlElementGroupName(manager));
       if (templatesGroup == null) continue;

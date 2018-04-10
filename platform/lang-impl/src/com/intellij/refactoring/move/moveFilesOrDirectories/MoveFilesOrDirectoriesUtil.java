@@ -168,7 +168,7 @@ public class MoveFilesOrDirectoriesUtil {
               callback.run();
               return;
             }
-            new MoveFilesOrDirectoriesProcessor(project, els.toArray(new PsiElement[els.size()]), targetDirectory1,
+            new MoveFilesOrDirectoriesProcessor(project, els.toArray(PsiElement.EMPTY_ARRAY), targetDirectory1,
                                                 RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE,
                                                 false, false, moveCallback, callback).run();
           }

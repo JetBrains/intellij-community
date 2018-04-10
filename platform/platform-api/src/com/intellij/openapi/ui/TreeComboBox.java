@@ -232,7 +232,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
         node = node.getParent();
       }
 
-      return new TreePath(path.toArray(new TreeNode[path.size()]));
+      return new TreePath(path.toArray(new TreeNode[0]));
     }
 
     @Override

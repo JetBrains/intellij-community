@@ -30,11 +30,13 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 /**
  * @author Tagir Valeev
  */
 class MigrateToStreamFix implements LocalQuickFix {
-  private BaseStreamApiMigration myMigration;
+  private final BaseStreamApiMigration myMigration;
 
   protected MigrateToStreamFix(BaseStreamApiMigration migration) {
     myMigration = migration;
@@ -56,19 +58,16 @@ class MigrateToStreamFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
-    if (element instanceof PsiLoopStatement) {
-      PsiLoopStatement loopStatement = (PsiLoopStatement)element;
-      StreamSource source = StreamSource.tryCreate(loopStatement);
-      PsiStatement body = loopStatement.getBody();
-      if(body == null || source == null) return;
-      TerminalBlock tb = TerminalBlock.from(source, body);
-      PsiElement result = myMigration.migrate(project, body, tb);
-      if(result != null) {
-        tb.operations().forEach(StreamApiMigrationInspection.Operation::cleanUp);
-        simplifyAndFormat(project, result);
-      }
-    }
+    PsiLoopStatement loopStatement = tryCast(descriptor.getPsiElement(), PsiLoopStatement.class);
+    if (loopStatement == null) return;
+    StreamSource source = StreamSource.tryCreate(loopStatement);
+    PsiStatement body = loopStatement.getBody();
+    if(body == null || source == null) return;
+    TerminalBlock tb = TerminalBlock.from(source, body);
+    PsiElement result = myMigration.migrate(project, body, tb);
+    if (result == null) return;
+    tb.operations().forEach(StreamApiMigrationInspection.Operation::cleanUp);
+    simplifyAndFormat(project, result);
   }
 
   static void simplifyAndFormat(@NotNull Project project, PsiElement result) {

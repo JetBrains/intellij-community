@@ -32,15 +32,18 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
   public static final String BACKGROUND_VISIBLE_OPTION = "backgroundVisible";
   public static final String GRID_VISIBLE_OPTION = "gridVisible";
   public static final String ZOOM_FACTOR_OPTION = "zoomFactor";
+  public static final String ZOOM_FACTOR_CHANGED_OPTION = "zoomFactorChanged";
 
   private boolean backgroundVisible;
   private boolean gridVisible;
   private double zoomFactor;
+  private boolean zoomFactorChanged;
 
-  ImageFileEditorState(boolean backgroundVisible, boolean gridVisible, double zoomFactor) {
+  ImageFileEditorState(boolean backgroundVisible, boolean gridVisible, double zoomFactor, boolean zoomFactorChanged) {
     this.backgroundVisible = backgroundVisible;
     this.gridVisible = gridVisible;
     this.zoomFactor = zoomFactor;
+    this.zoomFactorChanged = zoomFactorChanged;
   }
 
   @Override
@@ -60,6 +63,15 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
     return zoomFactor;
   }
 
+  public boolean isZoomFactorChanged() {
+    return zoomFactorChanged;
+  }
+
+  @Override
+  public void setCopiedFromMasterEditor() {
+    zoomFactorChanged = true;
+  }
+
   @Override
   public String getEditorId() {
     return IMAGE_EDITOR_ID;
@@ -71,6 +83,7 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
     map.put(BACKGROUND_VISIBLE_OPTION, String.valueOf(backgroundVisible));
     map.put(GRID_VISIBLE_OPTION, String.valueOf(gridVisible));
     map.put(ZOOM_FACTOR_OPTION, String.valueOf(zoomFactor));
+    map.put(ZOOM_FACTOR_CHANGED_OPTION, String.valueOf(zoomFactorChanged));
     return map;
   }
 
@@ -89,6 +102,11 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
     o = options.get(ZOOM_FACTOR_OPTION);
     if (o != null) {
       zoomFactor = Double.parseDouble(o);
+    }
+
+    o = options.get(ZOOM_FACTOR_CHANGED_OPTION);
+    if (o != null) {
+      zoomFactorChanged = Boolean.valueOf(o);
     }
   }
 }

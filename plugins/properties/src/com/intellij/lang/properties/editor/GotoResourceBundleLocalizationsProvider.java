@@ -19,7 +19,9 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -43,7 +45,7 @@ public class GotoResourceBundleLocalizationsProvider extends GotoRelatedProvider
       return Collections.emptyList();
     }
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(context);
-    if (psiFile == null || !(psiFile instanceof PropertiesFile)) {
+    if (!(psiFile instanceof PropertiesFile)) {
       return Collections.emptyList();
     }
     final ResourceBundle resourceBundle = ((PropertiesFile)psiFile).getResourceBundle();

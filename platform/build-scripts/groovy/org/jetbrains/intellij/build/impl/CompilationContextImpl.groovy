@@ -16,15 +16,18 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -48,6 +51,8 @@ class CompilationContextImpl implements CompilationContext {
   final JpsGlobal global
   final JpsModel projectModel
   final JpsGantProjectBuilder projectBuilder
+  final Map<String, String> oldToNewModuleName
+  final Map<String, String> newToOldModuleName
   JpsCompilationData compilationData
 
   @SuppressWarnings("GrUnresolvedAccess")
@@ -67,7 +72,8 @@ class CompilationContextImpl implements CompilationContext {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
-    GradleRunner gradle = new GradleRunner(new File(communityHome, 'build/dependencies'), messages)
+    def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, SystemProperties.getJavaHome())
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle)
     }
@@ -78,16 +84,34 @@ class CompilationContextImpl implements CompilationContext {
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
+    gradle = new GradleRunner(dependenciesProjectDir, messages, jdk8Home)
 
     def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, ant)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages,
+    def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
+    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
+    messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
     return context
+  }
+
+  @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
+  @CompileDynamic
+  static Map<String, String> loadModuleRenamingHistory(String projectHome, BuildMessages messages) {
+    def modulesXml = new File(projectHome, ".idea/modules.xml")
+    if (!modulesXml.exists()) {
+      messages.error("Incorrect project home: $modulesXml doesn't exist")
+    }
+    def root = new XmlParser().parse(modulesXml)
+    def renamingHistoryTag = root.component.find { it.@name == "ModuleRenamingHistory"}
+    def mapping = new LinkedHashMap<String, String>()
+    renamingHistoryTag?.module?.each { mapping[it.'@old-name'] = it.'@new-name' }
+    return mapping
   }
 
   private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
                                  String projectHome, String jdk8Home, String kotlinHome, BuildMessages messages,
+                                 Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
     this.gradle = gradle
@@ -97,6 +121,8 @@ class CompilationContextImpl implements CompilationContext {
     this.options = options
     this.projectBuilder = new JpsGantProjectBuilder(ant.project, projectModel)
     this.messages = messages
+    this.oldToNewModuleName = oldToNewModuleName
+    this.newToOldModuleName = oldToNewModuleName.collectEntries { oldName, newName -> [newName, oldName] } as Map<String, String>
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
     this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home, kotlinHome)
   }
@@ -104,7 +130,7 @@ class CompilationContextImpl implements CompilationContext {
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
     return new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
-                                      paths.kotlinHome, messages, buildOutputRootEvaluator, options)
+                                      paths.kotlinHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
   }
 
   private static JpsModel loadProject(String projectHome, String jdkHome, String kotlinHome, BuildMessages messages, AntBuilder ant) {
@@ -139,14 +165,18 @@ class CompilationContextImpl implements CompilationContext {
     }
 
     def kotlinPluginLibPath = "$kotlinHomePath/lib"
-    if (new File(kotlinPluginLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar", "kotlin-reflect.jar"].each {
+    def kotlincLibPath = "$kotlinHomePath/kotlinc/lib"
+    if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
+      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", ant)
+      }
+      ["kotlin-runtime.jar"].each {
+        BuildUtils.addToJpsClassPath("$kotlincLibPath/$it", ant)
       }
     }
     else {
       messages.error(
-        "Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
+        "Could not find Kotlin JARs at $kotlinPluginLibPath and $kotlincLibPath: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
     }
   }
 
@@ -159,15 +189,25 @@ class CompilationContextImpl implements CompilationContext {
                                              System.getProperty("intellij.build.debug.logging.categories", ""), messages)
 
     def classesDirName = "classes"
+    def projectArtifactsDirName = "project-artifacts"
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
     List<String> outputDirectoriesToKeep = ["log"]
     if (options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(messages, ant, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
+
+    String baseArtifactsOutput = "$paths.buildOutputRoot/$projectArtifactsDirName"
+    JpsArtifactService.instance.getArtifacts(project).each {
+      it.outputPath = "$baseArtifactsOutput/${PathUtilRt.getFileName(it.outputPath)}"
+    }
+
+    messages.info("Incremental compilation: " + options.incrementalCompilation)
     if (options.incrementalCompilation) {
+      System.setProperty("kotlin.incremental.compilation", "true")
       outputDirectoriesToKeep.add(dataDirName)
       outputDirectoriesToKeep.add(classesDirName)
+      outputDirectoriesToKeep.add(projectArtifactsDirName)
     }
     if (!options.useCompiledClassesFromProjectOutput) {
       projectOutputDirectory = classesOutput
@@ -197,7 +237,9 @@ class CompilationContextImpl implements CompilationContext {
   void exportModuleOutputProperties() {
     for (JpsModule module : project.modules) {
       for (boolean test : [true, false]) {
-        ant.project.setProperty("module.${module.name}.output.${test ? "test" : "main"}", getOutputPath(module, test))
+        [module.name, getOldModuleName(module.name)].findAll { it != null}.each {
+          ant.project.setProperty("module.${it}.output.${test ? "test" : "main"}", getOutputPath(module, test))
+        }
       }
     }
   }
@@ -211,6 +253,7 @@ class CompilationContextImpl implements CompilationContext {
           messages.info("Skipped cleaning for $file.absolutePath")
         }
         else {
+          messages.info("Deleting $file.absolutePath")
           FileUtil.delete(file)
         }
       }
@@ -258,7 +301,20 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   JpsModule findModule(String name) {
-    project.modules.find { it.name == name }
+    String actualName
+    if (oldToNewModuleName.containsKey(name)) {
+      actualName = oldToNewModuleName[name]
+      messages.warning("Old module name '$name' is used in the build scripts; use the new name '$actualName' instead")
+    }
+    else {
+      actualName = name
+    }
+    project.modules.find { it.name == actualName }
+  }
+
+  @Override
+  String getOldModuleName(String newName) {
+    return newToOldModuleName[newName]
   }
 
   @Override
@@ -285,18 +341,27 @@ class CompilationContextImpl implements CompilationContext {
     return enumerator.classes().roots.collect { it.absolutePath }
   }
 
-
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     def file = new File(artifactPath)
     def baseDir = new File(paths.projectHome)
+    def artifactsDir = new File(paths.artifacts)
     if (!FileUtil.isAncestor(baseDir, file, true)) {
       messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
       return
     }
     def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
+
+    def targetDirectoryPath = ""
+    if (FileUtil.isAncestor(artifactsDir, file.parentFile, true)) {
+      targetDirectoryPath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(artifactsDir, file.parentFile) ?: "")
+    }
+
     if (file.isDirectory()) {
-      relativePath += "=>" + file.name
+      targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.name
+    }
+    if (targetDirectoryPath) {
+      relativePath += "=>" + targetDirectoryPath
     }
     messages.artifactBuilt(relativePath)
   }

@@ -17,6 +17,8 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiClass;
@@ -46,11 +48,29 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
     final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(getProject());
     final JavaCodeFragment fragment = codeBlock ? fragmentFactory.createCodeBlockCodeFragment(evaluatedText, context, false) : fragmentFactory.createExpressionCodeFragment(evaluatedText, context, null, false);
     final ExtractLightMethodObjectHandler.ExtractedData extractedData =
-      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test");
+      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test", JavaSdkVersion.JDK_1_8);
     assertNotNull(extractedData);
     assertEquals(expectedCallSite, extractedData.getGeneratedCallText());
     final PsiClass innerClass = extractedData.getGeneratedInnerClass();
     assertEquals(expectedClass, innerClass.getText());
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Registry.get("debugger.compiling.evaluator.magic.accessor").setValue(true);
+    Registry.get("debugger.compiling.evaluator.reflection.access.with.java8").setValue(false);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      Registry.get("debugger.compiling.evaluator.magic.accessor").resetToDefault();
+      Registry.get("debugger.compiling.evaluator.reflection.access.with.java8").resetToDefault();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testSimpleGeneration() throws Exception {

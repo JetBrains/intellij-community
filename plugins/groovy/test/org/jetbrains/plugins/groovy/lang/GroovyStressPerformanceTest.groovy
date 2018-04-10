@@ -178,7 +178,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }
     myFixture.enableInspections(new MissingReturnInspection())
 
-    measureHighlighting("def <T> void foo(T t, Closure cl) {}\n$text", 1000)
+    measureHighlighting("def <T> void foo(T t, Closure cl) {}\n$text", 1600)
   }
 
   void testDeeplyNestedClosuresInGenericCalls2() {
@@ -188,7 +188,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
       text = "foo(it) { $text }"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    measureHighlighting("def <T> void foo(T t, Closure<T> cl) {}\n$text", 1000)
+    measureHighlighting("def <T> void foo(T t, Closure<T> cl) {}\n$text", 1200)
   }
 
   void testManyAnnotatedScriptVariables() {
@@ -255,13 +255,13 @@ class SomeClass {
   void someMethod(String s) {}
 }
 """
-    measureHighlighting(text, 8000)
+    measureHighlighting(text, 14_000)
   }
 
   void "test infer only the variable types that are needed"() {
     addGdsl '''contribute(currentType(String.name)) {
   println 'sleeping'
-  Thread.sleep(1000)
+  Thread.sleep(100_000)
   method name:'foo', type:String, params:[:], namedParams:[
     parameter(name:'param1', type:String),
   ]
@@ -274,7 +274,7 @@ while (true) {
   f.canoPath<caret>
 }
 '''
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 80, configureAndComplete(text)).usesAllCPUCores().assertTiming()
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 20_000, configureAndComplete(text)).attempts(1).usesAllCPUCores().assertTiming()
   }
 
   void testClosureRecursion() {
@@ -447,7 +447,7 @@ class AwsService {
     }
 }
 '''
-    measureHighlighting(text, 500)
+    measureHighlighting(text, 700)
   }
 
   ThrowableRunnable configureAndComplete(String text) {

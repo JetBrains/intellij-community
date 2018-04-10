@@ -19,6 +19,7 @@ import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -106,12 +107,7 @@ public class PublicStaticCollectionFieldInspectionBase extends BaseInspection {
           return true;
         }
       }
-      final PsiType type = methodCallExpression.getType();
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(methodCallExpression.getType());
       return aClass != null && JCiPUtil.isImmutable(aClass);
     }
   }

@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.*;
@@ -141,10 +139,11 @@ public interface RunnerAndConfigurationSettings {
   void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException;
 
   /**
-   * Checks if this configuration supports running on the provided target (see {@link ExecutionTarget} for details).
-   * @param target target provided by {@link ExecutionTargetProvider}
+   * @deprecated 
+   * @see ExecutionTargetManager#canRun(com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.execution.ExecutionTarget)
    */
-  boolean canRunOn(@NotNull ExecutionTarget target);
+  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+  default boolean canRunOn(@NotNull ExecutionTarget target) { return true; }  
 
   /**
    * Returns a factory object which can be used to create a copy of this configuration.

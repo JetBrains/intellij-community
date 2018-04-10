@@ -2,23 +2,9 @@
 from typing import Any, List, Dict, Tuple, AnyStr, Generic, overload, Sequence, Mapping, Union, NamedTuple, Callable
 import sys
 
-__all__ = (
-    'urlparse',
-    'urlunparse',
-    'urljoin',
-    'urldefrag',
-    'urlsplit',
-    'urlunsplit',
-    'urlencode',
-    'parse_qs',
-    'parse_qsl',
-    'quote',
-    'quote_plus',
-    'quote_from_bytes',
-    'unquote',
-    'unquote_plus',
-    'unquote_to_bytes'
-)
+_Str = Union[bytes, str]
+
+__all__ = ...  # type: Tuple[str]
 
 uses_relative = ...  # type: List[str]
 uses_netloc = ...  # type: List[str]
@@ -103,20 +89,20 @@ def parse_qsl(qs: AnyStr, keep_blank_values: bool = ..., strict_parsing: bool = 
 
 
 @overload
-def quote(string: str, safe: AnyStr = ..., encoding: str = ..., errors: str = ...) -> str: ...
+def quote(string: str, safe: _Str = ..., encoding: str = ..., errors: str = ...) -> str: ...
 @overload
-def quote(string: bytes, safe: AnyStr = ...) -> str: ...
+def quote(string: bytes, safe: _Str = ...) -> str: ...
 
-def quote_from_bytes(bs: bytes, safe: AnyStr = ...) -> str: ...
+def quote_from_bytes(bs: bytes, safe: _Str = ...) -> str: ...
 
 @overload
-def quote_plus(string: str, safe: AnyStr = ..., encoding: str = ..., errors: str = ...) -> str: ...
+def quote_plus(string: str, safe: _Str = ..., encoding: str = ..., errors: str = ...) -> str: ...
 @overload
-def quote_plus(string: bytes, safe: AnyStr = ...) -> str: ...
+def quote_plus(string: bytes, safe: _Str = ...) -> str: ...
 
 def unquote(string: str, encoding: str = ..., errors: str = ...) -> str: ...
 
-def unquote_to_bytes(string: AnyStr) -> bytes: ...
+def unquote_to_bytes(string: _Str) -> bytes: ...
 
 def unquote_plus(string: str, encoding: str = ..., errors: str = ...) -> str: ...
 

@@ -29,7 +29,7 @@ public class MouseGestureManager {
 
   private static final Logger LOG = Logger.getInstance("MouseGestureManager");
 
-  private Map<IdeFrame, Object> myListeners = new HashMap<>();
+  private final Map<IdeFrame, Object> myListeners = new HashMap<>();
   private boolean HAS_TRACKPAD = false;
 
   public MouseGestureManager() {
@@ -49,7 +49,7 @@ public class MouseGestureManager {
         myListeners.put(frame, listener);
       }
       catch (Throwable e) {
-        LOG.debug(e);
+        LOG.error("Can't initialize MacGestureAdapter", e);
       }
     }
   }

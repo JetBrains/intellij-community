@@ -1,32 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code;
 
-import org.jetbrains.java.decompiler.code.interpreter.Util;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.util.TextUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
-
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
 
 public abstract class InstructionSequence {
 
@@ -87,10 +64,6 @@ public abstract class InstructionSequence {
     }
   }
 
-  public Instruction getCurrentInstr() {
-    return collinstr.get(pointer);
-  }
-
   public Instruction getInstr(int index) {
   return collinstr.get(index);
   }
@@ -99,16 +72,12 @@ public abstract class InstructionSequence {
   return collinstr.getLast();
   }
 
-  public int getCurrentOffset() {
-    return collinstr.getKey(pointer).intValue();
-  }
-
-public int getOffset(int index) {
-    return collinstr.getKey(index).intValue();
+  public int getOffset(int index) {
+    return collinstr.getKey(index);
   }
 
   public int getPointerByAbsOffset(int offset) {
-    Integer absoffset = new Integer(offset);
+    Integer absoffset = offset;
     if (collinstr.containsKey(absoffset)) {
       return collinstr.getIndexByKey(absoffset);
     }
@@ -118,19 +87,12 @@ public int getOffset(int index) {
   }
 
   public int getPointerByRelOffset(int offset) {
-    Integer absoffset = new Integer(collinstr.getKey(pointer).intValue() + offset);
+    Integer absoffset = collinstr.getKey(pointer) + offset;
     if (collinstr.containsKey(absoffset)) {
       return collinstr.getIndexByKey(absoffset);
     }
     else {
       return -1;
-    }
-  }
-
-  public void setPointerByAbsOffset(int offset) {
-    Integer absoffset = new Integer(collinstr.getKey(pointer).intValue() + offset);
-    if (collinstr.containsKey(absoffset)) {
-      pointer = collinstr.getIndexByKey(absoffset);
     }
   }
 
@@ -167,55 +129,6 @@ public int getOffset(int index) {
     return buf.toString();
   }
 
-  public void writeCodeToStream(DataOutputStream out) throws IOException {
-
-    for (int i = 0; i < collinstr.size(); i++) {
-      collinstr.get(i).writeToStream(out, collinstr.getKey(i).intValue());
-    }
-  }
-
-  public void writeExceptionsToStream(DataOutputStream out) throws IOException {
-
-    List<ExceptionHandler> handlers = exceptionTable.getHandlers();
-
-    out.writeShort(handlers.size());
-    for (int i = 0; i < handlers.size(); i++) {
-      handlers.get(i).writeToStream(out);
-    }
-  }
-
-  public void sortHandlers(final StructContext context) {
-
-    Collections.sort(exceptionTable.getHandlers(), (handler0, handler1) -> {
-
-      if (handler0.to == handler1.to) {
-        if (handler0.exceptionClass == null) {
-          return 1;
-        }
-        else {
-          if (handler1.exceptionClass == null) {
-            return -1;
-          }
-          else if (handler0.exceptionClass.equals(handler1.exceptionClass)) {
-            return (handler0.from > handler1.from) ? -1 : 1; // invalid code
-          }
-          else {
-            if (Util.instanceOf(context, handler0.exceptionClass, handler1.exceptionClass)) {
-              return -1;
-            }
-            else {
-              return 1;
-            }
-          }
-        }
-      }
-      else {
-        return (handler0.to > handler1.to) ? 1 : -1;
-      }
-    });
-  }
-
-
   // *****************************************************************************
   // getter and setter methods
   // *****************************************************************************
@@ -230,9 +143,5 @@ public int getOffset(int index) {
 
   public ExceptionTable getExceptionTable() {
     return exceptionTable;
-  }
-
-  public void setExceptionTable(ExceptionTable exceptionTable) {
-    this.exceptionTable = exceptionTable;
   }
 }

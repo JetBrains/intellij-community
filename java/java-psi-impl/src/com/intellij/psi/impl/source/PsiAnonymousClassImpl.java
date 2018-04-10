@@ -84,7 +84,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
       final PsiElement context = calcBasesResolveContext(PsiNameHelper.getShortClassName(refText), getExtendsList());
       try {
         final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(refText, context);
-        ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
+        ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.Kind.CLASS_NAME_KIND);
         type = factory.createType(ref);
       }
       catch (IncorrectOperationException e) {
@@ -99,7 +99,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     }
   }
   
-  private boolean isDiamond(PsiClassStub stub) {
+  private boolean isDiamond(@NotNull PsiClassStub stub) {
     if (PsiUtil.isLanguageLevel9OrHigher(this)) {
       final String referenceText = stub.getBaseClassReferenceText();
       if (referenceText != null && referenceText.endsWith(">")) {

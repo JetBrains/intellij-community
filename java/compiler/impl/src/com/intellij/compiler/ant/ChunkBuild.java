@@ -26,7 +26,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 22, 2004
  */
 public class ChunkBuild extends CompositeGenerator{
 

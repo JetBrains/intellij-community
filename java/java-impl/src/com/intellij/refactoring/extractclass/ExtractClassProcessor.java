@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,21 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.MoveDestination;
@@ -136,12 +139,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
       typeParams.addAll(typeParamSet);
     }
-    myClass = new WriteCommandAction<PsiClass>(myProject, getCommandName()){
-      @Override
-      protected void run(@NotNull Result<PsiClass> result) throws Throwable {
-        result.setResult(buildClass(false));
-      }
-    }.execute().getResultObject();
+    myClass = WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).compute(() -> buildClass(false));
     myExtractEnumProcessor = new ExtractEnumProcessor(myProject, this.enumConstants, myClass);
   }
 
@@ -256,6 +254,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return false;
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactorJBundle.message("extracted.class.command.name", newClassName);
   }
@@ -602,7 +601,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     if (myGenerateAccessors) {
       getter = GenerateMembersUtil.suggestGetterName(field);
     } else {
-      final PsiMethod fieldGetter = PropertyUtil.findPropertyGetter(sourceClass, field.getName(), false, false);
+      final PsiMethod fieldGetter = PropertyUtilBase.findPropertyGetter(sourceClass, field.getName(), false, false);
       if (fieldGetter != null && isInMovedElement(fieldGetter)) {
         getter = fieldGetter.getName();
       }
@@ -612,7 +611,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     if (myGenerateAccessors) {
       setter = GenerateMembersUtil.suggestSetterName(field);
     } else {
-      final PsiMethod fieldSetter = PropertyUtil.findPropertySetter(sourceClass, field.getName(), false, false);
+      final PsiMethod fieldSetter = PropertyUtilBase.findPropertySetter(sourceClass, field.getName(), false, false);
       if (fieldSetter != null && isInMovedElement(fieldSetter)) {
         setter = fieldSetter.getName();
       }
@@ -707,7 +706,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       if (myMoveDestination != null) {
         directory = myMoveDestination.getTargetDirectory(containingDirectory);
       } else {
-        final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+        final Module module = ModuleUtilCore.findModuleForPsiElement(containingFile);
         assert module != null;
         directory = PackageUtil.findOrCreateDirectoryForPackage(module, newPackageName, containingDirectory, false, true);
       }
@@ -855,13 +854,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
     }
 
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
-      checkSetterNeeded(expression.getOperand(), expression.getOperationSign());
-    }
-
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
       checkSetterNeeded(expression.getOperand(), expression.getOperationSign());
     }
 

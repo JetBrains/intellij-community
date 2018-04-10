@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl.nodes;
 
@@ -28,6 +14,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PlatformIcons;
@@ -66,7 +53,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
         result.add(createModuleNode(module));
       }
     }
-    catch (Exception e) {
+    catch (ReflectiveOperationException e) {
       LOG.error(e);
     }
 
@@ -110,14 +97,30 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
 
   @Override
   public void update(PresentationData presentation) {
-    final String[] groupPath = getValue().getGroupPath();
-    presentation.setPresentableText(groupPath[groupPath.length-1]);
+    presentation.setPresentableText(getPresentableName());
     presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+  }
+
+  @NotNull
+  private String getPresentableName() {
+    return StringUtil.join(getRelativeGroupPath(), ".");
+  }
+
+  private List<String> getRelativeGroupPath() {
+    AbstractTreeNode parent = getParent();
+    List<String> thisPath = getValue().getGroupPathList();
+    if (parent instanceof ModuleGroupNode) {
+      List<String> parentPath = ((ModuleGroupNode)parent).getValue().getGroupPathList();
+      if (ContainerUtil.startsWith(thisPath, parentPath)) {
+        return thisPath.subList(parentPath.size(), thisPath.size());
+      }
+    }
+    return thisPath;
   }
 
   @Override
   public String getTestPresentation() {
-    return "Group: " + getValue();
+    return "Group: " + getPresentableName();
   }
 
   @Override
@@ -144,7 +147,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   @Override
   public void drop(TreeNode[] sourceNodes, DataContext dataContext) {
     final List<Module> modules = extractModules(sourceNodes);
-    MoveModulesToGroupAction.doMove(modules.toArray(new Module[modules.size()]), getValue(), null);
+    MoveModulesToGroupAction.doMove(modules.toArray(Module.EMPTY_ARRAY), getValue(), null);
   }
 
   @Override

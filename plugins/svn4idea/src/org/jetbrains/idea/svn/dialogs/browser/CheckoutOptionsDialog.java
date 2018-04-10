@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -31,9 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.revision.SvnSelectRevisionPanel;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,11 +42,10 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   private JBScrollPane myScroll;
   private final String myRelativePath;
 
-  public CheckoutOptionsDialog(final Project project, SVNURL url, File target, final VirtualFile root, final String relativePath) {
+  public CheckoutOptionsDialog(final Project project, Url url, File target, final VirtualFile root, final String relativePath) {
     super(project, true);
     myRelativePath = relativePath;
-    final String urlText = url.toDecodedString();
-    myUrlLabel.setText(urlText);
+    myUrlLabel.setText(url.toDecodedString());
 
     fillTargetList(target);
     validateTargetSelected();
@@ -83,7 +68,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
 
     svnSelectRevisionPanel.setRoot(root);
     svnSelectRevisionPanel.setProject(project);
-    svnSelectRevisionPanel.setUrlProvider(() -> urlText);
+    svnSelectRevisionPanel.setUrlProvider(() -> url);
 
     setTitle(SvnBundle.message("checkout.options.dialog.title"));
     myDepthLabel.setLabelFor(myDepthCombo);
@@ -148,7 +133,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   }
 
   @NotNull
-  public SVNRevision getRevision() throws ConfigurationException {
+  public Revision getRevision() throws ConfigurationException {
       return svnSelectRevisionPanel.getRevision();
   }
 

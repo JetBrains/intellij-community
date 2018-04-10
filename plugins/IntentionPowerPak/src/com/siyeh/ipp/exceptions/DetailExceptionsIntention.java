@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -35,58 +37,64 @@ public class DetailExceptionsIntention extends Intention {
 
   @Override
   public void processIntention(@NotNull PsiElement element) {
-    final PsiJavaToken token = (PsiJavaToken)element;
-    PsiElement parent = token.getParent();
-    if (parent instanceof PsiCatchSection) {
-      parent = parent.getParent();
-    }
-    if (!(parent instanceof PsiTryStatement)) {
-      return;
-    }
-    final PsiTryStatement tryStatement = (PsiTryStatement)parent;
+    final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
+    if (tryStatement == null) return;
+    CommentTracker commentTracker = new CommentTracker();
     @NonNls final StringBuilder newTryStatement = new StringBuilder("try");
     final Set<PsiClassType> exceptionsThrown = new HashSet<>();
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {
-      newTryStatement.append(resourceList.getText());
+      newTryStatement.append(commentTracker.text(resourceList));
       ExceptionUtils.calculateExceptionsThrown(resourceList, exceptionsThrown);
     }
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) {
       return;
     }
-    final String tryBlockText = tryBlock.getText();
+    final String tryBlockText = commentTracker.text(tryBlock);
     newTryStatement.append(tryBlockText);
     ExceptionUtils.calculateExceptionsThrown(tryBlock, exceptionsThrown);
     final Comparator<PsiType> comparator = new HierarchicalTypeComparator();
-    final List<PsiType> exceptionsAlreadyEmitted = new ArrayList<>();
     final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
     for (PsiCatchSection catchSection : catchSections) {
       final PsiParameter parameter = catchSection.getParameter();
       final PsiCodeBlock block = catchSection.getCatchBlock();
       if (parameter != null && block != null) {
         final PsiType caughtType = parameter.getType();
-        final List<PsiType> exceptionsToExpand = new ArrayList<>(10);
-        for (Object aExceptionsThrown : exceptionsThrown) {
-          final PsiType thrownType = (PsiType)aExceptionsThrown;
-          if (caughtType.isAssignableFrom(thrownType)) {
-            exceptionsToExpand.add(thrownType);
+        List<PsiClassType> exceptionsToExpand = new ArrayList<>(exceptionsThrown.size());
+        for (PsiClassType aExceptionsThrown : exceptionsThrown) {
+          if (caughtType.isAssignableFrom(aExceptionsThrown)) {
+            exceptionsToExpand.add(aExceptionsThrown);
           }
         }
-        exceptionsToExpand.removeAll(exceptionsAlreadyEmitted);
-        Collections.sort(exceptionsToExpand, comparator);
-        for (PsiType thrownType : exceptionsToExpand) {
+        exceptionsThrown.removeAll(exceptionsToExpand);
+
+        PsiClassType commonSuperType = null;
+        PsiClass commonSuper = ObscureThrownExceptionsIntention.findCommonSuperClass(exceptionsToExpand.toArray(PsiClassType.EMPTY_ARRAY));
+        if (commonSuper != null) {
+          commonSuperType = JavaPsiFacade.getElementFactory(commonSuper.getProject()).createType(commonSuper);
+          if (commonSuperType.equals(caughtType)) {
+            commonSuperType = null;
+          }
+        }
+
+        if (commonSuperType != null) {
+          exceptionsToExpand = Collections.singletonList(commonSuperType);
+        } else {
+          Collections.sort(exceptionsToExpand, comparator);
+        }
+        for (PsiClassType thrownType : exceptionsToExpand) {
           newTryStatement.append("catch(").append(thrownType.getCanonicalText()).append(' ').append(parameter.getName()).append(')');
-          newTryStatement.append(block.getText());
-          exceptionsAlreadyEmitted.add(thrownType);
+          newTryStatement.append(commentTracker.text(block));
         }
       }
     }
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
-      newTryStatement.append("finally").append(finallyBlock.getText());
+      newTryStatement.append("finally").append(commentTracker.text(finallyBlock));
     }
     final String newStatement = newTryStatement.toString();
-    PsiReplacementUtil.replaceStatementAndShortenClassNames(tryStatement, newStatement);
+
+    PsiReplacementUtil.replaceStatementAndShortenClassNames(tryStatement, newStatement, commentTracker);
   }
 }

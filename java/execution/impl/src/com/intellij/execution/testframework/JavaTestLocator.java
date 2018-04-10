@@ -23,12 +23,14 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -69,10 +71,32 @@ public class JavaTestLocator implements SMTestLocator {
     return results;
   }
 
+  @NotNull
+  @Override
+  public List<Location> getLocation(@NotNull String protocol,
+                                    @NotNull String path,
+                                    @Nullable String metainfo,
+                                    @NotNull Project project,
+                                    @NotNull GlobalSearchScope scope) {
+    List<Location> locations = getLocation(protocol, path, project, scope);
+    if (locations.size() > 1 && metainfo != null) {
+      
+      for (Location location : locations) {
+        PsiElement element = location.getPsiElement();
+        if (element instanceof PsiMethod) {
+          if (metainfo.equals(ClassUtil.getVMParametersMethodSignature((PsiMethod)element))) {
+            return Collections.singletonList(location);
+          }
+        }
+      }
+    }
+    return locations;
+  }
+
   private static List<Location> collectMethodNavigatables(@NotNull String path,
                                                           @NotNull Project project,
                                                           @NotNull GlobalSearchScope scope,
-                                                           String paramName) {
+                                                          String paramName) {
     List<Location> results = Collections.emptyList();
     String className = StringUtil.getPackageName(path);
     if (!StringUtil.isEmpty(className)) {

@@ -72,7 +72,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
                                                                                           consoleProperties);
       final ConsoleView consoleView =
         new PythonDebugLanguageConsoleView(project, PythonSdkType.findSdkByPath(myConfiguration.getInterpreterPath()),
-                                           testsOutputConsoleView);
+                                           testsOutputConsoleView, true);
       consoleView.attachToProcess(processHandler);
       addTracebackFilter(project, consoleView, processHandler);
       return consoleView;
@@ -97,6 +97,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     return null;  // by default, the IDE will use a "file://" protocol locator
   }
 
+  @NotNull
   @Override
   public GeneralCommandLine generateCommandLine() {
     GeneralCommandLine cmd = super.generateCommandLine();

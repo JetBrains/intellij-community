@@ -51,7 +51,7 @@ import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -74,7 +74,6 @@ import java.util.Set;
 
 /**
  * @author anna
- * Date: 24-Mar-2008
  */
 public class MigrationPanel extends JPanel implements Disposable {
   @NonNls private static final String MIGRATION_USAGES = "migration.usages";
@@ -211,11 +210,9 @@ public class MigrationPanel extends JPanel implements Disposable {
                   ensureFilesWritable(VfsUtilCore.toVirtualFileArray(files)).hasReadonlyFiles()) {
                   return;
                 }
-                new WriteCommandAction(myProject) {
-                  protected void run(@NotNull Result result) throws Throwable {
-                    TypeMigrationProcessor.change(usages, myLabeler, myProject);
-                  }
-                }.execute();
+                WriteCommandAction.writeCommandAction(myProject).run(() -> {
+                  TypeMigrationProcessor.change(usages, myLabeler, myProject);
+                });
               }, myProject.getDisposed());
             }, "Type Migration", false, myProject);
           }
@@ -318,7 +315,7 @@ public class MigrationPanel extends JPanel implements Disposable {
             collectInfos(usageInfos, (MigrationNode)userObject);
           }
         }
-        return usageInfos.toArray(new TypeMigrationUsageInfo[usageInfos.size()]);
+        return usageInfos.toArray(new TypeMigrationUsageInfo[0]);
       }
       return null;
     }

@@ -15,13 +15,19 @@
  */
 package com.intellij.settingsSummary;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Implement this interface and register the implementation as com.intellij.settingsSummaryFactory extension
  * to see result of {@link #collectInfo} in Help|Settings Summary dialog.
+ * <p>
+ * Implement toString() for better presentation in {@link com.intellij.settingsSummary.ui.SettingsSummaryDialog}
  */
 public interface ProblemType {
+  ExtensionPointName<ProblemType> EP_SETTINGS = ExtensionPointName.create("com.intellij.settingsSummaryFactory");
+
+  @NotNull
   String collectInfo(@NotNull Project project);
 }

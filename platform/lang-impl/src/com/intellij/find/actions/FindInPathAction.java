@@ -42,7 +42,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
       return;
     }
 
-    findManager.findInProject(dataContext);
+    findManager.findInProject(dataContext, null);
   }
 
   static void showNotAvailableMessage(AnActionEvent e, Project project) {

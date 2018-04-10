@@ -30,12 +30,10 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,9 +53,11 @@ public class VcsProjectLog implements Disposable {
   private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
   private int myRecreatedLogCount = 0;
 
-  public VcsProjectLog(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
+  public VcsProjectLog(@NotNull Project project,
+                       @NotNull MessageBus messageBus,
+                       @NotNull VcsLogTabsProperties uiProperties) {
     myProject = project;
-    myMessageBus = project.getMessageBus();
+    myMessageBus = messageBus;
     myUiProperties = uiProperties;
   }
 
@@ -88,13 +88,13 @@ public class VcsProjectLog implements Disposable {
     return myLogManager.getCached();
   }
 
-  @CalledInAwt
+  @CalledInAny
   private void recreateLog() {
-    myLogManager.drop(() -> {
+    UIUtil.invokeLaterIfNeeded(() -> myLogManager.drop(() -> {
       if (hasDvcsRoots()) {
-        createLog();
+        createLog(false);
       }
-    });
+    }));
   }
 
   @CalledInAwt
@@ -119,11 +119,11 @@ public class VcsProjectLog implements Disposable {
   }
 
   @CalledInBackground
-  public void createLog() {
+  public void createLog(boolean forceInit) {
     VcsLogManager logManager = myLogManager.getValue();
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (logManager.isLogVisible()) {
+      if (logManager.isLogVisible() || forceInit) {
         logManager.scheduleInitialization();
       }
       else if (PostponableLogRefresher.keepUpToDate()) {
@@ -157,7 +157,9 @@ public class VcsProjectLog implements Disposable {
       if (myValue == null) {
         VcsLogManager value = compute();
         myValue = value;
-        ApplicationManager.getApplication().invokeLater(() -> myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!myProject.isDisposed()) myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
+        });
       }
       return myValue;
     }
@@ -199,7 +201,7 @@ public class VcsProjectLog implements Disposable {
         MessageBusConnection connection = project.getMessageBus().connect(project);
         connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
         if (projectLog.hasDvcsRoots()) {
-          projectLog.createLog();
+          projectLog.createLog(false);
         }
       });
     }

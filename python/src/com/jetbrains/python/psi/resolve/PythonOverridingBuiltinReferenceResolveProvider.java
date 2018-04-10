@@ -34,7 +34,7 @@ public class PythonOverridingBuiltinReferenceResolveProvider implements PyOverri
     // resolve implicit __class__ inside class function
     if (element instanceof PyReferenceExpression &&
         PyNames.__CLASS__.equals(referencedName) &&
-        LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON30)) {
+        !LanguageLevel.forElement(element).isPython2()) {
       final PyFunction containingFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
       if (containingFunction != null) {

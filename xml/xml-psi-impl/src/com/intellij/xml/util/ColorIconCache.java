@@ -15,7 +15,7 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.SoftFactoryMap;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;

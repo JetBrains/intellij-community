@@ -26,7 +26,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +62,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
     Collection<PsiClass> allClasses = new SmartList<>();
     processClassesWithName(name, Processors.cancelableCollectProcessor(allClasses), scope, null);
     if (allClasses.isEmpty()) return PsiClass.EMPTY_ARRAY;
-    return allClasses.toArray(new PsiClass[allClasses.size()]);
+    return allClasses.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   public List<PsiClass> getScriptClassesByFQName(final String name, final GlobalSearchScope scope, final boolean srcOnly) {
@@ -105,12 +104,6 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   @NotNull
   public String[] getAllClassNames() {
     return ArrayUtil.toStringArray(StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY, myProject));
-  }
-
-
-  @Override
-  public void getAllClassNames(@NotNull HashSet<String> dest) {
-    dest.addAll(StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY, myProject));
   }
 
   @Override
@@ -164,17 +157,12 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public void getAllMethodNames(@NotNull HashSet<String> set) {
-    set.addAll(StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, myProject));
-  }
-
-  @Override
   @NotNull
   public PsiField[] getFieldsByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
     final Collection<? extends PsiField> fields = StubIndex.getElements(GrFieldNameIndex.KEY, name, myProject,
                                                                         new GrSourceFilterScope(scope), GrField.class);
     if (fields.isEmpty()) return PsiField.EMPTY_ARRAY;
-    return fields.toArray(new PsiField[fields.size()]);
+    return fields.toArray(PsiField.EMPTY_ARRAY);
   }
 
   @Override
@@ -182,11 +170,6 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   public String[] getAllFieldNames() {
     Collection<String> fields = StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, myProject);
     return ArrayUtil.toStringArray(fields);
-  }
-
-  @Override
-  public void getAllFieldNames(@NotNull HashSet<String> set) {
-    set.addAll(StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, myProject));
   }
 
   @Override

@@ -178,13 +178,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
         }
       }
       else if (PsiUtil.isIncrementDecrementOperation(parent)){
-        IElementType sign;
-        if (parent instanceof PsiPrefixExpression){
-          sign = ((PsiPrefixExpression)parent).getOperationTokenType();
-        }
-        else{
-          sign = ((PsiPostfixExpression)parent).getOperationTokenType();
-        }
+        IElementType sign = ((PsiUnaryExpression)parent).getOperationTokenType();
 
         PsiExpression getExpr = expr;
         if (processGet){
@@ -309,7 +303,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   @Override
   public PsiField[] getApplicableFields(@NotNull PsiClass aClass) {
     final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(), field -> !(field instanceof PsiEnumConstant));
-    return fields.toArray(new PsiField[fields.size()]);
+    return fields.toArray(PsiField.EMPTY_ARRAY);
   }
 
   @Override

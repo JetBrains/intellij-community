@@ -146,14 +146,14 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     fun Int.resolve() {
       val change = change(this)
       command(change) {
-        assertTrue(change.isConflict && viewer.canApplyNonConflictedChange(change, ThreeSide.BASE))
-        viewer.applyNonConflictedChange(change, ThreeSide.BASE)
+        assertTrue(change.isConflict && viewer.canResolveChangeAutomatically(change, ThreeSide.BASE))
+        viewer.resolveChangeAutomatically(change, ThreeSide.BASE)
       }
     }
 
     fun Int.canResolveConflict(): Boolean {
       val change = change(this)
-      return viewer.canApplyNonConflictedChange(change, ThreeSide.BASE)
+      return viewer.canResolveChangeAutomatically(change, ThreeSide.BASE)
     }
 
     //
@@ -342,9 +342,9 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
   private class MockMergeContext(private val myProject: Project?) : MergeContext() {
     override fun getProject(): Project? = myProject
 
-    override fun isFocused(): Boolean = false
+    override fun isFocusedInWindow(): Boolean = false
 
-    override fun requestFocus() {
+    override fun requestFocusInWindow() {
     }
 
     override fun finishMerge(result: MergeResult) {

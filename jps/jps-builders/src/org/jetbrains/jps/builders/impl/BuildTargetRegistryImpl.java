@@ -34,8 +34,8 @@ import java.util.*;
  */
 public class BuildTargetRegistryImpl implements BuildTargetRegistry {
   private final List<BuildTarget<?>> myAllTargets;
-  private Map<BuildTargetType<?>, List<? extends BuildTarget<?>>> myTargets;
-  private Map<JpsModule, List<ModuleBasedTarget>> myModuleBasedTargets;
+  private final Map<BuildTargetType<?>, List<? extends BuildTarget<?>>> myTargets;
+  private final Map<JpsModule, List<ModuleBasedTarget>> myModuleBasedTargets;
 
   public BuildTargetRegistryImpl(JpsModel model) {
     myTargets = new THashMap<>();

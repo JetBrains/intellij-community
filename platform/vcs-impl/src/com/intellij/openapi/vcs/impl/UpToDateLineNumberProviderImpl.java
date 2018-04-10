@@ -32,7 +32,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
 
   @Override
   public boolean isRangeChanged(final int start, final int end) {
-    LineStatusTracker tracker = getTracker();
+    LineStatusTracker<?> tracker = getTracker();
     if (tracker == null) {
       return false;
     }
@@ -43,7 +43,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
 
   @Override
   public boolean isLineChanged(int currentNumber) {
-    LineStatusTracker tracker = getTracker();
+    LineStatusTracker<?> tracker = getTracker();
     if (tracker == null) {
       return false;
     }
@@ -54,7 +54,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
 
   @Override
   public int getLineNumber(int currentNumber) {
-    LineStatusTracker tracker = getTracker();
+    LineStatusTracker<?> tracker = getTracker();
     if (tracker == null) {
       return currentNumber;
     }
@@ -65,7 +65,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
 
   @Override
   public int getLineCount() {
-    LineStatusTracker tracker = getTracker();
+    LineStatusTracker<?> tracker = getTracker();
     if (tracker == null) {
       return myDocument.getLineCount();
     }
@@ -75,8 +75,8 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
   }
 
   @Nullable
-  private LineStatusTracker getTracker() {
-    LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
+  private LineStatusTracker<?> getTracker() {
+    LineStatusTracker<?> tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
     return tracker != null && tracker.isOperational() ? tracker : null;
   }
 }

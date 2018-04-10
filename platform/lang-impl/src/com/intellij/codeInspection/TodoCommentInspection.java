@@ -54,7 +54,7 @@ public class TodoCommentInspection extends LocalInspectionTool {
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
       }
     }
-    return result.toArray(new ProblemDescriptor[result.size()]);
+    return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static List<TextRange> getTodoRanges(@NotNull PsiFile file) {

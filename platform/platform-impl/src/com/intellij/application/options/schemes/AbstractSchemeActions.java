@@ -68,7 +68,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     
   protected Collection<String> getSchemeImportersNames() {
     List<String> importersNames = new ArrayList<>();
-    for (SchemeImporterEP importerEP : SchemeImporterEP.getExtensions(getSchemeType())) {
+    for (SchemeImporterEP<T> importerEP : SchemeImporterEP.getExtensions(getSchemeType())) {
       importersNames.add(importerEP.name);
     }
     return importersNames;
@@ -76,7 +76,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private Collection<String> getSchemeExporterNames() {
     List<String> exporterNames = new ArrayList<>();
-    for (SchemeExporterEP exporterEP : SchemeExporterEP.getExtensions(getSchemeType())) {
+    for (SchemeExporterEP<T> exporterEP : SchemeExporterEP.getExtensions(getSchemeType())) {
       exporterNames.add(exporterEP.name);
     }
     return exporterNames;
@@ -287,7 +287,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       for (String actionName : myActionNames) {
         namedActions.add(createAction(actionName));
       }
-      return namedActions.toArray(new AnAction[namedActions.size()]);
+      return namedActions.toArray(AnAction.EMPTY_ARRAY);
     }
 
     @NotNull
@@ -296,7 +296,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class ImportAction extends DumbAwareAction {
 
-    private String myImporterName;
+    private final String myImporterName;
 
     public ImportAction(@NotNull String importerName, @NotNull String importerText) {
       super(importerText);
@@ -311,7 +311,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
   
   private class ExportAction extends DumbAwareAction {
-    private String myExporterName;
+    private final String myExporterName;
 
     public ExportAction(@NotNull String exporterName, @NotNull String exporterText) {
       super(exporterText);
@@ -378,6 +378,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   protected void exportScheme(@NotNull T scheme, @NotNull String exporterName) {
     SchemeExporter<T> exporter = SchemeExporterEP.getExporter(exporterName, getSchemeType());
     if (exporter != null) {
+      Object config = null;
+      if (exporter instanceof ConfigurableSchemeExporter) {
+        //noinspection unchecked
+        config = ((ConfigurableSchemeExporter)exporter).getConfiguration(mySchemesPanel, scheme);
+        if (config == null) return;
+      }
       String ext = exporter.getExtension();
       FileSaverDialog saver =
         FileChooserFactory.getInstance()
@@ -392,9 +398,14 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
         MessageType messageType;
         if (targetFile != null) {
           try {
+            Object finalConfig = config;
             WriteAction.run(() -> {
               OutputStream outputStream = targetFile.getOutputStream(this);
               try {
+                if (exporter instanceof ConfigurableSchemeExporter) {
+                  //noinspection unchecked
+                  ((ConfigurableSchemeExporter)exporter).exportScheme(scheme, outputStream, finalConfig);
+                }
                 exporter.exportScheme(scheme, outputStream);
               }
               finally {

@@ -31,10 +31,7 @@
       </component>
       <component id="8d69a" class="javax.swing.JTextField" binding="myAutoreparseDelayField">
         <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <minimum-size width="50" height="-1"/>
-            <preferred-size width="50" height="-1"/>
-          </grid>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <columns value="20"/>
@@ -42,10 +39,7 @@
       </component>
       <component id="71c39" class="javax.swing.JTextField" binding="myMarkMinHeight">
         <constraints>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <minimum-size width="50" height="-1"/>
-            <preferred-size width="50" height="-1"/>
-          </grid>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <columns value="20"/>

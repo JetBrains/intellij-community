@@ -63,13 +63,17 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   ContentEntryImpl(@NotNull String url, @NotNull RootModelImpl m) {
     super(m);
-    myRoot = VirtualFilePointerManager.getInstance().create(url, this, null);
+    myRoot = VirtualFilePointerManager.getInstance().create(url, this, m.getRootsChangedListener());
   }
 
   ContentEntryImpl(@NotNull Element e, @NotNull RootModelImpl m) throws InvalidDataException {
     this(getUrlFrom(e), m);
-    initSourceFolders(e);
-    initExcludeFolders(e);
+    loadSourceFolders(e);
+    loadExcludeFolders(e);
+    loadExcludePatterns(e);
+  }
+
+  private void loadExcludePatterns(@NotNull Element e) {
     for (Element element : e.getChildren(JpsModuleRootModelSerializer.EXCLUDE_PATTERN_TAG)) {
       addExcludePattern(element.getAttributeValue(JpsModuleRootModelSerializer.EXCLUDE_PATTERN_ATTRIBUTE));
     }
@@ -83,13 +87,13 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return url;
   }
 
-  private void initSourceFolders(@NotNull Element e) throws InvalidDataException {
+  private void loadSourceFolders(@NotNull Element e) throws InvalidDataException {
     for (Element child : e.getChildren(SourceFolderImpl.ELEMENT_NAME)) {
       addSourceFolder(new SourceFolderImpl(child, this));
     }
   }
 
-  private void initExcludeFolders(@NotNull Element e) throws InvalidDataException {
+  private void loadExcludeFolders(@NotNull Element e) throws InvalidDataException {
     for (Element child : e.getChildren(ExcludeFolderImpl.ELEMENT_NAME)) {
       ExcludeFolderImpl excludeFolder = new ExcludeFolderImpl(child, this);
       addExcludeFolder(excludeFolder);
@@ -111,7 +115,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @NotNull
   @Override
   public SourceFolder[] getSourceFolders() {
-    return mySourceFolders.toArray(new SourceFolder[mySourceFolders.size()]);
+    return mySourceFolders.toArray(new SourceFolder[0]);
   }
 
   @NotNull
@@ -151,7 +155,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @Override
   public ExcludeFolder[] getExcludeFolders() {
     //assert !isDisposed();
-    return myExcludeFolders.toArray(new ExcludeFolder[myExcludeFolders.size()]);
+    return myExcludeFolders.toArray(new ExcludeFolder[0]);
   }
 
   @NotNull

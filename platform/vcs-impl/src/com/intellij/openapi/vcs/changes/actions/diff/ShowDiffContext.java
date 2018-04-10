@@ -55,8 +55,7 @@ public class ShowDiffContext {
 
   @NotNull
   public Map<Key, Object> getChainContext() {
-    if (myChainContext == null) return Collections.emptyMap();
-    return myChainContext;
+    return ContainerUtil.notNullize(myChainContext);
   }
 
   @NotNull

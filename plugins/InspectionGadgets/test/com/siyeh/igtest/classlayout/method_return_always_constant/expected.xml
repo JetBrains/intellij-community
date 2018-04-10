@@ -2,6 +2,6 @@
   <problem>
     <file>MethodReturnsAlwaysConstant.java</file>
     <line>6</line>
-    <description>Method &lt;code&gt;getConstant()&lt;/code&gt; and all it's derivables always return constants</description>
+    <description>Method &lt;code&gt;getConstant()&lt;/code&gt; and all its derivables always return constants</description>
   </problem>
 </problems>

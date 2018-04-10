@@ -14,6 +14,10 @@
       <implementation-class>com.intellij.packaging.impl.artifacts.ArtifactManagerImpl</implementation-class>
     </component>
     <component>
+      <implementation-class>com.intellij.compiler.ExternalCompilerConfigurationStorage</implementation-class>
+      <loadForDefaultProject/>
+    </component>
+    <component>
       <interface-class>com.intellij.compiler.CompilerConfiguration</interface-class>
       <implementation-class>com.intellij.compiler.CompilerConfigurationImpl</implementation-class>
       <loadForDefaultProject/>
@@ -25,6 +29,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
+    <javaCompilerConfigurationProxy implementation="com.intellij.compiler.JavaCompilerConfiguration"/>
   </extensions>
 
 </idea-plugin>

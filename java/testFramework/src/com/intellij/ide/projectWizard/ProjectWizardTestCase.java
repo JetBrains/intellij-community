@@ -22,6 +22,7 @@ import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -46,22 +47,54 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Supplier;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/29/12
  */
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends PlatformTestCase {
   protected static final String DEFAULT_SDK = "default";
-  protected final List<Sdk> mySdks = new ArrayList<>();
   protected T myWizard;
   @Nullable
   private Project myCreatedProject;
   private Sdk myOldDefaultProjectSdk;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myOldDefaultProjectSdk = ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).getProjectSdk();
+    Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
+    for (final Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (projectSdk != jdk) {
+        ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
+      }
+    }
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      if (myWizard != null) {
+        Disposer.dispose(myWizard.getDisposable());
+        myWizard = null;
+      }
+      if (myCreatedProject != null) {
+        myProjectManager.closeProject(myCreatedProject);
+        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(myCreatedProject));
+        myCreatedProject = null;
+      }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
+      });
+      SelectTemplateSettings.getInstance().setLastTemplate(null, null);
+      UIUtil.dispatchAllInvocationEvents(); // let vfs update pass
+      LaterInvocator.dispatchPendingFlushes();
+    }
+    finally {
+      super.tearDown();
+    }
+  }
 
   protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<Step> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
@@ -143,18 +176,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     throw new RuntimeException();
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myOldDefaultProjectSdk = ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).getProjectSdk();
-    Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
-    for (final Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (projectSdk != jdk) {
-        ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
-      }
-    }
-  }
-
   protected void configureJdk() {
     ApplicationManager.getApplication().runWriteAction(() -> {
       addSdk(new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome()));
@@ -166,34 +187,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected void addSdk(final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
-
-    mySdks.add(sdk);
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      if (myWizard != null) {
-        Disposer.dispose(myWizard.getDisposable());
-        myWizard = null;
-      }
-      if (myCreatedProject != null) {
-        myProjectManager.closeProject(myCreatedProject);
-        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(myCreatedProject));
-        myCreatedProject = null;
-      }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
-        for (Sdk sdk : mySdks) {
-          ProjectJdkTable.getInstance().removeJdk(sdk);
-        }
-      });
-      SelectTemplateSettings.getInstance().setLastTemplate(null, null);
-    }
-    finally {
-      super.tearDown();
-    }
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
   }
 
   protected Module importModuleFrom(ProjectImportProvider provider, String path) {
@@ -237,8 +231,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   protected Sdk createSdk(String name, SdkTypeId sdkType) {
     final Sdk sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType);
-    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
-    mySdks.add(sdk);
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
     return sdk;
   }
 }

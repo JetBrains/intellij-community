@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -186,9 +187,8 @@ public class HgBranchPopupActions {
                                                                    ChangesUtil.getFilePath(change))));
       HgCloseBranchExecutor closeBranchExecutor = vcs.getCloseBranchExecutor();
       closeBranchExecutor.setRepositories(myRepositories);
-      CommitChangeListDialog.commitChanges(project, changesForRepositories, activeChangeList,
-                                           Collections.singletonList(closeBranchExecutor),
-                                           false, vcs, "Close Branch", null, false);
+      CommitChangeListDialog.commitChanges(project, changesForRepositories, changesForRepositories, activeChangeList,
+                                           Collections.singletonList(closeBranchExecutor), false, vcs, "Close Branch", null, false);
     }
 
     @Override
@@ -290,8 +290,8 @@ public class HgBranchPopupActions {
   public static class CurrentBranch extends BranchActions implements PopupElementWithAdditionalInfo {
     public CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, DvcsImplIcons.FavoriteOnHover,
-               DvcsImplIcons.NotFavoriteOnHover);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Vcs.FavoriteOnHover,
+               AllIcons.Vcs.NotFavoriteOnHover);
     }
 
     @NotNull
@@ -324,11 +324,11 @@ public class HgBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        HgUtil.executeOnPooledThread(() -> {
+        BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
           for (HgRepository repository : myRepositories) {
             HgBookmarkCommand.deleteBookmarkSynchronously(myProject, repository.getRoot(), myBranchName);
           }
-        }, myProject);
+        });
       }
     }
   }
@@ -337,7 +337,8 @@ public class HgBranchPopupActions {
 
     public CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, DvcsImplIcons.FavoriteOnHover, DvcsImplIcons.NotFavoriteOnHover);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Vcs.FavoriteOnHover,
+               AllIcons.Vcs.NotFavoriteOnHover);
     }
 
     @NotNull

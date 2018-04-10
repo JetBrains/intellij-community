@@ -114,21 +114,11 @@ class Test(unittest.TestCase):
         self.assertEqual(testObj.name, "Custom")
         self.assertEqual(1, testObj._get)
 
-        self.assert_(hasattr(testObj, 'name'))
+        self.assertTrue(hasattr(testObj, 'name'))
         del testObj.name
         self.assertEqual(1, testObj._del)
 
-        self.assert_(not hasattr(testObj, 'name'))
+        self.assertTrue(not hasattr(testObj, 'name'))
         testObj.name = "Custom2"
         self.assertEqual(testObj.name, "Custom2")
-
-
-
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-if __name__ == '__main__':
-    #this is so that we can run it from the jython tests -- because we don't actually have an __main__ module
-    #(so, it won't try importing the __main__ module)
-    unittest.TextTestRunner().run(unittest.makeSuite(Test))
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -47,14 +33,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
@@ -64,7 +51,7 @@ import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
  * @author Konstantin Bulenkov
  */
 public class ThreadDumpPanel extends JPanel implements DataProvider {
-  private static final Icon PAUSE_ICON_DAEMON = new LayeredIcon(Paused, Daemon_sign);
+  private static final Icon PAUSE_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.Pause, Daemon_sign);
   private static final Icon LOCKED_ICON_DAEMON = new LayeredIcon(Locked, Daemon_sign);
   private static final Icon RUNNING_ICON_DAEMON = new LayeredIcon(Running, Daemon_sign);
   private static final Icon SOCKET_ICON_DAEMON = new LayeredIcon(Socket, Daemon_sign);
@@ -87,10 +74,13 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       ThreadState state = copy.get(i);
       ThreadState.CompoundThreadState compound = new ThreadState.CompoundThreadState(state);
       myMergedThreadDump.add(compound);
-      for (int j = i+1; j < copy.size(); j++) {
+      for (int j = i + 1; j < copy.size(); ) {
         ThreadState toAdd = copy.get(j);
         if (compound.add(toAdd)) {
           copy.remove(j);
+        }
+        else {
+          j++;
         }
       }
     }
@@ -219,7 +209,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   private static Icon getThreadStateIcon(final ThreadState threadState) {
     final boolean daemon = threadState.isDaemon();
     if (threadState.isSleeping()) {
-      return daemon ? PAUSE_ICON_DAEMON : Paused;
+      return daemon ? PAUSE_ICON_DAEMON : AllIcons.Actions.Pause;
     }
     if (threadState.isWaiting()) {
       return daemon ? LOCKED_ICON_DAEMON : Locked;
@@ -413,17 +403,6 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       myThreadStates = threadStates;
     }
 
-    @Override
-    public JComponent getSettingsEditor() {
-      return null;
-    }
-
-    @Override
-    public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {}
-
-    @Override
-    public void removeSettingsChangedListener(ChangeListener listener) {}
-
     @NotNull
     @Override
     public String getReportText() {
@@ -445,11 +424,6 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
         return baseDir.getPresentableUrl() + File.separator + DEFAULT_REPORT_FILE_NAME;
       }
       return "";
-    }
-
-    @Override
-    public void exportedTo(String filePath) {
-
     }
 
     @Override

@@ -218,12 +218,16 @@ public abstract class AbstractImportFromExternalSystemControl<
   }
 
   public void reset() {
+    reset(null);
+  }
+
+  public void reset(@Nullable WizardContext wizardContext) {
     myLinkedProjectPathField.setNameComponentVisible(false);
     myLinkedProjectPathField.setNameValue("untitled");
     myLinkedProjectPathField.setPath("");
-    myProjectSettingsControl.reset();
+    myProjectSettingsControl.reset(wizardContext);
     if (mySystemSettingsControl != null) {
-      mySystemSettingsControl.reset();
+      mySystemSettingsControl.reset(wizardContext);
     }
     if (hideableSystemSettingsPanel != null) {
       hideableSystemSettingsPanel.setOn(false);

@@ -22,18 +22,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubTree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.IntIntHashMap;
 import gnu.trove.TByteArrayList;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author peter
@@ -97,30 +92,10 @@ class AnchorRepository {
   static PsiClass retrieveClass(@NotNull Project project, int fileId, int stubId) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(retrieveFile(fileId));
     assert psiFile != null : anchorToString(stubId, fileId);
-    PsiElement element = restoreFromStubIndex((PsiFileWithStubSupport)psiFile, stubId);
+    PsiElement element = ((PsiFileWithStubSupport)psiFile).getStubbedSpine().getStubPsi(stubId);
     if (!(element instanceof PsiClass)) {
       throw new AssertionError(anchorToString(stubId, fileId) + "; " + psiFile);
     }
     return (PsiClass)element;
   }
-
-  private static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl, int index) {
-    StubTree tree = fileImpl.getStubTree();
-    if (tree == null) {
-      if (fileImpl instanceof PsiFileImpl) {
-        tree = ((PsiFileImpl)fileImpl).calcStubTree();
-      }
-      else {
-        return null;
-      }
-    }
-
-    List<StubElement<?>> list = tree.getPlainList();
-    if (index >= list.size()) {
-      return null;
-    }
-
-    return ((StubElement)list.get(index)).getPsi();
-  }
-
 }

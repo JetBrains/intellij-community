@@ -35,8 +35,8 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
   @Override
   protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
     return new ParsingContext(builder, languageLevel, futureFlag) {
-      private StatementParsing myStatementParsing = new AnnotationParser(this, futureFlag);
-      private ExpressionParsing myExpressionParsing = new ExpressionParsing(this) {
+      private final StatementParsing myStatementParsing = new AnnotationParser(this, futureFlag);
+      private final ExpressionParsing myExpressionParsing = new ExpressionParsing(this) {
         @Override
         protected IElementType getReferenceType() {
           return PyDocstringTokenTypes.DOC_REFERENCE;

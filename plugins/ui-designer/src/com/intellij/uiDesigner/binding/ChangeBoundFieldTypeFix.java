@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 15, 2005
  */
 public class ChangeBoundFieldTypeFix implements IntentionAction {
   private final PsiField myField;

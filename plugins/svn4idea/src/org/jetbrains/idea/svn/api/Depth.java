@@ -18,20 +18,17 @@ package org.jetbrains.idea.svn.api;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNDepth;
 
 import java.util.Map;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public enum Depth {
 
   UNKNOWN("unknown"),
   INFINITY("infinity"),
   IMMEDIATES("immediates"),
   FILES("files"),
-  EMPTY("empty");
+  EMPTY("empty"),
+  EXCLUDE("exclude");
 
   @NotNull private static final Map<String, Depth> ourAllDepths = ContainerUtil.newHashMap();
 
@@ -70,11 +67,6 @@ public enum Depth {
     }
 
     return result;
-  }
-
-  @NotNull
-  public static Depth from(@Nullable SVNDepth depth) {
-    return depth != null ? from(depth.getName()) : UNKNOWN;
   }
 
   @NotNull

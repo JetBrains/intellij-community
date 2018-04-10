@@ -38,7 +38,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/11/12
  */
 public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   private final Set<File> myExcludedRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);

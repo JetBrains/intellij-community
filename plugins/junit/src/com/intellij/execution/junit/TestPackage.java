@@ -29,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -37,6 +38,8 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.util.Function;
+import com.intellij.util.containers.JBTreeTraverser;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -48,6 +51,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class TestPackage extends TestObject {
@@ -68,33 +72,19 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
 
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
-      private final THashSet<PsiClass> myClasses = new THashSet<>();
+      private final THashSet<String> myClassNames = new THashSet<>();
       @Override
       protected void search() {
-        myClasses.clear();
+        myClassNames.clear();
         final SourceScope sourceScope = getSourceScope();
         final Module module = getConfiguration().getConfigurationModule().getModule();
-        if (sourceScope != null && !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+        if (sourceScope != null) {
           DumbService instance = DumbService.getInstance(myProject);
           try {
             instance.setAlternativeResolveEnabled(true);
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            long start = System.currentTimeMillis();
-            if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
-              String packageName = getPackageName(data);
-              String[] classNames = TestClassCollector.collectClassFQNames(packageName, getRootPath(), getConfiguration(), TestPackage::createPredicate);
-              PsiManager manager = PsiManager.getInstance(myProject);
-              Arrays.stream(classNames)
-                .filter(className -> acceptClassName(className)) //check patterns
-                .map(name -> ReadAction.compute(() -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope())))
-                .filter(aClass -> aClass != null)
-                .forEach(myClasses::add);
-              LOG.info("Found tests in " + (System.currentTimeMillis() - start));
-            }
-            else {
-              ConfigurationUtil.findAllTestClasses(classFilter, module, myClasses);
-            }
+            searchTests(module, classFilter, myClassNames);
           }
           catch (CantRunException ignored) {}
           finally {
@@ -107,14 +97,43 @@ public class TestPackage extends TestObject {
       protected void onFound() {
 
         try {
-          addClassesListToJavaParameters(myClasses,
-                                         psiClass -> psiClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(psiClass) : null, getPackageName(data), createTempFiles(), getJavaParameters());
+          addClassesListToJavaParameters(myClassNames, Function.ID, getPackageName(data), createTempFiles(), getJavaParameters());
         }
         catch (ExecutionException ignored) {}
       }
     };
   }
 
+
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<String> names) throws CantRunException {
+     if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+       //junit 5 process tests automatically
+       return;
+     }
+    Set<PsiClass> classes = new THashSet<>();
+    if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
+      String packageName = getPackageName(getConfiguration().getPersistentData());
+      String[] classNames =
+        TestClassCollector.collectClassFQNames(packageName, getRootPath(), getConfiguration(), TestPackage::createPredicate);
+      PsiManager manager = PsiManager.getInstance(getConfiguration().getProject());
+      Arrays.stream(classNames)
+            .filter(className -> acceptClassName(className)) //check patterns
+            .filter(name -> ReadAction.compute(() -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope())) != null)
+            .forEach(className -> names.add(className));
+    }
+    else {
+      if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
+        Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
+        collectClassesRecursively(classFilter, acceptClassCondition, classes);
+      }
+      else {
+        ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
+      }
+
+      classes.forEach(psiClass -> names.add(JavaExecutionUtil.getRuntimeQualifiedName(psiClass)));
+    }
+  }
+  
   @Nullable
   protected Path getRootPath() {
     Module module = getConfiguration().getConfigurationModule().getModule();
@@ -133,6 +152,41 @@ public class TestPackage extends TestObject {
   protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
     return getPackage(data).getQualifiedName();
   }
+
+  protected void collectClassesRecursively(TestClassFilter classFilter,
+                                           Condition<PsiClass> acceptClassCondition,
+                                           Set<PsiClass> classes) throws CantRunException {
+    PsiPackage aPackage = getPackage(getConfiguration().getPersistentData());
+    if (aPackage != null) {
+      GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
+      collectClassesRecursively(aPackage, scope, acceptClassCondition, classes);
+    }
+  }
+
+  private static void collectClassesRecursively(PsiPackage aPackage,
+                                                GlobalSearchScope scope,
+                                                Condition<PsiClass> acceptAsTest,
+                                                Set<PsiClass> classes) {
+    PsiPackage[] psiPackages = ReadAction.compute(() -> aPackage.getSubPackages(scope));
+    for (PsiPackage psiPackage : psiPackages) {
+      collectClassesRecursively(psiPackage, scope, acceptAsTest, classes);
+    }
+    PsiClass[] psiClasses = ReadAction.compute(() -> aPackage.getClasses(scope));
+    for (PsiClass aClass : psiClasses) {
+      collectInnerClasses(aClass, acceptAsTest, classes);
+    }
+  }
+
+  protected static void collectInnerClasses(PsiClass aClass, Condition<PsiClass> acceptAsTest, Set<PsiClass> classes) {
+    if (Registry.is("junit4.accept.inner.classes", true)) {
+      classes
+        .addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).filter(acceptAsTest).toList()));
+    }
+    else if (acceptAsTest.value(aClass)) {
+      classes.add(aClass);
+    }
+  }
+
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
@@ -234,41 +288,48 @@ public class TestPackage extends TestObject {
 
   private static Predicate<Class<?>> createPredicate(ClassLoader classLoader) {
 
-    try {
-      Class<?> testCaseClass = Class.forName("junit.framework.TestCase", true, classLoader);
+    Class<?> testCaseClass = loadClass(classLoader,"junit.framework.TestCase");
 
-      @SuppressWarnings("unchecked")
-      Class<? extends Annotation> runWithClass = (Class<? extends Annotation>)Class.forName("org.junit.runner.RunWith", true, classLoader);
+    @SuppressWarnings("unchecked")
+    Class<? extends Annotation> runWithAnnotationClass = (Class<? extends Annotation>)loadClass(classLoader, "org.junit.runner.RunWith");
 
-      @SuppressWarnings("unchecked")
-      Class<? extends Annotation> testClass = (Class<? extends Annotation>)Class.forName("org.junit.Test", true, classLoader);
+    @SuppressWarnings("unchecked")
+    Class<? extends Annotation> testAnnotationClass = (Class<? extends Annotation>)loadClass(classLoader, "org.junit.Test");
 
-      return aClass -> {
-        //junit 3
-        if (testCaseClass.isAssignableFrom(aClass)) {
-          return hasSingleConstructor(aClass);
-        }
-        else {
-          //annotation
-          if (aClass.isAnnotationPresent(runWithClass)) {
+    return aClass -> {
+      //annotation
+      if (runWithAnnotationClass != null && aClass.isAnnotationPresent(runWithAnnotationClass)) {
+        return true;
+      }
+      //junit 3
+      if (testCaseClass != null && testCaseClass.isAssignableFrom(aClass)) {
+        return Arrays.stream(aClass.getConstructors()).anyMatch(constructor -> {
+          Class<?>[] parameterTypes = constructor.getParameterTypes();
+          return parameterTypes.length == 0 ||
+                 parameterTypes.length == 1 && CommonClassNames.JAVA_LANG_STRING.equals(parameterTypes[0].getName());
+        });
+      }
+      else {
+        //junit 4 & suite
+        for (Method method : aClass.getMethods()) {
+          if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName())) {
             return true;
           }
-          else {
-            //junit 4 & suite
-            for (Method method : aClass.getMethods()) {
-              if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName()) ||
-                  method.isAnnotationPresent(testClass)) {
-                return hasSingleConstructor(aClass);
-              }
-            }
+          if (testAnnotationClass != null && method.isAnnotationPresent(testAnnotationClass)) {
+            return hasSingleConstructor(aClass);
           }
         }
-        return false;
-      };
+      }
+      return false;
+    };
+  }
+
+  private static Class<?> loadClass(ClassLoader classLoader, String className) {
+    try {
+      return Class.forName(className, true, classLoader);
     }
     catch (ClassNotFoundException e) {
-      LOG.error(e);
-      return aClass -> false;
+      return null;
     }
   }
 

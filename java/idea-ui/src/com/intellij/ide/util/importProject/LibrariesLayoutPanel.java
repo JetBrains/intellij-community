@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 18, 2007
  */
 public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
 

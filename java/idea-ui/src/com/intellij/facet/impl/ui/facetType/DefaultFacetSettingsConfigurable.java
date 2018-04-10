@@ -48,6 +48,7 @@ public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> impl
     return ProjectBundle.message("facet.defaults.display.name");
   }
 
+  @Override
   public String getHelpTopic() {
     return myDelegate.getHelpTopic();
   }

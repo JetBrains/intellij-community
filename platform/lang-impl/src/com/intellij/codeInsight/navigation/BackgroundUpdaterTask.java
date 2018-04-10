@@ -17,11 +17,17 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBListUpdater;
+import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -31,13 +37,14 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
 
-public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
-  protected AbstractPopup myPopup;
-  protected T myComponent;
+public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
+  protected JBPopup myPopup;
+  private ListComponentUpdater myUpdater;
   private Ref<UsageView> myUsageView;
   private final Collection<PsiElement> myData;
 
@@ -49,12 +56,11 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   private volatile ProgressIndicator myIndicator;
 
   /**
-   * @deprecated, use {@link #BackgroundUpdaterTask(Project, String, Comparator)} instead
+   * @deprecated Use {@link #BackgroundUpdaterTask(Project, String, Comparator)} instead
    */
   @Deprecated
   public BackgroundUpdaterTask(Project project, @NotNull String title) {
-    super(project, title);
-    myData = ContainerUtil.newSmartList();
+    this(project, title, null);
   }
   
   public BackgroundUpdaterTask(@Nullable Project project, @NotNull String title, @Nullable Comparator<PsiElement> comparator) {
@@ -62,17 +68,48 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     myData = comparator == null ? ContainerUtil.newSmartList() : new TreeSet<>(comparator);
   }
 
-  public void init(@NotNull AbstractPopup popup, @NotNull T component, @NotNull Ref<UsageView> usageView) {
+  @TestOnly
+  public ListComponentUpdater getUpdater() {
+    return myUpdater;
+  }
+
+  /**
+   * @deprecated Use {@link #init(JBPopup, ListComponentUpdater, Ref)} instead
+   */
+  @Deprecated
+  public void init(@NotNull JBPopup popup, @NotNull Object component, @NotNull Ref<UsageView> usageView) {
+    if (component instanceof JBList) {
+      init(popup, new JBListUpdater((JBList)component), usageView);
+    }
+  }
+
+  public void init(@NotNull JBPopup popup, @NotNull ListComponentUpdater updater, @NotNull Ref<UsageView> usageView) {
     myPopup = popup;
-    myComponent = component;
+    myUpdater = updater;
     myUsageView = usageView;
   }
 
   public abstract String getCaption(int size);
-  protected abstract void replaceModel(@NotNull List<PsiElement> data);
-  protected abstract void paintBusy(boolean paintBusy);
 
-  public boolean setCanceled() {
+  protected void replaceModel(@NotNull List<PsiElement> data) {
+    myUpdater.replaceModel(data);
+  }
+
+  protected void paintBusy(boolean paintBusy) {
+    myUpdater.paintBusy(paintBusy);
+  }
+
+  protected static Comparator<PsiElement> createComparatorWrapper(@NotNull Comparator comparator) {
+    return (o1, o2) -> {
+      int diff = comparator.compare(o1, o2);
+      if (diff == 0) {
+        return ReadAction.compute(() -> PsiUtilCore.compareElementsByPosition(o1, o2));
+      }
+      return diff;
+    };
+  }
+
+  private boolean setCanceled() {
     boolean canceled = myCanceled;
     myCanceled = true;
     return canceled;
@@ -83,7 +120,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   }
 
   /**
-   * @deprecated, use {@link #BackgroundUpdaterTask(Project, String, Comparator)} and {@link #updateComponent(PsiElement)} instead
+   * @deprecated Use {@link #BackgroundUpdaterTask(Project, String, Comparator)} and {@link #updateComponent(PsiElement)} instead
    */
   public boolean updateComponent(@NotNull PsiElement element, @Nullable Comparator comparator) {
     final UsageView view = myUsageView.get();
@@ -93,21 +130,23 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     }
 
     if (myCanceled) return false;
+
     final JComponent content = myPopup.getContent();
-    if (content == null || myPopup.isDisposed()) return false;
+    if ((myPopup instanceof AbstractPopup && content == null) || myPopup.isDisposed()) return false;
+    ModalityState modalityState = content == null ? null : ModalityState.stateForComponent(content);
 
     synchronized (lock) {
       if (myData.contains(element)) return true;
       myData.add(element);
       if (comparator != null && myData instanceof List) {
-        Collections.sort(((List)myData), comparator);
+        Collections.sort((List)myData, comparator);
       }
     }
 
     myAlarm.addRequest(() -> {
       myAlarm.cancelAllRequests();
       refreshModelImmediately();
-    }, 200, ModalityState.stateForComponent(content));
+    }, 200, modalityState);
     return true;
   }
   

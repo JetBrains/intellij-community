@@ -18,11 +18,11 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -59,6 +59,8 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
 /**
  * @param <T> List item type. Must implement {@code equals()/hashCode()} correctly.
@@ -381,7 +383,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       return selectedValue;
     }
 
-    if (selectedValue instanceof DataProvider) {
+    if (selectedValue instanceof DataProvider && (!(selectedValue instanceof ValidateableNode) || ((ValidateableNode)selectedValue).isValid())) {
       return ((DataProvider)selectedValue).getData(dataId);
     }
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
@@ -429,15 +431,19 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    */
   public void updateSelectedPath(Object... pathToSelect) {
     if (!myUpdateSelectedPathModeActive.compareAndSet(false, true)) return;
-
     try {
       FinderRecursivePanel panel = this;
       for (int i = 0; i < pathToSelect.length; i++) {
         Object selectedValue = pathToSelect[i];
         panel.setSelectedValue(selectedValue);
+
         if (i < pathToSelect.length - 1) {
           final JComponent component = panel.getSecondComponent();
-          assert component instanceof FinderRecursivePanel : Arrays.toString(pathToSelect);
+          if (!(component instanceof FinderRecursivePanel)) {
+            throw new IllegalStateException("failed to select idx=" + (i + 1) + ": " +
+                                            "component=" + component + ", " +
+                                            "pathToSelect=" + Arrays.toString(pathToSelect));
+          }
           panel = (FinderRecursivePanel)component;
         }
       }
@@ -675,7 +681,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
       if (!isSelected) {
         VirtualFile file = getContainingFile(t);
-        Color bgColor = file == null ? null : EditorTabbedContainer.calcTabColor(myProject, file);
+        Color bgColor = file == null ? null : getFileBackgroundColor(myProject, file);
         bg = bgColor == null ? bg : bgColor;
       }
       setBackground(bg);

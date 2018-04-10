@@ -153,7 +153,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
       return new LogicalRootType[0];
     }
 
-    return rootTypes.toArray(new LogicalRootType[rootTypes.size()]);
+    return rootTypes.toArray(new LogicalRootType[0]);
   }
 
   @Override

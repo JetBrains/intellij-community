@@ -19,7 +19,6 @@ import com.intellij.util.xml.DomElement;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/17/12
  */
 public interface NotStubbed extends DomElement {
 }

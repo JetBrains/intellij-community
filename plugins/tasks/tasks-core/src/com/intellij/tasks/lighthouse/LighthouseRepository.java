@@ -119,7 +119,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
       tasks.addAll(taskList);
       page++;
     }
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   @Nullable

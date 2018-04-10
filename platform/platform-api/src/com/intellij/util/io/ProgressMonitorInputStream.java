@@ -25,7 +25,7 @@ final class ProgressMonitorInputStream extends InputStream {
   private final ProgressIndicator indicator;
   private final InputStream in;
 
-  private double available;
+  private final double available;
   private long count;
 
   public ProgressMonitorInputStream(@NotNull ProgressIndicator indicator, @NotNull InputStream in, int length) {

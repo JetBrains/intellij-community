@@ -26,7 +26,6 @@ import com.intellij.refactoring.util.VariableData;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 
 public class MakeStaticUtil {
@@ -34,7 +33,7 @@ public class MakeStaticUtil {
     PsiClass containingClass = member.getContainingClass();
     ArrayList<InternalUsageInfo> classRefs = new ArrayList<>();
     addClassRefs(member, classRefs, containingClass, member, includeSelf);
-    return classRefs.toArray(new InternalUsageInfo[classRefs.size()]);
+    return classRefs.toArray(new InternalUsageInfo[0]);
   }
 
   public static boolean isParameterNeeded(PsiTypeParameterListOwner member) {

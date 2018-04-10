@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 18, 2007
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key> implements PersistentMap<Key, Value> {
   // PersistentHashMap (PHM) works in following (generic) way:
@@ -143,11 +142,23 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
                            final int initialSize,
                            int version,
                            @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
-    super(checkDataFiles(file), keyDescriptor, initialSize, lockContext, version);
+    this(file, keyDescriptor, valueExternalizer, initialSize, version, lockContext,
+         PersistentHashMapValueStorage.CreationTimeOptions.threadLocalOptions());
+  }
+
+  private PersistentHashMap(@NotNull final File file,
+                           @NotNull KeyDescriptor<Key> keyDescriptor,
+                           @NotNull DataExternalizer<Value> valueExternalizer,
+                           final int initialSize,
+                           int version,
+                           @Nullable PagedFileStorage.StorageLockContext lockContext,
+                           PersistentHashMapValueStorage.CreationTimeOptions options) throws IOException {
+    super(checkDataFiles(file), keyDescriptor, initialSize, lockContext, modifyVersionDependingOnOptions(version, options));
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
     myIsReadOnly = isReadOnly();
+    if (myIsReadOnly) options = options.setReadOnly();
 
     myAppendCache = createAppendCache(keyDescriptor);
     final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
@@ -192,7 +203,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if(myDoTrace) LOG.info("Opened " + file);
     try {
       myValueExternalizer = valueExternalizer;
-      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath(), myIsReadOnly);
+      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath(), options);
       myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
       long data2 = myEnumerator.getMetaData2();
       myLargeIndexWatermarkId = (int)(data2 & DEAD_KEY_NUMBER_MASK);
@@ -222,6 +233,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
       throw new PersistentEnumerator.CorruptedException(file);
     }
+  }
+
+  private static int modifyVersionDependingOnOptions(int version, PersistentHashMapValueStorage.CreationTimeOptions options) {
+    return version + options.getVersion();
   }
 
   protected boolean wantNonnegativeIntegralValues() {
@@ -462,6 +477,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     AppendStream appenderStream = ourFlyweightAppenderStream.getValue();
     BufferExposingByteArrayOutputStream stream = myAppendCache.get(key);
     appenderStream.setOut(stream);
+    myValueStorage.checkAppendsAllowed(stream.size());
     appender.append(appenderStream);
     appenderStream.setOut(null);
   }
@@ -764,7 +780,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       final File[] oldFiles = getFilesInDirectoryWithNameStartingWith(oldDataFile, oldDataFileBaseName);
 
       final String newPath = getDataFile(myEnumerator.myFile).getPath() + ".new";
-      final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath, myIsReadOnly);
+      PersistentHashMapValueStorage.CreationTimeOptions options = myValueStorage.getOptions();
+      final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath, options);
       myValueStorage.switchToCompactionMode();
       myEnumerator.markDirty(true);
       long sizeBefore = myValueStorage.getSize();
@@ -819,7 +836,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         }
       }
 
-      myValueStorage = PersistentHashMapValueStorage.create(oldDataFile.getPath(), myIsReadOnly);
+      myValueStorage = PersistentHashMapValueStorage.create(oldDataFile.getPath(), options);
       LOG.info("Compacted " + myEnumerator.myFile.getPath() + ":" + sizeBefore + " bytes into " + newSize + " bytes in " + (System.currentTimeMillis() - now) + "ms.");
       myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
       myEnumerator.putMetaData2( myLargeIndexWatermarkId );

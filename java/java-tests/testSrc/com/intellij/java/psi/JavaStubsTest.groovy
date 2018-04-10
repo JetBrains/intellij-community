@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -263,6 +264,59 @@ class Foo {
     PsiFile psiFile = myFixture.addFileToProject("a.java", "@() class Foo { } }")
     assert ((PsiJavaFile) psiFile).classes[0].modifierList.annotations[0].nameReferenceElement == null
     assert !((PsiFileImpl) psiFile).contentsLoaded
+  }
+
+  void "test anonymous class generics"() {
+    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """
+class A {
+    <V> Object foo() {
+      return new I<V>(){};
+    }
+}
+
+interface I<T> {}
+""")
+
+    PsiClass a = ((PsiJavaFile) file).classes[0]
+    PsiClass i = ((PsiJavaFile) file).classes[1]
+    PsiAnonymousClass anon = assertOneElement(DirectClassInheritorsSearch.search(i).findAll()) as PsiAnonymousClass
+
+    assert i == anon.baseClassType.resolve()
+    assert a.methods[0].typeParameters[0] == PsiUtil.resolveClassInClassTypeOnly(anon.baseClassType.parameters[0])
+
+    assert !file.contentsLoaded
+  }
+
+  void "test broken anonymous"() {
+    String text = """
+class A {
+  public GroupDescriptor[] getGroupDescriptors() {
+    return new ThreadGroup(Descriptor[]{
+      new GroupDescriptor(groupId, "test")
+    };
+  }
+}"""
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    WriteCommandAction.runWriteCommandAction(project) {
+      psiFile.viewProvider.document.insertString(text.indexOf(']{'), 'x')
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
+  void "test broken nested anonymous"() {
+    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", "class A { { new A(new B[a]{b}); } }"))
+  }
+
+  void "test lone angle brackets"() {
+    String text = """
+class A {
+  {
+    PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(element, .class);
+    final <PsiElement, TextRange> pair;
+  }  
+}"""
+    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", text))
   }
 
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
@@ -90,14 +89,8 @@ public class HgLocalIgnoredHolder implements Disposable {
 
   private void rescanAllIgnored() {
     Set<VirtualFile> ignored = ContainerUtil.newHashSet();
-    try {
-      ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(myRepository.getProject())
-                       .getFiles(myRepository.getRoot(), null));
-    }
-    catch (VcsException e) {
-      LOG.error("Can't reload ignored files for: " + myRepository.getPresentableUrl(), e);
-      return;
-    }
+    ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(myRepository.getProject())
+                     .getFiles(myRepository.getRoot(), null));
     try {
       SET_LOCK.writeLock().lock();
       myIgnoredSet.clear();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
@@ -24,6 +10,7 @@ import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
@@ -46,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCompiledElement;
@@ -94,12 +80,12 @@ public class DebuggerSession implements AbstractDebuggerSession {
   private final DebugProcessImpl myDebugProcess;
   private final GlobalSearchScope mySearchScope;
   private Sdk myAlternativeJre;
-  private Sdk myRunJre;
+  private final Sdk myRunJre;
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
   private final AtomicReference<ThreadReferenceProxyImpl> mySteppingThroughThread = new AtomicReference<>();
-  protected final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm();
 
   private boolean myModifiedClassesScanRequired = false;
 
@@ -192,7 +178,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
           }
 
           @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
             context.initCaches();
             DebuggerInvocationUtil.swingInvokeLater(getProject(), setStateRunnable);
           }
@@ -222,6 +208,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     myState = new DebuggerSessionState(State.STOPPED, null);
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
     myDebugProcess.addEvaluationListener(new MyEvaluationListener());
+    myDebugProcess.setAgentInsertPoints(CaptureSettingsProvider.getIdeInsertPoints());
     ValueLookupManager.getInstance(getProject()).startListening();
     mySearchScope = environment.getSearchScope();
     myAlternativeJre = environment.getAlternativeJre();
@@ -402,7 +389,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public void dispose() {
     getProcess().dispose();
-    Disposer.dispose(myUpdateAlarm);
     DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
       myContextManager.setState(SESSION_EMPTY_CONTEXT, State.DISPOSED, Event.DISPOSE, null);
       myContextManager.dispose();
@@ -480,7 +466,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       ThreadReferenceProxyImpl currentThread = suspendContext.getThread();
 
       if (!shouldSetAsActiveContext(suspendContext)) {
-        DebuggerInvocationUtil.invokeLater(getProject(), () -> getContextManager().fireStateChanged(getContextManager().getContext(), Event.THREADS_REFRESH));
+        notifyThreadsRefresh();
         ThreadReferenceProxyImpl thread = suspendContext.getThread();
         if (thread != null) {
           List<Pair<Breakpoint, com.sun.jdi.event.Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
@@ -493,16 +479,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
                 public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
                   if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                     notification.expire();
-                    getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
-                      @Override
-                      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-                        final DebuggerContextImpl debuggerContext =
-                          DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, suspendContext);
-
-                        DebuggerInvocationUtil.invokeLater(getProject(),
-                                                           () -> getContextManager().setState(debuggerContext, State.PAUSED, Event.PAUSE, null));
-                      }
-                    });
+                    switchContext(suspendContext);
                   }
                 }
               }).notify(getProject());
@@ -740,14 +717,23 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
 
     private void notifyThreadsRefresh() {
-      if (!myUpdateAlarm.isDisposed()) {
-        myUpdateAlarm.cancelAllRequests();
-        myUpdateAlarm.addRequest(() -> {
-          final DebuggerStateManager contextManager = getContextManager();
-          contextManager.fireStateChanged(contextManager.getContext(), Event.THREADS_REFRESH);
-        }, 100, ModalityState.NON_MODAL);
-      }
+      myUpdateAlarm.cancelAllRequests();
+      myUpdateAlarm.addRequest(() -> {
+        final DebuggerStateManager contextManager = getContextManager();
+        contextManager.fireStateChanged(contextManager.getContext(), Event.THREADS_REFRESH);
+      }, 100, ModalityState.NON_MODAL);
     }
+  }
+
+  public void switchContext(SuspendContextImpl suspendContext) {
+    getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+      @Override
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+        DebuggerContextImpl debuggerContext = DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, suspendContext);
+        DebuggerInvocationUtil.invokeLater(getProject(),
+                                           () -> getContextManager().setState(debuggerContext, State.PAUSED, Event.PAUSE, null));
+      }
+    });
   }
 
   private static String getDescription(DebuggerContextImpl debuggerContext) {

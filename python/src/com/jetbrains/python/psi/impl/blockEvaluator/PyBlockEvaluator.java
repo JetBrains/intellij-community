@@ -44,9 +44,9 @@ public class PyBlockEvaluator {
   private boolean myEvaluateCollectionItems = true;
 
   /**
-   * @param evaluationContext context, obtained via {@link #getContext()}. Pass it here to enable cache. See {@link com.jetbrains.python.psi.impl.blockEvaluator.PyEvaluationContext}
+   * @param evaluationContext context, obtained via {@link #getContext()}. Pass it here to enable cache. See {@link PyEvaluationContext}
    *                          for more info
-   * @see com.jetbrains.python.psi.impl.blockEvaluator.PyEvaluationContext
+   * @see PyEvaluationContext
    */
   public PyBlockEvaluator(@NotNull final PyEvaluationContext evaluationContext) {
     this(Sets.newHashSet(), evaluationContext);
@@ -76,9 +76,6 @@ public class PyBlockEvaluator {
     }
     myVisitedFiles.add((PyFile)element.getContainingFile());
     PyElement statementContainer = element instanceof PyFunction ? ((PyFunction)element).getStatementList() : element;
-    if (statementContainer == null) {
-      return;
-    }
     statementContainer.acceptChildren(new MyPyElementVisitor());
   }
 
@@ -88,7 +85,7 @@ public class PyBlockEvaluator {
     Object value = myEvaluationResult.myNamespace.get(nameBeingExtended);
     if (value instanceof List) {
       Object argValue = prepareEvaluator().evaluate(arg);
-      myEvaluationResult.myNamespace.put(nameBeingExtended, prepareEvaluator().concatenate(value, argValue));
+      myEvaluationResult.myNamespace.put(nameBeingExtended, prepareEvaluator().applyPlus(value, argValue));
     }
 
     if (myDeclarationsToTrack.contains(nameBeingExtended)) {
@@ -173,7 +170,7 @@ public class PyBlockEvaluator {
   }
 
   /**
-   * @return so-called context. You may pass it to any instance of {@link com.jetbrains.python.psi.impl.blockEvaluator.PyBlockEvaluator}
+   * @return so-called context. You may pass it to any instance of {@link PyBlockEvaluator}
    * to make instances share their cache
    */
   @NotNull
@@ -219,7 +216,7 @@ public class PyBlockEvaluator {
         Object currentValue = myEvaluationResult.myNamespace.get(name);
         if (currentValue != null) {
           Object rhs = prepareEvaluator().evaluate(node.getValue());
-          myEvaluationResult.myNamespace.put(name, prepareEvaluator().concatenate(currentValue, rhs));
+          myEvaluationResult.myNamespace.put(name, prepareEvaluator().applyPlus(currentValue, rhs));
         }
         if (myDeclarationsToTrack.contains(name)) {
           List<PyExpression> declarations = myEvaluationResult.myDeclarations.get(name);
@@ -301,9 +298,7 @@ public class PyBlockEvaluator {
     @Override
     public void visitPyIfStatement(PyIfStatement node) {
       PyStatementList list = node.getIfPart().getStatementList();
-      if (list != null) {
-        list.acceptChildren(this);
-      }
+      list.acceptChildren(this);
     }
 
     @Override

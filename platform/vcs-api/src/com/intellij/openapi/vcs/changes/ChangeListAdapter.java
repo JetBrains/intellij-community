@@ -22,36 +22,58 @@ import java.util.Collection;
  * @author yole
  */
 public class ChangeListAdapter implements ChangeListListener {
+  public void changeListsChanged() {
+  }
+
+
+  @Override
   public void changeListAdded(ChangeList list) {
+    changeListsChanged();
   }
 
+  @Override
   public void changeListRemoved(ChangeList list) {
+    changeListsChanged();
   }
 
-  public void changeListChanged(ChangeList list) {
-  }
-
+  @Override
   public void changeListRenamed(ChangeList list, String oldName) {
+    changeListsChanged();
   }
 
-  public void changeListCommentChanged(final ChangeList list, final String oldComment) {
+  @Override
+  public void changeListCommentChanged(ChangeList list, String oldComment) {
+    changeListsChanged();
   }
 
-  public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+  @Override
+  public void changeListChanged(ChangeList list) {
+    changeListsChanged();
   }
 
-  public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
+  @Override
+  public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {
+    changeListsChanged();
   }
 
-  public void unchangedFileStatusChanged() {
-  }
 
-  public void changeListUpdateDone() {
-  }
-
-  public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
-  }
-
+  @Override
   public void changesAdded(Collection<Change> changes, ChangeList toList) {
+    changeListsChanged();
+  }
+
+  @Override
+  public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
+    changeListsChanged();
+  }
+
+  @Override
+  public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+    changeListsChanged();
+  }
+
+  @Override
+  public void allChangeListsMappingsChanged() {
+    changeListsChanged();
   }
 }

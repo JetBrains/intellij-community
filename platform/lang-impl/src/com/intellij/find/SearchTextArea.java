@@ -19,15 +19,18 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
 import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.IconLoader;
@@ -42,12 +45,8 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,9 +77,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   private final boolean myInfoMode;
   private final JLabel myInfoLabel;
   private JPanel myIconsPanel = null;
-  private ActionButton myNewLineButton;
-  private ActionButton myClearButton;
-  private JBScrollPane myScrollPane;
+  private final ActionButton myNewLineButton;
+  private final ActionButton myClearButton;
+  private final JBScrollPane myScrollPane;
   private final ActionButton myHistoryPopupButton;
   private final LafHelper myHelper;
   private boolean myMultilineEnabled = true;
@@ -127,7 +126,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       @Override
       public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
         if (getProperty("filterNewlines") == Boolean.TRUE && str.indexOf('\n')>=0) {
-          str = StringUtil.replace(str, "\n", "");
+          str = StringUtil.replace(str, "\n", " ");
         }
         if (!StringUtil.isEmpty(str)) super.insertString(offs, str, a);
       }
@@ -187,6 +186,29 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myHelper = createHelper();
 
     myHistoryPopupButton = createButton(new ShowHistoryAction());
+    final KeyStroke oldHistoryKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_H, CTRL_DOWN_MASK);
+    new DumbAwareAction() {
+      @Override
+      public void update(AnActionEvent e) {
+        Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+        while(keymap != null) {
+          if ("Visual Studio".equals(keymap.getName())) {
+            e.getPresentation().setEnabled(false);
+            return;
+          }
+          keymap = keymap.getParent();
+        }
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        IdeTooltipManager.getInstance().show(
+          new IdeTooltip(myTextArea, new Point(), new JLabel(
+            "The shortcut was changed. Press " +
+            KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) +
+            " to open search history.")), true, true);
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(oldHistoryKeyStroke), myTextArea);
     myClearButton = createButton(new ClearAction());
     myNewLineButton = createButton(new NewLineAction());
     myNewLineButton.setVisible(searchMode);
@@ -221,7 +243,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     boolean showClearIcon = !StringUtil.isEmpty(myTextArea.getText());
     boolean showNewLine = isNewLineAvailable();
     boolean wrongVisibility =
-      ((myClearButton.getParent() != null) != showClearIcon) || ((myNewLineButton.getParent() != null) != showNewLine);
+      ((myClearButton.getParent() == null) == showClearIcon) || ((myNewLineButton.getParent() == null) == showNewLine);
 
     LayoutManager layout = myIconsPanel.getLayout();
     boolean wrongLayout = !(layout instanceof GridLayout);
@@ -313,8 +335,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myInfoLabel.setText(info);
   }
 
-  private static Color enabledBorderColor = new JBColor(Gray._196, Gray._100);
-  private static Color disabledBorderColor = Gray._83;
+  private static final Color enabledBorderColor = new JBColor(Gray._196, Gray._100);
+  private static final Color disabledBorderColor = Gray._83;
 
   @Override
   public void paint(Graphics graphics) {
@@ -461,7 +483,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     Icon getShowHistoryIcon() {
-      return MacIntelliJIconCache.getIcon("searchFieldWithHistory");
+      return IconCache.getIcon("searchFieldWithHistory");
     }
 
     @Override
@@ -480,24 +502,24 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       int deltaY = i.top - ei.top;
       r.y += deltaY;
       r.height = Math.max(r.height, h + i.top + i.bottom) - (i.bottom - ei.bottom) - deltaY;
-      MacIntelliJTextFieldUI.paintAquaSearchFocusRing(g, r, myTextArea);
+      MacIntelliJTextBorder.paintMacSearchArea(g, r, myTextArea, true);
     }
   }
 
   private class DefaultLafHelper extends LafHelper {
     @Override
     Border getBorder() {
-      return JBUI.Borders.empty(2);
+      return JBUI.Borders.empty(1);
     }
 
     @Override
     String getLayoutConstraints() {
-      return "flowx, ins 2 " + JBUI.scale(4) + " 2 " + (3 + JBUI.scale(1)) + ", gapx " + JBUI.scale(4);
+      return "flowx, ins 2 " + JBUI.scale(4) + " 2 " + (3 + JBUI.scale(1)) + ", gapx " + JBUI.scale(3);
     }
 
     @Override
     String getHistoryButtonConstraints() {
-      return "ay baseline";
+      return "ay baseline, gaptop " + JBUI.scale(1);
     }
 
     @Override
@@ -532,20 +554,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     void paint(Graphics2D g) {
       Rectangle r = new Rectangle(getSize());
       JBInsets.removeFrom(r, getInsets());
-      if (r.height % 2 == 1) r.height++;
-      int arcSize = JBUI.scale(26);
-
-      JBInsets.removeFrom(r, new JBInsets(1, 1, 1, 1));
-      if (myTextArea.hasFocus()) {
-        g.setColor(myTextArea.getBackground());
-        RectanglePainter.FILL.paint(g, r.x, r.y, r.width, r.height, arcSize);
-        DarculaUIUtil.paintSearchFocusRing(g, r, myTextArea, arcSize);
-      }
-      else {
-        arcSize -= JBUI.scale(5);
-        RectanglePainter
-          .paint(g, r.x, r.y, r.width, r.height, arcSize, myTextArea.getBackground(), myTextArea.isEnabled() ? Gray._100 : Gray._83);
-      }
+      DarculaTextBorder.paintDarculaSearchArea(g, r, myTextArea, true);
     }
   }
 
@@ -611,9 +620,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         }
 
         int bw = JBUI.scale(1);
-        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        border.append(new Rectangle2D.Double(0, 0, width, height), false);
-        border.append(new Rectangle2D.Double(bw, bw, width - bw*2, height - bw*2), false);
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        border.append(new Rectangle2D.Float(0, 0, width, height), false);
+        border.append(new Rectangle2D.Float(bw, bw, width - bw*2, height - bw*2), false);
 
         g2.fill(border);
       } finally {

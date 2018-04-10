@@ -21,45 +21,34 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import jetCheck.Generator;
-import jetCheck.IntDistribution;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.IntDistribution;
 
-import java.util.Objects;
+public class DeleteRange extends ActionOnFile {
 
-public class DeleteRange extends ActionOnRange {
-
-  DeleteRange(PsiFile file, int startOffset, int endOffset) {
-    super(file, startOffset, endOffset);
-  }
-
-  public static Generator<DeleteRange> psiRangeDeletions(@NotNull PsiFile psiFile) {
-    return Generator.from(data -> {
-      if (psiFile.getTextLength() == 0) return new DeleteRange(psiFile, 0, 0);
-
-      int startOffset = Generator.integers(0, psiFile.getTextLength() - 1).generateValue(data);
-      PsiElement start = psiFile.findElementAt(startOffset);
-      PsiElement end = psiFile.findElementAt(startOffset + data.drawInt(IntDistribution.geometric(10)));
-      if (start == null || end == null) return null;
-
-      PsiElement commonParent = PsiTreeUtil.findCommonParent(start, end);
-      if (commonParent == null || commonParent.getTextRange() == null) { // directory; for multi-root files
-        return null;
-      }
-      return new DeleteRange(psiFile,
-                             commonParent.getTextRange().getStartOffset(),
-                             commonParent.getTextRange().getEndOffset());
-    }).suchThat(Objects::nonNull).noShrink();
+  public DeleteRange(PsiFile file) {
+    super(file);
   }
 
   @Override
-  public String toString() {
-    return "DeleteRange{" + getVirtualFile().getPath() + " " + getCurrentRange() + ", raw=(" + myInitialStart + ", " + myInitialEnd + ")}";
-  }
+  public void performCommand(@NotNull Environment env) {
+    PsiFile psiFile = getFile();
 
-  public void performAction() {
-    TextRange range = getFinalRange();
-    if (range == null) return;
+    int startOffset = generatePsiOffset(env, null);
+    int endOffset = Math.min(psiFile.getTextLength(), startOffset + env.generateValue(Generator.integers(IntDistribution.geometric(10)).noShrink(), null));
+    PsiElement start = psiFile.findElementAt(startOffset);
+    PsiElement end = psiFile.findElementAt(endOffset);
+    if (start == null || end == null) return;
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().deleteString(range.getStartOffset(), range.getEndOffset()));
+    PsiElement commonParent = PsiTreeUtil.findCommonParent(start, end);
+    if (commonParent == null || commonParent.getTextRange() == null) { // directory; for multi-root files
+      return;
+    }
+
+    TextRange range = commonParent.getTextRange().intersection(TextRange.from(0, getDocument().getTextLength()));
+    if (range != null && !range.isEmpty()) {
+      env.logMessage("Delete " + range);
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().deleteString(range.getStartOffset(), range.getEndOffset()));
+    }
   }
 }

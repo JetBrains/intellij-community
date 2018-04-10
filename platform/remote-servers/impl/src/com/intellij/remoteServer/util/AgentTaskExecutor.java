@@ -2,6 +2,10 @@ package com.intellij.remoteServer.util;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.remoteServer.agent.util.CloudAgentErrorHandler;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.CancellationException;
 
 /**
  * @author michael.golubev
@@ -21,7 +25,13 @@ public class AgentTaskExecutor implements CloudAgentErrorHandler {
 
   public <T> T execute(Computable<T> task) throws ServerRuntimeException {
     clear();
-    T result = task.compute();
+    T result;
+    try {
+      result = task.compute();
+    }
+    catch (CancellationException e) {
+      throw new ServerRuntimeException(safeMessage(e));
+    }
     if (myErrorMessage == null) {
       return result;
     }
@@ -32,12 +42,24 @@ public class AgentTaskExecutor implements CloudAgentErrorHandler {
 
   public <T> void execute(Computable<T> task, CallbackWrapper<T> callback) {
     clear();
-    T result = task.compute();
+    T result;
+    try {
+      result = task.compute();
+    }
+    catch (CancellationException e) {
+      onError(safeMessage(e));
+      result = null;
+    }
+
     if (myErrorMessage == null) {
       callback.onSuccess(result);
     }
     else {
       callback.onError(myErrorMessage);
     }
+  }
+
+  private static String safeMessage(@NotNull CancellationException ex) {
+    return ObjectUtils.notNull(ex.getMessage(), "Operation cancelled");
   }
 }

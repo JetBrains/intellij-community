@@ -41,6 +41,12 @@ public class CodeStyleXmlImporterTest extends CodeStyleTestCase {
     assertEquals(true, settings.FORMATTER_TAGS_ENABLED);
     assertEquals(true, settings.FORMATTER_TAGS_ACCEPT_REGEXP);
   }
+
+  public void testNewProjectSettings() throws SchemeImportException {
+    CodeStyleSettings settings= importSettings();
+    assertEquals(140, settings.getDefaultRightMargin());
+    assertEquals(true, settings.FORMATTER_TAGS_ENABLED);
+  }
   
   private CodeStyleSettings importSettings() throws SchemeImportException {
     final CodeStyleScheme targetScheme = new CodeStyleSchemeImpl("Test", false, null);

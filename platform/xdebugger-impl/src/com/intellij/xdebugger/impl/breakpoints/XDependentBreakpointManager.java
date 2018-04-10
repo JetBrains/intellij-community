@@ -1,25 +1,14 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.util.SmartList;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SmartList;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,20 +83,20 @@ public class XDependentBreakpointManager {
   }
 
   public void saveState() {
-    Map<XBreakpointBase<?,?,?>, String> breakpoint2Id = new HashMap<>();
+    Map<XBreakpointBase<?,?,?>, String> breakpointToId = new THashMap<>();
     int id = 0;
     for (XBreakpointBase breakpoint : myMaster2Info.keySet()) {
-      breakpoint2Id.put(breakpoint, String.valueOf(id++));
+      breakpointToId.put(breakpoint, String.valueOf(id++));
     }
 
     for (XDependentBreakpointInfo info : mySlave2Info.values()) {
-      XBreakpointDependencyState state = new XBreakpointDependencyState(breakpoint2Id.get(info.mySlaveBreakpoint),
-                                                                        breakpoint2Id.get(info.myMasterBreakpoint),
+      XBreakpointDependencyState state = new XBreakpointDependencyState(breakpointToId.get(info.mySlaveBreakpoint),
+                                                                        breakpointToId.get(info.myMasterBreakpoint),
                                                                         info.myLeaveEnabled);
       info.mySlaveBreakpoint.setDependencyState(state);
     }
 
-    for (Map.Entry<XBreakpointBase<?, ?, ?>, String> entry : breakpoint2Id.entrySet()) {
+    for (Map.Entry<XBreakpointBase<?, ?, ?>, String> entry : breakpointToId.entrySet()) {
       if (!mySlave2Info.containsKey(entry.getKey())) {
         entry.getKey().setDependencyState(new XBreakpointDependencyState(entry.getValue()));
       }

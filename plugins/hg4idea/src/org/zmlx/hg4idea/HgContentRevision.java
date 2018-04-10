@@ -47,7 +47,7 @@ public class HgContentRevision implements ByteBackedContentRevision {
 
   @Nullable
   @Override
-  public String getContent() throws VcsException {
+  public String getContent() {
     if (myRevisionNumber.isWorkingVersion()) return VcsUtil.getFileContent(myHgFile.getFile().getPath());
     final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
     return CharsetToolkit.bytesToString(HgUtil.loadContent(myProject, myRevisionNumber, fileToCat), getFile().getCharset());

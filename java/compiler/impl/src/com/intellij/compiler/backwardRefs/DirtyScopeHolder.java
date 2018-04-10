@@ -158,7 +158,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
       action.run();
       myVFSChangedModules.addAll(myChangedModulesDuringCompilation);
       myChangedModulesDuringCompilation.clear();
-      descriptions = myExcludedDescriptions.toArray(new ExcludeEntryDescription[myExcludedDescriptions.size()]);
+      descriptions = myExcludedDescriptions.toArray(new ExcludeEntryDescription[0]);
       myExcludedDescriptions.clear();
     }
     myCompilationAffectedModules.clear();

@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TemplateXmlTagBlock extends XmlTagBlock implements IndentInheritingBlock {
-  private AbstractXmlTemplateFormattingModelBuilder myBuilder;
+  private final AbstractXmlTemplateFormattingModelBuilder myBuilder;
   private Indent myInheritedIndent;
 
   public TemplateXmlTagBlock(final AbstractXmlTemplateFormattingModelBuilder builder,

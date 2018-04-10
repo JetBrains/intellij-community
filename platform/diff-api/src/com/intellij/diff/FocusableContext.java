@@ -22,7 +22,7 @@ package com.intellij.diff;
  * NB: focus requested via {@link java.awt.Component#requestFocusInWindow()}, ignoring {@link com.intellij.openapi.wm.IdeFocusManager}
  */
 public interface FocusableContext {
-  boolean isFocused();
+  boolean isFocusedInWindow();
 
-  void requestFocus();
+  void requestFocusInWindow();
 }

@@ -50,7 +50,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
   private JBCheckBox mySupportQt;
   private JBLabel warningIcon;
   private ComboBox<String> myPyQtBackend;
-  private List<String> myPyQtBackendsList = Lists.newArrayList("Auto", "PyQt4", "PyQt5", "PySide");
+  private final List<String> myPyQtBackendsList = Lists.newArrayList("Auto", "PyQt4", "PyQt5", "PySide");
 
   private final Project myProject;
 
@@ -71,6 +71,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     return "Python Debugger";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.idesettings.debugger.python";
   }

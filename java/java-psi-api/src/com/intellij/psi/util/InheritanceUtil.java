@@ -18,13 +18,13 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -34,7 +34,7 @@ public class InheritanceUtil {
   /**
    * @param aClass     a class to check.
    * @param baseClass  supposed base class.
-   * @param checkDeep  true to check deeper than aClass.super (see {@linkplain PsiClass#isInheritor(com.intellij.psi.PsiClass, boolean)}).
+   * @param checkDeep  true to check deeper than aClass.super (see {@linkplain PsiClass#isInheritor(PsiClass, boolean)}).
    * @return true if aClass is the baseClass or baseClass inheritor
    */
   public static boolean isInheritorOrSelf(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) {
@@ -142,31 +142,38 @@ public class InheritanceUtil {
                                                     PsiElement scope,
                                                     Condition<PsiClass> isSuperClassAccepted,
                                                     boolean isTypeParamsAccepted) {
+    return findEnclosingInstanceInScope(aClass, scope, isSuperClassAccepted, isTypeParamsAccepted) != null;
+  }
+
+  public static PsiClass findEnclosingInstanceInScope(PsiClass aClass,
+                                                      PsiElement scope,
+                                                      Condition<PsiClass> isSuperClassAccepted,
+                                                      boolean isTypeParamsAccepted) {
     PsiManager manager = aClass.getManager();
     PsiElement place = scope;
-    while (place != null && place != aClass && !(place instanceof PsiFile)) {
+    while (place != null && !(place instanceof PsiFile)) {
       if (place instanceof PsiClass) {
         if (isSuperClassAccepted.value((PsiClass)place)) {
-          if (isInheritorOrSelf((PsiClass)place, aClass, true)) return true;
+          if (isInheritorOrSelf((PsiClass)place, aClass, true)) return (PsiClass)place;
         }
         else {
-          if (manager.areElementsEquivalent(place, aClass)) return true;
+          if (manager.areElementsEquivalent(place, aClass)) return aClass;
         }
         if (isTypeParamsAccepted && place instanceof PsiTypeParameter) {
-          return true;
+          return (PsiClass)place;
         }
       }
       if (place instanceof PsiModifierListOwner) {
         final PsiModifierList modifierList = ((PsiModifierListOwner)place).getModifierList();
         if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-          return false;
+          return null;
         }
       }
       place = place.getParent();
     }
-    return place == aClass;
+    return null;
   }
-
+  
   public static boolean processSuperTypes(@NotNull PsiType type, boolean includeSelf, @NotNull Processor<PsiType> processor) {
     if (includeSelf && !processor.process(type)) return false;
     return processSuperTypes(type, processor, new HashSet<>());

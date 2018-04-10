@@ -69,7 +69,7 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
         }
       }
     }
-    return children.isEmpty() ? NO_CHILDREN : children.toArray(new SimpleNode[children.size()]);
+    return children.isEmpty() ? NO_CHILDREN : children.toArray(new SimpleNode[0]);
   }
 
   private static boolean isAvailable(@NotNull PackagingSourceItem item, @NotNull ArtifactEditorContext context,

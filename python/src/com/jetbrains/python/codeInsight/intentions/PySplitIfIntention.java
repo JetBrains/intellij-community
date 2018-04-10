@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   10.03.2010
- * Time:   18:52:52
  */
 public class PySplitIfIntention extends PyBaseIntentionAction {
   @NotNull

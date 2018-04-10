@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 16, 2010
  */
 public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
 

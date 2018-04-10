@@ -40,6 +40,8 @@ import java.util.stream.Collectors;
  */
 public class JsonSchemaVariantsTreeBuilder {
   private static final Logger LOG = Logger.getInstance(JsonSchemaVariantsTreeBuilder.class);
+  private static final String ourSchemaV4Schema = "http://json-schema.org/draft-04/schema#";
+  private static final String ourSchemaV6Schema = "http://json-schema.org/draft-06/schema#";
 
   public static JsonSchemaTreeNode buildTree(@NotNull final JsonSchemaObject schema,
                                       @Nullable final List<Step> position,
@@ -51,8 +53,7 @@ public class JsonSchemaVariantsTreeBuilder {
     // set root's position since this children are just variants of root
     root.getChildren().forEach(node -> node.setSteps(ContainerUtil.notNullize(position)));
 
-    final ArrayDeque<JsonSchemaTreeNode> queue = new ArrayDeque<>();
-    queue.addAll(root.getChildren());
+    final ArrayDeque<JsonSchemaTreeNode> queue = new ArrayDeque<>(root.getChildren());
 
     while (!queue.isEmpty()) {
       final JsonSchemaTreeNode node = queue.removeFirst();
@@ -358,7 +359,6 @@ public class JsonSchemaVariantsTreeBuilder {
     object.mergeValues(other);
     object.mergeValues(base);
     object.setRef(other.getRef());
-    object.setDefinitions(base.getDefinitions());
     return object;
   }
 
@@ -468,7 +468,10 @@ public class JsonSchemaVariantsTreeBuilder {
       if (!service.isSchemaFile(schemaFile)) return false;
 
       final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
-      return rootSchema != null && "http://json-schema.org/draft-04/schema#".equals(rootSchema.getId());
+      if (rootSchema == null) return false;
+
+      String schemaId = rootSchema.getId();
+      return ourSchemaV4Schema.equals(schemaId) || ourSchemaV6Schema.equals(schemaId);
     }
 
     @NotNull

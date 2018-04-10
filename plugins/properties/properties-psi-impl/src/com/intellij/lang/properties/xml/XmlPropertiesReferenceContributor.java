@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/15/11
  */
 public class XmlPropertiesReferenceContributor extends PsiReferenceContributor {
   @Override

@@ -102,10 +102,12 @@ public class DummyCompileContext implements CompileContext {
     return null;
   }
 
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     return null;
   }
 
+  @Override
   public <T> void putUserData(@NotNull Key<T> key, T value) {
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.extensions.Extensions;
@@ -48,7 +34,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
   }
 
   @Override
-  public void cleanAndAdjustScope(VcsModifiableDirtyScope scope) {
+  public void cleanAndAdjustScope(@NotNull VcsModifiableDirtyScope scope) {
     final AbstractVcs vcs = scope.getVcs();
     if (myVcsIgnoredHolderMap.containsKey(vcs)) {
       myVcsIgnoredHolderMap.get(vcs).cleanAndAdjustScope(scope);
@@ -71,11 +57,11 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
     return HolderType.IGNORED;
   }
 
-  public void addFile(VirtualFile file) {
+  public void addFile(@NotNull VirtualFile file) {
     myIdeIgnoredFilesHolder.addFile(file);
   }
 
-  public void addFile(@NotNull AbstractVcs vcs, VirtualFile file) {
+  public void addFile(@NotNull AbstractVcs vcs, @NotNull VirtualFile file) {
     myVcsIgnoredHolderMap.get(vcs).addFile(file);
   }
 
@@ -84,7 +70,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
       .anyMatch(holder -> holder instanceof VcsIgnoredFilesHolder && ((VcsIgnoredFilesHolder)holder).isInUpdatingMode());
   }
 
-  public boolean containsFile(VirtualFile file) {
+  public boolean containsFile(@NotNull VirtualFile file) {
     if (myIdeIgnoredFilesHolder.containsFile(file)) return true;
     final AbstractVcs vcs = myVcsManager.getVcsFor(file);
     if (vcs == null) return false;
@@ -92,6 +78,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
     return ignoredFilesHolder != null && ignoredFilesHolder.containsFile(file);
   }
 
+  @NotNull
   public Collection<VirtualFile> values() {
     final HashSet<VirtualFile> result = ContainerUtil.newHashSet();
     result.addAll(myIdeIgnoredFilesHolder.values());

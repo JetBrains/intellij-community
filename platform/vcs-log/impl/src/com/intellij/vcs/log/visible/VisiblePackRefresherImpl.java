@@ -22,23 +22,24 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
 
 public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VisiblePackRefresherImpl.class);
@@ -55,11 +56,19 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                   @NotNull VcsLogData logData,
                                   @NotNull PermanentGraph.SortType initialSortType,
                                   @NotNull VcsLogFilterer builder) {
+    this(project, logData, new VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder().build(), initialSortType, builder);
+  }
+
+  public VisiblePackRefresherImpl(@NotNull Project project,
+                                  @NotNull VcsLogData logData,
+                                  @NotNull VcsLogFilterCollection filters,
+                                  @NotNull PermanentGraph.SortType sortType,
+                                  @NotNull VcsLogFilterer builder) {
     myLogData = logData;
     myVisiblePackBuilder = builder;
-    myState = new State(initialSortType);
+    myState = new State(filters, sortType);
 
-    myTaskController = new SingleTaskController<Request, State>(state -> {
+    myTaskController = new SingleTaskController<Request, State>(project, "visible", state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
       myState = state;
       if (hasChanges) {
@@ -67,16 +76,14 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           listener.onVisiblePackChange(state.getVisiblePack());
         }
       }
-    }, true) {
+    }, true, this) {
       @NotNull
       @Override
-      protected ProgressIndicator startNewBackgroundTask() {
+      protected SingleTask startNewBackgroundTask() {
         ProgressIndicator indicator = myLogData.getProgress().createProgressIndicator();
-        UIUtil.invokeLaterIfNeeded(() -> {
-          MyTask task = new MyTask(project, "Applying filters...");
-          ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator);
-        });
-        return indicator;
+        MyTask task = new MyTask(project, "Applying filters...");
+        Future<?> future = ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, null);
+        return new SingleTaskImpl(future, indicator);
       }
     };
 
@@ -100,8 +107,13 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   @Override
-  public void setValid(boolean validate) {
-    myTaskController.request(new ValidateRequest(validate));
+  public void setValid(boolean validate, boolean refresh) {
+    if (refresh) {
+      myTaskController.request(new RefreshRequest(), new ValidateRequest(validate));
+    }
+    else {
+      myTaskController.request(new ValidateRequest(validate));
+    }
   }
 
   @Override
@@ -224,8 +236,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           return refresh(state, filterRequest, moreCommitsRequests);
         }
         else if (!indexingRequests.isEmpty()) {
-          if (myVisiblePackBuilder.affectedByIndexingRoots(state.getFilters(),
-                                                           ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
+          if (myVisiblePackBuilder.areFiltersAffectedByIndexing(state.getFilters(),
+                                                                ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
             return refresh(state, filterRequest, moreCommitsRequests);
           }
         }
@@ -239,7 +251,9 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                           @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
       DataPack dataPack = myLogData.getDataPack();
 
-      if (dataPack == DataPack.EMPTY) { // when filter is set during initialization, just remember filters
+      if (dataPack == DataPack.EMPTY && !myVisiblePackBuilder.canBuildFromEmpty()) {
+        // when filter is set during initialization, just remember filters
+        // unless our builder can do something with an empty pack, for example in file history
         return state;
       }
 
@@ -265,9 +279,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     @NotNull private final VisiblePack myVisiblePack;
     private final boolean myIsValid;
 
-    public State(@NotNull PermanentGraph.SortType sortType) {
-      this(new VcsLogFilterCollectionBuilder().build(), sortType, CommitCountStage.INITIAL, ContainerUtil.newArrayList(), VisiblePack.EMPTY,
-           true);
+    public State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.SortType sortType) {
+      this(filters, sortType, CommitCountStage.INITIAL, ContainerUtil.newArrayList(), VisiblePack.EMPTY, true);
     }
 
     public State(@NotNull VcsLogFilterCollection filters,

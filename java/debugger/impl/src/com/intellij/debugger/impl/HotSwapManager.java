@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -28,7 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -129,7 +115,7 @@ public class HotSwapManager extends AbstractProjectComponent {
   }
 
   public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(List<DebuggerSession> sessions, Map<String, List<String>> generatedPaths) {
-    final Map<DebuggerSession, Map<String, HotSwapFile>> result = new java.util.HashMap<>();
+    final Map<DebuggerSession, Map<String, HotSwapFile>> result = new HashMap<>();
     List<Pair<DebuggerSession, Long>> sessionWithStamps = new ArrayList<>();
     for (DebuggerSession session : sessions) {
       sessionWithStamps.add(new Pair<>(session, getInstance(session.getProject()).getTimeStamp(session)));
@@ -145,7 +131,7 @@ public class HotSwapManager extends AbstractProjectComponent {
           for (Pair<DebuggerSession, Long> pair : sessionWithStamps) {
             final DebuggerSession session = pair.first;
             if (fileStamp > pair.second) {
-              result.computeIfAbsent(session, k -> new java.util.HashMap<>()).put(qualifiedName, hotswapFile);
+              result.computeIfAbsent(session, k -> new HashMap<>()).put(qualifiedName, hotswapFile);
             }
           }
         }
@@ -166,7 +152,7 @@ public class HotSwapManager extends AbstractProjectComponent {
     for (final DebuggerSession debuggerSession : sessions) {
       if (debuggerSession.isAttached()) {
                  scanClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
-                   protected void action() throws Exception {
+                   protected void action() {
                      swapProgress.setDebuggerSession(debuggerSession);
                      final Map<String, HotSwapFile> sessionClasses =
                        getInstance(swapProgress.getProject()).scanForModifiedClasses(debuggerSession, swapProgress);
@@ -197,7 +183,7 @@ public class HotSwapManager extends AbstractProjectComponent {
 
     for (final DebuggerSession debuggerSession : modifiedClasses.keySet()) {
       reloadClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
-        protected void action() throws Exception {
+        protected void action() {
           reloadClassesProgress.setDebuggerSession(debuggerSession);
           getInstance(reloadClassesProgress.getProject()).reloadClasses(
             debuggerSession, modifiedClasses.get(debuggerSession), reloadClassesProgress

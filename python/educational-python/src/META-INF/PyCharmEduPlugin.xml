@@ -24,6 +24,9 @@
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
+                        serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
+                        overrides="true"/>
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
                         serviceImplementation="com.jetbrains.python.edu.PyStudyInstructionPainter" overrides="true"/>
     <programRunner implementation="com.jetbrains.python.edu.debugger.PyEduDebugRunner"/>

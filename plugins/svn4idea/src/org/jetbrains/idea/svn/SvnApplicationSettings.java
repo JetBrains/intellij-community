@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.PathManager;
@@ -22,13 +8,15 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 
 @State(
@@ -63,7 +51,7 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
     return myConfigurationBean;
   }
 
-  public void loadState(ConfigurationBean object) {
+  public void loadState(@NotNull ConfigurationBean object) {
     myConfigurationBean = object;
     getTypedList();
   }
@@ -145,13 +133,12 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
       // 'url' is not necessary an exact match for some of the urls in collection - it has been parsed and then converted back to string
       for(String oldUrl: myConfigurationBean.myCheckoutURLs) {
         try {
-          if (url.equals(oldUrl) || SVNURL.parseURIEncoded(url).equals(SVNURL.parseURIEncoded(oldUrl))) {
+          if (url.equals(oldUrl) || createUrl(url).equals(createUrl(oldUrl))) {
             myConfigurationBean.myCheckoutURLs.remove(oldUrl);
             break;
           }
         }
-        catch (SVNException e) {
-          // ignore
+        catch (SvnBindException ignored) {
         }
       }
     }

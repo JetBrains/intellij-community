@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -29,7 +15,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -79,6 +64,8 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
+import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getUniquePresentableNameForUI;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -115,7 +102,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (shortcut.equals(recentFiles)) continue;
       shortcuts.add(shortcut);
     }
-    TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
+    TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(Shortcut.EMPTY_ARRAY));
 
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
       @Override
@@ -124,7 +111,7 @@ public class Switcher extends AnAction implements DumbAware {
         if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
           final KeyEvent keyEvent = (KeyEvent)event;
           if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
-            SwingUtilities.invokeLater(CHECKER);
+            ApplicationManager.getApplication().invokeLater(CHECKER, ModalityState.current());
           }
           else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
                    && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
@@ -335,7 +322,7 @@ public class Switcher extends AnAction implements DumbAware {
         protected void paintComponent(@NotNull Graphics g) {
           super.paintComponent(g);
           g.setColor(UIUtil.isUnderDarcula() ? SEPARATOR_COLOR : BORDER_COLOR);
-          g.drawLine(0, 0, getWidth(), 0);
+          UIUtil.drawLine(g, 0, 0, getWidth(), 0);
         }
       };
 
@@ -405,7 +392,7 @@ public class Switcher extends AnAction implements DumbAware {
         protected void paintComponent(@NotNull Graphics g) {
           super.paintComponent(g);
           g.setColor(SEPARATOR_COLOR);
-          g.drawLine(0, 0, 0, getHeight());
+          UIUtil.drawLine(g, 0, 0, 0, getHeight());
         }
       };
       separator.setBackground(toolWindows.getBackground());
@@ -514,6 +501,9 @@ public class Switcher extends AnAction implements DumbAware {
           String presentableUrl = ObjectUtils.notNull(file.getParent(), file).getPresentableUrl();
           String location = FileUtil.getLocationRelativeToUserHome(presentableUrl);
           myPanel.getAccessibleContext().setAccessibleDescription(location);
+          if (!selected && list == mouseMoveSrc && index == mouseMoveListIndex) {
+            setBackground(ON_MOUSE_OVER_BG_COLOR);
+          }
           return myPanel;
         }
 
@@ -634,6 +624,10 @@ public class Switcher extends AnAction implements DumbAware {
           public void actionPerformed(@NotNull AnActionEvent e) {
             if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
               mySpeedSearch.hidePopup();
+              Object[] elements = mySpeedSearch.getAllElements();
+              if (elements != null && elements.length > 0) {
+                mySpeedSearch.selectElement(elements[0], "");
+              }
             }
             else {
               myPopup.cancel();
@@ -653,6 +647,7 @@ public class Switcher extends AnAction implements DumbAware {
         window = WindowManager.getInstance().getFrame(project);
       }
       myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
+      IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       myPopup.showInCenterOf(window);
 
       Container popupFocusAncestor = getPopupFocusAncestor();
@@ -964,7 +959,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (gotoFile != null && !StringUtil.isEmpty(fileName)) {
         myPopup.cancel();
         final AnAction action = gotoFile;
-        SwingUtilities.invokeLater(() -> DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
+        ApplicationManager.getApplication().invokeLater(() -> DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
           final DataContext dataContext = new DataContext() {
             @Nullable
             @Override
@@ -979,7 +974,7 @@ public class Switcher extends AnAction implements DumbAware {
             new AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP, new PresentationFactory().getPresentation(action),
                               ActionManager.getInstance(), 0);
           action.actionPerformed(event);
-        }));
+        }), ModalityState.current());
       }
     }
 
@@ -1081,6 +1076,7 @@ public class Switcher extends AnAction implements DumbAware {
                : files.getModel().getSize() + toolWindows.getSelectedIndex();
       }
 
+      @NotNull
       @Override
       protected Object[] getAllElements() {
 
@@ -1121,12 +1117,15 @@ public class Switcher extends AnAction implements DumbAware {
       protected void selectElement(final Object element, String selectedText) {
         if (element instanceof FileInfo) {
           if (!toolWindows.isSelectionEmpty()) toolWindows.clearSelection();
-          IdeFocusManager.findInstanceByComponent(files).requestFocus(files, true).doWhenDone(() -> files.setSelectedValue(element, true));
+          files.clearSelection();
+          files.setSelectedValue(element, true);
+          files.requestFocusInWindow();
         }
         else {
           if (!files.isSelectionEmpty()) files.clearSelection();
-          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows, true).doWhenDone(
-            () -> toolWindows.setSelectedValue(element, true));
+          toolWindows.clearSelection();
+          toolWindows.setSelectedValue(element, true);
+          toolWindows.requestFocusInWindow();
         }
       }
 
@@ -1153,6 +1152,7 @@ public class Switcher extends AnAction implements DumbAware {
           files.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
           toolWindows.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
         }
+        refreshSelection();
       }
     }
 
@@ -1223,7 +1223,7 @@ public class Switcher extends AnAction implements DumbAware {
         append(renderedName, SimpleTextAttributes.fromTextAttributes(attributes));
 
         // calc color the same way editor tabs do this, i.e. including EPs
-        Color color = EditorTabbedContainer.calcTabColor(project, virtualFile);
+        Color color = getFileBackgroundColor(project, virtualFile);
 
         if (!selected && color != null) {
           setBackground(color);
@@ -1245,7 +1245,7 @@ public class Switcher extends AnAction implements DumbAware {
     String getNameForRendering() {
       if (myNameForRendering == null) {
         // Recently changed files would also be taken into account (not only open 'visible' files)
-        myNameForRendering = EditorTabbedContainer.calcFileName(myProject, first);
+        myNameForRendering = getUniquePresentableNameForUI(myProject, first);
       }
       return myNameForRendering;
     }

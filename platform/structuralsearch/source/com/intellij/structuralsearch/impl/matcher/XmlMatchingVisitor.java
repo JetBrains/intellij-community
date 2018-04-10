@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -38,13 +24,11 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     final XmlAttribute another = (XmlAttribute)myMatchingVisitor.getElement();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(attribute.getName());
 
-    myMatchingVisitor.setResult(isTypedVar || matches(attribute.getName(), another.getName()));
+    if (!myMatchingVisitor.setResult(isTypedVar || matches(attribute.getName(), another.getName()))) return;
     final XmlAttributeValue valueElement = attribute.getValueElement();
-    if (myMatchingVisitor.getResult() && valueElement != null) {
-      myMatchingVisitor.setResult(myMatchingVisitor.match(valueElement, another.getValueElement()));
-    }
+    if (valueElement != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(valueElement, another.getValueElement()))) return;
 
-    if (myMatchingVisitor.getResult() && isTypedVar) {
+    if (isTypedVar) {
       final SubstitutionHandler handler =
         (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(attribute.getName());
       myMatchingVisitor.setResult(handler.handle(another, myMatchingVisitor.getMatchContext()));
@@ -58,7 +42,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     if (myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text)) {
       final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(text);
       final String text2 = another.getText();
-      final int offset = text2.length() > 0 && (text2.charAt(0) == '"' || text2.charAt(0) == '\'') ? 1 : 0;
+      final int offset = !text2.isEmpty() && (text2.charAt(0) == '"' || text2.charAt(0) == '\'') ? 1 : 0;
       myMatchingVisitor.setResult(handler.handle(another, offset, text2.length() - offset, myMatchingVisitor.getMatchContext()));
     } else {
       myMatchingVisitor.setResult(matches(text, another.getValue()));
@@ -69,21 +53,17 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     final XmlTag another = (XmlTag)myMatchingVisitor.getElement();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(tag.getName());
 
-    myMatchingVisitor.setResult((matches(tag.getName(), another.getName()) || isTypedVar) &&
-                                myMatchingVisitor.matchInAnyOrder(tag.getAttributes(), another.getAttributes()));
+    if (!myMatchingVisitor.setResult((matches(tag.getName(), another.getName()) || isTypedVar) &&
+                                     myMatchingVisitor.matchInAnyOrder(tag.getAttributes(), another.getAttributes()))) return;
 
-    if(myMatchingVisitor.getResult()) {
-      final XmlTagChild[] children = tag.getValue().getChildren();
-
-      final SsrFilteringNodeIterator patternNodes = new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(children));
-      if (patternNodes.current() != null) {
-        final SsrFilteringNodeIterator matchNodes =
-          new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(another.getValue().getChildren()));
-        myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(patternNodes, matchNodes));
-      }
+    final SsrFilteringNodeIterator patternNodes = new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(tag.getValue().getChildren()));
+    if (patternNodes.current() != null) {
+      final SsrFilteringNodeIterator matchNodes =
+        new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(another.getValue().getChildren()));
+      if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(patternNodes, matchNodes))) return;
     }
 
-    if (myMatchingVisitor.getResult() && isTypedVar) {
+    if (isTypedVar) {
       final PsiElement[] children = another.getChildren();
       if (children.length > 1) {
         final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(tag.getName());

@@ -59,14 +59,14 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
       }
       if (e instanceof PsiReferenceExpression && parent instanceof PsiCallExpression) {
         final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
-        if (argumentList != null && argumentList.getExpressions().length == 1) {
+        if (argumentList != null && argumentList.getExpressionCount() == 1) {
           return true;
         }
       }
     } else if (e instanceof PsiJavaCodeReferenceElement) {
       if (parent instanceof PsiCall) {
         final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
-        if (argumentList != null && argumentList.getExpressions().length == 1) {
+        if (argumentList != null && argumentList.getExpressionCount() == 1) {
           return true;
         }
       }

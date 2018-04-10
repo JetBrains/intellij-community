@@ -47,7 +47,7 @@ public class ProcessListUtil {
   @NotNull
   public static ProcessInfo[] getProcessList() {
     List<ProcessInfo> result = doGetProcessList();
-    return result.isEmpty() ? ProcessInfo.EMPTY_ARRAY : result.toArray(new ProcessInfo[result.size()]);
+    return result.isEmpty() ? ProcessInfo.EMPTY_ARRAY : result.toArray(new ProcessInfo[0]);
   }
 
   @NotNull
@@ -334,7 +334,7 @@ public class ProcessListUtil {
     for (int i = 1; i < lines.length; i++) {
       String line = lines[i];
 
-      int pid = StringUtil.parseInt(line.substring(pidStart, line.length()).trim(), -1);
+      int pid = StringUtil.parseInt(line.substring(pidStart).trim(), -1);
       if (pid == -1 || pid == 0) continue;
 
       String executablePath = line.substring(executablePathStart, pidStart).trim();

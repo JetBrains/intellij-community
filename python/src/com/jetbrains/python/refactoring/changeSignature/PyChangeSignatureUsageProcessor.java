@@ -28,7 +28,6 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
@@ -41,6 +40,7 @@ import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +62,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         usages.add(new UsageInfo(function));
         usages.addAll(PyRefactoringUtil.findUsages(function, true));
       }
-      return usages.toArray(new UsageInfo[usages.size()]);
+      return usages.toArray(UsageInfo.EMPTY_ARRAY);
     }
     return UsageInfo.EMPTY_ARRAY;
   }
@@ -264,13 +264,20 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   private static void processFunctionDeclaration(@NotNull PyChangeInfo changeInfo, @NotNull PyFunction function) {
     if (changeInfo.isParameterNamesChanged()) {
       final PyParameter[] oldParameters = function.getParameterList().getParameters();
-      for (PyParameterInfo paramInfo: changeInfo.getNewParameters()) {
-        if (paramInfo.getOldIndex() >= 0 && paramInfo.isRenamed()) {
-          final String newName = StringUtil.trimLeading(paramInfo.getName(), '*').trim();
-          final UsageInfo[] usages = RenameUtil.findUsages(oldParameters[paramInfo.getOldIndex()], newName, true, false, null);
-          for (UsageInfo info : usages) {
-            RenameUtil.rename(info, newName);
-          }
+      final Map<PyParameter, String> paramRenames = StreamEx.of(changeInfo.getNewParameters())
+                                                            .filter(info -> info.getOldIndex() >= 0 && info.isRenamed())
+                                                            .toMap(info -> oldParameters[info.getOldIndex()],
+                                                                   info -> StringUtil.trimLeading(info.getName(), '*').trim());
+      final Map<PsiElement, String> allRenames = new HashMap<>(paramRenames);
+      if (changeInfo.isNameChanged()) {
+        allRenames.put(function, changeInfo.getNewName());
+      }
+      for (Map.Entry<PyParameter, String> entry : paramRenames.entrySet()) {
+        final PyParameter oldParameter = entry.getKey();
+        final String newName = entry.getValue();
+        final UsageInfo[] usages = RenameUtil.findUsages(oldParameter, newName, true, false, allRenames);
+        for (UsageInfo info : usages) {
+          RenameUtil.rename(info, newName);
         }
       }
     }

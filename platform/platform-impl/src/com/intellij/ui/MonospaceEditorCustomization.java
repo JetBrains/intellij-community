@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
 public class MonospaceEditorCustomization implements EditorCustomization {
-  private static EditorCustomization INSTANCE = new MonospaceEditorCustomization();
+  private static final EditorCustomization INSTANCE = new MonospaceEditorCustomization();
 
   @NotNull
   public static EditorCustomization getInstance() {

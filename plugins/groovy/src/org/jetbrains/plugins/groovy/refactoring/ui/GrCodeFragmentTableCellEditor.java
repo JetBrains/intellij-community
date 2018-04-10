@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.ui;
 import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCodeFragment;
 import com.intellij.refactoring.ui.CodeFragmentTableCellEditorBase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -30,11 +29,6 @@ import javax.swing.table.TableCellEditor;
 public class GrCodeFragmentTableCellEditor extends CodeFragmentTableCellEditorBase implements TableCellEditor {
   public GrCodeFragmentTableCellEditor(Project project) {
     super(project, GroovyFileType.GROOVY_FILE_TYPE);
-  }
-
-  @Override
-  public PsiCodeFragment getCellEditorValue() {
-    return myCodeFragment;
   }
 
   @Override

@@ -21,8 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author irengrig
- *         Date: 4/8/11
- *         Time: 5:15 PM
  */
 public class FilesProgress {
   private final double myTotal;

@@ -50,7 +50,7 @@ public class RepositoryLibraryWithDescriptionEditor
     RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(
       properties.getVersion(),
       RepositoryUtils.libraryHasSources(myEditorComponent.getLibraryEditor()),
-      RepositoryUtils.libraryHasJavaDocs(myEditorComponent.getLibraryEditor()));
+      RepositoryUtils.libraryHasJavaDocs(myEditorComponent.getLibraryEditor()), properties.isIncludeTransitiveDependencies());
 
     final Project project = myEditorComponent.getProject();
     assert project != null : "EditorComponent's project must not be null in order to be used with RepositoryLibraryWithDescriptionEditor";
@@ -59,11 +59,12 @@ public class RepositoryLibraryWithDescriptionEditor
       project,
       model,
       RepositoryLibraryDescription.findDescription(properties),
-      true);
+      true, true);
     if (!dialog.showAndGet()) {
       return;
     }
     myEditorComponent.getProperties().changeVersion(model.getVersion());
+    myEditorComponent.getProperties().setIncludeTransitiveDependencies(model.isIncludeTransitiveDependencies());
     if (wasGeneratedName) {
       myEditorComponent.renameLibrary(RepositoryLibraryType.getInstance().getDescription(properties));
     }

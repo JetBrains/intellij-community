@@ -70,9 +70,9 @@
       <reference ref="Vcs.Push"/>
       <separator/>
       <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase..."/>
-      <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>
-      <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebasing"/>
-      <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit in Rebasing"/>
+      <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebase"/>
+      <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebase"/>
+      <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit"/>
     </group>
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
@@ -114,6 +114,13 @@
             description="Undo last commit and put its changes into selected changelist"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
             description="Change commit message" />
+    <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
+            description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
+    <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
+      <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
+      <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta alt K" keymap="Xcode" remove="true"/>
+    </action>
 
     <group id="Git.Log.ContextMenu">
       <separator/>
@@ -128,6 +135,7 @@
       <reference id="Git.Uncommit" />
       <separator />
       <reference id="Git.Reword.Commit" />
+      <reference id="Git.Interactive.Rebase" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
     </group>
 
@@ -158,10 +166,11 @@
     <cherryPicker implementation="git4idea.cherrypick.GitCherryPicker"/>
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.usagesCollector implementation="git4idea.GitStatisticsCollector" />
-    <vcsColorsProvider implementation="git4idea.GitColors"/>
+    <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
+    <projectService serviceImplementation="git4idea.branch.GitBranchIncomingOutgoingManager"/>
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
@@ -188,11 +197,14 @@
     <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>
+    <projectService serviceImplementation="git4idea.util.GitVcsConsoleWriter"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
 
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
+    <projectService serviceInterface="git4idea.config.GitExecutableProblemsNotifier"
+                    serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
 
     <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
                         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
@@ -208,6 +220,7 @@
                         serviceImplementation="git4idea.remote.GitRememberedInputs"/>
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
+    <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
     <applicationService serviceInterface="git4idea.GitPlatformFacade"
                         serviceImplementation="git4idea.GitPlatformFacadeImpl" />
     <applicationService serviceInterface="git4idea.DialogManager"
@@ -221,5 +234,8 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.remote.GitHttpAuthDataProvider"/>
+    <extensionPoint qualifiedName="Git4Idea.gitRepositoryHostingService" interface="git4idea.remote.GitRepositoryHostingService"/>
+    <extensionPoint qualifiedName="com.intellij.vcs.git.pushCustomizationFactory"
+                    interface="git4idea.push.GitPushProcessCustomizationFactory" />
   </extensionPoints>
 </idea-plugin>

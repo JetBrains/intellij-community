@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DelegatingFix extends InspectionGadgetsFix {
 
-  private final LocalQuickFix delegate;
+  protected final LocalQuickFix delegate;
 
   public DelegatingFix(LocalQuickFix delegate) {
     this.delegate = delegate;

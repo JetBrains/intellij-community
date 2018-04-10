@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -43,6 +29,7 @@ import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -50,8 +37,9 @@ import java.util.Collection;
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
+  @NotNull
   @Override
-  public Result beforeCharTyped(final char c, final Project project, Editor editor, PsiFile editedFile, final FileType fileType) {
+  public Result beforeCharTyped(final char c, @NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile editedFile, @NotNull final FileType fileType) {
     final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
     if (c == '>' && webEditorOptions != null && webEditorOptions.isAutomaticallyInsertClosingTag() && fileContainsXmlLanguage(editedFile)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -172,7 +160,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
             ((XmlToken)elementAtCaret).getTokenType() == XmlTokenType.XML_TAG_NAME)) {
         name = name.substring(0, offset - elementAtCaret.getTextOffset());
       }
-      if (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name)) return Result.CONTINUE;
+      if (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag, true)) return Result.CONTINUE;
       if (name.isEmpty()) return Result.CONTINUE;
 
       int tagOffset = tag.getTextRange().getStartOffset();

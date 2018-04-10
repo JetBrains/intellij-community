@@ -34,6 +34,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
@@ -128,7 +129,7 @@ public class GitPullDialog extends DialogWrapper {
   private Collection<String> getRemoteBranches(@NotNull final GitRemote remote) {
     final Ref<GitCommandResult> result = Ref.create();
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> result.set(myGit.lsRemote(GitPullDialog.this.myProject, gitRoot(), remote, "--heads")), GitBundle.getString("pull.getting.remote.branches"), true, myProject);
+      () -> result.set(myGit.lsRemote(myProject, gitRoot(), remote, "--heads")), GitBundle.getString("pull.getting.remote.branches"), true, myProject);
 
     if (!completed) {
       return null;
@@ -172,7 +173,9 @@ public class GitPullDialog extends DialogWrapper {
   public GitLineHandler makeHandler(@NotNull List<String> urls) {
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
     h.setUrls(urls);
-    h.addProgressParameter();
+    if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myProject)) {
+      h.addParameters("--progress");
+    }
     h.addParameters("--no-stat");
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");
@@ -193,7 +196,9 @@ public class GitPullDialog extends DialogWrapper {
       h.addParameters("--strategy", strategy);
     }
     h.addParameters("-v");
-    h.addProgressParameter();
+    if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myProject)) {
+      h.addParameters("--progress");
+    }
 
     final List<String> markedBranches = myBranchChooser.getMarkedElements();
     String remote = getRemote();
@@ -263,23 +268,11 @@ public class GitPullDialog extends DialogWrapper {
   @Nullable
   private static GitRemote getCurrentOrDefaultRemote(@NotNull GitRepository repository) {
     Collection<GitRemote> remotes = repository.getRemotes();
-    if (remotes.isEmpty()) {
-      return null;
-    }
+    if (remotes.isEmpty()) return null;
 
     GitBranchTrackInfo trackInfo = GitUtil.getTrackInfoForCurrentBranch(repository);
-    if (trackInfo != null) {
-      return trackInfo.getRemote();
-    }
-    else {
-      GitRemote origin = GitUtil.getDefaultRemote(remotes);
-      if (origin != null) {
-        return origin;
-      }
-      else {
-        return remotes.iterator().next();
-      }
-    }
+    if (trackInfo != null) return trackInfo.getRemote();
+    return GitUtil.getDefaultOrFirstRemote(remotes);
   }
 
   @Nullable

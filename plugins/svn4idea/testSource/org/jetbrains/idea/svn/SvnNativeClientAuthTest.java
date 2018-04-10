@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -29,17 +15,11 @@ import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.*;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,18 +27,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+
 public class SvnNativeClientAuthTest extends Svn17TestCase {
   private SvnVcs myVcs;
-  private int myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+  private AcceptResult myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
   private boolean myCredentialsCorrect = true;
   private boolean mySaveCredentials = false;
   private boolean myCancelAuth = false;
 
-  private String outHttpUser = "test";
-  private String outHttpPassword = "test";
+  private final String outHttpUser = "test";
+  private final String outHttpPassword = "test";
 
-  private final static String ourHTTP_URL = "http://svnsrvtest/stuff/autoTest";
-  private final static String ourHTTPS_URL = "https://svnsrvtest:443/TestSSL/autoTest";
+  private final static Url ourHTTP_URL = parseUrl("http://svnsrvtest/stuff/autoTest", false);
+  private final static Url ourHTTPS_URL = parseUrl("https://svnsrvtest:443/TestSSL/autoTest", false);
 
   private int myCertificateAskedInteractivelyCount = 0;
   private int myCredentialsAskedInteractivelyCount = 0;
@@ -80,22 +62,17 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     configuration.setConfigurationDirParameters(false, svnconfig.getPath());
 
     final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(myVcs);
-    final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication(interactiveManager) {
+    final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication() {
       @Override
-      public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
+      public AcceptResult acceptServerAuthentication(Url url, String realm, Object certificate, boolean canCache) {
         ++ myCertificateAskedInteractivelyCount;
         return myCertificateAnswer;
       }
 
       @Override
-      public SVNAuthentication requestClientAuthentication(String kind,
-                                                           SVNURL url,
-                                                           String realm,
-                                                           SVNErrorMessage errorMessage,
-                                                           SVNAuthentication previousAuth,
-                                                           boolean authMayBeStored) {
+      public AuthenticationData requestClientAuthentication(String kind, Url url, String realm, boolean canCache) {
         if (myCancelAuth) return null;
-        return super.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
+        return super.requestClientAuthentication(kind, url, realm, canCache);
       }
     };
     interactiveManager.setAuthenticationProvider(authentication);
@@ -104,26 +81,28 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     // will be the same as in interactive -> authentication notifier is not used
     manager.setAuthenticationProvider(authentication);
 
-    authentication.addAuthentication(ISVNAuthenticationManager.PASSWORD,
+    authentication.addAuthentication(SvnAuthenticationManager.PASSWORD,
                                      o -> {
                                        ++ myCredentialsAskedInteractivelyCount;
                                        if (myCancelAuth) return null;
                                        if (myCredentialsCorrect) {
-                                         return new SVNPasswordAuthentication(outHttpUser, outHttpPassword, mySaveCredentials, o, false);
+                                         return new PasswordAuthenticationData(outHttpUser, outHttpPassword, mySaveCredentials);
                                        } else {
                                          myCredentialsCorrect = true;// only once
-                                         return new SVNPasswordAuthentication("1234214 23 4234", "324324", mySaveCredentials, o, false);
+                                         return new PasswordAuthenticationData("1234214 23 4234", "324324", mySaveCredentials);
                                        }
                                      });
-    authentication.addAuthentication(ISVNAuthenticationManager.SSL,
+    authentication.addAuthentication(SvnAuthenticationManager.SSL,
                                      o -> {
                                        ++ myCredentialsAskedInteractivelyCount;
                                        if (myCancelAuth) return null;
                                        if (myCredentialsCorrect) {
-                                         return new SVNSSLAuthentication(certFile, "12345", mySaveCredentials, o, false);
+                                         return new CertificateAuthenticationData(certFile.getAbsolutePath(), "12345".toCharArray(),
+                                                                                  mySaveCredentials);
                                        } else {
                                          myCredentialsCorrect = true;// only once
-                                         return new SVNSSLAuthentication(new File("1232432423"), "3245321532534235445", mySaveCredentials, o, false);
+                                         return new CertificateAuthenticationData("1232432423", "3245321532534235445".toCharArray(),
+                                                                                  mySaveCredentials);
                                        }
                                      });
     myCertificateAskedInteractivelyCount = 0;
@@ -138,7 +117,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = false;
 
     updateSimple(wc1);
@@ -160,7 +138,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = false;
 
     updateSimple(wc1);
@@ -184,7 +161,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = true;
 
     updateSimple(wc1);
@@ -207,7 +183,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = true;
 
     updateSimple(wc1);
@@ -228,7 +203,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = false;
 
     testCommitImpl(wc1);
@@ -250,7 +224,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = false;
 
     testCommitImpl(wc1);
@@ -274,7 +247,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = true;
 
     testCommitImpl(wc1);
@@ -298,9 +270,8 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = true;
-    myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED;
+    myCertificateAnswer = AcceptResult.ACCEPTED_PERMANENTLY;
 
     testCommitImpl(wc1);
 
@@ -328,9 +299,8 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = false;
-    myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED;
+    myCertificateAnswer = AcceptResult.ACCEPTED_PERMANENTLY;
 
     testCommitImpl(wc1);
 
@@ -345,7 +315,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //------------
     clearAuthCache(instance);
     mySaveCredentials = true;
-    myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+    myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
 
     testCommitImpl(wc1);
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
@@ -363,7 +333,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = true;
 
     testCommitImpl(wc1);
@@ -384,7 +353,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = false;
     myCredentialsCorrect = false;
 
@@ -407,7 +375,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = false;
     myCredentialsCorrect = false;
 
@@ -433,16 +400,15 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = false;
-    myCertificateAnswer = ISVNAuthenticationProvider.REJECTED;
+    myCertificateAnswer = AcceptResult.REJECTED;
 
     updateExpectAuthCanceled(wc1, "Authentication canceled");
 
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
-    myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+    myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
     myCredentialsCorrect = false;
 
     updateSimple(wc1);
@@ -466,7 +432,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = false;
     myCredentialsCorrect = false;
     myCancelAuth = true;
@@ -492,7 +457,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     clearAuthCache(instance);
 
-    Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.getUseAcceleration());
     mySaveCredentials = false;
     myCredentialsCorrect = false;
     myCancelAuth = true;
@@ -529,12 +493,12 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     return file;
   }
 
-  private File testCheckoutImpl(final String url) throws IOException {
+  private File testCheckoutImpl(@NotNull Url url) throws IOException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
     Assert.assertTrue(root.exists());
     SvnCheckoutProvider
-      .checkout(myProject, root, url, SVNRevision.HEAD, Depth.INFINITY, false, new CheckoutProvider.Listener() {
+      .checkout(myProject, root, url, Revision.HEAD, Depth.INFINITY, false, new CheckoutProvider.Listener() {
         @Override
         public void directoryCheckedOut(File directory, VcsKey vcs) {
         }
@@ -550,7 +514,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
       return ! (cnt[0] > 1);
     });
     Assert.assertTrue(cnt[0] > 1);
-    myIsSecure = url.contains("https:");
+    myIsSecure = "https".equals(url.getProtocol());
     if (myIsSecure) {
       ++ myExpectedCreds;
       ++ myExpectedCert;
@@ -590,14 +554,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
       ++ myExpectedCreds;
       ++ myExpectedCert;
     }
-  }
-
-  private void testBrowseRepositoryImpl(final String url) throws SVNException {
-    final List<SVNDirEntry> list = new ArrayList<>();
-    final SVNRepository repository = myVcs.getSvnKitManager().createRepository(url);
-    repository.getDir(".", -1, null, dirEntry -> list.add(dirEntry));
-
-    Assert.assertTrue(!list.isEmpty());
   }
 
   private static @interface Test {}

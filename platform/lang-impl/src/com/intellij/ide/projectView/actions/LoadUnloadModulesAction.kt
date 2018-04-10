@@ -34,12 +34,13 @@ class LoadUnloadModulesAction : DumbAwareAction("Load/Unload Modules...") {
 
   override fun actionPerformed(e: AnActionEvent) {
     val selectedModuleName = e.getData(LangDataKeys.MODULE_CONTEXT)?.name ?: getSelectedUnloadedModuleName(e)
+                             ?: e.getData(LangDataKeys.MODULE)?.name
     ConfigureUnloadedModulesDialog(e.project!!, selectedModuleName).show()
   }
 
   private fun getSelectedUnloadedModuleName(e: AnActionEvent): String? {
     val project = e.project ?: return null
     val file = e.getData(LangDataKeys.VIRTUAL_FILE) ?: return null
-    return ProjectRootsUtil.computeNameOfUnloadedModuleByContentRoot(file, project)
+    return ProjectRootsUtil.findUnloadedModuleByFile(file, project)
   }
 }

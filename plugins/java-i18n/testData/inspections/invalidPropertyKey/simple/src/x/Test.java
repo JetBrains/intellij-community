@@ -16,6 +16,31 @@ class Test {
   String ss3 = f2("with.params");
   String ss4 = IBundle.message("with.params", new Object[3]); // don't check if array passed
 
+  private static final String CONST = ".params";
+
   String f1(@PropertyKey(resourceBundle = IBundle.BUNDLE) String s, Object...params) {return "";}
   String f2(@PropertyKey(resourceBundle = IBundle.BUNDLE) String s) {return "";}
+  void f3(@PropertyKey(resourceBundle = "invalid") String s, int i) {
+    IBundle.message(s + ".params");
+    IBundle.message(s + CONST);
+    IBundle.message(s == null ? CONST : "invalid");
+    IBundle.message(((("invalid"))));
+    IBundle.message((((CONST))));
+    String pattern;
+    if (i == 0) {
+      pattern = "invalid";
+    }
+    else if (i == 1) {
+      pattern = s + ".params";
+    }
+    else if (i == 2) {
+      pattern = "defaultKey";
+    }
+    else {
+      pattern = i > 10
+                ? "invalid"
+                : "invalid";
+    }
+    f2(pattern);
+  }
 }

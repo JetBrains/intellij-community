@@ -19,16 +19,17 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
@@ -87,7 +88,11 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
     FileDocumentManager.getInstance().saveAllDocuments();
 
     for (ProjectSystemId externalSystemId : systemIds) {
-      ExternalSystemUtil.refreshProjects(project, externalSystemId, true);
+      ExternalSystemUtil.refreshProjects(
+        new ImportSpecBuilder(project, externalSystemId)
+          .forceWhenUptodate(true)
+          .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+      );
     }
   }
 

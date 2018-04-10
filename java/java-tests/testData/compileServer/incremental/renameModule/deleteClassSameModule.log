@@ -1,0 +1,10 @@
+Compiling files:
+moduleA/src/ppp/Iface.java
+moduleA/src/ppp/Impl1.java
+End of files
+Cleaning output files:
+out/production/moduleA_renamed/ppp/Impl1.class
+End of files
+Compiling files:
+moduleA/src/ppp/Impl1.java
+End of files

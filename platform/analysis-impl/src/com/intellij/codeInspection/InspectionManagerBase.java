@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +43,12 @@ public abstract class InspectionManagerBase extends InspectionManager {
   @NotNull
   public CommonProblemDescriptor createProblemDescriptor(@NotNull String descriptionTemplate, QuickFix... fixes) {
     return new CommonProblemDescriptorImpl(fixes, descriptionTemplate);
+  }
+
+  @NotNull
+  @Override
+  public ModuleProblemDescriptor createProblemDescriptor(@Nls @NotNull String descriptionTemplate, Module module, QuickFix... fixes) {
+    return new ModuleProblemDescriptorImpl(fixes, descriptionTemplate, module);
   }
 
   @Override
@@ -72,7 +80,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
                                                    @NotNull ProblemHighlightType highlightType,
                                                    boolean onTheFly,
                                                    boolean isAfterEndOfLine) {
-    return new ProblemDescriptorBase(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, null, true, onTheFly);
+    return new ProblemDescriptorBase(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, null, highlightType != ProblemHighlightType.INFORMATION, onTheFly);
   }
 
   @Override
@@ -83,7 +91,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
                                                    @NotNull ProblemHighlightType highlightType,
                                                    boolean onTheFly,
                                                    LocalQuickFix... fixes) {
-    return new ProblemDescriptorBase(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null, true, onTheFly);
+    return new ProblemDescriptorBase(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null, highlightType != ProblemHighlightType.INFORMATION, onTheFly);
   }
 
   @NotNull
@@ -94,7 +102,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
                                                    @NotNull final ProblemHighlightType highlightType,
                                                    boolean onTheFly,
                                                    final LocalQuickFix... fixes) {
-    return new ProblemDescriptorBase(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, true, onTheFly);
+    return new ProblemDescriptorBase(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, highlightType != ProblemHighlightType.INFORMATION, onTheFly);
   }
 
   @NotNull

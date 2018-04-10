@@ -1,35 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.renamer;
 
+import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 public class ConverterHelper implements IIdentifierRenamer {
-
   private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
     "abstract", "do", "if", "package", "synchronized", "boolean", "double", "implements", "private", "this", "break", "else", "import",
     "protected", "throw", "byte", "extends", "instanceof", "public", "throws", "case", "false", "int", "return", "transient", "catch",
     "final", "interface", "short", "true", "char", "finally", "long", "static", "try", "class", "float", "native", "strictfp", "void",
     "const", "for", "new", "super", "volatile", "continue", "goto", "null", "switch", "while", "default", "assert", "enum"));
   private static final Set<String> RESERVED_WINDOWS_NAMESPACE = new HashSet<>(Arrays.asList(
-    "aux", "prn", "aux", "nul",
+    "con", "prn", "aux", "nul",
     "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
     "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9"));
 
@@ -41,15 +28,54 @@ public class ConverterHelper implements IIdentifierRenamer {
   @Override
   public boolean toBeRenamed(Type elementType, String className, String element, String descriptor) {
     String value = elementType == Type.ELEMENT_CLASS ? className : element;
-    return value == null || value.length() == 0 || value.length() <= 2 || KEYWORDS.contains(value) || Character.isDigit(value.charAt(0))
-      || elementType == Type.ELEMENT_CLASS && RESERVED_WINDOWS_NAMESPACE.contains(value.toLowerCase());
+    return value == null ||
+           value.length() <= 2 ||
+           !isValidIdentifier(elementType == Type.ELEMENT_METHOD, value) ||
+           KEYWORDS.contains(value) ||
+           elementType == Type.ELEMENT_CLASS && (
+             RESERVED_WINDOWS_NAMESPACE.contains(value.toLowerCase(Locale.US)) ||
+             value.length() > 255 - ".class".length());
+  }
+
+  /**
+   * Return {@code true} if, and only if identifier passed is compliant to JLS9 section 3.8 AND DOES NOT CONTAINS so-called "ignorable" characters.
+   * Ignorable characters are removed by javac silently during compilation and thus may appear only in specially crafted obfuscated classes.
+   * For more information about "ignorable" characters see <a href="https://bugs.openjdk.java.net/browse/JDK-7144981">JDK-7144981</a>.
+   *
+   * @param identifier Identifier to be checked
+   * @return {@code true} in case {@code identifier} passed can be used as an identifier; {@code false} otherwise.
+   */
+  private static boolean isValidIdentifier(boolean isMethod, String identifier) {
+
+    assert identifier != null : "Null identifier passed to the isValidIdentifier() method.";
+    assert !identifier.isEmpty() : "Empty identifier passed to the isValidIdentifier() method.";
+
+    if (isMethod && (identifier.equals(CodeConstants.INIT_NAME) || identifier.equals(CodeConstants.CLINIT_NAME))) {
+      return true;
+    }
+
+    if (!Character.isJavaIdentifierStart(identifier.charAt(0))) {
+      return false;
+    }
+
+    char[] chars = identifier.toCharArray();
+
+    for(int i = 1; i < chars.length; i++) {
+      char ch = chars[i];
+
+      if ((!Character.isJavaIdentifierPart(ch)) || Character.isIdentifierIgnorable(ch)) {
+        return false;
+      }
+    }
+
+    return true;
+
   }
 
   // TODO: consider possible conflicts with not renamed classes, fields and methods!
   // We should get all relevant information here.
   @Override
   public String getNextClassName(String fullName, String shortName) {
-
     if (shortName == null) {
       return "class_" + (classCounter++);
     }
@@ -64,7 +90,6 @@ public class ConverterHelper implements IIdentifierRenamer {
     }
     else {
       String name = shortName.substring(index);
-
       if (setNonStandardClassNames.contains(name)) {
         return "Inner" + name + "_" + (classCounter++);
       }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.test
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -25,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.TestVcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier
@@ -42,52 +29,53 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
 import java.io.File
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 abstract class VcsPlatformTest : PlatformTestCase() {
+  protected lateinit var testRoot: File
+  protected lateinit var testRootFile: VirtualFile
+  protected lateinit var projectRoot: VirtualFile
+  protected lateinit var projectPath: String
 
-  protected lateinit var myTestRoot: File
-  protected lateinit var myTestRootFile: VirtualFile
-  protected lateinit var myProjectRoot: VirtualFile
-  protected lateinit var myProjectPath: String
-
-  private lateinit var myTestStartedIndicator: String
+  private lateinit var testStartedIndicator: String
   private val asyncTasks = mutableSetOf<AsyncTask>()
 
   protected lateinit var changeListManager: ChangeListManagerImpl
   protected lateinit var vcsManager: ProjectLevelVcsManagerImpl
-  protected lateinit var myVcsNotifier: TestVcsNotifier
+  protected lateinit var vcsNotifier: TestVcsNotifier
 
   @Throws(Exception::class)
   override fun setUp() {
-    myTestRoot = File(FileUtil.getTempDirectory(), "testRoot")
-    PlatformTestCase.myFilesToDelete.add(myTestRoot)
-    checkTestRootIsEmpty(myTestRoot)
+    testRoot = createTempDir("root-${Integer.toHexString(Random().nextInt())}", false)
+    checkTestRootIsEmpty(testRoot)
 
     runInEdtAndWait { super@VcsPlatformTest.setUp() }
-    myTestRootFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTestRoot)!!
+    testRootFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testRoot)!!
     refresh()
 
-    myTestStartedIndicator = enableDebugLogging()
+    testStartedIndicator = enableDebugLogging()
 
-    myProjectRoot = myProject.baseDir
-    myProjectPath = myProjectRoot.path
+    projectRoot = project.baseDir
+    projectPath = projectRoot.path
 
-    changeListManager = ChangeListManager.getInstance(myProject) as ChangeListManagerImpl
-    vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
+    changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerImpl
+    vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
 
-    myVcsNotifier = overrideService<VcsNotifier, TestVcsNotifier>(myProject)
-    myVcsNotifier = myProject.service<VcsNotifier>() as TestVcsNotifier
+    vcsNotifier = overrideService<VcsNotifier, TestVcsNotifier>(project)
+    vcsNotifier = project.service<VcsNotifier>() as TestVcsNotifier
+    cd(testRoot)
   }
 
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
-      .append(ThrowableRunnable { if (wasInit { myVcsNotifier }) myVcsNotifier.cleanup() })
+      .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
+      .append(ThrowableRunnable { if (wasInit { vcsNotifier }) vcsNotifier.cleanup() })
       .append(ThrowableRunnable { waitForPendingTasks() })
-      .append(ThrowableRunnable { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator) })
+      .append(ThrowableRunnable { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(testStartedIndicator) })
       .append(ThrowableRunnable { clearFields(this) })
       .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } })
       .run()
@@ -101,9 +89,9 @@ abstract class VcsPlatformTest : PlatformTestCase() {
    */
   protected open fun getDebugLogCategories(): Collection<String> = emptyList()
 
-  override fun getIprFile(): File {
-    val projectRoot = File(myTestRoot, "project")
-    return FileUtil.createTempFile(projectRoot, name + "_", ProjectFileType.DOT_DEFAULT_EXTENSION)
+  override fun getProjectDirOrFile(): Path {
+    val projectRoot = File(testRoot, "project")
+    return FileUtil.createTempFile(projectRoot, name + "_", ProjectFileType.DOT_DEFAULT_EXTENSION).toPath()
   }
 
   override fun setUpModule() {
@@ -133,17 +121,18 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     return true
   }
 
-  protected open fun refresh() {
-    VfsUtil.markDirtyAndRefresh(false, true, false, myTestRootFile)
+  @JvmOverloads
+  protected open fun refresh(dir: VirtualFile = testRootFile) {
+    VfsUtil.markDirtyAndRefresh(false, true, false, dir)
   }
 
   protected fun updateChangeListManager() {
-    val changeListManager = ChangeListManager.getInstance(myProject)
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty()
+    val changeListManager = ChangeListManager.getInstance(project)
+    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
     changeListManager.ensureUpToDate(false)
   }
 
-  protected fun waitForPendingTasks() {
+  private fun waitForPendingTasks() {
     for ((name, indicator, future) in asyncTasks) {
       if (!future.isDone) {
         LOG.error("Task $name didn't finish within the test")
@@ -185,7 +174,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
 
   protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
-    return assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
+    return assertNotification(NotificationType.INFORMATION, title, message, vcsNotifier.lastNotification)
   }
 
   protected fun assertSuccessfulNotification(message: String) : Notification {
@@ -193,18 +182,18 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   }
 
   protected fun assertWarningNotification(title: String, message: String) {
-    assertNotification(NotificationType.WARNING, title, message, myVcsNotifier.lastNotification)
+    assertNotification(NotificationType.WARNING, title, message, vcsNotifier.lastNotification)
   }
 
   protected fun assertErrorNotification(title: String, message: String) : Notification {
-    val notification = myVcsNotifier.lastNotification
+    val notification = vcsNotifier.lastNotification
     assertNotNull("No notification was shown", notification)
     assertNotification(NotificationType.ERROR, title, message, notification)
     return notification
   }
 
   protected fun assertNoNotification() {
-    val notification = myVcsNotifier.lastNotification
+    val notification = vcsNotifier.lastNotification
     if (notification != null) {
       fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}")
     }

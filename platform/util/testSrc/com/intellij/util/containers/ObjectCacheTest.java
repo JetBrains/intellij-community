@@ -17,7 +17,8 @@
 package com.intellij.util.containers;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
+import junit.framework.TestCase;import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * @author lvo
@@ -41,7 +42,7 @@ public class ObjectCacheTest extends TestCase {
     cache.put("IDEA 4.5", "better IDEA");
     cache.put("IDEA 5.0", "perfect IDEA");
     cache.put("IDEA 6.0", "IDEAL");
-    HashSet<String> values = new HashSet<>();
+    java.util.HashSet<String> values = new java.util.HashSet<>();
     for (Object obj : cache) {
       values.add((String)obj);
     }
@@ -53,7 +54,7 @@ public class ObjectCacheTest extends TestCase {
     Assert.assertTrue(values.contains("IDEAL"));
   }
 
-  final private static HashMap removedPairs = new HashMap();
+  final private static HashMap removedPairs = new java.util.HashMap();
 
   private static class CacheDeletedPairsListener implements ObjectCache.DeletedPairsListener {
     @Override
@@ -94,7 +95,7 @@ public class ObjectCacheTest extends TestCase {
     cache.put(2, 2);
     cache.put(3, 3);
     cache.put(4, 4);
-    HashSet<Object> values = new HashSet<>();
+    java.util.HashSet<Object> values = new HashSet<>();
     for (Object obj : cache) {
       values.add(obj);
     }

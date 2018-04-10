@@ -94,22 +94,35 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
 
     OrderEntry orderEntry = library.getOrderEntry();
     presentation.setPresentableText(library.getName());
-    Icon closedIcon = orderEntry instanceof JdkOrderEntry ? getJdkIcon((JdkOrderEntry)orderEntry) : AllIcons.Nodes.PpLibFolder;
-    presentation.setIcon(closedIcon);
+    Icon icon = AllIcons.Nodes.PpLibFolder;
+    String tooltip = null;
+    String location = null;
     if (orderEntry instanceof JdkOrderEntry) {
       JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
+      icon = getJdkIcon(jdkOrderEntry);
       Sdk projectJdk = jdkOrderEntry.getJdk();
       if (projectJdk != null) { //jdk not specified
-        final String path = projectJdk.getHomePath();
+        String path = projectJdk.getHomePath();
         if (path != null) {
-          presentation.setLocationString(FileUtil.toSystemDependentName(path));
+          path = projectJdk.getSdkType().isLocalSdk(projectJdk) ?
+                 FileUtil.toSystemDependentName(path) :
+                 FileUtil.toSystemIndependentName(path);
+          if (getSettings().isShowURL()) {
+            location = path;
+          }
+          else {
+            tooltip = path;
+          }
         }
       }
-      presentation.setTooltip(null);
     }
-    else {
-      presentation.setTooltip(StringUtil.capitalize(IdeBundle.message("node.projectview.library", ((LibraryOrderEntry)orderEntry).getLibraryLevel())));
+    else if (orderEntry instanceof LibraryOrderEntry) {
+      LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+      tooltip = StringUtil.capitalize(IdeBundle.message("node.projectview.library", libraryOrderEntry.getLibraryLevel()));
     }
+    presentation.setIcon(icon);
+    presentation.setTooltip(tooltip);
+    presentation.setLocationString(location);
   }
 
   @Override

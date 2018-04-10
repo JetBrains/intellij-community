@@ -18,7 +18,6 @@ package com.jetbrains.python.psi.stubs;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
@@ -35,7 +34,6 @@ import java.io.IOException;
 /**
  * Packs property description for storage in a stub.
  * User: dcheryasov
- * Date: Jun 3, 2010 6:46:01 AM
  */
 public class PropertyStubStorage extends PropertyBunch<String> implements CustomTargetExpressionStub {
 
@@ -83,8 +81,7 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
     me.mySetter  = readOne(stream);
     me.myDeleter = readOne(stream);
     //
-    StringRef ref = stream.readName();
-    me.myDoc = ref != null? ref.getString() : null;
+    me.myDoc = stream.readNameString();
     return me;
   }
 
@@ -93,10 +90,9 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
 
   @Nullable
   private static Maybe<String> readOne(StubInputStream stream) throws IOException {
-    StringRef ref = stream.readName();
-    if (ref == null) return none;
+    String s = stream.readNameString();
+    if (s == null) return none;
     else {
-      String s = ref.getString();
       if (IMPOSSIBLE_NAME.equals(s)) return unknown;
       else return new Maybe<>(s);
     }

@@ -24,7 +24,10 @@ import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 // TODO: TEST
@@ -124,6 +127,6 @@ final class LookupWithIndentsBuilder {
         result.add(elementBuilder);
       }
     }
-    return result.toArray(new LookupElement[result.size()]);
+    return result.toArray(LookupElement.EMPTY_ARRAY);
   }
 }

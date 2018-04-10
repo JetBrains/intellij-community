@@ -205,6 +205,11 @@ public class GitRebaseUtils {
     return null;
   }
 
+  public static boolean isInteractiveRebaseInProgress(@NotNull GitRepository repository) {
+    File rebaseDir = getRebaseDir(repository.getProject(), repository.getRoot());
+    return rebaseDir != null && new File(rebaseDir, "interactive").exists();
+  }
+
   /**
    * Get rebase directory
    *
@@ -266,7 +271,7 @@ public class GitRebaseUtils {
   @NotNull
   static String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
     return saver != null && saver.wereChangesSaved() ?
-           "<br/>Note that some local changes were <a href='stash'>" + toPast(saver.getOperationName()) + "</a> before rebase." :
+           "<br/>Local changes were " + toPast(saver.getOperationName()) + " before rebase." :
            "";
   }
 

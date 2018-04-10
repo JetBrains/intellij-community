@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.IdeBundle;
@@ -29,7 +15,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
@@ -41,12 +26,20 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.MessageDecoder;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collection;
@@ -81,6 +74,9 @@ public final class SocketLock {
   public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
     myConfigPath = canonicalPath(configPath);
     mySystemPath = canonicalPath(systemPath);
+    if (FileUtil.pathsEqual(myConfigPath, mySystemPath)) {
+      throw new IllegalArgumentException("'config' and 'system' paths should point to different directories");
+    }
   }
 
   public void setExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
@@ -148,9 +144,8 @@ public final class SocketLock {
 
       myToken = UUID.randomUUID().toString();
       String[] lockedPaths = {myConfigPath, mySystemPath};
-      int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
       NotNullProducer<ChannelHandler> handler = () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken);
-      myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, handler);
+      myServer = BuiltInServer.startNioOrOio(2, 6942, 50, false, handler);
 
       byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
       FileUtil.writeToFile(portMarkerC, portBytes);
@@ -175,9 +170,11 @@ public final class SocketLock {
 
   private <V> V underLocks(@NotNull Callable<V> action) throws Exception {
     FileUtilRt.createDirectory(new File(myConfigPath));
-    try (@SuppressWarnings("unused") FileOutputStream lock1 = new FileOutputStream(new File(myConfigPath, PORT_LOCK_FILE), true)) {
+    Path path1 = Paths.get(myConfigPath, PORT_LOCK_FILE);
+    try (FileChannel ch1 = FileChannel.open(path1, StandardOpenOption.CREATE, StandardOpenOption.APPEND); @SuppressWarnings("unused") FileLock lock1 = ch1.lock()) {
       FileUtilRt.createDirectory(new File(mySystemPath));
-      try (@SuppressWarnings("unused") FileOutputStream lock2 = new FileOutputStream(new File(mySystemPath, PORT_LOCK_FILE), true)) {
+      Path path2 = Paths.get(mySystemPath, PORT_LOCK_FILE);
+      try (FileChannel ch2 = FileChannel.open(path2, StandardOpenOption.CREATE, StandardOpenOption.APPEND); @SuppressWarnings("unused") FileLock lock2 = ch2.lock()) {
         return action.call();
       }
     }

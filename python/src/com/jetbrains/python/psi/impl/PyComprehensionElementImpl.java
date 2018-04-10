@@ -32,7 +32,6 @@ import java.util.Optional;
 /**
  * Comprehension-like element base, for list comps ang generators.
  * User: dcheryasov
- * Date: Jul 31, 2008
  */
 public abstract class PyComprehensionElementImpl extends PyElementImpl implements PyComprehensionElement {
   public PyComprehensionElementImpl(ASTNode astNode) {

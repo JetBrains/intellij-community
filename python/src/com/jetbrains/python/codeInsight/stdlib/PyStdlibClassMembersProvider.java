@@ -1,35 +1,21 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyFunctionType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -40,12 +26,9 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   private static final Key<List<PyCustomMember>> SOCKET_MEMBERS_KEY = Key.create("socket.members");
 
   @NotNull
-  private static final List<PyCustomMember> MOCK_PATCH_MEMBERS = calcMockPatchMembers();
-
-  @NotNull
   @Override
-  public Collection<PyCustomMember> getMembers(PyClassType classType, PsiElement location, TypeEvalContext typeEvalContext) {
-    PyClass clazz = classType.getPyClass();
+  public Collection<PyCustomMember> getMembers(PyClassType classType, PsiElement location, @NotNull TypeEvalContext context) {
+    final PyClass clazz = classType.getPyClass();
     final String qualifiedName = clazz.getQualifiedName();
     if ("socket._socketobject".equals(qualifiedName)) {
       final PyFile socketFile = (PyFile)clazz.getContainingFile();
@@ -58,9 +41,9 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
     }
 
     if (location instanceof PyReferenceExpression) {
-      final PyCallable mockPatchCallable = mockPatchCallable(classType, ((PyReferenceExpression)location).getQualifier(), typeEvalContext);
-      if (mockPatchCallable != null) {
-        return MOCK_PATCH_MEMBERS;
+      final PyExpression qualifier = ((PyReferenceExpression)location).getQualifier();
+      if (qualifier instanceof PyReferenceExpression && referenceToMockPatch((PyReferenceExpression)qualifier, context)) {
+        return calcMockPatchMembers(qualifier);
       }
     }
 
@@ -68,53 +51,58 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   }
 
   @Override
-  public PsiElement resolveMember(PyClassType clazz, String name, @Nullable PsiElement location, TypeEvalContext context) {
-    final PyCallable mockPatchCallable = mockPatchCallable(clazz, location, context);
-    if (mockPatchCallable != null && location!= null) {
-      for (PyCustomMember member : MOCK_PATCH_MEMBERS) {
+  @Nullable
+  public PsiElement resolveMember(@NotNull PyClassType type,
+                                  @NotNull String name,
+                                  @Nullable PsiElement location,
+                                  @NotNull PyResolveContext resolveContext) {
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+    if (location instanceof PyReferenceExpression && referenceToMockPatch((PyReferenceExpression)location, context)) {
+      for (PyCustomMember member : calcMockPatchMembers(location)) {
         if (name.equals(member.getName())) {
-          return member.resolve(location);
+          return member.resolve(location, resolveContext);
         }
       }
     }
 
-    return super.resolveMember(clazz, name, location, context);
+    return super.resolveMember(type, name, location, resolveContext);
+  }
+
+  public static boolean referenceToMockPatch(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
+    final PyType type = context.getType(referenceExpression);
+    if (type instanceof PyFunctionType) {
+      final String callableQName = ((PyFunctionType)type).getCallable().getQualifiedName();
+      return mockPatchQName(referenceExpression).toString().equals(callableQName);
+    }
+    return false;
   }
 
   private static List<PyCustomMember> calcSocketMembers(PyFile socketFile) {
-    List<PyCustomMember> result = new ArrayList<>();
+    final List<PyCustomMember> result = new ArrayList<>();
     addMethodsFromAttr(socketFile, result, "_socketmethods");
     addMethodsFromAttr(socketFile, result, "_delegate_methods");
     return result;
   }
 
-  @Nullable
-  private static PyCallable mockPatchCallable(@NotNull PyClassType classType, @Nullable PsiElement location, @NotNull TypeEvalContext context) {
-    if (!PyNames.TYPES_FUNCTION_TYPE.equals(classType.getClassQName())) {
-      return null;
-    }
+  @NotNull
+  public static List<PyCustomMember> calcMockPatchMembers(@NotNull PsiElement anchor) {
+    final String[] members = {"object", "dict", "multiple", "stopall", "TEST_PREFIX"};
+    final String moduleQName = mockPatchQName(anchor).removeLastComponent().toString();
 
-    return Optional
-      .ofNullable(PyUtil.as(location, PyReferenceExpression.class))
-      .map(context::getType)
-      .map(qualifierType -> PyUtil.as(qualifierType, PyFunctionType.class))
-      .map(PyFunctionType::getCallable)
-      .filter(callable -> "unittest.mock.patch".equals(QualifiedNameFinder.getQualifiedName(callable)))
-      .orElse(null);
+    return ContainerUtil.map(members, member -> new PyCustomMember(member).resolvesTo(moduleQName).toAssignment("patch." + member));
   }
 
   @NotNull
-  private static List<PyCustomMember> calcMockPatchMembers() {
-    final String[] members = new String[]{"object", "dict", "multiple", "stopall", "TEST_PREFIX"};
-    final String moduleQName = "unittest.mock";
-
-    return ContainerUtil.map(members, member -> new PyCustomMember(member).resolvesTo(moduleQName).toAssignment("patch." + member));
+  private static QualifiedName mockPatchQName(@NotNull PsiElement anchor) {
+    return LanguageLevel.forElement(anchor).isPython2()
+           ? QualifiedName.fromComponents("mock", "mock", "patch")
+           : QualifiedName.fromComponents("unittest", "mock", "patch");
   }
 
   private static void addMethodsFromAttr(PyFile socketFile, List<PyCustomMember> result, final String attrName) {
     final PyTargetExpression socketMethods = socketFile.findTopLevelAttribute(attrName);
     if (socketMethods != null) {
-      final List<String> methods = PyUtil.getStringListFromTargetExpression(socketMethods);
+      final List<String> methods = PyUtil.strListValue(socketMethods.findAssignedValue());
       if (methods != null) {
         for (String name : methods) {
           result.add(new PyCustomMember(name).resolvesTo("_socket").toClass("SocketType").toFunction(name));

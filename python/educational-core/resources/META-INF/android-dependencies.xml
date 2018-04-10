@@ -1,9 +1,0 @@
-<idea-plugin>
-  <actions>
-    <action id="Edu.StartLearn" class="com.jetbrains.edu.learning.intellij.android.EduStartLearningAction" text="Start Learning"
-            description="Create New Educational Project">
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
-      <add-to-group group-id="FileMenu" anchor="last"/>
-    </action>
-  </actions>
-</idea-plugin>

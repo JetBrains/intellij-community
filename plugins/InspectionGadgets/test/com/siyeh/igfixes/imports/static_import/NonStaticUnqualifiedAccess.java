@@ -1,4 +1,5 @@
-import static java.lang.Lon<caret>g.*;
+import static//end of line comment
+  java.lang.Lon<caret>g.*;
 public class Foo implements Runnable {
     @Override
     public void run() {

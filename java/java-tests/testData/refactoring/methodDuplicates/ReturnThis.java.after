@@ -8,7 +8,7 @@ class Return {
 
   public void context() {
       Return r = method();
-    // Currently the statement below could be replaced, but it's not. Nobody has requested this.
+      // Currently the statement below could be replaced, but it's not. Nobody has requested this.
     myInt++;
   }
 }

@@ -57,7 +57,7 @@ public class ShelfProjectConfigurable implements SearchableConfigurable {
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     ObjectUtils.assertNotNull(myShelfConfigPanel).apply();
   }
 

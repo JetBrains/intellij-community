@@ -58,19 +58,19 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
   }
 
   public void testQuickfixRaw() {
-    doQuickfixTest("Create method 'void onSort(SortEvent)'");
+    doQuickfixTest("Create method 'onSort'");
   }
 
   public void testQuickfixHalfRaw() {
-    doQuickfixTest("Create method 'void onSort(SortEvent)'");
+    doQuickfixTest("Create method 'onSort'");
   }
 
   public void testQuickfixSpecific() {
-    doQuickfixTest("Create method 'void onSort(SortEvent)'");
+    doQuickfixTest("Create method 'onSort'");
   }
 
   public void testQuickfixNoField() {
-    doQuickfixTest("Create method 'void onSort(SortEvent)'");
+    doQuickfixTest("Create method 'onSort'");
   }
 
   public void testQuickfixFieldType() {
@@ -82,7 +82,7 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
     final boolean oldImports = settings.INSERT_INNER_CLASS_IMPORTS;
     try {
       settings.INSERT_INNER_CLASS_IMPORTS = true;
-      doQuickfixTest("Create method 'void onColumnEditStart(CellEditEvent)'");
+      doQuickfixTest("Create method 'onColumnEditStart'");
     }
     finally {
       settings.INSERT_INNER_CLASS_IMPORTS = oldImports;
@@ -90,7 +90,7 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
   }
 
   public void testQuickfixSuper() {
-    doQuickfixTest("Create method 'void click(MouseEvent)'");
+    doQuickfixTest("Create method 'click'");
   }
 
   private void doHighlightingTest() {
@@ -100,7 +100,8 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
 
   private void doQuickfixTest(final String actionName) {
     String path = getTestName(true) + ".fxml";
-    final IntentionAction intention = myFixture.getAvailableIntention(actionName, path, getTestName(false) + ".java");
+    myFixture.configureByFiles(path, getTestName(false) + ".java");
+    IntentionAction intention = myFixture.findSingleIntention(actionName);
     assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", true);

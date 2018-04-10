@@ -22,7 +22,7 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection;
  */
 public class MavenSpellcheckerTest extends MavenDomTestCase {
 
-  public void testSpell() throws Exception {
+  public void testSpell() {
     myFixture.enableInspections(SpellCheckingInspection.class);
 
     createProjectPom("<groupId>test</groupId>\n" +

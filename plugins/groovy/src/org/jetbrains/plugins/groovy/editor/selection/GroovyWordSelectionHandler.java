@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -46,13 +47,13 @@ public class GroovyWordSelectionHandler extends ExtendWordSelectionHandlerBase {
   private static final Logger LOG = Logger.getInstance(GroovyWordSelectionHandler.class);
 
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return (e instanceof GroovyPsiElement || e.getLanguage() == GroovyLanguage.INSTANCE) &&
            !(e.getNode().getElementType() == GroovyTokenTypes.mDOLLAR);
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     final TextRange originalRange = e.getTextRange();
     LOG.assertTrue(originalRange.getEndOffset() <= editorText.length(), getClass() + "; " + e);
 

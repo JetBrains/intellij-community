@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.hierarchy;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
@@ -41,11 +40,7 @@ public class PyHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
 
     NavigatablePsiElement element = (NavigatablePsiElement)getPsiElement();
     if (element == null) {
-      final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
-      if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
-        myHighlightedText.getBeginning().addText(invalidPrefix, HierarchyNodeDescriptor.getInvalidPrefixAttributes());
-      }
-      return true;
+      return invalidElement();
     }
 
     final ItemPresentation presentation = element.getPresentation();

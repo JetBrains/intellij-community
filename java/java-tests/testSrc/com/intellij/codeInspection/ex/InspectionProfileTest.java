@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ex;
 
@@ -28,10 +16,15 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesPanel;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
+import com.siyeh.ig.naming.ClassNamingConvention;
+import com.siyeh.ig.naming.FieldNamingConventionInspection;
+import com.siyeh.ig.naming.NewClassNamingConventionInspection;
+import com.siyeh.ig.naming.NewMethodNamingConventionInspection;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -222,42 +216,28 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
 
     //settings to merge
-    final Element unusedProfile = JdomKt.loadElement("<profile version=\"1.0\">\n" +
-                                                        "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                                                        "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
-                                                        "      <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
-                                                        "      <option name=\"FIELD\" value=\"true\" />\n" +
-                                                        "      <option name=\"METHOD\" value=\"true\" />\n" +
-                                                        "      <option name=\"CLASS\" value=\"true\" />\n" +
-                                                        "      <option name=\"PARAMETER\" value=\"true\" />\n" +
-                                                        "      <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"false\" />\n" +
-                                                        "  </inspection_tool>\n" +
-                                                        "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
-                                                        "      <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
-                                                        "      <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
-                                                        "      <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
-                                                        "      <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
-                                                        "   </inspection_tool>\n" +
-                                                        "</profile>");
+    String serialized = 
+                   "<profile version=\"1.0\">\n" +
+                   "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                   "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                   "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                   "    <option name=\"FIELD\" value=\"true\" />\n" +
+                   "    <option name=\"METHOD\" value=\"true\" />\n" +
+                   "    <option name=\"CLASS\" value=\"true\" />\n" +
+                   "    <option name=\"PARAMETER\" value=\"true\" />\n" +
+                   "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"false\" />\n" +
+                   "  </inspection_tool>\n" +
+                   "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                   "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                   "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                   "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                   "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
+                   "  </inspection_tool>\n" +
+                   "</profile>";
+    final Element unusedProfile = JdomKt.loadElement(serialized);
     profile.readExternal(unusedProfile);
     profile.getModifiableModel().commit();
-    assertEquals("<profile version=\"1.0\">\n" +
-                 "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                 "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
-                 "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
-                 "    <option name=\"FIELD\" value=\"true\" />\n" +
-                 "    <option name=\"METHOD\" value=\"true\" />\n" +
-                 "    <option name=\"CLASS\" value=\"true\" />\n" +
-                 "    <option name=\"PARAMETER\" value=\"true\" />\n" +
-                 "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"false\" />\n" +
-                 "  </inspection_tool>\n" +
-                 "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
-                 "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
-                 "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
-                 "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
-                 "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
-                 "  </inspection_tool>\n" +
-                 "</profile>", serialize(profile));
+    assertEquals(serialized, serialize(profile));
 
     //make them default
     profile = createProfile(new InspectionProfileImpl("foo"));
@@ -295,6 +275,309 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     //check merged
     Element mergedElement = JdomKt.loadElement(mergedText);
+    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(mergedElement);
+    profile.getModifiableModel().commit();
+    assertThat(profile.writeScheme()).isEqualTo(mergedElement);
+
+    assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
+  }
+
+  public void testScopesInNamingConventions() throws Exception {
+    String unchanged = "<profile version=\"1.0\">\n" +
+                       "  <option name=\"myName\" value=\"Name convention\" />\n" +
+                       "  <inspection_tool class=\"AnnotationNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*Ann\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"8\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"58\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"ClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <scope name=\"Production\" level=\"ERROR\" enabled=\"true\">\n" +
+                       "      <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                       "      <option name=\"m_minLength\" value=\"8\" />\n" +
+                       "      <option name=\"m_maxLength\" value=\"64\" />\n" +
+                       "    </scope>\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*Class\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"10\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"60\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"EnumeratedClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <scope name=\"Tests\" level=\"WEAK WARNING\" enabled=\"true\">\n" +
+                       "      <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                       "      <option name=\"m_minLength\" value=\"8\" />\n" +
+                       "      <option name=\"m_maxLength\" value=\"64\" />\n" +
+                       "    </scope>\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*Enum\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"12\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"62\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"InterfaceNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*I\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"14\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"64\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"JUnitAbstractTestClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*TestCase\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"2\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"52\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"JUnitTestClassNamingConvention\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*Test\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"4\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"54\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"TypeParameterNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*TP\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"16\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"66\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "</profile>";
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    final Element oldProfile = JdomKt.loadElement(unchanged);
+    profile.readExternal(oldProfile);
+    profile.getModifiableModel().commit();
+    assertEquals(unchanged, serialize(profile));
+    ToolsImpl tools = profile.getToolsOrNull("NewClassNamingConvention", getProject());
+    assertTrue(tools.isEnabled());
+    for (ScopeToolState toolState : tools.getTools()) {
+      NamedScope scope = toolState.getScope(getProject());
+      assertTrue(scope != null);
+      String scopeName = scope.getName();
+      NewClassNamingConventionInspection tool = (NewClassNamingConventionInspection)toolState.getTool().getTool();
+      if ("Production".equals(scopeName)) {
+        assertTrue(tool.isConventionEnabled(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME));
+        assertTrue(tool.isConventionEnabled("TypeParameterNamingConvention"));
+        assertEquals(16, tool.getNamingConventionBean("TypeParameterNamingConvention").m_minLength);
+      }
+      else if ("Tests".equals(scopeName)) {
+        assertTrue(tool.isConventionEnabled("TypeParameterNamingConvention"));
+        assertEquals(16, tool.getNamingConventionBean("TypeParameterNamingConvention").m_minLength);
+      }
+    }
+  }
+
+  public void testMergeNamingConventions() throws Exception {
+    //no specific settings
+    final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +
+                                                  "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                  "</profile>");
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(element);
+    profile.getModifiableModel().commit();
+    assertThat(profile.writeScheme()).isEqualTo(element);
+    
+    String unchanged = "<profile version=\"1.0\">\n" +
+                   "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                   "  <inspection_tool class=\"AbstractClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                   "  <inspection_tool class=\"AnnotationNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                   "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                   "    <option name=\"m_minLength\" value=\"8\" />\n" +
+                   "    <option name=\"m_maxLength\" value=\"64\" />\n" +
+                   "  </inspection_tool>\n" +
+                   "  <inspection_tool class=\"ClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                   "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                   "    <option name=\"m_minLength\" value=\"8\" />\n" +
+                   "    <option name=\"m_maxLength\" value=\"64\" />\n" +
+                   "  </inspection_tool>\n" +
+                   "  <inspection_tool class=\"EnumeratedClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                   "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                   "    <option name=\"m_minLength\" value=\"8\" />\n" +
+                   "    <option name=\"m_maxLength\" value=\"64\" />\n" +
+                   "  </inspection_tool>\n" +
+                   "  <inspection_tool class=\"InterfaceNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                   "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                   "    <option name=\"m_minLength\" value=\"8\" />\n" +
+                   "    <option name=\"m_maxLength\" value=\"64\" />\n" +
+                   "  </inspection_tool>\n" +
+                   "  <inspection_tool class=\"TypeParameterNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                   "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                   "    <option name=\"m_minLength\" value=\"1\" />\n" +
+                   "    <option name=\"m_maxLength\" value=\"1\" />\n" +
+                   "  </inspection_tool>\n" +
+                   "</profile>";
+    final Element allEnabledProfile = JdomKt.loadElement(unchanged);
+    profile.readExternal(allEnabledProfile);
+    profile.getModifiableModel().commit();
+    assertEquals(unchanged, serialize(profile));
+
+    //make them default
+    profile = createProfile(new InspectionProfileImpl("foo"));
+    String customSettingsText = "<profile version=\"1.0\">\n" +
+                                "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                                "  <inspection_tool class=\"AbstractClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                                "  <inspection_tool class=\"AnnotationNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                                "    <option name=\"m_minLength\" value=\"8\" />\n" +
+                                "    <option name=\"m_maxLength\" value=\"256\" />\n" +
+                                "  </inspection_tool>\n" +
+                                "  <inspection_tool class=\"EnumeratedClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                                "    <option name=\"m_minLength\" value=\"1\" />\n" +
+                                "    <option name=\"m_maxLength\" value=\"64\" />\n" +
+                                "  </inspection_tool>\n" +
+                                "  <inspection_tool class=\"InterfaceNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                                "    <option name=\"m_minLength\" value=\"8\" />\n" +
+                                "    <option name=\"m_maxLength\" value=\"64\" />\n" +
+                                "  </inspection_tool>\n" +
+                                "  <inspection_tool class=\"TypeParameterNamingConvention\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                                "    <option name=\"m_minLength\" value=\"1\" />\n" +
+                                "    <option name=\"m_maxLength\" value=\"1\" />\n" +
+                                "  </inspection_tool>\n" +
+                                "</profile>";
+    profile.readExternal(JdomKt.loadElement(customSettingsText));
+    assertEquals(customSettingsText, serialize(profile));
+    InspectionToolWrapper wrapper = profile.getInspectionTool("NewClassNamingConvention", getProject());
+    assertNotNull(wrapper);
+    NewClassNamingConventionInspection tool = (NewClassNamingConventionInspection)wrapper.getTool();
+    assertEquals(256, tool.getNamingConventionBean("AnnotationNamingConvention").m_maxLength);
+    assertEquals(1, tool.getNamingConventionBean("EnumeratedClassNamingConvention").m_minLength);
+    assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("NewClassNamingConvention"), null));
+    assertFalse(tool.isConventionEnabled("TypeParameterNamingConvention"));
+    assertFalse(tool.isConventionEnabled(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME));
+
+    Element toImportElement = profile.writeScheme();
+    final InspectionProfileImpl importedProfile =
+      InspectionProfileSchemesPanel.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject());
+
+    //check merged
+    Element mergedElement = JdomKt.loadElement(customSettingsText);
+    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(mergedElement);
+    profile.getModifiableModel().commit();
+    assertThat(profile.writeScheme()).isEqualTo(mergedElement);
+
+    assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
+  }
+
+  public void testKeepUnloadedMergeNamingConventions() throws Exception {
+      String unchanged = "<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                         "  <inspection_tool class=\"NewClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                         "    <extension name=\"AnnotationNamingConvention\" enabled=\"true\">\n" +
+                         "      <option name=\"inheritDefaultSettings\" value=\"false\" />\n" +
+                         "      <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                         "      <option name=\"m_minLength\" value=\"8\" />\n" +
+                         "      <option name=\"m_maxLength\" value=\"66\" />\n" +
+                         "    </extension>\n" +
+                         "    <extension name=\"AnnotationNamingConventionUnknown\" enabled=\"true\">\n" +
+                         "      <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                         "      <option name=\"m_minLength\" value=\"8\" />\n" +
+                         "      <option name=\"m_maxLength\" value=\"66\" />\n" +
+                         "    </extension>\n" +
+                         "    <extension name=\"ClassNamingConvention\" enabled=\"true\">\n" +
+                         "      <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                         "      <option name=\"m_minLength\" value=\"8\" />\n" +
+                         "      <option name=\"m_maxLength\" value=\"66\" />\n" +
+                         "    </extension>\n" +
+                         "  </inspection_tool>\n" +
+                         "</profile>";
+      final Element allEnabledProfile = JdomKt.loadElement(unchanged);
+      InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+      profile.readExternal(allEnabledProfile);
+      profile.initInspectionTools();
+      assertEquals(unchanged, serialize(profile));
+    }
+
+  public void testMergeMethodNamingConventions() throws Exception {
+    final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +
+                                               "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                               "</profile>");
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(element);
+    profile.getModifiableModel().commit();
+    assertThat(profile.writeScheme()).isEqualTo(element);
+
+    String customSettingsText = "<profile version=\"1.0\">\n" +
+                       "  <option name=\"myName\" value=\"empty\" />\n" +
+                       "  <inspection_tool class=\"InstanceMethodNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"i_[a-z][A-Za-z\\d]*\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"4\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"32\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"NativeMethodNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"n_[a-z][A-Za-z\\d]*\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"StaticMethodNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"s_[a-z][A-Za-z\\d]*\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"4\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"32\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "</profile>";
+
+    final Element allEnabledProfile = JdomKt.loadElement(customSettingsText);
+    profile.readExternal(allEnabledProfile);
+    profile.getModifiableModel().commit();
+    assertEquals(customSettingsText, serialize(profile));
+
+    InspectionToolWrapper wrapper = profile.getInspectionTool("NewMethodNamingConvention", getProject());
+    assertNotNull(wrapper);
+    NewMethodNamingConventionInspection tool = (NewMethodNamingConventionInspection)wrapper.getTool();
+    assertEquals("i_[a-z][A-Za-z\\d]*", tool.getNamingConventionBean("InstanceMethodNamingConvention").m_regex);
+    assertEquals("n_[a-z][A-Za-z\\d]*", tool.getNamingConventionBean("NativeMethodNamingConvention").m_regex);
+    assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("NewMethodNamingConvention"), null));
+    assertFalse(tool.isConventionEnabled("JUnit4MethodNamingConvention"));
+    assertFalse(tool.isConventionEnabled("JUnit3MethodNamingConvention"));
+
+    Element toImportElement = profile.writeScheme();
+    final InspectionProfileImpl importedProfile =
+      InspectionProfileSchemesPanel.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject());
+
+    //check merged
+    Element mergedElement = JdomKt.loadElement(customSettingsText);
+    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(mergedElement);
+    profile.getModifiableModel().commit();
+    assertThat(profile.writeScheme()).isEqualTo(mergedElement);
+
+    assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
+  }
+
+  public void testMergeFieldNamingConventions() throws Exception {
+    final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +
+                                               "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                               "</profile>");
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(element);
+    profile.getModifiableModel().commit();
+    assertThat(profile.writeScheme()).isEqualTo(element);
+
+    String customSettingsText = "<profile version=\"1.0\">\n" +
+                                "  <option name=\"myName\" value=\"empty\" />\n" +
+                                "  <inspection_tool class=\"ConstantNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                "    <option name=\"m_regex\" value=\"i_[a-z][A-Za-z\\d]*\" />\n" +
+                                "    <option name=\"m_minLength\" value=\"4\" />\n" +
+                                "    <option name=\"m_maxLength\" value=\"32\" />\n" +
+                                "    <option name=\"onlyCheckImmutables\" value=\"true\" />\n" +
+                                "  </inspection_tool>\n" +
+                                "  <inspection_tool class=\"StaticVariableNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                "    <option name=\"m_regex\" value=\"i_[a-z][A-Za-z\\d]*\" />\n" +
+                                "    <option name=\"m_minLength\" value=\"4\" />\n" +
+                                "    <option name=\"m_maxLength\" value=\"32\" />\n" +
+                                "    <option name=\"checkMutableFinals\" value=\"true\" />\n" +
+                                "  </inspection_tool>\n" +
+                                "</profile>";
+
+    final Element allEnabledProfile = JdomKt.loadElement(customSettingsText);
+    profile.readExternal(allEnabledProfile);
+    profile.getModifiableModel().commit();
+    assertEquals(customSettingsText, serialize(profile));
+
+    InspectionToolWrapper wrapper = profile.getInspectionTool("FieldNamingConvention", getProject());
+    assertNotNull(wrapper);
+    FieldNamingConventionInspection tool = (FieldNamingConventionInspection)wrapper.getTool();
+    assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("FieldNamingConvention"), null));
+    assertTrue(tool.isConventionEnabled("StaticVariableNamingConvention"));
+    assertTrue(tool.isConventionEnabled("ConstantNamingConvention"));
+    assertTrue(tool.isConventionEnabled("ConstantWithMutableFieldTypeNamingConvention"));
+
+    Element toImportElement = profile.writeScheme();
+    final InspectionProfileImpl importedProfile =
+      InspectionProfileSchemesPanel.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject());
+
+    //check merged
+    Element mergedElement = JdomKt.loadElement(customSettingsText);
     profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(mergedElement);
     profile.getModifiableModel().commit();
@@ -586,17 +869,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionToolWrapper toolWrapper = profile.getInspectionTool(new DataFlowInspection().getShortName(), getProject());
     assertNotNull(toolWrapper);
     String id = toolWrapper.getShortName();
-    System.out.println(id);
     profile.setToolEnabled(id, !profile.isToolEnabled(HighlightDisplayKey.findById(id)));
     assertThat(countInitializedTools(profile)).isEqualTo(0);
     profile.writeScheme();
     List<InspectionToolWrapper> initializedTools = getInitializedTools(profile);
-    if (initializedTools.size() > 0) {
-      for (InspectionToolWrapper initializedTool : initializedTools) {
-        System.out.println(initializedTool.getShortName());
-      }
-      fail();
-    }
+    assertEmpty(initializedTools.stream().map(InspectionToolWrapper::getShortName).collect(Collectors.joining(", ")), initializedTools);
   }
 
   public void testInspectionInitializationForSerialization() throws Exception {

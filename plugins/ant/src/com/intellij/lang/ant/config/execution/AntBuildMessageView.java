@@ -487,7 +487,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       int index = fileAndLineNumber.lastIndexOf(':');
       if (index != -1) {
         String fileName = fileAndLineNumber.substring(0, index);
-        String lineNumberStr = fileAndLineNumber.substring(index + 1, fileAndLineNumber.length()).trim();
+        String lineNumberStr = fileAndLineNumber.substring(index + 1).trim();
         try {
           int line = Integer.parseInt(lineNumberStr);
 
@@ -947,7 +947,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     protected final void flushDelayedMessages() {
       if (!myDelayedMessages.isEmpty()) {
-        final AntMessage[] messages = myDelayedMessages.toArray(new AntMessage[myDelayedMessages.size()]);
+        final AntMessage[] messages = myDelayedMessages.toArray(new AntMessage[0]);
         myDelayedMessages.clear();
         myTreeView.addMessages(messages);
         myPlainTextView.addMessages(messages);

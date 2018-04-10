@@ -32,7 +32,7 @@ public class ServerTaskExecutorImpl implements ServerTaskExecutor {
   private final ExecutorService myTaskExecutor;
 
   public ServerTaskExecutorImpl() {
-    myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ServerTaskExecutorImpl pool");
+    myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ServerTaskExecutorImpl Pool");
   }
 
   @Override
@@ -53,7 +53,8 @@ public class ServerTaskExecutorImpl implements ServerTaskExecutor {
       }
       catch (Throwable e) {
         LOG.info(e);
-        callback.errorOccurred(e.getMessage());
+        String message = e.getMessage();
+        callback.errorOccurred(message != null ? message : e.getClass().getName());
       }
     });
   }

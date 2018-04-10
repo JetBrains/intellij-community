@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.*;
-import com.intellij.structuralsearch.impl.matcher.strategies.ExprMatchingStrategy;
+import com.intellij.structuralsearch.impl.matcher.strategies.JavaMatchingStrategy;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,7 +30,7 @@ public class JavaCompiledPattern extends CompiledPattern {
   private boolean requestsSuperInners;
 
   public JavaCompiledPattern() {
-    setStrategy(ExprMatchingStrategy.getInstance());
+    setStrategy(JavaMatchingStrategy.getInstance());
   }
 
   public String[] getTypedVarPrefixes() {

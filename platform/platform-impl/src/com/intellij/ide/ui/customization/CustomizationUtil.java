@@ -117,7 +117,7 @@ public class CustomizationUtil {
       }
     }
 
-    return reorderedChildren.toArray(new AnAction[reorderedChildren.size()]);
+    return reorderedChildren.toArray(AnAction.EMPTY_ARRAY);
   }
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
@@ -263,8 +263,7 @@ public class CustomizationUtil {
 
   private static ActionUrl[] getChildUserObjects(DefaultMutableTreeNode node, ActionUrl parent) {
     ArrayList<ActionUrl> result = new ArrayList<>();
-    ArrayList<String> groupPath = new ArrayList<>();
-    groupPath.addAll(parent.getGroupPath());
+    ArrayList<String> groupPath = new ArrayList<>(parent.getGroupPath());
     for (int i = 0; i < node.getChildCount(); i++) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(i);
       ActionUrl url = new ActionUrl();
@@ -273,13 +272,19 @@ public class CustomizationUtil {
       url.setComponent(userObject instanceof Pair ? ((Pair)userObject).first : userObject);
       result.add(url);
     }
-    return result.toArray(new ActionUrl[result.size()]);
+    return result.toArray(new ActionUrl[0]);
   }
 
   @NotNull
   public static MouseListener installPopupHandler(JComponent component, @NotNull String groupId, String place) {
-    ActionManager actionManager = ActionManager.getInstance();
-    ActionGroup group = (ActionGroup)actionManager.getAction(groupId);
-    return PopupHandler.installPopupHandler(component, group, place, actionManager);
+    return PopupHandler.installPopupHandler(
+      component, new ActionGroup() {
+        @NotNull
+        @Override
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
+          return group == null ? EMPTY_ARRAY : group.getChildren(e);
+        }
+      }, place, ActionManager.getInstance(), null);
   }
 }

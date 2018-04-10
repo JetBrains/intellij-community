@@ -40,8 +40,8 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
                                                                                   ModuleJdkOrderEntry,
                                                                                   ProjectJdkTable.Listener {
   @NonNls public static final String ENTRY_TYPE = JpsModuleRootModelSerializer.JDK_TYPE;
-  @NonNls public static final String JDK_NAME_ATTR = JpsModuleRootModelSerializer.JDK_NAME_ATTRIBUTE;
-  @NonNls public static final String JDK_TYPE_ATTR = JpsModuleRootModelSerializer.JDK_TYPE_ATTRIBUTE;
+  @NonNls private static final String JDK_NAME_ATTR = JpsModuleRootModelSerializer.JDK_NAME_ATTRIBUTE;
+  @NonNls private static final String JDK_TYPE_ATTR = JpsModuleRootModelSerializer.JDK_TYPE_ATTRIBUTE;
 
   @Nullable private Sdk myJdk;
   private String myJdkName;
@@ -103,7 +103,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     myJdk = jdk;
     setJdkName(jdkName);
     setJdkType(jdkType);
-    addListener();
+    myProjectRootManagerImpl.addJdkTableListener(this, this);
     init();
   }
 
@@ -112,10 +112,6 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
       return myJdk.getSdkType().getName();
     }
     return myJdkType;
-  }
-
-  private void addListener() {
-    myProjectRootManagerImpl.addJdkTableListener(this);
   }
 
   @Override
@@ -212,12 +208,6 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
                                @NotNull ProjectRootManagerImpl projectRootManager,
                                @NotNull VirtualFilePointerManager filePointerManager) {
     return new ModuleJdkOrderEntryImpl(this, rootModel, ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject()));
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
-    myProjectRootManagerImpl.removeJdkTableListener(this);
   }
 
   private void setJdkName(String jdkName) {

@@ -20,7 +20,7 @@ def boo():
   for i in [1,2]:
     print(i)
 
-  j = 1 #pass
+  <weak_warning descr="Local variable 'j' value is not used">j</weak_warning> = 1 #fail
   for j in [-2, -1]:
     print(j)
   print (j)

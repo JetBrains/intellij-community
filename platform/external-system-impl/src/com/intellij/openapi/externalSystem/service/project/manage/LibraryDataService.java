@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -145,7 +144,6 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
 
   /**
    * Remove orphan project libraries during postprocess phase (after execution of LibraryDependencyDataService#import)
-   * in order to use LibraryDataService.isOrphanProjectLibrary method properly
    */
   @Override
   public void postProcess(@NotNull Collection<DataNode<LibraryData>> toImport,
@@ -157,15 +155,45 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
 
     // do not cleanup orphan project libraries if import runs from Project Structure Dialog
     // since libraries order entries cannot be imported for modules in that case
-    // and hence #isOrphanProjectLibrary() method will work incorrectly
+    // and hence orphans will be detected incorrectly
     if (modelsProvider instanceof IdeUIModifiableModelsProvider) return;
 
     final List<Library> orphanIdeLibraries = ContainerUtil.newSmartList();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
+    final Map<String, Library> namesToLibs = ContainerUtil.newHashMap();
+    final Set<Library> potentialOrphans = ContainerUtil.newHashSet();
+    RootPolicy<Void> excludeUsedLibraries = new RootPolicy<Void>() {
+      @Override
+      public Void visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Void value) {
+        if (ideDependency.isModuleLevel()) {
+          return null;
+        }
+        Library lib = ideDependency.getLibrary();
+        if (lib == null) {
+          lib = namesToLibs.get(ideDependency.getLibraryName());
+        }
+        if (lib != null) {
+          potentialOrphans.remove(lib);
+        }
+        return null;
+      }
+    };
+
     for (Library library : librariesModel.getLibraries()) {
       if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, projectData.getOwner())) continue;
-      if (isOrphanProjectLibrary(library, modelsProvider) && !modelsProvider.isSubstituted(library.getName())) {
-        orphanIdeLibraries.add(library);
+      namesToLibs.put(library.getName(), library);
+      potentialOrphans.add(library);
+    }
+
+    for (Module module : modelsProvider.getModules()) {
+      for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
+        entry.accept(excludeUsedLibraries, null);
+      }
+    }
+
+    for (Library lib : potentialOrphans) {
+      if (!modelsProvider.isSubstituted(lib.getName())) {
+        orphanIdeLibraries.add(lib);
       }
     }
 
@@ -219,23 +247,5 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
       registerPaths(externalLibrary.isUnresolved(), roots, libraryModel, externalLibrary.getInternalName());
     }
-  }
-
-  private static boolean isOrphanProjectLibrary(@NotNull final Library library,
-                                                @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    RootPolicy<Boolean> visitor = new RootPolicy<Boolean>() {
-      @Override
-      public Boolean visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Boolean value) {
-        return !ideDependency.isModuleLevel() &&
-               (library == ideDependency.getLibrary() ||
-                (ideDependency.getLibrary() == null && StringUtil.equals(library.getName(), ideDependency.getLibraryName())));
-      }
-    };
-    for (Module module : modelsProvider.getModules()) {
-      for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
-        if (entry.accept(visitor, false)) return false;
-      }
-    }
-    return true;
   }
 }

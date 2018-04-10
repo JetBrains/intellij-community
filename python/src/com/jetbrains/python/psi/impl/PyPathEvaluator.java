@@ -21,6 +21,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -47,20 +48,21 @@ public class PyPathEvaluator extends PyEvaluator {
   }
 
   @Override
-  protected Object evaluateCall(PyCallExpression call) {
-    final PyExpression[] args = call.getArguments();
-    if (call.isCalleeText(PyNames.DIRNAME) && args.length == 1) {
+  @Nullable
+  protected Object evaluateCall(@NotNull PyCallExpression expression) {
+    final PyExpression[] args = expression.getArguments();
+    if (expression.isCalleeText(PyNames.DIRNAME) && args.length == 1) {
       Object argValue = evaluate(args[0]);
       return argValue instanceof String ? new File((String) argValue).getParent() : null;
     }
-    else if (call.isCalleeText(PyNames.JOIN) && args.length >= 1) {
+    else if (expression.isCalleeText(PyNames.JOIN) && args.length >= 1) {
       return evaluatePathInJoin(args, args.length);
     }
-    else if (call.isCalleeText(PyNames.NORMPATH, PyNames.REALPATH) && args.length == 1) {
+    else if (expression.isCalleeText(PyNames.NORMPATH, PyNames.REALPATH) && args.length == 1) {
       // we don't care about the exact transformation performed by python but need to preserve the availability of the path
       return evaluate(args[0]);
     }
-    else if (call.isCalleeText(PyNames.ABSPATH) && args.length == 1) {
+    else if (expression.isCalleeText(PyNames.ABSPATH) && args.length == 1) {
       Object argValue = evaluate(args[0]);
       // relative to directory of 'containingFilePath', not file
       if (!(argValue instanceof String)) {
@@ -74,21 +76,22 @@ public class PyPathEvaluator extends PyEvaluator {
         return path.replace("\\", "/");
       }
     }
-    return super.evaluateCall(call);
+    return super.evaluateCall(expression);
   }
 
   @Override
-  protected Object evaluateReferenceExpression(PyReferenceExpression expr) {
-    if (PyNames.PARDIR.equals(expr.getName())) {
+  @Nullable
+  protected Object evaluateReference(@NotNull PyReferenceExpression expression) {
+    if (PyNames.PARDIR.equals(expression.getName())) {
       return "..";
     }
-    else if (PyNames.CURDIR.equals(expr.getName())) {
+    else if (PyNames.CURDIR.equals(expression.getName())) {
       return ".";
     }
-    if (!expr.isQualified() && PyNames.FILE.equals(expr.getReferencedName())) {
+    if (!expression.isQualified() && PyNames.FILE.equals(expression.getReferencedName())) {
       return myContainingFilePath;
     }
-    return super.evaluateReferenceExpression(expr);
+    return super.evaluateReference(expression);
   }
 
   public String evaluatePathInJoin(PyExpression[] args, int endElement) {

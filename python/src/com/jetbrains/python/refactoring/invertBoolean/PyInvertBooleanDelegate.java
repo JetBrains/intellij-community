@@ -27,7 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.invertBoolean.InvertBooleanDelegate;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
@@ -94,12 +93,8 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
 
     for (PsiReference ref : refs) {
       final PsiElement refElement = ref.getElement();
-      final PsiElement elementToInvert = getElementToInvert(psiElement, refElement);
-      if (elementToInvert != null) {
-        elementsToInvert.add(elementToInvert);
-      }
-      else {
-        ContainerUtil.addIfNotNull(elementsToInvert, getForeignElementToInvert(psiElement, refElement, PythonLanguage.getInstance()));
+      if (!collectElementsToInvert(psiElement, refElement, elementsToInvert)) {
+        collectForeignElementsToInvert(psiElement, refElement, PythonLanguage.getInstance(), elementsToInvert);
       }
     }
   }

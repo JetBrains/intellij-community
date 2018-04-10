@@ -15,12 +15,15 @@
  */
 package com.intellij.java.psi.resolve;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Collection;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
@@ -440,7 +443,9 @@ public class ResolveMethod15Test extends Resolve15TestCase {
 
   public void testTestGenericMethodOverloading2() throws Exception{
     PsiReference ref = configureByFile();
-    PsiElement target = ref.resolve();
+    Collection<PsiElement> candidates = TargetElementUtil.getInstance().getTargetCandidates(ref);
+    assertOneElement(candidates);
+    PsiElement target = candidates.iterator().next();
     assertThat(target, instanceOf(PsiMethod.class));
     assertThat(target.getParent(), instanceOf(PsiClass.class));
     assertEquals("A", ((NavigationItem)target.getParent()).getName());

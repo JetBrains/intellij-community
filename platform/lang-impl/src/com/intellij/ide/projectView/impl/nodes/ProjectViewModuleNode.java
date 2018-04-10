@@ -20,15 +20,9 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -48,23 +42,7 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
     }
 
     final List<VirtualFile> contentRoots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelModuleRoots(module, getSettings());
-    final List<AbstractTreeNode> children = new ArrayList<>(contentRoots.size());
-    final PsiManager psiManager = PsiManager.getInstance(module.getProject());
-    for (final VirtualFile contentRoot : contentRoots) {
-      if (contentRoot.isDirectory()) {
-        PsiDirectory directory = psiManager.findDirectory(contentRoot);
-        if (directory != null) {
-          children.add(new PsiDirectoryNode(getProject(), directory, getSettings()));
-        }
-      }
-      else {
-        PsiFile file = psiManager.findFile(contentRoot);
-        if (file != null) {
-          children.add(new PsiFileNode(getProject(), file, getSettings()));
-        }
-      }
-    }
-    return children;
+    return ProjectViewDirectoryHelper.getInstance(myProject).createFileAndDirectoryNodes(contentRoots, this.getSettings());
   }
 
   @Override

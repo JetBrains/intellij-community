@@ -55,7 +55,7 @@ class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> 
     assert method != null;
 
     final PsiTypeVisitor<PsiType> eachProcessor = new PsiTypeVisitor<PsiType>() {
-      private Set<PsiType> myProcessed = ContainerUtil.newHashSet();
+      private final Set<PsiType> myProcessed = ContainerUtil.newHashSet();
       
       @Nullable
       @Override

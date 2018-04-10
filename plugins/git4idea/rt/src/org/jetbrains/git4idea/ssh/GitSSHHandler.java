@@ -39,6 +39,10 @@ public interface GitSSHHandler {
    */
   @NonNls String GIT_SSH_ENV = "GIT_SSH";
   /**
+   * Name of environment variable for SSH executable variant
+   */
+  @NonNls String GIT_SSH_VAR = "GIT_SSH_VARIANT";
+  /**
    * Name of the handler
    */
   @NonNls String HANDLER_NAME = "Git4ideaSSHHandler";

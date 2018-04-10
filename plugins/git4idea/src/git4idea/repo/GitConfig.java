@@ -53,10 +53,10 @@ public class GitConfig {
 
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 
-  private static final Pattern REMOTE_SECTION = Pattern.compile("(?:svn-)?remote \"(.*)\"");
-  private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"");
-  private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"");
-  private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch");
+  private static final Pattern REMOTE_SECTION = Pattern.compile("(?:svn-)?remote \"(.*)\"", Pattern.CASE_INSENSITIVE);
+  private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"", Pattern.CASE_INSENSITIVE);
+  private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"", Pattern.CASE_INSENSITIVE);
+  private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch", Pattern.CASE_INSENSITIVE);
 
   @NotNull private final Collection<Remote> myRemotes;
   @NotNull private final Collection<Url> myUrls;
@@ -135,7 +135,7 @@ public class GitConfig {
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
-      if (sectionName.startsWith("branch")) {
+      if (StringUtil.startsWithIgnoreCase(sectionName, "branch")) {
         BranchConfig branchConfig = parseBranchSection(sectionName, section,  classLoader);
         if (branchConfig != null) {
           configs.add(branchConfig);
@@ -376,7 +376,7 @@ public class GitConfig {
 
     @NotNull
     private Collection<String> getPushUrls() {
-      return nonNullCollection(myRemoteBean.getPushUrl());
+      return nonNullCollection(myRemoteBean.getPushurl());
     }
 
     @NotNull
@@ -396,7 +396,7 @@ public class GitConfig {
     @Nullable String[] getFetch();
     @Nullable String[] getPush();
     @Nullable String[] getUrl();
-    @Nullable String[] getPushUrl();
+    @Nullable String[] getPushurl();
   }
 
   private static class Url {
@@ -411,19 +411,19 @@ public class GitConfig {
     @Nullable
     // null means to entry, i.e. nothing to substitute. Empty string means substituting everything
     public String getInsteadOf() {
-      return myUrlBean.getInsteadOf();
+      return myUrlBean.getInsteadof();
     }
 
     @Nullable
     // null means to entry, i.e. nothing to substitute. Empty string means substituting everything
     public String getPushInsteadOf() {
-      return myUrlBean.getPushInsteadOf();
+      return myUrlBean.getPushinsteadof();
     }
   }
 
   private interface UrlBean {
-    @Nullable String getInsteadOf();
-    @Nullable String getPushInsteadOf();
+    @Nullable String getInsteadof();
+    @Nullable String getPushinsteadof();
   }
   
   private static class BranchConfig {

@@ -21,7 +21,6 @@ import com.sun.jdi.Value;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Feb 9, 2010
 */
 public class IdentityEvaluator implements Evaluator {
   private final Value myValue;

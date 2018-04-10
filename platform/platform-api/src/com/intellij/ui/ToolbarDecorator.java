@@ -334,7 +334,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     final JComponent contextComponent = getComponent();
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
                              myToolbarPosition,
-                             myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
+                             myExtraActions.toArray(new AnActionButton[0]),
                              myButtonComparator,
                              myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
                              myAddIcon, buttons);
@@ -428,7 +428,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
       }
     }
 
-    return buttons.toArray(new CommonActionsPanel.Buttons[buttons.size()]);
+    return buttons.toArray(new CommonActionsPanel.Buttons[0]);
   }
 
   @Override

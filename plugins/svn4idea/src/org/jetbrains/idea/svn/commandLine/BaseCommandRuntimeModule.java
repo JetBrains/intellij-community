@@ -35,7 +35,7 @@ public abstract class BaseCommandRuntimeModule implements CommandRuntimeModule {
   }
 
   @Override
-  public void onStart(@NotNull Command command) throws SvnBindException {
+  public void onStart(@NotNull Command command) {
 
   }
 }

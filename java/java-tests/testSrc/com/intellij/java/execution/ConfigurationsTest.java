@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.java.execution;
 
@@ -34,6 +22,8 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -44,10 +34,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.ant.execution.SegmentedOutputStream;
@@ -111,7 +103,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
 
     PsiMethod mainMethod = innerTest.findMethodsByName("main", false)[0];
     ApplicationConfiguration appConfiguration = createConfiguration(mainMethod);
-    assertEquals(RT_INNER_TEST_NAME, appConfiguration.MAIN_CLASS_NAME);
+    assertEquals(RT_INNER_TEST_NAME, appConfiguration.getMainClassName());
     checkCanRun(configuration);
   }
 
@@ -168,7 +160,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     PsiClass psiClass = findTestA(module1);
     PsiClass psiClass2 = findTestA(getModule2());
     PsiClass derivedTest = findClass(module1, "test1.DerivedTest");
-    PsiClass baseTestCase = findClass("junit.framework.ThirdPartyClass", module1AndLibraries);
+    PsiClass baseTestCase = findClass("test1.ThirdPartyTest", module1AndLibraries);
     PsiClass testB = findClass(getModule3(), "test1.TestB");
     assertNotNull(testCase);
     assertNotNull(derivedTest);
@@ -183,8 +175,38 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     List<String> lines = extractAllInPackageTests(parameters, psiPackage);
     Assertion.compareUnordered(
       //category, filters, classNames...
-      new Object[]{"", "", psiClass.getQualifiedName(), derivedTest.getQualifiedName(), RT_INNER_TEST_NAME,
+      new Object[]{"", "", psiClass.getQualifiedName(),
+        derivedTest.getQualifiedName(), RT_INNER_TEST_NAME,
+        "test1.nested.TestA",
+        "test1.nested.TestWithJunit4",
+        "test1.ThirdPartyTest",
         testB.getQualifiedName()},
+      lines);
+  }
+
+
+  public void testRunningAllInDirectory() throws IOException, ExecutionException {
+    Module module1 = getModule1();
+    PsiClass psiClass = findTestA(module1);
+
+    JUnitConfiguration configuration =
+      new JUnitConfiguration("", myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
+    configuration.getPersistentData().setDirName(psiClass.getContainingFile().getContainingDirectory().getVirtualFile().getParent().getPath());
+    configuration.setModule(module1);
+    JavaParameters parameters = checkCanRun(configuration);
+    String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
+                                         value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
+    List<String> lines = readLinesFrom(new File(filePath));
+    lines.remove(0);
+    Assertion.compareUnordered(
+      //category, filters, classNames...
+      new Object[]{"", "", psiClass.getQualifiedName(),
+        "test1.DerivedTest", RT_INNER_TEST_NAME,
+        "test1.nested.TestA",
+        "test1.nested.TestWithJunit4",
+        "test1.ThirdPartyTest",
+        "TestA"},
       lines);
   }
 
@@ -226,6 +248,19 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     CHECK.containsAll(tests, new Object[]{ancestorTest, childTest1, childTest2});
   }
 
+  public void testConstructors() throws IOException, ExecutionException {
+    addModule("module6", true);
+    PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("test1");
+    JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, new MapDataContext());
+    configuration.getPersistentData().setScope(TestSearchScope.SINGLE_MODULE);
+    configuration.setModule(getModule(3));
+    assertNotNull(configuration);
+    checkPackage(psiPackage.getQualifiedName(), configuration);
+    JavaParameters parameters = checkCanRun(configuration);
+    List<String> tests = extractAllInPackageTests(parameters, psiPackage);
+    CHECK.containsAll(tests, new Object[]{"test1.TestCaseInheritor"});
+  }
+
   public void testClasspathConfiguration() throws CantRunException {
     JavaParameters parameters = new JavaParameters();
     RunConfigurationModule module = new JavaRunConfigurationModule(myProject, false);
@@ -253,7 +288,10 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     CHECK.singleOccurence(classPath, getOutput(module2, true));
     CHECK.singleOccurence(classPath, getOutput(module3, false));
     CHECK.singleOccurence(classPath, getOutput(module3, true));
-    CHECK.singleOccurence(classPath, getFSPath(findFile(MOCK_JUNIT)));
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    for (File file : junit4Library.getClasses()) {
+      CHECK.singleOccurence(classPath, file.getPath());
+    }
   }
 
   public void testExternalizeJUnitConfiguration() {
@@ -295,7 +333,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     checkContains(classPath, testOuput);
     checkContains(classPath, output);
 
-    applicationConfiguration.MAIN_CLASS_NAME = junitConfiguration.getPersistentData().getMainClassName();
+    applicationConfiguration.setMainClassName(junitConfiguration.getPersistentData().getMainClassName());
     classPath = checkCanRun(applicationConfiguration).getClassPath().getPathsString();
     checkContains(classPath, testOuput);
     checkContains(classPath, output);
@@ -347,7 +385,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     PsiClass psiClass = findClass(getModule1(), "test2.NotATest.InnerApplication");
     assertNotNull(psiClass);
     ApplicationConfiguration configuration = createConfiguration(psiClass);
-    assertEquals("test2.NotATest$InnerApplication", configuration.MAIN_CLASS_NAME);
+    assertEquals("test2.NotATest$InnerApplication", configuration.getMainClassName());
     checkCanRun(configuration);
   }
 
@@ -384,7 +422,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     ApplicationConfiguration configuration =
       new ApplicationConfiguration("Third party", myProject, ApplicationConfigurationType.getInstance());
     configuration.setModule(getModule1());
-    configuration.MAIN_CLASS_NAME = "third.party.Main";
+    configuration.setMainClassName("third.party.Main");
     checkCanRun(configuration);
   }
 
@@ -480,13 +518,22 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       assertNotNull(task);
       Project project = configuration.getProject();
       try {
-        CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
-        try {
-          tester.make();
+        if (Registry.is("junit4.search.4.tests.all.in.scope")) {
           task.startSearch();
         }
-        finally {
-          tester.tearDown();
+        else {
+          CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
+          try {
+            List<CompilerMessage> messages = tester.make();
+            assertFalse(messages.stream().filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
+                                .map(message -> message.getMessage())
+                                .findFirst().orElse("Compiles fine"),
+                        messages.stream().anyMatch(message -> message.getCategory() == CompilerMessageCategory.ERROR));
+            task.startSearch();
+          }
+          finally {
+            tester.tearDown();
+          }
         }
       }
       catch (Exception e) {

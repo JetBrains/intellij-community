@@ -1,22 +1,46 @@
-# Stubs for inspect
-
-from typing import (AbstractSet, Any, Tuple, List, Dict, Callable, Generator,
-                    Mapping, MutableMapping, NamedTuple, Optional, Sequence, Union,
+import sys
+from typing import (AbstractSet, Any, Callable, Dict, Generator, List, Mapping,
+                    MutableMapping, NamedTuple, Optional, Sequence, Tuple,
+                    Union,
                     )
-from types import FrameType, ModuleType, TracebackType
+from types import CodeType, FrameType, ModuleType, TracebackType
 
 #
 # Types and members
 #
-ModuleInfo = NamedTuple('ModuleInfo', [('name', str),
-                                       ('suffix', str),
-                                       ('mode', str),
-                                       ('module_type', int),
-                                       ])
+class EndOfBlock(Exception): ...
+
+class BlockFinder:
+    indent: int
+    islambda: bool
+    started: bool
+    passline: bool
+    indecorator: bool
+    decoratorhasargs: bool
+    last: int
+    def tokeneater(self, type: int, token: str, srow_scol: Tuple[int, int],
+                   erow_ecol: Tuple[int, int], line: str) -> None: ...
+
+CO_GENERATOR = ...  # type: int
+CO_NESTED = ...  # type: int
+CO_NEWLOCALS = ...  # type: int
+CO_NOFREE = ...  # type: int
+CO_OPTIMIZED = ...  # type: int
+CO_VARARGS = ...  # type: int
+CO_VARKEYWORDS = ...  # type: int
+TPFLAGS_IS_ABSTRACT = ...  # type: int
+
+if sys.version_info < (3, 6):
+    ModuleInfo = NamedTuple('ModuleInfo', [('name', str),
+                                           ('suffix', str),
+                                           ('mode', str),
+                                           ('module_type', int),
+                                           ])
+    def getmoduleinfo(path: str) -> Optional[ModuleInfo]: ...
+
 def getmembers(object: object,
                predicate: Callable[[Any], bool] = ...,
                ) -> List[Tuple[str, Any]]: ...
-def getmoduleinfo(path: str) -> Optional[ModuleInfo]: ...
 def getmodulename(path: str) -> Optional[str]: ...
 
 def ismodule(object: object) -> bool: ...
@@ -46,6 +70,9 @@ def ismemberdescriptor(object: object) -> bool: ...
 #
 # Retrieving source code
 #
+def findsource(object: object) -> Tuple[List[str], int]: ...
+def getabsfile(object: object) -> str: ...
+def getblock(lines: Sequence[str]) -> Sequence[str]: ...
 def getdoc(object: object) -> str: ...
 def getcomments(object: object) -> str: ...
 def getfile(object: object) -> str: ...
@@ -58,6 +85,7 @@ def getsourcelines(object: object) -> Tuple[List[str], int]: ...
 # or code object"
 def getsource(object: object) -> str: ...
 def cleandoc(doc: str) -> str: ...
+def indentsize(line: str) -> int: ...
 
 
 #
@@ -65,7 +93,7 @@ def cleandoc(doc: str) -> str: ...
 #
 def signature(callable: Callable[..., Any],
               *,
-              follow_wrapped: bool = True) -> 'Signature': ...
+              follow_wrapped: bool = ...) -> 'Signature': ...
 
 class Signature:
     def __init__(self,
@@ -92,7 +120,7 @@ class Signature:
     def from_callable(cls,
                       obj: Callable[..., Any],
                       *,
-                      follow_wrapped: bool = True) -> 'Signature': ...
+                      follow_wrapped: bool = ...) -> 'Signature': ...
 
 # The name is the same as the enum's name in CPython
 class _ParameterKind: ...
@@ -148,6 +176,12 @@ ArgSpec = NamedTuple('ArgSpec', [('args', List[str]),
                                  ('defaults', tuple),
                                  ])
 
+Arguments = NamedTuple('Arguments', [('args', List[str]),
+                                     ('varargs', Optional[str]),
+                                     ('varkw', Optional[str]),
+                                     ])
+
+def getargs(co: CodeType) -> Arguments: ...
 def getargspec(func: object) -> ArgSpec: ...
 
 FullArgSpec = NamedTuple('FullArgSpec', [('args', List[str]),
@@ -169,6 +203,8 @@ ArgInfo = NamedTuple('ArgInfo', [('args', List[str]),
                                  ])
 
 def getargvalues(frame: FrameType) -> ArgInfo: ...
+def formatannotation(annotation: object, base_module: Optional[str] = ...) -> str: ...
+def formatannotationrelativeto(object: object) -> Callable[[object], str]: ...
 def formatargspec(args: List[str],
                   varargs: Optional[str] = ...,
                   varkw: Optional[str] = ...,
@@ -218,6 +254,17 @@ def unwrap(func: Callable[..., Any],
 # The interpreter stack
 #
 
+Traceback = NamedTuple(
+    'Traceback',
+    [
+        ('filename', str),
+        ('lineno', int),
+        ('function', str),
+        ('code_context', List[str]),
+        ('index', int),
+    ]
+)
+
 # Python 3.5+ (functions returning it used to return regular tuples)
 FrameInfo = NamedTuple('FrameInfo', [('frame', FrameType),
                                      ('filename', str),
@@ -227,14 +274,13 @@ FrameInfo = NamedTuple('FrameInfo', [('frame', FrameType),
                                      ('index', int),
                                      ])
 
-# TODO make the frame type more specific
-def getframeinfo(frame: Any, context: int = 1) -> FrameInfo: ...
-def getouterframes(frame: Any, context: int = 1) -> List[FrameInfo]: ...
-def getinnerframes(traceback: TracebackType, context: int = 1) -> List[FrameInfo]:
-    ...
+def getframeinfo(frame: Union[FrameType, TracebackType], context: int = ...) -> Traceback: ...
+def getouterframes(frame: Any, context: int = ...) -> List[FrameInfo]: ...
+def getinnerframes(traceback: TracebackType, context: int = ...) -> List[FrameInfo]: ...
+def getlineno(frame: FrameType) -> int: ...
 def currentframe() -> Optional[FrameType]: ...
-def stack(context: int = 1) -> List[FrameInfo]: ...
-def trace(context: int = 1) -> List[FrameInfo]: ...
+def stack(context: int = ...) -> List[FrameInfo]: ...
+def trace(context: int = ...) -> List[FrameInfo]: ...
 
 #
 # Fetching attributes statically
@@ -273,17 +319,10 @@ def getgeneratorlocals(generator: Generator[Any, Any, Any]) -> Dict[str, Any]: .
 # TODO can we be more specific than "object"?
 def getcoroutinelocals(coroutine: object) -> Dict[str, Any]: ...
 
-
-#
-# The following seems undocumented but it was already present in this file
-#
-_object = object
-
-# namedtuple('Attribute', 'name kind defining_class object')
-class Attribute(tuple):
-    name = ...  # type: str
-    kind = ...  # type: str
-    defining_class = ...  # type: type
-    object = ...  # type: _object
+Attribute = NamedTuple('Attribute', [('name', str),
+                                     ('kind', str),
+                                     ('defining_class', type),
+                                     ('object', object),
+                                     ])
 
 def classify_class_attrs(cls: type) -> List[Attribute]: ...

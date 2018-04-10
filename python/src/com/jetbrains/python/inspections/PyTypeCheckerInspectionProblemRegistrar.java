@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -110,6 +111,10 @@ class PyTypeCheckerInspectionProblemRegistrar {
     final String expectedTypeRepresentation = getSingleCalleeExpectedTypeRepresentation(expectedType,
                                                                                         argumentResult.getExpectedTypeAfterSubstitution(),
                                                                                         context);
+
+    if (PyProtocolsKt.matchingProtocolDefinitions(expectedType, actualType, context)) {
+      return "Only concrete class can be used where " + expectedTypeRepresentation + " protocol is expected";
+    }
 
     return String.format("Expected type %s, got '%s' instead", expectedTypeRepresentation, actualTypeName);
   }

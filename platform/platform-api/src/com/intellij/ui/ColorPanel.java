@@ -164,11 +164,6 @@ public class ColorPanel extends JComponent {
     updateSelectedColor();
   }
 
-  @Override
-  public void repaint() {
-    super.repaint();
-  }
-
   private static class Painter implements Highlighter.HighlightPainter, PropertyChangeListener {
     private static final String PROPERTY = "highlighter";
     private static final Painter BACKGROUND = new Painter();

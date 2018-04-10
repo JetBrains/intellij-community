@@ -32,7 +32,6 @@ import java.io.*;
 
 /**
  * @author: db
- * Date: 08.03.11
  */
 public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final TIntHashSet NULL_COLLECTION = new TIntHashSet();

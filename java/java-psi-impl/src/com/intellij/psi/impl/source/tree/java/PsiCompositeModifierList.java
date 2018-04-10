@@ -44,7 +44,7 @@ public class PsiCompositeModifierList extends LightModifierList {
     for (PsiModifierList list : mySublists) {
       ContainerUtil.addAll(annotations, list.getAnnotations());
     }
-    return annotations.toArray(new PsiAnnotation[annotations.size()]);
+    return annotations.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   @Override

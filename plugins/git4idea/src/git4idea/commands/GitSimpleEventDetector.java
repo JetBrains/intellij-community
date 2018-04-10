@@ -17,7 +17,11 @@ package git4idea.commands;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -35,13 +39,17 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
     BRANCH_NOT_FULLY_MERGED("is not fully merged"),
     MERGE_CONFLICT("Automatic merge failed; fix conflicts and then commit the result"),
     MERGE_CONFLICT_ON_UNSTASH("conflict"),
-    ALREADY_UP_TO_DATE("Already up-to-date"),
+    ALREADY_UP_TO_DATE("Already up-to-date", "Already up to date"),
     INVALID_REFERENCE("invalid reference:");
 
-    private final String myDetectionString;
+    private final List<String> myDetectionStrings;
 
-    Event(@NotNull String detectionString) {
-      myDetectionString = detectionString;
+    Event(@NotNull String... detectionStrings) {
+      myDetectionStrings = Arrays.asList(detectionStrings);
+    }
+
+    boolean matches(@NotNull String line) {
+      return ContainerUtil.exists(myDetectionStrings, s -> StringUtil.containsIgnoreCase(line, s));
     }
   }
 
@@ -51,7 +59,7 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
 
   @Override
   public void onLineAvailable(@NotNull String line, Key outputType) {
-    if (StringUtil.containsIgnoreCase(line, myEvent.myDetectionString)) {
+    if (myEvent.matches(line)) {
       myHappened = true;
     }
   }

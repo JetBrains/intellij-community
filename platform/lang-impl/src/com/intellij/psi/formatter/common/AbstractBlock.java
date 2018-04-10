@@ -19,12 +19,12 @@ package com.intellij.psi.formatter.common;
 import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,13 +95,13 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     if (file == null) {
       return EMPTY;
     }
-    
-    if (InjectedLanguageUtil.getCachedInjectedDocuments(file).isEmpty()) {
+
+    TextRange blockRange = myNode.getTextRange();
+    List<DocumentWindow> documentWindows = InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, blockRange);
+    if (documentWindows.isEmpty()) {
       return EMPTY;
     }
-    
-    TextRange blockRange = myNode.getTextRange();
-    List<DocumentWindow> documentWindows = InjectedLanguageUtil.getCachedInjectedDocuments(file);
+
     for (DocumentWindow documentWindow : documentWindows) {
       int startOffset = documentWindow.injectedToHost(0);
       int endOffset = startOffset + documentWindow.getTextLength();

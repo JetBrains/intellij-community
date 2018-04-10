@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Key;
@@ -123,7 +124,8 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
     int start = CharArrayUtil.shiftForward(context.getDocument().getCharsSequence(), context.getStartOffset(), " \t\n");
     if (shouldParenthesizeQualifier(context.getFile(), start, qualifierContext.getTailOffset())) {
-      final String space = CodeStyleSettingsManager.getSettings(qualifierContext.getProject()).SPACE_WITHIN_PARENTHESES ? " " : "";
+      final String space = CodeStyleSettingsManager.getSettings(qualifierContext.getProject())
+                             .getCommonSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_PARENTHESES ? " " : "";
       document.insertString(start, "(" + space);
       document.insertString(qualifierContext.getTailOffset(), space + ")");
     }

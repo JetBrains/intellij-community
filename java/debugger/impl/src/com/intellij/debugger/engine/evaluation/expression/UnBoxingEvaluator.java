@@ -21,7 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +31,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 8, 2010
  */
 public class UnBoxingEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance(UnBoxingEvaluator.class);

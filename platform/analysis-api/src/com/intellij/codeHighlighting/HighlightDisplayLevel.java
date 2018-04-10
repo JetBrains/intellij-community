@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;

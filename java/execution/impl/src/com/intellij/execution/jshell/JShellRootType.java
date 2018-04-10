@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 09-May-17
  */
 public final class JShellRootType extends ConsoleRootType {
   public static final String CONTENT_ID = "jshell_console";

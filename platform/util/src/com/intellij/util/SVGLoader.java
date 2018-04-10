@@ -16,7 +16,8 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
+import org.apache.batik.anim.dom.*;
+import org.apache.batik.dom.AbstractDocument;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
@@ -25,6 +26,7 @@ import org.apache.batik.util.XMLResourceDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -39,10 +41,10 @@ import java.util.List;
  * @author tav
  */
 public class SVGLoader {
-  private TranscoderInput input;
+  private final TranscoderInput input;
   private BufferedImage img;
-  private float width;
-  private float height;
+  private final double width;
+  private final double height;
 
   private enum SizeAttr {
     width,
@@ -121,7 +123,7 @@ public class SVGLoader {
     return load(null, stream, scale);
   }
 
-  public static Image load(@Nullable URL url, @NotNull InputStream stream , float scale) throws IOException {
+  public static Image load(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
     try {
       return new SVGLoader(url, stream, scale).createImage();
     }
@@ -130,7 +132,7 @@ public class SVGLoader {
     }
   }
 
-  private SVGLoader(@Nullable URL url, InputStream stream, float scale) throws IOException {
+  private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
     Document document = null;
     String uri = null;
     try {
@@ -138,7 +140,7 @@ public class SVGLoader {
     }
     catch (URISyntaxException ignore) {
     }
-    document = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName()).
+    document = new MySAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName()).
       createDocument(uri, stream);
     if (document == null) {
       throw new IOException("document not created");
@@ -155,5 +157,34 @@ public class SVGLoader {
     r.addTranscodingHint(ImageTranscoder.KEY_HEIGHT, new Float(height));
     r.transcode(input, null);
     return img;
+  }
+
+  /**
+   * A workaround for https://issues.apache.org/jira/browse/BATIK-1220
+   */
+  private static class MySAXSVGDocumentFactory extends SAXSVGDocumentFactory {
+    public MySAXSVGDocumentFactory(String parser) {
+      super(parser);
+      implementation = new MySVGDOMImplementation();
+    }
+  }
+
+  private static class MySVGDOMImplementation extends SVGDOMImplementation {
+    static {
+      svg11Factories.put("rect", new SVGDOMImplementation.RectElementFactory() {
+        @Override
+        public Element create(String prefix, Document doc) {
+          return new SVGOMRectElement(prefix, (AbstractDocument)doc) {
+            @Override
+            protected SVGOMAnimatedLength createLiveAnimatedLength(String ns, String ln, String def, short dir, boolean nonneg) {
+              if (def == null && ("width".equals(ln) || "height".equals(ln))) {
+                def = "0"; // used in case of missing width/height attr to avoid org.apache.batik.bridge.BridgeException
+              }
+              return super.createLiveAnimatedLength(ns, ln, def, dir, nonneg);
+            }
+          };
+        }
+      });
+    }
   }
 }

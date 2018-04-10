@@ -51,7 +51,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + session.getPresentableText(myT));
         }
         else if (TypeCompatibilityConstraint.isUncheckedConversion(myT, exprType) && !JavaGenericsUtil.isReifiableType(myT)) {
-          session.setErasedDuringApplicabilityCheck();
+          session.setErased();
         }
         return assignmentCompatible;
       }
@@ -180,6 +180,10 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType, expression);
           }
           if (callSession.repeatInferencePhases()) {
+            if (callSession.isErased() && 
+                !JavaGenericsUtil.isReifiableType(targetType) && session.getInferenceVariable(targetType) == null) {
+              session.setErased();
+            }
             return callSession;
           }
         }

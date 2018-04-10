@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,16 +31,15 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -125,35 +123,25 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     final PsiClass firstClass = classes.get(0);
     final Project project = firstClass.getProject();
 
-    final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(renderer);
-    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    renderer.installSpeedSearch(builder);
-
     final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
-    if (preselection != null) {
-      list.setSelectedValue(preselection, true);
-    }
+    PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
+    IPopupChooserBuilder<PsiClass> builder = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(classes)
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setSelectedValue(preselection, true)
+      .setRenderer(renderer)
+      .setItemChosenCallback((aClass) -> {
+        AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
+        CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(project, aClass), getText(), null);
+      })
+      .setTitle(QuickFixBundle.message("target.class.chooser.title"));
 
-    Runnable runnable = () -> {
-      int index = list.getSelectedIndex();
-      if (index < 0) return;
-      final PsiClass aClass = (PsiClass) list.getSelectedValue();
-      AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
-      CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(project, aClass), getText(), null);
-    };
-
-    builder.
-      setTitle(QuickFixBundle.message("target.class.chooser.title")).
-      setItemChoosenCallback(runnable).
-      createPopup().
-      showInBestPositionFor(editor);
+    renderer.installSpeedSearch(builder);
+    builder.createPopup().showInBestPositionFor(editor);
   }
 
   @Nullable("null means unable to open the editor")
-  protected static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
+  public static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     LOG.assertTrue(range != null, element.getClass());
     int textOffset = range.getStartOffset();
@@ -189,11 +177,11 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     if (parentClass != null && (parentClass.equals(targetClass) || PsiTreeUtil.isAncestor(targetClass, parentClass, true))) {
       return PsiModifier.PRIVATE;
     } else {
-      return CodeStyleSettingsManager.getSettings(targetClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).VISIBILITY;
+      return JavaCodeStyleSettings.getInstance(targetClass.getContainingFile()).VISIBILITY;
     }
   }
 
-  protected static boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiClass targetClass) {
+  public static boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiClass targetClass) {
 
     PsiExpression qualifierExpression = ref.getQualifierExpression();
     while (qualifierExpression instanceof PsiParenthesizedExpression) {
@@ -253,11 +241,12 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return null;
   }
 
-  protected static PsiSubstitutor getTargetSubstitutor (PsiElement element) {
+  @NotNull
+  public static PsiSubstitutor getTargetSubstitutor(@Nullable PsiElement element) {
     if (element instanceof PsiNewExpression) {
-      JavaResolveResult result = ((PsiNewExpression)element).getClassOrAnonymousClassReference().advancedResolve(false);
-      PsiSubstitutor substitutor = result.getSubstitutor();
-      return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
+      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
+      JavaResolveResult result = reference == null ? JavaResolveResult.EMPTY : reference.advancedResolve(false);
+      return result.getSubstitutor();
     }
 
     PsiExpression qualifier = getQualifier(element);
@@ -408,7 +397,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return psiClass.getManager().isInProject(psiClass);
   }
 
-  protected static void startTemplate (@NotNull Editor editor, final Template template, @NotNull final Project project) {
+  public static void startTemplate (@NotNull Editor editor, final Template template, @NotNull final Project project) {
     startTemplate(editor, template, project, null);
   }
 

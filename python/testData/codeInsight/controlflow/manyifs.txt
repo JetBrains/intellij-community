@@ -7,10 +7,10 @@
 6(7) element: PyStatementList. Condition: a == b:true
 7(8) element: PyAssignmentStatement
 8(25) WRITE ACCESS: var
-9(10,22) element: PyIfPartElif. Condition: a == b:false
+9(10) element: PyIfPartElif. Condition: a == b:false
 10(11) READ ACCESS: aa
-11(12) READ ACCESS: bb
-12(13) element: PyIfPartElif. Condition: aa == bb:true
+11(12,22) READ ACCESS: bb
+12(13) element: PyStatementList. Condition: aa == bb:true
 13(14) element: PyAssignmentStatement
 14(15) READ ACCESS: same_changet_expression
 15(16) WRITE ACCESS: bbb
@@ -20,7 +20,7 @@
 19(20) ASSERTTYPE ACCESS: bbb
 20(21) element: PyAssignmentStatement
 21(25) WRITE ACCESS: var
-22(23) element: PyElsePart. Condition: aa == bb:false
+22(23) element: PyStatementList. Condition: aa == bb:false
 23(24) element: PyAssignmentStatement
 24(25) WRITE ACCESS: var
 25(26) element: PyReturnStatement

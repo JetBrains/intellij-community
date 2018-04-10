@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection;
 
@@ -24,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,14 +26,16 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Generated;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
 
 public class JavaSuppressionUtil {
+  private static final String GENERATED_ANNOTATION_NAME = "javax.annotation.Generated";
+
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
+
   public static boolean alreadyHas14Suppressions(@NotNull PsiJavaDocumentedElement commentOwner) {
     final PsiDocComment docComment = commentOwner.getDocComment();
     return docComment != null && docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME) != null;
@@ -141,7 +132,7 @@ public class JavaSuppressionUtil {
       if (directory != null) {
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         if (aPackage != null) {
-          return AnnotationUtil.findAnnotation(aPackage, Generated.class.getName());
+          return AnnotationUtil.findAnnotation(aPackage, GENERATED_ANNOTATION_NAME);
         }
       }
     }
@@ -157,7 +148,7 @@ public class JavaSuppressionUtil {
         return modifierList != null ? AnnotationUtil.findAnnotation(owner, SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
       }
     }
-    return AnnotationUtil.findAnnotation(owner, Generated.class.getName());
+    return AnnotationUtil.findAnnotation(owner, GENERATED_ANNOTATION_NAME);
   }
 
   static PsiElement getDocCommentToolSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {
@@ -315,17 +306,10 @@ public class JavaSuppressionUtil {
     if (module == null) return false;
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
     if (jdk == null) return false;
-    JavaSdkVersion version = getVersion(jdk);
+    final JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
     if (version == null) return false;
     final boolean is_1_5 = version.isAtLeast(JavaSdkVersion.JDK_1_5);
     return DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings() && is_1_5 && PsiUtil.isLanguageLevel5OrHigher(file);
-  }
-
-  @Nullable
-  private static JavaSdkVersion getVersion(@NotNull Sdk sdk) {
-    String version = sdk.getVersionString();
-    if (version == null) return null;
-    return JavaSdkVersion.fromVersionString(version);
   }
 
   @Nullable

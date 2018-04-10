@@ -401,6 +401,8 @@ public class DarculaLaf extends BasicLookAndFeel {
       }
     } else if (key.endsWith("Size")) {
       return parseSize(value);
+    } else if (key.endsWith("Width")) {
+      return getInteger(value);
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
@@ -570,9 +572,5 @@ public class DarculaLaf extends BasicLookAndFeel {
   @Override
   public boolean getSupportsWindowDecorations() {
     return true;
-  }
-
-  public static Icon loadIcon(String iconName) {
-    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/" + iconName, DarculaLaf.class, true);
   }
 }

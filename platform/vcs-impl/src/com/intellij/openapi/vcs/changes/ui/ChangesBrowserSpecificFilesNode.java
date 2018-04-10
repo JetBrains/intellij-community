@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-public class ChangesBrowserSpecificFilesNode extends ChangesBrowserNode {
+public class ChangesBrowserSpecificFilesNode extends ChangesBrowserNode<Object> {
   protected final boolean myIsMany;
   @NotNull protected final Runnable myDialogShower;
   private final int myManyFileCount;

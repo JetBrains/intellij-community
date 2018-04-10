@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -84,13 +85,14 @@ public class InferenceSessionContainer {
         if (topLevelCall != null) {
 
           InferenceSession session;
-          if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() || LambdaUtil.isLambdaParameterCheck()) {
+          if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() ||
+              LambdaUtil.isLambdaParameterCheck() || !policy.equals(DefaultParameterTypeInferencePolicy.INSTANCE)) {
             session = startTopLevelInference(topLevelCall, policy);
           }
           else {
             session = CachedValuesManager.getCachedValue(topLevelCall,
                                                          () -> new CachedValueProvider.Result<>(
-                                                           startTopLevelInference(topLevelCall, policy),
+                                                           startTopLevelInference(topLevelCall, DefaultParameterTypeInferencePolicy.INSTANCE),
                                                            PsiModificationTracker.MODIFICATION_COUNT));
 
             if (session != null) {
@@ -269,7 +271,7 @@ public class InferenceSessionContainer {
   private static PsiSubstitutor replaceVariables(Collection<InferenceVariable> inferenceVariables) {
     final List<InferenceVariable> targetVars = new ArrayList<>();
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-    final InferenceVariable[] oldVars = inferenceVariables.toArray(new InferenceVariable[inferenceVariables.size()]);
+    final InferenceVariable[] oldVars = inferenceVariables.toArray(new InferenceVariable[0]);
     for (InferenceVariable variable : oldVars) {
       final InferenceVariable newVariable = new InferenceVariable(variable.getCallContext(), variable.getParameter(), variable.getName());
       substitutor = substitutor.put(variable, JavaPsiFacade.getElementFactory(variable.getProject()).createType(newVariable));

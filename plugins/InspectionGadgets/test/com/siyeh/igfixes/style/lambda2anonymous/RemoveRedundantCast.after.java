@@ -9,8 +9,7 @@ class Test {
   {
     foo(new J() {
         @Override
-        public void m() {
-        }
+        public void m() {}
     });
   }
 }

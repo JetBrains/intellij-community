@@ -109,7 +109,7 @@ public class MigrateToNewDiffUtil {
     @NotNull
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-      throws DiffRequestProducerException, ProcessCanceledException {
+      throws ProcessCanceledException {
       return new ErrorDiffRequest(this, "Can't convert from old-style request");
     }
   }

@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
@@ -117,14 +120,22 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   @Override
-  void updateToolTipText() {
-    setToolTipText(myPresentation.getDescription());
+  protected void updateToolTipText() {
+    String description = myPresentation.getDescription();
+    if (Registry.is("ide.helptooltip.enabled")) {
+      HelpTooltip.dispose(this);
+      if (StringUtil.isNotEmpty(description)) {
+        new HelpTooltip().setDescription(description).installOn(this);
+      }
+    } else {
+      setToolTipText(description);
+    }
   }
 
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
     FontMetrics fm = getFontMetrics(getFont());
-    Rectangle viewRect = new Rectangle(getSize());
+    Rectangle viewRect = getButtonRect();
     JBInsets.removeFrom(viewRect, getInsets());
 
     Rectangle iconRect = new Rectangle();
@@ -133,9 +144,9 @@ public class ActionButtonWithText extends ActionButton {
                                                      SwingConstants.CENTER, horizontalTextAlignment(),
                                                      SwingConstants.CENTER, horizontalTextPosition(),
                                                      viewRect, iconRect, textRect, iconTextSpace());
-    ActionButtonLook look = ActionButtonLook.DEFAULT_LOOK;
+    ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
     look.paintBackground(g, this);
-    look.paintIconAt(g, this, icon, iconRect.x, iconRect.y);
+    look.paintIconAt(g, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
     UISettings.setupAntialiasing(g);
@@ -144,6 +155,10 @@ public class ActionButtonWithText extends ActionButton {
                                               getMnemonicCharIndex(text),
                                               textRect.x,
                                               textRect.y + fm.getAscent());
+  }
+
+  protected Rectangle getButtonRect() {
+    return new Rectangle(getSize());
   }
 
   @Override
@@ -158,10 +173,12 @@ public class ActionButtonWithText extends ActionButton {
     return UIUtil.getInactiveTextColor();
   }
 
+  @SuppressWarnings("unused")
   public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {
     myHorizontalTextPosition = position;
   }
 
+  @SuppressWarnings("unused")
   public void setHorizontalTextAlignment(@MagicConstant(flagsFromClass = SwingConstants.class) int alignment) {
     myHorizontalTextAlignment = alignment;
   }

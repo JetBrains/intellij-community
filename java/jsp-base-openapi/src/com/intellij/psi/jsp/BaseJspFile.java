@@ -46,9 +46,11 @@ public interface BaseJspFile extends XmlFile {
    */
   PsiFile getErrorPage();
 
+  @Override
   @NotNull
   JspxFileViewProvider getViewProvider();
 
+  @Override
   @NotNull
   XmlTag getRootTag();
 }

@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +48,7 @@ import java.util.Map;
  */
 public class HgMockVcsHelper extends AbstractVcsHelper {
 
-  private Collection<VcsHelperListener> myListeners = new THashSet<>();
+  private final Collection<VcsHelperListener> myListeners = new THashSet<>();
 
   public HgMockVcsHelper(@NotNull Project project) {
     super(project);
@@ -119,14 +117,13 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public void showFileHistory(@NotNull VcsHistoryProvider historyProvider, @NotNull FilePath path, @NotNull AbstractVcs vcs, String repositoryPath) {
+  public void showFileHistory(@NotNull VcsHistoryProvider historyProvider, @NotNull FilePath path, @NotNull AbstractVcs vcs) {
   }
 
   @Override
   public void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
                               AnnotationProvider annotationProvider,
                               @NotNull FilePath path,
-                              String repositoryPath,
                               @NotNull AbstractVcs vcs) {
   }
 

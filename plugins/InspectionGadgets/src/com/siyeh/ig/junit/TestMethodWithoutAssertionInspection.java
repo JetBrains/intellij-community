@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.ui.UiUtils;
 
@@ -29,15 +30,17 @@ public class TestMethodWithoutAssertionInspection extends TestMethodWithoutAsser
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
     final ListTable table = new ListTable(
       new ListWrappingTableModel(Arrays.asList(methodMatcher.getClassNames(), methodMatcher.getMethodNamePatterns()), "Assertion class name",
                                  InspectionGadgetsBundle.message("method.name.regex")));
-    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose assertion class");
-    final CheckBox checkBox =
+    final CheckBox checkBox1 =
       new CheckBox(InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion"), this, "assertKeywordIsAssertion");
-    panel.add(tablePanel, BorderLayout.CENTER);
-    panel.add(checkBox, BorderLayout.SOUTH);
-    return panel;
+    final CheckBox checkBox2 =
+      new CheckBox("Ignore test methods which declare exceptions", this, "ignoreIfExceptionThrown");
+    return new FormBuilder()
+      .addComponentFillVertically(UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose assertion class"), 0)
+      .addComponent(checkBox1)
+      .addComponent(checkBox2)
+      .getPanel();
   }
 }

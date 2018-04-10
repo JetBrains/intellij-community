@@ -15,6 +15,9 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
@@ -83,13 +86,16 @@ public class BadOddnessInspection extends BaseInspection {
       if (rhs == null) {
         return false;
       }
-      return hasValue(rhs, 2) || hasValue(lhs, 2);
+      return hasValue(rhs, 2) && canBeNegative(lhs);
+    }
+
+    private static boolean canBeNegative(PsiExpression lhs) {
+      LongRangeSet range = CommonDataflow.getExpressionFact(lhs, DfaFactType.RANGE);
+      return range == null || range.min() < 0;
     }
 
     private static boolean hasValue(PsiExpression expression, int testValue) {
-      final Integer value = (Integer)
-        ConstantExpressionUtil.computeCastTo(
-          expression, PsiType.INT);
+      final Integer value = (Integer)ConstantExpressionUtil.computeCastTo(expression, PsiType.INT);
       return value != null && value.intValue() == testValue;
     }
   }

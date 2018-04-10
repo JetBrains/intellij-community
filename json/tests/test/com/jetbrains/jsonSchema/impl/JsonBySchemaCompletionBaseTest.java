@@ -47,7 +47,7 @@ public abstract class JsonBySchemaCompletionBaseTest extends CompletionTestCase 
 
     final List<LookupElement> foundVariants = JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element, element);
     Collections.sort(foundVariants, Comparator.comparing(LookupElement::getLookupString));
-    myItems = foundVariants.toArray(new LookupElement[foundVariants.size()]);
+    myItems = foundVariants.toArray(LookupElement.EMPTY_ARRAY);
     assertStringItems(variants);
   }
 }

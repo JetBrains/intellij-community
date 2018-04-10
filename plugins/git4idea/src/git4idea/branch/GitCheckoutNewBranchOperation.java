@@ -47,6 +47,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @Override
   protected void execute() {
     boolean fatalErrorHappened = false;
+    branchWillChange();
     while (hasMoreRepositories() && !fatalErrorHappened) {
       final GitRepository repository = next();
 
@@ -69,7 +70,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
 
     if (!fatalErrorHappened) {
       notifySuccess();
-      updateRecentBranch();
+      updateRecentBranch(myNewBranchName);
     }
   }
 

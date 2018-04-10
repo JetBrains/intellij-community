@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports Comparators defined as lambda expressions which could be expressed using
+methods like <code>Comparator.comparing()</code>.
+<p>Some comparators like <code>(person1, person2) -> person1.getName().compareTo(person2.getName())</code>
+  could be simplified like this: <code>Comparator.comparing(Person::getName)</code>.</p>
+<p>Also suggests to replace chain comparisons with Comparator.thenComparing(), e.g.
+  <code>
+    int res = o1.first.compareTo(o2.first);
+    if(res == 0) res = o1.second.compareTo(o2.second);
+    if(res == 0) res = o1.third - o2.third;
+    return res;
+  </code> will be replaced with
+  <code>
+    objs.sort(Comparator.comparing((Obj o) -> o.first).thenComparing(o -> o.second).thenComparingInt(o -> o.third));
+  </code>
+</p>
+<!-- tooltip end -->
+<p><small>New in 2016.3</small></p>
+</body>
+</html>

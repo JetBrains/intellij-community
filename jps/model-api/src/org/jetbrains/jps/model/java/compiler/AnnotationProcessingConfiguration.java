@@ -22,7 +22,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 5/27/12
  */
 public interface AnnotationProcessingConfiguration {
   boolean isEnabled();

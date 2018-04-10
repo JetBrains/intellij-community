@@ -21,7 +21,6 @@ import java.awt.geom.AffineTransform;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 29
  * @author 2003
  */
 public class ScalableIconComponent extends JComponent {

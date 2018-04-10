@@ -1,56 +1,39 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.info;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.BaseNodeDescription;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
+import java.time.Instant;
 import java.util.Date;
 
-/**
- * @author Konstantin Kolosovsky.
- */
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class Info extends BaseNodeDescription {
 
   public static final String SCHEDULE_ADD = "add";
 
+  private static final Date DEFAULT_COMMITTED_DATE = Date.from(Instant.EPOCH);
+
   private final File myFile;
   private final String myPath;
-  private final SVNURL myURL;
-  @NotNull private final SVNRevision myRevision;
-  private final SVNURL myRepositoryRootURL;
+  private final Url myURL;
+  @NotNull private final Revision myRevision;
+  private final Url myRepositoryRootURL;
   private final String myRepositoryUUID;
-  private final SVNRevision myCommittedRevision;
+  private final Revision myCommittedRevision;
   private final Date myCommittedDate;
   private final String myAuthor;
   @Nullable private final Lock myLock;
   private final boolean myIsRemote;
   private final String mySchedule;
-  private final SVNURL myCopyFromURL;
-  private final SVNRevision myCopyFromRevision;
+  private final Url myCopyFromURL;
+  private final Revision myCopyFromRevision;
   @Nullable private final File myConflictOldFile;
   @Nullable private final File myConflictNewFile;
   @Nullable private final File myConflictWrkFile;
@@ -58,30 +41,9 @@ public class Info extends BaseNodeDescription {
   private final Depth myDepth;
   @Nullable private final TreeConflictDescription myTreeConflict;
 
-  @NotNull
-  public static Info create(@NotNull SVNInfo info) {
-    Info result;
-
-    if (info.isRemote()) {
-      result = new Info(info.getPath(), info.getURL(), info.getRevision(), NodeKind.from(info.getKind()), info.getRepositoryUUID(),
-                        info.getRepositoryRootURL(), info.getCommittedRevision().getNumber(), info.getCommittedDate(), info.getAuthor(),
-                        Lock.create(info.getLock()), Depth.from(info.getDepth()));
-    }
-    else {
-      result =
-        new Info(info.getFile(), info.getURL(), info.getRepositoryRootURL(), info.getRevision().getNumber(), NodeKind.from(info.getKind()),
-                 info.getRepositoryUUID(), info.getCommittedRevision().getNumber(), toString(info.getCommittedDate()), info.getAuthor(),
-                 info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(), getName(info.getConflictOldFile()),
-                 getName(info.getConflictNewFile()), getName(info.getConflictWrkFile()), getName(info.getPropConflictFile()),
-                 Lock.create(info.getLock()), Depth.from(info.getDepth()), TreeConflictDescription.create(info.getTreeConflict()));
-    }
-
-    return result;
-  }
-
   public Info(File file,
-              SVNURL url,
-              SVNURL rootURL,
+              Url url,
+              Url rootURL,
               long revision,
               @NotNull NodeKind kind,
               String uuid,
@@ -89,7 +51,7 @@ public class Info extends BaseNodeDescription {
               String committedDate,
               String author,
               String schedule,
-              SVNURL copyFromURL,
+              Url copyFromURL,
               long copyFromRevision,
               @Nullable String conflictOldFileName,
               @Nullable String conflictNewFileName,
@@ -101,18 +63,18 @@ public class Info extends BaseNodeDescription {
     super(kind);
     myFile = file;
     myURL = url;
-    myRevision = SVNRevision.create(revision);
+    myRevision = Revision.of(revision);
     myRepositoryUUID = uuid;
     myRepositoryRootURL = rootURL;
 
-    myCommittedRevision = SVNRevision.create(committedRevision);
-    myCommittedDate = committedDate != null ? SVNDate.parseDate(committedDate) : null;
+    myCommittedRevision = Revision.of(committedRevision);
+    myCommittedDate = committedDate != null ? notNull(SvnUtil.parseDate(committedDate), DEFAULT_COMMITTED_DATE) : null;
     myAuthor = author;
 
     mySchedule = schedule;
 
     myCopyFromURL = copyFromURL;
-    myCopyFromRevision = SVNRevision.create(copyFromRevision);
+    myCopyFromRevision = Revision.of(copyFromRevision);
 
     myLock = lock;
     myTreeConflict = treeConflict;
@@ -129,11 +91,11 @@ public class Info extends BaseNodeDescription {
   }
 
   public Info(String path,
-              SVNURL url,
-              @NotNull SVNRevision revision,
+              Url url,
+              @NotNull Revision revision,
               @NotNull NodeKind kind,
               String uuid,
-              SVNURL reposRootURL,
+              Url reposRootURL,
               long committedRevision,
               Date date,
               String author,
@@ -147,7 +109,7 @@ public class Info extends BaseNodeDescription {
     myRepositoryUUID = uuid;
 
     myCommittedDate = date;
-    myCommittedRevision = SVNRevision.create(committedRevision);
+    myCommittedRevision = Revision.of(committedRevision);
     myAuthor = author;
 
     myLock = lock;
@@ -173,7 +135,7 @@ public class Info extends BaseNodeDescription {
     return myCommittedDate;
   }
 
-  public SVNRevision getCommittedRevision() {
+  public Revision getCommittedRevision() {
     return myCommittedRevision;
   }
 
@@ -197,11 +159,11 @@ public class Info extends BaseNodeDescription {
     return myTreeConflict;
   }
 
-  public SVNRevision getCopyFromRevision() {
+  public Revision getCopyFromRevision() {
     return myCopyFromRevision;
   }
 
-  public SVNURL getCopyFromURL() {
+  public Url getCopyFromURL() {
     return myCopyFromURL;
   }
 
@@ -232,7 +194,7 @@ public class Info extends BaseNodeDescription {
     return myPropConflictFile;
   }
 
-  public SVNURL getRepositoryRootURL() {
+  public Url getRepositoryRootURL() {
     return myRepositoryRootURL;
   }
 
@@ -241,7 +203,7 @@ public class Info extends BaseNodeDescription {
   }
 
   @NotNull
-  public SVNRevision getRevision() {
+  public Revision getRevision() {
     return myRevision;
   }
 
@@ -249,7 +211,7 @@ public class Info extends BaseNodeDescription {
     return mySchedule;
   }
 
-  public SVNURL getURL() {
+  public Url getURL() {
     return myURL;
   }
 
@@ -260,15 +222,5 @@ public class Info extends BaseNodeDescription {
   @Nullable
   private static File resolveConflictFile(@Nullable File file, @Nullable String path) {
     return file != null && path != null ? new File(file.getParentFile(), path) : null;
-  }
-
-  @Nullable
-  private static String getName(@Nullable File file) {
-    return file != null ? file.getName() : null;
-  }
-
-  @Nullable
-  private static String toString(@Nullable Date date) {
-    return date != null ? date.toString() : null;
   }
 }

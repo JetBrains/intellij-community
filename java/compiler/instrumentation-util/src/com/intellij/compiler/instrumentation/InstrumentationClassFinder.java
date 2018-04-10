@@ -32,7 +32,6 @@ import java.util.zip.ZipFile;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 2/16/12
  */
 public class InstrumentationClassFinder {
   private static final PseudoClass[] EMPTY_PSEUDOCLASS_ARRAY = new PseudoClass[0];

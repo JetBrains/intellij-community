@@ -51,7 +51,7 @@ public class EclipseCompiler implements BackendCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new EclipseCompilerConfigurable(EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class));
+    return new EclipseCompilerConfigurable(myProject, EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class));
   }
 
   @NotNull

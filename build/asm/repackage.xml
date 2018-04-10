@@ -42,7 +42,9 @@
     <patch dir="${src.dir}" strip="0" patchfile="1_version_check.patch" failonerror="true"/>
     <patch dir="${src.dir}" strip="0" patchfile="2_coverage_fix.patch" failonerror="true"/>
     <patch dir="${src.dir}" strip="0" patchfile="3_api_version.patch" failonerror="true"/>
-    <delete file="${src.dir}/org/objectweb/asm/optimizer/ModuleInfoBndPlugin.java" quiet="true"/>
+    <patch dir="${src.dir}" strip="0" patchfile="4_compat_const.patch" failonerror="true"/>
+    <delete file="${src.dir}/org/objectweb/asm/tools/ModuleInfoBndPlugin.java" quiet="true"/>
+    <delete dir="${src.dir}/org/objectweb/asm/optimizer" quiet="true"/>
   </target>
 
   <target name="repackage" depends="patch">
@@ -53,7 +55,7 @@
 
   <target name="compile" depends="repackage">
     <mkdir dir="${out.dir}"/>
-    <javac srcdir="${src.dir}" destdir="${out.dir}" source="1.5" target="1.5" debug="true"/>
+    <javac srcdir="${src.dir}" destdir="${out.dir}" source="1.5" target="1.5" debug="true" includeantruntime="false"/>
   </target>
 
   <target name="package" depends="compile">

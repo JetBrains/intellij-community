@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import org.jetbrains.annotations.NotNull;
 
 public class ImportStaticStatementElement extends ImportStatementBaseElement {
 
@@ -46,7 +47,7 @@ public class ImportStaticStatementElement extends ImportStatementBaseElement {
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     final int role = super.getChildRole(child);
     if (role != ChildRoleBase.NONE) return role;
     if (child.getElementType() == JavaElementType.IMPORT_STATIC_REFERENCE) {

@@ -66,7 +66,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
   }
 
   private SimpleTextAttributes patchMainTextAttrs(InspectionTreeNode node, SimpleTextAttributes attributes) {
-    if (node.isExcluded(myView.getExcludedManager())) {
+    if (node.isExcluded()) {
       return attributes.derive(attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, null, null, null);
     }
     if (node instanceof SuppressableInspectionTreeNode && ((SuppressableInspectionTreeNode)node).isQuickFixAppliedFromView()) {

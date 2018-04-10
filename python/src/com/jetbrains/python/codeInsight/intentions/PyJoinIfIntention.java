@@ -85,7 +85,7 @@ public class PyJoinIfIntention extends PyBaseIntentionAction {
 
     PyStatement firstStatement = getFirstStatement(ifStatement);
     if (ifStatement == null) return;
-    if (firstStatement != null && firstStatement instanceof PyIfStatement) {
+    if (firstStatement instanceof PyIfStatement) {
       PyExpression condition = ((PyIfStatement)firstStatement).getIfPart().getCondition();
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       PyExpression ifCondition = ifStatement.getIfPart().getCondition();

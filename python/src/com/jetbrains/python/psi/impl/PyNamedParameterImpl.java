@@ -155,10 +155,10 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @Nullable
   public PyExpression getDefaultValue() {
     final PyNamedParameterStub stub = getStub();
-    if (stub != null && !stub.hasDefaultValue()) {
+    if (stub != null && stub.getDefaultValueText() == null) {
       return null;
     }
-    ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     if (nodes.length > 0) {
       return (PyExpression)nodes[0].getPsi();
     }
@@ -169,9 +169,19 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   public boolean hasDefaultValue() {
     final PyNamedParameterStub stub = getStub();
     if (stub != null) {
-      return stub.hasDefaultValue();
+      return stub.getDefaultValueText() != null;
     }
     return getDefaultValue() != null;
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultValueText() {
+    final PyNamedParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getDefaultValueText();
+    }
+    return ParamHelper.getDefaultValueText(getDefaultValue());
   }
 
   @NotNull

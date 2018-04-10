@@ -16,12 +16,12 @@
 package git4idea.util;
 
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ui.FilePathChangesTreeList;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -37,7 +37,7 @@ public class GitSimplePathsBrowser extends JPanel {
   public GitSimplePathsBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
     super(new BorderLayout());
 
-    FilePathChangesTreeList browser = createBrowser(project, absolutePaths);
+    ChangesTree browser = createBrowser(project, absolutePaths);
     ActionToolbar toolbar = createToolbar(browser);
 
     add(toolbar.getComponent(), BorderLayout.NORTH);
@@ -45,15 +45,13 @@ public class GitSimplePathsBrowser extends JPanel {
   }
 
   @NotNull
-  private static FilePathChangesTreeList createBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
+  private static ChangesTree createBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
     List<FilePath> filePaths = toFilePaths(absolutePaths);
-    FilePathChangesTreeList browser = new FilePathChangesTreeList(project, filePaths, false, false, null, null);
-    browser.setChangesToDisplay(filePaths);
-    return browser;
+    return new ChangesTreeImpl.FilePaths(project, false, false, filePaths);
   }
 
   @NotNull
-  private static ActionToolbar createToolbar(@NotNull FilePathChangesTreeList browser) {
+  private static ActionToolbar createToolbar(@NotNull ChangesTree browser) {
     DefaultActionGroup actionGroup = new DefaultActionGroup(browser.getTreeActions());
     return ActionManager.getInstance().createActionToolbar("GitPathBrowser", actionGroup, true);
   }

@@ -16,10 +16,12 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
@@ -29,6 +31,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class PushDownConflicts {
@@ -76,6 +79,46 @@ public class PushDownConflicts {
     if (annotation != null && myMovedMembers.contains(LambdaUtil.getFunctionalInterfaceMethod(myClass))) {
       myConflicts.putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
     }
+    boolean isAbstract = myClass.hasModifierProperty(PsiModifier.ABSTRACT);
+    for (PsiMember member : myMovedMembers) {
+      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+        member.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            if (expression.getMethodExpression().getQualifierExpression() instanceof PsiSuperExpression) {
+              final PsiMethod resolvedMethod = expression.resolveMethod();
+              if (resolvedMethod != null) {
+                final PsiClass resolvedClass = resolvedMethod.getContainingClass();
+                if (resolvedClass != null && myClass.isInheritor(resolvedClass, true)) {
+                  final PsiMethod methodBySignature = myClass.findMethodBySignature(resolvedMethod, false);
+                  if (methodBySignature != null && !myMovedMembers.contains(methodBySignature)) {
+                    myConflicts.putValue(expression, "Super method call will resolve to another method");
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+      if (!member.hasModifierProperty(PsiModifier.STATIC) && member instanceof PsiMethod && !myAbstractMembers.contains(member)) {
+        Set<PsiClass> unrelatedDefaults = new LinkedHashSet<>();
+        for (PsiMethod superMethod : ((PsiMethod)member).findSuperMethods()) {
+          if (!isAbstract && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            myConflicts.putValue(member, "Non abstract " + RefactoringUIUtil.getDescription(myClass, false) + " will miss implementation of " + RefactoringUIUtil.getDescription(superMethod, false));
+            break;
+          }
+          if (superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+            unrelatedDefaults.add(superMethod.getContainingClass());
+            if (unrelatedDefaults.size() > 1) {
+              myConflicts.putValue(member, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(myClass, false) + " will inherit unrelated defaults from " +
+                                                                            StringUtil.join(unrelatedDefaults, aClass -> RefactoringUIUtil.getDescription(aClass, false)," and ")));
+              break;
+            }
+          }
+        }
+      }
+    }
   }
 
   public void checkTargetClassConflicts(final PsiElement targetElement, final PsiElement context) {
@@ -88,33 +131,15 @@ public class PushDownConflicts {
     if (targetClass != null) {
       for (final PsiMember movedMember : myMovedMembers) {
         checkMemberPlacementInTargetClassConflict(targetClass, movedMember);
-        movedMember.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (expression.getMethodExpression().getQualifierExpression() instanceof PsiSuperExpression) {
-              final PsiMethod resolvedMethod = expression.resolveMethod();
-              if (resolvedMethod != null) {
-                final PsiClass resolvedClass = resolvedMethod.getContainingClass();
-                if (resolvedClass != null) {
-                  if (myClass.isInheritor(resolvedClass, true)) {
-                    final PsiMethod methodBySignature = myClass.findMethodBySignature(resolvedMethod, false);
-                    if (methodBySignature != null && !myMovedMembers.contains(methodBySignature)) {
-                      myConflicts.putValue(expression, "Super method call will resolve to another method");
-                    }
-                  }
-                }
-              }
-            }
-          }
-        });
       }
     }
     Members:
     for (PsiMember member : myMovedMembers) {
+      if (member.hasModifierProperty(PsiModifier.STATIC)) continue;
       for (PsiReference ref : ReferencesSearch.search(member, member.getResolveScope(), false)) {
         final PsiElement element = ref.getElement();
         if (element instanceof PsiReferenceExpression) {
+          if (myConflicts.containsKey(element)) continue;
           final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
           final PsiExpression qualifier = referenceExpression.getQualifierExpression();
           if (qualifier != null) {
@@ -179,6 +204,12 @@ public class PushDownConflicts {
           myConflicts.putValue(innerClass, message);
         }
       }
+    }
+
+    if (movedMember.hasModifierProperty(PsiModifier.STATIC) &&
+        PsiUtil.getEnclosingStaticElement(targetClass, null) == null &&
+        !(targetClass.getParent() instanceof PsiFile)) {
+      myConflicts.putValue(movedMember, "Static " + RefactoringUIUtil.getDescription(movedMember, false) + " can't be pushed to non-static " + RefactoringUIUtil.getDescription(targetClass, false));
     }
   }
 

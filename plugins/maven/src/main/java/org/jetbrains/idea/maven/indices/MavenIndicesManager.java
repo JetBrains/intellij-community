@@ -18,12 +18,14 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdomKt;
@@ -240,6 +242,7 @@ public class MavenIndicesManager implements Disposable {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
+          indicator.setIndeterminate(false);
           doUpdateIndices(projectOrNull, toSchedule, fullUpdate, new MavenProgressIndicator(indicator));
         }
         catch (MavenProcessCanceledException ignore) {
@@ -296,13 +299,8 @@ public class MavenIndicesManager implements Disposable {
     throws MavenProcessCanceledException {
     MavenGeneralSettings settings;
 
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      settings = project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getGeneralSettings().clone();
-    }
-    finally {
-      accessToken.finish();
-    }
+    settings = ReadAction
+      .compute(() -> project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getGeneralSettings().clone());
 
     if (settings == null) {
       // project was closed
@@ -325,6 +323,9 @@ public class MavenIndicesManager implements Disposable {
     ensureInitialized();
     Set<MavenArchetype> result = new THashSet<>(myIndexer.getArchetypes());
     result.addAll(myUserArchetypes);
+    for (MavenIndex index : myIndices.getIndices()) {
+      result.addAll(index.getArchetypes());
+    }
 
     for (MavenArchetypesProvider each : Extensions.getExtensions(MavenArchetypesProvider.EP_NAME)) {
       result.addAll(each.getArchetypes());

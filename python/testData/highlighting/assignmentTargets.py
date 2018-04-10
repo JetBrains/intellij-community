@@ -9,7 +9,7 @@
 result = <error descr="Can't assign to operator">a < c and c</error> = 4
 
 <error descr="Can't assign to ()">()</error> = 123
-<error descr="Can't assign to []">[]</error> = 1
+[] = 1
 [<error descr="Can't assign to literal">1</error>] = 1
 <error descr="Can't assign to literal">{}</error> = 1
 <error descr="Can't assign to literal">{1, 2, 3}</error> = 1

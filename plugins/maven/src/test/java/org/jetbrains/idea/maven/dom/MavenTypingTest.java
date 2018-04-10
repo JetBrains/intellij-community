@@ -17,10 +17,8 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.IOException;
-
 public class MavenTypingTest extends MavenDomTestCase {
-  public void testTypingOpenBrace() throws Exception {
+  public void testTypingOpenBrace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -33,7 +31,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>${<caret>}</name>");
   }
 
-  public void testTypingOpenBraceInsideOtherBrace() throws Exception {
+  public void testTypingOpenBraceInsideOtherBrace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -46,7 +44,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>${{<caret></name>");
   }
 
-  public void testTypingOpenBraceWithExistingClosedBrace() throws Exception {
+  public void testTypingOpenBraceWithExistingClosedBrace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -59,7 +57,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>${<caret>}</name>");
   }
 
-  public void testTypingOpenBraceBeforeChar() throws Exception {
+  public void testTypingOpenBraceBeforeChar() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -72,7 +70,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>${<caret>foo</name>");
   }
 
-  public void testTypingOpenBraceBeforeWhitespace() throws Exception {
+  public void testTypingOpenBraceBeforeWhitespace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -85,7 +83,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>${<caret>} foo</name>");
   }
 
-  public void testTypingOpenBraceWithoutDollar() throws Exception {
+  public void testTypingOpenBraceWithoutDollar() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -114,7 +112,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                                   "  <name>${<caret>}");
   }
 
-  public void testTypingOpenBraceInsideTagDoesNothing() throws Exception {
+  public void testTypingOpenBraceInsideTagDoesNothing() {
     if (ignore()) return;
 
     createProjectPom("<groupId>test</groupId>" +
@@ -236,7 +234,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                                        "  <name>$<caret>");
   }
 
-  private void assertTypeResult(char c, String xml) throws IOException {
+  private void assertTypeResult(char c, String xml) {
     assertTypeResultInRegularFile(myProjectPom, c, createPomXml(xml));
   }
 
@@ -245,11 +243,11 @@ public class MavenTypingTest extends MavenDomTestCase {
     myFixture.checkResult(expected);
   }
 
-  private void assertBackspaceResult(String xml) throws IOException {
+  private void assertBackspaceResult(String xml) {
     assertTypeResult('\b', xml);
   }
 
-  private void assertBackspaceResultInRegularFile(VirtualFile f, String content) throws IOException {
+  private void assertBackspaceResultInRegularFile(VirtualFile f, String content) {
     assertTypeResultInRegularFile(f, '\b', content);
   }
 }

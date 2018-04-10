@@ -216,7 +216,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
           it.remove();
         }
       }
-      return myFilters.toArray(new com.intellij.ui.classFilter.ClassFilter[myFilters.size()]);
+      return myFilters.toArray(com.intellij.ui.classFilter.ClassFilter.EMPTY_ARRAY);
     }
 
     public com.intellij.ui.classFilter.ClassFilter getFilterAt(int index) {

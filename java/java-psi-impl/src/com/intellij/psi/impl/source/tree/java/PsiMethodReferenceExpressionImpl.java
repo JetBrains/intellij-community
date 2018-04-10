@@ -173,7 +173,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       if (result.isEmpty()) {
         return null;
       }
-      methods = result.toArray(new PsiMethod[result.size()]);
+      methods = result.toArray(PsiMethod.EMPTY_ARRAY);
     }
     else if (isConstructor()) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
@@ -269,6 +269,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return element instanceof PsiExpression || element instanceof PsiTypeElement ? element : null;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement element = getReferenceNameElement();
@@ -444,6 +445,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     throw new IncorrectOperationException();
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;

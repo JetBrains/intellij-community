@@ -2987,16 +2987,6 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.lang.Thread java.lang.Thread.UncaughtExceptionHandler getDefaultUncaughtExceptionHandler()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.lang.Thread java.lang.Thread.UncaughtExceptionHandler getUncaughtExceptionHandler()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.lang.Thread long getId()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

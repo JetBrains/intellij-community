@@ -20,26 +20,26 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Nikolay Matveev
  */
-public abstract class AbstractRunConfigurationTypeUsagesCollector extends AbstractProjectsUsagesCollector {
+public abstract class AbstractRunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
 
   protected abstract boolean isApplicable(@NotNull RunManager runManager, @NotNull RunnerAndConfigurationSettings settings);
 
   @NotNull
   @Override
-  public final Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) {
+  public Set<UsageDescriptor> getUsages(@NotNull Project project) {
     final Set<String> runConfigurationTypes = new HashSet<>();
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       if (project.isDisposed()) return;

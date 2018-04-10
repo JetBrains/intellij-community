@@ -9,7 +9,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/29/12
  */
 public class JpsIntelliLangModelSerializerExtension extends JpsModelSerializerExtension{
   @NotNull

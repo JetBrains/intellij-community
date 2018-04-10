@@ -16,6 +16,7 @@
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,9 @@ public abstract class KeymapManager {
   public abstract Keymap getKeymap(@NotNull String name);
 
   public static KeymapManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(KeymapManager.class);
+    Application application = ApplicationManager.getApplication();
+    if (application == null) return null;
+    return application.getComponent(KeymapManager.class);
   }
 
   /**

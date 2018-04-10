@@ -31,10 +31,10 @@ import java.awt.event.ActionListener;
  * @author Leonid Shalupov
  */
 public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConfigurationParams {
-  private JPanel myRootPanel;
-  private JCheckBox myIsPureUnittest;
+  private final JPanel myRootPanel;
+  private final JCheckBox myIsPureUnittest;
 
-  private PythonTestLegacyRunConfigurationForm myTestRunConfigurationForm;
+  private final PythonTestLegacyRunConfigurationForm myTestRunConfigurationForm;
 
 
   public PythonUnitTestRunConfigurationForm(final Project project, final PythonUnitTestRunConfiguration configuration) {

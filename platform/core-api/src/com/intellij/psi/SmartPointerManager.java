@@ -33,6 +33,20 @@ public abstract class SmartPointerManager {
   }
 
   /**
+   * Creates a smart pointer to the specified PSI element
+   * using a manager that corresponds to the element's project.
+   *
+   * @param element the element to create a pointer to
+   * @param <E>     the specific type of the given element
+   * @return a pointer to the specified element which can survive PSI reparse
+   * @see #createSmartPsiElementPointer(PsiElement)
+   */
+  @NotNull
+  public static <E extends PsiElement> SmartPsiElementPointer<E> createPointer(@NotNull E element) {
+    return getInstance(element.getProject()).createSmartPsiElementPointer(element);
+  }
+
+  /**
    * Creates a smart pointer to the specified PSI element. If the element's containing file is known, it's more preferable to use
    * {@link #createSmartPsiElementPointer(PsiElement, PsiFile)}.
    *

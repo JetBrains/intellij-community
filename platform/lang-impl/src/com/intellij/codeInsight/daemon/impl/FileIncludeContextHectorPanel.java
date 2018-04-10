@@ -71,9 +71,6 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
     myContextFile.setTextFieldPreferredWidth(30);
   }
 
-  @Override
-  public void disposeUIResources() { }
-
   private class MyListCellRenderer extends DefaultListCellRenderer {
     private final JComboBox myComboBox;
     private int myMaxWidth;

@@ -109,9 +109,9 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
       }
     }
 
-    final DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir);
-    DataInputOutputUtil.writeINT(oStream, level.ordinal());
-    oStream.close();
+    try (DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir)) {
+      DataInputOutputUtil.writeINT(oStream, level.ordinal());
+    }
 
     // Todo: GwtLanguageLevelPusher changes java language level for single files without firing filePropertiesChanged
     // so code below doesn't work.

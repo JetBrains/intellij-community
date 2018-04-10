@@ -32,13 +32,14 @@ import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.model.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class MavenProjectReaderTest extends MavenTestCase {
-  public void testBasics() throws Exception {
+  public void testBasics() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
@@ -50,7 +51,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("1", p.getVersion());
   }
 
-  public void testInvalidXml() throws Exception {
+  public void testInvalidXml() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
@@ -73,7 +74,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("1", p.getVersion());
   }
 
-  public void testInvalidXmlCharData() throws Exception {
+  public void testInvalidXmlCharData() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
@@ -89,7 +90,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("a0x0a", p.getName());
   }
 
-  public void testInvalidParentXml() throws Exception {
+  public void testInvalidParentXml() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -105,7 +106,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertProblems(readProject(module, new NullProjectLocator()), "Parent 'test:parent:1' has problems");
   }
 
-  public void testProjectWithAbsentParentXmlIsValid() throws Exception {
+  public void testProjectWithAbsentParentXmlIsValid() {
     createProjectPom("<parent>" +
                      "  <groupId>test</groupId>" +
                      "  <artifactId>parent</artifactId>" +
@@ -114,7 +115,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertProblems(readProject(myProjectPom, new NullProjectLocator()));
   }
 
-  public void testProjectWithSelfParentIsInvalid() throws Exception {
+  public void testProjectWithSelfParentIsInvalid() {
     createProjectPom("<parent>" +
                      "  <groupId>test</groupId>" +
                      "  <artifactId>project</artifactId>" +
@@ -126,7 +127,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertProblems(readProject(myProjectPom, new NullProjectLocator()), "Self-inheritance found");
   }
 
-  public void testInvalidProfilesXml() throws Exception {
+  public void testInvalidProfilesXml() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
@@ -146,7 +147,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertProblems(readProject(myProjectPom, new NullProjectLocator()), "'settings.xml' has syntax errors");
   }
 
-  public void testInvalidXmlWithNotClosedTag() throws Exception {
+  public void testInvalidXmlWithNotClosedTag() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1" +
@@ -162,7 +163,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("foo", p.getName());
   }
 
-  public void testInvalidXmlWithWrongClosingTag() throws Exception {
+  public void testInvalidXmlWithWrongClosingTag() {
     if (ignore()) return;
 
     createProjectPom("<groupId>test</groupId>" +
@@ -180,7 +181,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("foo", p.getName());
   }
 
-  public void testEmpty() throws Exception {
+  public void testEmpty() {
     createProjectPom("");
 
     MavenModel p = readProject(myProjectPom);
@@ -190,14 +191,14 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("Unknown", p.getMavenId().getVersion());
   }
 
-  public void testSpaces() throws Exception {
+  public void testSpaces() {
     createProjectPom("<name>foo bar</name>");
 
     MavenModel p = readProject(myProjectPom);
     assertEquals("foo bar", p.getName());
   }
 
-  public void testNewLines() throws Exception {
+  public void testNewLines() {
     createProjectPom("<groupId>\n" +
                      "  group\n" +
                      "</groupId>\n" +
@@ -212,7 +213,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals(new MavenId("group", "artifact", "1"), p.getMavenId());
   }
 
-  public void testCommentsWithNewLinesInTags() throws Exception {
+  public void testCommentsWithNewLinesInTags() {
     createProjectPom("<groupId>test<!--a-->\n" +
                      "</groupId>" +
                      "<artifactId>\n" +
@@ -232,26 +233,23 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertNull(p.getName());
   }
 
-  public void testTextInContainerTag() throws Exception {
+  public void testTextInContainerTag() {
     createProjectPom("foo <name>name</name> bar");
 
     MavenModel p = readProject(myProjectPom);
     assertEquals("name", p.getName());
   }
 
-  public void testDefaults() {
-    VirtualFile file = new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
-        result.setResult(res);
-        VfsUtil.saveText(res, "<project>" +
-                               "  <groupId>test</groupId>" +
-                               "  <artifactId>project</artifactId>" +
-                               "  <version>1</version>" +
-                               "</project>");
-      }
-    }.execute().getResultObject();
+  public void testDefaults() throws IOException {
+    VirtualFile file = WriteAction.compute(() -> {
+      VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
+      VfsUtil.saveText(res, "<project>" +
+                            "  <groupId>test</groupId>" +
+                            "  <artifactId>project</artifactId>" +
+                            "  <version>1</version>" +
+                            "</project>");
+      return res;
+    });
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     MavenModel p = readProject(file);
 
@@ -276,7 +274,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("target/test-classes"), p.getBuild().getTestOutputDirectory());
   }
 
-  public void testDefaultsForParent() throws Exception {
+  public void testDefaultsForParent() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -290,7 +288,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertParent(p, "Unknown", "Unknown", "Unknown");
   }
 
-  public void testTakingCoordinatesFromParent() throws Exception {
+  public void testTakingCoordinatesFromParent() {
     createProjectPom("<parent>" +
                      "  <groupId>test</groupId>" +
                      "  <artifactId>project</artifactId>" +
@@ -304,55 +302,52 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("1", id.getVersion());
   }
 
-  public void testCustomSettings() {
-    VirtualFile file = new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
-        result.setResult(res);
-        VfsUtil.saveText(res, "<project>" +
-                               "  <modelVersion>1.2.3</modelVersion>" +
-                               "  <groupId>test</groupId>" +
-                               "  <artifactId>project</artifactId>" +
-                               "  <version>1</version>" +
-                               "  <name>foo</name>" +
-                               "  <packaging>pom</packaging>" +
+  public void testCustomSettings() throws IOException {
+    VirtualFile file = WriteAction.compute(() -> {
+      VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
+      VfsUtil.saveText(res, "<project>" +
+                            "  <modelVersion>1.2.3</modelVersion>" +
+                            "  <groupId>test</groupId>" +
+                            "  <artifactId>project</artifactId>" +
+                            "  <version>1</version>" +
+                            "  <name>foo</name>" +
+                            "  <packaging>pom</packaging>" +
 
-                               "  <parent>" +
-                               "    <groupId>testParent</groupId>" +
-                               "    <artifactId>projectParent</artifactId>" +
-                               "    <version>2</version>" +
-                               "    <relativePath>../parent/pom.xml</relativePath>" +
-                               "  </parent>" +
+                            "  <parent>" +
+                            "    <groupId>testParent</groupId>" +
+                            "    <artifactId>projectParent</artifactId>" +
+                            "    <version>2</version>" +
+                            "    <relativePath>../parent/pom.xml</relativePath>" +
+                            "  </parent>" +
 
-                               "  <build>" +
-                               "    <finalName>xxx</finalName>" +
-                               "    <defaultGoal>someGoal</defaultGoal>" +
-                               "    <sourceDirectory>mySrc</sourceDirectory>" +
-                               "    <testSourceDirectory>myTestSrc</testSourceDirectory>" +
-                               "    <scriptSourceDirectory>myScriptSrc</scriptSourceDirectory>" +
-                               "    <resources>" +
-                               "      <resource>" +
-                               "        <directory>myRes</directory>" +
-                               "        <filtering>true</filtering>" +
-                               "        <targetPath>dir</targetPath>" +
-                               "        <includes><include>**.properties</include></includes>" +
-                               "        <excludes><exclude>**.xml</exclude></excludes>" +
-                               "      </resource>" +
-                               "    </resources>" +
-                               "    <testResources>" +
-                               "      <testResource>" +
-                               "        <directory>myTestRes</directory>" +
-                               "        <includes><include>**.properties</include></includes>" +
-                               "      </testResource>" +
-                               "    </testResources>" +
-                               "    <directory>myOutput</directory>" +
-                               "    <outputDirectory>myClasses</outputDirectory>" +
-                               "    <testOutputDirectory>myTestClasses</testOutputDirectory>" +
-                               "  </build>" +
-                               "</project>");
-      }
-    }.execute().getResultObject();
+                            "  <build>" +
+                            "    <finalName>xxx</finalName>" +
+                            "    <defaultGoal>someGoal</defaultGoal>" +
+                            "    <sourceDirectory>mySrc</sourceDirectory>" +
+                            "    <testSourceDirectory>myTestSrc</testSourceDirectory>" +
+                            "    <scriptSourceDirectory>myScriptSrc</scriptSourceDirectory>" +
+                            "    <resources>" +
+                            "      <resource>" +
+                            "        <directory>myRes</directory>" +
+                            "        <filtering>true</filtering>" +
+                            "        <targetPath>dir</targetPath>" +
+                            "        <includes><include>**.properties</include></includes>" +
+                            "        <excludes><exclude>**.xml</exclude></excludes>" +
+                            "      </resource>" +
+                            "    </resources>" +
+                            "    <testResources>" +
+                            "      <testResource>" +
+                            "        <directory>myTestRes</directory>" +
+                            "        <includes><include>**.properties</include></includes>" +
+                            "      </testResource>" +
+                            "    </testResources>" +
+                            "    <directory>myOutput</directory>" +
+                            "    <outputDirectory>myClasses</outputDirectory>" +
+                            "    <testOutputDirectory>myTestClasses</testOutputDirectory>" +
+                            "  </build>" +
+                            "</project>");
+      return res;
+    });
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     MavenModel p = readProject(file);
 
@@ -378,7 +373,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("myTestClasses"), p.getBuild().getTestOutputDirectory());
   }
 
-  public void testOutputPathsAreBasedOnTargetPath() throws Exception {
+  public void testOutputPathsAreBasedOnTargetPath() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -393,7 +388,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), p.getBuild().getTestOutputDirectory());
   }
 
-  public void testDoesNotIncludeResourcesWithoutDirectory() throws Exception {
+  public void testDoesNotIncludeResourcesWithoutDirectory() {
     createProjectPom("<build>" +
                      "  <resources>" +
                      "    <resource>" +
@@ -413,7 +408,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals(0, p.getBuild().getTestResources().size());
   }
 
-  public void testPathsWithProperties() throws Exception {
+  public void testPathsWithProperties() {
     createProjectPom("<properties>" +
                      "  <foo>subDir</foo>" +
                      "  <emptyProperty />" +
@@ -459,7 +454,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("subDir/myTestClasses"), p.getBuild().getTestOutputDirectory());
   }
 
-  public void testExpandingProperties() throws Exception {
+  public void testExpandingProperties() {
     createProjectPom("<properties>" +
                      "  <prop1>value1</prop1>" +
                      "  <prop2>value2</prop2>" +
@@ -473,7 +468,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value2", p.getPackaging());
   }
 
-  public void testExpandingPropertiesRecursively() throws Exception {
+  public void testExpandingPropertiesRecursively() {
     createProjectPom("<properties>" +
                      "  <prop1>value1</prop1>" +
                      "  <prop2>${prop1}2</prop2>" +
@@ -487,7 +482,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value12", p.getPackaging());
   }
 
-  public void testHandlingRecursiveProperties() throws Exception {
+  public void testHandlingRecursiveProperties() {
     createProjectPom("<properties>" +
                      "  <prop1>${prop2}</prop1>" +
                      "  <prop2>${prop1}</prop2>" +
@@ -536,7 +531,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertProblems(readResult);
   }
 
-  public void testDoNotGoIntoRecursionWhenTryingToResolveParentInDefaultPath() throws Exception {
+  public void testDoNotGoIntoRecursionWhenTryingToResolveParentInDefaultPath() {
     VirtualFile child = createModulePom("child",
                                         "<groupId>test</groupId>" +
                                         "<artifactId>child</artifactId>" +
@@ -563,7 +558,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertProblems(readResult);
   }
 
-  public void testExpandingSystemAndEnvProperties() throws Exception {
+  public void testExpandingSystemAndEnvProperties() {
     createProjectPom("<name>${java.home}</name>" +
                      "<packaging>${env." + getEnvVar() + "}</packaging>");
 
@@ -572,7 +567,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals(System.getenv(getEnvVar()), p.getPackaging());
   }
 
-  public void testExpandingPropertiesFromProfiles() throws Exception {
+  public void testExpandingPropertiesFromProfiles() {
     createProjectPom("<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>" +
 
@@ -599,7 +594,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("${prop2}", p.getPackaging());
   }
 
-  public void testExpandingPropertiesFromManuallyActivatedProfiles() throws Exception {
+  public void testExpandingPropertiesFromManuallyActivatedProfiles() {
     createProjectPom("<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>" +
 
@@ -626,7 +621,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value2", p.getPackaging());
   }
 
-  public void testExpandingPropertiesFromParent() throws Exception {
+  public void testExpandingPropertiesFromParent() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -647,7 +642,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value", p.getName());
   }
 
-  public void testDoNotExpandPropertiesFromParentWithWrongCoordinates() throws Exception {
+  public void testDoNotExpandPropertiesFromParentWithWrongCoordinates() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -690,7 +685,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value", p.getName());
   }
 
-  public void testExpandingPropertiesFromIndirectParent() throws Exception {
+  public void testExpandingPropertiesFromIndirectParent() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -722,7 +717,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value", p.getName());
   }
 
-  public void testExpandingPropertiesFromParentInSpecifiedLocation() throws Exception {
+  public void testExpandingPropertiesFromParentInSpecifiedLocation() {
     createModulePom("parent",
                     "<groupId>test</groupId>" +
                     "<artifactId>parent</artifactId>" +
@@ -745,7 +740,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value", p.getName());
   }
 
-  public void testExpandingPropertiesFromParentInSpecifiedLocationWithoutFile() throws Exception {
+  public void testExpandingPropertiesFromParentInSpecifiedLocationWithoutFile() {
     createModulePom("parent",
                     "<groupId>test</groupId>" +
                     "<artifactId>parent</artifactId>" +
@@ -794,7 +789,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value", p.getName());
   }
 
-  public void testExpandingPropertiesFromParentInInvalidLocation() throws Exception {
+  public void testExpandingPropertiesFromParentInInvalidLocation() {
     final VirtualFile parent = createModulePom("parent",
                                                "<groupId>test</groupId>" +
                                                "<artifactId>parent</artifactId>" +
@@ -821,7 +816,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("value", p.getName());
   }
 
-  public void testPropertiesFromParentInParentSection() throws Exception {
+  public void testPropertiesFromParentInParentSection() {
     createProjectPom("<groupId>${groupProp}</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>${versionProp}</version>" +
@@ -843,7 +838,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("test:module:1", id.getGroupId() + ":" + id.getArtifactId() + ":" + id.getVersion());
   }
 
-  public void testInheritingSettingsFromParentAndAlignCorrectly() throws Exception {
+  public void testInheritingSettingsFromParentAndAlignCorrectly() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -862,7 +857,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.getParent(), "custom"), p.getBuild().getDirectory());
   }
 
-  public void testExpandingPropertiesAfterInheritingSettingsFromParent() throws Exception {
+  public void testExpandingPropertiesAfterInheritingSettingsFromParent() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -885,7 +880,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.getParent(), "subDir/custom"), p.getBuild().getDirectory());
   }
 
-  public void testExpandingPropertiesAfterInheritingSettingsFromParentProfiles() throws Exception {
+  public void testExpandingPropertiesAfterInheritingSettingsFromParentProfiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -913,7 +908,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.getParent(), "subDir/custom"), p.getBuild().getDirectory());
   }
 
-  public void testPropertiesFromProfilesXmlOldStyle() throws Exception {
+  public void testPropertiesFromProfilesXmlOldStyle() {
     createProjectPom("<name>${prop}</name>");
     createProfilesXmlOldStyle("<profile>" +
                               "  <id>one</id>" +
@@ -929,7 +924,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("foo", mavenProject.getName());
   }
 
-  public void testPropertiesFromProfilesXmlNewStyle() throws Exception {
+  public void testPropertiesFromProfilesXmlNewStyle() {
     createProjectPom("<name>${prop}</name>");
     createProfilesXml("<profile>" +
                       "  <id>one</id>" +
@@ -963,7 +958,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("foo", mavenProject.getName());
   }
 
-  public void testDoNoInheritParentFinalNameIfUnspecified() throws Exception {
+  public void testDoNoInheritParentFinalNameIfUnspecified() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>");
@@ -983,7 +978,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("module-2", p.getBuild().getFinalName());
   }
 
-  public void testDoInheritingParentFinalNameIfSpecified() throws Exception {
+  public void testDoInheritingParentFinalNameIfSpecified() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -1008,7 +1003,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
 
-  public void testInheritingParentProfiles() throws Exception {
+  public void testInheritingParentProfiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -1109,12 +1104,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("profiles", p.getProfiles().get(0).getModules().get(0));
     assertEquals("profiles.xml", p.getProfiles().get(0).getSource());
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        profiles.delete(this);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> profiles.delete(this));
 
 
     p = readProject(module);
@@ -1131,12 +1121,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEmpty("parentProfiles", p.getProfiles().get(0).getModules());
     assertEquals("profiles.xml", p.getProfiles().get(0).getSource());
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        parentProfiles.delete(null);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> parentProfiles.delete(null));
 
 
     p = readProject(module);
@@ -1145,7 +1130,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("settings.xml", p.getProfiles().get(0).getSource());
   }
 
-  public void testModulesAreNotInheritedFromParentsProfiles() throws Exception {
+  public void testModulesAreNotInheritedFromParentsProfiles() {
     VirtualFile p = createProjectPom("<groupId>test</groupId>" +
                                      "<artifactId>project</artifactId>" +
                                      "<version>1</version>" +
@@ -1173,7 +1158,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertSize(0, readProject(m, "one").getModules());
   }
 
-  public void testActivatingProfilesByDefault() throws Exception {
+  public void testActivatingProfilesByDefault() {
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
@@ -1192,7 +1177,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("one");
   }
 
-  public void testActivatingProfilesAfterResolvingInheritance() throws Exception {
+  public void testActivatingProfilesAfterResolvingInheritance() {
     createModulePom("parent",
                     "<groupId>test</groupId>" +
                     "<artifactId>parent</artifactId>" +
@@ -1217,7 +1202,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("one");
   }
 
-  public void testActivatingProfilesByOS() throws Exception {
+  public void testActivatingProfilesByOS() {
     String os = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "unix";
 
     createProjectPom("<profiles>" +
@@ -1238,7 +1223,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("one");
   }
 
-  public void testActivatingProfilesByJdk() throws Exception {
+  public void testActivatingProfilesByJdk() {
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
@@ -1257,7 +1242,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("one");
   }
 
-  public void testActivatingProfilesByStrictJdkVersion() throws Exception {
+  public void testActivatingProfilesByStrictJdkVersion() {
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
@@ -1270,7 +1255,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles();
   }
 
-  public void testActivatingProfilesByProperty() throws Exception {
+  public void testActivatingProfilesByProperty() {
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
@@ -1295,7 +1280,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("one");
   }
 
-  public void testActivatingProfilesByEnvProperty() throws Exception {
+  public void testActivatingProfilesByEnvProperty() {
     String value = System.getenv(getEnvVar());
 
     createProjectPom("<profiles>" +
@@ -1347,7 +1332,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("one");
   }
 
-  public void testActivateDefaultProfileEventIfThereAreExplicitOnesButAbsent() throws Exception {
+  public void testActivateDefaultProfileEventIfThereAreExplicitOnesButAbsent() {
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>default</id>" +
@@ -1363,7 +1348,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles(Arrays.asList("foofoofoo"), "default");
   }
 
-  public void testDoNotActivateDefaultProfileIfThereAreActivatedImplicit() throws Exception {
+  public void testDoNotActivateDefaultProfileIfThereAreActivatedImplicit() {
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>default</id>" +
@@ -1382,7 +1367,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("implicit");
   }
 
-  public void testActivatingImplicitProfilesEventWhenThereAreExplicitOnes() throws Exception {
+  public void testActivatingImplicitProfilesEventWhenThereAreExplicitOnes() {
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>explicit</id>" +
@@ -1416,7 +1401,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles(Arrays.asList("explicit"), "explicit", "settings");
   }
 
-  public void testAlwaysActivatingActiveProfilesInProfilesXml() throws Exception {
+  public void testAlwaysActivatingActiveProfilesInProfilesXml() {
     createFullProfilesXml("<?xml version=\"1.0\"?>" +
                           "<profilesXml>" +
                           "  <activeProfiles>" +
@@ -1499,7 +1484,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("default", "settings");
   }
 
-  public void testActivateDefaultProfilesWhenThereAreActiveProfilesInProfilesXml() throws Exception {
+  public void testActivateDefaultProfilesWhenThereAreActiveProfilesInProfilesXml() {
     createFullProfilesXml("<?xml version=\"1.0\"?>" +
                           "<profilesXml>" +
                           "  <profiles>" +

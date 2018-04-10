@@ -30,7 +30,6 @@ import java.util.Collections;
 
 /**
  * @author: db
- * Date: 08.03.11
  */
 public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   private static final Collection NULL_COLLECTION = Collections.emptySet();

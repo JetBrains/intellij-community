@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import java.util.Objects;
 public class LookupElementPresentation {
   private Icon myIcon;
   private Icon myTypeIcon;
+  private boolean myTypeIconRightAligned;
   private String myItemText;
   private String myTypeText;
   private boolean myStrikeout;
@@ -192,6 +193,7 @@ public class LookupElementPresentation {
     myStrikeout = presentation.myStrikeout;
     myItemTextBold = presentation.myItemTextBold;
     myTypeGrayed = presentation.myTypeGrayed;
+    myTypeIconRightAligned = presentation.myTypeIconRightAligned;
     myItemTextUnderlined = presentation.myItemTextUnderlined;
     myItemTextForeground = presentation.myItemTextForeground;
   }
@@ -202,6 +204,14 @@ public class LookupElementPresentation {
 
   public void setTypeGrayed(boolean typeGrayed) {
     myTypeGrayed = typeGrayed;
+  }
+
+  public boolean isTypeIconRightAligned() {
+    return myTypeIconRightAligned;
+  }
+
+  public void setTypeIconRightAligned(boolean typeIconRightAligned) {
+    myTypeIconRightAligned = typeIconRightAligned;
   }
 
   public static LookupElementPresentation renderElement(LookupElement element) {

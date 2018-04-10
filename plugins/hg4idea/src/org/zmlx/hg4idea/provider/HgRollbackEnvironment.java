@@ -72,8 +72,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
         }
       }
     }
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getRollbackOperationName())) {
       revert(filePaths);
       for (FilePath file : toDelete) {
         listener.accept(file);
@@ -92,19 +91,12 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
         }
       }
     }
-    finally {
-      token.finish();
-    }
   }
 
   public void rollbackMissingFileDeletion(List<FilePath> files,
                                           List<VcsException> exceptions, RollbackProgressListener listener) {
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getRollbackOperationName())) {
       revert(files);
-    }
-    finally {
-      token.finish();
     }
   }
 

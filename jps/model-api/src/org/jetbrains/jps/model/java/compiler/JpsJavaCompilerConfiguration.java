@@ -70,6 +70,9 @@ public interface JpsJavaCompilerConfiguration extends JpsElement {
   void setProjectByteCodeTargetLevel(String level);
   void setModuleByteCodeTargetLevel(String moduleName, String level);
 
+  boolean useReleaseOption();
+  void setUseReleaseOption(boolean useReleaseOption);
+
   @NotNull
   String getJavaCompilerId();
   void setJavaCompilerId(@NotNull String compiler);

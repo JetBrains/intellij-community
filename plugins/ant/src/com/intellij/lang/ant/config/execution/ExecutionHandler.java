@@ -155,10 +155,12 @@ public final class ExecutionHandler {
     final FutureResult<ProcessHandler> future = new FutureResult<>();
     new Task.Backgroundable(buildFile.getProject(), AntBundle.message("ant.build.progress.dialog.title"), true) {
 
+      @Override
       public boolean shouldStartInBackground() {
         return true;
       }
 
+      @Override
       public void onCancel() {
         listenerWrapper.buildFinished(AntBuildListener.ABORTED, 0);
       }

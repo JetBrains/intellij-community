@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import icons.OpenapiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +112,7 @@ public class RepositoryLibraryDescription {
   }
 
   public RepositoryLibraryProperties createDefaultProperties() {
-    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), ReleaseVersionId);
+    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), ReleaseVersionId, true);
   }
 
   public String getDisplayName(String version) {

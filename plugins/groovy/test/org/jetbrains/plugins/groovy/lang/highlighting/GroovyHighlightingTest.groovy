@@ -1,23 +1,12 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
-import com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
-import com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
+import com.siyeh.ig.junit.AbstractTestClassNamingConvention
+import com.siyeh.ig.junit.TestClassNamingConvention
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
 /**
@@ -180,6 +169,13 @@ class A {
 
   void testBuiltInTypeInstantiation() { doTest() }
 
+  void 'test void array type'() {
+    testHighlighting '''\
+<error descr="Illegal type: 'void'">void</error>[] foo() {}
+<error descr="Illegal type: 'void'">void</error>[] bar = foo()
+'''
+  }
+
   void testSOEInFieldDeclarations() { doTest() }
 
   void testWrongAnnotation() { doTest() }
@@ -299,7 +295,10 @@ class Bar {{
 
   void testJUnitConvention() {
     myFixture.addClass("package junit.framework; public class TestCase {}")
-    doTest(new JUnitTestClassNamingConventionInspection(), new JUnitAbstractTestClassNamingConventionInspection())
+    def inspection = new NewGroovyClassNamingConventionInspection()
+    inspection.setEnabled(true, TestClassNamingConvention.TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
+    inspection.setEnabled(true, AbstractTestClassNamingConvention.ABSTRACT_TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
+    doTest(inspection)
   }
 
   void testDuplicateMethods() {
@@ -939,7 +938,7 @@ class A {
   class B {}
 }
 
-A.B foo = new A.<warning descr="Cannot reference non-static symbol 'A.B' from static context">B</warning>()
+A.B foo = new A.B()
 ''', GrUnresolvedAccessInspection)
   }
 
@@ -1767,7 +1766,7 @@ class MyCommand {
     testHighlighting('''\
 class MyController {
      def list() {
-         def myInnerClass = new MyCommand.<warning descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</warning>()
+         def myInnerClass = new MyCommand.MyInnerClass()
          print myInnerClass
     }
 }
@@ -1795,8 +1794,6 @@ class MyCommand {
 ''')
 
     myFixture.enableInspections(GrUnresolvedAccessInspection)
-
-    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightInnerClasses = false
     myFixture.testHighlighting(true, false, true)
   }
 
@@ -1816,8 +1813,6 @@ class MyCommand {
 ''')
 
     myFixture.enableInspections(GrUnresolvedAccessInspection)
-
-    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightInnerClasses = false
     myFixture.testHighlighting(true, false, true)
   }
 
@@ -2141,5 +2136,9 @@ w.width.round()
 w.width.intValue()
 w.width.compareTo(2f)
 ''', GrUnresolvedAccessInspection
+  }
+
+  void "test no warning on extension method with spread operator"() {
+    testHighlighting '[1, 2, 3]*.multiply(4)', GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection
   }
 }

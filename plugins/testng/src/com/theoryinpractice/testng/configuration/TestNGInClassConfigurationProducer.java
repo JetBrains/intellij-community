@@ -24,7 +24,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer {
-  private TestNGInClassConfigurationProducerDelegate myDelegate = new TestNGInClassConfigurationProducerDelegate(TestNGConfigurationType.getInstance());
+  private final TestNGInClassConfigurationProducerDelegate myDelegate = new TestNGInClassConfigurationProducerDelegate(TestNGConfigurationType.getInstance());
   protected TestNGInClassConfigurationProducer() {
     super(TestNGConfigurationType.getInstance());
   }

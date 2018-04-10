@@ -20,11 +20,12 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
+import org.jetbrains.annotations.NotNull;
 
 public class BasicSelectioner extends ExtendWordSelectionHandlerBase {
 
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return canSelectBasic(e);
   }
 

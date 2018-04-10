@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -21,15 +7,10 @@ import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.laf.LafManagerImpl;
-import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
-import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.*;
@@ -41,8 +22,6 @@ import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -74,11 +53,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static com.intellij.ide.actions.QuickChangeColorSchemeAction.changeLafIfNecessary;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
+  private static final Logger LOG = Logger.getInstance(ColorAndFontOptions.class);
+
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
   public static final String FONT_CONFIGURABLE_NAME = "Color Scheme Font";
 
@@ -109,6 +91,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   public void stateChanged() {
     myDispatcher.getMulticaster().settingsChanged();
+  }
+
+  @Override
+  public String getDisplayName() {
+    return ApplicationBundle.message("title.colors.and.fonts");
   }
 
   @Override
@@ -294,7 +281,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   void resetSchemeToOriginal(@NotNull String name) {
     MyColorScheme schemeToReset = mySchemes.get(name);
     schemeToReset.resetToOriginal();
-    resetImpl();
     selectScheme(name);
     resetSchemesCombo(null);
     ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
@@ -348,53 +334,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return schemeList;
   }
 
-  private static void changeLafIfNecessary(boolean isDarkEditorTheme) {
-    String propKey = "change.laf.on.editor.theme.change";
-    String value = PropertiesComponent.getInstance().getValue(propKey);
-    if ("false".equals(value)) return;
-    boolean applyAlways = "true".equals(value);
-    DialogWrapper.DoNotAskOption doNotAskOption = new DialogWrapper.DoNotAskOption.Adapter() {
-      @Override
-      public void rememberChoice(boolean isSelected, int exitCode) {
-        if (isSelected) {
-          PropertiesComponent.getInstance().setValue(propKey, Boolean.toString(exitCode == Messages.YES));
-        }
-      }
-
-      @Override
-      public boolean shouldSaveOptionsOnCancel() {
-        return true;
-      }
-    };
-
-    final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-    final LafManager lafManager = LafManager.getInstance();
-    if (isDarkEditorTheme && !UIUtil.isUnderDarcula()) {
-      if (applyAlways || Messages.showYesNoDialog(
-        "Looks like you have set a dark editor theme. Would you like to set dark theme for entire " + productName,
-        "Change " + productName + " theme", Messages.YES_BUTTON, Messages.NO_BUTTON,
-        Messages.getQuestionIcon(), doNotAskOption) == Messages.YES) {
-        lafManager.setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
-        lafManager.updateUI();
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(DarculaInstaller::install);
-      }
-    } else if (!isDarkEditorTheme && UIUtil.isUnderDarcula()) {
-
-      if (lafManager instanceof LafManagerImpl
-          &&
-          (applyAlways || Messages.showYesNoDialog(
-            "Looks like you have set a bright editor theme. Would you like to set bright theme for entire " + productName,
-            "Change " + productName + " theme", Messages.YES_BUTTON, Messages.NO_BUTTON,
-            Messages.getQuestionIcon(), doNotAskOption) == Messages.YES)) {
-        lafManager.setCurrentLookAndFeel(((LafManagerImpl)lafManager).getDefaultLaf());
-        lafManager.updateUI();
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(DarculaInstaller::uninstall);
-      }
-    }
-  }
-
   private boolean myIsReset = false;
 
   private void resetSchemesCombo(Object source) {
@@ -433,14 +372,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     List<ColorAndFontPanelFactory> panelFactories = createPanelFactories();
 
-    List<Configurable> result = new ArrayList<>();
     mySubPanelFactories = new LinkedHashMap<>(panelFactories.size());
     for (ColorAndFontPanelFactory panelFactory : panelFactories) {
       mySubPanelFactories.put(panelFactory, new InnerSearchableConfigurable(panelFactory));
     }
 
-    result.addAll(new ArrayList<SearchableConfigurable>(mySubPanelFactories.values()));
-    return result.toArray(new Configurable[result.size()]);
+    return mySubPanelFactories.values().toArray(new Configurable[0]);
   }
 
   @NotNull
@@ -456,8 +393,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   protected List<ColorAndFontPanelFactory> createPanelFactories() {
-    List<ColorAndFontPanelFactory> result = new ArrayList<>();
-
     List<ColorAndFontPanelFactory> extensions = new ArrayList<>();
     extensions.add(new FontConfigurableFactory());
     extensions.add(new ConsoleFontConfigurableFactory());
@@ -502,7 +437,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
       return f1.getPanelDisplayName().compareToIgnoreCase(f2.getPanelDisplayName());
     });
-    result.addAll(extensions);
+    List<ColorAndFontPanelFactory> result = new ArrayList<>(extensions);
 
     result.add(new ScopeColorsPageFactory());
 
@@ -582,7 +517,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     initPluggedDescriptions(descriptions, scheme);
     initScopesDescriptors(descriptions, scheme);
 
-    scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[descriptions.size()]));
+    scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[0]));
   }
 
   private static void initPluggedDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions,
@@ -599,24 +534,33 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private static void initDescriptions(@NotNull ColorAndFontDescriptorsProvider provider,
                                        @NotNull List<EditorSchemeAttributeDescriptor> descriptions,
                                        @NotNull MyColorScheme scheme) {
+    String className = provider.getClass().getName();
     String group = provider.getDisplayName();
     List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(provider);
     if (provider instanceof RainbowColorSettingsPage) {
-      descriptions.add(new RainbowAttributeDescriptor(((RainbowColorSettingsPage)provider).getLanguage(),
-                                                      group,
-                                                      ApplicationBundle.message("rainbow.option.panel.display.name"),
-                                                      scheme,
-                                                      scheme.myRainbowState));
+      RainbowAttributeDescriptor d = new RainbowAttributeDescriptor(
+        ((RainbowColorSettingsPage)provider).getLanguage(), group,
+        ApplicationBundle.message("rainbow.option.panel.display.name"),
+        scheme, scheme.myRainbowState);
+      descriptions.add(d);
     }
     for (AttributesDescriptor descriptor : attributeDescriptors) {
-      addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
+      if (descriptor == null) {
+        LOG.warn("Null attribute descriptor in " + className);
+        continue;
+      }
+      SchemeTextAttributesDescription d = new SchemeTextAttributesDescription(
+        descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
+      descriptions.add(d);
     }
-
-    ColorDescriptor[] colorDescriptors = provider.getColorDescriptors();
-    for (ColorDescriptor descriptor : colorDescriptors) {
-      ColorKey back = descriptor.getKind() == ColorDescriptor.Kind.BACKGROUND ? descriptor.getKey() : null;
-      ColorKey fore = descriptor.getKind() == ColorDescriptor.Kind.FOREGROUND ? descriptor.getKey() : null;
-      addEditorSettingDescription(descriptions, descriptor.getDisplayName(), group, back, fore, scheme);
+    for (ColorDescriptor descriptor : provider.getColorDescriptors()) {
+      if (descriptor == null) {
+        LOG.warn("Null color descriptor in " + className);
+        continue;
+      }
+      EditorSettingColorDescription d = new EditorSettingColorDescription(
+        descriptor.getDisplayName(), group, descriptor.getKey(), descriptor.getKind(), scheme);
+      descriptions.add(d);
     }
   }
 
@@ -654,47 +598,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       PackageSet value = namedScope.getValue();
       String toolTip = holder.getDisplayName() + (value==null ? "" : ": "+ value.getText());
-      addSchemedDescription(descriptions,
-                            name,
-                            SCOPES_GROUP,
-                            textAttributesKey,
-                            scheme, holder.getIcon(), toolTip);
+      descriptions.add(new SchemeTextAttributesDescription(name, SCOPES_GROUP, textAttributesKey, scheme, holder.getIcon(), toolTip));
     }
-  }
-
-  @Nullable
-  private static String calcType(@Nullable ColorKey backgroundKey, @Nullable ColorKey foregroundKey) {
-    if (foregroundKey != null) {
-      return foregroundKey.getExternalName();
-    }
-    else if (backgroundKey != null) {
-      return backgroundKey.getExternalName();
-    }
-    return null;
-  }
-
-  private static void addEditorSettingDescription(@NotNull List<EditorSchemeAttributeDescriptor> list,
-                                                  String name,
-                                                  String group,
-                                                  @Nullable ColorKey backgroundKey,
-                                                  @Nullable ColorKey foregroundKey,
-                                                  @NotNull MyColorScheme scheme) {
-    list.add(new EditorSettingColorDescription(name, group, backgroundKey, foregroundKey, scheme));
-  }
-
-  private static void addSchemedDescription(@NotNull List<EditorSchemeAttributeDescriptor> list,
-                                            String name,
-                                            String group,
-                                            @NotNull TextAttributesKey key,
-                                            @NotNull MyColorScheme scheme,
-                                            Icon icon,
-                                            String toolTip) {
-    list.add(new SchemeTextAttributesDescription(name, group, key, scheme, icon, toolTip));
-  }
-
-  @Override
-  public String getDisplayName() {
-    return ApplicationBundle.message("title.colors.and.fonts");
   }
 
   private void revertChanges(){
@@ -808,11 +713,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     private TextAttributes myFallbackAttributes;
     private Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> myBaseAttributeDescriptor;
-    private boolean myIsInheritedInitial;
+    private final boolean myIsInheritedInitial;
 
-    private SchemeTextAttributesDescription(String name, String group,
-                                            @NotNull TextAttributesKey key, @NotNull MyColorScheme scheme,
-                                            Icon icon, String toolTip) {
+    private SchemeTextAttributesDescription(String name,
+                                            String group,
+                                            @NotNull TextAttributesKey key,
+                                            @NotNull MyColorScheme scheme,
+                                            Icon icon,
+                                            String toolTip) {
       super(name, group,
             getInitialAttributes(scheme, key).clone(),
             key, scheme, icon, toolTip);
@@ -829,7 +737,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
       myIsInheritedInitial = scheme.isInherited(key);
       setInherited(myIsInheritedInitial);
-      if (myIsInheritedInitial) {
+      if (myIsInheritedInitial && myFallbackAttributes != null) {
         getTextAttributes().copyFrom(myFallbackAttributes);
       }
       initCheckedStatus();
@@ -885,17 +793,17 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private Color myColor;
     private TextAttributes myFallbackAttributes;
     private Pair<ColorAndFontDescriptorsProvider, ColorDescriptor> myBaseAttributeDescriptor;
-    private boolean myIsInheritedInitial;
+    private final boolean myIsInheritedInitial;
 
     EditorSettingColorDescription(String name,
                                   String group,
-                                  ColorKey backgroundKey,
-                                  ColorKey foregroundKey,
-                                  MyColorScheme scheme) {
-      super(name, group, calcType(backgroundKey, foregroundKey), scheme, null, null);
-      myColorKey = ObjectUtils.chooseNotNull(foregroundKey, backgroundKey);
-      myKind = myColorKey == foregroundKey ? ColorDescriptor.Kind.FOREGROUND : ColorDescriptor.Kind.BACKGROUND;
-      ColorKey fallbackKey = myColorKey == null ? null : myColorKey.getFallbackColorKey();
+                                  @NotNull ColorKey colorKey,
+                                  @NotNull ColorDescriptor.Kind kind,
+                                  @NotNull MyColorScheme scheme) {
+      super(name, group, colorKey.getExternalName(), scheme, null, null);
+      myColorKey = colorKey;
+      myKind = kind;
+      ColorKey fallbackKey = myColorKey.getFallbackColorKey();
       Color fallbackColor = null;
       if (fallbackKey != null) {
         fallbackColor = scheme.getColor(fallbackKey);
@@ -1039,7 +947,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private EditorSchemeAttributeDescriptor[] myDescriptors;
     private String                            myName;
     private boolean myIsNew = false;
-    private RainbowColorsInSchemeState myRainbowState;
+    private final RainbowColorsInSchemeState myRainbowState;
     private final static Predicate<ColorKey> FILE_STATUS_COLORS =
       input -> input != null && input.getExternalName().startsWith(FileStatusFactory.FILESTATUS_COLOR_KEY_PREFIX);
 
@@ -1181,7 +1089,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       return "temporary scheme for " + myName;
     }
 
-    public boolean isInherited(TextAttributesKey key) {
+    public boolean isInherited(@NotNull TextAttributesKey key) {
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       if (fallbackKey != null) {
         if (myParentScheme instanceof AbstractColorsScheme) {
@@ -1222,6 +1130,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         AbstractColorsScheme originalScheme = ((AbstractColorsScheme)myParentScheme).getOriginal();
         if (originalScheme != null) {
           copyPreservingFileStatusColors(originalScheme, (AbstractColorsScheme)myParentScheme);
+          copyPreservingFileStatusColors(originalScheme, this);
+          initScheme(this);
         }
       }
     }
@@ -1260,7 +1170,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @Nullable
   public SearchableConfigurable findSubConfigurable(String pageName) {
     if (mySubPanelFactories == null) {
-      buildConfigurables();
+      getConfigurables();
     }
     for (InnerSearchableConfigurable configurable : mySubPanelFactories.values()) {
       if (configurable.getDisplayName().equals(pageName)) {

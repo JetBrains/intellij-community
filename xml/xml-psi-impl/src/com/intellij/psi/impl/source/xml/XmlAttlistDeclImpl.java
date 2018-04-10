@@ -40,7 +40,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == XmlTokenType.XML_NAME) {
       return XmlChildRole.XML_NAME;
@@ -70,7 +70,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
         return true;
       }
     }, this);
-    return result.toArray(new XmlAttributeDecl[result.size()]);
+    return result.toArray(new XmlAttributeDecl[0]);
   }
 
   @Override

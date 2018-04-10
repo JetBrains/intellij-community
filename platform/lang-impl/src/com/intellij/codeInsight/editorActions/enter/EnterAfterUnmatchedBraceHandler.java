@@ -173,7 +173,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
                                String generatedRBraces) {
     final Document document = editor.getDocument();
     insertRBracesAtPosition(document, caretOffset, rBracesInsertOffset, generatedRBraces);
-    formatCodeFragmentBetweenBraces(file, document, caretOffset, rBracesInsertOffset, generatedRBraces);
+    formatCodeFragmentBetweenBraces(file, document, editor, caretOffset, rBracesInsertOffset, generatedRBraces);
   }
 
   /**
@@ -206,15 +206,16 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
 
   /**
    * Formats the code block between caret and inserted braces.
-   *
    * @param file                target PSI file
    * @param document            target document
+   * @param editor              target editor
    * @param caretOffset         target caret offset
    * @param rBracesInsertOffset target position to insert
    * @param generatedRBraces    string of '}' to insert
    */
   protected void formatCodeFragmentBetweenBraces(@NotNull PsiFile file,
                                                  @NotNull Document document,
+                                                 @NotNull Editor editor,
                                                  int caretOffset,
                                                  int rBracesInsertOffset,
                                                  String generatedRBraces) {

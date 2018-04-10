@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.gradle;
 
-import com.google.common.base.Objects;
+import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

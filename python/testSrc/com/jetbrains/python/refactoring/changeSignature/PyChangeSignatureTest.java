@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
@@ -136,36 +122,36 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   public void testParamAnnotation() {
-    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "b", null, false)), LanguageLevel.PYTHON32);
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "b", null, false)), LanguageLevel.PYTHON34);
   }
 
   public void testKwArgs() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "param", null, false),
-                                              new PyParameterInfo(1, "**kwargs", null, false)), LanguageLevel.PYTHON32);
+                                              new PyParameterInfo(1, "**kwargs", null, false)), LanguageLevel.PYTHON34);
   }
 
   public void testKeywordOnlyParams() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "param", null, false),
                                               new PyParameterInfo(-1, "*", null, false),
-                                              new PyParameterInfo(-1, "a", "2", false)), LanguageLevel.PYTHON32);
+                                              new PyParameterInfo(-1, "a", "2", false)), LanguageLevel.PYTHON34);
   }
 
   public void testKeywordOnlyParamRemoveDefaultValue() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "my", "None", false),
                                               new PyParameterInfo(1, "*", null, false),
-                                              new PyParameterInfo(2, "param", null, false)), LanguageLevel.PYTHON32);
+                                              new PyParameterInfo(2, "param", null, false)), LanguageLevel.PYTHON34);
   }
 
   public void testKeywordOnlyParamRemoveDefaultValue1() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "my", "None", false),
                                               new PyParameterInfo(1, "*", null, false),
-                                              new PyParameterInfo(2, "param", "1", true)), LanguageLevel.PYTHON32);
+                                              new PyParameterInfo(2, "param", "1", true)), LanguageLevel.PYTHON34);
   }
 
   public void testKeywordOnlyParamRemoveDefaultValue2() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "my", "None", true),
                                               new PyParameterInfo(1, "*", null, false),
-                                              new PyParameterInfo(2, "param", "1", false)), LanguageLevel.PYTHON32);
+                                              new PyParameterInfo(2, "param", "1", false)), LanguageLevel.PYTHON34);
   }
 
   public void testRenameOverriding() {
@@ -193,7 +179,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testKeywordOnlyMove() {
     doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(2, "param2", null, false),
                                              new PyParameterInfo(0, "*", null, false),
-                                             new PyParameterInfo(1, "param1", null, false)), LanguageLevel.PYTHON32);
+                                             new PyParameterInfo(1, "param1", null, false)), LanguageLevel.PYTHON34);
   }
 
   // PY-8599
@@ -202,7 +188,7 @@ public class PyChangeSignatureTest extends PyTestCase {
     argsParam.setName("*foo");
     final PyParameterInfo kwargsParam = new PyParameterInfo(2, "**kwargs", null, false);
     kwargsParam.setName("**bar");
-    doChangeSignatureTest("func", Arrays.asList(new PyParameterInfo(0, "arg1", null, false), argsParam, kwargsParam), LanguageLevel.PYTHON32);
+    doChangeSignatureTest("func", Arrays.asList(new PyParameterInfo(0, "arg1", null, false), argsParam, kwargsParam), LanguageLevel.PYTHON34);
   }
 
   public void testRenameAndMoveParam() {
@@ -233,7 +219,7 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   // PY-14774
   public void testAnnotationsForStarredParametersAreNotShownInDialog() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByText(PythonFileType.INSTANCE, "def func(a, b:int, *args: tuple, c:list, d:str='foo', ** kwargs:dict):\n" +
                                                          "    pass");
       final PyFunction function = (PyFunction)new PyChangeSignatureHandler().findTargetMember(myFixture.getFile(), myFixture.getEditor());
@@ -326,11 +312,17 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   // PY-16683
   public void testKeywordOnlyParameter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
-      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "x", null, false),
-                                                new PyParameterInfo(1, "*args", null, false),
-                                                new PyParameterInfo(-1, "foo", "None", false)));
-    });
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () ->
+        doChangeSignatureTest(null,
+                              Arrays.asList(
+                                new PyParameterInfo(0, "x", null, false),
+                                new PyParameterInfo(1, "*args", null, false),
+                                new PyParameterInfo(-1, "foo", "None", false)
+                              )
+        )
+    );
   }
 
   // PY-24602
@@ -396,13 +388,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   private void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters, LanguageLevel level) {
-    setLanguageLevel(level);
-    try {
-      doChangeSignatureTest(newName, parameters);
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(level, () -> doChangeSignatureTest(newName, parameters));
   }
 
   private void doUnchangedSignatureTest() {

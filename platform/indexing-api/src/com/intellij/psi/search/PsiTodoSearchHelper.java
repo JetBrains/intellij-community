@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author irengrig
- *         Date: 2/24/11
- *         Time: 10:08 AM
  */
 public interface PsiTodoSearchHelper {
   class SERVICE {

@@ -73,7 +73,7 @@ public class AnnotateOperation extends LocalPathIndifferentOperation {
   }
 
   public Annotation[] getLineAnnotations(){
-    return myAnnotations.toArray(new Annotation[myAnnotations.size()]);
+    return myAnnotations.toArray(new Annotation[0]);
   }
 
   public String getContent(){

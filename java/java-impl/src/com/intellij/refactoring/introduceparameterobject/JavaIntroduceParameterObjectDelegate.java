@@ -174,7 +174,7 @@ public class JavaIntroduceParameterObjectDelegate
                                   method,
                                   method.getName(),
                                   returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
-                                  newParameterInfos.toArray(new ParameterInfoImpl[newParameterInfos.size()]),
+                                  newParameterInfos.toArray(new ParameterInfoImpl[0]),
                                   null,
                                   delegate,
                                   Collections.emptySet(),

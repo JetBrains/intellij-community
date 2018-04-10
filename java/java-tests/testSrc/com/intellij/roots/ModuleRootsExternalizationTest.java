@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
@@ -27,7 +13,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -40,6 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
+
 /**
  *  @author dsl
  */
@@ -51,7 +38,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
       ModuleRootManagerImpl moduleRootManager = createTempModuleRootManager();
       Element root = new Element("root");
       moduleRootManager.getState().writeExternal(root);
-      assertEquals(root.getText(), "");
+      assertThat(root.getText()).isEmpty();
     }
     catch (IOException e) {
       LOG.error(e);
@@ -59,7 +46,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
   }
 
   private ModuleRootManagerImpl createTempModuleRootManager() throws IOException {
-    File tmpModule = FileUtil.createTempFile("tst", ModuleFileType.DOT_DEFAULT_EXTENSION);
+    File tmpModule = getTempDir().createTempFile("tst", ModuleFileType.DOT_DEFAULT_EXTENSION, false);
     myFilesToDelete.add(tmpModule);
     final Module module = createModule(tmpModule);
     return (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
@@ -130,8 +117,8 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     final Library unnamedLibrary = moduleLibraryTable.createLibrary();
     final File unnamedLibClasses = new File(getTestRoot(), "unnamedLibClasses");
     final VirtualFile unnamedLibClassesRoot = LocalFileSystem.getInstance().findFileByIoFile(unnamedLibClasses);
-    final Library.ModifiableModel libraryModifyableModel = unnamedLibrary.getModifiableModel();
-    libraryModifyableModel.addRoot(unnamedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
+    final Library.ModifiableModel libraryModifiableModel = unnamedLibrary.getModifiableModel();
+    libraryModifiableModel.addRoot(unnamedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
     final Library namedLibrary = moduleLibraryTable.createLibrary("namedLibrary");
     final File namedLibClasses = new File(getTestRoot(), "namedLibClasses");
@@ -140,7 +127,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     namedLibraryModel.addRoot(namedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      libraryModifyableModel.commit();
+      libraryModifiableModel.commit();
       namedLibraryModel.commit();
     });
 

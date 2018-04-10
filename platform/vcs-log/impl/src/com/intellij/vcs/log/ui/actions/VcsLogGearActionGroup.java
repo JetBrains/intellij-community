@@ -23,9 +23,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -44,7 +44,7 @@ public class VcsLogGearActionGroup extends DumbAwareAction {
 
     ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
-                              ToolWindowContentUi.POPUP_PLACE);
+                              VcsLogActionPlaces.VCS_LOG_GEAR_POPUP_PLACE);
     Component component = e.getInputEvent().getComponent();
     if (component instanceof ActionButtonComponent) {
       popup.showUnderneathOf(component);

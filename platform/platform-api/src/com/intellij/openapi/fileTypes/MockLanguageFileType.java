@@ -41,6 +41,7 @@ public class MockLanguageFileType extends LanguageFileType {
     return "Mock";
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return ".mockExtensionThatProbablyWon'tEverExist";

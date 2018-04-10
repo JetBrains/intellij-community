@@ -66,7 +66,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   private JPanel myFilter;
   private JPanel myMainPanel;
   private JEditorPane myDescriptionTextArea;
-  private JBList myPackages;
+  private final JBList myPackages;
   private JButton myInstallButton;
   private JCheckBox myOptionsCheckBox;
   private JTextField myOptionsField;
@@ -82,7 +82,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   private final Set<String> myInstalledPackages;
   @Nullable private final PackageManagementService.Listener myPackageListener;
 
-  private Set<String> myCurrentlyInstalling = new HashSet<>();
+  private final Set<String> myCurrentlyInstalling = new HashSet<>();
   protected final ListSpeedSearch myListSpeedSearch;
 
   public ManagePackagesDialog(@NotNull Project project, final PackageManagementService packageManagementService,
@@ -507,9 +507,9 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private class MyTableRenderer extends DefaultListCellRenderer {
-    private JLabel myNameLabel = new JLabel();
-    private JLabel myRepositoryLabel = new JLabel();
-    private JPanel myPanel = new JPanel(new BorderLayout());
+    private final JLabel myNameLabel = new JLabel();
+    private final JLabel myRepositoryLabel = new JLabel();
+    private final JPanel myPanel = new JPanel(new BorderLayout());
 
     private MyTableRenderer() {
       myPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 1));

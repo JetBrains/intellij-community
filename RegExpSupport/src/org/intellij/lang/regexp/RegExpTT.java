@@ -48,6 +48,14 @@ public interface RegExpTT {
     IElementType BRACKET_EXPRESSION_BEGIN = new RegExpElementType("BRACKET_EXPRESSION_BEGIN");
     /** ":]" */
     IElementType BRACKET_EXPRESSION_END = new RegExpElementType("BRACKET_EXPRESSION_END");
+    /** "[." */
+    IElementType MYSQL_CHAR_BEGIN = new RegExpElementType("MYSQL_CHAR_BEGIN");
+    /** ".]" */
+    IElementType MYSQL_CHAR_END = new RegExpElementType("MYSQL_CHAR_END");
+    /** "[=" */
+    IElementType MYSQL_CHAR_EQ_BEGIN = new RegExpElementType("MYSQL_CHAR_EQ_BEGIN");
+    /** "=]" */
+    IElementType MYSQL_CHAR_EQ_END = new RegExpElementType("MYSQL_CHAR_EQ_END");
 
     /** "(" */
     IElementType GROUP_BEGIN = new RegExpElementType("GROUP_BEGIN");

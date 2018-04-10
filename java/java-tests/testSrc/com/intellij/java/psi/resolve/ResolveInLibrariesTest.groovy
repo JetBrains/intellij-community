@@ -15,11 +15,13 @@
  */
 package com.intellij.java.psi.resolve
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
@@ -32,43 +34,18 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-
 /**
  * @author peter
  */
 class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
-
-  void "test prefer current library when navigation from its source"() {
-    def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib")
-    def nanoJar = lib.children.find { it.name.startsWith("nanoxml") }
-    def nanoSrc = lib.findChild("src").children.find { it.name.startsWith("nanoxml") }
-
-    def jarCopy = myFixture.copyFileToProject(nanoJar.path, 'lib/nanoJar.jar')
-    def srcCopy = myFixture.copyFileToProject(nanoSrc.path, 'lib/nanoSrc.zip')
-
-    PsiTestUtil.addLibrary(myModule, 'nano1', lib.path, ["/$nanoJar.name!/"] as String[], ["/src/$nanoSrc.name!/"] as String[])
-    PsiTestUtil.addLibrary(myModule, 'nano2', jarCopy.parent.path, ["/$jarCopy.name!/"] as String[], ["/$srcCopy.name!/"] as String[])
-
-    def parsers = JavaPsiFacade.getInstance(project).findClasses('net.n3.nanoxml.IXMLParser', GlobalSearchScope.allScope(project))
-    assert parsers.size() == 2
-
-    def file0 = parsers[0].navigationElement.containingFile
-    assert file0.virtualFile.path.startsWith(nanoSrc.path)
-    assert file0.findReferenceAt(file0.text.indexOf('IXMLReader reader')).resolve().navigationElement.containingFile.virtualFile.path.startsWith(nanoSrc.path)
-
-    def file1 = parsers[1].navigationElement.containingFile
-    assert file1.virtualFile.path.startsWith(srcCopy.path)
-    assert file1.findReferenceAt(file1.text.indexOf('IXMLReader reader')).resolve().navigationElement.containingFile.virtualFile.path.startsWith(srcCopy.path)
-  }
-
   void "test inheritance transitivity"() {
-    def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib")
-    def protoJar = lib.children.find { it.name.startsWith("protobuf") }
+    def protobufJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("protobuf")
+    VirtualFile jarCopy = WriteAction.compute {
+      JarFileSystem.instance.getLocalVirtualFileFor(protobufJar).copy(this, myFixture.getTempDirFixture().findOrCreateDir("lib"), "protoJar.jar")
+    }
 
-    def jarCopy = myFixture.copyFileToProject(protoJar.path, 'lib/protoJar.jar')
-
-    PsiTestUtil.addLibrary(myModule, 'proto1', lib.path, ["/$protoJar.name!/"] as String[], [] as String[])
-    PsiTestUtil.addLibrary(myModule, 'proto2', jarCopy.parent.path, ["/$jarCopy.name!/"] as String[], [] as String[])
+    PsiTestUtil.addProjectLibrary(myModule, 'proto1', [protobufJar], [])
+    PsiTestUtil.addProjectLibrary(myModule, 'proto2', [JarFileSystem.instance.getJarRootForLocalFile(jarCopy)], [])
 
     def scope = GlobalSearchScope.allScope(project)
 

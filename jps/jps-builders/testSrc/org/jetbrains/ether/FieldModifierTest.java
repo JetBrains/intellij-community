@@ -17,7 +17,6 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 23.09.11
  */
 public class FieldModifierTest extends IncrementalTestCase {
   public FieldModifierTest() {
@@ -40,6 +39,10 @@ public class FieldModifierTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testSetPackagePrivate() {
+    doTest();
+  }
+
   public void testSetStatic() {
     doTest();
   }
@@ -49,6 +52,42 @@ public class FieldModifierTest extends IncrementalTestCase {
   }
 
   public void testUnsetStaticFinal() {
+    doTest();
+  }
+
+  public void testHidePackagePrivateWithPackagePrivate() {
+    doTest();
+  }
+
+  public void testHidePackagePrivateWithProtected() {
+    doTest();
+  }
+
+  public void testHidePackagePrivateWithPublic() {
+    doTest();
+  }
+
+  public void testHideProtectedWithPackagePrivate() {
+    doTest();
+  }
+
+  public void testHideProtectedWithProtected() {
+    doTest();
+  }
+
+  public void testHideProtectedWithPublic() {
+    doTest();
+  }
+
+  public void testHidePublicWithPackagePrivate() {
+    doTest();
+  }
+
+  public void testHidePublicWithProtected() {
+    doTest();
+  }
+
+  public void testHidePublicWithPublic() {
     doTest();
   }
 }

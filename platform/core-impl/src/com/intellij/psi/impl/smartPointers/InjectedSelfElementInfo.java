@@ -79,25 +79,25 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public VirtualFile getVirtualFile() {
-    PsiElement element = restoreElement();
+  VirtualFile getVirtualFile() {
+    PsiElement element = restoreElement((SmartPointerManagerImpl)SmartPointerManager.getInstance(getProject()));
     if (element == null) return null;
     return element.getContainingFile().getVirtualFile();
   }
 
   @Override
-  public Segment getRange() {
+  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
     return getInjectedRange(false);
   }
 
   @Nullable
   @Override
-  public Segment getPsiRange() {
+  Segment getPsiRange(@NotNull SmartPointerManagerImpl manager) {
     return getInjectedRange(true);
   }
 
   @Override
-  public PsiElement restoreElement() {
+  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
     PsiFile hostFile = myHostContext.getContainingFile();
     if (hostFile == null || !hostFile.isValid()) return null;
 
@@ -133,7 +133,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(hostFile);
     if (document != null && documentManager.isUncommited(document)) {
-      for (DocumentWindow documentWindow : InjectedLanguageManager.getInstance(getProject()).getCachedInjectedDocuments(hostFile)) {
+      for (DocumentWindow documentWindow : InjectedLanguageManager.getInstance(getProject()).getCachedInjectedDocumentsInRange(hostFile, rangeInHostFile)) {
         PsiFile injected = documentManager.getPsiFile(documentWindow);
         if (injected != null) {
           visitor.visit(injected, Collections.emptyList());
@@ -154,16 +154,17 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other,
+                                   @NotNull SmartPointerManagerImpl manager) {
     if (getClass() != other.getClass()) return false;
     if (!((InjectedSelfElementInfo)other).myHostContext.equals(myHostContext)) return false;
     SmartPointerElementInfo myElementInfo = ((SmartPsiElementPointerImpl)myInjectedFileRangeInHostFile).getElementInfo();
     SmartPointerElementInfo oElementInfo = ((SmartPsiElementPointerImpl)((InjectedSelfElementInfo)other).myInjectedFileRangeInHostFile).getElementInfo();
-    return myElementInfo.pointsToTheSameElementAs(oElementInfo);
+    return myElementInfo.pointsToTheSameElementAs(oElementInfo, manager);
   }
 
   @Override
-  public PsiFile restoreFile() {
+  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
     PsiFile hostFile = myHostContext.getContainingFile();
     if (hostFile == null || !hostFile.isValid()) return null;
 
@@ -184,7 +185,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     Segment hostElementRange = psi ? myInjectedFileRangeInHostFile.getPsiRange() : myInjectedFileRangeInHostFile.getRange();
     if (hostElementRange == null) return null;
 
-    return hostToInjected(psi, hostElementRange, restoreFile(), myAffixOffsets);
+    return hostToInjected(psi, hostElementRange, restoreFile((SmartPointerManagerImpl)SmartPointerManager.getInstance(getProject())), myAffixOffsets);
   }
 
   @Nullable
@@ -208,24 +209,23 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public void cleanup() {
+  void cleanup() {
     SmartPointerManager.getInstance(getProject()).removePointer(myInjectedFileRangeInHostFile);
   }
 
   @Nullable
   @Override
-  public Document getDocumentToSynchronize() {
+  Document getDocumentToSynchronize() {
     return ((SmartPsiElementPointerImpl)myHostContext).getElementInfo().getDocumentToSynchronize();
   }
 
   @Override
-  public int elementHashCode() {
+  int elementHashCode() {
     return ((SmartPsiElementPointerImpl)myHostContext).getElementInfo().elementHashCode();
   }
 
   @NotNull
-  @Override
-  public Project getProject() {
+  private Project getProject() {
     return myHostContext.getProject();
   }
 

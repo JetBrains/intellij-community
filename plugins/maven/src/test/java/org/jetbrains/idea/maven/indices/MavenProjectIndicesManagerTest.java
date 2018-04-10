@@ -47,7 +47,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
   }
 
-  public void testAutomaticallyAddRemoteRepositoriesOnProjectUpdate() throws Exception {
+  public void testAutomaticallyAddRemoteRepositoriesOnProjectUpdate() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -59,7 +59,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     assertEquals("http://repo1.maven.org/maven2", indices.get(1).getRepositoryPathOrUrl());
   }
 
-  public void testUpdatingIndicesOnResolution() throws Exception {
+  public void testUpdatingIndicesOnResolution() {
     removeFromLocalRepository("junit/junit/4.0");
     myIndicesFixture.getProjectIndicesManager().scheduleUpdate(myIndicesFixture.getProjectIndicesManager().getIndices());
 

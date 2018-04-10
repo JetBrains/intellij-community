@@ -156,7 +156,9 @@ public class ProjectIconsAccessor {
   private static boolean isIdeaProject(Project project) {
     if (project == null) return false;
     VirtualFile baseDir = project.getBaseDir();
-    return baseDir != null && (baseDir.findChild("idea.iml") != null || baseDir.findChild("community-main.iml") != null);
+    //has copy in devkit plugin: org.jetbrains.idea.devkit.util.PsiUtil.isIntelliJBasedDir
+    return baseDir != null && (baseDir.findChild("idea.iml") != null || baseDir.findChild("community-main.iml") != null
+           || baseDir.findChild("intellij.idea.community.main.iml") != null || baseDir.findChild("intellij.idea.ultimate.main.iml") != null);
   }
 
   private static Icon createOrFindBetterIcon(VirtualFile file, boolean useIconLoader) throws IOException {

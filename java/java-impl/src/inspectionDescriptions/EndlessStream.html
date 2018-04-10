@@ -1,0 +1,10 @@
+<html>
+<body>
+<p>Non-short-circuit operation consumes the infinite stream. Operation may be completed only by throwing the exception.</p>
+<!-- tooltip end -->
+<p>Example:</p>
+<p><code>
+  Stream.iterate(0, i -> i + 1).collect(Collectors.toList())
+</code></p>
+</body>
+</html>

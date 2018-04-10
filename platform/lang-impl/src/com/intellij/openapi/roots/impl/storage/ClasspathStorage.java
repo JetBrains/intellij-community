@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.ProjectTopics;
@@ -23,8 +9,7 @@ import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -74,7 +59,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     ClasspathStorageProvider provider = getProvider(storageType);
     if (provider == null) {
       if (module.getUserData(ERROR_NOTIFIED_KEY) == null) {
-        Notification n = new Notification(StorageUtilKt.getNOTIFICATION_GROUP_ID(), "Cannot load module '" + module.getName() + "'",
+        Notification n = new Notification(StorageUtilKt.NOTIFICATION_GROUP_ID, "Cannot load module '" + module.getName() + "'",
                                           "Support for " + storageType + " format is not installed.", NotificationType.ERROR);
         n.notify(module.getProject());
         module.putUserData(ERROR_NOTIFIED_KEY, Boolean.TRUE);
@@ -155,33 +140,30 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     }
 
     Element element = new Element("component");
-    ModifiableRootModel model = null;
-    AccessToken token = ReadAction.start();
-    try {
-      model = ((ModuleRootManagerImpl)component).getModifiableModel();
-      // IDEA-137969 Eclipse integration: external remove of classpathentry is not synchronized
-      model.clear();
+    ApplicationManager.getApplication().runReadAction(() -> {
+      ModifiableRootModel model = null;
       try {
-        myConverter.readClasspath(model);
+        model = ((ModuleRootManagerImpl)component).getModifiableModel();
+        // IDEA-137969 Eclipse integration: external remove of classpathentry is not synchronized
+        model.clear();
+        try {
+          myConverter.readClasspath(model);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        ((RootModelImpl)model).writeExternal(element);
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      ((RootModelImpl)model).writeExternal(element);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    finally {
-      try {
-        token.finish();
+      catch (WriteExternalException e) {
+        LOG.error(e);
       }
       finally {
         if (model != null) {
           model.dispose();
         }
       }
-    }
+    });
+
 
     if (myPathMacroSubstitutor != null) {
       myPathMacroSubstitutor.expandPaths(element);
@@ -286,7 +268,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     }
 
     @Override
-    public void readClasspath(@NotNull ModifiableRootModel model) throws IOException {
+    public void readClasspath(@NotNull ModifiableRootModel model) {
     }
   }
 }

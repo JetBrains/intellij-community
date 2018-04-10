@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.icons.AllIcons;
@@ -84,7 +70,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   private static final String ELEMENT_MACRO = "macro";
   private final IdeEventQueue.EventDispatcher myKeyProcessor;
 
-  private Set<InputEvent> myLastActionInputEvent = new HashSet<>();
+  private final Set<InputEvent> myLastActionInputEvent = new HashSet<>();
   private ActionMacroManager.Widget myWidget;
 
   private String myLastTyping = "";
@@ -110,14 +96,6 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
           myLastActionInputEvent.add(event.getInputEvent());
         }
       }
-
-      @Override
-      public void beforeEditorTyping(char c, DataContext dataContext) {
-      }
-
-      @Override
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext, final AnActionEvent event) {
-      }
     });
 
     myKeyProcessor = new MyKeyPostpocessor();
@@ -125,7 +103,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     myMacros = new ArrayList<>();
     for (Element macroElement : state.getChildren(ELEMENT_MACRO)) {
       ActionMacro macro = new ActionMacro();
@@ -165,17 +143,17 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
   private class Widget implements CustomStatusBarWidget, Consumer<MouseEvent> {
 
-    private AnimatedIcon myIcon = new AnimatedIcon("Macro recording",
-                                                   new Icon[]{
+    private final AnimatedIcon myIcon = new AnimatedIcon("Macro recording",
+                                                         new Icon[]{
                                                      AllIcons.Ide.Macro.Recording_1,
                                                      AllIcons.Ide.Macro.Recording_2,
                                                      AllIcons.Ide.Macro.Recording_3,
                                                      AllIcons.Ide.Macro.Recording_4},
-                                                   AllIcons.Ide.Macro.Recording_1, 1000);
-    private StatusBar myStatusBar;
+                                                         AllIcons.Ide.Macro.Recording_1, 1000);
+    private final StatusBar myStatusBar;
     private final WidgetPresentation myPresentation;
 
-    private JPanel myBalloonComponent;
+    private final JPanel myBalloonComponent;
     private Balloon myBalloon;
     private final JLabel myText;
 
@@ -412,7 +390,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   }
 
   public ActionMacro[] getAllMacros() {
-    return myMacros.toArray(new ActionMacro[myMacros.size()]);
+    return myMacros.toArray(new ActionMacro[0]);
   }
 
   public void removeAllMacros() {

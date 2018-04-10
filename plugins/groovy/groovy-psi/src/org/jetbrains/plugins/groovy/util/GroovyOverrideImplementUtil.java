@@ -25,7 +25,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -235,7 +234,8 @@ public class GroovyOverrideImplementUtil {
 
     Collection<CandidateInfo> candidates = GroovyOverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, toImplement);
     Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ? ContainerUtil.newArrayList()
-                                                                              : GroovyOverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
+                                                                              : GroovyOverrideImplementExploreUtil
+                                            .getMethodsToOverrideImplement(aClass, true);
 
     if (toImplement) {
       for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
@@ -251,19 +251,18 @@ public class GroovyOverrideImplementUtil {
       }
     }
 
-    final MemberChooser<PsiMethodMember> chooser = OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
+    final MemberChooser<PsiMethodMember> chooser =
+      OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
     if (chooser == null) return;
 
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
     LOG.assertTrue(aClass.isValid());
-    new WriteCommandAction(project, aClass.getContainingFile()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() -> {
+      OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
+                                                                   chooser.isInsertOverrideAnnotation());
+    });
   }
 
   @NotNull

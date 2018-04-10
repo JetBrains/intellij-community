@@ -88,13 +88,6 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
     }
   }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    super.tuneFixture(moduleBuilder)
-    def javaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome())
-    moduleBuilder.addJdk(StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre'))
-  }
-
   void runDebugger(PsiFile script, Closure cl) {
     def configuration = createScriptConfiguration(script.virtualFile.path, myModule)
     runDebugger(configuration, cl)

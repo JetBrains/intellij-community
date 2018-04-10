@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.roots.ui.configuration.dependencyAnalysis;
 
@@ -54,6 +42,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * The classpath details component
@@ -62,7 +51,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
   /**
    * Data key for order path element
    */
-  public static DataKey<ModuleDependenciesAnalyzer.OrderPathElement> ORDER_PATH_ELEMENT_KEY = DataKey.create("ORDER_PATH_ELEMENT");
+  public static final DataKey<ModuleDependenciesAnalyzer.OrderPathElement> ORDER_PATH_ELEMENT_KEY = DataKey.create("ORDER_PATH_ELEMENT");
   /**
    * The module being analyzed
    */
@@ -80,7 +69,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
   /**
    * The message bus connection to use
    */
-  private MessageBusConnection myMessageBusConnection;
+  private final MessageBusConnection myMessageBusConnection;
 
   /**
    * The constructor
@@ -146,34 +135,16 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
    * {@inheritDoc}
    */
   @Override
-  protected ArrayList<AnAction> createActions(boolean fromPopup) {
-    if (!fromPopup) {
-      ArrayList<AnAction> rc = new ArrayList<>();
-      rc.add(new ClasspathTypeAction());
-      rc.add(new SdkFilterAction());
-      rc.add(new UrlModeAction());
-      return rc;
+  protected List<AnAction> createActions(boolean fromPopup) {
+    if (fromPopup) {
+      return super.createActions(true);
     }
-    else {
-      return super.createActions(fromPopup);
-    }
-  }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected void processRemovedItems() {
-    // no remove action so far
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected boolean wasObjectStored(Object editableObject) {
-    // no modifications so far
-    return false;
+    List<AnAction> rc = new ArrayList<>();
+    rc.add(new ClasspathTypeAction());
+    rc.add(new SdkFilterAction());
+    rc.add(new UrlModeAction());
+    return rc;
   }
 
   /**
@@ -257,7 +228,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
         return;
       }
       final ModuleDependenciesAnalyzer.OrderPathElement element = e.getData(ORDER_PATH_ELEMENT_KEY);
-      if (element != null && element instanceof ModuleDependenciesAnalyzer.OrderEntryPathElement) {
+      if (element instanceof ModuleDependenciesAnalyzer.OrderEntryPathElement) {
         final ModuleDependenciesAnalyzer.OrderEntryPathElement o = (ModuleDependenciesAnalyzer.OrderEntryPathElement)element;
         final OrderEntry entry = o.entry();
         final Module m = entry.getOwnerModule();
@@ -415,14 +386,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public void disposeUIResources() {
-      //Do nothing
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public String getHelpTopic() {
       return null;
     }
@@ -441,14 +404,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     @Override
     public void apply() throws ConfigurationException {
       // Do nothing
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void reset() {
-      //Do nothing
     }
 
     /**
@@ -485,7 +440,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
    * Cell renderer for explanation tree
    */
   static class ExplanationTreeRenderer extends ColoredTreeCellRenderer {
-
     @Override
     public void customizeCellRenderer(JTree tree,
                                       Object value,
@@ -771,7 +725,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
   /**
    * The enumeration type that represents classpath entry filter
    */
-  private static enum ClasspathType {
+  private enum ClasspathType {
     /**
      * The production compile mode
      */

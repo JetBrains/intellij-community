@@ -60,9 +60,9 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
       @NotNull
       @Override
       protected Set<String> compute() {
-        final Set<String> knownTopLevelPackages = new HashSet<>();
-        final List<PsiElement> defaultPackages = getDefaultPackages(position.getProject());
-        for (final PsiElement pack : defaultPackages) {
+        Set<String> knownTopLevelPackages = new HashSet<>();
+        List<PsiPackage> defaultPackages = getDefaultPackages(position.getProject());
+        for (PsiElement pack : defaultPackages) {
           if (pack instanceof PsiPackage) {
             knownTopLevelPackages.add(((PsiPackage)pack).getName());
           }

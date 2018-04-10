@@ -45,7 +45,7 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 class ExternalSystemRunManagerListener implements RunManagerListener {
   private Disposable eventDisposable;
 
-  private ExternalProjectsManagerImpl myManager;
+  private final ExternalProjectsManagerImpl myManager;
   private final Map<Integer, Pair<String, RunnerAndConfigurationSettings>> myMap;
 
   public ExternalSystemRunManagerListener(ExternalProjectsManager manager) {

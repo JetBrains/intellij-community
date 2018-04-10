@@ -36,7 +36,7 @@ public class RatesPanel extends JPanel {
   private static final Icon STAR6 = AllIcons.Ide.Rating4;
   private static final Icon[] STARs = new Icon[]{IconLoader.getDisabledIcon(STAR), STAR3, STAR3, STAR4, STAR4, STAR5, STAR5, STAR6, STAR6, STAR};
 
-  private JLabel[] myLabels = new JLabel[MAX_RATE];
+  private final JLabel[] myLabels = new JLabel[MAX_RATE];
 
   public RatesPanel() {
     super(new GridBagLayout());

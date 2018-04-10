@@ -40,11 +40,10 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 12, 2007
  */
 public class StringIndex {
   private final MapReduceIndex<String, String, PathContentPair> myIndex;
-  private volatile Exception myRebuildException;
+  private volatile Throwable myRebuildThrowable;
   public StringIndex(String testName,
                      final IndexStorage<String, String> storage,
                      final PersistentHashMap<Integer, Collection<String>> inputIndex,
@@ -94,11 +93,11 @@ public class StringIndex {
       }
 
       @Override
-      public void requestRebuild(@NotNull Exception ex) {
+      public void requestRebuild(@NotNull Throwable ex) {
         if (failOnRebuildRequest) {
           Assert.fail();
         } else {
-          myRebuildException = ex;
+          myRebuildThrowable = ex;
         }
       }
 
@@ -126,8 +125,8 @@ public class StringIndex {
     return content != null ? new PathContentPair(path, content) : null;
   }
 
-  public Exception getRebuildException() {
-    return myRebuildException;
+  public Throwable getRebuildThrowable() {
+    return myRebuildThrowable;
   }
 
   private static class Indexer implements DataIndexer<String, String, PathContentPair> {

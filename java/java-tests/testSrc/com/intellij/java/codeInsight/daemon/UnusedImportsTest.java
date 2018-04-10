@@ -18,16 +18,16 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.psi.PsiFile;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 
 public class UnusedImportsTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedImports";
 
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UnusedImportLocalInspection()};
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedImportInspection());
   }
 
   public void test1() throws Exception { doTest(); }

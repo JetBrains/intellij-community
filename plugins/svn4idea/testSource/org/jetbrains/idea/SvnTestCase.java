@@ -58,7 +58,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnFileUrlMappingImpl;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.CreateExternalAction;
@@ -67,26 +66,22 @@ import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.junit.Assert.*;
 
-/**
- * @author yole
- */
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   public static String ourGlobalTestDataDir;
-  public static Boolean ourGlobalUseNativeAcceleration;
 
   protected TempDirTestFixture myTempDirFixture;
   protected String myRepoUrl;
   protected TestClientRunner myRunner;
   protected String myWcRootName;
-  // TODO: Change this to explicitly run either with native acceleration or not.
-  // properties set through run configurations or different runners (like Suite) could be used
-  private boolean myUseNativeAcceleration = new GregorianCalendar().get(Calendar.HOUR_OF_DAY) % 2 == 0;
 
   private String myTestDataDir;
   private File myRepoRoot;
@@ -116,70 +111,63 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Before
   public void setUp() throws Exception {
-    System.out.println("Native client for status: " + isUseNativeAcceleration());
-
     String property = System.getProperty("svn.test.data.directory");
     if (!StringUtil.isEmpty(property)) {
       myTestDataDir = property;
     }
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-        myTempDirFixture = fixtureFactory.createTempDirTestFixture();
-        myTempDirFixture.setUp();
+    runInEdtAndWait(() -> {
+      final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+      myTempDirFixture = fixtureFactory.createTempDirTestFixture();
+      myTempDirFixture.setUp();
 
-        myRepoRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
-        boolean isRepoRootCreated = myRepoRoot.mkdir() || myRepoRoot.isDirectory();
-        assert isRepoRootCreated : myRepoRoot;
+      myRepoRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
+      boolean isRepoRootCreated = myRepoRoot.mkdir() || myRepoRoot.isDirectory();
+      assert isRepoRootCreated : myRepoRoot;
 
-        myPluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
-        if (!myPluginRoot.isDirectory()) {
-          // try standalone mode
-          Class aClass = SvnTestCase.class;
-          String rootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-          myPluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
-        }
-
-        File svnBinDir =  new File(myPluginRoot, getTestDataDir() + "/svn/bin");
-        File svnExecutable = null;
-        if (SystemInfo.isWindows) {
-          svnExecutable = new File(svnBinDir, "windows/svn.exe");
-        }
-        else if (SystemInfo.isLinux) {
-          svnExecutable = new File(svnBinDir, "linux/svn");
-        }
-        else if (SystemInfo.isMac) {
-          svnExecutable = new File(svnBinDir, "mac/svn");
-        }
-        assertTrue("No Subversion executable was found: " + svnExecutable + ", " + SystemInfo.OS_NAME,
-                   svnExecutable != null && svnExecutable.canExecute());
-        myClientBinaryPath = svnExecutable.getParentFile();
-        myRunner = SystemInfo.isMac
-                   ? createClientRunner(Collections.singletonMap("DYLD_LIBRARY_PATH", myClientBinaryPath.getPath()))
-                   : createClientRunner();
-
-        ZipUtil.extract(new File(myPluginRoot, getTestDataDir() + "/svn/newrepo.zip"), myRepoRoot, null);
-
-        myWcRoot = new File(myTempDirFixture.getTempDirPath(), myWcRootName);
-        boolean isWcRootCreated = myWcRoot.mkdir() || myWcRoot.isDirectory();
-        assert isWcRootCreated : myWcRoot;
-
-        myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
-
-        verify(runSvn("co", myRepoUrl, myWcRoot.getPath()));
-
-        initProject(myWcRoot, this.getTestName());
-        activateVCS(SvnVcs.VCS_NAME);
-
-        myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
-
-        ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
-        refreshSvnMappingsSynchronously();
+      myPluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
+      if (!myPluginRoot.isDirectory()) {
+        // try standalone mode
+        Class aClass = SvnTestCase.class;
+        String rootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+        myPluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
       }
-      catch (Exception e) {
-        throw new RuntimeException(e);
+
+      File svnBinDir = new File(myPluginRoot, getTestDataDir() + "/svn/bin");
+      File svnExecutable = null;
+      if (SystemInfo.isWindows) {
+        svnExecutable = new File(svnBinDir, "windows/svn.exe");
       }
+      else if (SystemInfo.isLinux) {
+        svnExecutable = new File(svnBinDir, "linux/svn");
+      }
+      else if (SystemInfo.isMac) {
+        svnExecutable = new File(svnBinDir, "mac/svn");
+      }
+      assertTrue("No Subversion executable was found: " + svnExecutable + ", " + SystemInfo.OS_NAME,
+                 svnExecutable != null && svnExecutable.canExecute());
+      myClientBinaryPath = svnExecutable.getParentFile();
+      myRunner = SystemInfo.isMac
+                 ? createClientRunner(Collections.singletonMap("DYLD_LIBRARY_PATH", myClientBinaryPath.getPath()))
+                 : createClientRunner();
+
+      ZipUtil.extract(new File(myPluginRoot, getTestDataDir() + "/svn/newrepo.zip"), myRepoRoot, null);
+
+      myWcRoot = new File(myTempDirFixture.getTempDirPath(), myWcRootName);
+      boolean isWcRootCreated = myWcRoot.mkdir() || myWcRoot.isDirectory();
+      assert isWcRootCreated : myWcRoot;
+
+      myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
+
+      verify(runSvn("co", myRepoUrl, myWcRoot.getPath()));
+
+      initProject(myWcRoot, this.getTestName());
+      activateVCS(SvnVcs.VCS_NAME);
+
+      myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
+
+      ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
+      refreshSvnMappingsSynchronously();
     });
 
     // there should be kind-a waiting for after change list manager finds all changes and runs inner refresh of copies in the above method
@@ -203,33 +191,26 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Override
   protected void projectCreated() {
-    SvnConfiguration.getInstance(myProject).setUseAcceleration(
-      isUseNativeAcceleration() ? SvnConfiguration.UseAcceleration.commandLine : SvnConfiguration.UseAcceleration.nothing);
-      SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
+    SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
   }
 
   @After
   public void tearDown() throws Exception {
     ((ChangeListManagerImpl) ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
     sleep(100);
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        tearDownProject();
+    runInEdtAndWait(() -> {
+      tearDownProject();
 
-        if (myWcRoot != null && myWcRoot.exists()) {
-          FileUtil.delete(myWcRoot);
-        }
-        if (myRepoRoot != null && myRepoRoot.exists()) {
-          FileUtil.delete(myRepoRoot);
-        }
-
-        if (myTempDirFixture != null) {
-          myTempDirFixture.tearDown();
-          myTempDirFixture = null;
-        }
+      if (myWcRoot != null && myWcRoot.exists()) {
+        FileUtil.delete(myWcRoot);
       }
-      catch (Exception e) {
-        throw new RuntimeException(e);
+      if (myRepoRoot != null && myRepoRoot.exists()) {
+        FileUtil.delete(myRepoRoot);
+      }
+
+      if (myTempDirFixture != null) {
+        myTempDirFixture.tearDown();
+        myTempDirFixture = null;
       }
     });
   }
@@ -316,14 +297,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   public void setTestDataDir(String testDataDir) {
     myTestDataDir = testDataDir;
-  }
-
-  public boolean isUseNativeAcceleration() {
-    return ourGlobalUseNativeAcceleration != null ? ourGlobalUseNativeAcceleration : myUseNativeAcceleration;
-  }
-
-  public void setUseNativeAcceleration(boolean useNativeAcceleration) {
-    myUseNativeAcceleration = useNativeAcceleration;
   }
 
   protected class SubTree {
@@ -580,8 +553,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   protected void setNativeAcceleration(final boolean value) {
     System.out.println("Set native acceleration to " + value);
-    SvnConfiguration.getInstance(myProject).setUseAcceleration(
-      value ? SvnConfiguration.UseAcceleration.commandLine : SvnConfiguration.UseAcceleration.nothing);
     SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
   }
 }

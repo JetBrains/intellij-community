@@ -47,11 +47,6 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
   }
 
   @Override
-  public boolean isAddBreakpointButtonVisible() {
-    return false;
-  }
-
-  @Override
   public final boolean isSuspendThreadSupported() {
     return true;
   }

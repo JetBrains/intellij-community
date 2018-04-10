@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.util.List;
@@ -45,7 +46,7 @@ public class PyInvertBooleanTest extends PyTestCase {
 
   private void doTest(List<String> files) {
     files.add(0, "refactoring/invertBoolean/" + getTestName(true) + ".before.py");
-    myFixture.configureByFiles(files.toArray(new String[files.size()]));
+    myFixture.configureByFiles(files.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
     final PsiElement element = myFixture.getElementAtCaret();
     assertTrue(element instanceof PsiNamedElement);
 

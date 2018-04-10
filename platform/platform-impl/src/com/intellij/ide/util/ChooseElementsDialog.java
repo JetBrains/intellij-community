@@ -36,7 +36,7 @@ import java.util.List;
  */
 public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   protected ElementsChooser<T> myChooser;
-  private String myDescription;
+  private final String myDescription;
 
   public ChooseElementsDialog(Project project, List<? extends T> items, String title, final String description) {
     this(project, items, title, description, false);
@@ -58,9 +58,18 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     initializeDialog(items, title, sort);
   }
 
+  /**
+   * @return true if elements should have checkboxes
+   * @see #getMarkedElements()
+   * @see #isElementMarkedByDefault(Object)
+   */
+  protected boolean canElementsBeMarked() {
+    return false;
+  }
+
   private void initializeDialog(final List<? extends T> items, final String title, boolean sort) {
     setTitle(title);
-    myChooser = new ElementsChooser<T>(false) {
+    myChooser = new ElementsChooser<T>(canElementsBeMarked()) {
       protected String getItemText(@NotNull final T item) {
         return ChooseElementsDialog.this.getItemText(item);
       }
@@ -100,6 +109,14 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   @Nullable
   protected abstract Icon getItemIcon(T item);
 
+  /**
+   * Override this method and return non-null value to specify location of {@code item}.
+   * It will be shown as grayed text next to the {@link #getItemText(T) item text}.
+   */
+  protected String getItemLocation(T item) {
+    return null; // default implementation
+  }
+
   @NotNull
   public List<T> getChosenElements() {
     return isOK() ? myChooser.getSelectedElements() : Collections.emptyList();
@@ -125,19 +142,40 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   private void setElements(final Collection<? extends T> elements, final Collection<? extends T> elementsToSelect) {
     myChooser.clear();
     for (final T item : elements) {
-      myChooser.addElement(item, false, createElementProperties(item));
+      myChooser.addElement(item, isElementMarkedByDefault(item), createElementProperties(item));
     }
     myChooser.selectElements(elementsToSelect);
   }
 
+  /**
+   * @return true if element's checkbox should be selected by default
+   * Takes effect if {@link #canElementsBeMarked()} returns true
+   */
+  protected boolean isElementMarkedByDefault(T element) {
+    return false;
+  }
+
+  /**
+   * @return list of elements with selected checkboxes
+   * Works only if {@link #canElementsBeMarked()} returns true
+   * @see #isElementMarkedByDefault(Object)
+   */
+  public List<T> getMarkedElements() {
+    return myChooser.getMarkedElements();
+  }
+
   private ElementsChooser.ElementProperties createElementProperties(final T item) {
     return new ElementsChooser.ElementProperties() {
+      @Override
+      @Nullable
       public Icon getIcon() {
         return getItemIcon(item);
       }
 
-      public Color getColor() {
-        return null;
+      @Override
+      @Nullable
+      public String getLocation() {
+        return getItemLocation(item);
       }
     };
   }

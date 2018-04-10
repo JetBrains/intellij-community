@@ -1,29 +1,23 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 /**
  * Is intended to hold specific java formatting tests for 'spacing' settings.
  *
  * @author Denis Zhdanov
- * @since Apr 29, 2010 5:50:34 PM
+ * @since Apr 29, 2010
  */
 public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).setLanguageLevel(JavaTestUtil.getMaxRegisteredLanguageLevel());
+  }
 
   public void testSpacingBetweenTypeParameters() {
     // Implied by IDEADEV-3666
@@ -150,6 +144,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doTextTest(initial, formatted); // Expect spaces to be inserted after unary operators
   }
 
+  @SuppressWarnings("unused")
   public void _testJavadocMethodParams() {
     // Inspired by IDEA-42167
     // Disabled because the contents of the {@code tag} is not necessarily Java code and
@@ -348,8 +343,13 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   public void testSpacesInsideMethodRef() {
     getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = true;
 
+    //expr
     doMethodTest("Runnable r = this::foo",
                  "Runnable r = this :: foo");
+
+    //class ref
+    doMethodTest("Runnable r = Foo::foo",
+                 "Runnable r = Foo :: foo");
 
     getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = false;
     doMethodTest("Runnable r = this::foo",
@@ -652,7 +652,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "int x = (1 + 2 + 3) * (1 + 2 + 2) * (1 + 2);"
     );
   }
-  
+
   public void testKeepFinalOnLine() {
     doClassTest(
       "public    static void bar(@NonNls final String[] args) {\n" +
@@ -684,5 +684,9 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "    foo(100 , 200);\n" +
       "}");
   }
-  
+
+  public void testSpacingAroundVarKeyword() {
+    doMethodTest("for (  var  path  :  paths) ;", "for (var path : paths) ;");
+    doMethodTest("try ( @A  var  r  =  open()) { }", "try (@A var r = open()) {\n}");
+  }
 }

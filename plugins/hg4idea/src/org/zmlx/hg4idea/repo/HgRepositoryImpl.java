@@ -20,6 +20,7 @@ import com.intellij.dvcs.repo.AsyncFilesManagerListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,7 +46,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   private static final Logger LOG = Logger.getInstance(HgRepositoryImpl.class);
 
-  @NotNull private HgVcs myVcs;
+  @NotNull private final HgVcs myVcs;
   @NotNull private final HgRepositoryReader myReader;
   @NotNull private final VirtualFile myHgDir;
   @NotNull private volatile HgRepoInfo myInfo;
@@ -230,11 +231,8 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
         myOpenedBranches = HgBranchesCommand.collectNames(branchCommandResult);
       }
 
-      HgUtil.executeOnPooledThread(() -> {
-        if (!project.isDisposed()) {
-          project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, getRoot());
-        }
-      }, project);
+      BackgroundTaskUtil.executeOnPooledThread(project, ()
+        -> BackgroundTaskUtil.syncPublisher(project, HgVcs.STATUS_TOPIC).update(project, getRoot()));
     }
   }
 

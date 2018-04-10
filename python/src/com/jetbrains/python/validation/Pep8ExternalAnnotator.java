@@ -50,6 +50,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
@@ -234,17 +235,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     Results results = new Results(collectedInfo.level);
     if (output.isTimeout()) {
       LOG.info("Timeout running pycodestyle.py");
+      return results;
     }
-    else if (output.getStderrLines().isEmpty()) {
-      for (String line : output.getStdoutLines()) {
-        final Problem problem = parseProblem(line);
-        if (problem != null) {
-          results.problems.add(problem);
-        }
-      }
-    }
-    else if (((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
+    if (!output.getStderr().isEmpty() && ((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
       LOG.info("Error running pycodestyle.py: " + output.getStderr());
+    }
+    for (String line : output.getStdoutLines()) {
+      ContainerUtil.addIfNotNull(results.problems, parseProblem(line));
     }
     return results;
   }

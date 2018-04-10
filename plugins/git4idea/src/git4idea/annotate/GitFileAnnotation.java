@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -82,7 +81,7 @@ public class GitFileAnnotation extends FileAnnotation {
     super(project);
     myProject = project;
     myFile = file;
-    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
+    myVcs = GitVcs.getInstance(myProject);
     myBaseRevision = revision;
     myLines = lines;
   }

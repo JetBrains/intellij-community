@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -119,10 +118,6 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
 
   @Override
   public void setEditor(@NotNull HighlighterClient editor) {
-  }
-
-  @Override
-  public void setColorScheme(@NotNull EditorColorsScheme scheme) {
   }
 
   private class ProxyIterator implements HighlighterIterator {

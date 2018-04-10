@@ -159,14 +159,15 @@ public class MavenDomUtil {
     MavenDomParent result = mavenModel.getMavenParent();
 
     VirtualFile pomFile = DomUtil.getFile(mavenModel).getVirtualFile();
-    Project project = mavenModel.getXmlElement().getProject();
+    Project project = mavenModel.getManager().getProject();
 
     MavenId parentId = parentProject.getMavenId();
     result.getGroupId().setStringValue(parentId.getGroupId());
     result.getArtifactId().setStringValue(parentId.getArtifactId());
     result.getVersion().setStringValue(parentId.getVersion());
 
-    if (!Comparing.equal(pomFile.getParent().getParent(), parentProject.getDirectoryFile())) {
+    if (!Comparing.equal(pomFile.getParent().getParent(), parentProject.getDirectoryFile())
+        || !FileUtil.namesEqual(MavenConstants.POM_XML, parentProject.getFile().getName())) {
       result.getRelativePath().setValue(PsiManager.getInstance(project).findFile(parentProject.getFile()));
     }
 

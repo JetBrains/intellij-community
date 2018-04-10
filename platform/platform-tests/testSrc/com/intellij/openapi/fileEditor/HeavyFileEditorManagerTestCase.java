@@ -25,7 +25,6 @@ import com.intellij.ui.docking.DockManager;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 4/30/13
  */
 public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureTestCase {
 

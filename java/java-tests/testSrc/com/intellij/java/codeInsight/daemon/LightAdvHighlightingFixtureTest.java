@@ -48,6 +48,15 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     assertNull(ReferencesSearch.search(aClass).findFirst());
   }
 
+  public void testInaccessibleFunctionalTypeParameter() {
+    myFixture.addClass("package test; class A {}");
+    myFixture.addClass("package test; public interface I { void m(A a);}");
+    myFixture.addClass("package test; public interface J { A m();}");
+
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testBoundsPromotionWithCapturedWildcards() {
     myFixture.addClass("package a; public interface Provider<A> {}");
     myFixture.addClass("package b; public interface Provider<B> {}");
@@ -75,6 +84,25 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
       myFixture.disableInspections(inspection);
     }
 
+  }
+
+  public void testReferenceThroughInheritance() {
+    myFixture.addClass("package test;\n" +
+                       "public class A {\n" +
+                       "  public static class B {}\n" +
+                       "}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testReferenceThroughInheritance1() {
+    myFixture.addClass("package me;\n" +
+                       "import me.Serializer.Format;\n" +
+                       "public interface Serializer<F extends Format> {\n" +
+                       "    public static interface Format {}\n" +
+                       "}\n");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
   }
 
   public void testUsageOfProtectedAnnotationOutsideAPackage() {
@@ -127,6 +155,20 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
                        "    return null;\n" +
                        "  }\n" +
                        "}\n");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testClassPackageConflict() {
+    myFixture.addClass("package a; public class b {}");
+    myFixture.addClass("package c; public class a {}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testClassPackageConflict1() {
+    myFixture.addClass("package a; public class b {}");
+    myFixture.addClass("package c.d; public class a {}");
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }

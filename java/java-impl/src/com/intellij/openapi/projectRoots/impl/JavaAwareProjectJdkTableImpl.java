@@ -1,29 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {
@@ -41,7 +30,7 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   public Sdk getInternalJdk() {
     if (myInternalJdk == null) {
       final String jdkHome = SystemProperties.getJavaHome();
-      final String versionName = ProjectBundle.message("sdk.java.name.template", SystemProperties.getJavaVersion());
+      final String versionName = ProjectBundle.message("sdk.java.name.template", SystemInfo.JAVA_VERSION);
       myInternalJdk = myJavaSdk.createJdk(versionName, jdkHome);
     }
     return myInternalJdk;
@@ -62,7 +51,7 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   }
 
   @Override
-  public void loadState(final Element element) {
+  public void loadState(@NotNull final Element element) {
     myInternalJdk = null;
     try {
       super.loadState(element);
@@ -76,4 +65,15 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   protected String getSdkTypeName(final String type) {
     return type != null ? type : JavaSdk.getInstance().getName();
   }
+
+  @TestOnly
+  public static void removeInternalJdkInTests() {
+    WriteAction.run(()-> {
+      JavaAwareProjectJdkTableImpl table = getInstanceEx();
+      if (table.myInternalJdk != null) {
+        table.removeJdk(table.myInternalJdk);
+      }
+    });
+  }
+
 }

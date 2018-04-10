@@ -28,8 +28,8 @@ class TestSyntheticAccess {
       }// 19
 
       void incrementS() {
-         ++TestSyntheticAccess.s;// 22 23
-      }
+         ++TestSyntheticAccess.s;// 22
+      }// 23
 
       void decrementS() {
          TestSyntheticAccess.s--;// 26
@@ -39,46 +39,44 @@ class TestSyntheticAccess {
 
 class 'pkg/TestSyntheticAccess$Assigner' {
    method 'assignI (I)V' {
-      3      8
+      5      8
       9      9
    }
 
    method 'assignS (I)V' {
-      2      12
+      1      12
       5      13
    }
 }
 
 class 'pkg/TestSyntheticAccess$Incrementer' {
    method 'orI ()V' {
-      1      18
-      3      18
+      8      18
       b      18
-      c      18
+      d      18
       11      19
    }
 
    method 'incrementI ()V' {
       2      22
-      7      22
+      4      22
       8      23
    }
 
    method 'decrementI ()V' {
       2      26
-      6      26
+      4      26
       8      27
    }
 
    method 'incrementS ()V' {
       0      30
-      4      30
+      4      31
    }
 
    method 'decrementS ()V' {
       0      34
       4      35
-      5      34
    }
 }
 
@@ -90,7 +88,7 @@ Lines mapping:
 18 <-> 27
 19 <-> 28
 22 <-> 31
-23 <-> 31
+23 <-> 32
 26 <-> 35
 27 <-> 36
 32 <-> 9

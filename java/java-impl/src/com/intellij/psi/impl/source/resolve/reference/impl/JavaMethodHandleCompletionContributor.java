@@ -91,12 +91,12 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
       final String methodName = methodCall.getMethodExpression().getReferenceName();
       if (methodName != null && METHOD_HANDLE_FACTORY_NAMES.contains(methodName)) {
         final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
-        final PsiClass psiClass = arguments.length != 0 ? getReflectiveClass(arguments[0]) : null;
-        if (psiClass != null) {
+        final ReflectiveClass ownerClass = arguments.length != 0 ? getReflectiveClass(arguments[0]) : null;
+        if (ownerClass != null) {
 
           switch (methodName) {
             case FIND_CONSTRUCTOR:
-              addConstructorSignatures(psiClass, position, result);
+              addConstructorSignatures(ownerClass, position, result);
               break;
 
             case FIND_VIRTUAL:
@@ -104,7 +104,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
             case FIND_SPECIAL:
               final String name = arguments.length > 1 ? computeConstantExpression(arguments[1], String.class) : null;
               if (!StringUtil.isEmpty(name)) {
-                addMethodSignatures(psiClass, name, FIND_STATIC.equals(methodName), position, result);
+                addMethodSignatures(ownerClass, name, FIND_STATIC.equals(methodName), position, result);
               }
               break;
           }
@@ -113,27 +113,24 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     }
   }
 
-  private static void addConstructorSignatures(@NotNull PsiClass psiClass,
+  private static void addConstructorSignatures(@NotNull ReflectiveClass ownerClass,
                                                @NotNull PsiElement context,
                                                @NotNull Consumer<LookupElement> result) {
-    final String className = psiClass.getName();
-    if (className != null) {
-      final PsiMethod[] constructors = psiClass.getConstructors();
-      if (constructors.length != 0) {
-        lookupMethodTypes(Arrays.stream(constructors), context, result);
-      }
-      else {
-        result.consume(lookupSignature(ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE, context));
-      }
+    final PsiMethod[] constructors = ownerClass.getPsiClass().getConstructors();
+    if (constructors.length != 0) {
+      lookupMethodTypes(Arrays.stream(constructors), context, result);
+    }
+    else {
+      result.consume(lookupSignature(ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE, context));
     }
   }
 
-  private static void addMethodSignatures(@NotNull PsiClass psiClass,
+  private static void addMethodSignatures(@NotNull ReflectiveClass psiClass,
                                           @NotNull String methodName,
                                           boolean isStaticExpected,
                                           @NotNull PsiElement context,
                                           @NotNull Consumer<LookupElement> result) {
-    final PsiMethod[] methods = psiClass.findMethodsByName(methodName, false);
+    final PsiMethod[] methods = psiClass.getPsiClass().findMethodsByName(methodName, false);
     if (methods.length != 0) {
       final Stream<PsiMethod> methodStream = Arrays.stream(methods)
         .filter(method -> method.hasModifierProperty(PsiModifier.STATIC) == isStaticExpected);
@@ -174,9 +171,9 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
         if (arguments.length > 2) {
           final String fieldName = computeConstantExpression(arguments[1], String.class);
           if (!StringUtil.isEmpty(fieldName)) {
-            final PsiClass psiClass = getReflectiveClass(arguments[0]);
-            if (psiClass != null) {
-              addFieldType(psiClass, fieldName, position, result);
+            final ReflectiveClass ownerClass = getReflectiveClass(arguments[0]);
+            if (ownerClass != null) {
+              addFieldType(ownerClass, fieldName, position, result);
             }
           }
         }
@@ -184,14 +181,14 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     }
   }
 
-  private static void addFieldType(@NotNull PsiClass psiClass,
+  private static void addFieldType(@NotNull ReflectiveClass ownerClass,
                                    @NotNull String fieldName,
                                    @NotNull PsiElement context,
                                    @NotNull Consumer<LookupElement> result) {
-    final PsiField field = psiClass.findFieldByName(fieldName, false);
+    final PsiField field = ownerClass.getPsiClass().findFieldByName(fieldName, false);
     if (field != null) {
       final String typeText = getTypeText(field.getType());
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(ownerClass.getPsiClass().getProject()).getElementFactory();
       final PsiExpression expression = factory.createExpressionFromText(typeText + ".class", context);
 
       final String shortType = PsiNameHelper.getShortClassName(typeText);

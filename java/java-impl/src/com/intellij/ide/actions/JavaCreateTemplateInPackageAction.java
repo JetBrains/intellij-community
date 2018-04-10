@@ -38,6 +38,10 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
 
   @Override
   protected boolean checkPackageExists(PsiDirectory directory) {
+    return doCheckPackageExists(directory);
+  }
+
+  public static boolean doCheckPackageExists(PsiDirectory directory) {
     PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
     if (pkg == null) {
       return false;

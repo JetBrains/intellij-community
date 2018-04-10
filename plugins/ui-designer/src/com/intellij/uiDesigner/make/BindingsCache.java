@@ -16,8 +16,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Jul 4, 2003
- * Time: 7:39:27 PM
  */
 package com.intellij.uiDesigner.make;
 

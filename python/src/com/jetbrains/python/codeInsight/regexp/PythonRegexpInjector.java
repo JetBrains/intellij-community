@@ -18,12 +18,9 @@ package com.jetbrains.python.codeInsight.regexp;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
-import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
@@ -104,19 +101,12 @@ public class PythonRegexpInjector implements MultiHostInjector {
     if (result.isInjected()) {
       registrar.doneInjecting();
       if (!result.isStrict()) {
-        final PsiFile file = getInjectedFile(registrar);
+        final PsiFile file = InjectedLanguageUtil.getCachedInjectedFileWithLanguage(context, language);
         if (file != null) {
           file.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
         }
       }
     }
-  }
-
-  @Nullable
-  private static PsiFile getInjectedFile(@NotNull MultiHostRegistrar registrar) {
-    // Don't add a dependency on IntelliLang here now, but this injector should become IntelliLang-based in the future
-    final List<Pair<Place, PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
-    return result == null || result.isEmpty() ? null : result.get(result.size() - 1).second;
   }
 
   @NotNull
@@ -151,7 +141,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
   private RegexpMethodDescriptor findRegexpMethodDescriptor(@Nullable PsiElement element) {
     if (element == null ||
         !(ScopeUtil.getScopeOwner(element) instanceof PyFile) ||
-        !element.getContainingFile().getName().equals("re.py") ||
+        !ArrayUtil.contains(element.getContainingFile().getName(), "re.py", "re.pyi") ||
         !(element instanceof PyFunction)) {
       return null;
     }

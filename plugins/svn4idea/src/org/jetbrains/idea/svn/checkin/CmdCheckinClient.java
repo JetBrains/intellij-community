@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.Collections;
@@ -74,7 +74,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
     CmdCheckinClient.CommandListener listener = new CommandListener(handler);
     listener.setBaseDirectory(CommandUtil.requireExistingParent(paths.get(0)));
-    execute(myVcs, SvnTarget.fromFile(paths.get(0)), null, command, listener);
+    execute(myVcs, Target.on(paths.get(0)), null, command, listener);
     listener.throwExceptionIfOccurred();
 
     long revision = validateRevisionNumber(listener.getCommittedRevision());

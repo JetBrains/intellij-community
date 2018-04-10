@@ -28,10 +28,8 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.*;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +37,7 @@ import java.util.Collection;
 
 public class TrivialIfInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -143,12 +142,14 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     if (condition == null) {
       return;
     }
-    final String conditionText = condition.getText();
-    final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(statement);
-    @NonNls final String newStatement = "return " + conditionText + ';';
-    PsiReplacementUtil.replaceStatement(statement, newStatement);
+    CommentTracker tr = new CommentTracker();
+    PsiReturnStatement nextStatement = ControlFlowUtils.getNextReturnStatement(statement);
+    @NonNls final String newStatement = "return " + tr.text(condition) + ';';
+    PsiReplacementUtil.replaceStatement(statement, newStatement, tr);
     assert nextStatement != null;
-    nextStatement.delete();
+    if (!ControlFlowUtils.isReachable(nextStatement)) {
+      nextStatement.delete();
+    }
   }
 
   private static void replaceSimplifiableReturn(PsiIfStatement statement) {
@@ -243,17 +244,19 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       return;
     }
     final String conditionText = BoolUtils.getNegatedExpressionText(condition);
-    final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(statement);
+    final PsiReturnStatement nextStatement = ControlFlowUtils.getNextReturnStatement(statement);
     if (nextStatement == null) {
       return;
     }
     final PsiElement nextSibling = statement.getNextSibling();
-    if (nextSibling != nextStatement) {
+    if (nextSibling != nextStatement && nextStatement.getParent() == statement.getParent()) {
       statement.getParent().deleteChildRange(nextSibling, nextStatement.getPrevSibling());
     }
     @NonNls final String newStatement = "return " + conditionText + ';';
     PsiReplacementUtil.replaceStatement(statement, newStatement);
-    nextStatement.delete();
+    if (!ControlFlowUtils.isReachable(nextStatement)) {
+      nextStatement.delete();
+    }
   }
 
   private static void replaceSimplifiableReturnNegated(PsiIfStatement statement) {
@@ -334,11 +337,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     }
     PsiStatement thenBranch = ifStatement.getThenBranch();
     thenBranch = ControlFlowUtils.stripBraces(thenBranch);
-    final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(ifStatement);
-    if (!(nextStatement instanceof PsiStatement)) {
-      return false;
-    }
-    final PsiStatement elseBranch = (PsiStatement)nextStatement;
+    PsiReturnStatement elseBranch = ControlFlowUtils.getNextReturnStatement(ifStatement);
     return isReturn(thenBranch, thenReturn) && isReturn(elseBranch, elseReturn);
   }
 

@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+import static com.intellij.vcs.log.VcsLogFilterCollection.ROOT_FILTER;
+
 /**
  * Tells the log to filter by vcs roots.
  */
@@ -30,4 +32,10 @@ public interface VcsLogRootFilter extends VcsLogFilter {
    */
   @NotNull
   Collection<VirtualFile> getRoots();
+
+  @NotNull
+  @Override
+  default VcsLogFilterCollection.FilterKey<VcsLogRootFilter> getKey() {
+    return ROOT_FILTER;
+  }
 }

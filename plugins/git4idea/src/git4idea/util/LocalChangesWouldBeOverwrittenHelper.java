@@ -90,9 +90,12 @@ public class LocalChangesWouldBeOverwrittenHelper {
       GitUtil.showPathsInDialog(project, absolutePaths, title, description);
     }
     else {
+      ChangesBrowserWithRollback changesViewer = new ChangesBrowserWithRollback(project, changes);
+
       DialogBuilder builder = new DialogBuilder(project);
       builder.setNorthPanel(new MultiLineLabel(description));
-      builder.setCenterPanel(new ChangesBrowserWithRollback(project, changes));
+      builder.setCenterPanel(changesViewer);
+      builder.addDisposable(changesViewer);
       builder.addOkAction();
       builder.setTitle(title);
       builder.show();

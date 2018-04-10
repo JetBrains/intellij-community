@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.emmet.filters;
 
 import com.intellij.codeInsight.template.XslTextContextType;
-import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
@@ -28,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class XslZenCodingFilter extends ZenCodingFilter {
-  private final XmlZenCodingGenerator myDelegate = new XmlZenCodingGeneratorImpl();
+  private final XmlZenCodingGeneratorImpl myDelegate = new XmlZenCodingGeneratorImpl();
   @NonNls private static final String SELECT_ATTR_NAME = "select";
 
   @NotNull

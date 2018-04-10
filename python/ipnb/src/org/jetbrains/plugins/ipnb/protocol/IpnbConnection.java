@@ -77,7 +77,7 @@ public class IpnbConnection {
   private IpnbOutputCell myOutput;
   private int myExecCount;
   private String myXsrf;
-  private HashMap<String, String> myHeaders = new HashMap<>();
+  private final HashMap<String, String> myHeaders = new HashMap<>();
   private final CookieManager myCookieManager;
 
 
@@ -249,14 +249,11 @@ public class IpnbConnection {
   private String getExistingKernelForSession(@NotNull String pathToFile, @NotNull String kernelName) throws IOException {
     final byte[] postData = createNewFormatKernelPostParameters(pathToFile, kernelName);
     String wrapper = getKernelId(postData);
-    if (wrapper != null) {
-      return wrapper;
-    }
-    else {
+    if (wrapper == null) {
       final byte[] oldParamsToPost = createOldFormatKernelPostParameters(pathToFile, kernelName);
       wrapper = getKernelId(oldParamsToPost);
-      return wrapper;
     }
+    return wrapper;
   }
 
   @Nullable

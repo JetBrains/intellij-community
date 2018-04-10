@@ -31,7 +31,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +114,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
 
     final UsageInfo[] renameUsages = myRenameProcessor != null ? myRenameProcessor.findUsages() : UsageInfo.EMPTY_ARRAY;
 
-    final SmartPsiElementPointer[] usagesToInvert = toInvert.toArray(new SmartPsiElementPointer[toInvert.size()]);
+    final SmartPsiElementPointer[] usagesToInvert = toInvert.toArray(new SmartPsiElementPointer[0]);
 
     //merge rename and invert usages
     Map<PsiElement, UsageInfo> expressionsToUsages = new HashMap<>();
@@ -136,7 +136,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Override
@@ -154,7 +154,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    return extractedUsages.toArray(new UsageInfo[extractedUsages.size()]);
+    return extractedUsages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Override
@@ -190,6 +190,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     myDelegate.invertElementInitializer(myElement);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return InvertBooleanHandler.REFACTORING_NAME;

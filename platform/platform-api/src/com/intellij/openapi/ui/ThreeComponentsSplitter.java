@@ -35,7 +35,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -113,7 +113,13 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     }
 
     Component findChildToFocus (Component component) {
-
+      final Window ancestor = SwingUtilities.getWindowAncestor(ThreeComponentsSplitter.this);
+      if (ancestor != null) {
+        final Component mostRecentFocusOwner = ancestor.getMostRecentFocusOwner();
+        if (mostRecentFocusOwner != null && mostRecentFocusOwner.isShowing()) {
+          return mostRecentFocusOwner;
+        }
+      }
       if (component instanceof JPanel) {
         JPanel container = (JPanel)component;
         final FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
@@ -162,7 +168,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     }
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
-    setFocusable(false);
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);
@@ -528,11 +533,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     protected Point myPoint;
     private final boolean myIsFirst;
 
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-    }
-
     private IdeGlassPane myGlassPane;
 
     private class MyMouseAdapter extends MouseAdapter implements Weighted {
@@ -847,9 +847,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           break;
       }
     }
-  }
-
-  private Cursor getResizeCursor() {
-    return getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+    private Cursor getResizeCursor() {
+      return getOrientation()
+             ? Cursor.getPredefinedCursor(myIsFirst ? Cursor.S_RESIZE_CURSOR : Cursor.N_RESIZE_CURSOR)
+             : Cursor.getPredefinedCursor(myIsFirst ? Cursor.W_RESIZE_CURSOR : Cursor.E_RESIZE_CURSOR);
+    }
   }
 }

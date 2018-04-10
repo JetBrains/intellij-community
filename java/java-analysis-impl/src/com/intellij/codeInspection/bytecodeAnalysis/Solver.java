@@ -116,10 +116,10 @@ class ResultUtil {
 
 final class CoreHKey {
   @NotNull
-  final MethodDescriptor myMethod;
+  final MemberDescriptor myMethod;
   final int dirKey;
 
-  CoreHKey(@NotNull MethodDescriptor method, int dirKey) {
+  CoreHKey(@NotNull MemberDescriptor method, int dirKey) {
     this.myMethod = method;
     this.dirKey = dirKey;
   }
@@ -168,7 +168,7 @@ final class Solver {
 
   void addEquation(Equation equation) {
     EKey key = equation.key;
-    CoreHKey coreKey = new CoreHKey(key.method, key.dirKey);
+    CoreHKey coreKey = new CoreHKey(key.member, key.dirKey);
 
     Equation previousEquation = equations.get(coreKey);
     if (previousEquation == null) {

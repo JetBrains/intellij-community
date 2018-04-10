@@ -23,7 +23,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -81,23 +80,17 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     builders[2].addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
 
     myFixture.setUp();
+
+    VirtualFile java3Root = myFixture.getTempDirFixture().findOrCreateDir("java3");
+    VirtualFile java7Root = myFixture.getTempDirFixture().findOrCreateDir("java7");
+    VirtualFile java8Root = myFixture.getTempDirFixture().findOrCreateDir("java8");
+
     myJava3Module = builders[0].getFixture().getModule();
     myJava7Module = builders[1].getFixture().getModule();
     myJava8Module = builders[2].getFixture().getModule();
-    ModuleRootModificationUtil.updateModel(myJava3Module, model -> {
-      String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java3";
-      model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
-    });
-
-    ModuleRootModificationUtil.updateModel(myJava7Module, model -> {
-      String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java7";
-      model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
-    });
-
-    ModuleRootModificationUtil.updateModel(myJava8Module, model -> {
-      String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java8";
-      model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
-    });
+    ModuleRootModificationUtil.updateModel(myJava3Module, model -> model.addContentEntry(java3Root).addSourceFolder(java3Root, false));
+    ModuleRootModificationUtil.updateModel(myJava7Module, model -> model.addContentEntry(java7Root).addSourceFolder(java7Root, false));
+    ModuleRootModificationUtil.updateModel(myJava8Module, model -> model.addContentEntry(java8Root).addSourceFolder(java8Root, false));
   }
 
   private void addDependencies_37_78() {
@@ -193,6 +186,15 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.checkHighlighting();
   }
 
+  public void testDependsOnNewerJdk() {
+    IdeaTestUtil.setModuleLanguageLevel(myJava7Module, LanguageLevel.JDK_1_7);
+    ModuleRootModificationUtil.addDependency(myJava3Module, myJava7Module);
+    final String name = getTestName(false);
+    myFixture.copyFileToProject("java7/p/" + name + ".java");
+    myFixture.configureByFiles("java3/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testMissedAutoCloseable() {
     IdeaTestUtil.setModuleLanguageLevel(myJava7Module, LanguageLevel.JDK_1_7);
     ModuleRootModificationUtil.addDependency(myJava3Module, myJava7Module);
@@ -234,6 +236,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
     PsiClass usage7 = ((PsiJavaFile) myFixture.addFileToProject("java7/a.java", "class A extends java.util.ArrayList {}")).getClasses()[0];
     PsiClass usage8 = ((PsiJavaFile) myFixture.addFileToProject("java8/a.java", "class A extends java.util.ArrayList {}")).getClasses()[0];
+    PsiUtilCore.ensureValid(usage7);
 
     PsiClass abstractList7 = myFixture.getJavaFacade().findClass(AbstractList.class.getName(), usage7.getResolveScope());
     PsiClass abstractList8 = myFixture.getJavaFacade().findClass(AbstractList.class.getName(), usage8.getResolveScope());

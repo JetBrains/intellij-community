@@ -15,10 +15,11 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
-public class PyClassHasNoInitInspectionTest extends PyTestCase {
+public class PyClassHasNoInitInspectionTest extends PyInspectionTestCase {
 
   public void testClass() {
     doTest();
@@ -54,21 +55,12 @@ public class PyClassHasNoInitInspectionTest extends PyTestCase {
 
   // PY-24436
   public void testAInheritsBAndBInheritsImportedAWithDunderInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doMultiFileTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doMultiFileTest);
   }
 
-  private void doTest() {
-    myFixture.configureByFile("inspections/PyClassHasNoInitInspection/" + getTestName(true) + ".py");
-    myFixture.enableInspections(PyClassHasNoInitInspection.class);
-    myFixture.checkHighlighting(false, false, true);
-  }
-
-  private void doMultiFileTest() {
-    final String folderPath = "inspections/PyClassHasNoInitInspection/" + getTestName(false) + "/";
-
-    myFixture.copyDirectoryToProject(folderPath, "");
-    myFixture.configureFromTempProjectFile("a.py");
-    myFixture.enableInspections(PyClassHasNoInitInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyClassHasNoInitInspection.class;
   }
 }

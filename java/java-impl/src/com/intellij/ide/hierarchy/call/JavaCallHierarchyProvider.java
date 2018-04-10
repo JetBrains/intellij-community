@@ -41,7 +41,7 @@ public class JavaCallHierarchyProvider implements HierarchyProvider {
 
   @Override
   @NotNull
-  public HierarchyBrowser createHierarchyBrowser(final PsiElement target) {
+  public HierarchyBrowser createHierarchyBrowser(@NotNull PsiElement target) {
     return new CallHierarchyBrowser(target.getProject(), (PsiMethod) target);
   }
 

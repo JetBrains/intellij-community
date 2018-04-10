@@ -32,7 +32,7 @@ import java.util.Set;
  * <p/>
  * Custom providers are registered via {@link FileViewProviderFactory}.
  * <p/>
- * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Architectural+Overview">IntelliJ IDEA Architectural Overview </a>
+ * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
  * for high-level overview.
  *
  * @see PsiFile#getViewProvider()
@@ -84,7 +84,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   /**
    * @return all languages this file supports, in no particular order.
    * 
-   * @see #getPsi(com.intellij.lang.Language)
+   * @see #getPsi(Language)
    */
   @NotNull
   Set<Language> getLanguages();
@@ -174,7 +174,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * 
    * @see #getBaseLanguage()
    * @see #findElementAt(int, Class) 
-   * @see #findElementAt(int, com.intellij.lang.Language) 
+   * @see #findElementAt(int, Language)
    * @see PsiFile#findElementAt(int) 
    */
   @Nullable
@@ -186,7 +186,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * 
    * @see #getBaseLanguage()
    * @see PsiFile#findReferenceAt(int)
-   * @see #findReferenceAt(int, com.intellij.lang.Language) 
+   * @see #findReferenceAt(int, Language)
    */
   @Nullable
   PsiReference findReferenceAt(int offset);

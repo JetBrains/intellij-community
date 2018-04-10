@@ -223,7 +223,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
   public String getName() {
     if (!getPresentation().getColoredText().isEmpty()) {
-      StringBuilder result = new StringBuilder("");
+      StringBuilder result = new StringBuilder();
       for (ColoredFragment each : getPresentation().getColoredText()) {
         result.append(each.getText());
       }

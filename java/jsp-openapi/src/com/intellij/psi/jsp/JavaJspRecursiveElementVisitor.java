@@ -16,13 +16,14 @@
 package com.intellij.psi.jsp;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.containers.Stack;
 
 /**
  * @author yole
  */
-public abstract class JavaJspRecursiveElementVisitor extends JavaJspElementVisitor {
+public abstract class JavaJspRecursiveElementVisitor extends JavaJspElementVisitor implements PsiRecursiveVisitor {
   // This stack thing is intended to prevent exponential child traversing due to visitReferenceExpression calls both visitRefElement
   // and visitExpression.
   private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<>();

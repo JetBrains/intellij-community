@@ -220,7 +220,7 @@ public class ConflictsDialog extends DialogWrapper{
         }
       }
       final UsageView usageView = UsageViewManager.getInstance(myProject)
-        .showUsages(UsageTarget.EMPTY_ARRAY, usages.toArray(new Usage[usages.size()]), presentation);
+        .showUsages(UsageTarget.EMPTY_ARRAY, usages.toArray(Usage.EMPTY_ARRAY), presentation);
       Runnable doRefactoringRunnable = getDoRefactoringRunnable(usageView);
       if (doRefactoringRunnable != null) {
         usageView.addPerformOperationAction(
@@ -232,7 +232,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     private class DescriptionOnlyUsage implements Usage {
-      private String myConflictDescription;
+      private final String myConflictDescription;
 
       public DescriptionOnlyUsage(String conflictDescription) {
         myConflictDescription = StringUtil.unescapeXml(conflictDescription)

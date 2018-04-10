@@ -27,7 +27,7 @@ public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
   public static final String PYTHONS_UNITTEST_NAME = PyBundle.message("runcfg.unittest.display_name");
 
   private String myTestRunner;
-  private Module myModule;
+  private final Module myModule;
 
   public PythonTestConfigurationsModel(final List items, final Object selection, Module module) {
     super(items, selection);

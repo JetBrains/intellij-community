@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -81,7 +82,7 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   private void setupChangeListener() {
-    myFrameAccessor.addFrameListener(() -> UIUtil.invokeLaterIfNeeded(() -> updateModel()));
+    myFrameAccessor.addFrameListener(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> updateModel()));
   }
 
   private void updateModel() {
@@ -91,9 +92,11 @@ public class PyDataViewerPanel extends JPanel {
     }
     model.invalidateCache();
     updateDebugValue(model);
-    if (isShowing()) {
-      model.fireTableDataChanged();
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (isShowing()) {
+        model.fireTableDataChanged();
+      }
+    });
   }
 
   private void updateDebugValue(@NotNull AsyncArrayTableModel model) {
@@ -153,12 +156,13 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   public void apply(String name) {
-    myErrorLabel.setVisible(false);
-    PyDebugValue debugValue = getDebugValue(name);
-    if (debugValue == null) {
-      return;
-    }
-    apply(debugValue);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      PyDebugValue debugValue = getDebugValue(name);
+      if (debugValue == null) {
+        return;
+      }
+      ApplicationManager.getApplication().invokeLater(() -> apply(debugValue));
+    });
   }
 
   public void apply(@NotNull PyDebugValue debugValue) {
@@ -169,13 +173,15 @@ public class PyDataViewerPanel extends JPanel {
       setError(type + " is not supported");
       return;
     }
-    try {
-      ArrayChunk arrayChunk = debugValue.getFrameAccessor().getArrayItems(debugValue, 0, 0, -1, -1, getFormat());
-      updateUI(arrayChunk, debugValue, strategy);
-    }
-    catch (PyDebuggerException e) {
-      LOG.error(e);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        ArrayChunk arrayChunk = debugValue.getFrameAccessor().getArrayItems(debugValue, 0, 0, -1, -1, getFormat());
+        ApplicationManager.getApplication().invokeLater(() -> updateUI(arrayChunk, debugValue, strategy));
+      }
+      catch (PyDebuggerException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   public void resize(boolean autoResize) {
@@ -212,8 +218,8 @@ public class PyDataViewerPanel extends JPanel {
   private PyDebugValue getDebugValue(String expression) {
     try {
       PyDebugValue value = myFrameAccessor.evaluate(expression, false, true);
-      if (value.isErrorOnEval()) {
-        setError(value.getValue());
+      if (value == null || value.isErrorOnEval()) {
+        setError(value != null ? value.getValue() : "Failed to evaluate expression " + expression);
         return null;
       }
       return value;

@@ -15,7 +15,9 @@
  */
 package org.intellij.lang.regexp.psi;
 
-public class RegExpRecursiveElementVisitor extends RegExpElementVisitor {
+import com.intellij.psi.PsiRecursiveVisitor;
+
+public class RegExpRecursiveElementVisitor extends RegExpElementVisitor implements PsiRecursiveVisitor {
     public void visitRegExpElement(RegExpElement element) {
         element.acceptChildren(this);
     }

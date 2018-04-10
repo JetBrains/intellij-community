@@ -1,21 +1,10 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -26,6 +15,7 @@ import org.assertj.core.api.Assertions.assertThat
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
+
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
   }
@@ -35,7 +25,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""
         <error descr="A module file should not have 'package' statement">package pkg;</error>
         module M { }""".trimIndent())
-    fixes("<caret>package pkg;\nmodule M { }", "DeleteElementFix")
+    fixes("<caret>package pkg;\nmodule M { }", arrayOf("DeleteElementFix"))
   }
 
   fun testSoftKeywords() {
@@ -62,7 +52,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testWrongFileLocation() {
-    highlight("pkg/module-info.java", """<warning descr="Module declaration should be located in a module's source root">module M</warning> { }""")
+    highlight("pkg/module-info.java", """<error descr="Module declaration should be located in a module's source root">module M</error> { }""")
   }
 
   fun testIncompatibleModifiers() {
@@ -208,20 +198,35 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
-  fun testModuleRefFixes() {
-    fixes("module M { requires <caret>M.missing; }")
-    fixes("module M { requires <caret>M3; }", "AddModuleDependencyFix")
-  }
-
-  fun testPackageRefFixes() {
-    fixes("module M { exports <caret>pkg.missing; }")
+  fun testQuickFixes() {
+    addFile("pkg/main/impl/X.java", "package pkg.main.impl;\npublic class X { }")
+    addFile("module-info.java", "module M2 { exports pkg.m2; }", M2)
+    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
     addFile("pkg/m3/C3.java", "package pkg.m3;\npublic class C3 { }", M3)
-    fixes("module M { exports <caret>pkg.m3; }")
-  }
+    addFile("module-info.java", "module M6 { exports pkg.m6; }", M6)
+    addFile("pkg/m6/C6.java", "package pkg.m6;\nimport pkg.m8.*;\nimport java.util.function.*;\npublic class C6 { public void m(Consumer<C8> c) { } }", M6)
+    addFile("module-info.java", "module M8 { exports pkg.m8; }", M8)
+    addFile("pkg/m8/C8.java", "package pkg.m8;\npublic class C8 { }", M8)
 
-  fun testClassRefFixes() {
-    addFile("pkg/m3/C3.java", "package pkg.m3;\npublic class C3 { }", M3)
-    fixes("module M { uses <caret>pkg.m3.C3; }", "AddModuleDependencyFix")
+    fixes("module M { requires <caret>M.missing; }", arrayOf())
+    fixes("module M { requires <caret>M3; }", arrayOf("AddModuleDependencyFix"))
+    fixes("module M { exports pkg.main.impl to <caret>M3; }", arrayOf())
+    fixes("module M { exports <caret>pkg.missing; }", arrayOf("CreateClassInPackageInModuleFix"))
+    fixes("module M { exports <caret>pkg.m3; }", arrayOf())
+    fixes("module M { uses pkg.m3.<caret>C3; }", arrayOf("AddModuleDependencyFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiresDirectiveFix"))
+
+    addFile("module-info.java", "module M { requires M6; }")
+    addFile("pkg/main/Util.java", "package pkg.main;\nclass Util {\n static <T> void sink(T t) { }\n}")
+    fixes("pkg/main/C.java", "package pkg.main;\nimport pkg.m6.*;class C {{ new C6().m(<caret>Util::sink); }}", arrayOf("AddRequiresDirectiveFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport pkg.m6.*;class C {{ new C6().m(<caret>t -> Util.sink(t)); }}", arrayOf("AddRequiresDirectiveFix"))
+
+    addFile("module-info.java", "module M2 { }", M2)
+    fixes("module M { requires M2; uses <caret>pkg.m2.C2; }", arrayOf("AddExportsDirectiveFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddExportsDirectiveFix"))
+
+    addFile("pkg/main/S.java", "package pkg.main;\npublic class S { }")
+    fixes("module M { provides pkg.main.<caret>S with pkg.main.S; }", arrayOf("AddExportsDirectiveFix", "AddUsesDirectiveFix"))
   }
 
   fun testPackageAccessibility() = doTestPackageAccessibility(moduleFileInTests = false, checkFileInTests = false)
@@ -268,6 +273,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         import java.util.List;
         import java.util.function.Supplier;
 
+        import <error descr="Package 'pkg.libInvalid' is declared in module with an invalid name ('lib.invalid.1.2')">pkg.libInvalid</error>.LCInv;
+
         /** See also {@link C2Impl#I} and {@link C2Impl#make} */
         class C {{
           <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>.I = 0;
@@ -305,7 +312,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testMarkedForRemoval() {
     myFixture.enableInspections(DeprecationInspection(), MarkedForRemovalInspection())
     addFile("module-info.java", "@Deprecated(forRemoval=true) module M2 { }", M2)
-    highlight("""module M { requires <warning descr="'M2' is deprecated and marked for removal">M2</warning>; }""")
+    highlight("""module M { requires <error descr="'M2' is deprecated and marked for removal">M2</error>; }""")
   }
 
   fun testPackageConflicts() {
@@ -355,6 +362,44 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testInaccessibleMemberType() {
+    addFile("module-info.java", "module C { exports pkg.c; }", M8)
+    addFile("module-info.java", "module B { requires C; exports pkg.b; }", M6)
+    addFile("module-info.java", "module A { requires B; }")
+    addFile("pkg/c/C.java", "package pkg.c;\npublic class C { }", M8)
+    addFile("pkg/b/B.java", """
+        package pkg.b;
+        import pkg.c.C;
+        public class B {
+          private static class I { }
+          public C f1;
+          public I f2;
+          public C m1(C p1, Class<? extends C> p2) { return new C(); }
+          public I m2(I p1, Class<? extends I> p2) { return new I(); }
+        }""".trimIndent(), M6)
+    highlight("pkg/a/A.java", """
+        package pkg.a;
+        import pkg.b.B;
+        public class A {
+          void test() {
+            B exposer = new B();
+            exposer.f1 = null;
+            exposer.f2 = null;
+            Object o1 = exposer.m1(null, null);
+            Object o2 = exposer.m2(null, null);
+          }
+        }""".trimIndent())
+  }
+
+  fun testAccessingDefaultPackage() {
+    addFile("X.java", "public class X {\n  public static class XX extends X { }\n}")
+    highlight("""
+        module M {
+          uses <error descr="Class 'X' is in the default package">X</error>;
+          provides <error descr="Class 'X' is in the default package">X</error> with <error descr="Class 'X' is in the default package">X</error>.XX;
+        }""".trimIndent())
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
@@ -363,9 +408,14 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
-  private fun fixes(text: String, vararg fixes: String) {
-    myFixture.configureByText("module-info.java", text)
-    assertThat(myFixture.getAllQuickFixes().map { it.javaClass.simpleName }).containsExactlyInAnyOrder(*fixes)
+  private fun fixes(text: String, fixes: Array<String>) = fixes("module-info.java", text, fixes)
+
+  private fun fixes(path: String, text: String, fixes: Array<String>) {
+    myFixture.configureFromExistingVirtualFile(addFile(path, text))
+    val available = myFixture.availableIntentions
+      .map { (if (it is IntentionActionDelegate) it.delegate else it)::class.simpleName }
+      .filter { it != "GutterIntentionAction" }
+    assertThat(available).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>
 }

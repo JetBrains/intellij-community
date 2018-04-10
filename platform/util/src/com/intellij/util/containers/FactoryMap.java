@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractMap;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,7 +41,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   private Map<K, V> myMap;
 
   /**
-   * Use {@link #createMap(Function)} instead
+   * Use {@link #create(Function)} instead
    */
   @Deprecated
   public FactoryMap() {
@@ -117,7 +118,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     final Set<K> ts = getMap().keySet();
     K nullKey = FAKE_NULL();
     if (ts.contains(nullKey)) {
-      final HashSet<K> hashSet = new HashSet<K>(ts);
+      final java.util.HashSet<K> hashSet = new HashSet<K>(ts);
       hashSet.remove(nullKey);
       hashSet.add(null);
       return hashSet;
@@ -181,8 +182,17 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
         });
   }
 
+  /**
+   * Use {@link #create(Function)} instead. TODO to be removed in IDEA 2018
+   */
+  @Deprecated
   @NotNull
-  public static <K, V> Map<K, V> createMap(@NotNull final Function<K, V> computeValue) {
+  public static <K, V> FactoryMap<K, V> createMap(@NotNull final Function<K, V> computeValue) {
+    return (FactoryMap<K, V>)create(computeValue);
+  }
+
+  @NotNull
+  public static <K, V> Map<K, V> create(@NotNull final Function<K, V> computeValue) {
     //noinspection deprecation
     return new FactoryMap<K, V>() {
       @Nullable

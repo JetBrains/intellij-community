@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 
 /**
@@ -66,16 +65,9 @@ public class GrInnerClassConstructorUtil {
       PsiClass containingClass = aClass.getContainingClass();
       if (containingClass != null) {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
-        PsiClass scopeClass = PsiUtil.findEnclosingInstanceClassInScope(containingClass, place, true);
-        if (scopeClass != null) {
+        if (PsiUtil.hasEnclosingInstanceInScope(containingClass, place, true)) {
           PsiType[] newTypes = PsiType.createArray(types.length + 1);
-          newTypes[0] = factory.createType(scopeClass);
-          System.arraycopy(types, 0, newTypes, 1, types.length);
-          types = newTypes;
-        }
-        else if (types.length == 0 || !TypesUtil.isAssignableByMethodCallConversion(factory.createType(containingClass), types[0], place)) {
-          PsiType[] newTypes = PsiType.createArray(types.length + 1);
-          newTypes[0] = PsiType.NULL;
+          newTypes[0] = factory.createType(containingClass);
           System.arraycopy(types, 0, newTypes, 1, types.length);
           types = newTypes;
         }

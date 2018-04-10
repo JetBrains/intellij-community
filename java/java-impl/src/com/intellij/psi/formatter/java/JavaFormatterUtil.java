@@ -17,9 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -73,33 +71,6 @@ public class JavaFormatterUtil {
     PsiPolyadicExpression expression1 = (PsiPolyadicExpression)node1;
     PsiPolyadicExpression expression2 = (PsiPolyadicExpression)node2;
     return expression1.getOperationTokenType() == expression2.getOperationTokenType();
-  }
-
-  public static boolean hasMultilineArguments(@NotNull PsiExpression[] arguments) {
-    for (PsiExpression argument: arguments) {
-      ASTNode node = argument.getNode();
-      if (node.textContains('\n'))
-        return true;
-    }
-
-    return false;
-  }
-
-  public static boolean isMultilineExceptArguments(@NotNull PsiExpression[] arguments) {
-    for (PsiExpression argument : arguments) {
-      ASTNode beforeArgument = argument.getNode().getTreePrev();
-      if (isWhiteSpaceWithLineFeed(beforeArgument))
-        return true;
-    }
-
-    PsiExpression lastArgument = arguments[arguments.length - 1];
-    ASTNode afterLastArgument = lastArgument.getNode().getTreeNext();
-    return isWhiteSpaceWithLineFeed(afterLastArgument);
-  }
-
-  private static boolean isWhiteSpaceWithLineFeed(@NotNull ASTNode node) {
-    return node instanceof PsiWhiteSpace
-           && node.textContains('\n');
   }
 
   @NotNull

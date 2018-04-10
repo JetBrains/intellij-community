@@ -24,7 +24,6 @@ import java.io.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/10/11
  */
 class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValueContainer<Value>> {
   @NotNull private final DataExternalizer<Value> myValueExternalizer;

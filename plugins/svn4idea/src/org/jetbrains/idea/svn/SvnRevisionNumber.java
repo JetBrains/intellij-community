@@ -18,16 +18,16 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.history.LongRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.jetbrains.idea.svn.api.Revision;
 
 /**
  * @author alex
  */
 public class SvnRevisionNumber implements VcsRevisionNumber, LongRevisionNumber {
   @NotNull
-  private final SVNRevision myRevision;
+  private final Revision myRevision;
 
-  public SvnRevisionNumber(@NotNull SVNRevision revision) {
+  public SvnRevisionNumber(@NotNull Revision revision) {
     myRevision = revision;
   }
 
@@ -44,24 +44,19 @@ public class SvnRevisionNumber implements VcsRevisionNumber, LongRevisionNumber 
     if (vcsRevisionNumber == null || vcsRevisionNumber.getClass() != SvnRevisionNumber.class) {
       return -1;
     }
-    SVNRevision rev = ((SvnRevisionNumber)vcsRevisionNumber).myRevision;
-    if (!myRevision.isValid()) {
-      return !rev.isValid() ? 0 : -1;
-    }
+    Revision rev = ((SvnRevisionNumber)vcsRevisionNumber).myRevision;
+
     if (myRevision.getNumber() >= 0 && rev.getNumber() >= 0) {
-      return myRevision.getNumber() == rev.getNumber() ? 0 : myRevision.getNumber() > rev.getNumber() ? 1 : -1;
+      return java.lang.Long.compare(myRevision.getNumber(), rev.getNumber());
     }
     else if (myRevision.getDate() != null && rev.getDate() != null) {
       return myRevision.getDate().compareTo(rev.getDate());
     }
-    if (myRevision.equals(SVNRevision.HEAD)) {
-      return rev.equals(SVNRevision.HEAD) ? 0 : 1;    // HEAD is greater than a specific rev
-    }
-    return myRevision.getID() == rev.getID() ? 0 : myRevision.getID() > rev.getID() ? 1 : -1;
+    return Revision.GENERAL_ORDER.compare(myRevision, rev);
   }
 
   @NotNull
-  public SVNRevision getRevision() {
+  public Revision getRevision() {
     return myRevision;
   }
 

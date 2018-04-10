@@ -15,7 +15,10 @@
  */
 package org.intellij.lang.regexp.inspection;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.util.XmlStringUtil;
@@ -31,7 +34,19 @@ public class RegExpReplacementUtil {
 
   public static String escapeForContext(String text, RegExpElement element) {
     final PsiElement context = element.getContainingFile().getContext();
+    ElementManipulator<PsiElement> manipulator = context == null ? null : ElementManipulators.getManipulator(context);
+    if (manipulator != null) {
+      // use element manipulator to process escape sequences correctly for all supported languages
+      PsiElement copy = context.copy(); // create a copy to avoid original element modifications
+      PsiElement newElement = manipulator.handleContentChange(copy, text);
+      if (newElement != null) {
+        String newElementText = newElement.getText();
+        TextRange newRange = manipulator.getRangeInElement(newElement);
+        return newElementText.substring(newRange.getStartOffset(), newRange.getEndOffset());
+      }
+    }
     if (RegExpElementImpl.isLiteralExpression(context)) {
+      // otherwise, just pretend it is a Java-style string
       return StringUtil.escapeStringCharacters(text);
     }
     else if (context instanceof XmlElement) {

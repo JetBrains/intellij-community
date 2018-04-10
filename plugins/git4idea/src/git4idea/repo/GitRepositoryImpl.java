@@ -54,7 +54,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                             @NotNull Disposable parentDisposable,
                             final boolean light) {
     super(project, rootDir, parentDisposable);
-    myVcs = assertNotNull(GitVcs.getInstance(project));
+    myVcs = GitVcs.getInstance(project);
     myGitDir = gitDir;
     myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
     myReader = new GitRepositoryReader(myRepositoryFiles);
@@ -210,12 +210,13 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitConfig config = GitConfig.read(configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
+    boolean isShallow = myReader.hasShallowCommits();
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
     sw.report();
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
-                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, submodules, hooksInfo);
+                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, submodules, hooksInfo, isShallow);
   }
 
   @NotNull
@@ -233,7 +234,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     Runnable task = () -> {
       syncPublisher(repository.getProject(), GIT_REPO_CHANGE).repositoryChanged(repository);
     };
-    BackgroundTaskUtil.executeOnPooledThread(task, repository);
+    BackgroundTaskUtil.executeOnPooledThread(repository, task);
   }
 
   @NotNull

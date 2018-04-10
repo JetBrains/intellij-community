@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -56,6 +57,8 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
       if (rhs == null) {
         return;
       }
+      CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(rhs);
       final String lhsText = assignmentExpression.getLExpression().getText();
       final String signText = assignmentExpression.getOperationSign().getText();
       @NonNls final String newStatementText = "if(" + ((signText.length() == 2) ? lhsText + signText.charAt(0) : "") + "true)" +
@@ -73,7 +76,7 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
       else {
         condition.replace(rhs);
       }
-      statement.replace(newIfStatement);
+      tracker.replaceAndRestoreComments(statement, newIfStatement);
     }
     else if (ExpandBooleanPredicate.isBooleanReturn(statement)) {
       final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
@@ -86,8 +89,10 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
         (PsiIfStatement)JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(newStatementText, element);
       final PsiExpression condition = newIfStatement.getCondition();
       assert condition != null;
+      CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(returnValue);
       condition.replace(returnValue);
-      statement.replace(newIfStatement);
+      tracker.replaceAndRestoreComments(statement, newIfStatement);
     }
     else if (ExpandBooleanPredicate.isBooleanDeclaration(statement)) {
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;

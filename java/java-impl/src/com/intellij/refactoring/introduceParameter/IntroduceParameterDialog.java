@@ -23,7 +23,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -47,6 +46,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private NameSuggestionsManager myNameSuggestionsManager;
 
   private final Project myProject;
+  private final PsiFile myFile;
   private final List<UsageInfo> myClassMembersList;
   private final int myOccurenceNumber;
   private final PsiMethod myMethodToSearchFor;
@@ -83,6 +83,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     super(project, true);
     myPanel = new IntroduceParameterSettingsPanel(onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     myProject = project;
+    myFile = methodToReplaceIn.getContainingFile();
     myClassMembersList = classMembersList;
     myOccurenceNumber = occurences.length;
     for (PsiExpression occurence : occurences) {
@@ -209,8 +210,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
     final Boolean settingsFinals = settings.INTRODUCE_PARAMETER_CREATE_FINALS;
     myCbDeclareFinal.setSelected(settingsFinals == null ?
-                                 CodeStyleSettingsManager.getSettings(myProject)
-                                   .getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS :
+                                 JavaCodeStyleSettings.getInstance(myFile).GENERATE_FINAL_PARAMETERS :
                                  settingsFinals.booleanValue());
     panel.add(myCbDeclareFinal, gbConstraints);
     if (myMustBeFinal) {
@@ -227,7 +227,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myCbCollapseToLambda = new NonFocusableCheckBox(RefactoringBundle.message("introduce.parameter.convert.lambda"));
     final PsiAnonymousClass anonymClass = myExpression instanceof PsiNewExpression ? ((PsiNewExpression)myExpression).getAnonymousClass() 
                                                                                    : null;
-    myCbCollapseToLambda.setVisible(anonymClass != null && AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymClass, false, Collections.emptySet()));
+    myCbCollapseToLambda.setVisible(anonymClass != null && AnonymousCanBeLambdaInspection.isLambdaForm(anonymClass, false, Collections.emptySet()));
     myCbCollapseToLambda.setSelected(PropertiesComponent.getInstance(myProject).getBoolean(INTRODUCE_PARAMETER_LAMBDA));
     gbConstraints.gridy++;
     panel.add(myCbCollapseToLambda, gbConstraints);

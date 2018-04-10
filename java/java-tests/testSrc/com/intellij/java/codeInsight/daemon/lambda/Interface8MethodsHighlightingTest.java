@@ -42,6 +42,7 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   public void testStaticMethods() { doTest(false, false); }
   public void testFinalStaticDefaultMethods() { doTest(false, false); }
   public void testIDEA122720() { doTest(false, false); }
+  public void testInterfaceStaticMethodsWithSameErasure() { doTest(false, false); }
   public void testIDEA123839() { doTest(false, false); }
   public void testStaticOverloading() { doTest(false, false); }
   public void testDefaultSupersInStaticContext() {
@@ -50,11 +51,8 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   public void testAnnotationTypeExtensionsNotSupported() {
     doTest(false, false);
   }
-
-  public void testStaticMethodAccessibleThroughStaticImportButExplicitlyQualified() {
-    doTest(true, false);
-  }
-
+  public void testStaticMethodAccessibleThroughStaticImportButExplicitlyQualified() { doTest(true, false); }
+  public void testStaticMethodOfInterfaceAccessibleThroughMethodReference() { doTest(true, false); }
   public void testInheritanceOfStaticMethodFromDefault() {
     doTest();
   }
@@ -126,6 +124,8 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   public void testAbstractOverriddenBySecondDefault() {
     doTest();
   }
+
+  public void testStaticAbstractDefaultInOneHierarchy() { doTest(); }
 
   public void testMethodHierarchyWithDeclaredTypeParameters() {
     doTest();

@@ -7,6 +7,7 @@ class FooBar {
     FooBar foobar = (FooBar)foo;
     foobar = null;
     FooBar foobar2 = (FooBar)foo;
-    return ((FooBar<caret>)foo).baz;
+    return ((FooBar<caret>)foo//comment
+            ).baz;
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCallableParameter;
@@ -119,6 +120,18 @@ public class ParamHelper {
 
     result.append(")");
     return result.toString();
+  }
+
+  @Nullable
+  public static String getDefaultValueText(@Nullable PyExpression defaultValue) {
+    if (defaultValue instanceof PyStringLiteralExpression) {
+      final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue.getText());
+      if (quotes != null) {
+        return quotes.getFirst() + ((PyStringLiteralExpression)defaultValue).getStringValue() + quotes.getSecond();
+      }
+    }
+
+    return defaultValue == null ? null : defaultValue.getText();
   }
 
   public interface ParamWalker {

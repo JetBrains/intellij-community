@@ -15,7 +15,7 @@ public final class DummyAdminWriter
 
 	// Implemented ============================================================
 
-	public void ensureCvsDirectory(DirectoryObject directoryObject, String repositoryPath, CvsRoot cvsRoot, ICvsFileSystem cvsFileSystem) throws IOException {
+	public void ensureCvsDirectory(DirectoryObject directoryObject, String repositoryPath, CvsRoot cvsRoot, ICvsFileSystem cvsFileSystem) {
 	}
 
 	public void setEntry(DirectoryObject directoryObject, Entry entry, ICvsFileSystem cvsFileSystem) {
@@ -39,9 +39,9 @@ public final class DummyAdminWriter
 	public void setEntriesDotStatic(DirectoryObject directoryObject, boolean set, ICvsFileSystem cvsFileSystem) {
 	}
 
-	public void writeTemplateFile(DirectoryObject directoryObject, int fileLength, InputStream inputStream, IReaderFactory readerFactory, IClientEnvironment clientEnvironment) throws IOException {
+	public void writeTemplateFile(DirectoryObject directoryObject, int fileLength, InputStream inputStream, IReaderFactory readerFactory, IClientEnvironment clientEnvironment) {
 	}
 
-	public void directoryAdded(DirectoryObject directory, ICvsFileSystem cvsFileSystem) throws IOException {
+	public void directoryAdded(DirectoryObject directory, ICvsFileSystem cvsFileSystem) {
 	}
 }

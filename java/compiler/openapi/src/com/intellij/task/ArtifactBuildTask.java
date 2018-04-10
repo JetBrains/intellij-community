@@ -18,9 +18,15 @@ package com.intellij.task;
 import com.intellij.packaging.artifacts.Artifact;
 
 /**
+ *
+ * @deprecated tobe removed, use {@link ProjectModelBuildTask}
+ *
  * @author Vladislav.Soroka
  * @since 7/18/2016
  */
-public interface ArtifactBuildTask extends BuildTask {
+public interface ArtifactBuildTask extends ProjectModelBuildTask<Artifact> {
   Artifact getArtifact();
+
+  @Override
+  default Artifact getBuildableElement() {return getArtifact();}
 }

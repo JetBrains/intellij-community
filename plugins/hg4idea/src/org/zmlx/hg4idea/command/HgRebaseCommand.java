@@ -52,8 +52,7 @@ public class HgRebaseCommand {
 
   @Nullable
   private HgCommandResult performRebase(@NotNull String... args) {
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, "Rebase")) {
       final List<String> list = ContainerUtil.newArrayList(args);
       list.add("--config");
       list.add("extensions.rebase=");
@@ -62,9 +61,6 @@ public class HgRebaseCommand {
           .executeInCurrentThread(repo.getRoot(), "rebase", list);
       repo.update();
       return result;
-    }
-    finally {
-      token.finish();
     }
   }
 }

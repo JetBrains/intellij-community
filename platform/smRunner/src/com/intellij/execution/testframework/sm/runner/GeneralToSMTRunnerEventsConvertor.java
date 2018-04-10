@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
@@ -52,16 +37,16 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   }
 
   @Override
-  protected SMTestProxy createProxy(String testName, String locationHint, String id, String parentNodeId) {
-    SMTestProxy proxy = super.createProxy(testName, locationHint, id, parentNodeId);
+  protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    SMTestProxy proxy = super.createProxy(testName, locationHint, metaInfo, id, parentNodeId);
     SMTestProxy currentSuite = getCurrentSuite();
     currentSuite.addChild(proxy);
     return proxy;
   }
 
   @Override
-  protected SMTestProxy createSuite(String suiteName, String locationHint, String id, String parentNodeId) {
-    SMTestProxy newSuite = super.createSuite(suiteName, locationHint, id, parentNodeId);
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    SMTestProxy newSuite = super.createSuite(suiteName, locationHint, metaInfo, id, parentNodeId);
     final SMTestProxy parentSuite = getCurrentSuite();
 
     parentSuite.addChild(newSuite);
@@ -115,7 +100,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       //fire events
       fireOnTestingFinished(myTestsRootProxy);
     });
-    stopEventProcessing();
+    super.onFinishTesting();
   }
 
   @Override
@@ -278,14 +263,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
     addToInvokeLater(() -> {
       final SMTestProxy currentProxy = findCurrentTestOrSuite();
-
-      if (ProcessOutputTypes.STDERR.equals(outputType)) {
-        currentProxy.addStdErr(text);
-      } else if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
-        currentProxy.addSystemOutput(text);
-      } else {
-        currentProxy.addStdOutput(text, outputType);
-      }
+      currentProxy.addOutput(text, outputType);
     });
   }
 
@@ -398,22 +376,17 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
      addToInvokeLater(() -> {
        final String testName = testOutputEvent.getName();
        final String text = testOutputEvent.getText();
-       final boolean stdOut = testOutputEvent.isStdOut();
+       final Key outputType = testOutputEvent.getOutputType();
        final String fullTestName = getFullTestName(testName);
        final SMTestProxy testProxy = getProxyByFullTestName(fullTestName);
        if (testProxy == null) {
          logProblem("Test wasn't started! TestOutput event: name = {" + testName + "}, " +
-                    "isStdOut = " + stdOut + ", " +
+                    "outputType = " + outputType + ", " +
                     "text = {" + text + "}. " +
                     cannotFindFullTestNameMsg(fullTestName));
          return;
        }
-
-       if (stdOut) {
-         testProxy.addStdOutput(text, ProcessOutputTypes.STDOUT);
-       } else {
-         testProxy.addStdErr(text);
-       }
+       testProxy.addOutput(text, outputType);
      });
   }
 

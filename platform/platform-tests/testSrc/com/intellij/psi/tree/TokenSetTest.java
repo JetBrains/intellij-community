@@ -17,26 +17,19 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
-@RunWith(Parameterized.class)
 public class TokenSetTest {
-  @Parameterized.Parameters
-  public static List<Object[]> data() {
-    return Collections.nCopies(10, ArrayUtil.EMPTY_OBJECT_ARRAY);
-  }
-
   private static IElementType T1, T2, T3, T4, T5, T6;
   private TokenSet S1, S12, S3, S34, S5;
 

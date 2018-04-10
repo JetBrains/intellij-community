@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -31,17 +16,21 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class FormatChangedTextUtil {
   public static final Key<CharSequence> TEST_REVISION_CONTENT = Key.create("test.revision.content");
@@ -98,12 +87,7 @@ public class FormatChangedTextUtil {
   }
 
   public static boolean hasChanges(@NotNull final Project project) {
-    final ModifiableModuleModel moduleModel = new ReadAction<ModifiableModuleModel>() {
-      @Override
-      protected void run(@NotNull Result<ModifiableModuleModel> result) throws Throwable {
-        result.setResult(ModuleManager.getInstance(project).getModifiableModel());
-      }
-    }.execute().getResultObject();
+    final ModifiableModuleModel moduleModel = ReadAction.compute(() -> ModuleManager.getInstance(project).getModifiableModel());
     try {
       for (Module module : moduleModel.getModules()) {
         if (hasChanges(module)) {
@@ -132,7 +116,7 @@ public class FormatChangedTextUtil {
   @NotNull
   public static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<Change> changes) {
     Function<Change, PsiFile> changeToPsiFileMapper = new Function<Change, PsiFile>() {
-      private PsiManager myPsiManager = PsiManager.getInstance(project);
+      private final PsiManager myPsiManager = PsiManager.getInstance(project);
 
       @Override
       public PsiFile fun(Change change) {
@@ -145,7 +129,7 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
+  public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
     return ContainerUtil.emptyList();
   }
 
@@ -159,8 +143,27 @@ public class FormatChangedTextUtil {
   
     
   @Nullable
-  public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) throws FilesTooBigForDiffException {
+  public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) {
     return null;
   }
-  
+
+  @NotNull
+  public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
+                                                           @NotNull Change[] changes,
+                                                           @NotNull Convertor<VirtualFile, List<T>> elementsConvertor) {
+    return Arrays.stream(changes).map(Change::getVirtualFile).filter(Objects::nonNull)
+                 .flatMap(file -> elementsConvertor.convert(file).stream()).filter(Objects::nonNull)
+                 .collect(Collectors.toList());
+  }
+
+  /**
+   * Allows to temporally suppress document modification tracking.
+   *
+   * Ex: To perform a task, that might delete whole document and re-create it from scratch.
+   * Such modification would destroy all existing ranges. While using `runHeavyModificationTask` would make trackers to compare
+   * only starting end finishing document states, ignoring intermediate modifications (because "actual" differences might be small).
+   */
+  public void runHeavyModificationTask(@NotNull Project project, @NotNull Document document, @NotNull Runnable o) {
+    o.run();
+  }
 }

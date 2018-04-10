@@ -28,7 +28,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.AbstractFileViewProvider;
 import org.jetbrains.annotations.Nullable;
 
 public class DocumentUndoProvider implements Disposable {
@@ -99,7 +99,7 @@ public class DocumentUndoProvider implements Disposable {
 
       VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
       if (vFile == null) return true;
-      return vFile.getUserData(SingleRootFileViewProvider.FREE_THREADED) != Boolean.TRUE && 
+      return vFile.getUserData(AbstractFileViewProvider.FREE_THREADED) != Boolean.TRUE && 
              vFile.getUserData(UndoConstants.DONT_RECORD_UNDO) != Boolean.TRUE;
     }
 

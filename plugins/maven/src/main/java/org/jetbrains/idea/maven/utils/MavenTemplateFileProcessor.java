@@ -35,7 +35,6 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 2/15/13
  */
 public class MavenTemplateFileProcessor extends ProjectTemplateFileProcessor {
 

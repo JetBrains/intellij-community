@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -146,7 +132,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   };
 
   private final boolean myShowSettingsDialogBefore;
-  private final UsageViewSettings myUsageViewSettings;
   private Runnable mySearchEverywhereRunnable;
 
   // used from plugin.xml
@@ -158,15 +143,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private ShowUsagesAction(boolean showDialogBefore) {
     setInjectedContext(true);
     myShowSettingsDialogBefore = showDialogBefore;
-
-    final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
-    myUsageViewSettings = new UsageViewSettings();
-    myUsageViewSettings.loadState(usageViewSettings);
-    myUsageViewSettings.GROUP_BY_FILE_STRUCTURE = false;
-    myUsageViewSettings.GROUP_BY_MODULE = false;
-    myUsageViewSettings.GROUP_BY_PACKAGE = false;
-    myUsageViewSettings.GROUP_BY_USAGE_TYPE = false;
-    myUsageViewSettings.GROUP_BY_SCOPE = false;
   }
 
   @Override
@@ -243,10 +219,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                  @NotNull final FindUsagesOptions options) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
+    final ShowUsagesSettings showUsagesSettings = ShowUsagesSettings.getInstance();
     final UsageViewSettings savedGlobalSettings = new UsageViewSettings();
 
     savedGlobalSettings.loadState(usageViewSettings);
-    usageViewSettings.loadState(myUsageViewSettings);
+    usageViewSettings.loadState(showUsagesSettings.getState());
 
     final Project project = handler.getProject();
     UsageViewManager manager = UsageViewManager.getInstance(project);
@@ -263,7 +240,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     Disposer.register(usageView, () -> {
-      myUsageViewSettings.loadState(usageViewSettings);
+      showUsagesSettings.applyUsageViewSettings(usageViewSettings);
       usageViewSettings.loadState(savedGlobalSettings);
     });
 
@@ -422,7 +399,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         }
       };
       List<ColumnInfo<UsageNode, UsageNode>> list = Collections.nCopies(cols, o);
-      return list.toArray(new ColumnInfo[list.size()]);
+      return list.toArray(ColumnInfo.EMPTY_ARRAY);
     }
 
     @Override
@@ -643,7 +620,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    @NotNull final AsyncProcessIcon processIcon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    PopupChooserBuilder builder = new PopupChooserBuilder(table);
+    PopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table);
     final String title = presentation.getTabText();
     if (title != null) {
       String result = getFullTitle(usages, title, false, visibleNodes.size() - 1, true);
@@ -995,8 +972,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   // returns new selection
   private static int updateModel(@NotNull MyModel tableModel, @NotNull List<UsageNode> listOld, @NotNull List<UsageNode> listNew, int oldSelection) {
-    UsageNode[] oa = listOld.toArray(new UsageNode[listOld.size()]);
-    UsageNode[] na = listNew.toArray(new UsageNode[listNew.size()]);
+    UsageNode[] oa = listOld.toArray(new UsageNode[0]);
+    UsageNode[] na = listNew.toArray(new UsageNode[0]);
     List<ModelDiff.Cmd> cmds = ModelDiff.createDiffCmds(tableModel, oa, na);
     int selection = oldSelection;
     if (cmds != null) {
@@ -1027,25 +1004,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     myWidth = newWidth;
 
-    int rowsToShow = Math.min(30, data.size());
-    Dimension dimension = new Dimension(newWidth, table.getRowHeight() * rowsToShow);
-    Rectangle rectangle = fitToScreen(dimension, popupPosition, table);
-    if (!data.isEmpty()) {
-      ScrollingUtil.ensureSelectionExists(table);
-    }
-    table.setSize(rectangle.getSize());
-    //table.setPreferredSize(dimension);
-    //table.setMaximumSize(dimension);
-    //table.setPreferredScrollableViewportSize(dimension);
-
-
     Dimension footerSize = ((AbstractPopup)popup).getFooterPreferredSize();
 
     int footer = footerSize.height;
     int footerBorder = footer == 0 ? 0 : 1;
     Insets insets = ((AbstractPopup)popup).getPopupBorder().getBorderInsets(content);
-    rectangle.height += headerSize.height + footer + footerBorder + insets.top + insets.bottom;
-    ScreenUtil.fitToScreen(rectangle);
+    int minHeight = headerSize.height + footer + footerBorder + insets.top + insets.bottom;
+
+    Rectangle rectangle = getPreferredBounds(table, popupPosition.getScreenPoint(), newWidth, minHeight, data.size());
+    table.setSize(rectangle.width, rectangle.height - minHeight);
+    if (!data.isEmpty()) ScrollingUtil.ensureSelectionExists(table);
+
     Dimension newDim = rectangle.getSize();
     window.setBounds(rectangle);
     window.setMinimumSize(newDim);
@@ -1055,16 +1024,19 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     window.repaint();
   }
 
-  private static Rectangle fitToScreen(@NotNull Dimension newDim, @NotNull RelativePoint popupPosition, JTable table) {
-    Rectangle rectangle = new Rectangle(popupPosition.getScreenPoint(), newDim);
-    ScreenUtil.fitToScreen(rectangle);
-    if (rectangle.getHeight() != newDim.getHeight()) {
-      int newHeight = (int)rectangle.getHeight();
-      int roundedHeight = newHeight - newHeight % table.getRowHeight();
-      rectangle.setSize((int)rectangle.getWidth(), Math.max(roundedHeight, table.getRowHeight()));
+  private static Rectangle getPreferredBounds(@NotNull JTable table, @NotNull Point point, int width, int minHeight, int modelRows) {
+    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
+    int visibleRows = Math.min(30, modelRows);
+    int rowHeight = table.getRowHeight();
+    int space = addExtraSpace && visibleRows < modelRows ? rowHeight / 2 : 0;
+    int height = visibleRows * rowHeight + minHeight + space;
+    Rectangle bounds = new Rectangle(point.x, point.y, width, height);
+    ScreenUtil.fitToScreen(bounds);
+    if (bounds.height != height) {
+      minHeight += addExtraSpace && space == 0 ? rowHeight / 2 : space;
+      bounds.height = Math.max(1, (bounds.height - minHeight) / rowHeight) * rowHeight + minHeight;
     }
-    return rectangle;
-
+    return bounds;
   }
 
   private void appendMoreUsages(Editor editor,

@@ -25,8 +25,6 @@ import com.intellij.psi.util.CachedValuesManager;
 
 /**
  * @author Maxim.Mossienko
-*         Date: 30.12.2008
-*         Time: 21:03:42
 */
 public abstract class FileBasedUserDataCache<T> extends UserDataCache<CachedValue<T>, PsiFile, Object> {
   @Override

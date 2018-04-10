@@ -55,6 +55,7 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix {
     return getText();
   }
 
+  // validity of startElement/endElement must be checked before calling this
   public boolean isAvailable(@NotNull Project project,
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
@@ -70,8 +71,6 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix {
     Project project = myStartElement.getProject();
     return startElement != null &&
            endElement != null &&
-           startElement.isValid() &&
-           (endElement == startElement || endElement.isValid()) &&
            file != null &&
            isAvailable(project, file, startElement, endElement);
   }

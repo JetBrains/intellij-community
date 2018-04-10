@@ -19,7 +19,9 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleDescription;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -30,7 +32,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class PackageViewProjectNode extends AbstractProjectNode {
@@ -42,16 +43,13 @@ public class PackageViewProjectNode extends AbstractProjectNode {
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     if (getSettings().isShowModules()) {
-      final List<Module> allModules = new ArrayList<>(Arrays.asList(ModuleManager.getInstance(getProject()).getModules()));
-      for (Iterator<Module> it = allModules.iterator(); it.hasNext();) {
-        final Module module = it.next();
-        final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-        if (sourceRoots.length == 0) {
-          // do not show modules with no source roots configured
-          it.remove();
+      List<ModuleDescription> modulesWithSourceRoots = new ArrayList<>();
+      for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
+        if (ModuleRootManager.getInstance(module).getSourceRoots().length > 0) {
+          modulesWithSourceRoots.add(new LoadedModuleDescriptionImpl(module));
         }
       }
-      return modulesAndGroups(allModules.toArray(new Module[allModules.size()]));
+      return modulesAndGroups(modulesWithSourceRoots);
     }
     else {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
@@ -98,15 +96,12 @@ public class PackageViewProjectNode extends AbstractProjectNode {
   }
 
   @Override
-  protected AbstractTreeNode createModuleGroup(final Module module) throws
-                                                                    InvocationTargetException,
-                                                                    NoSuchMethodException, InstantiationException, IllegalAccessException {
+  protected AbstractTreeNode createModuleGroup(final Module module) {
     return new PackageViewModuleNode(getProject(), module, getSettings());
   }
 
   @Override
-  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
-    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup) {
     return new PackageViewModuleGroupNode(getProject(),  moduleGroup, getSettings());
   }
 

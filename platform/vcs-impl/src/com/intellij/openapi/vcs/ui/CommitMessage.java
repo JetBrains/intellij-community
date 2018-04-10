@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
@@ -51,6 +50,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -61,7 +61,6 @@ import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
-import static java.util.Collections.emptyList;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
@@ -69,7 +68,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
 
-  @NotNull private List<ChangeList> myChangeLists = emptyList(); // guarded with WriteLock
+  @NotNull private List<ChangeList> myChangeLists = Collections.emptyList(); // guarded with WriteLock
 
   public CommitMessage(@NotNull Project project) {
     this(project, true, true, true);
@@ -166,8 +165,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       addIfNotNull(features, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
     }
 
-    EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
+    return EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
   }
 
   public static boolean isCommitMessage(@NotNull PsiElement element) {
@@ -208,6 +206,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @Override
   public void dispose() {
+  }
+
+  @CalledInAwt
+  public void setChangeList(@NotNull ChangeList value) {
+    setChangeLists(Collections.singletonList(value));
   }
 
   @CalledInAwt

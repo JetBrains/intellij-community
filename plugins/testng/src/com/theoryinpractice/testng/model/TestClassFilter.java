@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.model;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -28,80 +14,75 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Hani Suleiman
- *         Date: Jul 21, 2005
- *         Time: 9:03:06 PM
  */
-public class TestClassFilter implements ClassFilter.ClassFilterWithScope
-{
-    public static final String GUICE_INJECTION = "com.google.inject.Inject";
-    public static final String GUICE = "org.testng.annotations.Guice";
-    public static final String FACTORY_INJECTION = "org.testng.annotations.Factory";
+public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
+  private static final String GUICE = "org.testng.annotations.Guice";
+  private static final List<String> INJECTION_ANNOTATIONS = Arrays.asList("com.google.inject.Inject", "org.testng.annotations.Factory");
 
-    private final GlobalSearchScope scope;
-    private final Project project;
-    private final boolean includeConfig;
-    private final boolean checkClassCanBeInstantiated;
+  private final GlobalSearchScope scope;
+  private final Project project;
+  private final boolean includeConfig;
+  private final boolean checkClassCanBeInstantiated;
 
-
-    public TestClassFilter(GlobalSearchScope scope, Project project, boolean includeConfig) {
-      this(scope, project, includeConfig, false);
-    }
-
-    public TestClassFilter(GlobalSearchScope scope,
-                           Project project,
-                           boolean includeConfig,
-                           boolean checkClassCanBeInstantiated) {
-        this.scope = scope;
-        this.project = project;
-        this.includeConfig = includeConfig;
-        this.checkClassCanBeInstantiated = checkClassCanBeInstantiated;
+  public TestClassFilter(GlobalSearchScope scope, Project project, boolean includeConfig) {
+    this(scope, project, includeConfig, false);
   }
 
-    public TestClassFilter intersectionWith(GlobalSearchScope scope) {
-        return new TestClassFilter(this.scope.intersectWith(scope), project, includeConfig, checkClassCanBeInstantiated);
-    }
+  public TestClassFilter(GlobalSearchScope scope,
+                         Project project,
+                         boolean includeConfig,
+                         boolean checkClassCanBeInstantiated) {
+    this.scope = scope;
+    this.project = project;
+    this.includeConfig = includeConfig;
+    this.checkClassCanBeInstantiated = checkClassCanBeInstantiated;
+  }
 
-    public boolean isAccepted(final PsiClass psiClass) {
-      return ReadAction.compute(() -> {
-        if (!ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(psiClass)) return false;
-        //PsiManager manager = PsiManager.getInstance(project);
-        //if(manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return true;
-        boolean hasTest = TestNGUtil.hasTest(psiClass);
-        if (hasTest) {
-          if (checkClassCanBeInstantiated) {
-            final PsiMethod[] constructors = psiClass.getConstructors();
-            if (constructors.length > 0) {
-              boolean canBeInstantiated = false;
-              for (PsiMethod constructor : constructors) {
-                PsiParameter[] parameters = constructor.getParameterList().getParameters();
-                if (parameters.length == 0 ||
-                    AnnotationUtil.isAnnotated(constructor, Arrays.asList(GUICE_INJECTION, FACTORY_INJECTION), true) ||
-                    parameters.length == 1 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)
-                  ) {
-                  canBeInstantiated = true;
-                  break;
-                }
-              }
-              if (!canBeInstantiated && !AnnotationUtil.isAnnotated(psiClass, GUICE, false)) {
-                return false;
+  public TestClassFilter intersectionWith(GlobalSearchScope scope) {
+    return new TestClassFilter(this.scope.intersectWith(scope), project, includeConfig, checkClassCanBeInstantiated);
+  }
+
+  public boolean isAccepted(final PsiClass psiClass) {
+    return ReadAction.compute(() -> {
+      if (!ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(psiClass)) return false;
+      //PsiManager manager = PsiManager.getInstance(project);
+      //if(manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return true;
+      boolean hasTest = TestNGUtil.hasTest(psiClass);
+      if (hasTest) {
+        if (checkClassCanBeInstantiated) {
+          final PsiMethod[] constructors = psiClass.getConstructors();
+          if (constructors.length > 0) {
+            boolean canBeInstantiated = false;
+            for (PsiMethod constructor : constructors) {
+              PsiParameter[] parameters = constructor.getParameterList().getParameters();
+              if (parameters.length == 0 ||
+                  AnnotationUtil.isAnnotated(constructor, INJECTION_ANNOTATIONS, AnnotationUtil.CHECK_HIERARCHY) ||
+                  parameters.length == 1 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+                canBeInstantiated = true;
+                break;
               }
             }
+            if (!canBeInstantiated && !AnnotationUtil.isAnnotated(psiClass, GUICE, 0)) {
+              return false;
+            }
           }
-          return true;
         }
+        return true;
+      }
 
-        return includeConfig && TestNGUtil.hasConfig(psiClass, TestNGUtil.CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL);
-      });
-    }
+      return includeConfig && TestNGUtil.hasConfig(psiClass, TestNGUtil.CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL);
+    });
+  }
 
-    public Project getProject() {
-        return project;
-    }
+  public Project getProject() {
+    return project;
+  }
 
-    public GlobalSearchScope getScope() {
-        return scope;
-    }
+  public GlobalSearchScope getScope() {
+    return scope;
+  }
 }

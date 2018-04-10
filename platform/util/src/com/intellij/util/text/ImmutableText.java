@@ -192,23 +192,10 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     return subtext(start, length());
   }
 
-  /**
-   * Returns the text having the specified text inserted at 
-   * the specified location.
-   *
-   * @param index the insertion position.
-   * @param txt the text being inserted.
-   * @return {@code subtext(0, index).concat(txt).concat(subtext(index))}
-   * @throws IndexOutOfBoundsException if {@code (index < 0) ||
-   *            (index > this.length())}
-   */
-  private ImmutableText insert(int index, ImmutableText txt) {
-    return subtext(0, index).concat(txt).concat(subtext(index));
-  }
-
   @Override
   public ImmutableText insert(int index, @NotNull CharSequence seq) {
-    return insert(index, valueOf(seq));
+    if (seq.length() == 0) return this;
+    return subtext(0, index).concat(valueOf(seq)).concat(subtext(index));
   }
 
   /**

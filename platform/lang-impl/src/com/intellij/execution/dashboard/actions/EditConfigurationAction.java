@@ -17,7 +17,7 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -40,12 +40,12 @@ public class EditConfigurationAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected boolean isEnabled4(DashboardRunConfigurationNode node) {
+  protected boolean isEnabled4(RunDashboardRunConfigurationNode node) {
     return RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
   }
 
   @Override
-  protected void doActionPerformed(DashboardRunConfigurationNode node) {
+  protected void doActionPerformed(RunDashboardRunConfigurationNode node) {
     RunDialog.editConfiguration(node.getProject(), node.getConfigurationSettings(),
                                 ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"));
   }

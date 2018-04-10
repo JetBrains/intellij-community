@@ -36,7 +36,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/17/11
  */
 public class CompileContextImpl extends UserDataHolderBase implements CompileContext {
   private static final String CANCELED_MESSAGE = "The build has been canceled";

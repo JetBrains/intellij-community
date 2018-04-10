@@ -58,7 +58,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor {
     symbols.addAll(PyFunctionNameIndex.find(name, project, scope));
     symbols.addAll(PyVariableNameIndex.find(name, project, scope));
     symbols.addAll(PyClassAttributesIndex.findClassAndInstanceAttributes(name, project, scope));
-    return symbols.toArray(new NavigationItem[symbols.size()]);
+    return symbols.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
   @Override

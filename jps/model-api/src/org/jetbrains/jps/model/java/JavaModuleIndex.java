@@ -17,14 +17,15 @@ package org.jetbrains.jps.model.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 
-public abstract class JavaModuleIndex {
+public interface JavaModuleIndex extends JpsElement {
   /**
    * Returns a path to a module descriptor (module-info.java file) for the given module,
    * or {@code null} when there is no descriptor.
    */
-  public abstract @Nullable File getModuleInfoFile(@NotNull JpsModule module, boolean forTests);
+  @Nullable File getModuleInfoFile(@NotNull JpsModule module, boolean forTests);
 }

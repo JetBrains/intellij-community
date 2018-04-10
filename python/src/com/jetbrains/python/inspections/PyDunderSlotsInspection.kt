@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections
 
 import com.google.common.collect.Iterables
@@ -35,7 +21,7 @@ class PyDunderSlotsInspection : PyInspection() {
     override fun visitPyClass(node: PyClass?) {
       super.visitPyClass(node)
 
-      if (node != null && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON30)) {
+      if (node != null && !LanguageLevel.forElement(node).isPython2) {
         val slots = findSlotsValue(node)
 
         when (slots) {
@@ -69,7 +55,8 @@ class PyDunderSlotsInspection : PyInspection() {
     private fun processSlot(pyClass: PyClass, slot: PyStringLiteralExpression) {
       val name = slot.stringValue
 
-      if (pyClass.findClassAttribute(name, false, myTypeEvalContext) != null) {
+      val classAttribute = pyClass.findClassAttribute(name, false, myTypeEvalContext)
+      if (classAttribute != null && classAttribute.hasAssignedValue()) {
         registerProblem(slot, "'$name' in __slots__ conflicts with class variable")
       }
     }
@@ -105,7 +92,7 @@ class PyDunderSlotsInspection : PyInspection() {
       Py3+ raises ValueError about conflict between __slots__ and class variable.
       This case is handled above by com.jetbrains.python.inspections.PyDunderSlotsInspection.Visitor.processSlot method.
       */
-      if (LanguageLevel.forElement(cls).isOlderThan(LanguageLevel.PYTHON30)) {
+      if (LanguageLevel.forElement(cls).isPython2) {
         return attributeIsWritableInPy2(cls, name)
       }
       else {
@@ -117,7 +104,8 @@ class PyDunderSlotsInspection : PyInspection() {
       val slots = cls.getSlots(myTypeEvalContext)
       return slots == null ||
              slots.contains(PyNames.DICT) ||
-             slots.contains(name) && cls.findClassAttribute(name, true, myTypeEvalContext) == null
+             slots.contains(name) && cls.findClassAttribute(name, true, myTypeEvalContext) == null ||
+             cls.findProperty(name, true, myTypeEvalContext) != null
     }
 
     private fun attributeIsWritableInPy3(cls: PyClass, name: String): Boolean {
@@ -129,7 +117,7 @@ class PyDunderSlotsInspection : PyInspection() {
 
         val ownSlots = c.ownSlots
 
-        if (ownSlots == null || ownSlots.contains(PyNames.DICT)) return true
+        if (ownSlots == null || ownSlots.contains(PyNames.DICT) || c.findProperty(name, false, myTypeEvalContext) != null) return true
 
         if (!classAttrIsFound) {
           classAttrIsFound = c.findClassAttribute(name, false, myTypeEvalContext) != null

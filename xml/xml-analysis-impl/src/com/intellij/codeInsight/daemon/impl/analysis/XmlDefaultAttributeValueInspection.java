@@ -46,28 +46,33 @@ public class XmlDefaultAttributeValueInspection extends XmlSuppressableInspectio
         }
         if (parent.getParent() instanceof HtmlTag) return;
         XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-        if (descriptor == null) {
+        if (descriptor == null || descriptor.isRequired()) {
           return;
         }
         String defaultValue = descriptor.getDefaultValue();
         if (defaultValue != null && defaultValue.equals(value.getValue())) {
           holder.registerProblem(value, "Redundant default attribute value assignment", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                 new LocalQuickFix() {
-                                   @Nls
-                                   @NotNull
-                                   @Override
-                                   public String getFamilyName() {
-                                     return XmlErrorMessages.message("remove.attribute.quickfix.family");
-                                   }
+                                 createDeleteFix());
+        }
+      }
+    };
+  }
 
-                                   @Override
-                                   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                                     XmlAttribute attribute = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlAttribute.class);
-                                     if (attribute != null) {
-                                       attribute.delete();
-                                     }
-                                   }
-                                 });
+  @NotNull
+  private static LocalQuickFix createDeleteFix() {
+    return new LocalQuickFix() {
+      @Nls
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return XmlErrorMessages.message("remove.attribute.quickfix.family");
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        XmlAttribute attribute = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlAttribute.class);
+        if (attribute != null) {
+          attribute.delete();
         }
       }
     };

@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -57,15 +56,9 @@ public class LibrariesUtil {
     if (module == null) return Library.EMPTY_ARRAY;
     final ArrayList<Library> libraries = new ArrayList<>();
 
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      populateOrderEntries(module, condition, libraries, false, new THashSet<>());
-    }
-    finally {
-      accessToken.finish();
-    }
+    ApplicationManager.getApplication().runReadAction(() -> populateOrderEntries(module, condition, libraries, false, new THashSet<>()));
 
-    return libraries.toArray(new Library[libraries.size()]);
+    return libraries.toArray(Library.EMPTY_ARRAY);
   }
 
   private static void populateOrderEntries(@NotNull Module module, Condition<Library> condition, ArrayList<Library> libraries, boolean exportedOnly, Set<Module> visited) {
@@ -97,7 +90,7 @@ public class LibrariesUtil {
   public static Library[] getGlobalLibraries(Condition<Library> condition) {
     LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
     List<Library> libs = ContainerUtil.findAll(table.getLibraries(), condition);
-    return libs.toArray(new Library[libs.size()]);
+    return libs.toArray(Library.EMPTY_ARRAY);
   }
 
   @NotNull

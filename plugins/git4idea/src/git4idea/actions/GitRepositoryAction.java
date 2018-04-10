@@ -36,8 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 /**
  * Base class for actions that affect the entire git repository.
  * The action is available if there is at least one git root.
@@ -72,7 +70,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   }
 
   protected static void showErrors(@NotNull Project project, @NotNull String actionName, @NotNull List<VcsException> exceptions) {
-    notNull(GitVcs.getInstance(project)).showErrors(exceptions, actionName);
+    GitVcs.getInstance(project).showErrors(exceptions, actionName);
   }
 
   /**

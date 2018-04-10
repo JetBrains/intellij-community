@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>test.py</file>
-    <line>7</line>
-    <description>Raising a new style class</description>
-  </problem>
-</problems>

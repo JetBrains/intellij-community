@@ -5,11 +5,9 @@ import java.io.*;
 class Comments {
 
   void m(OutputStream out) throws IOException {
-      try (InputStream in = new FileInputStream("filename")) {
-      } finally {
-          // stop
-          // now
-          out.close();
+      try (out; InputStream in = new FileInputStream("filename")) {
       }
+      // stop
+      // now
   }
 }

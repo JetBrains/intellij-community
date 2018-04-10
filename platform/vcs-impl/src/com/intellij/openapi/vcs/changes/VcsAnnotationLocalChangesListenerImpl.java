@@ -29,10 +29,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -70,18 +72,25 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     myConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, handler);
   }
 
+  @TestOnly
+  public void calmDown() {
+    while (!myUpdater.isEmpty()) {
+      TimeoutUtil.sleep(1);
+    }
+  }
+
   private Runnable createUpdateStuff() {
     return () -> {
-      final Set<String> paths = new HashSet<>();
-      final Map<String, VcsRevisionNumber> changes = new HashMap<>();
-      final Set<VirtualFile> files = new HashSet<>();
+      final Set<String> paths;
+      final Map<String, VcsRevisionNumber> changes;
+      final Set<VirtualFile> files;
       Set<VcsKey> vcsToRefresh;
       synchronized (myLock) {
         vcsToRefresh = new HashSet<>(myVcsKeySet);
 
-        paths.addAll(myDirtyPaths);
-        changes.putAll(myDirtyChanges);
-        files.addAll(myDirtyFiles);
+        paths = new HashSet<>(myDirtyPaths);
+        changes = new HashMap<>(myDirtyChanges);
+        files = new HashSet<>(myDirtyFiles);
         myDirtyPaths.clear();
         myDirtyChanges.clear();
         myVcsKeySet.clear();

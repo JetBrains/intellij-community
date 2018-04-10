@@ -45,6 +45,7 @@ public class TagNameReference implements PsiReference {
     myNameElement = nameElement;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     PsiElement element = myNameElement.getPsi();
@@ -59,6 +60,7 @@ public class TagNameReference implements PsiReference {
     return (XmlTag)element;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final ASTNode nameElement = getNameElement();

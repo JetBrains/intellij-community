@@ -38,7 +38,7 @@ public class CompileScopeTestBuilder {
   private final boolean myForceBuild;
   private final Set<BuildTargetType<?>> myTargetTypes = new HashSet<>();
   private final Set<BuildTarget<?>> myTargets = new HashSet<>();
-  private LinkedHashMap<BuildTarget<?>, Set<File>> myFiles = new LinkedHashMap<>();
+  private final LinkedHashMap<BuildTarget<?>, Set<File>> myFiles = new LinkedHashMap<>();
 
   public static CompileScopeTestBuilder rebuild() {
     return new CompileScopeTestBuilder(true);

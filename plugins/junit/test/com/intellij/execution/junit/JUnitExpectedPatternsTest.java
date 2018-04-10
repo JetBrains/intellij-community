@@ -26,9 +26,22 @@ public class JUnitExpectedPatternsTest {
   }
 
   @Test
+  public void testMultiplePatternsInOneAssertion() {
+    Assert.assertNull(ExpectedPatterns.createExceptionNotification("line1 expected:<java.lang.String<Text>> but was:<java.lang.StringBuilder<Text>>\n" +
+                                                                   "line2 expected:<java.lang.String<Text1>> but was:<java.lang.StringBuilder<Text1>>"));
+  }
+
+  @Test
   public void testHamcrestAssertThatWithReason() {
     Assert.assertNotNull(ExpectedPatterns.createExceptionNotification("reason\n" +
                                                                       "Expected: is \"aaa\\naa\"\n" +
                                                                       "     but: was \"bbb\\nbb\""));
+  }
+
+  @Test
+  public void testHamcrestAssertThatEqWithReason() {
+    Assert.assertNotNull(ExpectedPatterns.createExceptionNotification("reason\n" +
+                                                                      "Expected: \"aaa\\naa\"\n" +
+                                                                      "     got: \"bbb\\nbb\""));
   }
 }

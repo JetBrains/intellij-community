@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -30,7 +16,7 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
+public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   @NotNull
@@ -40,7 +26,7 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
-          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, false);
+          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract);
           for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
             PsiElement element = entry.getKey();
             holder.registerProblem(element, entry.getValue());
@@ -62,15 +48,26 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
             PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
             assert value != null;
             holder.registerProblem(value, error);
-            return;
           }
         }
+        checkMutationContract(annotation, method);
+      }
 
-        if (Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure")) &&
-            PsiType.VOID.equals(method.getReturnType())) {
-          PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("pure");
-          assert value != null;
-          holder.registerProblem(value, "Pure methods must return something, void is not allowed as a return type");
+      private void checkMutationContract(PsiAnnotation annotation, PsiMethod method) {
+        String mutationContract = AnnotationUtil.getStringAttributeValue(annotation, MutationSignature.ATTR_MUTATES);
+        if (StringUtil.isNotEmpty(mutationContract)) {
+          boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure"));
+          String error;
+          if (pure) {
+            error = "Pure method cannot have mutation contract";
+          } else {
+            error = MutationSignature.checkSignature(mutationContract, method);
+          }
+          if (error != null) {
+            PsiAnnotationMemberValue value = annotation.findAttributeValue(MutationSignature.ATTR_MUTATES);
+            assert value != null;
+            holder.registerProblem(value, error);
+          }
         }
       }
     };
@@ -92,7 +89,7 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
         return "Method takes " + paramCount + " parameters, while contract clause number " + (i + 1) + " expects " + contract.arguments.length;
       }
       PsiType returnType = method.getReturnType();
-      if (returnType != null && !InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue)) {
+      if (returnType != null && !contract.returnValue.isReturnTypeCompatible(returnType)) {
         return "Method returns " + returnType.getPresentableText() + " but the contract specifies " + contract.returnValue;
       }
       if (method.isConstructor() && contract.returnValue != MethodContract.ValueConstraint.THROW_EXCEPTION) {

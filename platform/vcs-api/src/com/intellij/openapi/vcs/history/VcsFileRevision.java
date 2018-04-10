@@ -57,7 +57,7 @@ public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription 
       return getContent();
     }
 
-    public byte[] getContent() throws IOException, VcsException {
+    public byte[] getContent() {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   };

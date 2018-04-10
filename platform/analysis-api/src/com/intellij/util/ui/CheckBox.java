@@ -26,11 +26,17 @@ import javax.swing.event.ChangeListener;
 
 public class CheckBox extends JCheckBox {
 
+    public CheckBox(@NotNull String label,
+                    @NotNull InspectionProfileEntry owner,
+                    @NonNls String property) {
+      this(label, (Object)owner, property);
+    }
+
   /**
    * @param property field must be non-private (or ensure that it won't be scrambled in other means)
    */
     public CheckBox(@NotNull String label,
-                    @NotNull InspectionProfileEntry owner,
+                    @NotNull Object owner,
                     @NonNls String property) {
         super(label, getPropertyValue(owner, property));
         final ButtonModel model = getModel();
@@ -39,7 +45,7 @@ public class CheckBox extends JCheckBox {
         model.addChangeListener(listener);
     }
 
-    private static boolean getPropertyValue(InspectionProfileEntry owner,
+    private static boolean getPropertyValue(Object owner,
                                             String property) {
       return ReflectionUtil.getField(owner.getClass(), owner, boolean.class, property);
     }
@@ -47,11 +53,11 @@ public class CheckBox extends JCheckBox {
     private static class SingleCheckboxChangeListener
             implements ChangeListener {
 
-        private final InspectionProfileEntry owner;
+        private final Object owner;
         private final String property;
         private final ButtonModel model;
 
-        SingleCheckboxChangeListener(InspectionProfileEntry owner,
+        SingleCheckboxChangeListener(Object owner,
                                      String property, ButtonModel model) {
             this.owner = owner;
             this.property = property;
@@ -62,7 +68,7 @@ public class CheckBox extends JCheckBox {
             setPropertyValue(owner, property, model.isSelected());
         }
 
-        private static void setPropertyValue(InspectionProfileEntry owner,
+        private static void setPropertyValue(Object owner,
                                              String property,
                                              boolean selected) {
           ReflectionUtil.setField(owner.getClass(), owner, boolean.class, property, selected);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -88,8 +89,9 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
     final String literal = postfix.toLowerCase();
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
+    CommentTracker commentTracker = new CommentTracker();
     if (arguments.length > 1) {
-      newExpression.append(arguments[0].getText()).append(", ");
+      newExpression.append(commentTracker.text(arguments[0])).append(", ");
     }
     final PsiExpression lastArgument = arguments[arguments.length - 1];
     if (lastArgument instanceof PsiBinaryExpression) {
@@ -98,20 +100,21 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
       if (("assertTrue".equals(methodName) && JavaTokenType.EQEQ.equals(tokenType)) ||
           ("assertFalse".equals(methodName) && JavaTokenType.NE.equals(tokenType))) {
         final PsiExpression lhs = binaryExpression.getLOperand();
-        newExpression.append(lhs.getText()).append(", ");
+        newExpression.append(commentTracker.text(lhs)).append(", ");
         final PsiExpression rhs = binaryExpression.getROperand();
         if (rhs != null) {
-          newExpression.append(rhs.getText());
+          newExpression.append(commentTracker.text(rhs));
         }
       }
       else {
-        newExpression.append(literal).append(", ").append(lastArgument.getText());
+        newExpression.append(literal).append(", ").append(commentTracker.text(lastArgument));
       }
     }
     else {
-      newExpression.append(literal).append(", ").append(lastArgument.getText());
+      newExpression.append(literal).append(", ").append(commentTracker.text(lastArgument));
     }
     newExpression.append(')');
-    PsiReplacementUtil.replaceExpression(call, newExpression.toString());
+
+    PsiReplacementUtil.replaceExpression(call, newExpression.toString(), commentTracker);
   }
 }

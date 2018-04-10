@@ -1,6 +1,6 @@
 class Test {
   public static void test() {
-    String n = new AnInterface2<String,Void>() {
+    String n = new AnInterface2<String, Void>() {
       @Override
       public String invoke(Void v) {
         return null;

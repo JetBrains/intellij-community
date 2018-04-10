@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -25,7 +26,6 @@ import java.util.List;
  * @author ksafonov
  */
 public class AttachmentsTabForm {
-
   private static final Logger LOG = Logger.getInstance(AttachmentsTabForm.class);
 
   private JPanel myContentPane;
@@ -93,13 +93,13 @@ public class AttachmentsTabForm {
     });
     myTable.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final int[] selectedRows = myTable.getSelectedRows();
+        int[] selectedRows = myTable.getSelectedRows();
         boolean aggregateValue = true;
-        for (final int selectedRow : selectedRows) {
+        for (int selectedRow : selectedRows) {
           if (selectedRow < 0 || !myTable.isCellEditable(selectedRow, 0)) {
             return;
           }
-          final Boolean value = (Boolean)myTable.getValueAt(selectedRow, 0);
+          Boolean value = (Boolean)myTable.getValueAt(selectedRow, 0);
           aggregateValue &= value == null || value.booleanValue();
         }
         for (int selectedRow : selectedRows) {
@@ -130,8 +130,7 @@ public class AttachmentsTabForm {
   }
 
   public void selectFirstIncludedAttachment() {
-    final List items = ((ListTableModel)myTable.getModel()).getItems();
-    for (Object item : items) {
+    for (Object item : ((ListTableModel)myTable.getModel()).getItems()) {
       if (((Attachment)item).isIncluded()) {
         myTable.setSelection(Collections.singleton((Attachment)item));
         break;

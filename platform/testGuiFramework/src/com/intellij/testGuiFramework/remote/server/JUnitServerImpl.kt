@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.remote.server
 
+import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.apache.log4j.Logger
 import java.io.InvalidClassException
@@ -22,6 +23,7 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketException
 import java.util.*
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.CountDownLatch
@@ -32,7 +34,7 @@ import java.util.concurrent.TimeUnit
  * @author Sergey Karashevich
  */
 
-class JUnitServerImpl: JUnitServer {
+class JUnitServerImpl : JUnitServer {
 
   private val SEND_THREAD = "JUnit Server Send Thread"
   private val RECEIVE_THREAD = "JUnit Server Receive Thread"
@@ -43,46 +45,48 @@ class JUnitServerImpl: JUnitServer {
   private val LOG = Logger.getLogger("#com.intellij.testGuiFramework.remote.server.JUnitServerImpl")
 
   private val serverSocket = ServerSocket(0)
-  lateinit private var serverSendThread: ServerSendThread
-  lateinit private var serverReceiveThread: ServerReceiveThread
-  lateinit private var connection: Socket
+  private lateinit var serverSendThread: ServerSendThread
+  private lateinit var serverReceiveThread: ServerReceiveThread
+  private lateinit var connection: Socket
+  private var isStarted = false
 
-  lateinit private var objectInputStream: ObjectInputStream
-  lateinit private var objectOutputStream: ObjectOutputStream
+  private lateinit var objectInputStream: ObjectInputStream
+  private lateinit var objectOutputStream: ObjectOutputStream
+
+  private val IDE_STARTUP_TIMEOUT = 180000
 
   private val port: Int
 
   init {
     port = serverSocket.localPort
-    serverSocket.soTimeout = 180000
+    serverSocket.soTimeout = IDE_STARTUP_TIMEOUT
   }
 
-  fun start() {
-    execOnParallelThread {
-      try {
-        connection = serverSocket.accept()
-        LOG.info("Server accepted client on port: ${connection.port}")
+  override fun start() {
+    connection = serverSocket.accept()
+    LOG.info("Server accepted client on port: ${connection.port}")
 
-        objectOutputStream = ObjectOutputStream(connection.getOutputStream())
-        serverSendThread = ServerSendThread(connection, objectOutputStream)
-        serverSendThread.start()
+    objectOutputStream = ObjectOutputStream(connection.getOutputStream())
+    serverSendThread = ServerSendThread(connection, objectOutputStream)
+    serverSendThread.start()
 
-        objectInputStream = ObjectInputStream(connection.getInputStream())
-        serverReceiveThread = ServerReceiveThread(connection, objectInputStream)
-        serverReceiveThread.start()
-      } catch (e: Exception) {
-        failHandler?.invoke(e)
-      }
-    }
+    objectInputStream = ObjectInputStream(connection.getInputStream())
+    serverReceiveThread = ServerReceiveThread(connection, objectInputStream)
+    serverReceiveThread.start()
+    isStarted = true
   }
+
+  override fun isStarted(): Boolean = isStarted
 
   override fun send(message: TransportMessage) {
     postingMessages.put(message)
     LOG.info("Add message to send pool: $message ")
   }
 
-  override fun receive(): TransportMessage =
-    receivingMessages.take()
+  override fun receive(): TransportMessage {
+    return receivingMessages.poll(IDE_STARTUP_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
+           ?: throw SocketException("Client doesn't respond. Either the test has hanged or IDE crushed.")
+  }
 
   override fun sendAndWaitAnswer(message: TransportMessage)
     = sendAndWaitAnswerBase(message)
@@ -90,7 +94,7 @@ class JUnitServerImpl: JUnitServer {
   override fun sendAndWaitAnswer(message: TransportMessage, timeout: Long, timeUnit: TimeUnit)
     = sendAndWaitAnswerBase(message, timeout, timeUnit)
 
-  fun sendAndWaitAnswerBase(message: TransportMessage, timeout: Long = 0L, timeUnit: TimeUnit = TimeUnit.SECONDS): Unit {
+  private fun sendAndWaitAnswerBase(message: TransportMessage, timeout: Long = 0L, timeUnit: TimeUnit = TimeUnit.SECONDS) {
     val countDownLatch = CountDownLatch(1)
     val waitHandler = createCallbackServerHandler({ countDownLatch.countDown() }, message.id)
     addHandler(waitHandler)
@@ -121,7 +125,8 @@ class JUnitServerImpl: JUnitServer {
   override fun isConnected(): Boolean {
     try {
       return connection.isConnected
-    } catch (lateInitException: UninitializedPropertyAccessException) {
+    }
+    catch (lateInitException: UninitializedPropertyAccessException) {
       return false
     }
   }
@@ -131,25 +136,31 @@ class JUnitServerImpl: JUnitServer {
   override fun stopServer() {
     serverSendThread.objectOutputStream.close()
     LOG.info("Object output stream closed")
-    serverSendThread.join()
+    serverSendThread.interrupt()
     LOG.info("Server Send Thread joined")
     serverReceiveThread.objectInputStream.close()
     LOG.info("Object input stream closed")
-    serverReceiveThread.join()
+    serverReceiveThread.interrupt()
     LOG.info("Server Receive Thread joined")
     connection.close()
   }
 
 
   private fun execOnParallelThread(body: () -> Unit) {
-    (object: Thread("JUnitServer: Exec On Parallel Thread") { override fun run() { body(); Thread.currentThread().join() } }).start()
+    (object : Thread("JUnitServer: Exec On Parallel Thread") {
+      override fun run() {
+        body(); Thread.currentThread().join()
+      }
+    }).start()
   }
 
   private fun createCallbackServerHandler(handler: (TransportMessage) -> Unit, id: Long)
     = object : ServerHandler() {
-      override fun acceptObject(message: TransportMessage) = message.id == id
-      override fun handleObject(message: TransportMessage) { handler(message) }
+    override fun acceptObject(message: TransportMessage) = message.id == id
+    override fun handleObject(message: TransportMessage) {
+      handler(message)
     }
+  }
 
   inner class ServerSendThread(val connection: Socket, val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
 
@@ -162,7 +173,7 @@ class JUnitServerImpl: JUnitServer {
           objectOutputStream.writeObject(message)
         }
       }
-      catch(e: InterruptedException) {
+      catch (e: InterruptedException) {
         Thread.currentThread().interrupt()
       }
       catch (e: Exception) {
@@ -173,6 +184,7 @@ class JUnitServerImpl: JUnitServer {
         objectOutputStream.close()
       }
     }
+
   }
 
   inner class ServerReceiveThread(val connection: Socket, val objectInputStream: ObjectInputStream) : Thread(RECEIVE_THREAD) {
@@ -182,16 +194,15 @@ class JUnitServerImpl: JUnitServer {
         LOG.info("Server Receive Thread started")
         while (connection.isConnected) {
           val obj = objectInputStream.readObject()
-          LOG.info("Receiving message: $obj")
+          LOG.debug("Receiving message (DEBUG): $obj")
           assert(obj is TransportMessage)
           val message = obj as TransportMessage
+          if (message.type != MessageType.KEEP_ALIVE) LOG.info("Receiving message: $obj")
           receivingMessages.put(message)
-          val copied: Array<ServerHandler> = handlers.toTypedArray().copyOf()
-          copied
-            .filter { it.acceptObject(message) }
-            .forEach { it.handleObject(message) }
+          handlers.filter { it.acceptObject(message) }.forEach { it.handleObject(message) }
         }
-      } catch (e: Exception) {
+      }
+      catch (e: Exception) {
         if (e is InvalidClassException) LOG.error("Probably serialization error:", e)
         failHandler?.invoke(e)
       }

@@ -61,4 +61,10 @@ final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,
   ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value) {
     return new MySoftReference<K,V>(key, value, myQueue);
   }
+
+  //todo remove when Kotlin stops calling containsKey()
+  @Override
+  public boolean containsKey(Object key) {
+    return get(key) != null;  // Kotlin still calls containsKey()
+  }
 }

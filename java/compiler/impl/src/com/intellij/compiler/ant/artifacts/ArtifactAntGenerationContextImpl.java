@@ -143,7 +143,7 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
   }
 
   public Generator[] getAndClearBeforeCurrentArtifact() {
-    final Generator[] generators = myBeforeCurrentArtifact.toArray(new Generator[myBeforeCurrentArtifact.size()]);
+    final Generator[] generators = myBeforeCurrentArtifact.toArray(new Generator[0]);
     myBeforeCurrentArtifact.clear();
     return generators;
   }

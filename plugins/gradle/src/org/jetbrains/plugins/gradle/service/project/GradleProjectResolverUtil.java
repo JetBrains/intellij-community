@@ -25,8 +25,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleGrouperKt;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -51,10 +51,9 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Queue;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
 
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 
@@ -98,12 +97,12 @@ public class GradleProjectResolverUtil {
 
     String mainModuleId = getModuleId(resolverCtx, gradleModule);
     final ModuleData moduleData =
-      new ModuleData(mainModuleId, GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName,
+      new ModuleData(mainModuleId, GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(), moduleName,
                      mainModuleFileDirectoryPath, mainModuleConfigPath);
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (externalProject != null) {
-      moduleData.setInternalName(getInternalModuleName(gradleModule, externalProject));
+      moduleData.setInternalName(getInternalModuleName(gradleModule, externalProject, resolverCtx));
       moduleData.setGroup(externalProject.getGroup());
       moduleData.setVersion(externalProject.getVersion());
       moduleData.setDescription(externalProject.getDescription());
@@ -118,18 +117,25 @@ public class GradleProjectResolverUtil {
     return projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
   }
 
+  public static String getDefaultModuleTypeId() {
+    ModuleType moduleType = ModuleTypeManager.getInstance().getDefaultModuleType();
+    return moduleType.getId();
+  }
+
   @NotNull
-  static String getInternalModuleName(@NotNull IdeaModule gradleModule, @NotNull ExternalProject externalProject) {
-    return getInternalModuleName(gradleModule, externalProject, null);
+  static String getInternalModuleName(@NotNull IdeaModule gradleModule, @NotNull ExternalProject externalProject,
+                                      @NotNull ProjectResolverContext resolverCtx) {
+    return getInternalModuleName(gradleModule, externalProject, null, resolverCtx);
   }
 
   @NotNull
   static String getInternalModuleName(@NotNull IdeaModule gradleModule,
                                       @NotNull ExternalProject externalProject,
-                                      @Nullable String sourceSetName) {
+                                      @Nullable String sourceSetName,
+                                      @NotNull ProjectResolverContext resolverCtx) {
     String delimiter;
     StringBuilder moduleName = new StringBuilder();
-    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled()) {
+    if (resolverCtx.isUseQualifiedModuleNames()) {
       delimiter = ".";
       if (StringUtil.isNotEmpty(externalProject.getGroup())) {
         moduleName.append(externalProject.getGroup()).append(delimiter);
@@ -291,6 +297,7 @@ public class GradleProjectResolverUtil {
                                             @Nullable final File libFile,
                                             @NotNull final LibraryData library,
                                             @NotNull final ProjectResolverContext resolverCtx) {
+    if (libFile == null || !libFile.getName().startsWith("gradle-")) return;
     final BuildScriptClasspathModel buildScriptClasspathModel =
       resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
     if (buildScriptClasspathModel == null) return;
@@ -347,35 +354,47 @@ public class GradleProjectResolverUtil {
     }
 
     for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
-      final File file = new File(path);
-      if (!file.isFile()) continue;
-      if (!FileUtil.isAncestor(gradleUserHomeDir, file, true)) continue;
-      File binaryFileParent = file.getParentFile();
-      if (binaryFileParent == null) continue;
-      File grandParentFile = binaryFileParent.getParentFile();
-      if (grandParentFile == null) continue;
-      File[] sourceParentCandidates = grandParentFile.listFiles();
-      if (sourceParentCandidates == null || sourceParentCandidates.length < 2) continue;
+      try {
+        final Path file = Paths.get(path);
+        if (!FileUtil.isAncestor(gradleUserHomeDir.getPath(), path, true)) continue;
+        Path binaryFileParent = file.getParent();
+        Path grandParentFile = binaryFileParent.getParent();
 
-      boolean sourceFound = false;
-      boolean docFound = false;
-      for (File sourceParentCandidate : sourceParentCandidates) {
-        if (!sourceParentCandidate.isDirectory() || FileUtil.filesEqual(binaryFileParent, sourceParentCandidate)) continue;
-        File[] sourceCandidates = sourceParentCandidate.listFiles();
-        if (sourceCandidates != null && sourceCandidates.length == 1) {
-          File sourceCandidate = sourceCandidates[0];
-          if (sourceCandidate.isFile()) {
-            if (StringUtil.endsWith(sourceCandidate.getName(), "-sources.jar")) {
-              libraryData.addPath(LibraryPathType.SOURCE, sourceCandidate.getAbsolutePath());
-              sourceFound = true;
+        final boolean[] sourceFound = {false};
+        final boolean[] docFound = {false};
+        Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<Path>() {
+          @Override
+          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            if (binaryFileParent.equals(dir)) {
+              return FileVisitResult.SKIP_SUBTREE;
             }
-            else if (StringUtil.endsWith(sourceCandidate.getName(), "-javadoc.jar")) {
-              libraryData.addPath(LibraryPathType.DOC, sourceCandidate.getAbsolutePath());
-              docFound = true;
-            }
-            if (sourceFound && docFound) break;
+            return super.preVisitDirectory(dir, attrs);
           }
-        }
+
+          @Override
+          public FileVisitResult visitFile(Path sourceCandidate, BasicFileAttributes attrs) throws IOException {
+            if (!sourceCandidate.getParent().getParent().equals(grandParentFile)) {
+              return FileVisitResult.SKIP_SIBLINGS;
+            }
+            if (attrs.isRegularFile()) {
+              if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-sources.jar")) {
+                libraryData.addPath(LibraryPathType.SOURCE, sourceCandidate.toFile().getAbsolutePath());
+                sourceFound[0] = true;
+              }
+              else if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-javadoc.jar")) {
+                libraryData.addPath(LibraryPathType.DOC, sourceCandidate.toFile().getAbsolutePath());
+                docFound[0] = true;
+              }
+            }
+            if (sourceFound[0] && docFound[0]) {
+              return FileVisitResult.TERMINATE;
+            }
+            return super.visitFile(file, attrs);
+          }
+        });
+      }
+      catch (IOException | InvalidPathException e) {
+        LOG.debug(e);
       }
     }
   }

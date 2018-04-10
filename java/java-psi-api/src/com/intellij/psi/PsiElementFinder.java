@@ -24,7 +24,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Allows to extend the mechanism of locating classes and packages by full-qualified name.
@@ -199,7 +202,7 @@ public abstract class PsiElementFinder {
         foundClasses.add(psiClass);
       }
     }
-    return foundClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : foundClasses.toArray(new PsiClass[foundClasses.size()]);
+    return foundClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : foundClasses.toArray(PsiClass.EMPTY_ARRAY);
   }
 
 }

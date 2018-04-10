@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports unnecessarily complex collection operations which have simpler alternatives. E.g.
+<b>Arrays.asList(array).subList(0, 10).toArray(new String[0])</b> could be simplified to
+<b>Arrays.copyOfRange(array, 0, 10)</b> or <b>collection.containsAll(singletonList("x"))</b> could be
+simplified to <b>collection.contains("x")</b>.
+<!-- tooltip end -->
+<p><small>New in 2018.1</small></p>
+</body>
+</html>

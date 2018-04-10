@@ -1,0 +1,22 @@
+abstract annotation Annotation {
+}
+
+class A {
+}
+
+abstract annotation AnnotationInner {
+    public abstract fun value() : Annotation = UastEmptyExpression
+}
+
+class B1 {
+}
+
+class B2 {
+}
+
+abstract annotation AnnotationArray {
+    public abstract fun value() : Annotation[] = UastEmptyExpression
+}
+
+class C {
+}

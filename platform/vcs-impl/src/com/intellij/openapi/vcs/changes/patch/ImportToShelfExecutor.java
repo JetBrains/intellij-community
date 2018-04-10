@@ -104,7 +104,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
                 }
               }
               Collection<PatchEP> values = extensions.values();
-              patchTransitExtensions = values.toArray(new PatchEP[values.size()]);
+              patchTransitExtensions = values.toArray(new PatchEP[0]);
             }
             catch (PatchSyntaxException e) {
               VcsBalloonProblemNotifier

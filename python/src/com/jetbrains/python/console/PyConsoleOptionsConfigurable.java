@@ -68,7 +68,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
       }
     }
 
-    return result.toArray(new Configurable[result.size()]);
+    return result.toArray(new Configurable[0]);
   }
 
   private static Configurable createConsoleChildConfigurable(final String name,
@@ -162,6 +162,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
     private JPanel myWholePanel;
     private JBCheckBox myShowDebugConsoleByDefault;
     private JBCheckBox myIpythonEnabledCheckbox;
+    private JBCheckBox myShowsVariablesByDefault;
     private PyConsoleOptions myOptionsProvider;
 
     public JPanel createPanel(PyConsoleOptions optionsProvider) {
@@ -172,17 +173,20 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
 
     public void apply() {
       myOptionsProvider.setShowDebugConsoleByDefault(myShowDebugConsoleByDefault.isSelected());
+      myOptionsProvider.setShowVariablesByDefault(myShowsVariablesByDefault.isSelected());
       myOptionsProvider.setIpythonEnabled(myIpythonEnabledCheckbox.isSelected());
     }
 
     public void reset() {
       myShowDebugConsoleByDefault.setSelected(myOptionsProvider.isShowDebugConsoleByDefault());
+      myShowsVariablesByDefault.setSelected(myOptionsProvider.isShowVariableByDefault());
       myIpythonEnabledCheckbox.setSelected(myOptionsProvider.isIpythonEnabled());
     }
 
     public boolean isModified() {
       return myShowDebugConsoleByDefault.isSelected() != myOptionsProvider.isShowDebugConsoleByDefault() ||
-             myIpythonEnabledCheckbox.isSelected()  != myOptionsProvider.isIpythonEnabled();
+             myIpythonEnabledCheckbox.isSelected()  != myOptionsProvider.isIpythonEnabled() ||
+             myShowsVariablesByDefault.isSelected() != myOptionsProvider.isShowVariableByDefault();
 
     }
   }

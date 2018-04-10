@@ -12,7 +12,15 @@ public class AmbiguousMethodCall {
             }
         }
     }
-    class Y {
+    static class Xt {
+
+        void m() {}
+
+        static class Inner2 extends Y {{
+            m(); // not ambiguous because from static context.
+        }}
+    }
+    static class Y {
         void m() {}
     }
 
@@ -25,6 +33,32 @@ public class AmbiguousMethodCall {
             }
 
             void n() {}
+        }
+    }
+
+    static class Ministry {
+        public static void wasteMoney() {}
+    }
+    static class Government {
+
+        public static void wasteMoney() {}
+        static class MinistryOfSerendipity extends Ministry {{
+            <warning descr="Call to method 'wasteMoney()' from superclass 'Ministry' looks like call to method from class 'Government'">wasteMoney</warning>();
+        }}
+    }
+}
+class Base {
+    void method() {}
+}
+
+class Outer {
+    int method(String s) {
+        return s.length();
+    }
+
+    static class Inner extends Base {
+        void caller() {
+            method();
         }
     }
 }

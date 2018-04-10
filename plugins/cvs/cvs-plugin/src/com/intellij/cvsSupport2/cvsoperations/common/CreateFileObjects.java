@@ -32,7 +32,7 @@ public class CreateFileObjects {
 
   private final File[] myFiles;
   private final String myRootPath;
-  private final Map<File, AbstractFileObject> myFileToDirectoryObjectMap = new com.intellij.util.containers.HashMap<>();
+  private final Map<File, AbstractFileObject> myFileToDirectoryObjectMap = new HashMap<>();
   private final Collection<AbstractFileObject> myResult = new ArrayList<>();
   private final Set<File> myCreatedFiles = new HashSet<>();
 

@@ -15,7 +15,7 @@
  */
 package com.intellij.packaging.artifacts;
 
-import com.intellij.openapi.roots.ProjectModelElement;
+import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -25,9 +25,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * Describes an artifact configuration. Use {@link ArtifactManager} to create new and get existing artifacts.
+ *
  * @author nik
  */
-public interface Artifact extends UserDataHolder, ProjectModelElement {
+public interface Artifact extends UserDataHolder, ProjectModelBuildableElement {
   @NotNull
   ArtifactType getArtifactType();
 
@@ -35,6 +37,9 @@ public interface Artifact extends UserDataHolder, ProjectModelElement {
 
   boolean isBuildOnMake();
 
+  /**
+   * @return the root element in the artifact's output layout tree
+   */
   @NotNull
   CompositePackagingElement<?> getRootElement();
 

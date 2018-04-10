@@ -68,7 +68,7 @@ public class Utils{
   private static void handleUpdateException(AnAction action, Presentation presentation, Throwable exc) {
     String id = ActionManager.getInstance().getId(action);
     if (id != null) {
-      LOG.error("update failed for AnAction with ID=" + id, exc);
+      LOG.error("update failed for AnAction(" + action.getClass().getName() + ") with ID=" + id, exc);
     }
     else {
       LOG.error("update failed for ActionGroup: " + action + "[" + presentation.getText() + "]", exc);
@@ -224,7 +224,9 @@ public class Utils{
           list.add(child);
         }
         else {
-          expandActionGroup(isInModalContext, (ActionGroup)child, list, presentationFactory, context, place, actionManager, false, hideDisabled);
+          boolean hideDisabledChildren = hideDisabled || actionGroup instanceof CompactActionGroup;
+          expandActionGroup(isInModalContext, (ActionGroup)child, list, presentationFactory, context, place, actionManager, false,
+                            hideDisabledChildren);
         }
       }
       else if (child instanceof Separator) {
@@ -455,27 +457,5 @@ public class Utils{
     else {
       menuBuilt.setDone();
     }
-
-    menuBuilt.doWhenDone(() -> {
-      if (!mayDataContextBeInvalid) return;
-
-      if (IdeFocusManager.getInstance(null).isFocusBeingTransferred()) {
-        IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(() -> {
-          if (!component.isShowing()) return;
-
-          DataContext context1 = DataManager.getInstance().getDataContext();
-          expandActionGroup(LaterInvocator.isInModalContext(), group, new ArrayList<>(), presentationFactory, context1, place, ActionManager.getInstance());
-
-          for (Component each : children) {
-            if (each instanceof ActionMenuItem) {
-              ((ActionMenuItem)each).updateContext(context1);
-            } else if (each instanceof ActionMenu) {
-              ((ActionMenu)each).updateContext(context1);
-            }
-          }
-        });
-      }
-    });
-
   }
 }

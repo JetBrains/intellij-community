@@ -130,7 +130,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
 
                             return null;
                         } else if (method.getName() == "canNavigate") {
-                            return nameElement != null && nameElement instanceof NavigationItem && ((NavigationItem)nameElement).canNavigate();
+                            return nameElement instanceof NavigationItem && ((NavigationItem)nameElement).canNavigate();
                         } else if (method.getName() == "getTextOffset") {
                             return nameElement != null ? nameElement.getTextOffset() : myElement.getTextOffset();
                         }

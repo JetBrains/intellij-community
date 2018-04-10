@@ -37,7 +37,7 @@ public class PathMacroListEditor {
   JPanel myPanel;
   private JTextField myIgnoredVariables;
   private JPanel myPathVariablesPanel;
-  private PathMacroTable myPathMacroTable;
+  private final PathMacroTable myPathMacroTable;
 
   public PathMacroListEditor() {
     this(null);

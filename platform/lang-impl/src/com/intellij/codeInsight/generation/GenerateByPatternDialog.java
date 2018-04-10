@@ -49,7 +49,7 @@ public class GenerateByPatternDialog extends DialogWrapper {
   private final Project myProject;
   private JPanel myPanel;
   private Splitter mySplitter;
-  private Tree myTree = new Tree();
+  private final Tree myTree;
   private final Editor myEditor;
 
   private final MultiMap<String,PatternDescriptor> myMap;
@@ -140,20 +140,17 @@ public class GenerateByPatternDialog extends DialogWrapper {
   }
 
   private void updateDetails(final PatternDescriptor descriptor) {
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        final Template template = descriptor.getTemplate();
-        if (template instanceof TemplateImpl) {
-          String text = ((TemplateImpl)template).getString();
-          myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), text);
-          TemplateEditorUtil.setHighlighter(myEditor, ((TemplateImpl)template).getTemplateContext());
-        }
-        else {
-          myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
-        }
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      final Template template = descriptor.getTemplate();
+      if (template instanceof TemplateImpl) {
+        String text = template.getString();
+        myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), text);
+        TemplateEditorUtil.setHighlighter(myEditor, ((TemplateImpl)template).getTemplateContext());
       }
-    }.execute();
+      else {
+        myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
+      }
+    });
   }
 
   private DefaultMutableTreeNode createNode(@Nullable PatternDescriptor descriptor) {

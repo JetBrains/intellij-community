@@ -150,3 +150,9 @@ class Outer1<E> {
     static class Inner {
     }
 }
+
+class TypeArgOnNewArray {
+  {
+    final int[] ints = <error descr="Cannot create array with type arguments">new <String>int[10]</error>; 
+  }
+}

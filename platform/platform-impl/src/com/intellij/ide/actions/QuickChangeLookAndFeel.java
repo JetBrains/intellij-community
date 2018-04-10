@@ -41,36 +41,46 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     for (UIManager.LookAndFeelInfo lf : lfs) {
       group.add(new DumbAwareAction(lf.getName(), "", lf == current ? ourCurrentAction : ourNotCurrentAction) {
         public void actionPerformed(AnActionEvent e) {
-          switchLafAndUpdateUI(lafMan, lf);
+          switchLafAndUpdateUI(lafMan, lf, false);
         }
       });
     }
   }
 
-  public static void switchLafAndUpdateUI(@NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf) {
+  public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
     UIManager.LookAndFeelInfo cur = lafMan.getCurrentLookAndFeel();
     if (cur == lf) return;
 
-    boolean wasDarcula = UIUtil.isUnderDarcula();
+    final boolean wasDarcula = UIUtil.isUnderDarcula();
     lafMan.setCurrentLookAndFeel(lf);
-    // a twist not to updateUI twice: here and in DarculaInstaller
-    // double updateUI shall be avoided and causes NPE in some components (HelpView)
-    Ref<Boolean> updated = Ref.create(false);
-    LafManagerListener listener = (s) -> updated.set(true);
-    lafMan.addLafManagerListener(listener);
-    try {
-      if (UIUtil.isUnderDarcula()) {
-        DarculaInstaller.install();
+
+    Runnable updater = () -> {
+      // a twist not to updateUI twice: here and in DarculaInstaller
+      // double updateUI shall be avoided and causes NPE in some components (HelpView)
+      Ref<Boolean> updated = Ref.create(false);
+      LafManagerListener listener = (s) -> updated.set(true);
+      lafMan.addLafManagerListener(listener);
+      try {
+        if (UIUtil.isUnderDarcula()) {
+          DarculaInstaller.install();
+        }
+        else if (wasDarcula) {
+          DarculaInstaller.uninstall();
+        }
       }
-      else if (wasDarcula) {
-        DarculaInstaller.uninstall();
+      finally {
+        lafMan.removeLafManagerListener(listener);
+        if (!updated.get()) {
+          lafMan.updateUI();
+        }
       }
+    };
+    if (async) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(updater);
     }
-    finally {
-      lafMan.removeLafManagerListener(listener);
-      if (!updated.get()) {
-        lafMan.updateUI();
-      }
+    else {
+      updater.run();
     }
   }
 

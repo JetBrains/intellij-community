@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.testFramework;
 
@@ -33,6 +21,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -61,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  * @author peter
  */
 public class CompilerTester {
-  private Project myProject;
+  private final Project myProject;
   private List<Module> myModules;
   private TempDirTestFixture myMainOutput;
 
@@ -76,16 +65,13 @@ public class CompilerTester {
     myMainOutput.setUp();
 
     CompilerTestUtil.enableExternalCompiler();
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        //noinspection ConstantConditions
-        CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-        for (Module module : myModules) {
-          ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
-        }
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      //noinspection ConstantConditions
+      CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+      for (Module module : myModules) {
+        ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
       }
-    }.execute();
+    });
   }
 
   public void tearDown() {
@@ -108,7 +94,7 @@ public class CompilerTester {
   }
 
   public void deleteClassFile(final String className) throws IOException {
-    WriteAction.run(() -> {
+    WriteAction.runAndWait(() -> {
       //noinspection ConstantConditions
       touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
     });
@@ -124,35 +110,26 @@ public class CompilerTester {
   }
 
   public void touch(final VirtualFile file) throws IOException {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        file.setBinaryContent(file.contentsToByteArray(), -1, file.getTimeStamp() + 1);
-        File ioFile = VfsUtilCore.virtualToIoFile(file);
-        assert ioFile.setLastModified(ioFile.lastModified() - 100000);
-        file.refresh(false, false);
-      }
-    }.execute().throwException();
+    WriteAction.runAndWait(() -> {
+      file.setBinaryContent(file.contentsToByteArray(), -1, file.getTimeStamp() + 1);
+      File ioFile = VfsUtilCore.virtualToIoFile(file);
+      assert ioFile.setLastModified(ioFile.lastModified() - 100000);
+      file.refresh(false, false);
+    });
   }
 
   public void setFileText(final PsiFile file, final String text) throws IOException {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), text);
-      }
-    }.execute().throwException();
+    WriteAction.runAndWait(() -> {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), text);
+    });
     touch(file.getVirtualFile());
   }
 
   public void setFileName(final PsiFile file, final String name) {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        file.setName(name);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      file.setName(name);
+    });
   }
 
   public List<CompilerMessage> make() {
@@ -188,11 +165,14 @@ public class CompilerTester {
 
       PlatformTestUtil.saveProject(getProject());
       CompilerTestUtil.saveApplicationSettings();
-      for (Module module : myModules) {
-        Path ioFile = Paths.get(module.getModuleFilePath());
-        if (!Files.exists(ioFile)) {
-          getProject().save();
-          assert Files.exists(ioFile) : "File does not exist: " + ioFile.toString();
+      // for now directory based project is used for external storage
+      if (!ProjectKt.isDirectoryBased(myProject)) {
+        for (Module module : myModules) {
+          Path ioFile = Paths.get(module.getModuleFilePath());
+          if (!Files.exists(ioFile)) {
+            getProject().save();
+            assert Files.exists(ioFile) : "File does not exist: " + ioFile.toString();
+          }
         }
       }
       runnable.consume(callback);

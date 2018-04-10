@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
   public static PropertyGroup createOn(PsiElement object, final TreeElement treeElement) {
     if (object instanceof PsiField) {
       PsiField field = (PsiField)object;
-      PropertyGroup group = new PropertyGroup(PropertyUtil.suggestPropertyName(field), field.getType(),
+      PropertyGroup group = new PropertyGroup(PropertyUtilBase.suggestPropertyName(field), field.getType(),
                                               field.hasModifierProperty(PsiModifier.STATIC), object.getProject());
       group.setField(field);
       group.myChildren.add(treeElement);
@@ -73,16 +73,16 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     }
     else if (object instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)object;
-      if (PropertyUtil.isSimplePropertyGetter(method)) {
-        PropertyGroup group = new PropertyGroup(PropertyUtil.getPropertyNameByGetter(method), method.getReturnType(),
+      if (PropertyUtilBase.isSimplePropertyGetter(method)) {
+        PropertyGroup group = new PropertyGroup(PropertyUtilBase.getPropertyNameByGetter(method), method.getReturnType(),
                                                 method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
         group.setGetter(method);
         group.myChildren.add(treeElement);
         return group;
       }
-      else if (PropertyUtil.isSimplePropertySetter(method)) {
+      else if (PropertyUtilBase.isSimplePropertySetter(method)) {
         PropertyGroup group =
-          new PropertyGroup(PropertyUtil.getPropertyNameBySetter(method), method.getParameterList().getParameters()[0].getType(),
+          new PropertyGroup(PropertyUtilBase.getPropertyNameBySetter(method), method.getParameterList().getParameters()[0].getType(),
                             method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
         group.setSetter(method);
         group.myChildren.add(treeElement);

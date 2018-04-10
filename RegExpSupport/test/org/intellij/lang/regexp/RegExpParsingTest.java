@@ -16,9 +16,16 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.psi.IdentitySmartPointer;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.testFramework.ParsingTestCase;
 
 import java.io.IOException;
+import java.util.EnumSet;
+
+import static org.intellij.lang.regexp.RegExpCapability.POSIX_BRACKET_EXPRESSIONS;
 
 /**
  * @author Bas Leijdekkers
@@ -150,6 +157,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testCharClasses69() throws IOException { doCodeTest("\\p{^L}"); }
   public void testCharClasses70() throws IOException { doCodeTest("[&&&&a]"); }
   public void testCharClasses71() throws IOException { doCodeTest("[a-\\Qz\\E]"); }
+  public void testCharClasses72() throws IOException { doCodeTest("([\\^])"); }
 
   public void testGroups1() throws IOException { doCodeTest("()ef"); }
   public void testGroups2() throws IOException { doCodeTest("()*"); }
@@ -345,4 +353,19 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testParse3() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP])://)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
 
   public void testCategoryShorthand1() throws IOException { doCodeTest("\\pL"); }
+
+  public void testCapabilitiesProvider() throws IOException {
+    RegExpCapabilitiesProvider provider = (host, def) -> EnumSet.of(POSIX_BRACKET_EXPRESSIONS);
+    try {
+      RegExpCapabilitiesProvider.EP.addExplicitExtension(RegExpLanguage.INSTANCE, provider);
+      PsiComment context = SyntaxTraverser.psiTraverser(createPsiFile("c", "(?#xxx)")).filter(PsiComment.class).first();
+      myFile = createPsiFile("a", "[[:blank:]]");
+      FileContextUtil.INJECTED_IN_ELEMENT.set(myFile, new IdentitySmartPointer<>(context));
+      ensureParsed(myFile);
+      checkResult(myFilePrefix + getTestName(), myFile);
+    }
+    finally {
+      RegExpCapabilitiesProvider.EP.removeExplicitExtension(RegExpLanguage.INSTANCE, provider);
+    }
+  }
 }

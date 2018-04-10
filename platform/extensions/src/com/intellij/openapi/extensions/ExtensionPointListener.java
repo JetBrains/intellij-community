@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ExtensionPointListener<T> {
+  ExtensionPointListener[] EMPTY_ARRAY = new ExtensionPointListener[0];
   void extensionAdded(@NotNull T extension, @Nullable PluginDescriptor pluginDescriptor);
 
   void extensionRemoved(@NotNull T extension, @Nullable PluginDescriptor pluginDescriptor);

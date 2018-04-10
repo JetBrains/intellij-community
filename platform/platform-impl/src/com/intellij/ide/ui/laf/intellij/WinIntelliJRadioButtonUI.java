@@ -16,7 +16,11 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -26,6 +30,8 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
+  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(13)).asUIResource();
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     AbstractButton b = (AbstractButton)c;
@@ -38,17 +44,21 @@ public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
     AbstractButton b = (AbstractButton)c;
     ButtonModel bm = b.getModel();
     boolean focused = c.hasFocus() || bm.isRollover();
-    Icon icon = MacIntelliJIconCache.getIcon("radio", false, bm.isSelected(), focused, bm.isEnabled(), bm.isPressed());
+    Icon icon = IconCache.getIcon("radio", false, bm.isSelected(), focused, bm.isEnabled(), bm.isPressed());
 
-    // Paint the radio button
-    int x = (iconRect.width - icon.getIconWidth()) / 2 + iconRect.x;
-    int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y;
-    icon.paintIcon(c, g, x, y);
+    if (icon != null) {
+      icon.paintIcon(c, g, iconRect.x, iconRect.y);
+    }
   }
 
   @Override
-  protected void drawText(AbstractButton b, Graphics2D g, String text, Rectangle textRect, FontMetrics fm) {
-    textRect.y -= JBUI.scale(1); // Move one pixel up
-    super.drawText(b, g, text, textRect, fm);
+  public Icon getDefaultIcon() {
+    return DEFAULT_ICON;
+  }
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(1, 0);
   }
 }

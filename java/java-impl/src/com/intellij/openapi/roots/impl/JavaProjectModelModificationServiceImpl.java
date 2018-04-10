@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,20 @@ public class JavaProjectModelModificationServiceImpl extends JavaProjectModelMod
   }
 
   @Override
-  public Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
+  public Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
     for (JavaProjectModelModifier modifier : getModelModifiers()) {
-      Promise<Void> promise = modifier.addModuleDependency(from, to, scope);
+      Promise<Void> promise = modifier.addModuleDependency(from, to, scope, exported);
+      if (promise != null) {
+        return promise;
+      }
+    }
+    return Promises.rejectedPromise();
+  }
+
+  @Override
+  public Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
+    for (JavaProjectModelModifier modifier : getModelModifiers()) {
+      Promise<Void> promise = modifier.addLibraryDependency(from, library, scope, exported);
       if (promise != null) {
         return promise;
       }
@@ -54,17 +65,6 @@ public class JavaProjectModelModificationServiceImpl extends JavaProjectModelMod
   public Promise<Void> addDependency(@NotNull Collection<Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor, @NotNull DependencyScope scope) {
     for (JavaProjectModelModifier modifier : getModelModifiers()) {
       Promise<Void> promise = modifier.addExternalLibraryDependency(from, libraryDescriptor, scope);
-      if (promise != null) {
-        return promise;
-      }
-    }
-    return Promises.rejectedPromise();
-  }
-
-  @Override
-  public Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
-    for (JavaProjectModelModifier modifier : getModelModifiers()) {
-      Promise<Void> promise = modifier.addLibraryDependency(from, library, scope);
       if (promise != null) {
         return promise;
       }

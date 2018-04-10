@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -37,7 +23,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.basic.BasicTreeUI;
-import javax.swing.text.Position;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -109,12 +94,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
   protected void configureUiHelper(final TreeUIHelper helper) {
     helper.installTreeSpeedSearch(this);
-  }
-
-  @Override
-  public TreePath getNextMatch(final String prefix, final int startingRow, final Position.Bias bias) {
-    // turn JTree Speed Search off
-    return null;
   }
 
   public boolean accept(AbstractTreeBuilder builder, final SimpleNodeVisitor visitor) {
@@ -193,7 +172,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
         lastNode = nodeFor;
       }
     }
-    return result.toArray(new SimpleNode[result.size()]);
+    return result.toArray(new SimpleNode[0]);
   }
 
   public void setSelectedNode(AbstractTreeBuilder builder, SimpleNode node, boolean expand) {
@@ -476,23 +455,12 @@ public class SimpleTree extends Tree implements CellEditorListener {
     }, null, false);
   }
 
-  private void debugTree(AbstractTreeBuilder aBuilder) {
-    TreeUtil.traverseDepth((TreeNode)aBuilder.getTree().getModel().getRoot(), node -> {
-      System.out.println("Node: " + node);
-      return true;
-    });
-  }
-
   private boolean hasSingleSelection() {
     return !isSelectionEmpty() && getSelectionPaths().length == 1;
   }
 
   public DefaultTreeModel getBuilderModel() {
     return (DefaultTreeModel)getModel();
-  }
-
-  public Dimension getPreferredScrollableViewportSize() {
-    return super.getPreferredSize();
   }
 
   public NodeRenderer getRenderer() {

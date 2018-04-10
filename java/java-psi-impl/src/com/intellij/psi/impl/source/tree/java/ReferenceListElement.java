@@ -101,7 +101,7 @@ public class ReferenceListElement extends CompositeElement {
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     assert child.getTreeParent() == this : child;
     IElementType childType = child.getElementType();
     if (childType == JavaTokenType.COMMA) return ChildRole.COMMA;

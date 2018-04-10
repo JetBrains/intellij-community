@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class RemoteConfigurable
@@ -21,16 +7,20 @@
 package com.intellij.execution.remote;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationArgumentsHelpArea;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,26 +37,20 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private JRadioButton myRbAttach;
   private JTextField myAddressField;
   private JTextField myHostField;
-  private JTextField myPortField;
+  private IntegerField myPortField;
   private JPanel myShmemPanel;
   private JPanel mySocketPanel;
   private ConfigurationArgumentsHelpArea myHelpArea;
-  @NonNls private ConfigurationArgumentsHelpArea myJDK13HelpArea;
-  private ConfigurationArgumentsHelpArea myJDK14HelpArea;
   private LabeledComponent<ModuleDescriptionsComboBox> myModule;
+  private ComboBox<JDKVersionItem> myJDKVersion;
   private String myHostName = "";
   @NonNls
   protected static final String LOCALHOST = "localhost";
   private final ConfigurationModuleSelector myModuleSelector;
 
   public RemoteConfigurable(final Project project) {
-    myHelpArea.setLabelText(ExecutionBundle.message("remote.configuration.remote.debugging.allows.you.to.connect.idea.to.a.running.jvm.label"));
+    myHelpArea.setLabelText(null);
     myHelpArea.setToolbarVisible();
-
-    myJDK13HelpArea.setLabelText(ExecutionBundle.message("environment.variables.helper.use.arguments.jdk13.label"));
-    myJDK13HelpArea.setToolbarVisible();
-    myJDK14HelpArea.setLabelText(ExecutionBundle.message("environment.variables.helper.use.arguments.jdk14.label"));
-    myJDK14HelpArea.setToolbarVisible();
 
     final ButtonGroup transportGroup = new ButtonGroup();
     transportGroup.add(myRbSocket);
@@ -131,6 +115,17 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     
     myModule.getComponent().allowEmptySelection("<whole project>");
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
+
+    JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(ProjectRootManager.getInstance(project).getProjectSdk());
+    boolean selected = false;
+    for (JDKVersionItem value : JDKVersionItem.values()) {
+      myJDKVersion.addItem(value);
+      if (!selected && version != null && version.isAtLeast(value.myVersion)) {
+        myJDKVersion.setSelectedItem(value);
+        selected = true;
+      }
+    }
+    myJDKVersion.addItemListener(event -> updateHelpText());
   }
 
   public void applyEditorTo(@NotNull final RemoteConfiguration configuration) throws ConfigurationException {
@@ -147,6 +142,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       configuration.SHMEM_ADDRESS = null;
     }
     configuration.USE_SOCKET_TRANSPORT = myRbSocket.isSelected();
+    if (configuration.USE_SOCKET_TRANSPORT) {
+      myPortField.validateContent();
+    }
     configuration.SERVER_MODE = myRbListen.isSelected();
     myModuleSelector.applyTo(configuration);
   }
@@ -191,13 +189,69 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       useSockets ? myPortField.getText().trim() : myAddressField.getText().trim(),
       myRbListen.isSelected()
     );
-    final String cmdLine = connection.getLaunchCommandLine();
-    // -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=7007
-    final String jvmtiCmdLine = cmdLine.replace("-Xdebug", "").replace("-Xrunjdwp:", "-agentlib:jdwp=").trim();
-    myHelpArea.updateText(jvmtiCmdLine);
-    myJDK14HelpArea.updateText(cmdLine);
-    myJDK13HelpArea.updateText("-Xnoagent -Djava.compiler=NONE " + cmdLine);
+    myHelpArea.updateText(((JDKVersionItem)myJDKVersion.getSelectedItem()).getLaunchCommandLine(connection));
   }
 
+  private enum JDKVersionItem {
+    JDK9(JavaSdkVersion.JDK_1_9) {
+      @Override
+      String getLaunchCommandLine(RemoteConnection connection) {
+        String commandLine = JDK5to8.getLaunchCommandLine(connection);
+        if (connection.isUseSockets() && !connection.isServerMode()) {
+          commandLine = commandLine.replace(connection.getAddress(), "*:" + connection.getAddress());
+        }
+        return commandLine;
+      }
 
+      @Override
+      public String toString() {
+        return "9 and after";
+      }
+    },
+    JDK5to8(JavaSdkVersion.JDK_1_5)  {
+      @Override
+      String getLaunchCommandLine(RemoteConnection connection) {
+        return connection.getLaunchCommandLine().replace("-Xdebug", "").replace("-Xrunjdwp:", "-agentlib:jdwp=").trim();
+      }
+
+      @Override
+      public String toString() {
+        return "5 - 8";
+      }
+    },
+    JDK1_4(JavaSdkVersion.JDK_1_4) {
+      @Override
+      String getLaunchCommandLine(RemoteConnection connection) {
+        return connection.getLaunchCommandLine();
+      }
+
+      @Override
+      public String toString() {
+        return "1.4.x";
+      }
+    },
+    JDK1_3(JavaSdkVersion.JDK_1_3) {
+      @Override
+      String getLaunchCommandLine(RemoteConnection connection) {
+        return "-Xnoagent -Djava.compiler=NONE " + connection.getLaunchCommandLine();
+      }
+
+      @Override
+      public String toString() {
+        return "1.3.x or earlier";
+      }
+    };
+
+    private final JavaSdkVersion myVersion;
+
+    JDKVersionItem(JavaSdkVersion version) {
+      myVersion = version;
+    }
+
+    abstract String getLaunchCommandLine(RemoteConnection connection);
+  }
+
+  private void createUIComponents() {
+    myPortField = new IntegerField("Port", 0, 0xFFFF);
+  }
 }

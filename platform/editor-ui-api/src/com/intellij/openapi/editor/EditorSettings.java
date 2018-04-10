@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public interface EditorSettings {
   boolean isRightMarginShown();
@@ -35,6 +39,22 @@ public interface EditorSettings {
 
   int getRightMargin(Project project);
   void setRightMargin(int myRightMargin);
+
+  /**
+   * Retrieves a list of soft margins (visual indent guides) to be used in the editor. If soft margins haven't been explicitly set
+   * with {@link #setSoftMargins(List)} method, they are obtained from code style settings: {@code CodeStyleSettings.getSoftMargins()}.
+   * @return A list of current editor soft margins. The list may be empty if no soft margins are defined.
+   */
+  @NotNull
+  List<Integer> getSoftMargins();
+
+  /**
+   * Explicitly sets soft margins (visual indent guides) to be used in the editor instead of obtaining them from code style settings via
+   * {@code CodeStyleSettings.getSoftMargins()} method. It is important to distinguish and empty list from {@code null} value: the first
+   * will define no soft margins for the eidtor while the latter will restore the default behavior of using them from code style settings.
+   * @param softMargins A list of soft margins or {@code null} to use margins from code style settings.
+   */
+  void setSoftMargins(@Nullable List<Integer> softMargins);
 
   boolean isWrapWhenTypingReachesRightMargin(Project project);
   void setWrapWhenTypingReachesRightMargin(boolean val);

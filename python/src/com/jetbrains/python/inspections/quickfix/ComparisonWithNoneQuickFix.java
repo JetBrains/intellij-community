@@ -30,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   24.03.2010
- * Time:   22:00:49
  */
 public class ComparisonWithNoneQuickFix implements LocalQuickFix {
   @NotNull

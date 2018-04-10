@@ -10,7 +10,6 @@ import java.util.prefs.Preferences;
  * Utility class for working with Preferences
  * todo: in one year the migration code could be removed
  * @author Eugene Zhuravlev
- *         Date: 05-Mar-16
  */
 public class Prefs {
 

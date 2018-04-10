@@ -31,9 +31,13 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    addEnvironmentClass("package org.junit.platform.commons.annotation;\n" +
+                        "public @interface Testable {}");
     addEnvironmentClass("package org.junit.jupiter.params;\n" +
+                        "@org.junit.platform.commons.annotation.Testable\n" +
                         "public @interface ParameterizedTest {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "@org.junit.platform.commons.annotation.Testable\n" +
                         "public @interface Test {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public interface TestInfo {}");
@@ -44,11 +48,16 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
                         "public @interface EnumSource { Class<? extends Enum<?>> value();}");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
+                        "@ArgumentsSource(ValueArgumentsProvider.class)\n" +
                         "public @interface ValueSource {\n" +
                         "String[] strings() default {};\n" +
                         "int[] ints() default {};\n" +
                         "long[] longs() default {};\n" +
                         "double[] doubles() default {};\n" +
+                        "}\n");
+    addEnvironmentClass("package org.junit.jupiter.api.extension;\n" +
+                        "public @interface ExtendWith {\n" +
+                        "  Class[] value();\n" +
                         "}\n");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
                         "public @interface CsvSource {String[] value();}");
@@ -57,12 +66,18 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
 
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
                         "public @interface ArgumentsSource {}");
+
+    addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "public @interface TestInstance {\n" +
+                        "enum Lifecycle {PER_CLASS, PER_METHOD;}\n" +
+                        "Lifecycle value();}");
   }
 
   public void testMalformedSources() { doTest(); }
   public void testMethodSource() { doTest(); }
   public void testMalformedSourcesImplicitConversion() { doTest(); }
   public void testMalformedSourcesImplicitParameters() { doTest(); }
+  public void testMalformedSourcesTestInstancePerClass() { doTest(); }
 
   @Override
   protected String getBasePath() {

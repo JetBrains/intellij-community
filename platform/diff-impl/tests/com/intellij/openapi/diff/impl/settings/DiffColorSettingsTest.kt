@@ -48,6 +48,8 @@ class DiffColorSettingsTest : HeavyDiffTestCase() {
       assertContainsMarkerColor(viewer, TextDiffType.INSERTED)
       assertContainsMarkerColor(viewer, TextDiffType.DELETED)
       assertContainsMarkerColor(viewer, TextDiffType.CONFLICT)
+
+      assertContainsFoldedFragment(viewer)
     }
     finally {
       panel?.disposeUIResources()
@@ -81,5 +83,11 @@ class DiffColorSettingsTest : HeavyDiffTestCase() {
       })
     }
     assertTrue(ranges.isNotEmpty())
+  }
+
+  private fun assertContainsFoldedFragment(viewer: SimpleThreesideDiffViewer) {
+    assertTrue(viewer.editors.all {
+      it.foldingModel.allFoldRegions.any { !it.isExpanded }
+    })
   }
 }

@@ -29,7 +29,6 @@ import javax.swing.*;
 /**
  * TODO: Add description
  * User: dcheryasov
- * Date: Mar 2, 2010 5:05:24 PM
  */
 public class PythonLookupElement extends LookupElement implements Comparable<LookupElement>{
 

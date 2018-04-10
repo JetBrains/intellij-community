@@ -43,7 +43,10 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RootVisitor;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.Maybe;
@@ -55,6 +58,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -228,7 +232,7 @@ public class PyDocumentationBuilder {
     final AccessDirection direction = AccessDirection.of((PyElement)outerElement);
     final Maybe<PyCallable> accessor = property.getByDirection(direction);
     myProlog.addItem("property ").addWith(TagBold, $().addWith(TagCode, $(elementName)))
-      .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, TagCode, true, true));
+      .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context));
     if (accessor.isDefined() && property.getDoc() != null) {
       myBody.addItem(": ").addItem(property.getDoc()).addItem(BR);
     }
@@ -280,22 +284,26 @@ public class PyDocumentationBuilder {
   private void buildFromDocstring(@NotNull final PsiElement elementDefinition, boolean isProperty) {
     PyClass pyClass = null;
     final PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression((PyDocStringOwner)elementDefinition);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(elementDefinition.getProject(), elementDefinition.getContainingFile());
 
     if (elementDefinition instanceof PyClass) {
       pyClass = (PyClass)elementDefinition;
-      myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, TagItalic, BR, LCombUp));
-      myBody.add(PythonDocumentationProvider.describeClass(pyClass, TagBold, true, false));
+      myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
+      myBody.add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, context));
     }
     else if (elementDefinition instanceof PyFunction) {
       final PyFunction pyFunction = (PyFunction)elementDefinition;
       if (!isProperty) {
         pyClass = pyFunction.getContainingClass();
         if (pyClass != null) {
-          myBody.addWith(TagSmall, PythonDocumentationProvider.describeClass(pyClass, TagCode, true, true)).addItem(BR).addItem(BR);
+          myBody
+            .addWith(TagSmall, PythonDocumentationProvider.describeClass(pyClass, Function.identity(), TO_ONE_LINE_AND_ESCAPE, true, true, context))
+            .addItem(BR)
+            .addItem(BR);
         }
       }
-      myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, TagItalic, BR, LCombUp))
-        .add(PythonDocumentationProvider.describeFunction(pyFunction, TagBold, LCombUp));
+      myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
+      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, context));
       if (docStringExpression == null) {
         addInheritedDocString(pyFunction, pyClass);
       }
@@ -384,10 +392,14 @@ public class PyDocumentationBuilder {
         if (inheritedDoc.length() > 1) {
           myEpilog.addItem(BR).addItem(BR);
           final String ancestorName = ancestor.getName();
-          final String marker =
-            (pyClass == ancestor) ? PythonDocumentationProvider.LINK_TYPE_CLASS : PythonDocumentationProvider.LINK_TYPE_PARENT;
-          final String ancestorLink =
-            $().addWith(new LinkWrapper(marker + ancestorName), $(ancestorName)).toString();
+          final String ancestorQualifiedName = ancestor.getQualifiedName();
+          final TypeEvalContext context = TypeEvalContext.userInitiated(pyFunction.getProject(), pyFunction.getContainingFile());
+
+          final String ancestorLink = pyClass == ancestor
+                                      ? PyDocumentationLink.toContainingClass(ancestorName)
+                                      : ancestorName != null && ancestorQualifiedName != null
+                                        ? PyDocumentationLink.toPossibleClass(ancestorName, ancestorQualifiedName, pyClass, context)
+                                        : null;
           if (isFromClass) {
             myEpilog.addItem(PyBundle.message("QDOC.copied.from.class.$0", ancestorLink));
           }
@@ -487,13 +499,7 @@ public class PyDocumentationBuilder {
       final String description = typeAndDescr.second;
 
       if (type != null) {
-        final PyType pyType = PyTypeParser.getTypeByName(parameter, type, context);
-        if (pyType instanceof PyClassType) {
-          myBody.addItem(": ").addWith(new LinkWrapper(PythonDocumentationProvider.LINK_TYPE_PARAM), $(pyType.getName()));
-        }
-        else {
-          myBody.addItem(": ").addItem(type);
-        }
+        myBody.addItem(": ").addItem(PyDocumentationLink.toParameterPossibleClass(type, parameter, context));
       }
 
       if (description != null) {
@@ -523,8 +529,11 @@ public class PyDocumentationBuilder {
     assert cls != null;
     final String type = PyUtil.isInstanceAttribute((PyExpression)myElement) ? "Instance attribute " : "Class attribute ";
     myProlog
-      .addItem(type).addWith(TagBold, $().addWith(TagCode, $(((PyTargetExpression)myElement).getName())))
-      .addItem(" of class ").addWith(PythonDocumentationProvider.LinkMyClass, $().addWith(TagCode, $(cls.getName()))).addItem(BR);
+      .addItem(type)
+      .addWith(TagBold, $().addWith(TagCode, $(((PyTargetExpression)myElement).getName())))
+      .addItem(" of class ")
+      .addItem(PyDocumentationLink.toContainingClass(WRAP_IN_CODE.apply(cls.getName())))
+      .addItem(BR);
 
     final String docString = PyPsiUtils.strValue(getEffectiveDocStringExpression((PyTargetExpression)myElement));
     if (docString != null) {

@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="JUnit3">
+  <library name="JUnit3" type="repository">
+    <properties maven-id="junit:junit:3.8.1" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/junit.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/junit3_8_1.jar!/"/>
+      <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

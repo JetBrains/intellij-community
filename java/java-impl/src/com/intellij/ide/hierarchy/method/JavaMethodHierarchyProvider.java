@@ -87,7 +87,7 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
   }
 
   @NotNull
-  public HierarchyBrowser createHierarchyBrowser(final PsiElement target) {
+  public HierarchyBrowser createHierarchyBrowser(@NotNull PsiElement target) {
     return new MethodHierarchyBrowser(target.getProject(), (PsiMethod) target);
   }
 

@@ -20,6 +20,7 @@
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import junit.framework.TestCase;
 
 import java.io.*;
@@ -108,6 +109,64 @@ public class UpdateableZipTest extends TestCase {
     utilZip.close();
   }
   
+  public void testReadWrite1() throws Exception {
+    JBZipFile jbZip = new JBZipFile(zipFile);
+    try {
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      assertEntryWithContentExists(jbZip, "/second", "second");
+
+      createOrReplaceEntryData(jbZip, "/third", "third");
+
+      assertEntryWithContentExists(jbZip, "/third", "third");
+    }
+    finally {
+      jbZip.close();
+    }
+  }
+
+  public void testReadWrite2() throws Exception {
+    JBZipFile jbZip = new JBZipFile(zipFile);
+    try {
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      assertEntryWithContentExists(jbZip, "/second", "second");
+
+      createOrReplaceEntryData(jbZip, "/first", "first_new");
+
+      assertEntryWithContentExists(jbZip, "/first", "first_new");
+    }
+    finally {
+      jbZip.close();
+    }
+  }
+
+  public void testMissingSeeks() throws Exception {
+    JBZipFile jbZip = new JBZipFile(zipFile);
+    try {
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      assertEntryWithContentExists(jbZip, "/second", "second");
+
+      //seek end
+      createOrReplaceEntryData(jbZip, "/third", "third");
+      //seek somewhere
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      //write somewhere :)
+      createOrReplaceEntryData(jbZip, "/forth", "forth");
+
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      assertEntryWithContentExists(jbZip, "/second", "second");
+      assertEntryWithContentExists(jbZip, "/third", "third");
+      assertEntryWithContentExists(jbZip, "/forth", "forth");
+    }
+    finally {
+      jbZip.close();
+    }
+  }
+
+  private void createOrReplaceEntryData(JBZipFile jbZip, String name, String data) throws IOException {
+    JBZipEntry newEntry = jbZip.getOrCreateEntry(name);
+    newEntry.setData(data.getBytes(CharsetToolkit.UTF8_CHARSET));
+  }
+
   /*
   public void testAppendToIdeaJar() throws Exception {
     //ProfilingUtil.startCPUProfiling();

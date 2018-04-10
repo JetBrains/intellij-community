@@ -33,7 +33,6 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/25/12
  */
 public class PatternValidatorBuilder extends BaseInstrumentingBuilder{
   public PatternValidatorBuilder() {

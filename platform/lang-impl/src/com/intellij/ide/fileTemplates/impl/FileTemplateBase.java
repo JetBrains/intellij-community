@@ -31,7 +31,6 @@ import java.util.Properties;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 4/6/11
  */
 public abstract class FileTemplateBase implements FileTemplate {
   static final boolean DEFAULT_REFORMAT_CODE_VALUE = true;
@@ -40,6 +39,7 @@ public abstract class FileTemplateBase implements FileTemplate {
   private String myText;
   private boolean myShouldReformatCode = DEFAULT_REFORMAT_CODE_VALUE;
   private boolean myLiveTemplateEnabled;
+  private boolean myLiveTemplateEnabledChanged;
 
   @Override
   public final boolean isReformatCode() {
@@ -51,11 +51,13 @@ public abstract class FileTemplateBase implements FileTemplate {
     myShouldReformatCode = reformat;
   }
 
+  @NotNull 
   public final String getQualifiedName() {
     return getQualifiedName(getName(), getExtension());
   }
 
-  public static String getQualifiedName(final String name, final String extension) {
+  @NotNull
+  public static String getQualifiedName(@NotNull String name, @NotNull String extension) {
     return FTManager.encodeFileName(name, extension);
   }
 
@@ -122,7 +124,12 @@ public abstract class FileTemplateBase implements FileTemplate {
 
   @Override
   public void setLiveTemplateEnabled(boolean value) {
+    myLiveTemplateEnabledChanged |= myLiveTemplateEnabled != value;
     myLiveTemplateEnabled = value;
+  }
+
+  public boolean isLiveTemplateEnabledChanged() {
+    return myLiveTemplateEnabledChanged;
   }
 
   public boolean isLiveTemplateEnabledByDefault() { return false; }

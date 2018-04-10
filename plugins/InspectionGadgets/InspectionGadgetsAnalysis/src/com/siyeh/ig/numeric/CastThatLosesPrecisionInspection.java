@@ -15,11 +15,10 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -136,35 +135,8 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
     }
 
     private LongRangeSet getValueRange(@NotNull PsiExpression operand) {
-      PsiElement parent = PsiTreeUtil.getParentOfType(operand, PsiMethod.class, PsiLambdaExpression.class, PsiClass.class);
-      if (parent instanceof PsiMethod) {
-        parent = ((PsiMethod)parent).getBody();
-      }
-      else if (parent instanceof PsiLambdaExpression) {
-        parent = ((PsiLambdaExpression)parent).getBody();
-      }
-      else {
-        parent = null;
-      }
-      if (parent == null) return LongRangeSet.all();
-      Ref<LongRangeSet> range = Ref.create(LongRangeSet.empty());
-      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, false);
-      RunnerResult runnerResult = runner.analyzeMethod(parent, new StandardInstructionVisitor() {
-        @Override
-        public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-          if (instruction.getMethodType() == MethodCallInstruction.MethodType.CAST && instruction.getContext() == operand) {
-            LongRangeSet curRange = memState.getValueFact(DfaFactType.RANGE, memState.peek());
-            if (curRange == null) {
-              range.set(LongRangeSet.all());
-            }
-            else {
-              range.set(range.get().union(curRange));
-            }
-          }
-          return super.visitMethodCall(instruction, runner, memState);
-        }
-      });
-      return runnerResult == RunnerResult.OK ? range.get() : LongRangeSet.all();
+      LongRangeSet fact = CommonDataflow.getExpressionFact(operand, DfaFactType.RANGE);
+      return fact == null ? LongRangeSet.all() : fact;
     }
 
     private boolean valueIsContainableInType(Number value, PsiType type) {

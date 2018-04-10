@@ -25,22 +25,27 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PythonCommenter implements CodeDocumentationAwareCommenter, IndentedCommenter {
+  @Override
   public String getLineCommentPrefix() {
     return "# ";
   }
 
+  @Override
   public String getBlockCommentPrefix() {
     return null;
   }
 
+  @Override
   public String getBlockCommentSuffix() {
     return null;
   }
 
+  @Override
   public String getCommentedBlockCommentPrefix() {
     return null;
   }
 
+  @Override
   public String getCommentedBlockCommentSuffix() {
     return null;
   }

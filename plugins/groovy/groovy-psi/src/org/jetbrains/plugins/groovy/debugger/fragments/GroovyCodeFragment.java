@@ -1,44 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger.fragments;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnAmbiguousClosureContainer;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.ImportKind;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.*;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.GroovyImportCollector;
 
 /**
  * @author ven
@@ -53,8 +32,9 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
   /**
    * map from a class's imported name (e.g. its short name or alias) to its qualified name
    */
-  private final LinkedHashMap<String, GrImportStatement> myPseudoImports = ContainerUtil.newLinkedHashMap();
-  private final ArrayList<GrImportStatement> myOnDemandImports = ContainerUtil.newArrayList();
+  private final GroovyImportCollector myImportCollector = new GroovyImportCollector(this);
+  private final ClearableLazyValue<GroovyFileImports> myFileImports = ClearableLazyValue.create(() -> myImportCollector.build());
+
   private FileViewProvider myViewProvider = null;
 
   public GroovyCodeFragment(Project project, CharSequence text) {
@@ -93,45 +73,65 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
    */
   @Override
   public String importsToString() {
-    if (myPseudoImports.isEmpty()) return "";
+    if (myImportCollector.isEmpty()) return "";
 
-    StringBuilder buffer = new StringBuilder();
-    for (Map.Entry<String, GrImportStatement> entry : myPseudoImports.entrySet()) {
-      final String importedName = entry.getKey();
-      final GrImportStatement anImport = entry.getValue();
-
-
-      //buffer.append(anImport.isStatic() ? "+" : "-");
-      final String qname = anImport.getImportReference().getClassNameText();
-
-      buffer.append(qname);
-      buffer.append(':').append(importedName);
+    final StringBuilder buffer = new StringBuilder();
+    for (GroovyImport anImport : myImportCollector.getAllImports()) {
+      if (anImport instanceof RegularImport) {
+        buffer
+          .append(((RegularImport)anImport).getClassFqn())
+          .append(':')
+          .append(((RegularImport)anImport).getName());
+      }
+      else if (anImport instanceof StaticImport) {
+        buffer
+          .append(((StaticImport)anImport).getClassFqn())
+          .append('.')
+          .append(((StaticImport)anImport).getMemberName())
+          .append(':')
+          .append(((StaticImport)anImport).getName());
+      }
+      else if (anImport instanceof GroovyStarImport) {
+        buffer.append(((GroovyStarImport)anImport).getFqn());
+      }
+      else {
+        PsiUtil.LOG.warn("Unsupported import. Class: " + anImport.getClass());
+      }
       buffer.append(',');
     }
 
-    for (GrImportStatement anImport : myOnDemandImports) {
-      //buffer.append(anImport.isStatic() ? "+" : "-");
-
-      String packName = anImport.getImportReference().getClassNameText();
-      buffer.append(packName);
-      buffer.append(',');
-    }
     buffer.deleteCharAt(buffer.length() - 1);
     return buffer.toString();
   }
 
   @Override
   public void addImportsFromString(String imports) {
+    myFileImports.drop();
     for (String anImport : imports.split(",")) {
-      int colon = anImport.indexOf(':');
+      addImport(anImport);
+    }
+  }
 
-      if (colon >= 0) {
-        String qname = anImport.substring(0, colon);
-        String importedName = anImport.substring(colon + 1);
-        myPseudoImports.put(importedName, createSingleImport(qname, importedName));
+  private void addImport(@NotNull String importString) {
+    int colon = importString.indexOf(':');
+    if (colon >= 0) {
+      final String qname = importString.substring(0, colon);
+      final String importedName = importString.substring(colon + 1);
+      final boolean isStatic = JavaPsiFacade.getInstance(getProject()).findClass(qname, getResolveScope()) == null;
+      if (isStatic) {
+        myImportCollector.addStaticImport(StringUtil.getPackageName(qname), StringUtil.getShortName(qname), importedName);
       }
       else {
-        myOnDemandImports.add(createImportOnDemand(anImport));
+        myImportCollector.addRegularImport(qname, importedName);
+      }
+    }
+    else {
+      final boolean isStatic = JavaPsiFacade.getInstance(getProject()).findClass(importString, getResolveScope()) != null;
+      if (isStatic) {
+        myImportCollector.addStaticStarImport(importString);
+      }
+      else {
+        myImportCollector.addStarImport(importString);
       }
     }
   }
@@ -185,26 +185,12 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     return myThisType;
   }
 
-  @Override
-  protected boolean processImports(PsiScopeProcessor processor,
-                                   @NotNull ResolveState state,
-                                   @Nullable PsiElement lastParent,
-                                   @NotNull PsiElement place,
-                                   @NotNull GrImportStatement[] importStatements,
-                                   @NotNull ImportKind kind,
-                                   @Nullable Boolean processStatic) {
-    return super.processImports(processor, state, lastParent, place, importStatements, kind, processStatic) && (
-      kind == ImportKind.ON_DEMAND
-      ? processImportsOnDemand(processor, state, lastParent, place, processStatic)
-      : !(kind == ImportKind.ALIAS && !processSingleImports(processor, state, lastParent, place, processStatic))
-    );
-  }
-
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected GroovyCodeFragment clone() {
     final GroovyCodeFragment clone = (GroovyCodeFragment)cloneImpl((FileElement)calcTreeElement().clone());
     clone.myOriginalFile = this;
-    clone.myPseudoImports.putAll(myPseudoImports);
+    clone.myImportCollector.setFrom(myImportCollector);
     FileManager fileManager = ((PsiManagerEx)getManager()).getFileManager();
     SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(
       getName(),
@@ -215,79 +201,13 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     return clone;
   }
 
-  private boolean processImportsOnDemand(PsiScopeProcessor processor, ResolveState state, PsiElement parent, PsiElement place, Boolean processStatic) {
-    if (processStatic == null) return processImportsOnDemand(processor, state, parent, place, false) &&
-                                      processImportsOnDemand(processor, state, parent, place, true);
-    for (GrImportStatement anImport : myOnDemandImports) {
-      if (processStatic != anImport.isStatic()) continue;
-      if (!anImport.processDeclarations(processor, state, parent, place)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private boolean processSingleImports(PsiScopeProcessor processor,
-                                       @NotNull ResolveState state,
-                                       PsiElement lastParent,
-                                       PsiElement place,
-                                       Boolean processStatic) {
-    if (processStatic == null) return processSingleImports(processor, state, lastParent, place, false) &&
-                                      processSingleImports(processor, state, lastParent, place, true);
-    NameHint nameHint = processor.getHint(NameHint.KEY);
-    String name = nameHint != null ? nameHint.getName(state) : null;
-
-    if (name != null) {
-      final GrImportStatement anImport = myPseudoImports.get(name);
-      if (anImport != null && processStatic == anImport.isStatic()) {
-        if (!anImport.processDeclarations(processor, state, lastParent, place)) {
-          return false;
-        }
-      }
-    }
-    else {
-      for (GrImportStatement anImport : myPseudoImports.values()) {
-        if (processStatic != anImport.isStatic()) continue;
-        if (!anImport.processDeclarations(processor, state, lastParent, place)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  @Nullable
-  private GrImportStatement createImportOnDemand(@NotNull String qname) {
-    final PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(qname, getResolveScope());
-    final boolean isStatic = aClass != null;
-
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
-    try {
-      return factory.createImportStatement(qname, isStatic, true, null, this);
-    }
-    catch (IncorrectOperationException e) {
-      return null;
-    }
-  }
-
-  @Nullable
-  private GrImportStatement createSingleImport(@NotNull String qname, @Nullable String importedName) {
-    final PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(qname, getResolveScope());
-    final boolean isStatic = aClass == null;
-
-    final String className = PsiNameHelper.getShortClassName(qname);
-    final String alias = importedName == null || className.equals(importedName) ? null : importedName;
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
-    try {
-      return factory.createImportStatement(qname, isStatic, false, alias, this);
-    }
-    catch (IncorrectOperationException e) {
-      return null;
-    }
-  }
-
   public void clearImports() {
-    myPseudoImports.clear();
-    myOnDemandImports.clear();
+    myFileImports.drop();
+    myImportCollector.clear();
+  }
+
+  @Override
+  protected GroovyFileImports getImports() {
+    return myFileImports.getValue();
   }
 }

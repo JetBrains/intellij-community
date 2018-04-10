@@ -106,7 +106,7 @@ public class HgFileRevision implements VcsFileRevision {
   }
 
   @NotNull
-  public byte[] loadContent() throws IOException, VcsException {
+  public byte[] loadContent() {
     final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myFile);
     return HgUtil.loadContent(myProject, myRevisionNumber, fileToCat);
   }

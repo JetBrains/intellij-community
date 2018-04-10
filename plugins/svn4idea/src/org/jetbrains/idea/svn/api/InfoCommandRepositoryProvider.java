@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
 
-  public InfoCommandRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
+  public InfoCommandRepositoryProvider(@NotNull SvnVcs vcs, @NotNull Target target) {
     super(vcs, target);
   }
 
@@ -35,10 +31,10 @@ public class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
   public Repository get() {
     Repository result;
 
-    if (myTarget.isURL()) {
+    if (myTarget.isUrl()) {
       // TODO: Also could still execute info when target is url - either to use info for authentication or to just get correct repository
       // TODO: url in case of "read" operations are allowed anonymously.
-      result = new Repository(myTarget.getURL());
+      result = new Repository(myTarget.getUrl());
     }
     else {
       Info info = myVcs.getInfo(myTarget.getFile());

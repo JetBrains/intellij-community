@@ -24,12 +24,11 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 22, 2010
  */
 public class PropertyResolver extends PropertyProviderFinder {
   private final String myPropertyName;
   private PropertiesProvider myResult;
-  private Set<String> myVariants = new HashSet<>();
+  private final Set<String> myVariants = new HashSet<>();
 
   private PropertyResolver(@NotNull String propertyName, DomElement contextElement) {
     super(contextElement);

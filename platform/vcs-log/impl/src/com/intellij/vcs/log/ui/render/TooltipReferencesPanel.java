@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.ui.render;
 
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
@@ -34,19 +33,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 class TooltipReferencesPanel extends ReferencesPanel {
   private static final int REFS_LIMIT = 10;
-  @NotNull private final LabelPainter myReferencePainter;
   private boolean myHasGroupWithMultipleRefs;
 
   public TooltipReferencesPanel(@NotNull VcsLogData logData,
-                                @NotNull LabelPainter referencePainter,
                                 @NotNull Collection<VcsRef> refs) {
     super(new VerticalFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)), REFS_LIMIT);
-    myReferencePainter = referencePainter;
-
     VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
     setReferences(ContainerUtil.sorted(refs, logData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));
   }
@@ -65,16 +61,16 @@ class TooltipReferencesPanel extends ReferencesPanel {
   @NotNull
   @Override
   protected Font getLabelsFont() {
-    return myReferencePainter.getReferenceFont();
+    return LabelPainter.getReferenceFont();
   }
 
   @Nullable
   @Override
   protected Icon createIcon(@NotNull VcsRefType type, @NotNull Collection<VcsRef> refs, int refIndex, int height) {
     if (refIndex == 0) {
-      Color color = EditorColorsUtil.getGlobalOrDefaultColor(type.getBgColorKey());
-      return new LabelIcon(height, getBackground(),
-                           refs.size() > 1 ? new Color[]{color, color} : new Color[]{color}) {
+      Color color = type.getBackgroundColor();
+      return new LabelIcon(this, height, getBackground(),
+                           refs.size() > 1 ? ContainerUtil.newArrayList(color, color) : Collections.singletonList(color)) {
         @Override
         public int getIconWidth() {
           return getWidth(myHasGroupWithMultipleRefs ? 2 : 1);

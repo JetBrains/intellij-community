@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.vcs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -153,6 +154,18 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull Change change) {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public String getChangeListNameIfOnlyOne(Change[] changes) {
     throw new UnsupportedOperationException();
@@ -160,6 +173,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list) {
+    scheduleAutomaticEmptyChangeListDeletion(list, false);
+  }
+
+  @Override
+  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list, boolean silently) {
     throw new UnsupportedOperationException();
   }
 
@@ -225,6 +243,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @NotNull
   @Override
   public ThreeState haveChangesUnder(@NotNull VirtualFile vf) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void addChangeListListener(@NotNull ChangeListListener listener, @NotNull Disposable disposable) {
     throw new UnsupportedOperationException();
   }
 
@@ -343,12 +366,17 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void removeChangeList(String name) {
+  public void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void removeChangeList(LocalChangeList list) {
+  public void removeChangeList(@NotNull String name) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void removeChangeList(@NotNull LocalChangeList list) {
     myChangeLists.remove(list.getName());
     if (myActiveChangeList.equals(list)) {
       myActiveChangeList = myDefaultChangeList;
@@ -356,11 +384,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void moveChangesTo(LocalChangeList list, Change... changes) {
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes) {
   }
 
   @Override
-  public boolean setReadOnly(String name, boolean value) {
+  public boolean setReadOnly(@NotNull String name, boolean value) {
     throw new UnsupportedOperationException();
   }
 
@@ -374,12 +402,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
-  @Override
-  public LocalChangeList getIdentityChangeList(@NotNull Change change) {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public boolean isInUpdate() {
     throw new UnsupportedOperationException();
@@ -387,13 +409,13 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @NotNull
   @Override
-  public Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges) {
+  public Collection<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
     throw new UnsupportedOperationException();
   }
 
   @NotNull
   @Override
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
+  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     return addChangeList(name, comment);
   }
 

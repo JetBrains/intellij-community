@@ -2,7 +2,9 @@ class A<T> {
   void foo(A<T> a){}
 
   void bar(B b, B b1) {
-      b1.foo(b);
+      /*in method call*/
+      /*comment in arg*/
+      b1.foo(b);//end line comment
   }
 }
 

@@ -83,4 +83,19 @@ public class ManualArrayToCollectionCopy {
             rowObj.add(d);
         }
     }
+
+    class Node {
+        ArrayList<Node> children = new ArrayList<>();
+    }
+
+    private Node buildTree(int[] parents) {
+        Node[] nodes = new Node[parents.length];
+        for (int i = 0; i < parents.length; ++i) {
+            nodes[i] = new Node();
+        }
+        for (int i = 1; i < parents.length; ++i) {
+            nodes[parents[i]].children.add(nodes[i]);
+        }
+        return nodes[0];
+    }
 }

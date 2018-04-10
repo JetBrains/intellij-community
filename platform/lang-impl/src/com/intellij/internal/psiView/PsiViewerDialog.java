@@ -118,13 +118,13 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private JSplitPane myTreeSplit;
   private Tree myPsiTree;
   private ViewerTreeBuilder myPsiTreeBuilder;
-  private JList myRefs;
+  private final JList myRefs;
 
   private TitledSeparator myTextSeparator;
   private TitledSeparator myPsiTreeSeparator;
 
   @NotNull
-  private StubViewerPsiBasedTree myStubTree;
+  private final StubViewerPsiBasedTree myStubTree;
 
   @NotNull
   private final BlockViewerPsiBasedTree myBlockTree;
@@ -139,7 +139,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private int myNewDocumentHashCode = 11;
 
 
-  private boolean myExternalDocument;
+  private final boolean myExternalDocument;
 
   @NotNull
   private final JBTabsImpl myTabs;
@@ -248,11 +248,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       @Override
       protected Color getEmptySpaceColor() {
         return UIUtil.getBgFillColor(getParent());
-      }
-
-      @Override
-      protected void paintSelectionAndBorder(Graphics2D g2d) {
-        super.paintSelectionAndBorder(g2d);
       }
     };
   }

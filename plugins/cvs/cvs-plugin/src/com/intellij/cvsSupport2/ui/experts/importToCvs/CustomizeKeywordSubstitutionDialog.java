@@ -135,8 +135,7 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
   private List<FileExtension> collectFileTypes() {
     final Collection<FileExtension> storedExtensions = myImportConfiguration.getExtensions();
 
-    final ArrayList<FileExtension> result = new ArrayList<>();
-    result.addAll(storedExtensions);
+    final ArrayList<FileExtension> result = new ArrayList<>(storedExtensions);
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
       final String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(fileType);

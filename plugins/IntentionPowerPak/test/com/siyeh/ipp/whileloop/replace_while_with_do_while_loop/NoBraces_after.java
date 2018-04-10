@@ -1,8 +1,10 @@
 class NoBraces {
   void m() {
-      if (b()) {
+      //after while
+      //before body
+      if (b(/*inside call*/)) {
           do System.out.println();
-          while (b());
+          while (b(/*inside call*/));
       }
   }
 

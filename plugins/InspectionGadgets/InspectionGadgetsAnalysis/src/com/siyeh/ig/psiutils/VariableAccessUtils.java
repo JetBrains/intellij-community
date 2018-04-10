@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,13 +83,19 @@ public class VariableAccessUtils {
     return visitor.isPassed();
   }
 
+  /**
+   * This method will return true if the specified variable is a field with greater than private visibility with a common name.
+   * Finding usages for such fields is too expensive.
+   * @param variable  the variable to check assignments for
+   * @return true, if the variable is assigned or too expensive to search. False otherwise.
+   */
   public static boolean variableIsAssigned(@NotNull PsiVariable variable) {
     if (variable instanceof PsiField) {
       if (variable.hasModifierProperty(PsiModifier.PRIVATE)) {
         final PsiClass aClass = PsiUtil.getTopLevelClass(variable);
         return variableIsAssigned(variable, aClass);
       }
-      return !ReferencesSearch.search(variable).forEach(reference -> {
+      return DeclarationSearchUtils.isTooExpensiveToSearch(variable, false) || !ReferencesSearch.search(variable).forEach(reference -> {
         final PsiElement element = reference.getElement();
         if (!(element instanceof PsiExpression)) {
           return true;
@@ -104,13 +110,11 @@ public class VariableAccessUtils {
     return variableIsAssigned(variable, context);
   }
 
-  public static boolean variableIsAssigned(
-    @NotNull PsiVariable variable, @Nullable PsiElement context) {
+  public static boolean variableIsAssigned(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }
-    final VariableAssignedVisitor visitor =
-      new VariableAssignedVisitor(variable, true);
+    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable, true);
     context.accept(visitor);
     return visitor.isAssigned();
   }
@@ -275,24 +279,14 @@ public class VariableAccessUtils {
       (PsiExpressionStatement)statement;
     PsiExpression expression = expressionStatement.getExpression();
     expression = ParenthesesUtils.stripParentheses(expression);
-    if (expression instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression =
-        (PsiPrefixExpression)expression;
-      final IElementType tokenType = prefixExpression.getOperationTokenType();
+    if (expression instanceof PsiUnaryExpression) {
+      final PsiUnaryExpression unaryExpression =
+        (PsiUnaryExpression)expression;
+      final IElementType tokenType = unaryExpression.getOperationTokenType();
       if (!tokenType.equals(incremented ? JavaTokenType.PLUSPLUS : JavaTokenType.MINUSMINUS)) {
         return false;
       }
-      final PsiExpression operand = prefixExpression.getOperand();
-      return evaluatesToVariable(operand, variable);
-    }
-    if (expression instanceof PsiPostfixExpression) {
-      final PsiPostfixExpression postfixExpression =
-        (PsiPostfixExpression)expression;
-      final IElementType tokenType = postfixExpression.getOperationTokenType();
-      if (!tokenType.equals(incremented ? JavaTokenType.PLUSPLUS : JavaTokenType.MINUSMINUS)) {
-        return false;
-      }
-      final PsiExpression operand = postfixExpression.getOperand();
+      final PsiExpression operand = unaryExpression.getOperand();
       return evaluatesToVariable(operand, variable);
     }
     if (expression instanceof PsiAssignmentExpression) {

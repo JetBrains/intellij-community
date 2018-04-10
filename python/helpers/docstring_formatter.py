@@ -369,6 +369,11 @@ def format_epytext(docstring):
 
 
 def main():
+    # Remove existing Sphinx extensions registered via
+    # sphinxcontrib setuptools namespace package, as they
+    # conflict with sphinxcontrib.napoleon that we bundle.
+    sys.modules.pop('sphinxcontrib', None)
+
     args = sys.argv[1:]
 
     docstring_format = args[0] if args else 'rest'
@@ -393,4 +398,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except ImportError:
+        print_safe('sys.path = %s\n\n' % sys.path, error=True)
+        raise

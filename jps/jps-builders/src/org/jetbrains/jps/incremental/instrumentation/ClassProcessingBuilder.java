@@ -47,7 +47,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/30/12
  */
 public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
   private static final Key<InstrumentationClassFinder> CLASS_FINDER = Key.create("_cached_instrumentation_class_finder_");

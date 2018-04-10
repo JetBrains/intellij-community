@@ -74,7 +74,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   }
 
   public void testBytes30() {
-    doTest(LanguageLevel.PYTHON30, "s = b\"some string\"",
+    doTest(LanguageLevel.PYTHON34, "s = b\"some string\"",
                             "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
@@ -127,7 +127,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   }
 
   public void testUnicode30() {
-    doTest(LanguageLevel.PYTHON30, "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON34, "s = \"some string\"",
                       "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 

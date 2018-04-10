@@ -22,11 +22,10 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemService;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.rmi.RemoteException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -64,7 +63,7 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
   }
 
   @Override
-  public void setSettings(@NotNull S settings) throws RemoteException {
+  public void setSettings(@NotNull S settings) {
     mySettings.set(settings);
   }
 
@@ -74,7 +73,7 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
   }
   
   @Override
-  public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener listener) throws RemoteException {
+  public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener listener) {
     myListener.set(listener);
   }
 
@@ -84,14 +83,14 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
   }
 
   @Override
-  public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
+  public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) {
     Set<ExternalSystemTaskId> tasks = myTasksInProgress.get(id.getType());
     return tasks != null && tasks.contains(id);
   }
 
   @NotNull
   @Override
-  public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
+  public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
     return myTasksInProgress;
   }
 }

@@ -39,11 +39,6 @@ public class DarculaCheckBoxMenuItemUI extends DarculaMenuItemUIBase {
   }
 
   @Override
-  public Dimension getPreferredSize(JComponent c) {
-    return super.getPreferredSize(c);
-  }
-
-  @Override
   protected void paintCheckIcon(Graphics g2, MenuItemLayoutHelper lh, MenuItemLayoutHelper.LayoutResult lr, Color holdc, Color foreground) {
     Graphics2D g = (Graphics2D) g2;
     final GraphicsConfig config = new GraphicsConfig(g);

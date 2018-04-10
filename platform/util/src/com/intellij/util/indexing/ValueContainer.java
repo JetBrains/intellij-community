@@ -23,7 +23,6 @@ import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 14, 2007
  */
 public abstract class ValueContainer<Value> {
   public interface IntIterator {

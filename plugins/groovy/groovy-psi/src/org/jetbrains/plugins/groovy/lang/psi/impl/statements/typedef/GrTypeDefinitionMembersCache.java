@@ -119,8 +119,6 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
 
   @NotNull
   private TransformationResult getTransformationResult() {
-    boolean underTransformation = TransformationUtilKt.isUnderTransformation(myDefinition);
-    assert !underTransformation;
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       TransformationUtilKt.transformDefinition(myDefinition), myDependencies
     ));

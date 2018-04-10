@@ -3,11 +3,11 @@
   <grid id="f18c3" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="29" y="60" width="245" height="207"/>
+      <xy x="29" y="60" width="400" height="400"/>
     </constraints>
     <properties>
-      <minimumSize width="145" height="182"/>
-      <preferredSize width="145" height="182"/>
+      <minimumSize width="400" height="400"/>
+      <preferredSize width="400" height="400"/>
     </properties>
     <border type="none"/>
     <children>
@@ -48,6 +48,11 @@
           </xy>
         </children>
       </grid>
+      <vspacer id="9e735">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
       <grid id="d52bf" binding="myJavaCodeInfoPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="4" vgap="-1">
         <margin top="5" left="5" bottom="5" right="5"/>
         <constraints>
@@ -91,11 +96,6 @@
           </grid>
         </children>
       </grid>
-      <vspacer id="9e735">
-        <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </vspacer>
     </children>
   </grid>
 </form>

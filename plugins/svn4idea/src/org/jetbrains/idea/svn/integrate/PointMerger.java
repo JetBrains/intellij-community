@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -24,13 +10,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.Comparator;
@@ -44,7 +29,7 @@ public class PointMerger extends Merger {
                      CommittedChangeList selectedChangeList,
                      final File target,
                      final UpdateEventHandler handler,
-                     final SVNURL currentBranchUrl,
+                     final Url currentBranchUrl,
                      @NotNull List<Change> selectedChanges,
                      String branchName) {
     super(vcs, ContainerUtil.newArrayList(selectedChangeList), target, handler, currentBranchUrl, branchName);
@@ -72,8 +57,8 @@ public class PointMerger extends Merger {
 
   private void merge(@NotNull SvnRepositoryContentRevision before, @NotNull SvnRepositoryContentRevision after) throws VcsException {
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
-    SvnTarget source1 = before.toTarget();
-    SvnTarget source2 = after.toTarget();
+    Target source1 = before.toTarget();
+    Target source2 = after.toTarget();
     File localPath = getLocalPath(after.getFullPath());
 
     client.merge(source1, source2, localPath, Depth.FILES, true, mySvnConfig.isMergeDryRun(), false, false, mySvnConfig.getMergeOptions(),
@@ -122,7 +107,7 @@ public class PointMerger extends Merger {
       final String path1 = after1.getFullPath();
       final String path2 = after2.getFullPath();
 
-      final String ancestor = SVNPathUtil.getCommonPathAncestor(path1, path2);
+      final String ancestor = Url.getCommonAncestor(path1, path2);
       return path1.equals(ancestor) ? -1 : 1;
     }
   }

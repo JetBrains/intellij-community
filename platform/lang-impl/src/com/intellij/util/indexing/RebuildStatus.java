@@ -38,7 +38,8 @@ enum RebuildStatus {
   }
 
   static boolean isOk(ID<?, ?> indexId) {
-    return ourRebuildStatus.get(indexId).get() == OK;
+    AtomicReference<RebuildStatus> rebuildStatus = ourRebuildStatus.get(indexId);
+    return rebuildStatus != null && rebuildStatus.get() == OK;
   }
 
   static boolean requestRebuild(ID<?, ?> indexId) {
@@ -51,31 +52,23 @@ enum RebuildStatus {
       throw new StorageException("Problem updating " + indexId);
     }
 
-    if (rebuildStatus.compareAndSet(REQUIRES_REBUILD, DOING_REBUILD)) {
-      doClear(clearAction, rebuildStatus);
-    } else {
-      waitUntilIndexReady(rebuildStatus);
-    }
-  }
-
-  private static void doClear(ThrowableRunnable<StorageException> clearAction, AtomicReference<RebuildStatus> status) throws StorageException {
-    try {
-      clearAction.run();
-    }
-    catch (StorageException e) {
-      status.compareAndSet(DOING_REBUILD, REQUIRES_REBUILD);
-      throw e;
-    }
-    if (!status.compareAndSet(DOING_REBUILD, OK)) {
-      FileBasedIndexImpl.LOG.error("Unexpected status " + status.get());
-    }
-  }
-
-  private static void waitUntilIndexReady(AtomicReference<RebuildStatus> rebuildStatus) {
     while (rebuildStatus.get() != OK) {
+      if (rebuildStatus.compareAndSet(REQUIRES_REBUILD, DOING_REBUILD)) {
+        try {
+          clearAction.run();
+          if (!rebuildStatus.compareAndSet(DOING_REBUILD, OK)) {
+            throw new AssertionError("Unexpected status " + rebuildStatus.get());
+          }
+          continue;
+        }
+        catch (Throwable e) {
+          rebuildStatus.compareAndSet(DOING_REBUILD, REQUIRES_REBUILD);
+          throw e;
+        }
+      }
+
       ProgressManager.checkCanceled();
       TimeoutUtil.sleep(50);
     }
   }
-
 }

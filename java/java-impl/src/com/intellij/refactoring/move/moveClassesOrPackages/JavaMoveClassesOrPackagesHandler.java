@@ -45,13 +45,13 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.HashSet;
 
 public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(JavaMoveClassesOrPackagesHandler.class);
@@ -59,7 +59,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
 
   public static boolean isPackageOrDirectory(final PsiElement element) {
     if (element instanceof PsiPackage) return true;
-    return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackage((PsiDirectory)element) != null;
+    return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackageInSources((PsiDirectory)element) != null;
   }
 
   public static boolean isReferenceInAnonymousClass(@Nullable final PsiReference reference) {
@@ -75,7 +75,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     for (PsiElement element : elements) {
       if (!isPackageOrDirectory(element) && invalid4Move(element)) return false;
     }
-    return super.canMove(elements, targetContainer);
+    return targetContainer == null || super.canMove(elements, targetContainer);
   }
 
   public static boolean invalid4Move(PsiElement element) {
@@ -221,6 +221,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
                                                                         boolean searchInComments,
                                                                         boolean searchForTextOccurences) {
             final MoveDestination destination = createDestination(aPackage, targetDirectory);
+            if (destination == null) return null;
             try {
               for (PsiDirectory dir: directories) {
                 MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(dir, WriteAction.compute(() -> destination.getTargetDirectory(dir)));

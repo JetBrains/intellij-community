@@ -164,6 +164,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(1);
     editorSettings.setUseSoftWraps(false);
+    editorSettings.setSoftMargins(Collections.emptyList());
   }
 
   protected void updatePreview(boolean useDefaultSample) {
@@ -177,6 +178,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       return;
     }
 
+    Project project = ProjectUtil.guessCurrentProject(getPanel());
+    if (myEditor.isDisposed()) return;
+
     if (myLastDocumentModificationStamp != myEditor.getDocument().getModificationStamp()) {
       myTextToReformat = myEditor.getDocument().getText();
     }
@@ -185,9 +189,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     }
 
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
-
-    final Project finalProject = ProjectUtil.guessCurrentProject(getPanel());
-    CommandProcessor.getInstance().executeCommand(finalProject, () -> replaceText(finalProject), null, null);
+    CommandProcessor.getInstance().executeCommand(project, () -> replaceText(project), null, null);
 
     myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
@@ -210,6 +212,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         }
 
         //important not mark as generated not to get the classes before setting language level
+        @SuppressWarnings("deprecation")
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
         prepareForReformat(psiFile);
 
@@ -239,6 +242,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   private void applySettingsToModel() {
+    if (((CodeStyleSchemesModel.ModelSettings)mySettings).isLocked()) return;
     try {
       if (myModel != null && myModel.isUiEventsEnabled()) {
         apply(mySettings);
@@ -259,6 +263,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
    */
   @Nullable
   private Document collectChangesBeforeCurrentSettingsAppliance(Project project) {
+    @SuppressWarnings("deprecation")
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
     CodeStyleSettings clone = mySettings.clone();
@@ -295,7 +300,25 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return getFileTypeExtension(getFileType());
   }
 
+  /**
+   * @deprecated Do not override this method. Use LanguageCodeStyleSettingsProvider.createFileFromText() instead.
+   * @see LanguageCodeStyleSettingsProvider#createFileFromText(Project, String)
+   */
+  @Deprecated
   protected PsiFile createFileFromText(Project project, String text) {
+    Language language = getDefaultLanguage();
+    if (language != null) {
+      LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+      if (provider != null) {
+        final PsiFile file = provider.createFileFromText(project, text);
+        if (file != null) {
+          if (file.isPhysical()) {
+            LOG.error(provider.getClass() + " creates a physical file with PSI events enabled");
+          }
+          return file;
+        }
+      }
+    }
     return PsiFileFactory.getInstance(project).createFileFromText(
       "a." + getFileExt(), getFileType(), text, LocalTimeCounter.currentTime(), false
     );
@@ -362,6 +385,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     myShouldUpdatePreview = false;
     try {
       resetImpl(settings);
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
     finally {
       myShouldUpdatePreview = true;
@@ -575,7 +601,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
     codeStyle.apply(mySettings);
-    resetImpl(mySettings);
+    ((CodeStyleSchemesModel.ModelSettings) mySettings).doWithLockedSettings(()->resetImpl(mySettings));
     if (myModel != null) {
       myModel.fireAfterCurrentSettingsChanged();
     }

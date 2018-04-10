@@ -1,15 +1,25 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.MatchResult;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ReplacementInfo {
-  public abstract String getReplacement();
+public interface ReplacementInfo {
+  String getReplacement();
 
-  public abstract void setReplacement(String replacement);
+  void setReplacement(String replacement);
 
   @Nullable
-  public abstract PsiElement getMatch(int index);
+  PsiElement getMatch(int index);
 
-  public abstract int getMatchesCount();
+  int getMatchesCount();
+
+  MatchResult getNamedMatchResult(String name);
+
+  MatchResult getMatchResult();
+
+  String getVariableName(PsiElement element);
+
+  String getSearchPatternName(String sourceName);
 }

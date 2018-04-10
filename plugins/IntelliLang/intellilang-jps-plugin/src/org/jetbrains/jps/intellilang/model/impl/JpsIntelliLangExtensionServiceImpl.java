@@ -7,13 +7,13 @@ import org.jetbrains.jps.model.JpsGlobal;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/29/12
  */
 public class JpsIntelliLangExtensionServiceImpl extends JpsIntelliLangExtensionService {
   @NotNull
   @Override
   public JpsIntelliLangConfiguration getConfiguration(@NotNull JpsGlobal global) {
-    return global.getContainer().getChild(JpsIntelliLangConfigurationImpl.ROLE);
+    JpsIntelliLangConfiguration configuration = global.getContainer().getChild(JpsIntelliLangConfigurationImpl.ROLE);
+    return configuration != null ? configuration : new JpsIntelliLangConfigurationImpl();
   }
 
   @Override

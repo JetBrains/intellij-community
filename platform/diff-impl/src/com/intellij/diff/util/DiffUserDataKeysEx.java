@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.diff.DiffTool;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.merge.MergeResult;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +43,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   // DiffContent
   //
 
+  Key<TIntFunction> LINE_NUMBER_CONVERTOR = Key.create("Diff.LineNumberConvertor"); // Document line -> line number in Editor gutter
   Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO = Key.create("Diff.RevisionInfo");
   Key<String> FILE_NAME = Key.create("Diff.FileName");
 
@@ -78,6 +81,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   //
 
   Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel"); // Could implement Disposable
+  Key<DiffTool> FORCE_DIFF_TOOL = Key.create("Diff.ForceDiffTool");
 
   Key<Boolean> SHOW_READ_ONLY_LOCK = Key.create("Diff.ShowReadOnlyLock");
 

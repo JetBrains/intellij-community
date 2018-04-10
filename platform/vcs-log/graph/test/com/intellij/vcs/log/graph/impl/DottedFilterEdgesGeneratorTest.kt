@@ -30,7 +30,7 @@ class DottedFilterEdgesGeneratorTest {
 
   fun LinearGraph.assert(upIndex: Int = 0, downIndex: Int = nodesCount() - 1, result: TestGraphBuilder.() -> Unit) {
     val nodesVisibility = UnsignedBitSet()
-    for (nodeIndex in 0..nodesCount() - 1) {
+    for (nodeIndex in 0 until nodesCount()) {
       val graphNode = getGraphNode(nodeIndex)
       nodesVisibility.set(getNodeId(nodeIndex), graphNode.type == GraphNodeType.USUAL)
     }
@@ -43,7 +43,8 @@ class DottedFilterEdgesGeneratorTest {
     assertEquals(expectedResultGraph.asTestGraphString(true), actualResultGraph.asTestGraphString(true))
   }
 
-  @Test fun simple() = graph {
+  @Test
+  fun simple() = graph {
     1(2)
     2.UNM(3)
     3()
@@ -52,7 +53,8 @@ class DottedFilterEdgesGeneratorTest {
     3()
   }
 
-  @Test fun simple2Up() = graph {
+  @Test
+  fun simple2Up() = graph {
     1(3)
     2(3)
     3.UNM(4)
@@ -63,7 +65,8 @@ class DottedFilterEdgesGeneratorTest {
     4()
   }
 
-  @Test fun simple2Down() = graph {
+  @Test
+  fun simple2Down() = graph {
     1(2)
     2.UNM(3, 4)
     3()
@@ -81,7 +84,8 @@ class DottedFilterEdgesGeneratorTest {
   |\|\
   3 4 5
  */
-  @Test fun downTree() = graph {
+  @Test
+  fun downTree() = graph {
     0(1, 2)
     1.UNM(3, 4)
     2.UNM(4, 5)
@@ -102,7 +106,8 @@ class DottedFilterEdgesGeneratorTest {
   \/
   5
  */
-  @Test fun upTree() = graph {
+  @Test
+  fun upTree() = graph {
     0(3)
     1(3, 4)
     2(4)
@@ -126,7 +131,8 @@ class DottedFilterEdgesGeneratorTest {
   |/
   6
  */
-  @Test fun simpleMerge() = graph {
+  @Test
+  fun simpleMerge() = graph {
     1(2, 3)
     2(4)
     3(5)
@@ -140,7 +146,8 @@ class DottedFilterEdgesGeneratorTest {
     6()
   }
 
-  @Test fun simpleMerge2() = graph {
+  @Test
+  fun simpleMerge2() = graph {
     1(2, 3)
     2.UNM(4)
     3.UNM(5)
@@ -154,7 +161,8 @@ class DottedFilterEdgesGeneratorTest {
     6()
   }
 
-  @Test fun fork() = graph {
+  @Test
+  fun fork() = graph {
     0(2)
     1(3)
     2(3)

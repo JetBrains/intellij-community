@@ -1,7 +1,12 @@
 !define INSTALL_OPTION_ELEMENTS 5
+!define CUSTOM_SILENT_CONFIG 0
 
 Function customPreInstallActions
   DetailPrint "There are no custom pre-install actions."
+FunctionEnd
+
+Function customSilentConfigReader
+  DetailPrint "There are no custom silent install actions."
 FunctionEnd
 
 Function customInstallActions

@@ -1,12 +1,16 @@
 package git4idea.test;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.Executor;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+
+import static com.intellij.openapi.vcs.Executor.*;
+import static git4idea.test.GitExecutor.cd;
+import static git4idea.test.GitExecutor.git;
 
 /**
  * Create popular scenarios used in multiple tests, for example:
@@ -25,14 +29,14 @@ public class GitScenarios {
    * Create a branch with a commit and return back to master.
    */
   public static void branchWithCommit(GitRepository repository, String name, String file, String content, boolean returnToMaster) {
-    GitExecutor.cd(repository);
-    GitExecutor.git("checkout -b " + name);
-    Executor.touch(file, content);
-    GitExecutor.git("add " + file);
-    GitExecutor.git("commit -m branch_content");
+    cd(repository);
+    git(repository, "checkout -b " + name);
+    touch(file, content);
+    git(repository, "add " + file);
+    git(repository, "commit -m branch_content");
 
     if (returnToMaster) {
-      GitExecutor.git("checkout master");
+      git(repository, "checkout master");
     }
   }
 
@@ -41,13 +45,6 @@ public class GitScenarios {
    */
   public static void branchWithCommit(GitRepository repository, String name, String file, String content) {
     GitScenarios.branchWithCommit(repository, name, file, content, true);
-  }
-
-  /**
-   * Create a branch with a commit and return back to master.
-   */
-  public static void branchWithCommit(GitRepository repository, String name, String file) {
-    GitScenarios.branchWithCommit(repository, name, file, "branch content", true);
   }
 
   /**
@@ -69,13 +66,6 @@ public class GitScenarios {
   /**
    * Create a branch with a commit and return back to master.
    */
-  public static void branchWithCommit(Collection<GitRepository> repositories, String name, String file) {
-    GitScenarios.branchWithCommit(repositories, name, file, "branch content");
-  }
-
-  /**
-   * Create a branch with a commit and return back to master.
-   */
   public static void branchWithCommit(Collection<GitRepository> repositories, String name) {
     GitScenarios.branchWithCommit(repositories, name, "branch_file.txt", "branch content");
   }
@@ -85,8 +75,8 @@ public class GitScenarios {
    */
   public static String unmergedFiles(GitRepository repository) {
     conflict(repository, BRANCH_FOR_UNMERGED_CONFLICTS, "unmerged.txt");
-    GitExecutor.git("merge " + BRANCH_FOR_UNMERGED_CONFLICTS, true);
-    return GitExecutor.git("branch -D " + BRANCH_FOR_UNMERGED_CONFLICTS);
+    git(repository, "merge " + BRANCH_FOR_UNMERGED_CONFLICTS, true);
+    return git(repository, "branch -D " + BRANCH_FOR_UNMERGED_CONFLICTS);
   }
 
   /**
@@ -96,19 +86,19 @@ public class GitScenarios {
   public static String conflict(GitRepository repository, String branch, String file) {
     assert !branchExists(repository, branch) : "Branch [" + branch + "] shouldn\'t exist for this scenario";
 
-    GitExecutor.cd(repository);
+    cd(repository);
 
-    Executor.touch(file, "initial content");
-    GitExecutor.git("add " + file);
-    GitExecutor.git("commit -m initial_content");
+    touch(file, "initial content");
+    git(repository, "add " + file);
+    git(repository, "commit -m initial_content");
 
-    GitExecutor.git("checkout -b " + branch);
-    Executor.echo(file, "branch content");
-    GitExecutor.git("commit -am branch_content");
+    git(repository, "checkout -b " + branch);
+    echo(file, "branch content");
+    git(repository, "commit -am branch_content");
 
-    GitExecutor.git("checkout master");
-    Executor.echo(file, "master content");
-    return GitExecutor.git("commit -am master_content");
+    git(repository, "checkout master");
+    echo(file, "master content");
+    return git(repository, "commit -am master_content");
   }
 
   /**
@@ -125,20 +115,20 @@ public class GitScenarios {
    * Branch with the given name shall exist.
    */
   public static void untrackedFileOverwrittenBy(GitRepository repository, String branch, Collection<String> fileNames) {
-    GitExecutor.cd(repository);
-    GitExecutor.git("checkout " + branch);
+    cd(repository);
+    git(repository, "checkout " + branch);
 
     for (String it : fileNames) {
-      Executor.touch(it, "branch content");
-      GitExecutor.git("add " + it);
+      touch(it, "branch content");
+      git(repository, "add " + it);
     }
 
 
-    GitExecutor.git("commit -m untracked_files");
-    GitExecutor.git("checkout master");
+    git(repository, "commit -m untracked_files");
+    git(repository, "checkout master");
 
     for (String it : fileNames) {
-      Executor.touch(it, "master content");
+      touch(it, "master content");
     }
   }
 
@@ -149,38 +139,36 @@ public class GitScenarios {
    * <p/>
    * NB: the branch should not exist before this is called!
    */
-  public static void localChangesOverwrittenByWithoutConflict(GitRepository repository, String branch, Collection<String> fileNames) {
-    GitExecutor.cd(repository);
+  public static void localChangesOverwrittenByWithoutConflict(@NotNull GitRepository repository,
+                                                              @NotNull String branch,
+                                                              @NotNull Collection<String> fileNames) {
+    cd(repository);
 
     for (String it : fileNames) {
-      Executor.echo(it, LOCAL_CHANGES_OVERWRITTEN_BY.initial);
-      GitExecutor.git("add " + it);
+      echo(it, LOCAL_CHANGES_OVERWRITTEN_BY.initial);
+      git(repository, "add " + it);
     }
 
-    GitExecutor.git("commit -m initial_changes");
+    git(repository, "commit -m initial_changes");
 
-    GitExecutor.git("checkout -b " + branch);
+    git(repository, "checkout -b " + branch);
     for (String it : fileNames) {
       prepend(it, LOCAL_CHANGES_OVERWRITTEN_BY.branchLine);
-      GitExecutor.git("add " + it);
+      git(repository, "add " + it);
     }
 
-    GitExecutor.git("commit -m branch_changes");
+    git(repository, "commit -m branch_changes");
 
-    GitExecutor.git("checkout master");
+    git(repository, "checkout master");
     for (String it : fileNames) {
-      append1(it, LOCAL_CHANGES_OVERWRITTEN_BY.masterLine);
+      echo(it, LOCAL_CHANGES_OVERWRITTEN_BY.masterLine);
     }
-  }
-
-  public static void append1(String fileName, String content) {
-    Executor.echo(fileName, content);
   }
 
   public static void prepend(String fileName, final String content) {
-    String previousContent = Executor.cat(fileName);
+    String previousContent = cat(fileName);
     try {
-      FileUtil.writeToFile(new File(Executor.pwd(), fileName), content + previousContent);
+      FileUtil.writeToFile(new File(pwd(), fileName), content + previousContent);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -188,39 +176,14 @@ public class GitScenarios {
   }
 
   public static String commit(GitRepository repository, String file) {
-    GitExecutor.cd(repository);
-    Executor.touch(file);
-    GitExecutor.git("add " + file);
-    return GitExecutor.git("commit -m just_a_commit");
-  }
-
-  public static String commit(GitRepository repository) {
-    return GitScenarios.commit(repository, "just_a_file_" + String.valueOf(Math.random()) + ".txt");
+    cd(repository);
+    touch(file);
+    git(repository, "add " + file);
+    return git(repository, "commit -m just_a_commit");
   }
 
   public static boolean branchExists(GitRepository repo, String branch) {
-    return GitExecutor.git(repo, "branch").contains(branch);
-  }
-
-  public static boolean branchExists(String branch) {
-    return GitScenarios.branchExists(null, branch);
-  }
-
-  public static void checkoutOrCreate(GitRepository repository, String branch) {
-    if (branch.equals("master") || branchExists(repository, branch)) {
-      GitExecutor.git("checkout " + branch);
-    }
-    else {
-      GitExecutor.git("checkout -b " + branch);
-    }
-  }
-
-  public static void checkoutOrCreate(String branch) {
-    GitScenarios.checkoutOrCreate(null, branch);
-  }
-
-  public static void checkout(String branch) {
-    GitExecutor.git("checkout " + branch);
+    return git(repo, "branch").contains(branch);
   }
 
   public static class MergeContent {

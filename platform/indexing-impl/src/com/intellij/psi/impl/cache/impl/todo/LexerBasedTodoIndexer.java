@@ -25,7 +25,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 20, 2008
  *
  * @see com.intellij.psi.impl.search.IndexPatternBuilder
  */

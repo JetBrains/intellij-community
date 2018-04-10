@@ -62,7 +62,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Don't report unused library roots inside used library", this, "IGNORE_LIBRARY_PARTS");
+    return new SingleCheckboxOptionsPanel("Don't report unused jars inside used library", this, "IGNORE_LIBRARY_PARTS");
   }
 
   @Nullable
@@ -100,18 +100,24 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
 
       final List<CommonProblemDescriptor> result = new ArrayList<>();
       for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry && !((LibraryOrderEntry)entry).isExported()) {
+        if (entry instanceof LibraryOrderEntry && 
+            !((LibraryOrderEntry)entry).isExported() && 
+            ((LibraryOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
           final Set<VirtualFile> files = new HashSet<>(Arrays.asList(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)));
           boolean allRootsUnused = usedRoots == null || !files.removeAll(usedRoots);
           if (allRootsUnused) {
             String message = InspectionsBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
-            result.add(manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, entry, null)));
+            result.add(manager.createProblemDescriptor(message, module, new RemoveUnusedLibrary(entry.getPresentableName(), null)));
           }
           else if (!files.isEmpty() && !IGNORE_LIBRARY_PARTS) {
             final String unusedLibraryRoots = StringUtil.join(files, file -> file.getPresentableName(), ",");
             String message =
               InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
-            result.add(((LibraryOrderEntry)entry).isModuleLevel() ? manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, entry, files)) : manager.createProblemDescriptor(message));
+            CommonProblemDescriptor descriptor =
+              ((LibraryOrderEntry)entry).isModuleLevel() 
+              ? manager.createProblemDescriptor(message, module, new RemoveUnusedLibrary(entry.getPresentableName(), files))
+              : manager.createProblemDescriptor(message);
+            result.add(descriptor);
           }
         }
       }
@@ -213,14 +219,27 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     return "UnusedLibrary";
   }
 
-  private static class RemoveUnusedLibrary implements QuickFix {
-    private final RefModule myRefModule;
-    private final OrderEntry myOrderEntry;
-    private final Set<VirtualFile> myFiles;
+  @Nullable
+  @Override
+  public QuickFix getQuickFix(String hint) {
+    return new RemoveUnusedLibrary(hint, null);
+  }
 
-    public RemoveUnusedLibrary(final RefModule refModule, final OrderEntry orderEntry, final Set<VirtualFile> files) {
-      myRefModule = refModule;
-      myOrderEntry = orderEntry;
+  @Nullable
+  @Override
+  public String getHint(@NotNull QuickFix fix) {
+    if (fix instanceof RemoveUnusedLibrary && ((RemoveUnusedLibrary)fix).myFiles == null) {
+      return ((RemoveUnusedLibrary)fix).myLibraryName;
+    }
+    return null;
+  }
+
+  private static class RemoveUnusedLibrary implements QuickFix<ModuleProblemDescriptor> {
+    private final Set<VirtualFile> myFiles;
+    private final String myLibraryName;
+
+    public RemoveUnusedLibrary(String libraryName, final Set<VirtualFile> files) {
+      myLibraryName = libraryName;
       myFiles = files;
     }
 
@@ -231,12 +250,12 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull final CommonProblemDescriptor descriptor) {
-      final Module module = myRefModule.getModule();
+    public void applyFix(@NotNull final Project project, @NotNull final ModuleProblemDescriptor descriptor) {
+      final Module module = descriptor.getModule();
 
       final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
       for (OrderEntry entry : model.getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), myOrderEntry.getPresentableName())) {
+        if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), myLibraryName)) {
           if (myFiles == null) {
             model.removeOrderEntry(entry);
           }

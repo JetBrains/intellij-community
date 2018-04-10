@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class ImmediateFullValueEvaluator extends XFullValueEvaluator {
-  private String myFullValue;
+  private final String myFullValue;
 
   public ImmediateFullValueEvaluator(@NotNull String fullValue) {
     myFullValue = fullValue;

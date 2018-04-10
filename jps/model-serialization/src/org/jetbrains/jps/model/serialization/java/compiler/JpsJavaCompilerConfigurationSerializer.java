@@ -106,6 +106,11 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
     if (compilerId != null) {
       configuration.setJavaCompilerId(compilerId);
     }
+
+    String useReleaseOption = JDOMExternalizerUtil.readField(componentTag, "USE_RELEASE_OPTION");
+    if (useReleaseOption != null) {
+      configuration.setUseReleaseOption(Boolean.parseBoolean(useReleaseOption));
+    }
   }
 
   @Override

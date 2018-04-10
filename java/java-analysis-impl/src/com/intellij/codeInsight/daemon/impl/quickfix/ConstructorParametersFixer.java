@@ -43,9 +43,7 @@ public class ConstructorParametersFixer {
     }
     CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
     AddTypeArgumentsFix.REGISTRAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
-    WrapArrayToArraysAsListFix.REGISTAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
-    WrapLongWithMathToIntExactFix.REGISTAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
-    WrapStringWithFileFix.REGISTAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
+    WrapWithAdapterMethodCallFix.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
   }
 }

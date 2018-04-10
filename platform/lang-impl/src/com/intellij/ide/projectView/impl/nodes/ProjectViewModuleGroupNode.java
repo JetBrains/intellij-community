@@ -29,7 +29,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 public class ProjectViewModuleGroupNode extends ModuleGroupNode {
@@ -42,8 +41,7 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
   }
 
   @Override
-  protected AbstractTreeNode createModuleNode(Module module)
-    throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+  protected AbstractTreeNode createModuleNode(Module module) {
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
     if (roots.length == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots[0]);

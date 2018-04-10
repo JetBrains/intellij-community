@@ -22,25 +22,21 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-
-
 public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
+
+  public static final String FIX_NAME =  SpellCheckerBundle.message("rename.to");
 
   public RenameTo(String wordWithTypo) {
     super(wordWithTypo);
@@ -48,9 +44,8 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return SpellCheckerBundle.message("rename.to");
+    return FIX_NAME;
   }
-
 
   @Nullable
   private static DictionarySuggestionProvider findProvider() {
@@ -77,15 +72,10 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
       provider.setActive(true);
     }
 
-    Editor editor = getEditorFromFocus();
     HashMap<String, Object> map = new HashMap<>();
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null) return;
-    PsiFile containingFile = psiElement.getContainingFile();
-    if (editor == null) {
-      editor = InjectedLanguageUtil.openEditorFor(containingFile, project);
-    }
-
+    final Editor editor = getEditor(psiElement, project);
     if (editor == null) return;
 
     if (editor instanceof EditorWindow) {
@@ -112,19 +102,5 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     finally {
       editor.putUserData(RenameHandlerRegistry.SELECT_ALL, selectAll);
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Nullable
-  private static Editor getEditorFromFocus() {
-    final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (c instanceof EditorComponentImpl) {
-      return ((EditorComponentImpl)c).getEditor();
-    }
-    return null;
   }
 }

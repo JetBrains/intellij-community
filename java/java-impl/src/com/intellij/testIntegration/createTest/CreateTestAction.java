@@ -167,7 +167,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return suitableTestSourceFolders(module).map(SourceFolder::getUrl).collect(Collectors.toList());
   }
 
-  static List<VirtualFile> computeTestRoots(@NotNull Module mainModule) {
+  protected static List<VirtualFile> computeTestRoots(@NotNull Module mainModule) {
     if (!computeSuitableTestRootUrls(mainModule).isEmpty()) {
       //create test in the same module, if the test source folder doesn't exist yet it will be created
       return suitableTestSourceFolders(mainModule)

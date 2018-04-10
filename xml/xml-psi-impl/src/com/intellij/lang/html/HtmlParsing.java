@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -181,7 +167,7 @@ public class HtmlParsing {
           continue;
         }
 
-        if (HtmlUtil.isSingleHtmlTagL(tagName)) {
+        if (originalTagName != null && isSingleTag(tagName, originalTagName)) {
           final PsiBuilder.Marker footer = mark();
           if (token() == XmlTokenType.XML_END_TAG_START) {
             advance();
@@ -240,21 +226,17 @@ public class HtmlParsing {
             final boolean hasChancesToMatch = HtmlUtil.isOptionalEndForHtmlTagL(endName) ? childTerminatesParentInStack(endName) : myTagNamesStack.contains(endName);
             if (hasChancesToMatch) {
               footer.rollbackTo();
-              if (isOptionalTagEnd) {
-                doneTag(myTagMarkersStack.peek());
-              }
-              else {
+              if (!isOptionalTagEnd) {
                 error(XmlErrorMessages.message("named.element.is.not.closed", myOriginalTagNamesStack.peek()));
-                doneTag(myTagMarkersStack.peek());
               }
-              continue;
+              doneTag(myTagMarkersStack.peek());
             }
             else {
               advance();
               if (token() == XmlTokenType.XML_TAG_END) advance();
               footer.error(XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing"));
-              continue;
             }
+            continue;
           }
 
           advance();
@@ -292,6 +274,10 @@ public class HtmlParsing {
       }
       doneTag(myTagMarkersStack.peek());
     }
+  }
+
+  protected boolean isSingleTag(@NotNull String tagName, @NotNull String originalTagName) {
+    return HtmlUtil.isSingleHtmlTagL(tagName);
   }
 
   private boolean hasTags() {

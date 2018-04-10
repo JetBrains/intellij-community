@@ -16,8 +16,6 @@
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -43,10 +41,5 @@ public class TestNGSource extends TestNGTestMethod {
   @Override
   public String getActionName() {
     return getGeneratedName();
-  }
-
-  @Override
-  public void checkConfiguration() throws RuntimeConfigurationException {
-    super.checkConfiguration();
   }
 }

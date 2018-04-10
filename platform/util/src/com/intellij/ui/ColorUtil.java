@@ -32,6 +32,7 @@ import java.lang.annotation.Annotation;
  * @author max
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("UseJBColor")
 public class ColorUtil {
   private ColorUtil() {
   }
@@ -124,6 +125,26 @@ public class ColorUtil {
 
   public static Color withAlpha(Color c, double a) {
     return toAlpha(c, (int)(255 * a));
+  }
+
+  public static Color srcOver(Color c, Color b) {
+    float [] rgba = new float[4];
+    float [] brgba = new float[4];
+
+    rgba = c.getRGBComponents(rgba);
+    brgba = b.getRGBComponents(brgba);
+    float dsta = 1.0f - rgba[3];
+    // Applying SrcOver rule
+    return new Color(rgba[0]*rgba[3] + dsta*brgba[0],
+                     rgba[1]*rgba[3] + dsta*brgba[1],
+                     rgba[2]*rgba[3] + dsta*brgba[2], 1.0f);
+  }
+
+  public static Color withPreAlpha(Color c, double a) {
+    float [] rgba = new float[4];
+
+    rgba = withAlpha(c, a).getRGBComponents(rgba);
+    return new Color(rgba[0]*rgba[3], rgba[1]*rgba[3], rgba[2]*rgba[3], 1.0f);
   }
 
   public static Color toAlpha(Color color, int a) {

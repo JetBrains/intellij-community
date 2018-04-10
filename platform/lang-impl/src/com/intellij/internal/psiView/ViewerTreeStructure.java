@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +91,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
           }
           final PsiElement psi = root.getPsi();
           if (psi instanceof PsiLanguageInjectionHost) {
-            InjectedLanguageUtil.enumerate(psi, (injectedPsi, places) -> list.add(new Inject(psi, injectedPsi)));
+            InjectedLanguageManager.getInstance(myProject).enumerate(psi, (injectedPsi, places) -> list.add(new Inject(psi, injectedPsi)));
           }
         }
         result = ArrayUtil.toObjectArray(list);

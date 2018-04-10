@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python.nameResolver;
 
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Some enum value that represents one or more fully qualified names for some function
+ *
  * @author Ilya.Kazakevich
  */
 public interface FQNamesProvider {
@@ -28,8 +30,17 @@ public interface FQNamesProvider {
   @NotNull
   String[] getNames();
 
+
   /**
    * @return is name of class (true) or function (false)
    */
   boolean isClass();
+
+  /**
+   * @return if element should be checked by full name conformity by {@link PyQualifiedNameOwner#getQualifiedName()}
+   * or only name and package should be checked
+   */
+  default boolean alwaysCheckQualifiedName() {
+    return true;
+  }
 }

@@ -54,6 +54,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -100,22 +101,45 @@ public class ExternalSystemNotificationManager implements Disposable {
     return ServiceManager.getService(project, ExternalSystemNotificationManager.class);
   }
 
+  /**
+   * @deprecated build tool window should be used to display 'sync' errors
+   */
   public void processExternalProjectRefreshError(@NotNull Throwable error,
                                                  @NotNull String externalProjectName,
                                                  @NotNull ProjectSystemId externalSystemId) {
     if (isDisposedOrNotOpen()) {
       return;
     }
-    assert myProject != null;
     Project project = myProject;
+    assert project != null;
 
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     if (!(manager instanceof ExternalSystemConfigurableAware)) {
       return;
     }
+    NotificationData notificationData = createNotification(error, externalProjectName, externalSystemId, project);
+    EditorNotifications.getInstance(project).updateAllNotifications();
+    showNotification(externalSystemId, notificationData);
+  }
 
-    String title =
-      ExternalSystemBundle.message("notification.project.refresh.fail.title", externalSystemId.getReadableName(), externalProjectName);
+  /**
+   * @deprecated to be removed in 2018.2
+   */
+  @NotNull
+  public NotificationData createNotification(@NotNull Throwable error,
+                                             @NotNull String externalProjectName,
+                                             @NotNull ProjectSystemId externalSystemId,
+                                             @NotNull Project project) {
+    String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
+                                                externalSystemId.getReadableName(), externalProjectName);
+    return createNotification(title, error, externalSystemId, project);
+  }
+
+  @NotNull
+  public NotificationData createNotification(@NotNull String title,
+                                             @NotNull Throwable error,
+                                             @NotNull ProjectSystemId externalSystemId,
+                                             @NotNull Project project) {
     String message = ExternalSystemApiUtil.buildErrorMessage(error);
     NotificationCategory notificationCategory = NotificationCategory.ERROR;
     String filePath = null;
@@ -143,9 +167,7 @@ public class ExternalSystemNotificationManager implements Disposable {
       }
       extension.customize(notificationData, project, error);
     }
-
-    EditorNotifications.getInstance(project).updateAllNotifications();
-    showNotification(externalSystemId, notificationData);
+    return notificationData;
   }
 
   public boolean isNotificationActive(@NotNull Key<String> notificationKey) {
@@ -342,7 +364,11 @@ public class ExternalSystemNotificationManager implements Disposable {
         prepareMessagesView(externalSystemId, notificationData.getNotificationSource(), activate);
       final GroupingElement groupingElement = errorTreeView.getErrorViewStructure().getGroupingElement(groupName, null, virtualFile);
       final NavigatableMessageElement navigatableMessageElement;
-      if (notificationData.hasLinks()) {
+      // Note: Given that screen readers don't currently support hyperlinks and
+      // that having a cell editor for a panel in a tree view node makes
+      // the user-interaction confusing for keyboard only users,
+      // don't create a editable element if screen reader is active.
+      if (notificationData.hasLinks() && !ScreenReader.isActive()) {
         navigatableMessageElement = new EditableNotificationMessageElement(
           notification,
           kind,

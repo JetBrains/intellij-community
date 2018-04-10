@@ -19,6 +19,7 @@ import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
 class ReadVariableInstruction extends SimpleInstruction {
+  @NotNull 
   public final PsiVariable variable;
 
   ReadVariableInstruction(@NotNull PsiVariable variable) {
@@ -30,7 +31,7 @@ class ReadVariableInstruction extends SimpleInstruction {
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitReadVariableInstruction(this, offset, nextOffset);
   }
 }

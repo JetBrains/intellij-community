@@ -133,7 +133,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   public abstract static class BaseTextHighlighter implements DropTargetHighlighter {
 
     private Balloon myCurrentBalloon;
-    private MessageType myMessageType;
+    private final MessageType myMessageType;
 
     public BaseTextHighlighter(MessageType type) {
       myMessageType = type;

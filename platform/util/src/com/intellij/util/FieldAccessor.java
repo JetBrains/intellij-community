@@ -55,7 +55,7 @@ public class FieldAccessor<E, T> {
   }
 
   public T get(@Nullable E object) {
-    if (!isAvailable() || object == null) return null;
+    if (!isAvailable()) return null;
     try {
       @SuppressWarnings("unchecked")
       T value = (T)myFieldRef.get().get(object);
@@ -68,7 +68,7 @@ public class FieldAccessor<E, T> {
   }
 
   public void set(@Nullable E object, @Nullable T value) {
-    if (!isAvailable() || object == null) return;
+    if (!isAvailable()) return;
     try {
       myFieldRef.get().set(object, value);
     }

@@ -62,7 +62,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.ex.FileTextFieldImpl");
 
 
-  private JTextField myPathTextField;
+  private final JTextField myPathTextField;
 
   private CompletionResult myCurrentCompletion;
 
@@ -83,8 +83,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   private boolean myAutopopup = false;
   private FileTextFieldImpl.CancelAction myCancelAction;
-  private Set<Action> myDisabledTextActions;
-  private Map<String, String> myMacroMap;
+  private final Set<Action> myDisabledTextActions;
+  private final Map<String, String> myMacroMap;
 
   public FileTextFieldImpl(Finder finder, LookupFilter filter, Map<String, String> macroMap) {
     this(new JTextField(), finder, filter, macroMap, null);

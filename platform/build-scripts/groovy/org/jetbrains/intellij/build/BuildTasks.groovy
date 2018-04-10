@@ -50,6 +50,11 @@ abstract class BuildTasks {
 
   abstract void buildUpdaterJar()
 
+  /**
+   * Builds updater-full.jar artifact which includes 'intellij.platform.updater' module with all its dependencies
+   */
+  abstract void buildFullUpdaterJar()
+
   abstract void buildUnpackedDistribution(String targetDirectory)
 
   static BuildTasks create(BuildContext context) {

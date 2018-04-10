@@ -1,24 +1,11 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.util;
 
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.SingletonIteratorBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -243,8 +230,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
   }
 
-  @TestOnly
-  int getModificationCount() {
+  public int getModificationCount() {
     return modCount;
   }
 
@@ -326,5 +312,58 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   @Override
   public boolean contains(Object o) {
     return indexOf(o) >= 0;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+
+    if (o instanceof SmartList) {
+      return equalsWithSmartList((SmartList)o);
+    }
+
+    if (o instanceof ArrayList) {
+      return equalsWithArrayList((ArrayList)o);
+    }
+
+    return super.equals(o);
+  }
+
+  private boolean equalsWithSmartList(SmartList that) {
+    if (mySize != that.mySize) {
+      return false;
+    }
+
+    if (mySize == 1) {
+      return myElem == null ? that.myElem == null : myElem.equals(that.myElem);
+    }
+
+    return compareOneByOne(that);
+  }
+
+  private boolean equalsWithArrayList(ArrayList that) {
+    if (mySize != that.size()) {
+      return false;
+    }
+
+    if (mySize == 1) {
+      Object o = that.get(0);
+      return myElem == null ? o == null : myElem.equals(o);
+    }
+
+    return compareOneByOne(that);
+  }
+
+  private boolean compareOneByOne(List that) {
+    for (int i = 0; i < mySize; i++) {
+      E o1 = get(i);
+      Object o2 = that.get(i);
+      if (o1 == null ? o2 != null : !o1.equals(o2)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

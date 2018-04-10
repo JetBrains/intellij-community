@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 22, 2007
  */
 public final class AntIntrospector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.AntIntrospector");

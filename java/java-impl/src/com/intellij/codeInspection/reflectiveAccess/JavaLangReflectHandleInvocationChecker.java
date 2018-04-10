@@ -280,7 +280,7 @@ class JavaLangReflectHandleInvocationChecker {
           }
           final PsiClassType javaLangObject =
             PsiType.getJavaLangObject(methodTypeExpression.getManager(), methodTypeExpression.getResolveScope());
-          final ReflectiveType objectType = ReflectiveType.create(javaLangObject);
+          final ReflectiveType objectType = ReflectiveType.create(javaLangObject, false);
           final List<ReflectiveType> argumentTypes = new ArrayList<>();
           argumentTypes.add(objectType); // return type
           for (int i = 0; i < objectArgCount; i++) {

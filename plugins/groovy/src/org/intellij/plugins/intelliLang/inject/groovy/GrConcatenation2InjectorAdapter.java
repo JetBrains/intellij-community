@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.injection.MultiHostInjector;
@@ -76,9 +64,12 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
       operands = new PsiElement[]{rvalue == null ? element : rvalue};
       anchor = element;
     }
-    else {
+    else if (element instanceof GrLiteral && ((GrLiteral)element).isValidHost()) {
       operands = new PsiElement[]{context};
       anchor = context;
+    }
+    else {
+      return Pair.create(context, PsiElement.EMPTY_ARRAY);
     }
 
     return Pair.create(anchor, operands);
@@ -87,7 +78,7 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
   private static PsiElement[] collectGStringOperands(GrString grString) {
     final ArrayList<PsiElement> operands = ContainerUtil.newArrayList();
     processGString(grString, operands);
-    return operands.toArray(new PsiElement[operands.size()]);
+    return operands.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   private static void processGString(GrString string, ArrayList<PsiElement> operands) {
@@ -97,7 +88,7 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
   private static PsiElement[] collectBinaryOperands(GrBinaryExpression expression) {
     final ArrayList<PsiElement> operands = ContainerUtil.newArrayList();
     processBinary(expression, operands);
-    return operands.toArray(new PsiElement[operands.size()]);
+    return operands.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   private static void processBinary(GrBinaryExpression expression, ArrayList<PsiElement> operands) {

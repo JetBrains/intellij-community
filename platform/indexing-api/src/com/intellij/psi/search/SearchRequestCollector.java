@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ public class SearchRequestCollector {
   private static final ExtensionPointName<ScopeOptimizer> CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.codeUsageScopeOptimizer");
 
   private final Object lock = new Object();
-  private final List<PsiSearchRequest> myWordRequests = ContainerUtil.newArrayList();
-  private final List<QuerySearchRequest> myQueryRequests = ContainerUtil.newArrayList();
-  private final List<Processor<Processor<PsiReference>>> myCustomSearchActions = ContainerUtil.newArrayList();
+  private final List<PsiSearchRequest> myWordRequests = new ArrayList<>();
+  private final List<QuerySearchRequest> myQueryRequests = new ArrayList<>();
+  private final List<Processor<Processor<PsiReference>>> myCustomSearchActions = new ArrayList<>();
   private final SearchSession mySession;
 
   public SearchRequestCollector(@NotNull SearchSession session) {
@@ -64,7 +64,8 @@ public class SearchRequestCollector {
                          short searchContext,
                          boolean caseSensitive,
                          @NotNull PsiElement searchTarget) {
-    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), new SingleTargetRequestResultProcessor(searchTarget), searchTarget);
+    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), searchTarget,
+               new SingleTargetRequestResultProcessor(searchTarget));
   }
 
   private void searchWord(@NotNull String word,
@@ -72,28 +73,25 @@ public class SearchRequestCollector {
                           short searchContext,
                           boolean caseSensitive,
                           String containerName,
-                          @NotNull RequestResultProcessor processor,
-                          PsiElement searchTarget) {
+                          PsiElement searchTarget, @NotNull RequestResultProcessor processor) {
     if (!makesSenseToSearch(word, searchScope)) return;
 
     Collection<PsiSearchRequest> requests = null;
     if (searchTarget != null &&
         searchScope instanceof GlobalSearchScope &&
         ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
-      for (ScopeOptimizer optimizer : CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions()) {
-        final GlobalSearchScope optimizedCodeUsageSearchScope = optimizer.getScopeToExclude(searchTarget);
-        if (optimizedCodeUsageSearchScope != null) {
-          short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
-                                          ? UsageSearchContext.IN_COMMENTS |
-                                            UsageSearchContext.IN_STRINGS |
-                                            UsageSearchContext.IN_FOREIGN_LANGUAGES |
-                                            UsageSearchContext.IN_PLAIN_TEXT
-                                          : (short)(searchContext ^ UsageSearchContext.IN_CODE);
-          GlobalSearchScope searchCodeUsageEffectiveScope = ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
-          requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
-                                        new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
-          break;
-        }
+
+      SearchScope restrictedCodeUsageSearchScope = ReadAction.compute(() -> ScopeOptimizer.calculateOverallRestrictedUseScope(CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), searchTarget));
+      if (restrictedCodeUsageSearchScope != null) {
+        short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
+                                        ? UsageSearchContext.IN_COMMENTS |
+                                          UsageSearchContext.IN_STRINGS |
+                                          UsageSearchContext.IN_FOREIGN_LANGUAGES |
+                                          UsageSearchContext.IN_PLAIN_TEXT
+                                        : (short)(searchContext ^ UsageSearchContext.IN_CODE);
+        SearchScope searchCodeUsageEffectiveScope = searchScope.intersectWith(restrictedCodeUsageSearchScope);
+        requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
+                                      new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
       }
     }
     if (requests == null) {
@@ -110,7 +108,7 @@ public class SearchRequestCollector {
                           boolean caseSensitive,
                           @NotNull PsiElement searchTarget,
                           @NotNull RequestResultProcessor processor) {
-    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), processor, searchTarget);
+    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), searchTarget, processor);
   }
 
   private static String getContainerName(@NotNull final PsiElement target) {
@@ -140,7 +138,7 @@ public class SearchRequestCollector {
                          short searchContext,
                          boolean caseSensitive,
                          @NotNull RequestResultProcessor processor) {
-    searchWord(word, searchScope, searchContext, caseSensitive, null, processor, null);
+    searchWord(word, searchScope, searchContext, caseSensitive, null, null, processor);
   }
 
   private static boolean makesSenseToSearch(@NotNull String word, @NotNull SearchScope searchScope) {

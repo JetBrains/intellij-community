@@ -35,7 +35,7 @@ public class PatchCreationTest extends PatchTestCase {
   @Test
   public void testDigestFiles() throws Exception {
     Patch patch = createPatch();
-    Map<String, Long> checkSums = patch.digestFiles(myOlderDir, Collections.emptyList(), false, TEST_UI);
+    Map<String, Long> checkSums = digest(patch, myOlderDir);
     assertThat(checkSums.size()).isEqualTo(11);
   }
 
@@ -290,7 +290,7 @@ public class PatchCreationTest extends PatchTestCase {
     assertThat(recreated.getActions()).isEqualTo(original.getActions());
   }
 
-  private Patch createCaseOnlyRenamePatch() throws IOException, OperationCancelledException {
+  private Patch createCaseOnlyRenamePatch() throws IOException {
     Patch patch = createPatch();
     assertThat(patch.getActions().get(0))
       .isInstanceOf(DeleteAction.class)

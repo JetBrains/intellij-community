@@ -17,7 +17,8 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardManager;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,8 +39,10 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected boolean isEnabled4(DashboardRunConfigurationNode node) {
-    return RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
+  protected boolean isEnabled4(RunDashboardRunConfigurationNode node) {
+    Project project = node.getProject();
+    return !project.isDisposed() && RunDashboardManager.getInstance(project).isShowConfigurations() &&
+           RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
   }
 
   @Override
@@ -48,7 +51,7 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull RunDashboardContent content, AnActionEvent e, List<DashboardRunConfigurationNode> nodes) {
+  protected void doActionPerformed(@NotNull RunDashboardContent content, AnActionEvent e, List<RunDashboardRunConfigurationNode> nodes) {
     if (Messages.showYesNoDialog((Project)null,
                                  ExecutionBundle.message("run.dashboard.remove.configuration.dialog.message"),
                                  ExecutionBundle.message("run.dashboard.remove.configuration.dialog.title"),
@@ -60,7 +63,7 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected void doActionPerformed(DashboardRunConfigurationNode node) {
+  protected void doActionPerformed(RunDashboardRunConfigurationNode node) {
     RunManager.getInstance(node.getProject()).removeConfiguration(node.getConfigurationSettings());
   }
 }

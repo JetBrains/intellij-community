@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.ide.favoritesTreeView;
@@ -26,6 +14,7 @@ import com.intellij.ide.favoritesTreeView.actions.*;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
@@ -61,6 +50,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -68,7 +58,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -110,7 +99,17 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myFavoritesTreeStructure.getRootElement());
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    myTree = new DnDAwareTree(treeModel);
+    myTree = new DnDAwareTree(treeModel) {
+      @Override
+      public boolean isFileColorsEnabled() {
+        return ProjectViewTree.isFileColorsEnabledFor(this);
+      }
+
+      @Override
+      public Color getFileColorFor(Object object) {
+        return ProjectViewTree.getColorForElement(getPsiElement(object));
+      }
+    };
     myBuilder = new FavoritesViewTreeBuilder(myProject, myTree, treeModel, myFavoritesTreeStructure);
     DockManager.getInstance(project).register(this);
 
@@ -185,13 +184,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        return getSelectedPsiElements();
-      }
-    };
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this);
 
     AnActionButton addActionButton = AnActionButton.fromAction(ActionManager.getInstance().getAction("AddNewFavoritesList"));
     addActionButton.getTemplatePresentation().setIcon(CommonActionsPanel.Buttons.ADD.getIcon());
@@ -258,19 +251,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
   private ExporterToTextFile createTextExporter() {
     return new ExporterToTextFile() {
-      @Override
-      public JComponent getSettingsEditor() {
-        return null;
-      }
-
-      @Override
-      public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {
-      }
-
-      @Override
-      public void removeSettingsChangedListener(ChangeListener listener) {
-      }
-
       @NotNull
       @Override
       public String getReportText() {
@@ -326,10 +306,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       }
 
       @Override
-      public void exportedTo(String filePath) {
-      }
-
-      @Override
       public boolean canExport() {
         return true;
       }
@@ -362,35 +338,33 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
   @NotNull
   private PsiElement[] getSelectedPsiElements() {
-    final Object[] elements = getSelectedNodeElements();
-    if (elements == null) {
-      return PsiElement.EMPTY_ARRAY;
+    List<PsiElement> elements = JBIterable.of(getSelectedNodeElements()).filterMap(this::getPsiElement).toList();
+    return PsiUtilCore.toPsiElementArray(elements);
+  }
+
+  @Nullable
+  private PsiElement getPsiElement(@Nullable Object element) {
+    if (element instanceof FavoritesTreeNodeDescriptor) {
+      element = ((FavoritesTreeNodeDescriptor)element).getElement().getValue();
     }
-    ArrayList<PsiElement> result = new ArrayList<>();
-    for (Object element : elements) {
-      if (element instanceof Bookmark) {
-        element = ((Bookmark)element).getFile();
-      }
-      if (element instanceof PsiElement) {
-        result.add((PsiElement)element);
-      }
-      else if (element instanceof SmartPsiElementPointer) {
-        PsiElement psiElement = ((SmartPsiElementPointer)element).getElement();
+    if (element instanceof Bookmark) {
+      element = ((Bookmark)element).getFile();
+    }
+    if (element instanceof PsiElement) {
+      return (PsiElement)element;
+    }
+    else if (element instanceof SmartPsiElementPointer) {
+      return ((SmartPsiElementPointer)element).getElement();
+    }
+    else if (element != null) {
+      for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
+        PsiElement psiElement = provider.getPsiElement(element);
         if (psiElement != null) {
-          result.add(psiElement);
-        }
-      }
-      else {
-        for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
-          final PsiElement psiElement = provider.getPsiElement(element);
-          if (psiElement != null) {
-            result.add(psiElement);
-            break;
-          }
+          return psiElement;
         }
       }
     }
-    return PsiUtilCore.toPsiElementArray(result);
+    return null;
   }
 
   public FavoritesTreeStructure getFavoritesTreeStructure() {
@@ -408,7 +382,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final List<Navigatable> selectedElements = getSelectedElements(Navigatable.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[0]);
     }
 
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
@@ -461,15 +435,15 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     }
     if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
       final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[0]);
     }
     if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
       final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[0]);
     }
     if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
       final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
     }
     if (CONTEXT_FAVORITES_ROOTS_DATA_KEY.is(dataId)) {
       List<FavoritesTreeNodeDescriptor> result = new ArrayList<>();
@@ -483,7 +457,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
           result.add(selectedNodeDescriptor);
         }
       }
-      return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
+      return result.toArray(FavoritesTreeNodeDescriptor.EMPTY_ARRAY);
     }
     if (FAVORITES_TREE_KEY.is(dataId)) {
       return myTree;
@@ -559,7 +533,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       }
     }
 
-    return result.isEmpty() ? null : result.toArray(new Module[result.size()]);
+    return result.isEmpty() ? null : result.toArray(Module.EMPTY_ARRAY);
   }
 
   private Object[] getSelectedNodeElements() {

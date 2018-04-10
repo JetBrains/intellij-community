@@ -29,7 +29,6 @@ import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 4, 2004
  */
 public class UndefinedMacrosConfigurable implements Configurable{
   private PathMacroListEditor myEditor;
@@ -41,6 +40,7 @@ public class UndefinedMacrosConfigurable implements Configurable{
     myUndefinedMacroNames = undefinedMacroNames;
   }
 
+  @Override
   public String getHelpTopic() {
     return PathMacroConfigurable.HELP_ID;
   }

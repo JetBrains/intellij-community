@@ -19,6 +19,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
+import com.intellij.project.isDirectoryBased
 import com.intellij.util.containers.computeIfAny
 import com.intellij.util.io.exists
 import java.nio.file.Paths
@@ -35,8 +36,12 @@ private open class ModuleStoreImpl(module: Module, private val pathMacroManager:
   // todo what about Upsource? For now this implemented not in the ModuleStoreBase because `project` and `module` are available only in this class (ModuleStoreImpl)
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val result =  super.getStorageSpecs(component, stateSpec, operation)
+    if (!project.isDirectoryBased) {
+      return result
+    }
+
     return StreamProviderFactory.EP_NAME.getExtensions(project).computeIfAny {
-      LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager.componentManager!!, result, operation) }
+      LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager, stateSpec, result, operation) }
     } ?: result
   }
 }

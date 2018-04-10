@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public class GitRepositoryForAnnotationsListener {
   private final Project myProject;
   private final GitRepositoryChangeListener myListener;
-  private ProjectLevelVcsManager myVcsManager;
-  private GitVcs myVcs;
+  private final ProjectLevelVcsManager myVcsManager;
+  private final GitVcs myVcs;
 
   public GitRepositoryForAnnotationsListener(Project project) {
     myProject = project;

@@ -135,13 +135,9 @@ public class GitUpdateProcess {
       return GitUpdateResult.NOT_READY;
     }
 
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     GitUpdateResult result;
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "VCS Update")) {
       result = updateImpl(updateMethod);
-    }
-    finally {
-      token.finish();
     }
     myProgressIndicator.setText(oldText);
     return result;
@@ -187,7 +183,7 @@ public class GitUpdateProcess {
               LOG.error("No tracked branch information for root " + root);
               continue;
             }
-            updaters.put(repo, new GitMergeUpdater(myProject, myGit, root, branchAndTracked, myProgressIndicator, myUpdatedFiles));
+            updaters.put(repo, new GitMergeUpdater(myProject, myGit, repo, branchAndTracked, myProgressIndicator, myUpdatedFiles));
           }
         }
         else if (decision == GitRebaseOverMergeProblem.Decision.CANCEL_OPERATION) {
@@ -289,7 +285,7 @@ public class GitUpdateProcess {
       VirtualFile root = repository.getRoot();
       GitBranchPair branchAndTracked = trackedBranches.get(root);
       if (branchAndTracked == null) continue;
-      GitUpdater updater = GitUpdater.getUpdater(myProject, myGit, branchAndTracked, root, myProgressIndicator, myUpdatedFiles,
+      GitUpdater updater = GitUpdater.getUpdater(myProject, myGit, branchAndTracked, repository, myProgressIndicator, myUpdatedFiles,
                                                  updateMethod);
       if (updater.isUpdateNeeded()) {
         updaters.put(repository, updater);
@@ -360,8 +356,8 @@ public class GitUpdateProcess {
 
   @NotNull
   private static String recommendSetupTrackingCommand(@NotNull GitRepository repository, @NotNull String branchName) {
-    return String.format(GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository.getVcs().getVersion()) ?
-                         "git branch --set-upstream-to origin/%1$s %1$s" :
+    return String.format(GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository) ?
+                         "git branch --set-upstream-to=origin/%1$s %1$s" :
                          "git branch --set-upstream %1$s origin/%1$s", branchName);
   }
 

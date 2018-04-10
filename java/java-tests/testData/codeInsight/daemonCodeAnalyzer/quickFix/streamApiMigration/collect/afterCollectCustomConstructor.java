@@ -6,10 +6,10 @@ import java.util.stream.Collectors;
 
 public class Test {
   void testList(List<String> input) {
-      List<String> result = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toCollection(() -> new ArrayList<>(10)));
+      List<String> result = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toCollection(() -> new ArrayList<>(/*initial size*/10)));
       System.out.println(result);
 
-      ArrayList<String> result2 = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toCollection(() -> new ArrayList<>(20)));
+      ArrayList<String> result2 = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toCollection(() -> new ArrayList<>/*valuable comment*/(20)));
       System.out.println(result2);
 
     // Non-empty
@@ -26,10 +26,10 @@ public class Test {
   }
 
   void testSet(List<String> input) {
-      Set<String> result = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toCollection(() -> new HashSet<>(10)));
+      Set<String> result = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toCollection(() -> new HashSet/*comment*/<>(/*size*/10)));
       System.out.println(result);
 
-      Collection<String> result2 = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toCollection(() -> new LinkedHashSet<>(20, 0.8f)));
+      Collection<String> result2 = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toCollection(() -> new LinkedHashSet<>(20, /*load factor*/ 0.8f)));
       System.out.println(result2);
 
     // Non-empty
@@ -37,7 +37,7 @@ public class Test {
       input.stream().filter(s -> !s.isEmpty()).forEach(result3::add);
     System.out.println(result3);
 
-      Collection<TimeUnit> result4 = input.stream().filter(s -> !s.isEmpty()).map(TimeUnit::valueOf).collect(Collectors.toCollection(() -> EnumSet.noneOf(TimeUnit.class)));
+      Collection<TimeUnit> result4 = input.stream().filter(s -> !s.isEmpty()).map(TimeUnit::valueOf).collect(Collectors.toCollection(() -> EnumSet.noneOf(/*timeunits*/TimeUnit.class)));
       System.out.println(result4);
   }
 

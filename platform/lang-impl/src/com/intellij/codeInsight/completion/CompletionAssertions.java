@@ -37,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.Contract;
 
 import java.util.List;
 
@@ -109,23 +110,10 @@ class CompletionAssertions {
     return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath(), fileCopy.getText());
   }
 
-  static void assertFinalOffsets(PsiFile originalFile, CompletionContext context, PsiFile injected) {
-    if (context.getStartOffset() >= context.file.getTextLength()) {
-      String msg = "start outside the file; file=" + context.file + " " + context.file.getTextLength();
-      msg += "; injected=" + (injected != null);
-      msg += "; original " + originalFile + " " + originalFile.getTextLength();
-      throw new AssertionError(msg);
-    }
-    assert context.getStartOffset() >= 0 : "start < 0";
-  }
-
-  static void assertInjectedOffsets(int hostStartOffset,
-                                    InjectedLanguageManager injectedLanguageManager,
-                                    PsiFile injected,
-                                    DocumentWindow documentWindow) {
+  static void assertInjectedOffsets(int hostStartOffset, PsiFile injected, DocumentWindow documentWindow) {
     assert documentWindow != null : "no DocumentWindow for an injected fragment";
 
-    TextRange host = injectedLanguageManager.injectedToHost(injected, injected.getTextRange());
+    TextRange host = InjectedLanguageManager.getInstance(injected.getProject()).injectedToHost(injected, injected.getTextRange());
     assert hostStartOffset >= host.getStartOffset() : "startOffset before injected";
     assert hostStartOffset <= host.getEndOffset() : "startOffset after injected";
   }
@@ -137,14 +125,15 @@ class CompletionAssertions {
     }
   }
 
-  static void assertCompletionPositionPsiConsistent(CompletionContext newContext,
+  @Contract("_,_,_,null->fail")
+  static void assertCompletionPositionPsiConsistent(OffsetsInFile offsets,
                                                     int offset,
-                                                    PsiFile fileCopy,
                                                     PsiFile originalFile, PsiElement insertedElement) {
+    PsiFile fileCopy = offsets.getFile();
     if (insertedElement == null) {
       throw new LogEventException("No element at insertion offset",
                                                                    "offset=" +
-                                                                   newContext.getStartOffset() +
+                                                                   offset +
                                                                    "\n" +
                                                                    DebugUtil.currentStackTrace(),
                                                                    createFileTextAttachment(fileCopy, originalFile),
@@ -186,7 +175,7 @@ class CompletionAssertions {
     private RangeMarkerSpy spy;
 
     public WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
-      super(offsetMap, completionChar, items.toArray(new LookupElement[items.size()]),
+      super(offsetMap, completionChar, items.toArray(LookupElement.EMPTY_ARRAY),
             file, editor,
             completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
             completionChar != Lookup.NORMAL_SELECT_CHAR);

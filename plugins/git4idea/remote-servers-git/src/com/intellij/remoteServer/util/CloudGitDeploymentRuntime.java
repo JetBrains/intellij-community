@@ -190,25 +190,25 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
     final Ref<Boolean> commitSucceeded = new Ref<>(false);
     Boolean commitStarted = runOnEdt(() -> CommitChangeListDialog.commitChanges(getProject(),
-                                                                            relevantChanges,
-                                                                            activeChangeList,
-                                                                            ourCommitExecutors,
-                                                                            false,
-                                                                            COMMIT_MESSAGE,
-                                                                            new CommitResultHandler() {
+                                                                                relevantChanges,
+                                                                                activeChangeList,
+                                                                                ourCommitExecutors,
+                                                                                false,
+                                                                                COMMIT_MESSAGE,
+                                                                                new CommitResultHandler() {
 
-                                                  @Override
-                                                  public void onSuccess(@NotNull String commitMessage) {
-                                                    commitSucceeded.set(true);
-                                                    commitSemaphore.up();
-                                                  }
+                                                                                  @Override
+                                                                                  public void onSuccess(@NotNull String commitMessage) {
+                                                                                    commitSucceeded.set(true);
+                                                                                    commitSemaphore.up();
+                                                                                  }
 
-                                                  @Override
-                                                  public void onFailure() {
-                                                    commitSemaphore.up();
-                                                  }
-                                                },
-                                                                            false));
+                                                                                  @Override
+                                                                                  public void onFailure() {
+                                                                                    commitSemaphore.up();
+                                                                                  }
+                                                                                },
+                                                                                false));
     if (commitStarted != null && commitStarted) {
       commitSemaphore.waitFor();
       if (!commitSucceeded.get()) {
@@ -301,14 +301,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
   protected static void checkGitResult(GitCommandResult commandResult) throws ServerRuntimeException {
     if (!commandResult.success()) {
-      Throwable exception = commandResult.getException();
-      if (exception != null) {
-        LOG.info(exception);
-        throw new ServerRuntimeException(exception);
-      }
-      else {
-        throw new ServerRuntimeException(commandResult.getErrorOutputAsJoinedString());
-      }
+      throw new ServerRuntimeException(commandResult.getErrorOutputAsJoinedString());
     }
   }
 
@@ -341,12 +334,13 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
                              String failMessage)
     throws ServerRuntimeException {
     try {
-      final GitSimpleHandler handler = new GitSimpleHandler(getProject(), myContentRoot, GitCommand.REMOTE);
+      GitLineHandler handler = new GitLineHandler(getProject(), myContentRoot, GitCommand.REMOTE);
       handler.setSilent(false);
       handler.addParameters(subCommand, remoteName, application.getGitUrl());
-      handler.run();
+      GitCommandResult result = myGit.runCommand(handler);
+      result.getOutputOrThrow();
       getRepository().update();
-      if (handler.getExitCode() != 0) {
+      if (result.getExitCode() != 0) {
         throw new ServerRuntimeException(failMessage);
       }
     }
@@ -417,12 +411,12 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   protected void commit(String message) throws ServerRuntimeException {
     try {
       if (GitUtil.hasLocalChanges(true, getProject(), myContentRoot)) {
-        GitSimpleHandler handler = new GitSimpleHandler(getProject(), myContentRoot, GitCommand.COMMIT);
+        GitLineHandler handler = new GitLineHandler(getProject(), myContentRoot, GitCommand.COMMIT);
         handler.setSilent(false);
         handler.setStdoutSuppressed(false);
         handler.addParameters("-m", message);
         handler.endOptions();
-        handler.run();
+        Git.getInstance().runCommand(handler).getOutputOrThrow();
       }
     }
     catch (VcsException e) {
@@ -439,9 +433,6 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     GitCommandResult result = myGit.runCommand(handler);
     if (!result.success()) {
       getLoggingHandler().println(result.getErrorOutputAsJoinedString());
-      if (result.getException() != null) {
-        throw new ServerRuntimeException(result.getException());
-      }
       throw new ServerRuntimeException(result.getErrorOutputAsJoinedString());
     }
   }

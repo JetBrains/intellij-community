@@ -55,7 +55,6 @@ public class GitCrlfProblemsDetector {
   private static final Logger LOG = Logger.getInstance(GitCrlfProblemsDetector.class);
   private static final String CRLF = "\r\n";
 
-  @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final GitRepositoryManager myRepositoryManager;
 
@@ -68,7 +67,6 @@ public class GitCrlfProblemsDetector {
 
   private GitCrlfProblemsDetector(@NotNull Project project, @NotNull Git git,
                                   @NotNull Collection<VirtualFile> files) {
-    myProject = project;
     myRepositoryManager = GitUtil.getRepositoryManager(project);
     myGit = git;
 
@@ -127,8 +125,8 @@ public class GitCrlfProblemsDetector {
   }
 
   @NotNull
-  private Map<VirtualFile, Collection<VirtualFile>> findFilesWithCrlf(@NotNull Map<VirtualFile, List<VirtualFile>> allFilesByRoots,
-                                                                      @NotNull Collection<VirtualFile> rootsWithIncorrectAutoCrlf) {
+  private static Map<VirtualFile, Collection<VirtualFile>> findFilesWithCrlf(@NotNull Map<VirtualFile, List<VirtualFile>> allFilesByRoots,
+                                                                             @NotNull Collection<VirtualFile> rootsWithIncorrectAutoCrlf) {
     Map<VirtualFile, Collection<VirtualFile>> filesWithCrlfByRoots = new HashMap<>();
     for (Map.Entry<VirtualFile, List<VirtualFile>> entry : allFilesByRoots.entrySet()) {
       VirtualFile root = entry.getKey();
@@ -144,7 +142,7 @@ public class GitCrlfProblemsDetector {
   }
 
   @NotNull
-  private Collection<VirtualFile> findFilesWithCrlf(@NotNull Collection<VirtualFile> files) {
+  private static Collection<VirtualFile> findFilesWithCrlf(@NotNull Collection<VirtualFile> files) {
     Collection<VirtualFile> filesWithCrlf = new ArrayList<>();
     for (VirtualFile file : files) {
       ProgressIndicatorProvider.checkCanceled();

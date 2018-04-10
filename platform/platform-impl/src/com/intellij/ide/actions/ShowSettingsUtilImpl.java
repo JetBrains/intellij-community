@@ -167,7 +167,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
         groups.add(g);
       }
     }
-    return groups.toArray(new ConfigurableGroup[groups.size()]);
+    return groups.toArray(new ConfigurableGroup[0]);
   }
 
   @Override

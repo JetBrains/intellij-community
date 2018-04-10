@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Key;
@@ -36,7 +37,6 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -86,6 +86,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     GradleExecutionSettings effectiveSettings =
       settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
+
+    if (getForkedDebuggerSetup(jvmAgentSetup) != -1) {
+      effectiveSettings.withVmOption(jvmAgentSetup);
+    }
     Function<ProjectConnection, Void> f = connection -> {
       try {
         appendInitScriptArgument(taskNames, jvmAgentSetup, effectiveSettings);
@@ -121,11 +125,25 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
       catch (RuntimeException e) {
         LOG.debug("Gradle build launcher error", e);
-        ExternalSystemException friendlyError = new GradleExecutionErrorHandler(e, projectPath, null).getUserFriendlyError();
-        throw friendlyError == null ? e : friendlyError;
+        final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain(effectiveSettings);
+        throw projectResolverChain.getUserFriendlyError(e, projectPath, null);
       }
     };
     myHelper.execute(projectPath, effectiveSettings, f);
+  }
+
+  public static int getForkedDebuggerSetup(@Nullable String jvmAgentSetup) {
+    if (jvmAgentSetup != null && jvmAgentSetup.startsWith(ExternalSystemRunConfiguration.DEBUG_SETUP_PREFIX)) {
+      int forkSocketIndex = jvmAgentSetup.indexOf("-forkSocket");
+      if (forkSocketIndex > 0) {
+        try {
+          return Integer.parseInt(jvmAgentSetup.substring(forkSocketIndex + "-forkSocket".length()));
+        }
+        catch (NumberFormatException ignore) {
+        }
+      }
+    }
+    return -1;
   }
 
   public static void appendInitScriptArgument(@NotNull List<String> taskNames,
@@ -172,18 +190,17 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   @Override
   public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException {
-
+    final CancellationTokenSource cancellationTokenSource = myCancellationMap.get(id);
+    if (cancellationTokenSource != null) {
+      cancellationTokenSource.cancel();
+      return true;
+    }
     // extension points are available only in IDE process
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
         if (gradleTaskManagerExtension.cancelTask(id, listener)) return true;
       }
     }
-
-    final CancellationTokenSource cancellationTokenSource = myCancellationMap.get(id);
-    if (cancellationTokenSource != null) {
-      cancellationTokenSource.cancel();
-    }
-    return true;
+    return false;
   }
 }

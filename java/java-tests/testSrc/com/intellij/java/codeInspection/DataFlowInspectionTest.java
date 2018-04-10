@@ -18,10 +18,12 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -167,6 +169,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   private void checkIntentionResult(String hint) {
     myFixture.launchAction(myFixture.findSingleIntention(hint));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    PsiTestUtil.checkPsiMatchesTextIgnoringNonCode(getFile());
   }
 
   public void testReportConstantReferences_OverloadedCall() {
@@ -231,6 +234,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testTryWithResourcesNullability() { doTest(); }
   public void testTryWithResourcesInstanceOf() { doTest(); }
+  public void testTryWithResourcesCloseException() { doTest(); }
+  public void testTryWithResourceExpressions() { doTest(); }
+
   public void testOmnipresentExceptions() { doTest(); }
 
   public void testEqualsHasNoSideEffects() { doTest(); }
@@ -483,6 +489,26 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     checkIntentionResult("Remove 'for' statement");
   }
 
+  public void testSideEffectReturn() {
+    doTest();
+    checkIntentionResult("Simplify 'Test.valueOf(...) != null' to true extracting side effects");
+  }
+
+  public void testSideEffectNoBrace() {
+    doTest();
+    checkIntentionResult("Simplify 'Test.valueOf(...) != null' to true extracting side effects");
+  }
+
+  public void testSimplifyConcatWithParentheses() {
+    doTest();
+    checkIntentionResult("Simplify 'f' to false");
+  }
+
+  public void testSideEffectWhile() {
+    doTest();
+    checkIntentionResult("Remove 'while' statement extracting side effects");
+  }
+
   public void testUsingInterfaceConstant() { doTest();}
 
   //https://youtrack.jetbrains.com/issue/IDEA-162184
@@ -523,6 +549,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
       public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
         return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
       }
+
+      @Override
+      public boolean isClassWithCustomizedInitialization(@NotNull PsiElement element) {
+        return element instanceof PsiClass && ((PsiClass)element).getName().equals("Instrumented");
+      }
     }, myFixture.getTestRootDisposable());
     doTest();
   }
@@ -533,4 +564,38 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
 
   public void testEmptySingletonMap() {doTest();}
+  public void testStaticFieldsWithNewObjects() { doTest(); }
+  public void testComplexInitializer() { doTest(); }
+  public void testFieldAssignedNegative() { doTest(); }
+  public void testIteratePositiveCheck() { doTest(); }
+  public void testInnerClass() { doTest(); }
+  public void testCovariantReturn() { doTest(); }
+  public void testArrayInitializerLength() { doTest(); }
+
+  public void testGetterOfNullableFieldIsNotAnnotated() { doTest(); }
+
+  public void testGetterOfNullableFieldIsNotNull() { doTest(); }
+
+  public void testArrayStoreProblems() { doTest(); }
+
+  public void testNestedScopeComplexity() { doTest(); }
+
+  public void testNullableReturn() { doTest(); }
+  public void testManyBooleans() { doTest(); }
+  public void testPureNoArgMethodAsVariable() { doTest(); }
+  public void testRedundantAssignment() { doTest(); }
+  public void testXorNullity() { doTest(); }
+  public void testPrimitiveNull() { doTest(); }
+  public void testLessThanRelations() { doTest(); }
+  public void testAdvancedArrayAccess() { doTest(); }
+  public void testNullableGetterInLoop() { doTest(); }
+  public void testNullabilityBasics() { doTest(); }
+  public void testReassignedVarInLoop() { doTest(); }
+  public void testLoopDoubleComparisonNotComplex() { doTest(); }
+  public void testAssumeNotNull() {
+    myFixture.addClass("package org.junit; public class Assert { public static void assertTrue(boolean b) {}}");
+    myFixture.addClass("package org.junit; public class Assume { public static void assumeNotNull(Object... objects) {}}");
+    doTest();
+  }
+  public void testMergedInitializerAndConstructor() { doTest(); }
 }

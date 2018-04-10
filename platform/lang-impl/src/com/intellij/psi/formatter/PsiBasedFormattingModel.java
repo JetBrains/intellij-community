@@ -20,6 +20,7 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModelEx;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -86,7 +87,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
 
     if (leafElement != null) {
       PsiFile hostFile = myASTNode.getPsi().getContainingFile();
-      PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(hostFile, offset);
+      PsiElement injectedElement = InjectedLanguageManager.getInstance(hostFile.getProject()).findInjectedElementAt(hostFile, offset);
 
       TextRange effectiveRange = injectedElement != null ? rangeInInjectedDocument(textRange, injectedElement) : null;
       if (effectiveRange == null) {
@@ -151,7 +152,8 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
     assert !PsiDocumentManager.getInstance(project).isUncommited(myDocumentModel.getDocument());
     // TODO:default project can not be used for injections, because latter might wants (unavailable) indices
 
-    PsiElement psiElement = project.isDefault() ? null : InjectedLanguageUtil.findInjectedElementNoCommit(containingFile, offset);
+    PsiElement psiElement = project.isDefault() ? null : InjectedLanguageManager.getInstance(containingFile.getProject())
+      .findInjectedElementAt(containingFile, offset);
     if (psiElement != null) {
       return psiElement.getNode();
     }

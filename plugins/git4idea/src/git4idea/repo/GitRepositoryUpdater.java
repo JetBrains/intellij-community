@@ -105,7 +105,7 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
     if (headChanged || configChanged || branchFileChanged || packedRefsChanged || rebaseFileChanged || mergeFileChanged) {
       myRepository.update();
     }
-    else if (tagChanged) {
+    if (tagChanged) {
       BackgroundTaskUtil.syncPublisher(myRepository.getProject(), GIT_REPO_CHANGE).repositoryChanged(myRepository);
     }
   }

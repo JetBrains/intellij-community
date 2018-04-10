@@ -42,7 +42,7 @@ public class TraceableDisposable {
 
   public TraceableDisposable(boolean debug) {
     //noinspection ThrowableResultOfMethodCallIgnored
-    CREATE_TRACE = debug ? ThrowableInterner.intern(new Throwable()) : null;
+    CREATE_TRACE = debug ? ThrowableInterner.intern(new Throwable(String.valueOf(System.currentTimeMillis()))) : null;
   }
 
   public void kill(@NonNls @Nullable String msg) {
@@ -126,7 +126,7 @@ public class TraceableDisposable {
       KILL_TRACE.printStackTrace(out);
     }
     out.println("-------------Own trace:");
-    new DisposalException("").printStackTrace(out);
+    new DisposalException(""+System.identityHashCode(this)).printStackTrace(out);
     out.flush();
     return s.toString();
   }

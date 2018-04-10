@@ -33,7 +33,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,14 +42,13 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +91,7 @@ public class ExecutionHelper {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (errors.isEmpty() && warnings.isEmpty()) {
-        removeContents(null, myProject, tabDisplayName);
+        ContentManagerUtil.cleanupContents(null, myProject, tabDisplayName);
         return;
       }
 
@@ -218,27 +217,8 @@ public class ExecutionHelper {
       messageView.getContentManager().addContent(content);
       Disposer.register(content, errorTreeView);
       messageView.getContentManager().setSelectedContent(content);
-      removeContents(content, myProject, tabDisplayName);
+      ContentManagerUtil.cleanupContents(content, myProject, tabDisplayName);
     }, "Open message view", null);
-  }
-
-  private static void removeContents(@Nullable final Content notToRemove,
-                                     @NotNull final Project myProject,
-                                     @NotNull final String tabDisplayName) {
-    MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
-    Content[] contents = messageView.getContentManager().getContents();
-    for (Content content : contents) {
-      LOG.assertTrue(content != null);
-      if (content.isPinned()) continue;
-      if (tabDisplayName.equals(content.getDisplayName()) && content != notToRemove) {
-        ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
-        if (listErrorView != null) {
-          if (messageView.getContentManager().removeContent(content, true)) {
-            content.release();
-          }
-        }
-      }
-    }
   }
 
   public static Collection<RunContentDescriptor> findRunningConsoleByTitle(final Project project,
@@ -289,31 +269,27 @@ public class ExecutionHelper {
       descriptorToFront(project, descriptor);
     }
     else if (consoles.size() > 1) {
-      final JList list = new JBList(consoles);
       final Icon icon = DefaultRunExecutor.getRunExecutorInstance().getIcon();
-      list.setCellRenderer(new ListCellRendererWrapper<RunContentDescriptor>() {
-        @Override
-        public void customize(final JList list,
-                              final RunContentDescriptor value,
-                              final int index,
-                              final boolean selected,
-                              final boolean hasFocus) {
-          setText(value.getDisplayName());
-          setIcon(icon);
-        }
-      });
-
-      final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-      builder.setTitle(selectDialogTitle);
-
-      builder.setItemChoosenCallback(() -> {
-        final Object selectedValue = list.getSelectedValue();
-        if (selectedValue instanceof RunContentDescriptor) {
-          RunContentDescriptor descriptor = (RunContentDescriptor)selectedValue;
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(ContainerUtil.newArrayList(consoles))
+        .setRenderer(new ListCellRendererWrapper<RunContentDescriptor>() {
+          @Override
+          public void customize(final JList list,
+                                final RunContentDescriptor value,
+                                final int index,
+                                final boolean selected,
+                                final boolean hasFocus) {
+            setText(value.getDisplayName());
+            setIcon(icon);
+          }
+        })
+        .setTitle(selectDialogTitle)
+        .setItemChosenCallback((descriptor) -> {
           descriptorConsumer.consume(descriptor);
           descriptorToFront(project, descriptor);
-        }
-      }).createPopup().showInBestPositionFor(dataContext);
+        })
+        .createPopup()
+        .showInBestPositionFor(dataContext);
     }
   }
 

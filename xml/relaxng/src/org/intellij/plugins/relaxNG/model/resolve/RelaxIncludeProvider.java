@@ -66,7 +66,7 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     } else {
       return FileIncludeInfo.EMPTY;
     }
-    return infos.toArray(new FileIncludeInfo[infos.size()]);
+    return infos.toArray(FileIncludeInfo.EMPTY);
   }
 
   private static class RngBuilderAdapter extends NanoXmlUtil.IXMLBuilderAdapter {

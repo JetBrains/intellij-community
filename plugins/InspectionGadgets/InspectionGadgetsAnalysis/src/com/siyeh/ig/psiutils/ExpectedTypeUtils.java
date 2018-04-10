@@ -124,7 +124,10 @@ public class ExpectedTypeUtils {
 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
-      expectedType = variable.getType();
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && !typeElement.isInferredType()) {
+        expectedType = variable.getType();
+      }
     }
 
     @Override
@@ -234,18 +237,7 @@ public class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
-      final PsiType type = expression.getType();
-      if (type instanceof PsiPrimitiveType) {
-        expectedType = type;
-      }
-      else {
-        expectedType = PsiPrimitiveType.getUnboxedType(type);
-      }
-    }
-
-    @Override
-    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       final PsiType type = expression.getType();
       if (type instanceof PsiPrimitiveType) {
         expectedType = type;

@@ -24,21 +24,28 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,6 +53,8 @@ import java.util.Set;
  * @author spleaner
  */
 public class JavaExecutionUtil {
+  private static final Logger LOG = Logger.getInstance(JavaExecutionUtil.class);
+
   private JavaExecutionUtil() {
   }
 
@@ -155,7 +164,7 @@ public class JavaExecutionUtil {
     }
 
     int lastDot = rtClassName.lastIndexOf('.');
-    return lastDot == -1 || lastDot == rtClassName.length() - 1 ? rtClassName : rtClassName.substring(lastDot + 1, rtClassName.length());
+    return lastDot == -1 || lastDot == rtClassName.length() - 1 ? rtClassName : rtClassName.substring(lastDot + 1);
   }
 
   public static Module findModule(@NotNull final PsiClass psiClass) {
@@ -205,7 +214,69 @@ public class JavaExecutionUtil {
     ExecutionErrorDialog.show(e, title, project);
   }
 
-  public static boolean isRunnableClass(final PsiClass aClass) {
-    return PsiClassUtil.isRunnableClass(aClass, true);
+  @Nullable
+  public static String handleSpacesInAgentPath(@NotNull String agentPath,
+                                               @NotNull String copyDirName,
+                                               @Nullable String agentPathPropertyKey) {
+    return handleSpacesInAgentPath(agentPath, copyDirName, agentPathPropertyKey, null);
+  }
+
+  @Nullable
+  public static String handleSpacesInAgentPath(@NotNull String agentPath,
+                                               @NotNull String copyDirName,
+                                               @Nullable String agentPathPropertyKey,
+                                               @Nullable FileFilter fileFilter) {
+    String agentName = new File(agentPath).getName();
+    String containingDir = handleSpacesInContainingDir(agentPath, copyDirName, agentPathPropertyKey, fileFilter);
+    return containingDir == null ? null : FileUtil.join(containingDir, agentName);
+  }
+
+  @Nullable
+  private static String handleSpacesInContainingDir(@NotNull String agentPath,
+                                                    @NotNull String copyDirName,
+                                                    @Nullable String agentPathPropertyKey,
+                                                    @Nullable FileFilter fileFilter) {
+    String agentContainingDir;
+    String userDefined = agentPathPropertyKey == null ? null : System.getProperty(agentPathPropertyKey);
+    if (userDefined != null && new File(userDefined).exists()) {
+      agentContainingDir = userDefined;
+    } else {
+      agentContainingDir = new File(agentPath).getParent();
+    }
+    if (agentContainingDir.contains(" ")) {
+      File dir = new File(PathManager.getSystemPath(), copyDirName);
+      if (dir.getAbsolutePath().contains(" ")) {
+        try {
+          dir = FileUtil.createTempDirectory(copyDirName, "jars");
+          if (dir.getAbsolutePath().contains(" ")) {
+            String message = "agent not used since the agent path contains spaces: " + agentContainingDir;
+            if (agentPathPropertyKey != null) {
+              message += "\nOne can move the agent libraries to a directory with no spaces in path and specify its path in idea.properties as " +
+              agentPathPropertyKey + "=<path>";
+            }
+            LOG.info(message);
+            return null;
+          }
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          return null;
+        }
+      }
+
+      try {
+        LOG.info("Agent jars were copied to " + dir.getPath());
+        if (fileFilter == null) {
+          fileFilter = pathname -> FileUtilRt.extensionEquals(pathname.getPath(), "jar");
+        }
+        FileUtil.copyDir(new File(agentContainingDir), dir, fileFilter);
+        return dir.getPath();
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        return null;
+      }
+    }
+    return agentContainingDir;
   }
 }

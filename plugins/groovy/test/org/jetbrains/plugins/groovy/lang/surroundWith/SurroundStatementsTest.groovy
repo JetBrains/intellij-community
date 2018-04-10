@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * User: Dmitry.Krasilschikov
- * Date: 01.06.2007
  */
 
 

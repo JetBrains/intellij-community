@@ -88,8 +88,8 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
   @NotNull
   @Override
   public PsiImportStatementStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    final byte flags = dataStream.readByte();
-    final StringRef refText = dataStream.readName();
+    byte flags = dataStream.readByte();
+    String refText = dataStream.readNameString();
     return new PsiImportStatementStubImpl(parentStub, refText, flags);
   }
 

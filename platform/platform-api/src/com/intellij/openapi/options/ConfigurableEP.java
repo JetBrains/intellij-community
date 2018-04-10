@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.AbstractBundle;
@@ -23,10 +9,10 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -68,10 +54,17 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   public String bundle;
 
   public String getDisplayName() {
-    if (displayName != null) return displayName;
-    LOG.assertTrue(bundle != null, "Bundle missed for " + instanceClass);
-    final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
-    return displayName = CommonBundle.message(resourceBundle, key);
+    if (displayName == null) {
+      if (bundle != null) {
+        ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
+        displayName = CommonBundle.message(resourceBundle, key);
+      }
+      else {
+        displayName = providerClass != null ? providerClass : instanceClass != null ? instanceClass : implementationClass;
+        LOG.warn("Bundle missed for " + displayName);
+      }
+    }
+    return displayName;
   }
 
   /**
@@ -84,7 +77,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   }
 
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false)
+  @XCollection
   public ConfigurableEP[] children;
 
   /**

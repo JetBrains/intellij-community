@@ -21,34 +21,33 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PathListReferenceProvider;
 import org.jetbrains.annotations.NotNull;
-import org.testng.IMethodSelector;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
 public class TestNGSuiteReferenceContributor extends PsiReferenceContributor {
-  private static XmlAttributeValuePattern ourTestClassPattern =
+  private static final XmlAttributeValuePattern ourTestClassPattern =
     xmlAttributeValue(xmlAttribute("name").withParent(xmlTag().withName("class")
                         .withParent(xmlTag().withName("classes")
                                       .withParent(xmlTag().withName("test").withParent(xmlTag().withName("suite"))))));
 
-  private static XmlAttributeValuePattern ourListenerClassPattern =
+  private static final XmlAttributeValuePattern ourListenerClassPattern =
     xmlAttributeValue(xmlAttribute("class-name").withParent(xmlTag().withName("listener")
                                                               .withParent(xmlTag().withName("listeners")
                                                                             .withParent(xmlTag().withName("suite")))));
 
-  private static XmlAttributeValuePattern ourMethodSelectorPattern =
+  private static final XmlAttributeValuePattern ourMethodSelectorPattern =
     xmlAttributeValue(xmlAttribute("name").withParent(xmlTag().withName("selector-class")
                                                         .withParent(xmlTag().withName("method-selector")
                                                                       .withParent(xmlTag().withName("method-selectors")
                                                                                     .withParent(
                                                                                       xmlTag().withName(string().oneOf("suite", "test")))))));
 
-  private static XmlAttributeValuePattern ourPackagePattern =
+  private static final XmlAttributeValuePattern ourPackagePattern =
     xmlAttributeValue(xmlAttribute("name").withParent(xmlTag().withName("package")
                                                         .withParent(xmlTag().withName("packages")
                                                                       .withParent(xmlTag().withName("suite")))));
 
-  private static XmlAttributeValuePattern ourSuiteFilePattern =
+  private static final XmlAttributeValuePattern ourSuiteFilePattern =
     xmlAttributeValue(xmlAttribute("path").withParent(xmlTag().withName("suite-file")
                                                         .withParent(xmlTag().withName("suite-files")
                                                                       .withParent(xmlTag().withName("suite")))));

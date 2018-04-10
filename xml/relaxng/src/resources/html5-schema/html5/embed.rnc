@@ -158,6 +158,7 @@ namespace local = ""
 			                    | width
 			                    | id
 			                    | is
+			                    | slot
 			                    | class
 			                    | title
 			                    | dir

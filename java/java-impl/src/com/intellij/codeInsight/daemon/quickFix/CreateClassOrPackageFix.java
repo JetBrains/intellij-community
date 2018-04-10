@@ -167,7 +167,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
       }
 
       return DirectoryChooserUtil
-          .chooseDirectory(myWritableDirectoryList.toArray(new PsiDirectory[myWritableDirectoryList.size()]),
+          .chooseDirectory(myWritableDirectoryList.toArray(PsiDirectory.EMPTY_ARRAY),
                            preferredDirectory, project,
                            new HashMap<>());
     }

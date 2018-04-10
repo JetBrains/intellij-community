@@ -31,7 +31,7 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
     @NotNull
     @Override
     public RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings> getResolver()
-      throws RemoteException, IllegalStateException
+      throws IllegalStateException
     {
       return RemoteExternalSystemProjectResolver.NULL_OBJECT;
     }
@@ -39,31 +39,31 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
 
     @NotNull
     @Override
-    public RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings> getTaskManager() throws RemoteException {
+    public RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings> getTaskManager() {
       return RemoteExternalSystemTaskManager.NULL_OBJECT;
     }
 
     @Override
-    public void applySettings(@NotNull ExternalSystemExecutionSettings settings) throws RemoteException {
+    public void applySettings(@NotNull ExternalSystemExecutionSettings settings) {
     }
 
     @Override
-    public void applyProgressManager(@NotNull RemoteExternalSystemProgressNotificationManager progressManager) throws RemoteException {
+    public void applyProgressManager(@NotNull RemoteExternalSystemProgressNotificationManager progressManager) {
     }
 
     @Override
-    public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) {
       return false;
     }
 
     @Override
-    public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    public boolean cancelTask(@NotNull ExternalSystemTaskId id) {
       return false;
     }
 
     @NotNull
     @Override
-    public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
+    public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
       return Collections.emptyMap();
     }
   };

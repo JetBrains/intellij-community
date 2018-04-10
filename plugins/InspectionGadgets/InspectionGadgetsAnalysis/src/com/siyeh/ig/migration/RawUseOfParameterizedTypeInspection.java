@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +114,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         return;
       }
       super.visitTypeElement(typeElement);
-      final PsiElement parent = PsiTreeUtil.skipParentsOfType(typeElement, PsiTypeElement.class);
+      final PsiElement parent = PsiTreeUtil.skipParentsOfType(
+        typeElement, PsiTypeElement.class, PsiReferenceParameterList.class, PsiJavaCodeReferenceElement.class);
       if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiClassObjectAccessExpression) {
         return;
       }
@@ -122,21 +125,25 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (PsiTreeUtil.getParentOfType(typeElement, PsiComment.class) != null) {
         return;
       }
-      final PsiAnnotationMethod annotationMethod =
-        PsiTreeUtil.getParentOfType(typeElement, PsiAnnotationMethod.class, true, PsiClass.class);
-      if (ignoreUncompilable && annotationMethod != null) {
+      if (ignoreUncompilable && parent instanceof PsiAnnotationMethod) {
         // type of class type parameter cannot be parameterized if annotation method has default value
-        final PsiAnnotationMemberValue defaultValue = annotationMethod.getDefaultValue();
-        if (defaultValue != null && parent != annotationMethod) {
+        final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)parent).getDefaultValue();
+        if (defaultValue != null && typeElement.getParent() instanceof PsiTypeElement) {
           return;
         }
       }
-      if (parent instanceof PsiParameter && ignoreParametersOfOverridingMethods) {
+      if (parent instanceof PsiParameter) {
         final PsiParameter parameter = (PsiParameter)parent;
         final PsiElement declarationScope = parameter.getDeclarationScope();
         if (declarationScope instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)declarationScope;
-          if (MethodUtils.hasSuper(method)) {
+          if (ignoreParametersOfOverridingMethods) {
+            if (MethodUtils.getSuper(method) != null || MethodCallUtils.isUsedAsSuperConstructorCallArgument(parameter, false)) {
+              return;
+            }
+          }
+          else if (ignoreUncompilable &&
+                   (LibraryUtil.isOverrideOfLibraryMethod(method) || MethodCallUtils.isUsedAsSuperConstructorCallArgument(parameter, true))) {
             return;
           }
         }

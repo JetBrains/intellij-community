@@ -3,6 +3,16 @@ import os.path
 import sys
 
 from _pydev_bundle._pydev_tipper_common import do_find
+from _pydevd_bundle.pydevd_constants import IS_PY2
+
+if IS_PY2:
+    from inspect import getargspec
+else:
+    from inspect import getfullargspec
+
+    def getargspec(*args, **kwargs):
+        arg_spec = getfullargspec(*args, **kwargs)
+        return arg_spec.args, arg_spec.varargs, arg_spec.varkw, arg_spec.defaults
 
 try:
     xrange
@@ -140,10 +150,10 @@ def check_char(c):
         return '_'
     return c
 
-def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=getattr, filter=lambda name:True):
+def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=getattr, filter=lambda name:True):
     '''
         @param obj_to_complete: the object from where we should get the completions
-        @param dirComps: if passed, we should not 'dir' the object and should just iterate those passed as a parameter
+        @param dir_comps: if passed, we should not 'dir' the object and should just iterate those passed as a parameter
         @param getattr: the way to get a given object from the obj_to_complete (used for the completer)
         @param filter: a callable that receives the name and decides if it should be appended or not to the results
         @return: list of tuples, so that each tuple represents a completion with:
@@ -151,23 +161,23 @@ def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=geta
     '''
     ret = []
 
-    if dirComps is None:
-        dirComps = dir(obj_to_complete)
+    if dir_comps is None:
+        dir_comps = dir(obj_to_complete)
         if hasattr(obj_to_complete, '__dict__'):
-            dirComps.append('__dict__')
+            dir_comps.append('__dict__')
         if hasattr(obj_to_complete, '__class__'):
-            dirComps.append('__class__')
+            dir_comps.append('__class__')
 
-    getCompleteInfo = True
+    get_complete_info = True
 
-    if len(dirComps) > 1000:
+    if len(dir_comps) > 1000:
         #ok, we don't want to let our users wait forever...
         #no complete info for you...
 
-        getCompleteInfo = False
+        get_complete_info = False
 
     dontGetDocsOn = (float, int, str, tuple, list)
-    for d in dirComps:
+    for d in dir_comps:
 
         if d is None:
             continue
@@ -186,7 +196,7 @@ def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=geta
             ret.append((d, '', args, TYPE_BUILTIN))
         else:
 
-            if getCompleteInfo:
+            if get_complete_info:
                 try:
                     retType = TYPE_BUILTIN
 
@@ -212,7 +222,7 @@ def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=geta
 
                     if inspect.ismethod(obj) or inspect.isbuiltin(obj) or inspect.isfunction(obj) or inspect.isroutine(obj):
                         try:
-                            args, vargs, kwargs, defaults = inspect.getargspec(obj)
+                            args, vargs, kwargs, defaults = getargspec(obj)
 
                             r = ''
                             for a in (args):
@@ -242,7 +252,7 @@ def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=geta
                 except: #just ignore and get it without aditional info
                     ret.append((d, '', args, TYPE_BUILTIN))
 
-            else: #getCompleteInfo == False
+            else: #get_complete_info == False
                 if inspect.ismethod(obj) or inspect.isbuiltin(obj) or inspect.isfunction(obj) or inspect.isroutine(obj):
                     retType = TYPE_FUNCTION
 

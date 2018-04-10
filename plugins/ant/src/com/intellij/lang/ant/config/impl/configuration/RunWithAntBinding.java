@@ -38,7 +38,7 @@ public class RunWithAntBinding extends UIPropertyBinding {
   private final GlobalAntConfiguration myAntConfiguration;
   private boolean myEnabled = true;
   private boolean myLoadingValues = false;
-  private JRadioButton myUseCustomAnt;
+  private final JRadioButton myUseCustomAnt;
 
   public RunWithAntBinding(JRadioButton useDefaultAnt, JRadioButton useCastomAnt, ComboboxWithBrowseButton ants) {
     this(useDefaultAnt, useCastomAnt, ants, GlobalAntConfiguration.getInstance());

@@ -28,7 +28,7 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
   private static final Comparator<IndentUsageInfo> DECREASING_ORDER =
     (o1, o2) -> o1.getTimesUsed() < o2.getTimesUsed() ? 1 : o1.getTimesUsed() == o2.getTimesUsed() ? 0 : -1;
 
-  private List<LineIndentInfo> myLineInfos;
+  private final List<LineIndentInfo> myLineInfos;
 
   private int myPreviousLineIndent;
   private int myPreviousRelativeIndent;
@@ -36,9 +36,9 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
   private int myTotalLinesWithTabs = 0;
   private int myTotalLinesWithWhiteSpaces = 0;
 
-  private TIntIntHashMap myIndentToUsagesMap = new TIntIntHashMap();
+  private final TIntIntHashMap myIndentToUsagesMap = new TIntIntHashMap();
   private List<IndentUsageInfo> myIndentUsages = ContainerUtil.newArrayList();
-  private Stack<IndentData> myParentIndents = ContainerUtil.newStack(new IndentData(0, 0));
+  private final Stack<IndentData> myParentIndents = ContainerUtil.newStack(new IndentData(0, 0));
 
   public IndentUsageStatisticsImpl(@NotNull List<LineIndentInfo> lineInfos) {
     myLineInfos = lineInfos;

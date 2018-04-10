@@ -51,7 +51,7 @@ class Main {
     if (val != null) {
       return val;
     }
-    if (defVal.equals(val)) {
+    if (<warning descr="Condition 'defVal.equals(val)' is always 'false'">defVal.equals(val)</warning>) {
       return val;
     }
     return defVal;
@@ -68,10 +68,24 @@ class Main {
     if (<warning descr="Condition 'val == defVal' is always 'false'">val == defVal</warning>) {
       return val;
     }
-    if (defVal.equals(val)) {
+    if (<warning descr="Condition 'defVal.equals(val)' is always 'false'">defVal.equals(val)</warning>) {
       return val;
     }
     return defVal;
+  }
+
+  private static void test2(@NotNull Object defVal, @Nullable final Object val) {
+    if(val == defVal) {
+      if(<warning descr="Condition 'val == null' is always 'false'">val == null</warning>) {
+        System.out.println("oops");
+      }
+    }
+  }
+
+  private void test3(@Nullable Object val) {
+    if(<warning descr="Condition 'val != this || val != null' is always 'true'">val != this || <warning descr="Condition 'val != null' is always 'true' when reached">val != null</warning></warning>) {
+      System.out.println("never happens");
+    }
   }
 
 }

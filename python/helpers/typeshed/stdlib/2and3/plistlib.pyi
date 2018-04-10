@@ -5,8 +5,15 @@ from typing import (
     Type, TypeVar,
 )
 from typing import Dict as DictT
-from enum import Enum
 import sys
+if sys.version_info >= (3,):
+    from enum import Enum
+
+    class PlistFormat(Enum):
+        FMT_XML = ...  # type: PlistFormat
+        FMT_BINARY = ...  # type: PlistFormat
+    FMT_XML = PlistFormat.FMT_XML
+    FMT_BINARY = PlistFormat.FMT_BINARY
 
 mm = MutableMapping[str, Any]
 _D = TypeVar('_D', bound=mm)
@@ -15,15 +22,9 @@ if sys.version_info >= (3,):
 else:
     _Path = Union[str, unicode]
 
-
-if sys.version_info >= (3,):
-    class PlistFormat(Enum):
-        FMT_XML = ...  # type: PlistFormat
-        FMT_BINARY = ...  # type: PlistFormat
-
 if sys.version_info >= (3, 4):
     def load(fp: IO[bytes], *, fmt: Optional[PlistFormat] = ...,
-             use_builtin_types: bool, dict_type: Type[_D] =...) -> _D: ...
+             use_builtin_types: bool = ..., dict_type: Type[_D] = ...) -> _D: ...
     def loads(data: bytes, *, fmt: Optional[PlistFormat] = ...,
               use_builtin_types: bool = ..., dict_type: Type[_D] = ...) -> _D: ...
     def dump(value: Mapping[str, Any], fp: IO[bytes], *,
@@ -54,7 +55,3 @@ if sys.version_info >= (3,):
 class Data:
     data = ...  # type: bytes
     def __init__(self, data: bytes) -> None: ...
-
-if sys.version_info >= (3,):
-    FMT_XML = PlistFormat.FMT_XML
-    FMT_BINARY = PlistFormat.FMT_BINARY

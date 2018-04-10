@@ -244,6 +244,8 @@ public class ActionCallback implements Disposable {
 
     @NotNull
     public ActionCallback getWhenProcessed() {
+      if (myCallbacks.isEmpty()) return DONE;
+      
       final ActionCallback result = new ActionCallback(myCallbacks.size());
       Runnable setDoneRunnable = result.createSetDoneRunnable();
       for (ActionCallback each : myCallbacks) {

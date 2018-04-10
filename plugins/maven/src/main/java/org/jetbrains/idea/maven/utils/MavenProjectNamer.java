@@ -84,7 +84,7 @@ public class MavenProjectNamer {
   }
 
   private static void doBuildProjectTree(MavenProjectsManager manager, Map<MavenProject, Integer> res, List<MavenProject> rootProjects, int depth) {
-    MavenProject[] rootProjectArray = rootProjects.toArray(new MavenProject[rootProjects.size()]);
+    MavenProject[] rootProjectArray = rootProjects.toArray(new MavenProject[0]);
     Arrays.sort(rootProjectArray, new MavenProjectComparator());
 
     for (MavenProject project : rootProjectArray) {

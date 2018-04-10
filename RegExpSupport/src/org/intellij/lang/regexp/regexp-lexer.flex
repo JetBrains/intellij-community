@@ -41,6 +41,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
     private boolean allowTransformationEscapes;
     private boolean allowExtendedUnicodeCharacter;
     private boolean allowOneHexCharEscape;
+    private boolean allowMysqlBracketExpressions;
     private int maxOctal = 0777;
     private int minOctalDigits = 1;
 
@@ -59,6 +60,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
       this.allowEmptyCharacterClass = capabilities.contains(ALLOW_EMPTY_CHARACTER_CLASS);
       this.allowPosixBracketExpressions = capabilities.contains(POSIX_BRACKET_EXPRESSIONS);
       this.allowTransformationEscapes = capabilities.contains(TRANSFORMATION_ESCAPES);
+      this.allowMysqlBracketExpressions = capabilities.contains(MYSQL_BRACKET_EXPRESSIONS);
       if (capabilities.contains(MAX_OCTAL_177)) {
         maxOctal = 0177;
       }
@@ -113,6 +115,8 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
 %xstate PY_NAMED_GROUP_REF
 %xstate PY_COND_REF
 %xstate BRACKET_EXPRESSION
+%xstate MYSQL_CHAR_EXPRESSION
+%xstate MYSQL_CHAR_EQ_EXPRESSION
 %xstate EMBRACED_HEX
 
 DOT="."
@@ -125,7 +129,10 @@ RBRACKET="]"
 
 ESCAPE="\\"
 NAME=[:letter:]([:letter:]|_|-|" "|"("|")"|[:digit:])*
-GROUP_NAME=[:letter:]([:letter:]|_|-|" "|[:digit:])*
+GROUP_NAME_START=[:letter:]|_|\$|\\
+GROUP_NAME_PART={GROUP_NAME_START}|-|" "|[:digit:]
+GROUP_NAME={GROUP_NAME_START}({GROUP_NAME_PART})*
+MYSQL_CHAR_NAME=[:letter:](-|[:letter:])*[:digit:]?
 ANY=[^]
 
 META1 = {ESCAPE} | {LBRACKET}
@@ -317,11 +324,12 @@ HEX_CHAR=[0-9a-fA-F]
 }
 
 <CLASS1> {
-  {ESCAPE} "^"               { yypushstate(CLASS2); return RegExpTT.ESC_CHARACTER; }
+  {ESCAPE} "^"               { yybegin(CLASS2); return RegExpTT.ESC_CHARACTER; }
   {ESCAPE} "Q"               { yypushstate(QUOTED_CLASS1); return RegExpTT.QUOTE_BEGIN; }
   {ESCAPE} {RBRACKET}        { yybegin(CLASS2); return allowEmptyCharacterClass ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {RBRACKET}                 { if (allowEmptyCharacterClass) { yypopstate(); return RegExpTT.CLASS_END; } yybegin(CLASS2); return RegExpTT.CHARACTER; }
   {LBRACKET} / ":"           { yybegin(CLASS2); if (allowPosixBracketExpressions) { yypushback(1); } else if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } else { return RegExpTT.CHARACTER; } }
+  {LBRACKET} / [.=]          { yybegin(CLASS2); if (allowMysqlBracketExpressions) { yypushback(1); } else if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } else { return RegExpTT.CHARACTER; } }
   {LBRACKET} / "^"           { yybegin(CLASS2); if (allowNestedCharacterClasses) { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
   {LBRACKET}                 { yybegin(CLASS2); if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
   [\n\b\t\r\f ]              { if (commentMode) return com.intellij.psi.TokenType.WHITE_SPACE; yypushback(1); yybegin(CLASS2); }
@@ -329,9 +337,16 @@ HEX_CHAR=[0-9a-fA-F]
 }
 
 <CLASS2> {
-  {LBRACKET} ":"        { if (allowPosixBracketExpressions) {
+  {LBRACKET} [:=.]      { char c = yycharat(1);
+                          if (allowPosixBracketExpressions && c == ':') {
                             yybegin(BRACKET_EXPRESSION);
                             return RegExpTT.BRACKET_EXPRESSION_BEGIN;
+                          } else if (allowMysqlBracketExpressions && c == '=') {
+                            yybegin(MYSQL_CHAR_EQ_EXPRESSION);
+                            return RegExpTT.MYSQL_CHAR_EQ_BEGIN;
+                          } else if (allowMysqlBracketExpressions && c == '.') {
+                            yybegin(MYSQL_CHAR_EXPRESSION);
+                            return RegExpTT.MYSQL_CHAR_BEGIN;
                           } else {
                             yypushback(1);
                             return allowNestedCharacterClasses ? RegExpTT.CLASS_BEGIN : RegExpTT.CHARACTER;
@@ -351,6 +366,21 @@ HEX_CHAR=[0-9a-fA-F]
   "^"                                     { return RegExpTT.CARET; }
   {NAME}                                  { return RegExpTT.NAME;   }
   ":" {RBRACKET}                          { yybegin(CLASS2); return RegExpTT.BRACKET_EXPRESSION_END; }
+  [<>]                                    { return allowMysqlBracketExpressions ? RegExpTT.NAME : RegExpTT.BAD_CHARACTER; }
+  {ANY}                                   { return RegExpTT.BAD_CHARACTER; }
+}
+
+<MYSQL_CHAR_EXPRESSION> {
+  {MYSQL_CHAR_NAME}                       { return RegExpTT.NAME;   }
+  "." {RBRACKET}                          { yybegin(CLASS2); return RegExpTT.MYSQL_CHAR_END; }
+  {ANY} / "." {RBRACKET}                  { return RegExpTT.CHARACTER; }
+  {ANY}                                   { return RegExpTT.BAD_CHARACTER; }
+}
+
+<MYSQL_CHAR_EQ_EXPRESSION> {
+  {NAME}                                  { return RegExpTT.NAME;   }
+  "=" {RBRACKET}                          { yybegin(CLASS2); return RegExpTT.MYSQL_CHAR_EQ_END; }
+  {ANY} / "=" {RBRACKET}                  { return RegExpTT.CHARACTER; }
   {ANY}                                   { return RegExpTT.BAD_CHARACTER; }
 }
 

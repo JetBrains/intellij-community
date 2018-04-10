@@ -78,7 +78,7 @@ public class PyIterableVariableMacro extends Macro {
         }
       }
     }
-    return results.toArray(new LookupElement[results.size()]);
+    return results.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

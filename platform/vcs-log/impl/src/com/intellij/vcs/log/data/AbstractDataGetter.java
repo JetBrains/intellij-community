@@ -111,11 +111,18 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Override
   public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer, @Nullable ProgressIndicator indicator) {
     assert EventQueue.isDispatchThread();
-    loadCommitsData(getCommitsMap(hashes), consumer, indicator);
+    loadCommitsData(hashes, consumer, Consumer.EMPTY_CONSUMER, indicator);
   }
 
-  private void loadCommitsData(@NotNull final TIntIntHashMap commits,
-                               @NotNull final Consumer<List<T>> consumer,
+  public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer,
+                              @NotNull Consumer<Throwable> errorConsumer, @Nullable ProgressIndicator indicator) {
+    assert EventQueue.isDispatchThread();
+    loadCommitsData(getCommitsMap(hashes), consumer, errorConsumer, indicator);
+  }
+
+  private void loadCommitsData(@NotNull TIntIntHashMap commits,
+                               @NotNull Consumer<List<T>> consumer,
+                               @NotNull Consumer<Throwable> errorConsumer,
                                @Nullable ProgressIndicator indicator) {
     final List<T> result = ContainerUtil.newArrayList();
     final TIntHashSet toLoad = new TIntHashSet();
@@ -141,7 +148,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       Task.Backgroundable task =
         new Task.Backgroundable(null, "Loading Selected Details", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
           @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
+          public void run(@NotNull ProgressIndicator indicator) {
             indicator.checkCanceled();
             try {
               TIntObjectHashMap<T> map = preLoadCommitData(toLoad);
@@ -153,13 +160,19 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
               notifyLoaded();
             }
             catch (VcsException e) {
-              LOG.error(e);
+              LOG.warn(e);
+              throw new RuntimeException(e);
             }
           }
 
           @Override
           public void onSuccess() {
             consumer.consume(result);
+          }
+
+          @Override
+          public void onThrowable(@NotNull Throwable error) {
+            errorConsumer.consume(error);
           }
         };
       if (indicator != null) {

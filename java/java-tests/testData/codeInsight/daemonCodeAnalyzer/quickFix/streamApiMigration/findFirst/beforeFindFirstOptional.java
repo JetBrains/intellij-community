@@ -10,7 +10,7 @@ public class Main {
     Optional<String> found = Optional.empty();
     for (String s : li<caret>st) {
       if (Objects.nonNull(s)) {
-        found = Optional.of(s);
+        found = Optional.of(s); // optional!
         break;
       }
     }

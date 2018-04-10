@@ -51,6 +51,10 @@ public abstract class LookupElement extends UserDataHolderBase {
     return this;
   }
 
+  /**
+   * @return a PSI element associated with this lookup element. It's used for navigation, showing quick documentation and sorting by proximity to the current location.
+   * The default implementation tries to extract PSI element from {@link #getObject()} result.
+   */
   @Nullable
   public PsiElement getPsiElement() {
     Object o = getObject();
@@ -79,6 +83,14 @@ public abstract class LookupElement extends UserDataHolderBase {
 
   public void handleInsert(InsertionContext context) {
   }
+
+  /**
+   * @return whether {@link #handleInsert} expects all documents to be committed at the moment of its invocation.
+   * The default is {@code true}, overriders can change that, for example if automatic commit is too slow. 
+   */
+  public boolean requiresCommittedDocuments() {
+    return true;
+  } 
 
   public AutoCompletionPolicy getAutoCompletionPolicy() {
     return AutoCompletionPolicy.SETTINGS_DEPENDENT;

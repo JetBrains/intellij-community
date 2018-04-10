@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 public class TemplateVariable {
-  private String myName;
+  private String myName = "";
   private String myValue = "";
   private String myDescription = "";
   private boolean myReadOnly;

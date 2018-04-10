@@ -56,20 +56,8 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
     }
 
     @Override
-    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        return;
-      }
-      final PsiExpression operand = expression.getOperand();
-      checkForStaticFieldAccess(operand);
-    }
-
-    @Override
-    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
           !tokenType.equals(JavaTokenType.MINUSMINUS)) {

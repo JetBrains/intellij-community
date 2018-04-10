@@ -40,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
+import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -59,6 +60,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static git4idea.push.GitPushTarget.findRemote;
 import static java.util.stream.Collectors.toList;
 
 public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
@@ -87,6 +89,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @Nullable private GitPushTarget myCurrentTarget;
   @Nullable private String myError;
   @Nullable private Runnable myFireOnChangeAction;
+  private boolean myBranchWasUpdatedManually;
+  private boolean myEventFromRemoteChooser;
 
   public GitPushTargetPanel(@NotNull GitPushSupport support, @NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
     myPushSupport = support;
@@ -218,10 +222,20 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
           }
           else {
             myRemoteRenderer.updateLinkText(selectedValue.getPresentable());
-            if (myFireOnChangeAction != null && !myTargetEditor.isShowing()) {
-              //fireOnChange only when editing completed
-              myFireOnChangeAction.run();
+            myEventFromRemoteChooser = true;
+            if (!myTargetEditor.isShowing()) {
+              if (!myBranchWasUpdatedManually) {
+                String defaultPushTargetBranch = getDefaultPushTargetBranch();
+                if (defaultPushTargetBranch != null) {
+                  myTargetEditor.setText(defaultPushTargetBranch);
+                }
+              }
+              if (myFireOnChangeAction != null) {
+                //fireOnChange only when editing completed
+                myFireOnChangeAction.run();
+              }
             }
+            myEventFromRemoteChooser = false;
           }
         });
       }
@@ -245,6 +259,19 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     popup.show(new RelativePoint(component, point));
   }
 
+  @Nullable
+  private String getDefaultPushTargetBranch() {
+    GitLocalBranch sourceBranch = myRepository.getCurrentBranch();
+    GitRemote remote = findRemote(myRepository.getRemotes(), myRemoteRenderer.getText());
+    if (remote != null && sourceBranch != null) {
+      GitPushTarget fromPushSpec = GitPushTarget.getFromPushSpec(myRepository, remote, sourceBranch);
+      if (fromPushSpec != null) {
+        return fromPushSpec.getBranch().getNameForRemoteOperations();
+      }
+    }
+    return null;
+  }
+
   @NotNull
   private List<PopupItem> getPopupItems() {
     List<PopupItem> items = newArrayList(ContainerUtil.map(myRepository.getRemotes(), PopupItem::forRemote));
@@ -255,9 +282,9 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive, @Nullable String forceRenderedText) {
 
-    SimpleTextAttributes targetTextAttributes = PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
+    SimpleTextAttributes targetTextAttributes = PushLogTreeUtil.addTransparencyIfNeeded(renderer, SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
     if (myError != null) {
-      renderer.append(myError, PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.ERROR_ATTRIBUTES, isActive));
+      renderer.append(myError, PushLogTreeUtil.addTransparencyIfNeeded(renderer, SimpleTextAttributes.ERROR_ATTRIBUTES, isActive));
     }
     else {
       Collection<GitRemote> remotes = myRepository.getRemotes();
@@ -313,8 +340,14 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     String remoteName = myRemoteRenderer.getText();
     String branchName = myTargetEditor.getText();
     try {
-      myCurrentTarget = GitPushTarget.parse(myRepository, remoteName, branchName);
-      myTargetRenderer.updateLinkText(branchName);
+      GitPushTarget target = GitPushTarget.parse(myRepository, remoteName, branchName);
+      if (!target.equals(myCurrentTarget)) {
+        myCurrentTarget = target;
+        myTargetRenderer.updateLinkText(branchName);
+        if (!myEventFromRemoteChooser) {
+          myBranchWasUpdatedManually = true;
+        }
+      }
     }
     catch (ParseException e) {
       LOG.error("Invalid remote name shouldn't be allowed. [" + remoteName + ", " + branchName + "]", e);

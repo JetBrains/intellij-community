@@ -98,11 +98,11 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
         LOG.assertTrue(text != null, child);
         buffer.append(XmlUtil.getCharFromEntityRef(text));
       }
-      else if (elementType == XmlTokenType.XML_WHITE_SPACE || elementType == XmlTokenType.XML_DATA_CHARACTERS || elementType == XmlTokenType
-        .XML_ATTRIBUTE_VALUE_TOKEN) {
-        buffer.append(child.getText());
-      }
-      else if (elementType == TokenType.ERROR_ELEMENT || elementType == TokenType.NEW_LINE_INDENT) {
+      else if (elementType == XmlTokenType.XML_WHITE_SPACE ||
+               elementType == XmlTokenType.XML_DATA_CHARACTERS ||
+               elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+               elementType == TokenType.ERROR_ELEMENT ||
+               elementType == TokenType.NEW_LINE_INDENT) {
         buffer.append(child.getText());
       }
 
@@ -379,11 +379,11 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
   public TextRange getCDATAInterior() {
     PsiElement[] elements = getChildren();
-    int start = 0;
     int first = 0;
     if (elements.length > 0 && elements[0] instanceof PsiWhiteSpace) {
       first ++;
     }
+    int start = 0;
     if (elements.length > first && elements[first].getNode().getElementType() == XmlElementType.XML_CDATA) {
       ASTNode startNode = elements[first].getNode().findChildByType(XmlTokenType.XML_CDATA_START);
       if (startNode != null) {

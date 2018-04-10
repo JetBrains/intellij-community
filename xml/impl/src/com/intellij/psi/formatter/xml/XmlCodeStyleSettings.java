@@ -47,6 +47,7 @@ public class XmlCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean XML_KEEP_WHITE_SPACES_INSIDE_CDATA = false;
   public int XML_WHITE_SPACE_AROUND_CDATA = WS_AROUND_CDATA_PRESERVE;
 
+  @Deprecated
   public boolean XML_LEGACY_SETTINGS_IMPORTED = false;
 
   public XmlCodeStyleSettings(CodeStyleSettings container) {

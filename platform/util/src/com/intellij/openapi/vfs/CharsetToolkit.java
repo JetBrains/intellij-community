@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -553,6 +554,15 @@ public class CharsetToolkit {
   }
 
   /**
+   * Retrieve the platform charset of the system (determined by "sun.jnu.encoding" property)
+   */
+  @NotNull
+  public static Charset getPlatformCharset() {
+    String name = System.getProperty("sun.jnu.encoding");
+    return ObjectUtils.notNull(forName(name), getDefaultSystemCharset());
+  }
+
+  /**
    * Has a Byte Order Marker for UTF-8 (Used by Microsoft's Notepad and other editors).
    *
    * @param bom a buffer.
@@ -599,7 +609,7 @@ public class CharsetToolkit {
   @NotNull
   public static Charset[] getAvailableCharsets() {
     Collection<Charset> collection = Charset.availableCharsets().values();
-    return collection.toArray(new Charset[collection.size()]);
+    return collection.toArray(new Charset[0]);
   }
 
   @NotNull

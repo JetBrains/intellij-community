@@ -56,23 +56,27 @@ public class XmlTagValueImpl implements XmlTagValue{
   @NotNull
   public XmlText[] getTextElements() {
     XmlText[] textElements = myTextElements;
-    if(textElements != null) return textElements;
-    textElements = Arrays.stream(myElements)
-      .filter(element -> element instanceof XmlText)
-      .map(element -> (XmlText)element).toArray(XmlText[]::new);
-    return myTextElements = textElements.length == 0 ? XmlText.EMPTY_ARRAY : textElements;
+    if (textElements == null) {
+      textElements = Arrays.stream(myElements)
+        .filter(element -> element instanceof XmlText)
+        .map(element -> (XmlText)element).toArray(XmlText[]::new);
+      myTextElements = textElements = textElements.length == 0 ? XmlText.EMPTY_ARRAY : textElements;
+    }
+    return textElements;
   }
 
   @Override
   @NotNull
   public String getText() {
     String text = myText;
-    if(text != null) return text;
-    final StringBuilder consolidatedText = new StringBuilder();
-    for (final XmlTagChild element : myElements) {
-      consolidatedText.append(element.getText());
+    if (text == null) {
+      final StringBuilder consolidatedText = new StringBuilder();
+      for (final XmlTagChild element : myElements) {
+        consolidatedText.append(element.getText());
+      }
+      myText = text = consolidatedText.toString();
     }
-    return myText = consolidatedText.toString();
+    return text;
   }
 
   @Override
@@ -91,14 +95,15 @@ public class XmlTagValueImpl implements XmlTagValue{
   @NotNull
   public String getTrimmedText() {
     String trimmedText = myTrimmedText;
-    if(trimmedText != null) return trimmedText;
-
-    final StringBuilder consolidatedText = new StringBuilder();
-    final XmlText[] textElements = getTextElements();
-    for (final XmlText textElement : textElements) {
-      consolidatedText.append(textElement.getValue());
+    if (trimmedText == null) {
+      final StringBuilder consolidatedText = new StringBuilder();
+      final XmlText[] textElements = getTextElements();
+      for (final XmlText textElement : textElements) {
+        consolidatedText.append(textElement.getValue());
+      }
+      myTrimmedText = trimmedText = consolidatedText.toString().trim();
     }
-    return myTrimmedText = consolidatedText.toString().trim();
+    return trimmedText;
   }
 
   @Override

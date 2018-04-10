@@ -60,7 +60,7 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrCatchClause) result.add((GrCatchClause)cur);
     }
-    return result.toArray(new GrCatchClause[result.size()]);
+    return result.toArray(new GrCatchClause[0]);
   }
 
   @Override

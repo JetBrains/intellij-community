@@ -99,7 +99,7 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME = getScopeFilterName();
   }
 

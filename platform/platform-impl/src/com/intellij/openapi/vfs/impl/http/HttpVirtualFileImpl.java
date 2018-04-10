@@ -152,7 +152,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    return ContainerUtil.isEmpty(myChildren) ? EMPTY_ARRAY : myChildren.toArray(new VirtualFile[myChildren.size()]);
+    return ContainerUtil.isEmpty(myChildren) ? EMPTY_ARRAY : myChildren.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Nullable

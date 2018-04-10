@@ -55,8 +55,7 @@ public class ArtifactSorter {
   private List<JpsArtifact> doGetSortedArtifacts() {
     Graph<JpsArtifact> graph = createArtifactsGraph();
     DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<>(graph);
-    List<JpsArtifact> names = new ArrayList<>();
-    names.addAll(graph.getNodes());
+    List<JpsArtifact> names = new ArrayList<>(graph.getNodes());
     names.sort(builder.comparator());
     return names;
   }

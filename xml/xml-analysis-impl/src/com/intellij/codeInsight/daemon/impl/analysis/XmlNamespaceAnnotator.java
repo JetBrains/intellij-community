@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 17.10.13
  */
 public class XmlNamespaceAnnotator implements Annotator {
 

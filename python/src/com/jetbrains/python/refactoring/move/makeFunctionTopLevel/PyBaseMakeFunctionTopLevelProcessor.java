@@ -30,7 +30,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -95,6 +95,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return ArrayUtil.toObjectArray(PyRefactoringUtil.findUsages(myFunction, false), UsageInfo.class);
   }
 
+  @NotNull
   @Override
   protected final String getCommandName() {
     return getRefactoringName();

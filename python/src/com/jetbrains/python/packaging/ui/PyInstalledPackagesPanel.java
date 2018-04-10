@@ -214,7 +214,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       @Override
       public boolean isVisible() {
         final Sdk sdk = getSelectedSdk();
-        return sdk != null && PythonSdkType.isCondaVirtualEnv(sdk);
+        return sdk != null && PythonSdkType.isConda(sdk);
       }
     }};
   }

@@ -17,3 +17,29 @@ class UnnecessaryConditionalExpression {
     return <warning descr="'a == b ? a : b' can be simplified to 'b'">a == b ? a : b</warning>;
   }
 }
+
+class InsideLambdaInOverloadedMethod {
+  Boolean myField;
+  void m(I<Boolean> i) {}
+  void m(IVoid i) {}
+
+  Boolean get() {return myField;}
+
+  {
+    m(() -> <warning descr="'get() ? false : true' can be simplified to '!get()'">get() ? false : true</warning>);
+    m(() -> get() ? true : false);
+  }
+}
+
+interface I<T> {
+  T f();
+}
+
+interface IVoid extends I<Void>{
+  void foo();
+
+  @Override
+  default Void f() {
+    return null;
+  }
+}

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -24,6 +10,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
@@ -44,7 +31,7 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
  */
 public class PyTypeCheckerInspection extends PyInspection {
   private static final Logger LOG = Logger.getInstance(PyTypeCheckerInspection.class.getName());
-  private static Key<Long> TIME_KEY = Key.create("PyTypeCheckerInspection.StartTime");
+  private static final Key<Long> TIME_KEY = Key.create("PyTypeCheckerInspection.StartTime");
 
   @NotNull
   @Override
@@ -111,7 +98,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyType returnType = myTypeEvalContext.getReturnType(function);
 
       if (function.isAsync() || function.isGenerator()) {
-        return Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(returnType, myTypeEvalContext));
+        return Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(returnType));
       }
 
       return returnType;
@@ -203,7 +190,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       final List<AnalyzeArgumentResult> result = new ArrayList<>();
 
-      final PyExpression receiver = callSite.getReceiver(markedCallee.getCallable());
+      final PyExpression receiver = callSite.getReceiver(markedCallee.getElement());
       final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext);
       final Map<PyExpression, PyCallableParameter> mappedParameters = mapping.getMappedParameters();
 
@@ -212,7 +199,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         final PyCallableParameter parameter = entry.getValue();
         final PyType expected = parameter.getArgumentType(myTypeEvalContext);
         final PyType actual = myTypeEvalContext.getType(argument);
-        final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
         result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
       }
       final PyCallableParameter positionalContainer = getMappedPositionalContainer(mappedParameters);
@@ -223,7 +210,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (keywordContainer != null) {
         result.addAll(analyzeContainerMapping(keywordContainer, getArgumentsMappedToKeywordContainer(mappedParameters), substitutions));
       }
-      return new AnalyzeCalleeResults(markedCallee.getCallableType(), markedCallee.getCallable(), result);
+      return new AnalyzeCalleeResults(markedCallee.getCallableType(), markedCallee.getElement(), result);
     }
 
     @NotNull
@@ -234,7 +221,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
         final PyType actual = PyUnionType.union(arguments.stream().map(e -> myTypeEvalContext.getType(e)).collect(Collectors.toList()));
-        final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
         return arguments.stream()
           .map(argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched))
           .collect(Collectors.toList());
@@ -243,11 +230,18 @@ public class PyTypeCheckerInspection extends PyInspection {
         return arguments.stream()
           .map(argument -> {
             final PyType actual = myTypeEvalContext.getType(argument);
-            final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+            final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
             return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
           })
           .collect(Collectors.toList());
       }
+    }
+
+    private boolean matchParameterAndArgument(@Nullable PyType parameterType,
+                                              @Nullable PyType argumentType,
+                                              @NotNull Map<PyGenericType, PyType> substitutions) {
+      return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
+             !PyProtocolsKt.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext);
     }
 
     @Nullable

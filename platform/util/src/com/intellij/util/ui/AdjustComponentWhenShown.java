@@ -21,8 +21,6 @@ import java.awt.event.ComponentListener;
 
 /**
  * @author irengrig
- *         Date: 1/14/11
- *         Time: 1:30 PM
  */
 public abstract class AdjustComponentWhenShown {
   private boolean myIsAdjusted;

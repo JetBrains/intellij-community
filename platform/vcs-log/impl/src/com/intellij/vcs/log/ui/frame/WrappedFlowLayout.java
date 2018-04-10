@@ -20,8 +20,8 @@ import java.awt.*;
 
 public class WrappedFlowLayout extends FlowLayout {
 
-  public WrappedFlowLayout(int hgap, int vgap) {
-    super(FlowLayout.LEADING, hgap, vgap);
+  public WrappedFlowLayout(int hGap, int vGap) {
+    super(FlowLayout.LEADING, hGap, vGap);
   }
 
   @Override

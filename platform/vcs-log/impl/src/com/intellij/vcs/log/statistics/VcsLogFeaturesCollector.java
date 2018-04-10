@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
-import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -43,7 +42,7 @@ public class VcsLogFeaturesCollector extends AbstractProjectsUsagesCollector {
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
+  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     if (projectLog != null) {
       VcsLogUiImpl ui = projectLog.getMainLogUi();
@@ -59,8 +58,8 @@ public class VcsLogFeaturesCollector extends AbstractProjectsUsagesCollector {
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.bek", sortType.equals(PermanentGraph.SortType.Bek)));
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.normal", sortType.equals(PermanentGraph.SortType.Normal)));
 
-        if (ui.isMultipleRoots()) {
-          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", properties.get(SHOW_ROOT_NAMES)));
+        if (ui.getColorManager().isMultipleRoots()) {
+          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", properties.get(CommonUiProperties.SHOW_ROOT_NAMES)));
         }
 
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.compact", properties.get(COMPACT_REFERENCES_VIEW)));

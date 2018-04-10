@@ -1,73 +1,66 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.util;
 
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.JBIterable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
 /**
  *  @author dsl
  */
-public class PsiUtilTest extends LightCodeInsightTestCase {
+public class PsiUtilTest extends LightCodeInsightFixtureTestCase {
   public void testTypeParameterIterator() {
     PsiClass classA = createClass("class A<T> {}");
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA);
-    compareIterator(new String[]{"T"}, iterator);
-  }
-
-  private static PsiClass createClass(String text) throws IncorrectOperationException {
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(ourProject).getElementFactory();
-    final PsiClass classA = factory.createClassFromText(text, null).getInnerClasses()[0];
-    return classA;
+    Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA);
+    compareIterator(iterator, "T");
   }
 
   public void testTypeParameterIterator1() {
-    final PsiClass classA = createClass("class A<T> { class B<X> {}}");
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA.getInnerClasses()[0]);
-    compareIterator(new String[]{"X","T"}, iterator);
+    PsiClass classA = createClass("class A<T> { class B<X> {} }");
+    Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA.getInnerClasses()[0]);
+    compareIterator(iterator, "X", "T");
   }
 
   public void testTypeParameterIterator2() {
-    final PsiClass classA = createClass("class A<T> { static class B<X> {}}");
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA.getInnerClasses()[0]);
-    compareIterator(new String[]{"X"}, iterator);
+    PsiClass classA = createClass("class A<T> { static class B<X> {} }");
+    Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA.getInnerClasses()[0]);
+    compareIterator(iterator, "X");
   }
 
   public void testTypeParameterIterator3() {
-    final PsiClass classA = createClass("class A<T> { class B<X, Y> {}}");
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA.getInnerClasses()[0]);
-    compareIterator(new String[]{"Y", "X", "T"}, iterator);
+    PsiClass classA = createClass("class A<T> { class B<X, Y> {} }");
+    Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA.getInnerClasses()[0]);
+    compareIterator(iterator, "Y", "X", "T");
+  }
+
+  public void testTopLevelClass() {
+    PsiClass outer = ((PsiJavaFile)myFixture.configureByText("a.java", "class Outer { class Inner {} }")).getClasses()[0];
+    assertSame(outer, PsiUtil.getTopLevelClass(outer));
+    PsiClass inner = outer.getInnerClasses()[0];
+    assertSame(outer, PsiUtil.getTopLevelClass(inner));
+  }
+
+  public void testPackageName() {
+    PsiClass outer = ((PsiJavaFile)myFixture.configureByText("a.java", "package pkg;\nclass Outer { class Inner {} }")).getClasses()[0];
+    assertEquals("pkg", PsiUtil.getPackageName(outer));
+    PsiClass inner = outer.getInnerClasses()[0];
+    assertEquals("pkg", PsiUtil.getPackageName(inner));
   }
 
 
-  private static void compareIterator(String[] expected, Iterator<PsiTypeParameter> it) {
-    final ArrayList<String> actual = new ArrayList<>();
-    while (it.hasNext()) {
-      PsiTypeParameter typeParameter = it.next();
-      actual.add(typeParameter.getName());
-    }
-    assertEquals(Arrays.asList(expected).toString(), actual.toString());
+  private PsiClass createClass(String text) throws IncorrectOperationException {
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createClassFromText(text, null).getInnerClasses()[0];
+  }
+
+  private static void compareIterator(Iterator<PsiTypeParameter> it, String... expected) {
+    assertEquals(Arrays.asList(expected), JBIterable.once(it).map(PsiTypeParameter::getName).toList());
   }
 }

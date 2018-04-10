@@ -1,6 +1,7 @@
 
 import groovy.xml.MarkupBuilder
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal
+import org.gradle.util.*
 
 String[] ijTestIncludes = ${TEST_NAME_INCLUDES}
 boolean ijTestFilteringSupported = GradleVersion.current().compareTo(GradleVersion.version("1.10"))>=0
@@ -42,7 +43,7 @@ gradle.taskGraph.beforeTask { Task task ->
     try {
       try {
         def urls = task.classpath.files.findAll{
-          it.name.equals('idea_rt.jar') || it.name.startsWith('junit')
+          it.name == 'idea_rt.jar' || it.name.startsWith('junit')
         }.collect { it.toURI().toURL()}
         def classLoader = Class.forName("org.gradle.launcher.daemon.bootstrap.DaemonMain").getClassLoader()
         if(classLoader instanceof URLClassLoader) {
@@ -71,6 +72,7 @@ gradle.taskGraph.beforeTask { Task task ->
           ijTestIncludes.each(){ includeTestsMatching "${it}" }
         }
       }
+      task.testLogging.showStandardStreams = false
     }
     catch (all) {
       logger.error("", all)

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -154,8 +153,12 @@ public class MavenRootModelAdapter {
     addSourceFolder(path, rootType, false, rootType.createDefaultProperties());
   }
 
+  public void addGeneratedJavaSourceFolder(String path, JavaSourceRootType rootType, boolean ifNotEmpty) {
+    addSourceFolder(path, rootType, ifNotEmpty, JpsJavaExtensionService.getInstance().createSourceRootProperties("", true));
+  }
+
   public void addGeneratedJavaSourceFolder(String path, JavaSourceRootType rootType) {
-    addSourceFolder(path, rootType, true, JpsJavaExtensionService.getInstance().createSourceRootProperties("", true));
+    addGeneratedJavaSourceFolder(path, rootType, true);
   }
 
   private  <P extends JpsElement> void addSourceFolder(@NotNull String path, final @NotNull JpsModuleSourceRootType<P> rootType, boolean ifNotEmpty,
@@ -285,13 +288,7 @@ public class MavenRootModelAdapter {
       e = myRootModel.addModuleOrderEntry(m);
     }
     else {
-      AccessToken accessToken = ReadAction.start();
-      try {
-        e = myRootModel.addInvalidModuleEntry(moduleName);
-      }
-      finally {
-        accessToken.finish();
-      }
+      e = ReadAction.compute(() -> myRootModel.addInvalidModuleEntry(moduleName));
     }
 
     e.setScope(scope);

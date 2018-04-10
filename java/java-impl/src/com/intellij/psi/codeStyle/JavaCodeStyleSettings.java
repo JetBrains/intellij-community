@@ -15,12 +15,15 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +40,15 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public String STATIC_FIELD_NAME_PREFIX = "";
   public String PARAMETER_NAME_PREFIX = "";
   public String LOCAL_VARIABLE_NAME_PREFIX = "";
+  public String TEST_NAME_PREFIX = "";
+  public String SUBCLASS_NAME_PREFIX = "";
 
   public String FIELD_NAME_SUFFIX = "";
   public String STATIC_FIELD_NAME_SUFFIX = "";
   public String PARAMETER_NAME_SUFFIX = "";
   public String LOCAL_VARIABLE_NAME_SUFFIX = "";
+  public String TEST_NAME_SUFFIX = "Test";
+  public String SUBCLASS_NAME_SUFFIX = "Impl";
 
   public boolean PREFER_LONGER_NAMES = true;
 
@@ -364,7 +371,15 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     }
   }
 
+  public static JavaCodeStyleSettings getInstance(@NotNull PsiFile file) {
+    return CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
+  }
+
+  /**
+   * For production code use {@link #getInstance(PsiFile)}
+   */
+  @TestOnly
   public static JavaCodeStyleSettings getInstance(@NotNull Project project) {
-    return CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
+    return CodeStyle.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
   }
 }

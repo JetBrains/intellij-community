@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
 */
 public class XmlTextLiteralEscaper extends LiteralTextEscaper<XmlTextImpl> {
-  public XmlTextLiteralEscaper(final XmlTextImpl xmlText) {
+  public XmlTextLiteralEscaper(@NotNull XmlTextImpl xmlText) {
     super(xmlText);
   }
 

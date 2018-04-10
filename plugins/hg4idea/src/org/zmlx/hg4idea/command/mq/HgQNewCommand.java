@@ -15,10 +15,10 @@
  */
 package org.zmlx.hg4idea.command.mq;
 
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
@@ -43,7 +43,7 @@ public class HgQNewCommand extends HgCommitTypeCommand {
   }
 
   @Override
-  protected void executeChunked(@NotNull List<List<String>> chunkedCommits) throws HgCommandException, VcsException {
+  protected void executeChunked(@NotNull List<List<String>> chunkedCommits) throws VcsException {
     if (chunkedCommits.isEmpty()) {
       executeQNewInCurrentThread(ContainerUtil.emptyList());
     }
@@ -59,8 +59,7 @@ public class HgQNewCommand extends HgCommitTypeCommand {
       }
     }
     myRepository.update();
-    final MessageBus messageBus = myProject.getMessageBus();
-    messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
+    BackgroundTaskUtil.syncPublisher(myProject, HgVcs.REMOTE_TOPIC).update(myProject, null);
   }
 
   private void executeQRefreshInCurrentThread(@NotNull List<String> chunkFiles) throws VcsException {

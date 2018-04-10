@@ -40,6 +40,7 @@ public class UpdateConfigurable extends BaseConfigurable {
     return CvsBundle.getCvsDisplayName();
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.versionControl.cvs.options";
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.lang.ASTFactory;
@@ -57,6 +43,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return "Property{ key = " + getKey() + ", value = " + getValue() + "}";
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), name, "xxx", null);
     ASTNode keyNode = getKeyNode();
@@ -71,6 +58,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return this;
   }
 
+  @Override
   public void setValue(@NotNull String value) throws IncorrectOperationException {
     ASTNode node = getValueNode();
     PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", value, getKeyValueDelimiter());
@@ -90,10 +78,12 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     }
   }
 
+  @Override
   public String getName() {
     return getUnescapedKey();
   }
 
+  @Override
   public String getKey() {
     final PropertyStub stub = getStub();
     if (stub != null) {
@@ -117,6 +107,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS);
   }
 
+  @Override
   public String getValue() {
     final ASTNode node = getValueNode();
     if (node == null) {
@@ -125,6 +116,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return node.getText();
   }
 
+  @Override
   @Nullable
   public String getUnescapedValue() {
     return unescape(getValue());
@@ -349,6 +341,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return startSpaces == -1 ? null : new TextRange(startSpaces, len);
   }
 
+  @Override
   @Nullable
   public String getUnescapedKey() {
     return unescape(getKey());
@@ -360,6 +353,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return PlatformIcons.PROPERTY_ICON;
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     final ASTNode parentNode = getParent().getNode();
     assert parentNode != null;
@@ -374,10 +368,12 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     }
   }
 
+  @Override
   public PropertiesFile getPropertiesFile() {
     return (PropertiesFile)super.getContainingFile();
   }
 
+  @Override
   public String getDocCommentText() {
     StringBuilder text = new StringBuilder();
     for (PsiElement doc = getPrevSibling(); doc != null; doc = doc.getPrevSibling()) {
@@ -403,22 +399,27 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return this;
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     // property ref can occur in any file
     return GlobalSearchScope.allScope(getProject());
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
+      @Override
       public String getPresentableText() {
         return getName();
       }
 
+      @Override
       public String getLocationString() {
         return getPropertiesFile().getName();
       }
 
+      @Override
       public Icon getIcon(final boolean open) {
         return null;
       }

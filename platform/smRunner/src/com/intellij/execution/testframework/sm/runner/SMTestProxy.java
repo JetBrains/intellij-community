@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
@@ -24,7 +11,6 @@ import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +18,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
@@ -53,6 +38,8 @@ import java.util.List;
  * @author Roman Chernyatchik
  */
 public class SMTestProxy extends AbstractTestProxy {
+  public static final Key<String> NODE_ID = Key.create("test.proxy.id");
+
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
 
   private final String myName;
@@ -216,9 +203,11 @@ public class SMTestProxy extends AbstractTestProxy {
     //
     //TODO reset children cache
     child.setParent(this);
-    // if parent is being printed then all childs output
-    // should be also send to the same printer
-    child.setPrinter(myPrinter);
+
+    boolean printOwnContentOnly = this instanceof SMRootTestProxy && ((SMRootTestProxy)this).shouldPrintOwnContentOnly();
+    if (!printOwnContentOnly) {
+      child.setPrinter(myPrinter);
+    }
     if (myPreferredPrinter != null && child.myPreferredPrinter == null) {
       child.setPreferredPrinter(myPreferredPrinter);
     }
@@ -256,17 +245,11 @@ public class SMTestProxy extends AbstractTestProxy {
       String protocolId = VirtualFileManager.extractProtocol(locationUrl);
       if (protocolId != null) {
         String path = VirtualFileManager.extractPath(locationUrl);
-        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
-          try {
-            DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+          return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
             List<Location> locations = myLocator.getLocation(protocolId, path, myMetainfo, project, searchScope);
-            if (!locations.isEmpty()) {
-              return locations.get(0);
-            }
-          }
-          finally {
-            DumbService.getInstance(project).setAlternativeResolveEnabled(false);
-          }
+            return !locations.isEmpty() ? locations.get(0) : null;
+          });
         }
       }
     }
@@ -378,7 +361,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   private String getDurationString() {
     final Long duration = getDuration();
-    return duration != null ? StringUtil.formatDuration(duration.longValue()) : null;
+    return duration != null ? StringUtil.formatDuration(duration.longValue(), "\u2009") : null;
   }
 
   @Override
@@ -608,18 +591,29 @@ public class SMTestProxy extends AbstractTestProxy {
     });
   }
 
+  /**
+   * @deprecated use {@link #addOutput(String, Key)}
+   */
   public void addStdOutput(final String output, final Key outputType) {
-    addAfterLastPassed(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(output, ConsoleViewContentType.getConsoleViewType(outputType));
-      }
-    });
+    addOutput(output, outputType);
   }
 
-  public void addStdErr(final String output) {
+  public final void addStdOutput(@NotNull String output) {
+    addOutput(output, ProcessOutputTypes.STDOUT);
+  }
+  
+  public final void addStdErr(@NotNull String output) {
+    addOutput(output, ProcessOutputTypes.STDERR);
+  }
+
+  public final void addSystemOutput(final String output) {
+    addOutput(output, ProcessOutputTypes.SYSTEM);
+  }
+
+  public void addOutput(@NotNull String output, @NotNull Key outputType) {
     addAfterLastPassed(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(output, ConsoleViewContentType.ERROR_OUTPUT);
+      public void printOn(@NotNull Printer printer) {
+        printer.printWithAnsiColoring(output, outputType);
       }
     });
   }
@@ -650,14 +644,6 @@ public class SMTestProxy extends AbstractTestProxy {
     }
   }
 
-  public void addSystemOutput(final String output) {
-    addAfterLastPassed(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(output, ConsoleViewContentType.SYSTEM_OUTPUT);
-      }
-    });
-  }
-
   @NotNull
   public String getPresentableName() {
     if (myPresentableName == null) {
@@ -681,15 +667,6 @@ public class SMTestProxy extends AbstractTestProxy {
       return ((CompoundTestFailedState)myState).getHyperlinks().get(0);
     }
 
-    if (myChildren != null) {
-      for (SMTestProxy child : myChildren) {
-        if (!child.isDefect()) continue;
-        final DiffHyperlink provider = child.getDiffViewerProvider();
-        if (provider != null) {
-          return provider;
-        }
-      }
-    }
     return null;
   }
 
@@ -892,6 +869,7 @@ public class SMTestProxy extends AbstractTestProxy {
     private String myComment;
     private String myRootLocationUrl;
     private ProcessHandler myHandler;
+    private boolean myShouldPrintOwnContentOnly = false;
 
     public SMRootTestProxy() {
       this(false);
@@ -958,6 +936,30 @@ public class SMTestProxy extends AbstractTestProxy {
         return SuiteFinishedState.TESTS_REPORTER_NOT_ATTACHED;
       }
       return super.determineSuiteStateOnFinished();
+    }
+
+    public void testingRestarted() {
+      if (!getChildren().isEmpty()) {
+        getChildren().clear();
+      }
+      clear();
+    }
+
+    boolean shouldPrintOwnContentOnly() {
+      return myShouldPrintOwnContentOnly;
+    }
+
+    public void setShouldPrintOwnContentOnly(boolean shouldPrintOwnContentOnly) {
+      myShouldPrintOwnContentOnly = shouldPrintOwnContentOnly;
+    }
+
+    public void printOn(@NotNull Printer printer) {
+      if (myShouldPrintOwnContentOnly) {
+        printOwnPrintablesOn(printer, false);
+      }
+      else {
+        super.printOn(printer);
+      }
     }
   }
 }

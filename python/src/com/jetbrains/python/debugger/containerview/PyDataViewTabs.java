@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 class PyDataViewTabs extends JBRunnerTabs {
-
+  public static final String EMPTY_TEXT = "Run console or debugger to view available data ";
   private static final String HELP_ID = "reference.toolWindows.PyDataView";
 
   public PyDataViewTabs(@NotNull Project project) {
@@ -40,7 +40,7 @@ class PyDataViewTabs extends JBRunnerTabs {
     super.paintComponent(g);
     if (isEmptyVisible()) {
       UISettings.setupAntialiasing(g);
-      UIUtil.drawCenteredString((Graphics2D)g, g.getClipBounds(), PyDataViewToolWindowFactory.EMPTY_TEXT);
+      UIUtil.drawCenteredString((Graphics2D)g, g.getClipBounds(), EMPTY_TEXT);
     }
   }
 

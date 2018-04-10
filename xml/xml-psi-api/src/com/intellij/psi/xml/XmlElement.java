@@ -25,8 +25,12 @@ import com.intellij.psi.search.PsiElementProcessor;
 public interface XmlElement extends PsiElement {
   Key<XmlElement> INCLUDING_ELEMENT = Key.create("INCLUDING_ELEMENT");
   Key<PsiElement> DEPENDING_ELEMENT = Key.create("DEPENDING_ELEMENT");
+  Key<Boolean> DO_NOT_VALIDATE = Key.create("do not validate");
 
   XmlElement[] EMPTY_ARRAY = new XmlElement[0];
 
   boolean processElements(PsiElementProcessor processor, PsiElement place);
+  default boolean skipValidation() {
+    return false;
+  }
 }

@@ -17,6 +17,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,6 +38,8 @@ import java.util.List;
  * The handler for git commands with text outputs
  */
 public abstract class GitTextHandler extends GitHandler {
+  private static final int WAIT_TIMEOUT_MS = 50;
+  private static final int TERMINATION_TIMEOUT_MS = 1000 * 60;
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
   private volatile boolean myIsDestroyed;
@@ -47,12 +49,23 @@ public abstract class GitTextHandler extends GitHandler {
     super(project, directory, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
+  protected GitTextHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command, List<String> configParameters) {
+  protected GitTextHandler(@NotNull Project project,
+                           @NotNull VirtualFile vcsRoot,
+                           @NotNull GitCommand command,
+                           List<String> configParameters) {
     super(project, vcsRoot, command, configParameters);
+  }
+
+  public GitTextHandler(@Nullable Project project,
+                        @NotNull File directory,
+                        @NotNull String pathToExecutable,
+                        @NotNull GitCommand command,
+                        @NotNull List<String> configParameters) {
+    super(project, directory, pathToExecutable, command, configParameters);
   }
 
   @Nullable
@@ -82,7 +95,6 @@ public abstract class GitTextHandler extends GitHandler {
         final int exitCode = event.getExitCode();
         try {
           setExitCode(exitCode);
-          cleanupEnv();
           GitTextHandler.this.processTerminated(exitCode);
         }
         finally {
@@ -129,34 +141,43 @@ public abstract class GitTextHandler extends GitHandler {
   protected void waitForProcess() {
     if (myHandler != null) {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      while (!myHandler.waitFor(50)) {
+      while (!myHandler.waitFor(WAIT_TIMEOUT_MS)) {
         try {
           if (indicator != null) {
             indicator.checkCanceled();
           }
         }
         catch (ProcessCanceledException pce) {
-          myHandler.destroyProcess();
+          if (!tryKill()) {
+            LOG.error("Could not terminate [" + printableCommandLine() + "].");
+          }
           throw pce;
         }
       }
     }
   }
 
-  public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    commandLine.setCharset(getCharset());
-    return new MyOSProcessHandler(commandLine);
-  }
+  private boolean tryKill() {
+    myHandler.destroyProcess();
 
-  private static class MyOSProcessHandler extends KillableProcessHandler {
-    private MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-      super(commandLine, true);
+    // signal was sent, but we still need to wait for process to finish its dark deeds
+    if (myHandler.waitFor(TERMINATION_TIMEOUT_MS)) {
+      return true;
     }
 
-    @NotNull
-    @Override
-    public Charset getCharset() {
-      return myCharset;
+    LOG.warn("Soft-kill failed for [" + printableCommandLine() + "].");
+
+    ExecutionManagerImpl.stopProcess(myHandler);
+    return myHandler.waitFor(TERMINATION_TIMEOUT_MS);
+  }
+
+  protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    return new MyOSProcessHandler(commandLine, true);
+  }
+
+  protected static class MyOSProcessHandler extends KillableProcessHandler {
+    protected MyOSProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
+      super(commandLine, withMediator);
     }
 
     @NotNull

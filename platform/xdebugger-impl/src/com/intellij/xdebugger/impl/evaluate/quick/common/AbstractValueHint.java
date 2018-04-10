@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
@@ -28,6 +16,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -35,6 +24,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -50,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
+import java.util.Objects;
 
 /**
  * @author nik
@@ -159,15 +150,24 @@ public abstract class AbstractValueHint {
       return;
     }
 
-    if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
-      createHighlighter();
-    }
-    else {
+    createHighlighter();
+    if (myType != ValueHintType.MOUSE_ALT_OVER_HINT) {
       evaluateAndShowHint();
     }
   }
 
-  void createHighlighter() {
+  private static final Key<TextAttributes> HINT_TEXT_ATTRIBUTES = Key.create("HINT_TEXT_ATTRIBUTES");
+
+  private void setHighlighterAttributes() {
+    if (myHighlighter != null) {
+      TextAttributes attributes = myHighlighter.getUserData(HINT_TEXT_ATTRIBUTES);
+      if (attributes != null) {
+        ((RangeHighlighterEx)myHighlighter).setTextAttributes(attributes);
+      }
+    }
+  }
+
+  private void createHighlighter() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes;
     if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
@@ -175,16 +175,10 @@ public abstract class AbstractValueHint {
       attributes = NavigationUtil.patchAttributesColor(attributes, myCurrentRange, myEditor);
     }
     else {
-      TextAttributesKey attributesKey = DebuggerColors.EVALUATED_EXPRESSION_ATTRIBUTES;
-      MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), myProject, false);
-      if (model != null && !((MarkupModelEx)model).processRangeHighlightersOverlappingWith(
-        myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(),
-        h -> !ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY.get(h, false))) {
-        attributesKey = DebuggerColors.EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES;
-      }
-      attributes = scheme.getAttributes(attributesKey);
+      attributes = new TextAttributes(); // real attributes will be stored in user data
     }
 
+    disposeHighlighter();
     myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(),
                                                                   HighlighterLayer.SELECTION, attributes,
                                                                   HighlighterTargetArea.EXACT_RANGE);
@@ -196,6 +190,16 @@ public abstract class AbstractValueHint {
       if (LOG.isDebugEnabled()) {
         LOG.debug("internalComponent.setCursor(hintCursor())");
       }
+    }
+    else {
+      TextAttributesKey attributesKey = DebuggerColors.EVALUATED_EXPRESSION_ATTRIBUTES;
+      MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), myProject, false);
+      if (model != null && !((MarkupModelEx)model).processRangeHighlightersOverlappingWith(
+        myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(),
+        h -> !ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY.get(h, false))) {
+        attributesKey = DebuggerColors.EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES;
+      }
+      myHighlighter.putUserData(HINT_TEXT_ATTRIBUTES, scheme.getAttributes(attributesKey));
     }
   }
 
@@ -261,7 +265,7 @@ public abstract class AbstractValueHint {
                                                      HintManager.HIDE_BY_TEXT_CHANGE |
                                                      HintManager.HIDE_BY_SCROLLING, 0, false,
                                                      hint);
-    createHighlighter();
+    setHighlighterAttributes();
     myInsideShow = false;
     return true;
   }
@@ -328,8 +332,19 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
-    Point point = new Point(myPoint.x, myPoint.y + myEditor.getLineHeight());
-    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), myHideRunnable);
+    createHighlighter();
+    setHighlighterAttributes();
+
+    // align the popup with the bottom of the line
+    Point point = myEditor.visualPositionToXY(myEditor.xyToVisualPosition(myPoint));
+    point.translate(0, myEditor.getLineHeight());
+
+    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), () -> {
+      disposeHighlighter();
+      if (myHideRunnable != null) {
+        myHideRunnable.run();
+      }
+    });
   }
 
   @Override
@@ -349,10 +364,6 @@ public abstract class AbstractValueHint {
 
   @Override
   public int hashCode() {
-    int result = myProject.hashCode();
-    result = 31 * result + myEditor.hashCode();
-    result = 31 * result + myType.hashCode();
-    result = 31 * result + (myCurrentRange != null ? myCurrentRange.hashCode() : 0);
-    return result;
+    return Objects.hash(myProject, myEditor, myType, myCurrentRange);
   }
 }

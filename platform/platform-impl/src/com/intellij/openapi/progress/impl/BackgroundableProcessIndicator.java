@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 public class BackgroundableProcessIndicator extends ProgressWindow {
   protected StatusBarEx myStatusBar;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-
   private PerformInBackgroundOption myOption;
   private TaskInfo myInfo;
 
@@ -51,28 +49,13 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
         public void enteredDumbMode() {
           cancel();
         }
-
-        @Override
-        public void exitDumbMode() {
-        }
       });
     }
   }
 
   public BackgroundableProcessIndicator(@Nullable final Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {
     super(info.isCancellable(), true, project, info.getCancelText());
-    if (project != null) {
-      project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-        @Override
-        public void projectClosing(Project eventProject) {
-          if (eventProject == project && isRunning()) {
-            cancel();
-          }
-        }
-      });
-    }
     setOwnerTask(info);
-    setProcessId(info.getProcessId());
     myOption = option;
     myInfo = info;
     setTitle(info.getTitle());
@@ -95,10 +78,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
                                         @Nls final String cancelButtonText,
                                         @Nls final String backgroundStopTooltip, final boolean cancellable) {
     this(project, new TaskInfo() {
-      @Override
-      public String getProcessId() {
-        return "<unknown>";
-      }
 
       @Override
       @NotNull

@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -27,10 +28,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
- * Base class and extension point for code style settings shared between multiple languages
+ * Base class and extension point for common code style settings for a specific language.
  */
 public abstract class LanguageCodeStyleSettingsProvider {
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =
@@ -74,10 +76,14 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
   /**
    * Allows to customize PSI file creation for a language settings preview panel.
+   * <p>
+   * <b>IMPORTANT</b>: The created file must be a non-physical one with PSI events disabled. For more information see
+   * {@link com.intellij.psi.PsiFileFactory#createFileFromText(String, Language, CharSequence, boolean, boolean)} where
+   * {@code eventSystemEnabled} parameter must be {@code false}
    *
    * @param project current project
    * @param text    code sample to demonstrate formatting settings (see {@link #getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType)}
-   * @return a PSI file instance with given text, or null for use
+   * @return a PSI file instance with given text, or null for default implementation using provider's language.
    */
   @Nullable
   public PsiFile createFileFromText(final Project project, final String text) {
@@ -93,7 +99,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
    */
   @Nullable
   public CommonCodeStyleSettings getDefaultCommonSettings() {
-    return null;
+    return new CommonCodeStyleSettings(getLanguage());
   }
 
   /**
@@ -106,7 +112,8 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   public DisplayPriority getDisplayPriority() {
-    return DisplayPriority.LANGUAGE_SETTINGS;
+    List<Language> primaryIdeLanguages = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages();
+    return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   @NotNull
@@ -115,7 +122,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
       languages.add(provider.getLanguage());
     }
-    return languages.toArray(new Language[languages.size()]);
+    return languages.toArray(new Language[0]);
   }
 
   @Nullable

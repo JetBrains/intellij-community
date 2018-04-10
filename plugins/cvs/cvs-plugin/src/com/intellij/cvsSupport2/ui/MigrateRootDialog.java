@@ -44,7 +44,7 @@ public class MigrateRootDialog extends DialogWrapper {
   private final JRadioButton myRadioButton2 = new JRadioButton(CvsBundle.message("migrate.replace.all.roots.label"));
   private final TextFieldWithBrowseButton myDirectoryField = new TextFieldWithBrowseButton();
   private final SelectCvsConfigurationPanel myCvsConfigurationPanel;
-  private ListSelectionListener myListener;
+  private final ListSelectionListener myListener;
   private String myCvsRoot;
 
   public MigrateRootDialog(Project project, VirtualFile directory) {

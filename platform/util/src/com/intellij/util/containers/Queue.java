@@ -160,6 +160,15 @@ public class Queue<T> {
     return t;
   }
 
+  public T get(int index) {
+    int arrayIndex = myFirst + index;
+    if (isWrapped && arrayIndex >= myArray.length) {
+      arrayIndex -= myArray.length;
+    }
+    @SuppressWarnings("unchecked") T t = (T)myArray[arrayIndex];
+    return t;
+  }
+
   public boolean process(@NotNull Processor<T> processor) {
     if (isWrapped) {
       for (int i = myFirst; i < myArray.length; i++) {

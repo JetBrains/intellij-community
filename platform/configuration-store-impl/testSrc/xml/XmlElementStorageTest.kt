@@ -17,15 +17,13 @@ package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.StateMap
 import com.intellij.configurationStore.XmlElementStorage
-import com.intellij.openapi.util.JDOMBuilder.attr
-import com.intellij.openapi.util.JDOMBuilder.tag
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.Test
 
 class XmlElementStorageTest {
   @Test fun testGetStateSucceeded() {
-    val storage = MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))))
+    val storage = MyXmlElementStorage(Element("root").addContent(Element("component").setAttribute("name", "test").addContent(Element("foo"))))
     val state = storage.getState(this, "test", Element::class.java)
     assertThat(state).isNotNull()
     assertThat(state!!.name).isEqualTo("component")
@@ -33,14 +31,14 @@ class XmlElementStorageTest {
   }
 
   @Test fun `get state not succeeded`() {
-    val storage = MyXmlElementStorage(tag("root"))
+    val storage = MyXmlElementStorage(Element("root"))
     val state = storage.getState(this, "test", Element::class.java)
     assertThat(state).isNull()
   }
 
   @Test fun `set state overrides old state`() {
-    val storage = MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))))
-    val newState = tag("component", attr("name", "test"), tag("bar"))
+    val storage = MyXmlElementStorage(Element("root").addContent(Element("component").setAttribute("name", "test").addContent(Element("foo"))))
+    val newState = Element("component").setAttribute("name", "test").addContent(Element("bar"))
     val externalizationSession = storage.startExternalization()!!
     externalizationSession.setState(null, "test", newState)
     externalizationSession.createSaveSession()!!.save()

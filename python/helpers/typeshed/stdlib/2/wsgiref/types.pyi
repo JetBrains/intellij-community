@@ -15,16 +15,17 @@
 # you need to use 'WSGIApplication' and not simply WSGIApplication when type
 # hinting your code.  Otherwise Python will raise NameErrors.
 
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Type, Union, Any
 from types import TracebackType
 
 _exc_info = Tuple[Optional[Type[BaseException]],
                   Optional[BaseException],
                   Optional[TracebackType]]
 _Text = Union[unicode, str]
+WSGIEnvironment = Dict[_Text, Any]
 WSGIApplication = Callable[
     [
-        Dict[_Text, _Text],
+        WSGIEnvironment,
         Union[
             Callable[[_Text, List[Tuple[_Text, _Text]]], Callable[[_Text], None]],
             Callable[[_Text, List[Tuple[_Text, _Text]], _exc_info], Callable[[_Text], None]]

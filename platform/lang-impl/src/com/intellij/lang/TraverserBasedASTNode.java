@@ -122,7 +122,7 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
   private ASTNode[] childrenImpl() {
     List<ASTNode> children = myTraverser.children(myNode).transform(CHILD_TRANSFORM(myTraverser, 0)).toList();
     if (!children.isEmpty() || getTreeParent() == null) {
-      return children.isEmpty() ? EMPTY_ARRAY : children.toArray(new ASTNode[children.size()]);
+      return children.isEmpty() ? EMPTY_ARRAY : children.toArray(ASTNode.EMPTY_ARRAY);
     }
 
     // expand (parse) non-file lazy-parseable nodes
@@ -133,7 +133,7 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
     // avoid ShiftedNode double-shifting
     int shift = myTraverser.api.rangeOf(myNode).getStartOffset();
     List<ASTNode> childrenLazy = s.api.children(s.getRoot()).transform(CHILD_TRANSFORM(s, shift)).toList();
-    return childrenLazy.toArray(new ASTNode[childrenLazy.size()]);
+    return childrenLazy.toArray(ASTNode.EMPTY_ARRAY);
   }
 
   @NotNull

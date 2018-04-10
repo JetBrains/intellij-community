@@ -80,8 +80,8 @@ public abstract class ProjectStructureDetector {
   }
 
   public static class DirectoryProcessingResult {
-    private boolean myProcessChildren;
-    private File myParentToSkip;
+    private final boolean myProcessChildren;
+    private final File myParentToSkip;
     public static final DirectoryProcessingResult PROCESS_CHILDREN = new DirectoryProcessingResult(true, null);
     public static final DirectoryProcessingResult SKIP_CHILDREN = new DirectoryProcessingResult(false, null);
 

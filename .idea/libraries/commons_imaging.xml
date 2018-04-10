@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="commons-imaging" type="repository">
+    <properties maven-id="org.jetbrains.intellij.deps:commons-imaging:1.0-RC" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/commons-imaging/1.0-RC/commons-imaging-1.0-RC.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/commons-imaging/1.0-RC/commons-imaging-1.0-RC-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/commons-imaging/1.0-RC/commons-imaging-1.0-RC-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

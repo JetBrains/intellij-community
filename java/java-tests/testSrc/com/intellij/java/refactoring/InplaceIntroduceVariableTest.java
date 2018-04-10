@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
@@ -48,7 +49,9 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
     final PsiExpression expr = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
     if (expr == null && InjectedLanguageManager.getInstance(getProject()).isInjectedFragment(getFile())) {
-      return PsiTreeUtil.getParentOfType(InjectedLanguageUtil.getTopLevelFile(getFile()).findElementAt(InjectedLanguageUtil.getTopLevelEditor(getEditor()).getCaretModel().getOffset()), PsiExpression.class);
+      PsiElement element = getFile();
+      return PsiTreeUtil.getParentOfType(InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element)
+                                           .findElementAt(InjectedLanguageUtil.getTopLevelEditor(getEditor()).getCaretModel().getOffset()), PsiExpression.class);
     }
     return expr instanceof PsiLiteralExpression ? expr : null;
   }
@@ -139,6 +142,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
         type("smth");
+      }
+    });
+  }
+
+  public void testReplaceAllWithScopeInvalidation() {
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("newType");
       }
     });
   }

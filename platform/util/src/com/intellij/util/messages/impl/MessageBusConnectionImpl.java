@@ -139,7 +139,10 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   boolean containsMessage(@NotNull Topic topic) {
-    for (Message message : myPendingMessages.get()) {
+    Queue<Message> pendingMessages = myPendingMessages.get();
+    if (pendingMessages.isEmpty()) return false;
+    
+    for (Message message : pendingMessages) {
       if (message.getTopic() == topic) {
         return true;
       }

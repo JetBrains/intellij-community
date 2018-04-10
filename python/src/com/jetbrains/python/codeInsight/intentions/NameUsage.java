@@ -35,14 +35,13 @@ import java.awt.*;
 /**
  * Simplistic usage object for demonstration of name clashes, etc.
  * User: dcheryasov
- * Date: Oct 11, 2009 6:24:05 AM
  */
 class NameUsage implements PsiElementUsage {
 
   private final PsiElement myElement;
   private final PsiElement myCulprit;
 
-  static final TextAttributes SLANTED;
+  private static final TextAttributes SLANTED;
   private final String myName;
   private final boolean myIsPrefix;
 
@@ -58,37 +57,41 @@ class NameUsage implements PsiElementUsage {
    * @param name redefinition of it is what the conflict is about.
    * @param prefix if true, show name as a prefix to element's name in "would be" part.
    */
-  public NameUsage(PsiElement element, PsiElement culprit, String name, boolean prefix) {
+  NameUsage(PsiElement element, PsiElement culprit, String name, boolean prefix) {
     myElement = element;
     myCulprit = culprit;
     myName = name;
     myIsPrefix = prefix;
   }
 
+  @Override
   public FileEditorLocation getLocation() {
     return null;
   }
 
+  @Override
   @NotNull
   public UsagePresentation getPresentation() {
     return new UsagePresentation() {
+      @Override
       @Nullable
       public Icon getIcon() {
         PyPsiUtils.assertValid(myElement);
         return myElement.isValid() ? myElement.getIcon(0) : null;
       }
 
+      @Override
       @NotNull
       public TextChunk[] getText() {
         PyPsiUtils.assertValid(myElement);
         if (myElement.isValid()) {
-          TextChunk[] chunks = new TextChunk[3];
           PsiFile file = myElement.getContainingFile();
           String line_id = "...";
           final Document document = file.getViewProvider().getDocument();
           if (document != null) {
             line_id = String.valueOf(document.getLineNumber(myElement.getTextOffset()));
           }
+          TextChunk[] chunks = new TextChunk[3];
           chunks[0] = new TextChunk(SLANTED, "(" + line_id + ") ");
           chunks[1] = new TextChunk(TextAttributes.ERASE_MARKER, myElement.getText());
           StringBuilder sb = new StringBuilder(" would become ").append(myName);
@@ -99,46 +102,57 @@ class NameUsage implements PsiElementUsage {
         else return new TextChunk[]{new TextChunk(SLANTED, "?")}; 
       }
 
+      @Override
       @NotNull
       public String getPlainText() {
         return myElement.getText();
       }
 
+      @Override
       public String getTooltipText() {
         return myElement.getText();
       }
     };
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
+  @Override
   public void selectInEditor() { }
 
+  @Override
   public void highlightInEditor() { }
 
+  @Override
   public void navigate(boolean requestFocus) {
     Navigatable descr = EditSourceUtil.getDescriptor(myElement);
     if (descr != null) descr.navigate(requestFocus);
   }
 
+  @Override
   public boolean canNavigate() {
     return EditSourceUtil.canNavigate(myElement);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return false;
   }
 
+  @Override
   public PsiElement getElement() {
     return myCulprit;
   }
 
+  @Override
   public boolean isNonCodeUsage() {
     return false;
   }

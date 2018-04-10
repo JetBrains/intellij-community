@@ -17,14 +17,17 @@ package com.intellij.facet.frameworks;
 
 public class LibrariesDownloadConnectionService extends SettingsConnectionService {
 
-  private static final LibrariesDownloadConnectionService myInstance = new LibrariesDownloadConnectionService();
+  private static final String SETTINGS_URL = "https://www.jetbrains.com/idea/download-assistant.xml";
+  private static final String SERVICE_URL = "https://frameworks.jetbrains.com";
+
+  private static final LibrariesDownloadConnectionService ourInstance = new LibrariesDownloadConnectionService();
 
   public static LibrariesDownloadConnectionService getInstance() {
-    return myInstance;
+    return ourInstance;
   }
 
   private LibrariesDownloadConnectionService() {
-    super("https://www.jetbrains.com/idea/download-assistant.xml", "http://frameworks.jetbrains.com");
+    super(SETTINGS_URL, SERVICE_URL);
   }
 
 }

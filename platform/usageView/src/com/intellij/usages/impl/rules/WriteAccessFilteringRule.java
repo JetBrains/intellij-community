@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 17, 2005
  */
 public class WriteAccessFilteringRule implements UsageFilteringRule{
   @Override

@@ -79,21 +79,13 @@ public class GeneratedParserUtilBase {
     boolean parse(PsiBuilder builder, int level);
   }
 
-  public static final Parser TOKEN_ADVANCER = new Parser() {
-    @Override
-    public boolean parse(PsiBuilder builder, int level) {
-      if (builder.eof()) return false;
-      builder.advanceLexer();
-      return true;
-    }
+  public static final Parser TOKEN_ADVANCER = (builder, level) -> {
+    if (builder.eof()) return false;
+    builder.advanceLexer();
+    return true;
   };
 
-  public static final Parser TRUE_CONDITION = new Parser() {
-    @Override
-    public boolean parse(PsiBuilder builder, int level) {
-      return true;
-    }
-  };
+  public static final Parser TRUE_CONDITION = (builder, level) -> true;
 
   public interface Hook<T> {
 
@@ -103,48 +95,30 @@ public class GeneratedParserUtilBase {
   }
 
   public static final Hook<WhitespacesAndCommentsBinder> LEFT_BINDER =
-    new Hook<WhitespacesAndCommentsBinder>() {
-      @Override
-      public PsiBuilder.Marker run(PsiBuilder builder,
-                                   PsiBuilder.Marker marker,
-                                   WhitespacesAndCommentsBinder param) {
-        if (marker != null) marker.setCustomEdgeTokenBinders(param, null);
-        return marker;
-      }
+    (builder, marker, param) -> {
+      if (marker != null) marker.setCustomEdgeTokenBinders(param, null);
+      return marker;
     };
 
   public static final Hook<WhitespacesAndCommentsBinder> RIGHT_BINDER =
-    new Hook<WhitespacesAndCommentsBinder>() {
-      @Override
-      public PsiBuilder.Marker run(PsiBuilder builder,
-                                   PsiBuilder.Marker marker,
-                                   WhitespacesAndCommentsBinder param) {
-        if (marker != null) marker.setCustomEdgeTokenBinders(null, param);
-        return marker;
-      }
+    (builder, marker, param) -> {
+      if (marker != null) marker.setCustomEdgeTokenBinders(null, param);
+      return marker;
     };
 
   public static final Hook<WhitespacesAndCommentsBinder[]> WS_BINDERS =
-    new Hook<WhitespacesAndCommentsBinder[]>() {
-      @Override
-      public PsiBuilder.Marker run(PsiBuilder builder,
-                                   PsiBuilder.Marker marker,
-                                   WhitespacesAndCommentsBinder[] param) {
-        if (marker != null) marker.setCustomEdgeTokenBinders(param[0], param[1]);
-        return marker;
-      }
+    (builder, marker, param) -> {
+      if (marker != null) marker.setCustomEdgeTokenBinders(param[0], param[1]);
+      return marker;
     };
 
-  public static final Hook<String> LOG_HOOK = new Hook<String>() {
-    @Override
-    public PsiBuilder.Marker run(PsiBuilder builder, PsiBuilder.Marker marker, String param) {
-      PsiBuilderImpl.ProductionMarker m = (PsiBuilderImpl.ProductionMarker)marker;
-      int start = m == null ? builder.getCurrentOffset() : m.getStartOffset();
-      int end = m == null ? start : m.getEndOffset();
-      String prefix = "[" + start + ", " + end + "]" + (m == null ? "" : " " + m.getTokenType());
-      builder.mark().error(prefix + ": " + param);
-      return marker;
-    }
+  public static final Hook<String> LOG_HOOK = (builder, marker, param) -> {
+    PsiBuilderImpl.ProductionMarker m = (PsiBuilderImpl.ProductionMarker)marker;
+    int start = m == null ? builder.getCurrentOffset() : m.getStartOffset();
+    int end = m == null ? start : m.getEndOffset();
+    String prefix = "[" + start + ", " + end + "]" + (m == null ? "" : " " + m.getTokenType());
+    builder.mark().error(prefix + ": " + param);
+    return marker;
   };
 
 
@@ -539,16 +513,8 @@ public class GeneratedParserUtilBase {
       return;
     }
 
-    if (((frame.modifiers & _AND_) | (frame.modifiers & _NOT_)) != 0) {
-      close_marker_impl_(frame, marker, null, false);
-      replace_variants_with_name_(state, frame, builder, result, pinned);
-      state.predicateCount--;
-      if ((frame.modifiers & _NOT_) != 0) state.predicateSign = !state.predicateSign;
-    }
-    else {
-      close_frame_impl_(state, frame, builder, marker, elementType, result, pinned);
-      exit_section_impl_(state, frame, builder, elementType, result, pinned, eatMore);
-    }
+    close_frame_impl_(state, frame, builder, marker, elementType, result, pinned);
+    exit_section_impl_(state, frame, builder, elementType, result, pinned, eatMore);
     run_hooks_impl_(builder, state, pinned || result ? elementType : null);
     state.FRAMES.recycle(frame);
     state.level--;
@@ -673,6 +639,12 @@ public class GeneratedParserUtilBase {
                                         IElementType elementType,
                                         boolean result,
                                         boolean pinned) {
+    if (((frame.modifiers & _AND_) | (frame.modifiers & _NOT_)) != 0) {
+      close_marker_impl_(frame, marker, null, false);
+      state.predicateCount--;
+      if ((frame.modifiers & _NOT_) != 0) state.predicateSign = !state.predicateSign;
+      marker = elementType != null && marker != null && (result || pinned) ? builder.mark() : null;
+    }
     if (elementType != null && marker != null) {
       if (result || pinned) {
         if ((frame.modifiers & _COLLAPSE_) != 0) {

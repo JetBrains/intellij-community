@@ -120,7 +120,7 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
       result.add(ref);
     }
 
-    return result == null ? PsiReference.EMPTY_ARRAY : result.toArray(new PsiReference[result.size()]);
+    return result == null ? PsiReference.EMPTY_ARRAY : result.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   private static XmlTag findPropertiesParentTag(@NotNull PsiElement element) {

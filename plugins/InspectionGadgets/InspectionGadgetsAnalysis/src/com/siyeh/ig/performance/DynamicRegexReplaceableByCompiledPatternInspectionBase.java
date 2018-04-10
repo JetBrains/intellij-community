@@ -111,7 +111,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends Base
         return false;
       }
       if (Extensions.getRootArea().hasExtensionPoint(AllowedApiFilterExtension.EP_NAME.getName())) {
-        //todo[nik] remove this condition when the extension point will be registered in java-analysis-impl module
+        //todo[nik] remove this condition when the extension point will be registered in intellij.java.analysis.impl module
         return AllowedApiFilterExtension.isClassAllowed("java.util.regex.Pattern", expression);
       }
       return true;

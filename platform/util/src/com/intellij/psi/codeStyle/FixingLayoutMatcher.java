@@ -33,13 +33,12 @@ public class FixingLayoutMatcher extends MinusculeMatcher {
 
   public FixingLayoutMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
     super(pattern, options, hardSeparators);
-    String s = fixPattern(pattern);
+    String s = fixLayout(pattern);
     myFixedMatcher = s == null ? null : new MinusculeMatcher(s, options, hardSeparators);
   }
 
   @Nullable
-  private static String fixPattern(String pattern) {
-
+  public static String fixLayout(String pattern) {
     boolean hasLetters = false;
     boolean onlyWrongLetters = true;
     for (int i = 0; i < pattern.length(); i++) {

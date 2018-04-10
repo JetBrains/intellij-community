@@ -27,7 +27,6 @@ import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 14, 2005
  */
 public class ChangeFieldTypeFix extends QuickFix {
   private final PsiField myField;

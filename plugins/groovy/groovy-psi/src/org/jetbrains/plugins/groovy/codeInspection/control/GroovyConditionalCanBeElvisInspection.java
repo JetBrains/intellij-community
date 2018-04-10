@@ -132,7 +132,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
     return resolved instanceof PsiMethod &&
            "isEmpty".equals(((PsiMethod)resolved).getName()) &&
-           ((PsiMethod)resolved).getParameterList().getParametersCount() == 0;
+           ((PsiMethod)resolved).getParameterList().isEmpty();
   }
 
   /**
@@ -166,7 +166,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
     return resolved instanceof PsiMethod &&
            "isEmpty".equals(((PsiMethod)resolved).getName()) &&
-           ((PsiMethod)resolved).getParameterList().getParametersCount() == 0;
+           ((PsiMethod)resolved).getParameterList().isEmpty();
   }
 
   private static boolean checkForNull(GrExpression condition, GrExpression then) {

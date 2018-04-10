@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
@@ -152,6 +154,9 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   private void setLinkedProjectsSettings(@NotNull Collection<PS> settings, @Nullable ExternalSystemSettingsListener listener) {
+    // do not add invalid 'null' settings
+    settings = settings.stream().filter(ps -> ps.getExternalProjectPath() != null).collect(Collectors.toList());
+
     List<PS> added = ContainerUtilRt.newArrayList();
     Map<String, PS> removed = ContainerUtilRt.newHashMap(myLinkedProjectsSettings);
     myLinkedProjectsSettings.clear();
@@ -171,7 +176,8 @@ public abstract class AbstractExternalSystemSettings<
           }
           getPublisher().onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
         }
-        if (old.isCreateEmptyContentRootDirectories() != current.isCreateEmptyContentRootDirectories()) {
+        if (old.isCreateEmptyContentRootDirectories() != current.isCreateEmptyContentRootDirectories() ||
+            old.isUseQualifiedModuleNames() != current.isUseQualifiedModuleNames()) {
           ExternalProjectsManager.getInstance(getProject()).getExternalProjectsWatcher().markDirty(current.getExternalProjectPath());
         }
         checkSettings(old, current);
@@ -221,6 +227,10 @@ public abstract class AbstractExternalSystemSettings<
       setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter() {
         @Override
         public void onProjectsLinked(@NotNull Collection linked) {
+          if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+            return;
+          }
+
           for (Object o : linked) {
             final ExternalProjectSettings settings = (ExternalProjectSettings)o;
             for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {

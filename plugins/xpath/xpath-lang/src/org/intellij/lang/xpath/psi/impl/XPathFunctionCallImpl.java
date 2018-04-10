@@ -20,7 +20,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
@@ -220,9 +219,6 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
         return XpathIcons.Function;
       }
 
-      public void accept(@NotNull PsiElementVisitor visitor) {
-      }
-
       public PsiElement copy() {
         return this;
       }
@@ -248,11 +244,6 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
 
       public Function getDeclaration() {
         return myFunctionDecl;
-      }
-
-      @Override
-      public boolean isWritable() {
-        return false;
       }
 
       @Override

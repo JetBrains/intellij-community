@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,7 +179,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       });
     }
 
-    return descriptors.toArray(new HierarchyNodeDescriptor[descriptors.size()]);
+    return descriptors.toArray(new HierarchyNodeDescriptor[0]);
   }
 
   private static Collection<PsiClass> getSubclasses(final PsiClass psiClass) {

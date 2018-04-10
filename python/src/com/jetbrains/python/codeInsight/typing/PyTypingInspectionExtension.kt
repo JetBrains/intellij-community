@@ -15,28 +15,53 @@
  */
 package com.jetbrains.python.codeInsight.typing
 
+import com.intellij.psi.PsiReference
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.inspections.PyInspectionExtension
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.references.PyOperatorReference
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyTypingInspectionExtension : PyInspectionExtension() {
 
-  override fun ignoreUnresolvedMember(type: PyType, name: String, context: TypeEvalContext): Boolean {
-    return name == PyNames.GETITEM &&
-           type is PyClassLikeType &&
-           type.isDefinition &&
-           !isBuiltin(type) &&
-           isGenericItselfOrDescendant(type, context)
+  override fun ignoreUnresolvedReference(node: PyElement, reference: PsiReference, context: TypeEvalContext): Boolean {
+    if (node is PySubscriptionExpression && reference is PyOperatorReference && node.referencedName == PyNames.GETITEM) {
+      val operand = node.operand
+      val type = context.getType(operand)
+
+      if (type is PyClassLikeType && type.isDefinition && isGenericItselfOrDescendant(type, context)) {
+        // `true` is not returned for the cases like `typing.List[int]`
+        // because these types contain builtins as a class
+        if (!isBuiltin(type)) return true
+
+        // here is the check that current element is like `typing.List[int]`
+        // but be careful: builtin collections inherit `typing.Generic` in typeshed
+        if (operand is PyReferenceExpression) {
+          val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
+          val resolveResults = operand.getReference(resolveContext).multiResolve(false)
+
+          if (resolveResults
+            .asSequence()
+            .map { it.element }
+            .any { it is PyTargetExpression && PyTypingTypeProvider.BUILTIN_COLLECTION_CLASSES.containsKey(it.qualifiedName) }) {
+            return true
+          }
+        }
+      }
+    }
+
+    return false
   }
 
-  private fun isGenericItselfOrDescendant(type: PyClassLikeType,
-                                          context: TypeEvalContext): Boolean {
-    return type.classQName == PyTypingTypeProvider.GENERIC ||
-           type.getSuperClassTypes(context).any { it.classQName == PyTypingTypeProvider.GENERIC }
+  private fun isGenericItselfOrDescendant(type: PyClassLikeType, context: TypeEvalContext): Boolean {
+    return PyTypingTypeProvider.GENERIC_CLASSES.contains(type.classQName) || PyTypingTypeProvider.isGeneric(type, context)
   }
 
   private fun isBuiltin(type: PyClassLikeType): Boolean {

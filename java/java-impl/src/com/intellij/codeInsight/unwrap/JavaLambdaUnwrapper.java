@@ -37,7 +37,7 @@ public class JavaLambdaUnwrapper extends JavaUnwrapper {
     PsiElement from = JavaAnonymousUnwrapper.findElementToExtractFrom(element);
     PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)element;
     PsiElement body = lambdaExpression.getBody();
-    if (body instanceof PsiExpression || body instanceof PsiCodeBlock && ((PsiCodeBlock)body).getStatements().length == 1) {
+    if (body instanceof PsiExpression || body instanceof PsiCodeBlock && ((PsiCodeBlock)body).getStatementCount() == 1) {
       List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
       if (returnExpressions.size() == 1
           && !PsiType.VOID.equals(returnExpressions.get(0).getType())

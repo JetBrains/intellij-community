@@ -22,8 +22,6 @@ import java.util.List;
 /**
  * Created with IntelliJ IDEA.
  * @author: db
- * Date: 24.06.12
- * Time: 19:08
  * To change this template use File | Settings | File Templates.
  */
 class OrderProvider {

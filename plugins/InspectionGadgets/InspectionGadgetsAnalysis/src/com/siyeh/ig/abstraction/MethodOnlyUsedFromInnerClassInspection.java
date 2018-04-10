@@ -110,14 +110,14 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
         final PsiClass superClass;
         if (interfaces.length == 1) {
           superClass = interfaces[0];
-          registerMethodError(method, superClass, Boolean.valueOf(false));
+          registerMethodError(method, superClass, Boolean.FALSE);
         }
         else {
           superClass = containingClass.getSuperClass();
           if (superClass == null) {
             return;
           }
-          registerMethodError(method, superClass, Boolean.valueOf(true));
+          registerMethodError(method, superClass, Boolean.TRUE);
         }
       }
       else {
@@ -152,12 +152,6 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
         return false;
       }
       if (containingClass instanceof PsiAnonymousClass) {
-        final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)containingClass;
-        final PsiExpressionList argumentList = anonymousClass.getArgumentList();
-        if (PsiTreeUtil.isAncestor(argumentList, element, true)) {
-          onlyAccessedFromInnerClass = false;
-          return false;
-        }
         if (ignoreMethodsAccessedFromAnonymousClass) {
           onlyAccessedFromInnerClass = false;
           return false;

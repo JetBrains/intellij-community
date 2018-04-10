@@ -37,7 +37,7 @@ import java.awt.event.MouseWheelEvent;
  * @author ignatov
  */
 public class JBPopupMenu extends JPopupMenu {
-  private MyLayout myLayout;
+  private final MyLayout myLayout;
 
   public JBPopupMenu() {
     this(null);
@@ -86,7 +86,7 @@ public class JBPopupMenu extends JPopupMenu {
   }
 
   private static class MyLayout extends DefaultMenuLayout implements ActionListener {
-    private JPopupMenu myTarget;
+    private final JPopupMenu myTarget;
     int myShift = 0;
     int myScrollDirection = 0;
     Timer myTimer;
@@ -177,7 +177,7 @@ public class JBPopupMenu extends JPopupMenu {
       }
     }
 
-    private Color[] dim = new Color[]{
+    private final Color[] dim = new Color[]{
       JBColor.background(),
       ColorUtil.withAlpha(JBColor.background(), .9),
       ColorUtil.withAlpha(JBColor.background(), .8),

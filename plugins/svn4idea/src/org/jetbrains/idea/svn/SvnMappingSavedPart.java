@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,22 @@
  */
 package org.jetbrains.idea.svn;
 
-import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+
 public class SvnMappingSavedPart {
-  public List<SvnCopyRootSimple> myMappingRoots;
-  public List<SvnCopyRootSimple> myMoreRealMappingRoots;
+  public List<SvnCopyRootSimple> myMappingRoots = newArrayList();
+  public List<SvnCopyRootSimple> myMoreRealMappingRoots = newArrayList();
 
-  public SvnMappingSavedPart() {
-    myMappingRoots = new ArrayList<>();
-    myMoreRealMappingRoots = new ArrayList<>();
+  public void add(@NotNull RootUrlInfo info) {
+    myMappingRoots.add(new SvnCopyRootSimple(info));
   }
 
-  public void add(final SvnCopyRootSimple copy) {
-    myMappingRoots.add(copy);
-  }
-
-  public void addReal(final SvnCopyRootSimple copy) {
-    myMoreRealMappingRoots.add(copy);
+  public void addReal(@NotNull RootUrlInfo info) {
+    myMoreRealMappingRoots.add(new SvnCopyRootSimple(info));
   }
 
   public List<SvnCopyRootSimple> getMappingRoots() {

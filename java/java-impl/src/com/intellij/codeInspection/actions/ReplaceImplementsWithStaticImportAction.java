@@ -20,8 +20,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -80,7 +78,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
     if (psiClass.getExtendsList() != referenceList && psiClass.getImplementsList() != referenceList) return false;
 
     final PsiElement target = psiReference.resolve();
-    if (target == null || !(target instanceof PsiClass)) return false;
+    if (!(target instanceof PsiClass)) return false;
 
     return isEmptyClass(project, (PsiClass)target);
   }

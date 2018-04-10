@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
@@ -26,7 +12,6 @@ import com.sun.java.swing.plaf.windows.WindowsTreeUI;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import java.awt.*;
 
@@ -44,10 +29,10 @@ public final class IdeaLaf extends MetalLookAndFeel {
 
     Pair<String, Integer> systemFont = UIUtil.getSystemFontData();
     if (systemFont != null) {
-      LafManagerImpl.initFontDefaults(defaults, new FontUIResource(systemFont.first, Font.PLAIN, systemFont.second));
+      LafManagerImpl.initFontDefaults(defaults, UIUtil.getFontWithFallback(systemFont.first, Font.PLAIN, systemFont.second));
     }
     else {
-      LafManagerImpl.initFontDefaults(defaults, new FontUIResource("Tahoma", Font.PLAIN, 11));
+      LafManagerImpl.initFontDefaults(defaults, UIUtil.getFontWithFallback("Tahoma", Font.PLAIN, 11));
     }
   }
 

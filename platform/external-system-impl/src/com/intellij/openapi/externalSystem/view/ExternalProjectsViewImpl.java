@@ -618,7 +618,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       Navigatable navigatable = each.getNavigatable();
       if (navigatable != null) navigatables.add(navigatable);
     }
-    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
+    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
   }
 
   @Override

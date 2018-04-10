@@ -46,7 +46,7 @@ internal class GitCreateBranchOperation(
 
     if (!fatalErrorHappened) {
       notifySuccess()
-      updateRecentBranch()
+      updateRecentBranch(branchName)
     }
   }
 

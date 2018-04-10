@@ -194,9 +194,6 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     if (isStorePassword() != holder.isStorePassword()) return false;
     if (getAuthType() != holder.getAuthType()) return false;
     if (getHost() != null ? !getHost().equals(holder.getHost()) : holder.getHost() != null) return false;
-    if (getKnownHostsFile() != null ? !getKnownHostsFile().equals(holder.getKnownHostsFile()) : holder.getKnownHostsFile() != null) {
-      return false;
-    }
     if (getPassphrase() != null ? !getPassphrase().equals(holder.getPassphrase()) : holder.getPassphrase() != null) return false;
     if (getPassword() != null ? !getPassword().equals(holder.getPassword()) : holder.getPassword() != null) return false;
     if (getPrivateKeyFile() != null ? !getPrivateKeyFile().equals(holder.getPrivateKeyFile()) : holder.getPrivateKeyFile() != null) {
@@ -219,7 +216,6 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     result = 31 * result + (getPassword() != null ? getPassword().hashCode() : 0);
     result = 31 * result + getAuthType().hashCode();
     result = 31 * result + (getPrivateKeyFile() != null ? getPrivateKeyFile().hashCode() : 0);
-    result = 31 * result + (getKnownHostsFile() != null ? getKnownHostsFile().hashCode() : 0);
     result = 31 * result + (getPassphrase() != null ? getPassphrase().hashCode() : 0);
     result = 31 * result + (isStorePassword() ? 1 : 0);
     result = 31 * result + (isStorePassphrase() ? 1 : 0);

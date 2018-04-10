@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -34,26 +36,33 @@ public class AnnotateActionGroup extends ActionGroup {
   private final AnAction[] myActions;
 
   public AnnotateActionGroup(@NotNull List<AnnotationFieldGutter> gutters,
-                             @NotNull EditorGutterComponentEx gutterComponent,
                              @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
     super("View", true);
     final List<AnAction> actions = new ArrayList<>();
     for (AnnotationFieldGutter g : gutters) {
       if (g.getID() != null) {
-        actions.add(new ShowHideAspectAction(g, gutterComponent));
+        actions.add(new ShowHideAspectAction(g));
       }
     }
     actions.add(Separator.getInstance());
     if (bgColorMap != null) {
-      actions.add(new ShowAnnotationColorsAction(gutterComponent));
+      actions.add(new ShowAnnotationColorsAction());
     }
-    actions.add(new ShowShortenNames(gutterComponent));
-    myActions = actions.toArray(new AnAction[actions.size()]);
+    actions.add(new ShowShortenNames());
+    myActions = actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return myActions;
+  }
+
+  static void revalidateMarkupInAllEditors() {
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      if (editor.getGutter() instanceof EditorGutterComponentEx) {
+        ((EditorGutterComponentEx)editor.getGutter()).revalidateMarkup();
+      }
+    }
   }
 }

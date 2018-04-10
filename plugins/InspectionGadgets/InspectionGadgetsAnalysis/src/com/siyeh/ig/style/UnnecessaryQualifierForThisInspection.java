@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryQualifierForThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -67,14 +66,15 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement qualifier = descriptor.getPsiElement();
       final PsiElement parent = qualifier.getParent();
+      CommentTracker tracker = new CommentTracker();
       if (parent instanceof PsiThisExpression) {
-        PsiReplacementUtil.replaceExpression((PsiThisExpression)parent, PsiKeyword.THIS);
+        PsiReplacementUtil.replaceExpression((PsiThisExpression)parent, PsiKeyword.THIS, tracker);
       }
       else if (parent instanceof PsiSuperExpression) {
-        PsiReplacementUtil.replaceExpression((PsiSuperExpression)parent, PsiKeyword.SUPER);
+        PsiReplacementUtil.replaceExpression((PsiSuperExpression)parent, PsiKeyword.SUPER, tracker);
       }
     }
   }

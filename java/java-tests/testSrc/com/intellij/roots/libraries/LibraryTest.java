@@ -16,7 +16,6 @@
 package com.intellij.roots.libraries;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleRootManagerComponent;
@@ -182,23 +181,12 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   private static void commit(final ModifiableRootModel model) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        model.commit();
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> model.commit());
   }
 
   public void testNativePathSerialization() {
     LibraryTable table = getLibraryTable();
-    Library library = new WriteAction<Library>() {
-      @Override
-      protected void run(@NotNull Result<Library> result) {
-        Library res = table.createLibrary("native");
-        result.setResult(res);
-      }
-    }.execute().throwException().getResultObject();
+    Library library = WriteAction.compute(()-> table.createLibrary("native"));
     Library.ModifiableModel model = library.getModifiableModel();
     model.addRoot("file://native-lib-root", NativeLibraryOrderRootType.getInstance());
     commit(model);
@@ -226,6 +214,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     Library library = WriteAction.compute(() -> table.createLibrary("jarDirs"));
     Library.ModifiableModel model = library.getModifiableModel();
     model.addJarDirectory("file://jar-dir", false, OrderRootType.CLASSES);
+    model.addJarDirectory("file://jar-dir-rec", true, OrderRootType.CLASSES);
     model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);
     commit(model);
 
@@ -233,15 +222,18 @@ public class LibraryTest extends ModuleRootManagerTestCase {
                                              "  <library name=\"jarDirs\">\n" +
                                              "    <CLASSES>\n" +
                                              "      <root url=\"file://jar-dir\" />\n" +
+                                             "      <root url=\"file://jar-dir-rec\" />\n" +
                                              "    </CLASSES>\n" +
                                              "    <JAVADOC />\n" +
                                              "    <SOURCES>\n" +
                                              "      <root url=\"file://jar-dir-src\" />\n" +
                                              "    </SOURCES>\n" +
                                              "    <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
+                                             "    <jarDirectory url=\"file://jar-dir-rec\" recursive=\"true\" />\n" +
                                              "    <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
                                              "  </library>\n" +
-                                             "</root>");
+                                             "</root>"
+                                             );
   }
 
   private static Element serialize(Library library) {
@@ -253,6 +245,20 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     catch (WriteExternalException e) {
       throw new AssertionError(e);
     }
+  }
+
+  public void testAddRemoveJarDirectory() {
+    LibraryTable table = getLibraryTable();
+    Library library = WriteAction.compute(() -> table.createLibrary("jar-directory"));
+    Library.ModifiableModel model = library.getModifiableModel();
+    model.addJarDirectory("file://jar-directory", false, OrderRootType.CLASSES);
+    commit(model);
+    assertSameElements(library.getUrls(OrderRootType.CLASSES), "file://jar-directory");
+
+    model = library.getModifiableModel();
+    model.removeRoot("file://jar-directory", OrderRootType.CLASSES);
+    commit(model);
+    assertEmpty(library.getUrls(OrderRootType.CLASSES));
   }
 
   public void testAddRemoveExcludedRoot() {

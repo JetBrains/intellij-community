@@ -16,13 +16,9 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.ValueContainer;
-import com.intellij.util.indexing.impl.DebugAssertions;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-
-import static com.intellij.util.indexing.impl.DebugAssertions.EXTRA_SANITY_CHECKS;
 
 /**
  * Class buffers changes in 2 modes:
@@ -42,8 +38,6 @@ public class ChangeBufferingList implements Cloneable {
   private volatile boolean mayHaveDupes;
   private volatile RandomAccessIntContainer randomAccessContainer;
 
-  private IdSet checkSet;
-
   public ChangeBufferingList() { this(3); }
   public ChangeBufferingList(int length) {
     if (length > MAX_FILES) {
@@ -51,7 +45,6 @@ public class ChangeBufferingList implements Cloneable {
     } else {
       changes = new int[length];
     }
-    checkSet = EXTRA_SANITY_CHECKS ? new IdSet(length) : null;
   }
 
   @NotNull
@@ -67,7 +60,7 @@ public class ChangeBufferingList implements Cloneable {
 
   public void add(int value) {
     ensureCapacity(1);
-    if (checkSet != null) checkSet.add(value);
+    
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
       addChange(value);
@@ -87,7 +80,7 @@ public class ChangeBufferingList implements Cloneable {
 
   public void remove(int value) {
     ensureCapacity(1);
-    if (checkSet != null) checkSet.remove(value);
+    
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
       addChange(-value);
@@ -106,7 +99,7 @@ public class ChangeBufferingList implements Cloneable {
       if (randomAccessContainer != null) {
         clone.randomAccessContainer = (RandomAccessIntContainer)randomAccessContainer.clone();
       }
-      if (checkSet != null) clone.checkSet = (IdSet)checkSet.clone();
+      
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -149,8 +142,6 @@ public class ChangeBufferingList implements Cloneable {
         } else {
           idSet = new IdBitSet(calcMinMax(changes, length), 0);
         }
-      } else if (checkSet != null) {
-        idSet = (RandomAccessIntContainer)randomAccessContainer.clone();
       } else {
         idSet = randomAccessContainer;
       }
@@ -167,19 +158,7 @@ public class ChangeBufferingList implements Cloneable {
           }
         }
       }
-
-      if (checkSet != null) {
-        DebugAssertions.assertTrue(checkSet.size() == idSet.size());
-        final RandomAccessIntContainer finalIdSet = idSet;
-        checkSet.forEach(new TIntProcedure() {
-          @Override
-          public boolean execute(int value) {
-            DebugAssertions.assertTrue(finalIdSet.contains(value));
-            return true;
-          }
-        });
-      }
-
+      
       length = 0;
       hasRemovals = false;
       mayHaveDupes = false;
@@ -254,13 +233,10 @@ public class ChangeBufferingList implements Cloneable {
   public boolean isEmpty() {
     if (randomAccessContainer == null) {
       if (changes == null) {
-        if (checkSet != null) DebugAssertions.assertTrue(checkSet.isEmpty());
         return true;
       }
       if (!hasRemovals) {
-        boolean b = length == 0;
-        if (checkSet != null) DebugAssertions.assertTrue(b == checkSet.isEmpty());
-        return b;
+        return length == 0;
       }
     }
     // todo we can calculate isEmpty in more cases (without container)
@@ -269,18 +245,7 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   public ValueContainer.IntPredicate intPredicate() {
-    final ValueContainer.IntPredicate predicate = getRandomAccessContainer().intPredicate();
-    if (checkSet != null) {
-      return new ValueContainer.IntPredicate() {
-        @Override
-        public boolean contains(int id) {
-          boolean answer = predicate.contains(id);
-          DebugAssertions.assertTrue(answer == checkSet.contains(id));
-          return answer;
-        }
-      };
-    }
-    return predicate;
+    return getRandomAccessContainer().intPredicate();
   }
 
   public IntIdsIterator intIterator() {
@@ -306,10 +271,6 @@ public class ChangeBufferingList implements Cloneable {
       intIterator = SortedFileIdSetIterator.getTransientIterator(intIterator);
     }
     return intIterator;
-  }
-
-  public IdSet getCheckSet() {
-    return checkSet;
   }
 
   private static class ChangesIterator implements IntIdsIterator {

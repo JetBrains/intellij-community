@@ -17,6 +17,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -37,16 +38,18 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.util.*;
+import com.intellij.util.FilteredQuery;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
-// TODO this should eventually replace PackageUtil from java-impl
+// TODO this should eventually replace PackageUtil from intellij.java.impl
 public class PlatformPackageUtil {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.util.PlatformPackageUtil");
@@ -122,7 +125,7 @@ public class PlatformPackageUtil {
           ContainerUtil
             .mapNotNull(ProjectRootManager.getInstance(project).getContentSourceRoots(),
                         virtualFile -> scope_.contains(virtualFile) ? PsiManager.getInstance(project).findDirectory(virtualFile) : null);
-        psiDirectory = DirectoryChooserUtil.selectDirectory(project, dirs.toArray(new PsiDirectory[dirs.size()]), baseDir,
+        psiDirectory = DirectoryChooserUtil.selectDirectory(project, dirs.toArray(PsiDirectory.EMPTY_ARRAY), baseDir,
                                                             File.separatorChar + packageName.replace('.', File.separatorChar));
         if (psiDirectory == null) return null;
         final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(psiDirectory.getVirtualFile());
@@ -151,18 +154,10 @@ public class PlatformPackageUtil {
 
         final PsiDirectory psiDirectory_ = psiDirectory;
         try {
-          psiDirectory = ActionRunner.runInsideWriteAction(new ActionRunner.InterruptibleRunnableWithResult<PsiDirectory>() {
-            @Override
-            public PsiDirectory run() throws Exception {
-              return psiDirectory_ != null ? psiDirectory_.createSubdirectory(name) : null;
-            }
-          });
+          psiDirectory = WriteAction.compute(() -> psiDirectory_ != null ? psiDirectory_.createSubdirectory(name) : null);
         }
         catch (IncorrectOperationException e) {
           throw e;
-        }
-        catch (IOException e) {
-          throw new IncorrectOperationException(e);
         }
         catch (Exception e) {
           LOG.error(e);
@@ -202,7 +197,7 @@ public class PlatformPackageUtil {
     query = new FilteredQuery<>(query, scope::contains);
 
     List<PsiDirectory> directories = ContainerUtil.mapNotNull(query.findAll(), manager::findDirectory);
-    return directories.toArray(new PsiDirectory[directories.size()]);
+    return directories.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   private static boolean checkSourceRootsConfigured(final Module module) {

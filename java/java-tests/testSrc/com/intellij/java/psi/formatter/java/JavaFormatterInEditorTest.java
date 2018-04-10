@@ -44,12 +44,18 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     doTest(
       "import static java.util.concurrent.atomic.AtomicInteger.*;\n" +
       "\n" +
+      "/**\n" +
+      " * Some really long javadoc comment which exceeeds the right margin\n" +
+      " */\n" +
       "class <caret>Test {\n" +
       "}",
 
-      "import static java.util.concurrent\n" +
-      "        .atomic.AtomicInteger.*;\n" +
+      "import static java.util.concurrent.atomic.AtomicInteger.*;\n" +
       "\n" +
+      "/**\n" +
+      " * Some really long javadoc comment \n" +
+      " * which exceeeds the right margin\n" +
+      " */\n" +
       "class <caret>Test {\n" +
       "}"
     );

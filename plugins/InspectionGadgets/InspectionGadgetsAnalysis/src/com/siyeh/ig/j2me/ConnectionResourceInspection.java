@@ -18,6 +18,7 @@ package com.siyeh.ig.j2me;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -45,7 +46,7 @@ public class ConnectionResourceInspection extends ResourceInspection {
       return false;
     }
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-    return MethodCallUtils.isCallToMethod(methodCallExpression, "javax.microedition.io.Connector", null, "open", null);
+    return MethodCallUtils.isCallToMethod(methodCallExpression, "javax.microedition.io.Connector", null, "open", (PsiType[])null);
   }
 
   @Override

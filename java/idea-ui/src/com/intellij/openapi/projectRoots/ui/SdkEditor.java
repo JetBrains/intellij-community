@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.ui;
 
 import com.google.common.collect.Lists;
@@ -72,7 +58,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   // GUI components
   private JPanel myMainPanel;
   private TabbedPaneWrapper myTabbedPane;
-  private Project myProject;
+  private final Project myProject;
   private final SdkModel mySdkModel;
   private JLabel myHomeFieldLabel;
   private String myVersionString;
@@ -194,12 +180,12 @@ public class SdkEditor implements Configurable, Place.Navigator {
     if (mySdk != null) {
       myInitialName = mySdk.getName();
       myInitialPath = mySdk.getHomePath();
-      final SdkModificator sdkModificator = mySdk.getSdkModificator();
-      sdkModificator.setHomePath(FileUtil.toSystemDependentName(getHomeValue()));
+      SdkModificator sdkModificator = mySdk.getSdkModificator();
+      sdkModificator.setHomePath(FileUtil.toSystemIndependentName(getHomeValue()));
       for (SdkPathEditor pathEditor : myPathEditors.values()) {
         pathEditor.apply(sdkModificator);
       }
-      ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
+      ApplicationManager.getApplication().runWriteAction(sdkModificator::commitChanges);
       for (final AdditionalDataConfigurable configurable : getAdditionalDataConfigurable()) {
         if (configurable != null) {
           configurable.apply();
@@ -435,25 +421,26 @@ public class SdkEditor implements Configurable, Place.Navigator {
       throw new UnsupportedOperationException(); // not supported for this editor
     }
 
+    @NotNull
     @Override
-    public VirtualFile[] getRoots(OrderRootType rootType) {
+    public VirtualFile[] getRoots(@NotNull OrderRootType rootType) {
       final PathEditor editor = myPathEditors.get(rootType);
       if (editor == null) throw new IllegalStateException("no editor for root type " + rootType);
       return editor.getRoots();
     }
 
     @Override
-    public void addRoot(VirtualFile root, OrderRootType rootType) {
+    public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
       myPathEditors.get(rootType).addPaths(root);
     }
 
     @Override
-    public void removeRoot(VirtualFile root, OrderRootType rootType) {
+    public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
       myPathEditors.get(rootType).removePaths(root);
     }
 
     @Override
-    public void removeRoots(OrderRootType rootType) {
+    public void removeRoots(@NotNull OrderRootType rootType) {
       myPathEditors.get(rootType).clearList();
     }
 
@@ -484,7 +471,4 @@ public class SdkEditor implements Configurable, Place.Navigator {
   public void queryPlace(@NotNull final Place place) {
     place.putPath(SDK_TAB, myTabbedPane.getSelectedTitle());
   }
-
-  @Override
-  public void setHistory(final History history) { }
 }

@@ -25,7 +25,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -51,6 +51,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     super.setUp();
     if ("RandomEditingForUnused".equals(getTestName(false))) {
       enableInspectionTool(new UnusedDeclarationInspection());
+      enableInspectionTool(new UnusedImportInspection());
     }
   }
 
@@ -58,7 +59,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     if ("RandomEditingForUnused".equals(getTestName(false))) {
-      return new LocalInspectionTool[]{new UnusedImportLocalInspection(),};
+      return LocalInspectionTool.EMPTY_ARRAY;
     }
     List<InspectionToolWrapper> all = InspectionToolRegistrar.getInstance().createTools();
     List<LocalInspectionTool> locals = new ArrayList<>();
@@ -68,7 +69,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
         locals.add(e);
       }
     }
-    return locals.toArray(new LocalInspectionTool[locals.size()]);
+    return locals.toArray(LocalInspectionTool.EMPTY_ARRAY);
   }
 
   @SuppressWarnings("All") @Language("JAVA")

@@ -143,11 +143,8 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
       }
       if (child instanceof GrVariable) {
         myReporter.check(child, conflicts, varName);
-        validateOccurrencesDown(child, conflicts, varName, startOffset);
       }
-      else {
-        validateOccurrencesDown(child, conflicts, varName, startOffset);
-      }
+      validateOccurrencesDown(child, conflicts, varName, startOffset);
       child = child.getNextSibling();
     }
   }

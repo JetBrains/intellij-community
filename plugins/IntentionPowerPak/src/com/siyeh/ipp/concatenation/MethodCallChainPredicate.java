@@ -16,20 +16,21 @@
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Nullable;
 
 class MethodCallChainPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (!isCallChain(element)) {
+    if (getCallChainRoot(element) == null) {
       return false;
     }
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiExpressionStatement) {
       return true;
     }
-    else if (parent instanceof PsiLocalVariable) {
+    if (parent instanceof PsiLocalVariable) {
       final PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiDeclarationStatement)) {
         return false;
@@ -37,17 +38,27 @@ class MethodCallChainPredicate implements PsiElementPredicate {
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)grandParent;
       return declarationStatement.getDeclaredElements().length == 1;
     }
-    else if (parent instanceof PsiAssignmentExpression) {
+    if (parent instanceof PsiAssignmentExpression) {
       final PsiElement grandParent = parent.getParent();
       return grandParent instanceof PsiExpressionStatement;
     }
     return false;
   }
 
-  private static boolean isCallChain(PsiElement element) {
-    PsiClassType aClassType1 = getQualifierExpressionType(element);
-    if (aClassType1 == null) {
-      return false;
+  /**
+   * Find root of the call chain
+   *
+   * @param element
+   * @return root of call chain or null if it's not a call chain
+   */
+  static PsiExpression getCallChainRoot(PsiElement element) {
+    PsiClassType classType = getQualifierExpressionType(element);
+    if (classType == null) {
+      return null;
+    }
+    if (InheritanceUtil.isInheritor(classType, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
+      // Disable for stream API
+      return null;
     }
     boolean first = true;
     while (true) {
@@ -57,19 +68,23 @@ class MethodCallChainPredicate implements PsiElementPredicate {
       PsiClassType expressionType = getQualifierExpressionType(qualifierExpression);
       if (!first) {
         if (expressionType == null) {
-          if (qualifierExpression instanceof PsiMethodCallExpression &&
-              ((PsiMethodCallExpression)qualifierExpression).getMethodExpression().getQualifierExpression() == null) {
-            return false;
+          if (qualifierExpression instanceof PsiMethodCallExpression) {
+            PsiMethodCallExpression call = (PsiMethodCallExpression)qualifierExpression;
+            if (call.getMethodExpression().getQualifierExpression() == null) {
+              PsiMethod method = call.resolveMethod();
+              if (method == null || !method.hasModifierProperty(PsiModifier.STATIC)) {
+                return null;
+              }
+            }
           }
-          return true;
+          return qualifierExpression;
         }
       } else {
         first = false;
       }
-      if (!aClassType1.equals(expressionType)) {
-        return false;
+      if (!classType.equals(expressionType)) {
+        return null;
       }
-      aClassType1 = expressionType;
       element = qualifierExpression;
     }
   }

@@ -18,7 +18,7 @@ package com.intellij.openapi.actionSystem.impl.actionholder;
 import com.intellij.openapi.actionSystem.AnAction;
 
 class SimpleActionRef<T extends AnAction> extends ActionRef<T> {
-  private T myAction;
+  private final T myAction;
 
   public SimpleActionRef(T action) {
     myAction = action;

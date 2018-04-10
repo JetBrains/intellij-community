@@ -114,7 +114,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   }
 
   private static class GotoTaskPopupModel extends SimpleChooseByNameModel implements DumbAware {
-    private ListCellRenderer myListCellRenderer;
+    private final ListCellRenderer myListCellRenderer;
 
 
     protected GotoTaskPopupModel(@NotNull Project project) {

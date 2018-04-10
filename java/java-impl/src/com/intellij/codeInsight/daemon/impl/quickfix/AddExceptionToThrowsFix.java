@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +116,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
   private static PsiMethod[] getSuperMethods(@NotNull PsiMethod targetMethod) {
     List<PsiMethod> result = new ArrayList<>();
     collectSuperMethods(targetMethod, result);
-    return result.toArray(new PsiMethod[result.size()]);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   private static void collectSuperMethods(@NotNull PsiMethod method, @NotNull List<PsiMethod> result) {
@@ -173,8 +174,19 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     PsiElement targetElement = null;
     PsiMethod targetMethod = null;
 
-    final PsiElement psiElement = myWrongElement instanceof PsiMethodReferenceExpression ? myWrongElement 
-                                                                                         : PsiTreeUtil.getParentOfType(myWrongElement, PsiFunctionalExpression.class, PsiMethod.class);
+    final PsiElement psiElement;
+    if (myWrongElement instanceof PsiMethodReferenceExpression) {
+      psiElement = myWrongElement;
+    }
+    else {
+      PsiElement parentStatement = RefactoringUtil.getParentStatement(myWrongElement, false);
+      if (parentStatement instanceof PsiDeclarationStatement && 
+          ((PsiDeclarationStatement)parentStatement).getDeclaredElements()[0] instanceof PsiClass) {
+        return null;
+      }
+
+      psiElement = PsiTreeUtil.getParentOfType(myWrongElement, PsiFunctionalExpression.class, PsiMethod.class);
+    }
     if (psiElement instanceof PsiFunctionalExpression) {
       targetMethod = LambdaUtil.getFunctionalInterfaceMethod(psiElement);
       targetElement = psiElement instanceof PsiLambdaExpression ? ((PsiLambdaExpression)psiElement).getBody() : psiElement;

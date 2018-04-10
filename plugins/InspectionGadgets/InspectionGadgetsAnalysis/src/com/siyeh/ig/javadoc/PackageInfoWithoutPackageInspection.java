@@ -16,8 +16,10 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspectionBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -77,13 +79,7 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)element;
-      // can't use file.setPackageName(myPackageName) here because it will put the package in the wrong place and screw up formatting.
-      PsiElement anchor = file.getFirstChild();
-      while (anchor instanceof PsiWhiteSpace || anchor instanceof PsiComment) {
-        anchor = anchor.getNextSibling();
-      }
-      final PsiPackageStatement packageStatement = JavaPsiFacade.getElementFactory(project).createPackageStatement(myPackageName);
-      file.addBefore(packageStatement, anchor);
+      file.setPackageName(myPackageName);
     }
   }
 
@@ -110,7 +106,7 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
         return;
       }
       final String packageName = aPackage.getQualifiedName();
-      if (packageName.isEmpty()) {
+      if (packageName.isEmpty() || !PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName)) {
         return;
       }
       registerError(file, packageName);

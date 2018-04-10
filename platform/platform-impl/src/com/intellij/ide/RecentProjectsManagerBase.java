@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.execution.process.OSProcessUtil;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +22,10 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.util.*;
@@ -168,8 +159,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private State myState = new State();
 
   private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<String, String>());
-  private Set<String> myDuplicatesCache = null;
-  private boolean isDuplicatesCacheUpdating = false;
   private boolean myBatchOpening;
 
   protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
@@ -182,7 +171,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   public State getState() {
     synchronized (myStateLock) {
       if (myState.pid == null) {
-        myState.pid = ApplicationManager.getApplicationPid();
+        myState.pid = OSProcessUtil.getApplicationPid();
       }
       updateLastProjectPath();
       myState.validateRecentProjects();
@@ -191,8 +180,13 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
   }
 
+  @NotNull
+  protected State getStateInner() {
+    return myState;
+  }
+
   @Override
-  public void loadState(final State state) {
+  public void loadState(@NotNull final State state) {
     state.makePathsSystemIndependent();
     removeDuplicates(state);
     if (state.lastPath != null) {
@@ -419,26 +413,14 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   private Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
-    if (myDuplicatesCache != null) {
-      return myDuplicatesCache;
+    Set<String> names = ContainerUtil.newHashSet();
+    Set<String> duplicates = ContainerUtil.newHashSet();
+    for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
+      if (!names.add(getProjectName(path))) {
+        duplicates.add(path);
+      }
     }
-
-    if (!isDuplicatesCacheUpdating) {
-      isDuplicatesCacheUpdating = true; //assuming that this check happens only on EDT. So, no synchronised block or double-checked locking needed
-      Set<String> names = ContainerUtil.newHashSet();
-      final HashSet<String> duplicates = ContainerUtil.newHashSet();
-      ArrayList<String> list = ContainerUtil.newArrayList(ContainerUtil.concat(openedPaths, recentPaths));
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        for (String path : list) {
-          if (!names.add(getProjectName(path))) {
-            duplicates.add(path);
-          }
-        }
-        myDuplicatesCache = duplicates;
-        isDuplicatesCacheUpdating = false;
-      });
-    }
-    return ContainerUtil.newHashSet();
+    return duplicates;
   }
 
   @Override
@@ -460,7 +442,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     paths.remove(null);
-    paths.removeAll(openedPaths);
+    //paths.removeAll(openedPaths);
 
     List<AnAction> actions = new SmartList<>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
@@ -523,7 +505,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       return AnAction.EMPTY_ARRAY;
     }
 
-    return actions.toArray(new AnAction[actions.size()]);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private AnAction createOpenAction(@SystemIndependent String path, Set<String> duplicates) {
@@ -579,7 +561,23 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   @SystemIndependent
   protected abstract String getProjectPath(@NotNull Project project);
 
-  protected abstract void doOpenProject(@NotNull String projectPath, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
+  public Project doOpenProject(@NotNull @SystemIndependent String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
+    VirtualFile dotIdea  = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
+      new File(projectPath, Project.DIRECTORY_STORE_FOLDER));
+
+    if (dotIdea != null) {
+      EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.of(PlatformProjectOpenProcessor.Option.REOPEN);
+      if (forceOpenInNewFrame) options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+      return PlatformProjectOpenProcessor.doOpenProject(dotIdea.getParent(), projectToClose, -1, null, options);
+    }
+    else {
+      // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
+      // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
+      // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
+      // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
+      return ProjectUtil.openOrImport(projectPath, projectToClose, forceOpenInNewFrame);
+    }
+  }
 
   private class MyProjectListener implements ProjectManagerListener {
     @Override

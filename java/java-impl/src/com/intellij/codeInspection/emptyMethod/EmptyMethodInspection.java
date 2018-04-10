@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.ToolExtensionPoints;
@@ -146,7 +132,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       }
 
       final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, false,
-                                                                           fixes.toArray(new LocalQuickFix[fixes.size()]),
+                                                                           fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       return new ProblemDescriptor[]{descriptor};
     }
@@ -162,7 +148,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     if (owner == null) {
       return false;
     }
-    if (AnnotationUtil.isAnnotated(owner, EXCLUDE_ANNOS)) {
+    if (AnnotationUtil.isAnnotated(owner, EXCLUDE_ANNOS, 0)) {
       return false;
     }
     for (final Object extension : Extensions.getExtensions(ToolExtensionPoints.EMPTY_METHOD_TOOL)) {
@@ -217,8 +203,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
                 @Override
                 public boolean process(PsiMethod derivedMethod) {
                   PsiCodeBlock body = derivedMethod.getBody();
-                  if (body == null) return true;
-                  if (body.getStatements().length == 0) return true;
+                  if (body == null || body.isEmpty()) return true;
                   if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(derivedMethod)) return true;
                   descriptionsProcessor.ignoreElement(refMethod);
                   return false;
@@ -346,7 +331,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     private void deleteHierarchy(RefMethod refMethod, List<PsiElement> result) {
       Collection<RefMethod> derivedMethods = refMethod.getDerivedMethods();
-      RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[derivedMethods.size()]);
+      RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[0]);
       for (RefMethod refDerived : refMethods) {
         deleteMethod(refDerived, result);
       }

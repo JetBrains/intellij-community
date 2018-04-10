@@ -17,15 +17,17 @@
 package com.intellij.psi.controlFlow;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class InstructionBase implements Instruction, Cloneable{
+  @NotNull
   @Override
   public Instruction clone() {
     try {
       return (Instruction)super.clone();
     }
     catch (CloneNotSupportedException e) {
-      return null;
+      throw new RuntimeException(e);
     }
   }
 

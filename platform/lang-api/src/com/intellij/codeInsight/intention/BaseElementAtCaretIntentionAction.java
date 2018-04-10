@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -51,7 +52,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
   }
 
   protected boolean checkFile(@NotNull PsiFile file) {
-    return file.getManager().isInProject(file);
+    return file.getManager().isInProject(file) || ScratchFileService.isInScratchRoot(file.getVirtualFile());
   }
 
   /**
@@ -81,8 +82,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
    * @param project the project in which the file is opened.
    * @param editor  the editor for the file.
    * @param element the element under cursor.
-   * @throws com.intellij.util.IncorrectOperationException
-   *
+   * @throws IncorrectOperationException
    */
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 

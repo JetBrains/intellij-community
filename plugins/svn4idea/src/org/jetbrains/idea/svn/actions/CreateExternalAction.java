@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,11 @@ import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.update.UpdateClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -85,7 +85,7 @@ public class CreateExternalAction extends DumbAwareAction {
       if (checkout) {
         UpdateClient client = vcs.getFactory(ioFile).createUpdateClient();
         client.setEventHandler(new SvnProgressCanceller());
-        client.doUpdate(ioFile, SVNRevision.HEAD, Depth.UNKNOWN, false, false);
+        client.doUpdate(ioFile, Revision.HEAD, Depth.UNKNOWN, false, false);
         file.refresh(true, true, () -> dirtyScopeManager.dirDirtyRecursively(file));
       }
     }
@@ -97,7 +97,7 @@ public class CreateExternalAction extends DumbAwareAction {
   public static void addToExternalProperty(@NotNull SvnVcs vcs, @NotNull File ioFile, String target, String url) throws VcsException {
     ClientFactory factory = vcs.getFactory(ioFile);
     PropertyValue propertyValue =
-      factory.createPropertyClient().getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_EXTERNALS, false, SVNRevision.UNDEFINED);
+      factory.createPropertyClient().getProperty(Target.on(ioFile), SvnPropertyKeys.SVN_EXTERNALS, false, Revision.UNDEFINED);
     boolean hasExternals = propertyValue != null && !isEmptyOrSpaces(propertyValue.toString());
     String newExternals = "";
 

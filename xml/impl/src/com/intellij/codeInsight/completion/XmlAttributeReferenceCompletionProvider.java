@@ -118,7 +118,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
             element = element.withLookupString(name.substring(separator + 1));
           }
           element = element
-            .withCaseSensitivity(!(descriptor instanceof HtmlAttributeDescriptorImpl))
+            .withCaseSensitivity(!(descriptor instanceof HtmlAttributeDescriptorImpl) || ((HtmlAttributeDescriptorImpl)descriptor).isCaseSensitive())
             .withInsertHandler(insertHandler);
           result.addElement(
             descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) :

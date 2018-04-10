@@ -33,7 +33,7 @@ public class PyTripleQuoteBackspaceDelegate extends BackspaceHandlerDelegate {
     isTripleQuote = false;
     if (c == '"' || c == '\'' && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) {
       final QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file, editor);
-      if (quoteHandler == null || !(quoteHandler instanceof BaseQuoteHandler)) return;
+      if (!(quoteHandler instanceof BaseQuoteHandler)) return;
 
       final int offset = editor.getCaretModel().getCurrentCaret().getOffset();
       String text = editor.getDocument().getText();

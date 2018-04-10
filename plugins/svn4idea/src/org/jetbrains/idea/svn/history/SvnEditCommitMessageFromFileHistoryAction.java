@@ -46,7 +46,7 @@ public class SvnEditCommitMessageFromFileHistoryAction extends AnAction {
     final SvnFileRevision svnFileRevision = (SvnFileRevision) revision;
     final Consumer<String> listener = VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER.getData(e.getDataContext());
     SvnEditCommitMessageAction.askAndEditRevision(svnFileRevision.getRevision().getNumber(), svnFileRevision.getCommitMessage(),
-                                                  (SvnRepositoryLocation)svnFileRevision.getChangedRepositoryPath(), project,
+                                                  svnFileRevision.getChangedRepositoryPath(), project,
                                                   newMessage -> {
                                                     svnFileRevision.setCommitMessage(newMessage);
                                                     if (listener != null) {

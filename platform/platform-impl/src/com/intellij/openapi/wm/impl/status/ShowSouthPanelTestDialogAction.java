@@ -36,7 +36,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
   }
 
   private static class MyDialogWrapper extends DialogWrapper {
-    private boolean ORIGINAL_ALLOW_MERGE_BUTTONS;
+    private final boolean ORIGINAL_ALLOW_MERGE_BUTTONS;
 
     private final Wrapper mySouthPanel = new Wrapper();
 

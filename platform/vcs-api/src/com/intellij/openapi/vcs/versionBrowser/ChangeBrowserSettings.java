@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.text.SyncDateFormat;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +16,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.packNullables;
 import static com.intellij.util.containers.ContainerUtil.retainAll;
 
-public class ChangeBrowserSettings implements JDOMExternalizable {
-
+public class ChangeBrowserSettings {
   public interface Filter {
     boolean accepts(CommittedChangeList change);
   }
@@ -59,14 +43,6 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
 
   @Transient public boolean STRICTLY_AFTER = false;
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
   @Nullable
   private static Date parseDate(@Nullable String dateValue) {
     try {
@@ -89,18 +65,24 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     }
   }
 
+  @Nullable
+  @Transient
+  public Date getDateBefore() {
+    return parseDate(DATE_BEFORE);
+  }
+
   public void setDateBefore(@Nullable Date value) {
     DATE_BEFORE = value == null ? null : DATE_FORMAT.format(value);
   }
 
   @Nullable
-  public Date getDateBefore() {
-    return parseDate(DATE_BEFORE);
-  }
-
-  @Nullable
+  @Transient
   public Date getDateAfter() {
     return parseDate(DATE_AFTER);
+  }
+
+  public void setDateAfter(@Nullable Date value) {
+    DATE_AFTER = value == null ? null : DATE_FORMAT.format(value);
   }
 
   @Nullable
@@ -121,10 +103,6 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   @Nullable
   public Date getDateAfterFilter() {
     return USE_DATE_AFTER_FILTER ? parseDate(DATE_AFTER) : null;
-  }
-
-  public void setDateAfter(@Nullable Date value) {
-    DATE_AFTER = value == null ? null : DATE_FORMAT.format(value);
   }
 
   @NotNull
@@ -165,6 +143,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   @Nullable
+  @Transient
   public String getUserFilter() {
     return USE_USER_FILTER ? USER : null;
   }
@@ -177,6 +156,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
            isNonDateFilterSpecified();
   }
 
+  @Transient
   public boolean isNonDateFilterSpecified() {
     return USE_USER_FILTER;
   }

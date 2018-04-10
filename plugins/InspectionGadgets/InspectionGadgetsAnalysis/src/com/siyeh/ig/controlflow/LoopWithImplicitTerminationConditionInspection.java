@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2015 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -69,8 +69,7 @@ public class LoopWithImplicitTerminationConditionInspection
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiExpression loopCondition;
@@ -131,9 +130,10 @@ public class LoopWithImplicitTerminationConditionInspection
       final PsiStatement thenBranch = ifStatement.getThenBranch();
       final PsiStatement elseBranch = ifStatement.getElseBranch();
       if (containsUnlabeledBreakStatement(thenBranch)) {
+        CommentTracker commentTracker = new CommentTracker();
         final String negatedExpressionText =
-          BoolUtils.getNegatedExpressionText(ifCondition);
-        PsiReplacementUtil.replaceExpression(loopCondition, negatedExpressionText);
+          BoolUtils.getNegatedExpressionText(ifCondition, commentTracker);
+        PsiReplacementUtil.replaceExpression(loopCondition, negatedExpressionText, commentTracker);
         replaceStatement(ifStatement, elseBranch);
       }
       else if (containsUnlabeledBreakStatement(elseBranch)) {
@@ -147,10 +147,7 @@ public class LoopWithImplicitTerminationConditionInspection
       }
     }
 
-    private static void replaceStatement(
-      @NotNull PsiStatement replacedStatement,
-      @Nullable PsiStatement replacingStatement)
-      throws IncorrectOperationException {
+    private static void replaceStatement(@NotNull PsiStatement replacedStatement, @Nullable PsiStatement replacingStatement) {
       if (replacingStatement == null) {
         replacedStatement.delete();
         return;

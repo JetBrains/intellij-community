@@ -25,7 +25,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 1, 2010
  */
 public abstract class AntDomTypeDef extends AntDomCustomClasspathComponent{
 

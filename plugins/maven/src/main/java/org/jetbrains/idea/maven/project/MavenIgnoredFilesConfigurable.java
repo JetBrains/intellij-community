@@ -31,7 +31,6 @@ import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Comparator;
 
 public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final char SEPARATOR = ',';
@@ -87,6 +86,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
     return ProjectBundle.message("maven.tab.ignored.files");
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {

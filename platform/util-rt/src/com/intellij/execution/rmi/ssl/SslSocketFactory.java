@@ -39,7 +39,7 @@ public class SslSocketFactory extends SSLSocketFactory {
   public static final String SSL_CLIENT_KEY_PATH = "sslClientKeyPath";
   public static final String SSL_TRUST_EVERYBODY = "sslTrustEverybody";
   private static final String END_CERTIFICATE = "-----END CERTIFICATE-----";
-  private SSLSocketFactory myFactory;
+  private final SSLSocketFactory myFactory;
 
   public SslSocketFactory() throws GeneralSecurityException, IOException {
     super();
@@ -75,7 +75,7 @@ public class SslSocketFactory extends SSLSocketFactory {
       if (token == null || token.trim().length() == 0) continue;
       result.add(new MyTrustManager(readCertificate(stringStream(token + END_CERTIFICATE))));
     }
-    return new TrustManager[]{new CompositeX509TrustManager(result.toArray(new TrustManager[result.size()]))};
+    return new TrustManager[]{new CompositeX509TrustManager(result.toArray(new TrustManager[0]))};
   }
 
   @NotNull

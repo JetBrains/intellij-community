@@ -29,14 +29,14 @@ class Test {
     static void meth4(I3 s) { }
 
     static {
-        meth1(Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>);
+        meth1(Foo::<error descr="no instance(s) of type variable(s)  exist so that String conforms to Number">new</error>);
         meth2(Foo::new);
-        meth3(Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>);
+        meth3(Foo::<error descr="no instance(s) of type variable(s)  exist so that Object conforms to Number">new</error>);
         meth4<error descr="Ambiguous method call: both 'Test.meth4(I1)' and 'Test.meth4(I2)' match">(Foo::new)</error>;
 
-        meth1(Test::<error descr="Cannot resolve method 'foo'">foo</error>);
+        meth1(Test::<error descr="no instance(s) of type variable(s)  exist so that String conforms to Number">foo</error>);
         meth2(Test::foo);
-        meth3(Test::<error descr="Cannot resolve method 'foo'">foo</error>);
+        meth3(Test::<error descr="no instance(s) of type variable(s)  exist so that Object conforms to Number">foo</error>);
         meth4<error descr="Ambiguous method call: both 'Test.meth4(I1)' and 'Test.meth4(I2)' match">(Test::foo)</error>;
     }
 
@@ -55,8 +55,8 @@ class Test {
     }
 
     void test() {
-      II1 i1 = this::<error descr="Cannot resolve method 'fooInstance'">fooInstance</error>;
+      II1 i1 = this::<error descr="no instance(s) of type variable(s)  exist so that X conforms to Number">fooInstance</error>;
       II2 i2 = this::fooInstance;
-      II3 i3 = this::<error descr="Cannot resolve method 'fooInstance'">fooInstance</error>;
+      II3 i3 = this::<error descr="no instance(s) of type variable(s)  exist so that X conforms to Number">fooInstance</error>;
     }
 }

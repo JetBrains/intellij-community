@@ -24,6 +24,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -96,6 +97,19 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
         PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock((PsiCodeBlock)body);
         if (statement instanceof PsiReturnStatement && ExpressionUtils.isZero(((PsiReturnStatement)statement).getReturnValue())) return;
       }
+      PsiMethodCallExpression soleCall = ObjectUtils.tryCast(LambdaUtil.extractSingleExpressionFromBody(body), PsiMethodCallExpression.class);
+      if (soleCall != null) {
+        PsiMethod method = soleCall.resolveMethod();
+        if (method != null) {
+          List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, soleCall);
+          if (contracts.size() == 1) {
+            MethodContract contract = contracts.get(0);
+            if (contract.isTrivial() && contract.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION) {
+              return;
+            }
+          }
+        }
+      }
       PsiParameter[] parameters = parameterList.getParameters();
       checkParameterList(parameters, body);
       checkReflexivity(parameters, body);
@@ -111,13 +125,13 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     private void checkReflexivity(PsiParameter[] parameters, PsiElement body) {
-      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, true) {
+      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, body) {
         @NotNull
         @Override
         protected DfaMemoryState createMemoryState() {
           DfaMemoryState state = super.createMemoryState();
-          DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0], false);
-          DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1], false);
+          DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0]);
+          DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1]);
           DfaValue condition = getFactory().createCondition(var1, DfaRelationValue.RelationType.EQ, var2);
           state.applyCondition(condition);
           return state;
@@ -153,7 +167,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                                                          DfaMemoryState memState) {
         myContexts.add(instruction.getReturn());
         DfaValue value = memState.peek();
-        LongRangeSet range = memState.getValueFact(DfaFactType.RANGE, value);
+        LongRangeSet range = memState.getValueFact(value, DfaFactType.RANGE);
         myRange = range == null ? LongRangeSet.all() : myRange.union(range);
         return super.visitCheckReturnValue(instruction, runner, memState);
       }

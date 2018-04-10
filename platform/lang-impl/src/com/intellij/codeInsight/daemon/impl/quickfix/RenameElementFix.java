@@ -84,7 +84,7 @@ public class RenameElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return startElement.isValid() && RenameUtil.isValidName(project, startElement, myNewName);
+    return RenameUtil.isValidName(project, startElement, myNewName);
   }
 
   @Override

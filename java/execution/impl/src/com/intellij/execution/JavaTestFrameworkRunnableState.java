@@ -19,6 +19,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -37,9 +38,11 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -66,14 +69,12 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule>
   & CommonJavaRunConfigurationParameters
+  & ConfigurationWithCommandLineShortener
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
   private static final Logger LOG = Logger.getInstance(JavaTestFrameworkRunnableState.class);
   protected ServerSocket myServerSocket;
@@ -81,6 +82,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected File myWorkingDirsFile = null;
 
   private RemoteConnectionCreator remoteConnectionCreator;
+  private final List<ArgumentFileFilter> myArgumentFileFilters = new ArrayList<>();
 
   public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
     this.remoteConnectionCreator = remoteConnectionCreator;
@@ -127,6 +129,16 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return false;
   }
 
+  @Override
+  protected GeneralCommandLine createCommandLine() throws ExecutionException {
+    GeneralCommandLine commandLine = super.createCommandLine();
+    Map<String, String> content = commandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+    if (content != null) {
+      content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));
+    }
+    return commandLine;
+  }
+
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
@@ -141,6 +153,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
+
+    for (ArgumentFileFilter filter : myArgumentFileFilters) {
+      consoleView.addMessageFilter(filter);
+    }
 
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();
@@ -189,15 +205,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return result;
   }
 
-  protected abstract void configureRTClasspath(JavaParameters javaParameters);
+  protected abstract void configureRTClasspath(JavaParameters javaParameters) throws CantRunException;
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
-    javaParameters.setUseClasspathJar(true);
+    Project project = getConfiguration().getProject();
+    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
     final Module module = getConfiguration().getConfigurationModule().getModule();
 
-    Project project = getConfiguration().getProject();
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
     javaParameters.setJdk(jdk);
     
@@ -285,7 +301,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
-        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject()) && forkPerModule()) {
+        ShortenCommandLine shortenCommandLine = getConfiguration().getShortenCommandLine();
+        boolean useDynamicClasspathForForkMode = shortenCommandLine == null 
+                                                 ? JdkUtil.useDynamicClasspath(getConfiguration().getProject()) 
+                                                 : shortenCommandLine != ShortenCommandLine.NONE;
+        if (useDynamicClasspathForForkMode && forkPerModule()) {
           writer.println("use classpath jar");
         }
         else {
@@ -365,7 +385,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
             final GlobalSearchScope configurationSearchScope = GlobalSearchScopesCore.projectTestScope(project).intersectWith(
               sourceScope.getGlobalSearchScope());
             final PsiDirectory[] directories = aPackage.getDirectories(configurationSearchScope);
-            return directories.length > 1;
+            return Arrays.stream(directories)
+                     .map(dir -> ModuleUtilCore.findModuleForFile(dir.getVirtualFile(), project))
+                     .filter(Objects::nonNull)
+                     .distinct()
+                     .count() > 1;
           }
         }
       }
@@ -379,7 +403,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected boolean forkPerModule() {
     final String workingDirectory = getConfiguration().getWorkingDirectory();
     return getScope() != TestSearchScope.SINGLE_MODULE &&
-           ("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory) &&
+           (("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory) || ProgramParametersConfigurator.MODULE_WORKING_DIR.equals(workingDirectory)) &&
            spansMultipleModules(getConfiguration().getPackage());
   }
 
@@ -445,4 +469,5 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
   }
 
+  public void appendRepeatMode() throws ExecutionException { }
 }

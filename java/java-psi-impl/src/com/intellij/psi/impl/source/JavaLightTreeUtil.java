@@ -27,8 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.ANONYMOUS_CLASS;
-import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 /**
  * @author peter
@@ -57,5 +56,13 @@ public class JavaLightTreeUtil {
   @Nullable
   public static LighterASTNode findExpressionChild(@NotNull LighterAST tree, @Nullable LighterASTNode node) {
     return LightTreeUtil.firstChildOfType(tree, node, ElementType.EXPRESSION_BIT_SET);
+  }
+
+  @Nullable
+  public static LighterASTNode skipParenthesesCastsDown(@NotNull LighterAST tree, @Nullable LighterASTNode node) {
+    while (node != null && (node.getTokenType() == PARENTH_EXPRESSION || node.getTokenType() == TYPE_CAST_EXPRESSION)) {
+      node = findExpressionChild(tree, node);
+    }
+    return node;
   }
 }

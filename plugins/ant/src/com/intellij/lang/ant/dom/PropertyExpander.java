@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Apr 23, 2010
 */
 public class PropertyExpander {
   private static final Pattern $$_PATTERN = Pattern.compile("\\$\\$");
@@ -110,7 +109,7 @@ public class PropertyExpander {
   private static class Resolver implements Iterator<String> {
     private int myCurrentIndex = -1;
     private List<Pair<String /*property name without ${} characters*/, Integer /*offset of property occurrence including '$' char*/>> myPropertyNames; 
-    private StringBuilder myBuilder;
+    private final StringBuilder myBuilder;
     
     private Resolver(final String str, Set<String> namesToSkip) {
       myBuilder = new StringBuilder(str);

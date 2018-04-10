@@ -21,8 +21,6 @@ import com.intellij.util.QueryFactory;
 
 /**
  * @author irengrig
- *         Date: 2/19/11
- *         Time: 10:03 AM
  */
 public class LightIndexPatternSearch extends QueryFactory<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
   public static final LightIndexPatternSearch SEARCH = new LightIndexPatternSearch();

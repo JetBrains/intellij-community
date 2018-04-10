@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -136,8 +137,8 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
       final PsiMethod method = (PsiMethod) resolved;
       final String oldName = getReferenceName();
       if (!method.getName().equals(oldName)) { //was property reference to accessor
-        if (PropertyUtil.isSimplePropertyAccessor(method)) {
-          final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
+        if (PropertyUtilBase.isSimplePropertyAccessor(method)) {
+          final String newPropertyName = PropertyUtilBase.getPropertyName(newElementName);
           if (newPropertyName != null) {
             return super.handleElementRename(newPropertyName);
           }

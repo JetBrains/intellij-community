@@ -39,7 +39,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 21, 2010
  */
 public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElement> implements AntDomReference {
 
@@ -181,6 +180,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
       return myProvider;
     }
 
+    @Override
     public boolean isValidResult() {
       return true;
     }

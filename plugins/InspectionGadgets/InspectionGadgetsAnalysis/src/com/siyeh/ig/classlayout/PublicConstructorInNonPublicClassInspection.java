@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -61,7 +60,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       fixes.add(new SetConstructorModifierFix(PsiModifier.PRIVATE));
     }
     fixes.add(new RemoveModifierFix(PsiModifier.PUBLIC));
-    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+    return fixes.toArray(new InspectionGadgetsFix[0]);
   }
 
   private static class SetConstructorModifierFix extends InspectionGadgetsFix {
@@ -88,7 +87,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiModifierList modifierList = (PsiModifierList)element.getParent();
       modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
@@ -117,7 +116,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       }
       if (SerializationUtils.isExternalizable(containingClass)) {
         final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() == 0) {
+        if (parameterList.isEmpty()) {
           return;
         }
       }

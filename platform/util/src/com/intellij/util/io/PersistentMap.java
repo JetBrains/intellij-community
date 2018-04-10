@@ -7,7 +7,6 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/10/11
  */
 public interface PersistentMap<K, V> extends Closeable {
 

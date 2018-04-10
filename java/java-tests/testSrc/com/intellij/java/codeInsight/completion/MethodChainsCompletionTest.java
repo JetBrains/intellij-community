@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -21,9 +7,12 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.chainsSearch.ChainRelevance;
+import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
 import com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor;
 import com.intellij.compiler.chainsSearch.completion.lookup.JavaRelevantChainLookupElement;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SmartList;
 
@@ -44,6 +33,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     Registry.get(MethodChainCompletionContributor.REGISTRY_KEY).setValue(true, myFixture.getTestRootDisposable());
     myDefaultAutoCompleteOnCodeCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = false;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
   @Override
@@ -240,6 +230,30 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertEquals("psiElement.getProject", element.getLookupString());
   }
 
+  public void testChainWithCastOnContextVariable() {
+    JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("(EditorEx)editor.getMarkupModel", element.toString());
+  }
+
+  public void testChainWithCastOnVariableOutsideContext() {
+    assertEmpty(doCompletion());
+  }
+
+  public void testChainWithCastOnStaticMethod() {
+    JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("(InspectionManagerEx)getInstance().createContext", element.toString());
+  }
+
+  public void testChainEndedWithCast() {
+    JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("(InspectionManagerEx)getInstance", element.toString());
+  }
+
+  public void testLongChainWithCast() {
+    assertEquals("the test should be modified when MAX_CHAIN_SIZE is changed", 4, ChainSearchMagicConstants.MAX_CHAIN_SIZE);
+    assertEquals("a.getB().getC().getD", assertOneElement(doCompletion()).toString());
+  }
+
   public void assertAdvisorLookupElementEquals(String lookupText,
                                                int unreachableParametersCount,
                                                int chainSize,
@@ -273,7 +287,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
         return;
       }
     }
-    fail("relevant method chain isn't foun");
+    fail("relevant method chain isn't found");
   }
 
   private List<JavaRelevantChainLookupElement> doCompletion() {

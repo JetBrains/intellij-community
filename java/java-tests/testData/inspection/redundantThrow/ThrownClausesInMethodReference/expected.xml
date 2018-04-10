@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>6</line>
+    <description>The declared exception &lt;code&gt;Exception&lt;/code&gt; is never thrown</description>
+  </problem>
+</problems>
+

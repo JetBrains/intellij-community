@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.concurrency.JobScheduler;
@@ -21,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -45,18 +32,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.info.InfoClient;
-import org.tmatesoft.svn.core.SVNAuthenticationException;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,15 +48,17 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
+import static org.jetbrains.idea.svn.SvnUtil.isAuthError;
+
+public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, Url> {
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationNotifier.class);
 
-  private static final List<String> ourAuthKinds = Arrays.asList(ISVNAuthenticationManager.PASSWORD, ISVNAuthenticationManager.SSH,
-    ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME, "svn.ssl.server", "svn.ssh.server");
+  private static final List<String> ourAuthKinds = Arrays
+    .asList(SvnAuthenticationManager.PASSWORD, "svn.ssh", SvnAuthenticationManager.SSL, "svn.username", "svn.ssl.server", "svn.ssh.server");
 
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;
-  private final Map<SVNURL, Boolean> myCopiesPassiveResults;
+  private final Map<Url, Boolean> myCopiesPassiveResults;
   private ScheduledFuture<?> myTimer;
   private volatile boolean myVerificationInProgress;
 
@@ -83,7 +66,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     super(svnVcs.getProject(), svnVcs.getDisplayName(), "Not Logged In to Subversion", NotificationType.ERROR);
     myVcs = svnVcs;
     myRootsToWorkingCopies = myVcs.getRootsToWorkingCopies();
-    myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<SVNURL, Boolean>());
+    myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<Url, Boolean>());
     myVerificationInProgress = false;
   }
 
@@ -155,10 +138,10 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     myCopiesPassiveResults.put(getKey(obj), true);
     myVcs.invokeRefreshSvnRoots();
 
-    final List<SVNURL> outdatedRequests = new LinkedList<>();
-    final Collection<SVNURL> keys = getAllCurrentKeys();
-    for (SVNURL key : keys) {
-      final SVNURL commonURLAncestor = SVNURLUtil.getCommonURLAncestor(key, obj.getUrl());
+    final List<Url> outdatedRequests = new LinkedList<>();
+    final Collection<Url> keys = getAllCurrentKeys();
+    for (Url key : keys) {
+      final Url commonURLAncestor = key.commonAncestorWith(obj.getUrl());
       if ((commonURLAncestor != null) && (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getHost())) &&
           (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getPath()))) {
         //final AuthenticationRequest currObj = getObj(key);
@@ -169,7 +152,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     }
     log("on state changed ");
     ApplicationManager.getApplication().invokeLater(() -> {
-      for (SVNURL key : outdatedRequests) {
+      for (Url key : outdatedRequests) {
         removeLazyNotificationByKey(key);
       }
     }, ModalityState.NON_MODAL);
@@ -177,7 +160,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   @Override
   public boolean ensureNotify(AuthenticationRequest obj) {
-    final SVNURL key = getKey(obj);
+    final Url key = getKey(obj);
     myCopiesPassiveResults.remove(key);
     /*VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "You are not authenticated to '" + obj.getRealm() + "'." +
       "To login, see pending notifications.", MessageType.ERROR);*/
@@ -195,13 +178,13 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   @NotNull
   @Override
-  public SVNURL getKey(final AuthenticationRequest obj) {
+  public Url getKey(final AuthenticationRequest obj) {
     // !!! wc's URL
     return obj.getWcUrl();
   }
 
   @Nullable
-  public SVNURL getWcUrl(final AuthenticationRequest obj) {
+  public Url getWcUrl(final AuthenticationRequest obj) {
     if (obj.isOutsideCopies()) return null;
     if (obj.getWcUrl() != null) return obj.getWcUrl();
 
@@ -236,11 +219,15 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     return calculatedResult ? ThreeState.YES : ThreeState.NO;
   }
 
-  private static boolean passiveValidation(@NotNull ClientFactory factory, @NotNull SVNURL url) {
+  // TODO: Looks like passive authentication for command line integration could show dialogs for proxy errors. So, it could make sense to
+  // TODO: reuse some logic from validationImpl().
+  // TODO: Also SvnAuthenticationNotifier is not called for command line integration (ensureNotify() is called only in SVNKit lifecycle).
+  // TODO: Though its logic with notifications seems rather convenient. Fix this.
+  private static boolean passiveValidation(@NotNull ClientFactory factory, @NotNull Url url) {
     Info info = null;
 
     try {
-      info = factory.create(InfoClient.class, false).doInfo(SvnTarget.fromURL(url), SVNRevision.UNDEFINED);
+      info = factory.create(InfoClient.class, false).doInfo(Target.on(url), Revision.UNDEFINED);
     }
     catch (SvnBindException ignore) {
     }
@@ -257,14 +244,14 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   public static class AuthenticationRequest {
     private final Project myProject;
     private final String myKind;
-    private final SVNURL myUrl;
+    private final Url myUrl;
     private final String myRealm;
 
-    private SVNURL myWcUrl;
+    private Url myWcUrl;
     private boolean myOutsideCopies;
     private boolean myForceSaving;
 
-    public AuthenticationRequest(Project project, String kind, SVNURL url, String realm) {
+    public AuthenticationRequest(Project project, String kind, Url url, String realm) {
       myProject = project;
       myKind = kind;
       myUrl = url;
@@ -287,11 +274,11 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       myOutsideCopies = outsideCopies;
     }
 
-    public SVNURL getWcUrl() {
+    public Url getWcUrl() {
       return myWcUrl;
     }
 
-    public void setWcUrl(SVNURL wcUrl) {
+    public void setWcUrl(Url wcUrl) {
       myWcUrl = wcUrl;
     }
 
@@ -299,7 +286,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       return myKind;
     }
 
-    public SVNURL getUrl() {
+    public Url getUrl() {
       return myUrl;
     }
 
@@ -316,19 +303,19 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     LOG.debug(s);
   }
 
-  public static boolean passiveValidation(@NotNull SvnVcs vcs, final SVNURL url) {
+  public static boolean passiveValidation(@NotNull SvnVcs vcs, final Url url) {
     SvnConfiguration configuration = vcs.getSvnConfiguration();
     SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager(vcs);
     return validationImpl(vcs.getProject(), url, configuration, passiveManager, false, null, null, false);
   }
 
-  public static boolean interactiveValidation(final Project project, final SVNURL url, final String realm, final String kind) {
+  public static boolean interactiveValidation(final Project project, final Url url, final String realm, final String kind) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
     final SvnAuthenticationManager passiveManager = configuration.getInteractiveManager(SvnVcs.getInstance(project));
     return validationImpl(project, url, configuration, passiveManager, true, realm, kind, true);
   }
 
-  private static boolean validationImpl(final Project project, final SVNURL url,
+  private static boolean validationImpl(final Project project, final Url url,
                                         final SvnConfiguration configuration, final SvnAuthenticationManager manager,
                                         final boolean checkWrite,
                                         final String realm,
@@ -366,15 +353,15 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       }
     }
     SvnInteractiveAuthenticationProvider.clearCallState();
+    Target target = Target.on(url);
     try {
-      // start svnkit authentication cycle
-      SvnVcs.getInstance(project).getSvnKitManager().createWCClient(manager).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-      //SvnVcs.getInstance(project).getInfo(url, SVNRevision.HEAD, manager);
-    } catch (SVNAuthenticationException | SVNCancelException e) {
-      log(e);
+      SvnVcs.getInstance(project).getFactory(target).create(InfoClient.class, interactive).doInfo(target, Revision.HEAD);
+    }
+    catch (ProcessCanceledException e) {
       return false;
-    } catch (final SVNException e) {
-      if (e.getErrorMessage().getErrorCode().isAuthentication()) {
+    }
+    catch (SvnBindException e) {
+      if (isAuthError(e)) {
         log(e);
         return false;
       }
@@ -403,15 +390,10 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final SvnVcs svnVcs = SvnVcs.getInstance(project);
 
     final SvnInteractiveAuthenticationProvider provider = new SvnInteractiveAuthenticationProvider(svnVcs, manager);
-    final SVNAuthentication svnAuthentication = provider.requestClientAuthentication(kind, url, realm, null, null, true);
+    final AuthenticationData svnAuthentication = provider.requestClientAuthentication(kind, url, realm, true);
     if (svnAuthentication != null) {
       configuration.acknowledge(kind, realm, svnAuthentication);
-      try {
-        configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(true, kind, realm, null, svnAuthentication);
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-      }
+      configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(kind, url, realm, svnAuthentication);
       return true;
     }
     return false;
@@ -419,7 +401,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   private static void showAuthenticationFailedWithHotFixes(final Project project,
                                                            final SvnConfiguration configuration,
-                                                           final SVNException e) {
+                                                           final SvnBindException e) {
     ApplicationManager.getApplication().invokeLater(() -> VcsBalloonProblemNotifier
       .showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR, new NamedRunnable(
                              SvnBundle.message("confirmation.title.clear.authentication.cache")) {

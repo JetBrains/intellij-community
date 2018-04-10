@@ -38,18 +38,13 @@ public class GitMerge extends GitMergeAction {
   @Nullable
   @Override
   protected DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
-    GitVcs vcs = GitVcs.getInstance(project);
-    if (vcs == null) {
-      return null;
-    }
     final GitMergeDialog dialog = new GitMergeDialog(project, gitRoots, defaultRoot);
     try {
       dialog.updateBranches();
     }
     catch (VcsException e) {
-      if (vcs.getExecutableValidator().checkExecutableAndShowMessageIfNeeded(null)) {
-        vcs.showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
-      }
+      GitVcs vcs = GitVcs.getInstance(project);
+      vcs.showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
       return null;
     }
     if (!dialog.showAndGet()) {

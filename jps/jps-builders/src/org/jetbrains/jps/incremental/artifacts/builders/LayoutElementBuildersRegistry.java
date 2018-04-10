@@ -24,7 +24,9 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.incremental.artifacts.instructions.*;
+import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
+import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
+import org.jetbrains.jps.incremental.artifacts.instructions.CopyToDirectoryInstructionCreator;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.*;
 import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement;
@@ -53,7 +55,7 @@ public class LayoutElementBuildersRegistry {
     return InstanceHolder.ourInstance;
   }
 
-  private ClassMap<LayoutElementBuilderService> myBuilders;
+  private final ClassMap<LayoutElementBuilderService> myBuilders;
 
   private LayoutElementBuildersRegistry() {
     myBuilders = new ClassMap<>();

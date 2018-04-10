@@ -104,7 +104,7 @@ public class PsiMethodWithOverridingPercentMember extends PsiMethodMember {
         }
       }
     }
-    return result.toArray(new PsiMethodWithOverridingPercentMember[result.size()]);
+    return result.toArray(new PsiMethodWithOverridingPercentMember[0]);
   }
 
   private static int searchForOverridingCount(final PsiMethod method, final Collection<PsiClass> containingClassInheritors) {

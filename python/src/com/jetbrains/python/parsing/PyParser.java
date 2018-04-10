@@ -61,9 +61,13 @@ public class PyParser implements PsiParser {
     }
     rootMarker.done(root);
     ASTNode ast = builder.getTreeBuilt();
-    long diff = System.currentTimeMillis() - start;
-    double kb = builder.getCurrentOffset() / 1000.0;
-    LOGGER.debug("Parsed " + String.format("%.1f", kb) + "K file in " + diff + "ms");
+    if (LOGGER.isDebugEnabled()) {
+      long diff = System.currentTimeMillis() - start;
+      double kb = builder.getCurrentOffset() / 1000.0;
+      if (diff > 5) { // Only log heavy file parsing
+        LOGGER.debug("Parsed " + String.format("%.1f", kb) + "K file in " + diff + "ms");
+      }
+    }
     return ast;
   }
 
