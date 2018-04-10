@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,12 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TouchBar implements NSTLibrary.ItemCreator {
-  private final static boolean IS_LOGGING_ENABLED = false;
+  static final Logger LOG = Logger.getInstance(TouchBar.class);
+  private static final boolean IS_LOGGING_ENABLED = false;
 
-  private final String myName;    // just for logging/debugging
-  private ID myNativePeer;        // java wrapper holds native object
-  private long myCounter = 0;
-  private final List<TBItem> myItems = new ArrayList<>();
+  protected final String myName;    // just for logging/debugging
+  protected ID myNativePeer;        // java wrapper holds native object
+  protected long myCounter = 0;
+  protected final List<TBItem> myItems = new ArrayList<>();
 
   TouchBar(String touchbarName) {
     myName = touchbarName;
@@ -44,7 +47,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   }
 
   //
-  // NOTE: must call 'selectAllItemsToShow' after touchbar filling
+  // NOTE: must call 'selectVisibleItemsToShow' after touchbar filling
   //
 
   TBItemButton addButton(Icon icon, String text, NSTLibrary.Action action) {
@@ -57,6 +60,13 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   TBItemButton addButton(Icon icon, String text, String actionId) {
     final String uid = String.format("%s.button.%d", myName, myCounter++);
     final TBItemButton butt = new TBItemButton(uid, icon, text, new PlatformAction(actionId));
+    myItems.add(butt);
+    return butt;
+  }
+
+  TBItemButton addButton(Icon icon, String text, AnAction act) {
+    final String uid = String.format("%s.button.%d", myName, myCounter++);
+    final TBItemButton butt = new TBItemButton(uid, icon, text, new PlatformAction(act));
     myItems.add(butt);
     return butt;
   }
@@ -85,10 +95,11 @@ public class TouchBar implements NSTLibrary.ItemCreator {
     myItems.add(spacing);
   }
 
-  void selectAllItemsToShow() {
+  void selectVisibleItemsToShow() {
     if (myItems.isEmpty())
       return;
 
+    // TODO: cache prev ids and compare with new list
     final String[] ids = new String[myItems.size()];
     int c = 0;
     for (TBItem item : myItems) {
@@ -108,7 +119,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
 
   private void trace(String fmt, Object... args) {
     if (IS_LOGGING_ENABLED)
-      System.out.println("TouchBar [" + myName + "]: " + String.format(fmt, args));
+      LOG.trace("TouchBar [" + myName + "]: " + String.format(fmt, args));
   }
 
   private static class SpacingItem extends TBItem {

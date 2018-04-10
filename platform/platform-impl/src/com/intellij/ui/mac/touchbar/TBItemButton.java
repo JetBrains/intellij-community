@@ -8,27 +8,29 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class TBItemButton extends TBItem {
-  private @Nullable NSTLibrary.Action myAction;
-  private @Nullable Icon myIcon;
-  private @Nullable String myText;
-  private int myWidth;
+  protected @Nullable NSTLibrary.Action myAction;
+  protected @Nullable Icon myIcon;
+  protected @Nullable String myText;
+  protected int myWidth;
 
-  public TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action, int buttWidth) {
+  protected TBItemButton(@NotNull String uid) { this(uid, null, null, null, -1); }
+
+  TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action) {
+    this(uid, icon, text, action, -1);
+  }
+
+  TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action, int buttWidth) {
     super(uid);
     myAction = action;
     myIcon = icon;
     myText = text;
     myWidth = buttWidth;
   }
-  public TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action) {
-    this(uid, icon, text, action, -1);
-  }
 
-  public void update(Icon icon, String text, NSTLibrary.Action action) {
+  void update(Icon icon, String text, NSTLibrary.Action action) {
     update(icon, text, action, myWidth);
   }
-
-  public void update(Icon icon, String text) {
+  void update(Icon icon, String text) {
     update(icon, text, myAction, myWidth);
   }
 

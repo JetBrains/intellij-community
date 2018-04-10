@@ -39,10 +39,10 @@ public class TouchbarTest {
           scrubberItems.add(new TBItemScrubber.ItemData(AllIcons.Toolwindows.ToolWindowPalette, txt,
                             () -> System.out.println("JAVA: performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]")));
         }
-        expandTB.selectAllItemsToShow();
+        expandTB.selectVisibleItemsToShow();
 
         tapHoldTB.addButton(AllIcons.Toolwindows.ToolWindowPalette, null, createPrintTextCallback("pressed pimage button"));
-        tapHoldTB.selectAllItemsToShow();
+        tapHoldTB.selectVisibleItemsToShow();
 
         NST.setTouchBar(testTB);
       } finally {
