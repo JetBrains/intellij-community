@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.ui.ProjectUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,12 +67,12 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
 
   @Override
   public String getCheckBoxName() {
-    return IdeBundle.message("checkbox.include.non.project.symbols");
+    return ProjectUICustomization.replaceProjectConceptName(IdeBundle.message("checkbox.include.non.project.symbols"));
   }
 
   @Override
   public String getNotInMessage() {
-    return IdeBundle.message("label.no.matches.found.in.project");
+    return ProjectUICustomization.replaceProjectConceptName(IdeBundle.message("label.no.matches.found.in.project"));
   }
 
   @Override

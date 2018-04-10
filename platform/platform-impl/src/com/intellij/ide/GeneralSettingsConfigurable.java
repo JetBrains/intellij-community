@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.ProjectUICustomization;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
@@ -216,8 +217,15 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     private JBRadioButton myDisconnectJBRadioButton;
     private JBRadioButton myAskJBRadioButton;
     private TextFieldWithBrowseButton myProjectDirectoryTextField;
+    private JPanel myProjectOpeningPanel;
 
-    public MyComponent() { }
+    public MyComponent() {
+      ProjectUICustomization.replaceProjectConceptName(myChkReopenLastProject);
+      ProjectUICustomization.replaceProjectConceptName(myProjectOpeningPanel.getBorder());
+      ProjectUICustomization.replaceProjectConceptName(myOpenProjectInNewWindow);
+      ProjectUICustomization.replaceProjectConceptName(myOpenProjectInSameWindow);
+      ProjectUICustomization.replaceProjectConceptName(myConfirmWindowToOpenProject);
+    }
 
     private void createUIComponents() {
       myProjectDirectoryTextField = new TextFieldWithBrowseButton();
