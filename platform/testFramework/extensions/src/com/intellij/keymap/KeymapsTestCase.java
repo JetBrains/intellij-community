@@ -22,7 +22,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "F7",                       "NextDiff", "StepInto"},
     { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add", "XDebugger.NewWatch"},
     { "SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
-    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EditorTab", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
+    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EditorTab", "NextTemplateParameter", "ExpandLiveTemplateByTab", "BraceOrQuoteOut"},
     { "alt DOWN",                 "ShowContent", "MethodDown", "Arrangement.Rule.Match.Condition.Move.Down"},
     { "alt UP",                   "MethodUp", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
@@ -132,7 +132,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("Emacs", new String[][] {
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
-                                  "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
+                                  "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab", "BraceOrQuoteOut"},
     { "alt SLASH",                "CodeCompletion", "HippieCompletion"},
     { "control D",                "$Delete", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control K",                "EditorCutLineEnd", "CheckinProject"},
@@ -255,7 +255,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     put("JBuilder", new String[][] {
     { "F2",                       "EditorTab", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit", "ShelvedChanges.Rename"},
     { "F5",                       "ToggleBreakpointEnabled", "UML.ApplyCurrentLayout"},
-    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
+    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab", "BraceOrQuoteOut"},
     { "control F6",               "PreviousEditorTab", "PreviousTab", },
     { "control L",                "Vcs.Log.FocusTextFilter", "EditorSelectLine"},
     { "control M",                "Vcs.ShowMessageHistory", "OverrideMethods", },
