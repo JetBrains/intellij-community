@@ -1190,31 +1190,29 @@ public class PluginManagerCore {
     if (loadPluginCategory != null) {
       reasonToNotLoad = loadPluginCategory.equals(descriptor.getCategory()) ? null : "Plugin category doesn't match 'idea.load.plugins.category' value";
     }
-    else {
-      if (pluginIds != null) {
-        reasonToNotLoad = pluginIds.contains(idString) ? null : "'idea.load.plugins.id' doesn't contain this plugin id";
-        if (reasonToNotLoad != null) {
-          Map<PluginId,IdeaPluginDescriptor> map = new THashMap<>();
-          for (IdeaPluginDescriptor pluginDescriptor : loaded) {
-            map.put(pluginDescriptor.getPluginId(), pluginDescriptor);
-          }
-          addModulesAsDependents(map);
-          for (String id : pluginIds) {
-            IdeaPluginDescriptor descriptorFromProperty = map.get(PluginId.getId(id));
-            if (descriptorFromProperty != null && isDependent(descriptorFromProperty, descriptor.getPluginId(), map, checkModuleDependencies)) {
-              reasonToNotLoad = null;
-              break;
-            }
+    else if (pluginIds != null) {
+      reasonToNotLoad = pluginIds.contains(idString) ? null : "'idea.load.plugins.id' doesn't contain this plugin id";
+      if (reasonToNotLoad != null) {
+        Map<PluginId, IdeaPluginDescriptor> map = new THashMap<>();
+        for (IdeaPluginDescriptor pluginDescriptor : loaded) {
+          map.put(pluginDescriptor.getPluginId(), pluginDescriptor);
+        }
+        addModulesAsDependents(map);
+        for (String id : pluginIds) {
+          IdeaPluginDescriptor descriptorFromProperty = map.get(PluginId.getId(id));
+          if (descriptorFromProperty != null && isDependent(descriptorFromProperty, descriptor.getPluginId(), map, checkModuleDependencies)) {
+            reasonToNotLoad = null;
+            break;
           }
         }
       }
-      else {
-        reasonToNotLoad = getDisabledPlugins().contains(idString) ? "Plugin is disabled" : null;
-      }
+    }
+    else {
+      reasonToNotLoad = getDisabledPlugins().contains(idString) ? "Plugin is disabled" : null;
+    }
 
-      if (reasonToNotLoad == null && descriptor instanceof IdeaPluginDescriptorImpl && isIncompatible(descriptor)) {
-        reasonToNotLoad = "Plugin since-build or until-build don't match this product's build number";
-      }
+    if (reasonToNotLoad == null && descriptor instanceof IdeaPluginDescriptorImpl && isIncompatible(descriptor)) {
+      reasonToNotLoad = "Plugin since-build or until-build don't match this product's build number";
     }
 
     return reasonToNotLoad;
