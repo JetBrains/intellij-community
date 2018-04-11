@@ -27,6 +27,9 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   }
 
   @Override
+  public String toString() { return myName; }
+
+  @Override
   public ID createItem(@NotNull String uid) {
     TBItem item = findItem(uid);
     if (item == null) {

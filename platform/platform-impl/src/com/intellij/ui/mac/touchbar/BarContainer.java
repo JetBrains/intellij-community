@@ -4,4 +4,6 @@ package com.intellij.ui.mac.touchbar;
 public interface BarContainer {
   TouchBar get();
   void release();
+
+  default boolean isPopup() { return false; }
 }
