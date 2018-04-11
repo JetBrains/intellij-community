@@ -2,14 +2,19 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.NoScaleRule;
 import com.intellij.util.RetinaImage;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 
+import static com.intellij.util.ui.TestScaleHelper.createImageAndGraphics;
+import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;
 import static junit.framework.TestCase.assertEquals;
@@ -19,7 +24,10 @@ import static junit.framework.TestCase.assertEquals;
  *
  * @author tav
  */
-public class DrawImageTest extends TestScaleHelper {
+public class DrawImageTest {
+  @ClassRule
+  public static final ExternalResource manageState = new NoScaleRule();
+
   private final static int IMAGE_SIZE = 4;
   private final static int IMAGE_QUARTER_SIZE = IMAGE_SIZE / 2;
 

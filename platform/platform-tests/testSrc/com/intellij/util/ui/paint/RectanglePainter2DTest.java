@@ -13,6 +13,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 import static com.intellij.util.ui.JBUI.scale;
+import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**
  * Tests the {@link RectanglePainter2D} and {@link LinePainter2D} painting.

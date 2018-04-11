@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.ui.NoScaleRule;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 
 import javax.swing.*;
 
@@ -12,7 +15,10 @@ import static junit.framework.TestCase.assertEquals;
  *
  * @author tav
  */
-public class JBValueTest extends TestScaleHelper {
+public class JBValueTest {
+  @ClassRule
+  public static final ExternalResource manageState = new NoScaleRule();
+
   @Test
   public void testInt() {
     JBUI.setUserScaleFactor(1);

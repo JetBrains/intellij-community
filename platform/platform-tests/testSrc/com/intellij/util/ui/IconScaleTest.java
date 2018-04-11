@@ -4,11 +4,14 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.NoScaleRule;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import junit.framework.TestCase;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 
 import javax.swing.*;
 import java.io.File;
@@ -16,18 +19,20 @@ import java.net.MalformedURLException;
 
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**
  * Tests that {@link CachedImageIcon#scale(float)} doesn't break the contract and scales correctly.
  *
  * @author tav
  */
-@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class IconScaleTest extends TestScaleHelper {
+public class IconScaleTest {
+  @ClassRule
+  public static final ExternalResource manageState = new NoScaleRule();
+
   @BeforeClass
-  public static void setState() {
-    TestScaleHelper.setState();
-    setRegistryProperty("ide.svg.icon", "true");
+  public static void beforeClass() {
+    TestScaleHelper.setRegistryProperty("ide.svg.icon", "true");
   }
 
   @Test

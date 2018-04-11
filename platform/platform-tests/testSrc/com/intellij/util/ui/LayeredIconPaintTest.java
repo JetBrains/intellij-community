@@ -6,10 +6,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.NoScaleRule;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import com.intellij.util.ui.paint.ImageComparator.AASmootherComparator;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,13 +22,19 @@ import java.net.MalformedURLException;
 import java.util.function.BiFunction;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
+import static com.intellij.util.ui.TestScaleHelper.createImageAndGraphics;
+import static com.intellij.util.ui.TestScaleHelper.loadImage;
+import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**
  * Tests {@link com.intellij.ui.LayeredIcon} painting.
  *
  * @author tav
  */
-public class LayeredIconPaintTest extends TestScaleHelper {
+public class LayeredIconPaintTest {
+  @ClassRule
+  public static final ExternalResource manageState = new NoScaleRule();
+
   @Test
   public void test() throws MalformedURLException {
     overrideJreHiDPIEnabled(true);
