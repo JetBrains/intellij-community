@@ -11,6 +11,7 @@ import org.jetbrains.idea.svn.SvnUtil.isAncestor
 import org.jetbrains.idea.svn.SvnVcs
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
+import java.io.File
 
 private val LOG = logger<SvnBranchConfigurationNew>()
 
@@ -79,60 +80,33 @@ class SvnBranchConfigurationNew {
   @Throws(SvnBindException::class)
   fun getWorkingBranch(someUrl: Url) = getBaseUrl(someUrl.toString())?.let(::createUrl)
 
-  @Throws(SvnBindException::class)
-  private fun iterateUrls(listener: UrlListener) {
-    if (listener.accept(trunkUrl)) {
-      return
-    }
+  // to retrieve mappings between existing in the project working copies and their URLs
+  fun getUrl2FileMappings(project: Project, root: VirtualFile): Map<Url, File> {
+    try {
+      val rootUrl = SvnVcs.getInstance(project).getInfo(root)?.url ?: return emptyMap()
+      val baseDir = virtualToIoFile(root)
+      val result = mutableMapOf<Url, File>()
 
-    for (branchUrl in sortBranchLocations(myBranchMap.keys)) {
-      val children = myBranchMap[branchUrl]!!.value
-      for (child in children) {
-        if (listener.accept(child.url.toDecodedString())) {
-          return
+      for (url in allBranches) {
+        val branchUrl = createUrl(url)
+
+        if (isAncestor(rootUrl, branchUrl)) {
+          result[branchUrl] = SvnUtil.fileFromUrl(baseDir, rootUrl.path, branchUrl.path)
         }
       }
+      return result
+    }
+    catch (e: SvnBindException) {
+      return emptyMap()
     }
   }
 
-  // to retrieve mappings between existing in the project working copies and their URLs
-  fun getUrl2FileMappings(project: Project, root: VirtualFile) = try {
-    val searcher = BranchRootSearcher(SvnVcs.getInstance(project), root)
-    iterateUrls(searcher)
-    searcher.branchesUnder
-  }
-  catch (e: SvnBindException) {
-    null
-  }
+  private val allBranches
+    get() = sequenceOf(
+      trunkUrl) + myBranchMap.entries.sortedByDescending { it.key.length }.asSequence().map { it.value.value }.flatten().map { it.url.toDecodedString() }
 
   fun removeBranch(url: String) {
     myBranchMap.remove(ensureEndSlash(url))
-  }
-
-  private class BranchRootSearcher constructor(vcs: SvnVcs, private val myRoot: VirtualFile) : UrlListener {
-    private val myRootUrl = vcs.getInfo(myRoot.path)?.url
-    // url path to file path
-    val branchesUnder: MutableMap<String, String> = mutableMapOf()
-
-    @Throws(SvnBindException::class)
-    override fun accept(url: String?): Boolean {
-      if (myRootUrl != null) {
-        val baseDir = virtualToIoFile(myRoot)
-        val baseUrl = myRootUrl.path
-        val branchUrl = createUrl(url!!)
-
-        if (isAncestor(myRootUrl, branchUrl)) {
-          val file = SvnUtil.fileFromUrl(baseDir, baseUrl, branchUrl.path)
-          branchesUnder[url] = file.absolutePath
-        }
-      }
-      return false // iterate everything
-    }
-  }
-
-  private interface UrlListener {
-    @Throws(SvnBindException::class)
-    fun accept(url: String?): Boolean
   }
 
   companion object {
