@@ -264,7 +264,7 @@ public class AnnotationUtil {
       else if (listOwner instanceof PsiVariable) {
         type = ((PsiVariable)listOwner).getType();
       }
-      if (type != null && type.findAnnotation(annotationFQN) != null) {
+      if (type != null && type.hasAnnotation(annotationFQN)) {
         return true;
       }
     }

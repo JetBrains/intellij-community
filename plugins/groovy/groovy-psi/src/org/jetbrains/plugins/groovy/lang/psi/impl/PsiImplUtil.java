@@ -757,8 +757,8 @@ public class PsiImplUtil {
   }
 
   public static boolean hasImmutableAnnotation(PsiModifierList modifierList) {
-    return modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE) != null ||
-           modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE) != null;
+    return modifierList.hasAnnotation(GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE) ||
+           modifierList.hasAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE);
   }
 
   public static boolean isWhiteSpaceOrNls(@Nullable PsiElement sibling) {

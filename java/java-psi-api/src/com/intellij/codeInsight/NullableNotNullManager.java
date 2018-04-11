@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -14,10 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_INFERRED;
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
+import static com.intellij.codeInsight.AnnotationUtil.*;
 
 /**
  * @author anna
@@ -157,7 +154,7 @@ public abstract class NullableNotNullManager {
       String qualifiedName = checkContainer(annotation);
       if (qualifiedName != null) {
         PsiModifierList modifierList = target.getModifierList();
-        if (modifierList != null && modifierList.findAnnotation(qualifiedName) == null) {
+        if (modifierList != null && !modifierList.hasAnnotation(qualifiedName)) {
           return modifierList.addAnnotation(qualifiedName);
         }
       }
