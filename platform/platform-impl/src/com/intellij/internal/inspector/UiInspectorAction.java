@@ -80,6 +80,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static final String CLICK_INFO = "CLICK_INFO";
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
+  private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
   private UiInspector myInspector;
 
   public UiInspectorAction() {
@@ -425,7 +426,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static Pair<Class, String> getClassAndFieldName(Component component) {
     Container parent = component.getParent();
     int deepness = 1;
-    while(parent != null && deepness <= 3) {
+    while(parent != null && deepness <= MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME) {
       Class<? extends Container> aClass = parent.getClass();
       Field[] fields = aClass.getDeclaredFields();
       for (Field field : fields) {
