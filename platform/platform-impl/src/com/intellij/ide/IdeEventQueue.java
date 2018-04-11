@@ -671,6 +671,13 @@ public class IdeEventQueue extends EventQueue {
       }
     }
 
+    // We must ignore typed events that are dispatched between KEY_PRESSED and KEY_RELEASED.
+    // Key event dispatcher resets its state on KEY_RELEASED event
+    if (e.getID() == KeyEvent.KEY_TYPED &&
+        (myKeyEventDispatcher.isPressedWasProcessed())) {
+      ((KeyEvent)e).consume();
+    }
+
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
       if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);

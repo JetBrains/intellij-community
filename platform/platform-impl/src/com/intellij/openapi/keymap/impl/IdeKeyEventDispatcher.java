@@ -801,7 +801,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     setPressedWasProcessed(false);
   }
 
-  private boolean isPressedWasProcessed() {
+  public boolean isPressedWasProcessed() {
     return myPressedWasProcessed;
   }
 
