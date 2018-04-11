@@ -1127,8 +1127,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
-    AnAction oldAction = getActionOrStub(actionId);
+    AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
     if (oldAction != null) {
+      if (newAction instanceof OverridingAction) {
+        ((OverridingAction) newAction).setBaseAction(oldAction);
+      }
       boolean isGroup = oldAction instanceof ActionGroup;
       if (isGroup != newAction instanceof ActionGroup) {
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
