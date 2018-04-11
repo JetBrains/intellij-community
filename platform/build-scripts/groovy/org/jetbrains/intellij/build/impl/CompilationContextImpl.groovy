@@ -346,7 +346,7 @@ class CompilationContextImpl implements CompilationContext {
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     def file = new File(artifactPath)
-    def baseDir = TeamCityHelper.checkoutDirectory ?: new File(paths.projectHome)
+    def baseDir = new File(paths.projectHome)
     def artifactsDir = new File(paths.artifacts)
     if (!FileUtil.isAncestor(baseDir, file, true)) {
       messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
