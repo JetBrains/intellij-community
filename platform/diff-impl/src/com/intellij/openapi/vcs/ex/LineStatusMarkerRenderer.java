@@ -321,7 +321,7 @@ public abstract class LineStatusMarkerRenderer {
   }
 
 
-  public class MyActiveGutterRenderer implements ActiveGutterRenderer {
+  private class MyActiveGutterRenderer implements ActiveGutterRenderer, VCSGutterRenderer {
     @NotNull private final Range myRange;
 
     public MyActiveGutterRenderer(@NotNull Range range) {
@@ -343,6 +343,7 @@ public abstract class LineStatusMarkerRenderer {
       LineStatusMarkerRenderer.this.doAction(editor, myRange, e);
     }
 
+    @Override
     public Byte getGutterMarkType()
     {
       return myRange.getType();
