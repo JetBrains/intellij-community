@@ -12,13 +12,10 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -26,7 +23,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
@@ -110,32 +106,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     errorCount = new int[maxIndex + 1];
   }
 
-  static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel,
-                                              @NotNull Project project,
-                                              @NotNull Document document,
-                                              PsiFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!editorMarkupModel.isErrorStripeVisible() || !DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file)) {
-      return;
-    }
-    ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
-    if (renderer instanceof TrafficLightRenderer) {
-      TrafficLightRenderer tlr = (TrafficLightRenderer)renderer;
-      EditorMarkupModelImpl markupModelImpl = (EditorMarkupModelImpl)editorMarkupModel;
-      tlr.refresh(markupModelImpl);
-      markupModelImpl.repaintVerticalScrollBar();
-      if (tlr.myFile == null || tlr.myFile.isValid()) return;
-      Disposer.dispose(tlr);
-    }
-    EditorImpl editor = (EditorImpl)editorMarkupModel.getEditor();
-
-    if (!editor.isDisposed()) {
-      renderer = new TrafficLightRenderer(project, document, file);
-      Disposer.register(editor.getDisposable(), (Disposable)renderer);
-      editorMarkupModel.setErrorStripeRenderer(renderer);
-    }
-  }
-
   @Override
   public void dispose() {
   }
@@ -149,6 +119,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (severityIdx != -1) {
       errorCount[severityIdx] += delta;
     }
+  }
+
+  public boolean isValid() {
+    return myFile == null || myFile.isValid();
   }
 
   protected static class DaemonCodeAnalyzerStatus {

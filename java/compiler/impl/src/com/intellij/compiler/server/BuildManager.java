@@ -316,11 +316,13 @@ public class BuildManager implements Disposable {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        final Document document = e.getDocument();
-        if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
-          final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-          if (file != null && file.isInLocalFileSystem()) {
-            scheduleProjectSave();
+        if (Registry.is("compiler.document.save.enabled", true)) {
+          final Document document = e.getDocument();
+          if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+            final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+            if (file != null && file.isInLocalFileSystem()) {
+              scheduleProjectSave();
+            }
           }
         }
       }
@@ -526,6 +528,7 @@ public class BuildManager implements Disposable {
     if (project == null || !canStartAutoMake(project)) {
       return;
     }
+    // todo: check if the system is in the idle state. If yes, run the make, if not, postpone and re-schedule it
     final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
     final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
     final TaskFuture future = scheduleBuild(

@@ -81,6 +81,11 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
         return "Commit and Push";
       }
 
+      @Override
+      public boolean supportsPartialCommit() {
+        return true;
+      }
+
       @NotNull
       @Override
       public CommitSession createCommitSession() {

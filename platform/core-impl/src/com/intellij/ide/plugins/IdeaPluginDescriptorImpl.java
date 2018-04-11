@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -64,7 +65,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Nullable
   private Date myReleaseDate;
   private int myReleaseVersion;
-  
+
   private String myResourceBundleBaseName;
   private String myChangeNotes;
   private String myVersion;
@@ -73,7 +74,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myVendorUrl;
   private String myVendorLogoPath;
   private String myCategory;
-  private String url;
+  private String myUrl;
   private PluginId[] myDependencies = PluginId.EMPTY_ARRAY;
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
   private Map<PluginId, List<String>> myOptionalConfigs;
@@ -179,14 +180,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   // used in upsource
   protected void readExternal(@NotNull Element element) {
-    final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
-    url = pluginBean.url;
-    myName = pluginBean.name;
-    String idString = pluginBean.id;
-    if (idString == null || idString.isEmpty()) {
-      idString = myName;
-    }
-    myId = idString == null ? null : PluginId.getId(idString);
+    PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
+    myUrl = pluginBean.url;
+
+    String idString = StringUtil.nullize(pluginBean.id, true);
+    String nameString = StringUtil.nullize(pluginBean.name, true);
+    myId = idString != null ? PluginId.getId(idString) : nameString != null ? PluginId.getId(nameString) : null;
+    myName = ObjectUtils.chooseNotNull(nameString, idString);
+
     myProductCode = pluginBean.productCode;
     myReleaseDate = parseReleaseDate(pluginBean);
     myReleaseVersion = pluginBean.releaseVersion;
@@ -232,12 +233,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myOptionalConfigs = new THashMap<>();
       for (PluginDependency dependency : pluginBean.dependencies) {
         String text = dependency.pluginId;
-        if (!StringUtil.isEmpty(text)) {
+        if (!StringUtil.isEmptyOrSpaces(text)) {
           PluginId id = PluginId.getId(text);
           dependentPlugins.add(id);
           if (dependency.optional) {
             optionalDependentPlugins.add(id);
-            if (!StringUtil.isEmpty(dependency.configFile)) {
+            if (!StringUtil.isEmptyOrSpaces(dependency.configFile)) {
               myOptionalConfigs.computeIfAbsent(id, it -> new SmartList<>()).add(dependency.configFile);
             }
           }
@@ -503,12 +504,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String getUrl() {
-    return url;
+    return myUrl;
   }
 
   public void setUrl( final String val )
   {
-    url = val;
+    myUrl = val;
   }
 
   @Override

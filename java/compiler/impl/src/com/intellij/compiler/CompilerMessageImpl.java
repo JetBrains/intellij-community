@@ -79,7 +79,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
       return myNavigatable;
     }
     final VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile != null && virtualFile.isValid()) {
+    if (virtualFile != null && virtualFile.isValid() && !virtualFile.getFileType().isBinary()) {
       final int line = getLine() - 1; // editor lines are zero-based
       if (line >= 0) {
         return myNavigatable = new OpenFileDescriptor(myProject, virtualFile, line, myColumnAdjuster.fun(this, line, Math.max(0, getColumn()-1))) ;

@@ -4,12 +4,15 @@ package com.intellij.testng.integration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EdtRule;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunsInEdt;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.junit.After;
 import org.junit.Before;
@@ -50,6 +53,9 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
   protected void setupModule() throws Exception {
     super.setupModule();
     addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.testng", "testng", myTestNGVersion), getRepoManager());
+    assertNotNull("Test annotation not found", 
+                  JavaPsiFacade.getInstance(getProject())
+                               .findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
   }
 
   @Override

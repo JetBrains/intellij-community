@@ -31,7 +31,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
   @NonNls private static final String END_MARKER = "<!-- end marker -->";
   private final Project myProject;
 

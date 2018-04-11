@@ -289,17 +289,19 @@ public class MethodBytecodeUtil {
 
     List<Location> res = new ArrayList<>();
     for (Map.Entry<Method, Collection<Location>> entry : byMethod.entrySet()) {
-      res.addAll(removeMethodSameLineLocations(entry.getKey(), entry.getValue()));
+      res.addAll(removeMethodSameLineLocations(entry.getKey(), (List<Location>)entry.getValue()));
     }
     return res;
   }
 
-  private static Collection<Location> removeMethodSameLineLocations(@NotNull Method method, @NotNull Collection<Location> locations) {
-    if (locations.size() < 2) {
+  private static Collection<Location> removeMethodSameLineLocations(@NotNull Method method, @NotNull List<Location> locations) {
+    int locationsSize = locations.size();
+    if (locationsSize < 2) {
       return locations;
     }
+    //noinspection ConstantConditions
     int lineNumber = ContainerUtil.getFirstItem(locations).lineNumber();
-    List<Boolean> mask = new ArrayList<>();
+    List<Boolean> mask = new ArrayList<>(locationsSize);
     visit(method, new MethodVisitor(Opcodes.API_VERSION) {
       boolean myNewBlock = true;
       @Override
@@ -322,8 +324,10 @@ public class MethodBytecodeUtil {
         myNewBlock = true;
       }
     }, true);
-    if (mask.size() == locations.size()) {
-      List<Location> res = new ArrayList<>();
+
+    if (mask.size() == locationsSize) {
+      locations.sort(Comparator.comparing(Location::codeIndex));
+      List<Location> res = new ArrayList<>(locationsSize);
       int pos = 0;
       for (Location location : locations) {
         if (mask.get(pos++)) {

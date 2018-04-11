@@ -74,8 +74,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<RemoteConfiguration> group = new SettingsEditorGroup<>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
-                    Registry.is("remote.debug.redesing") ? new RemoteConfigurable2(getProject()) : new RemoteConfigurable(getProject()));
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new RemoteConfigurable(getProject()));
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }

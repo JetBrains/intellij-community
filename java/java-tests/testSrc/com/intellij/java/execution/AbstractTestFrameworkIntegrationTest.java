@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemProperties;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
@@ -112,6 +113,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     
     Collection<File> files = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion(),
                                                            descriptor.isIncludeTransitiveDependencies());
+    assertFalse("No files retrieved for: " + descriptor.getGroupId(), files.isEmpty());
     for (File artifact : files) {
       VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByIoFile(artifact);
       assertNotNull(libJarLocal);
@@ -121,13 +123,16 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
   }
 
   protected ArtifactRepositoryManager getRepoManager() {
-    final String userHome = System.getProperty("user.home", null);
-    final File localRepo = userHome != null ? new File(userHome, ".m2/repository") : new File(".m2/repository");
-
+    final File localRepo = new File(SystemProperties.getUserHome(), ".m2/repository");
     return new ArtifactRepositoryManager(
       localRepo,
       Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "http://maven.labs.intellij.net/repo1")),
-      ProgressConsumer.DEAF
+      new ProgressConsumer() {
+        @Override
+        public void consume(String message) {
+          System.out.println(message);
+        }
+      }
     );
   }
 

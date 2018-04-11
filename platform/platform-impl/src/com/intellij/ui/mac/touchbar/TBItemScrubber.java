@@ -62,7 +62,7 @@ public class TBItemScrubber extends TBItem {
       id.releaseMem();
   }
 
-  static class ItemData {
+  public static class ItemData {
     final Icon myIcon;
     final String myText;
     final NSTLibrary.Action myAction;
@@ -70,7 +70,7 @@ public class TBItemScrubber extends TBItem {
     private Memory myIconMem; // NOTE: must hold the memory to prevent dealloc until native caller of 'fill' finished his job
     private Memory myTextMem;
 
-    ItemData(Icon icon, String text, NSTLibrary.Action action) {
+    public ItemData(Icon icon, String text, NSTLibrary.Action action) {
       this.myIcon = icon;
       this.myText = text;
       this.myAction = action;

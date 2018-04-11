@@ -64,8 +64,11 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     buildIndexPatterns();
   }
 
+  /**
+   * Returns the list of default TO_DO patterns. Can be customized in other IDEs (and is customized in Rider).
+   */
   @NotNull
-  private static TodoPattern[] getDefaultPatterns() {
+  protected TodoPattern[] getDefaultPatterns() {
     //noinspection SpellCheckingInspection
     return new TodoPattern[]{
       new TodoPattern("\\btodo\\b.*", TodoAttributesUtil.createDefault(), false),

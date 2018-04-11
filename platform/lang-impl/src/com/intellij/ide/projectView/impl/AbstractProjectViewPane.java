@@ -297,6 +297,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Override
   public Object getData(String dataId) {
+    Object data =
+      myTreeStructure instanceof AbstractTreeStructureBase ?
+      ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(getSelectedNodes(AbstractTreeNode.class), dataId) : null;
+    if (data != null) {
+      return data;
+    }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
@@ -317,9 +323,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       else {
         return navigatables.toArray(new Navigatable[0]);
       }
-    }
-    if (myTreeStructure instanceof AbstractTreeStructureBase) {
-      return ((AbstractTreeStructureBase) myTreeStructure).getDataFromProviders(getSelectedNodes(AbstractTreeNode.class), dataId);
     }
     return null;
   }

@@ -44,7 +44,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
   }
 
   public void testLargeTextFileWithManyTypos() {
-    final int typoCount = 50000;
+    final int typoCount = 40000;
     @SuppressWarnings("SpellCheckingInspection") String text = StringUtil.repeat("aaaaaaaaa ", typoCount);  // about 0.5M
 
     long start = System.currentTimeMillis();
@@ -92,12 +92,12 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
 
   public void testVeryLongEmail(){
     final String text = "\\LONG_EMAIL: " + StringUtil.repeat("ivan.ivanov", 1000000) + "@mail.com\n";
-    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 4000);
+    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 5000);
   }
 
   public void testVeryLongURL(){
     final String text = "\\LONG_URL:  http://" + StringUtil.repeat("ivan.ivanov", 1000000) + ".com\n";
-    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 4000);
+    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 5000);
   }
 
   public void testVeryLongHTML(){

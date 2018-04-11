@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerListener;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +31,7 @@ public class TouchBarGeneral extends TouchBarActionBase {
   private TBItemButton    myPopoverRunConfTapAndHold;
   private TBItemScrubber  myScrubberRunConf;
 
-  private TBItemAnActionButton    myButtonRun;
+  private TBItemButton            myButtonRun;
   private TBItemAnActionButton    myButtonDebug;
   private TBItemAnActionButton    myButtonStop;
 
@@ -43,33 +43,50 @@ public class TouchBarGeneral extends TouchBarActionBase {
 
     myButtonAddRunConf = addButton(AllIcons.General.Add, "Add Configuration", IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
 
-    final TouchBar tapHoldTB = new TouchBar("run_configs_popover_tap_and_hold");
-    tapHoldTB.addFlexibleSpacing();
-    myPopoverRunConfTapAndHold = tapHoldTB.addButton(null, null, (NSTLibrary.Action)null);
-    tapHoldTB.selectVisibleItemsToShow();
+    {
+      final TouchBar tapHoldTB = new TouchBar("run_configs_popover_tap_and_hold");
+      tapHoldTB.addFlexibleSpacing();
+      myPopoverRunConfTapAndHold = tapHoldTB.addButton(null, null, (NSTLibrary.Action)null);
+      tapHoldTB.selectVisibleItemsToShow();
 
-    myPopoverRunConfExpandTB = new TouchBar("run_configs_popover_expand");
-    myPopoverRunConfExpandTB.addButton(AllIcons.Actions.EditSource, null, IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
-    myScrubberRunConf = myPopoverRunConfExpandTB.addScrubber(500);
-    myPopoverRunConfExpandTB.addFlexibleSpacing();
-    myPopoverRunConfExpandTB.selectVisibleItemsToShow();
+      myPopoverRunConfExpandTB = new TouchBar("run_configs_popover_expand");
+      myPopoverRunConfExpandTB.addButton(AllIcons.Actions.EditSource, null, IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
+      myScrubberRunConf = myPopoverRunConfExpandTB.addScrubber(500);
+      myPopoverRunConfExpandTB.addFlexibleSpacing();
+      myPopoverRunConfExpandTB.selectVisibleItemsToShow();
 
-    myPopoverRunConf = addPopover(null, null, 143, myPopoverRunConfExpandTB, tapHoldTB);
+      myPopoverRunConf = addPopover(null, null, 143, myPopoverRunConfExpandTB, tapHoldTB);
+    }
 
-    myButtonRun = addAnActionButton(IdeActions.ACTION_DEFAULT_RUNNER);
-    myButtonDebug = addAnActionButton(IdeActions.ACTION_DEFAULT_DEBUGGER);
-    myButtonStop = addAnActionButton(IdeActions.ACTION_STOP_PROGRAM);
-    myButtonRun.setAutoVisibility(false);
-    myButtonDebug.setAutoVisibility(false);
-    myButtonStop.setAutoVisibility(false);
+    {
+      myButtonRun = addButton();
+      myButtonDebug = addAnActionButton(IdeActions.ACTION_DEFAULT_DEBUGGER);
+      myButtonDebug.setAutoVisibility(false);
+      myButtonStop = addAnActionButton(IdeActions.ACTION_STOP_PROGRAM);
+      myButtonStop.setAutoVisibility(false);
+    }
 
     addSpacing(true);
     addAnActionButton("Vcs.UpdateProject", false);  // NOTE: IdeActions.ACTION_CVS_CHECKOUT doesn't works
     addAnActionButton("CheckinProject", false);     // NOTE: IdeActions.ACTION_CVS_COMMIT doesn't works
 
     _updateRunConfigs();
+    _updateRunButtons();
 
     final MessageBus mb = myProject.getMessageBus();
+
+    mb.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+      @Override
+      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
+        _updateRunButtons();
+      }
+      @Override
+      public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
+        ApplicationManager.getApplication().invokeLater(()->{
+          _updateRunButtons();
+        });
+      }
+    });
 
     mb.connect().subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
@@ -158,5 +175,29 @@ public class TouchBarGeneral extends TouchBarActionBase {
       myScrubberRunConf.setItems(scrubberItems);
     }
     selectVisibleItemsToShow();
+  }
+
+  private static boolean _canBeStopped(ProcessHandler ph) {
+    return ph != null && !ph.isProcessTerminated()
+           && (!ph.isProcessTerminating() || ph instanceof KillableProcess && ((KillableProcess)ph).canKillProcess());
+  }
+
+  private void _updateRunButtons() {
+    if (!myButtonRun.isVisible())
+      return;
+
+
+    final ExecutionManager em = ExecutionManager.getInstance(myProject);
+    final ProcessHandler[] allRunning = em.getRunningProcesses();
+
+    int runningCount = 0;
+    for (ProcessHandler ph : allRunning)
+      if (_canBeStopped(ph))
+        ++runningCount;
+
+    if (runningCount == 0)
+      myButtonRun.update(AllIcons.Actions.Execute, null, new PlatformAction(IdeActions.ACTION_DEFAULT_RUNNER));
+    else
+      myButtonRun.update(AllIcons.Actions.Restart, null, new PlatformAction(IdeActions.ACTION_RERUN));
   }
 }

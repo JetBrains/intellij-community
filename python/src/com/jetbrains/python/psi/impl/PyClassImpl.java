@@ -194,7 +194,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
       if (callee instanceof PyReferenceExpression) {
         final QualifiedName sixWithMetaclass = QualifiedName.fromComponents("six", "with_metaclass");
-        return PyResolveUtil.resolveImportedElementQNameLocally((PyReferenceExpression)callee).contains(sixWithMetaclass);
+        final QualifiedName djangoWithMetaclass = QualifiedName.fromDottedString("django.utils.six.with_metaclass");
+
+        return ContainerUtil.exists(PyResolveUtil.resolveImportedElementQNameLocally((PyReferenceExpression)callee),
+                                    name -> name.equals(sixWithMetaclass) || name.equals(djangoWithMetaclass));
       }
     }
 
@@ -1614,7 +1617,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
     if (callee instanceof PyReferenceExpression) {
       final QualifiedName sixAddMetaclass = QualifiedName.fromComponents("six", "add_metaclass");
-      return PyResolveUtil.resolveImportedElementQNameLocally((PyReferenceExpression)callee).contains(sixAddMetaclass);
+      final QualifiedName djangoAddMetaclass = QualifiedName.fromDottedString("django.utils.six.add_metaclass");
+
+      return ContainerUtil.exists(PyResolveUtil.resolveImportedElementQNameLocally((PyReferenceExpression)callee),
+                                  name -> name.equals(sixAddMetaclass) || name.equals(djangoAddMetaclass));
     }
 
     return false;

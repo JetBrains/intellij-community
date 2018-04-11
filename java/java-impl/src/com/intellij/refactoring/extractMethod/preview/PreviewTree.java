@@ -6,21 +6,22 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import one.util.streamex.StreamEx;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -67,11 +68,10 @@ class PreviewTree implements Disposable {
   void onSelectionUpdate() {
     if (myProject.isDisposed()) return;
 
-    FragmentNode firstSelectedNode = ContainerUtil.getFirstItem(getSelectedNodes());
+    FragmentNode firstSelectedNode = getFirstSelectedNode();
     if (firstSelectedNode != null) {
-      List<DuplicateNode> enabledDuplicates = myModel.getEnabledDuplicates();
       for (PreviewTreeListener listener : myTreeListeners) {
-        listener.onFragmentSelected(firstSelectedNode, enabledDuplicates);
+        listener.onNodeSelected(firstSelectedNode);
       }
     }
   }
@@ -82,18 +82,46 @@ class PreviewTree implements Disposable {
     if (ArrayUtil.isEmpty(selectionPaths)) {
       return Collections.emptyList();
     }
-    return StreamEx.of(selectionPaths)
-                   .map(TreePath::getLastPathComponent)
-                   .select(FragmentNode.class)
-                   .toList();
+    List<FragmentNode> result = new ArrayList<>();
+    for (TreePath path : selectionPaths) {
+      result.addAll(getFragmentNodes(path));
+    }
+    return result;
   }
 
-  public List<DuplicateNode> getAllDuplicates() {
-    return myModel.getAllDuplicates();
+  @Nullable
+  private FragmentNode getFirstSelectedNode() {
+    TreePath[] selectionPaths = myTree.getSelectionPaths();
+    if (ArrayUtil.isEmpty(selectionPaths)) {
+      return null;
+    }
+    for (TreePath path : selectionPaths) {
+      List<FragmentNode> nodes = getFragmentNodes(path);
+      if (!nodes.isEmpty()) {
+        return nodes.get(0);
+      }
+    }
+    return null;
   }
 
-  public List<DuplicateNode> getEnabledDuplicates() {
-    return myModel.getEnabledDuplicates();
+  @NotNull
+  private static List<FragmentNode> getFragmentNodes(@NotNull TreePath path) {
+    Object component = path.getLastPathComponent();
+    if (component instanceof FragmentNode) {
+      return Collections.singletonList((FragmentNode)component);
+    }
+    if (component instanceof TreeNode) {
+      TreeNode node = (TreeNode)component;
+      return IntStreamEx.range(0, node.getChildCount())
+                        .mapToObj(node::getChildAt)
+                        .select(FragmentNode.class)
+                        .toList();
+    }
+    return Collections.emptyList();
+  }
+
+  public PreviewTreeModel getModel() {
+    return myModel;
   }
 
   public JComponent getComponent() {
@@ -104,10 +132,13 @@ class PreviewTree implements Disposable {
     myTree.repaint();
   }
 
-  void updateMethod(PsiMethod method) {
-    myModel.updateMethod(method);
+  void onUpdateLater() {
     myTree.setPaintBusy(false);
     onSelectionUpdate();
+  }
+
+  void selectNode(FragmentNode node) {
+    myTree.setSelectionPath(new TreePath(node.getPath()));
   }
 
   public boolean isValid() {

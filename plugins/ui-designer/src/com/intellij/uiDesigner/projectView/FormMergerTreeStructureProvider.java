@@ -102,24 +102,22 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     return result;
   }
 
-  public Object getData(Collection<AbstractTreeNode> selected, String dataId) {
-    if (selected != null) {
-      if (Form.DATA_KEY.is(dataId)) {
-        List<Form> result = new ArrayList<>();
-        for(AbstractTreeNode node: selected) {
-          if (node.getValue() instanceof Form) {
-            result.add((Form) node.getValue());
-          }
-        }
-        if (!result.isEmpty()) {
-          return result.toArray(new Form[0]);
+  public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataId) {
+    if (Form.DATA_KEY.is(dataId)) {
+      List<Form> result = new ArrayList<>();
+      for(AbstractTreeNode node: selected) {
+        if (node.getValue() instanceof Form) {
+          result.add((Form) node.getValue());
         }
       }
-      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-        for(AbstractTreeNode node: selected) {
-          if (node.getValue() instanceof Form) {
-            return new MyDeleteProvider(selected);
-          }
+      if (!result.isEmpty()) {
+        return result.toArray(new Form[0]);
+      }
+    }
+    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      for(AbstractTreeNode node: selected) {
+        if (node.getValue() instanceof Form) {
+          return new MyDeleteProvider(selected);
         }
       }
     }

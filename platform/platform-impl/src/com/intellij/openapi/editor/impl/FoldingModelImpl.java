@@ -310,9 +310,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myGroups.remove(region.getGroup(), region);
   }
 
-  public void dispose() {
+  void dispose() {
     doClearFoldRegions();
-    myRegionTree.dispose();
+    myRegionTree.dispose(myEditor.getDocument());
   }
 
   @Override
@@ -507,7 +507,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   }
 
   @NotNull
-  public FoldRegion[] fetchCollapsedAt(int offset) {
+  FoldRegion[] fetchCollapsedAt(int offset) {
     return myFoldTree.fetchCollapsedAt(offset);
   }
 
@@ -516,7 +516,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     return myFoldTree.intersectsRegion(startOffset, endOffset);
   }
 
-  public FoldRegion[] fetchVisible() {
+  @Nullable
+  FoldRegion[] fetchVisible() {
     return myFoldTree.fetchVisible();
   }
 

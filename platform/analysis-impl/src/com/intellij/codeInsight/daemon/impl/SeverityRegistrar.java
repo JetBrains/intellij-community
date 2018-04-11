@@ -450,7 +450,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   @NotNull
   Collection<SeverityBasedTextAttributes> allRegisteredAttributes() {
-    return new ArrayList<>(myMap.values());
+    return Collections.unmodifiableCollection(myMap.values());
   }
   @NotNull
   Collection<HighlightInfoType> standardSeverities() {

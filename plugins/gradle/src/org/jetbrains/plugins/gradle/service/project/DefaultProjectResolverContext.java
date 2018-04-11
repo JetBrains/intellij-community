@@ -48,6 +48,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   private ProjectImportAction.AllModels myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
+  @Nullable private String myDefaultGroupId;
 
   public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
                                        @NotNull final String projectPath,
@@ -195,5 +196,15 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       }
     }
     return myProjectGradleVersion;
+  }
+
+  public void setDefaultGroupId(@Nullable String groupId) {
+    myDefaultGroupId = groupId;
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultGroupId() {
+    return myDefaultGroupId;
   }
 }

@@ -384,4 +384,6 @@
   <action id="ShelvedChanges.Rename">
     <keyboard-shortcut first-keystroke="control R"/>
   </action>
+  <action id="Vcs.MoveChangedLinesToChangelist"/>
+  <action id="ChangesView.Move"/>
 </keymap>

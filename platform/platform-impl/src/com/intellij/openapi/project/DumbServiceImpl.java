@@ -51,6 +51,7 @@ import java.util.concurrent.locks.LockSupport;
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
+  private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
   private volatile TransactionId myDumbStartTransaction;
   private final DumbModeListener myPublisher;
@@ -303,6 +304,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myState.set(State.SCHEDULED_TASKS);
       }
       myDumbStart = trace;
+      myDumbEnterTrace = new Throwable();
       myDumbStartTransaction = contextTransaction;
       myModificationCount++;
     });
@@ -329,6 +331,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return false;
       }
     }
+    myDumbEnterTrace = null;
     myDumbStart = null;
     myModificationCount++;
     return !myProject.isDisposed();
@@ -460,7 +463,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void assertWeAreWaitingToFinish() {
     if (myState.get() != State.WAITING_FOR_FINISH) {
-      Attachment[] attachments = myDumbStart != null ? new Attachment[]{new Attachment("indexingStart.trace", myDumbStart)} : Attachment.EMPTY_ARRAY;
+      Attachment[] attachments = myDumbEnterTrace != null ? new Attachment[]{new Attachment("indexingStart", myDumbEnterTrace)} : Attachment.EMPTY_ARRAY;
       throw new RuntimeExceptionWithAttachments(myState.get().toString(), attachments);
     }
   }

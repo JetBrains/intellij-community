@@ -52,6 +52,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.intellij.util.ObjectUtils.notNull;
+import static java.util.Collections.singletonList;
 
 public class PluginManagerCore {
   private static final Logger LOG = Logger.getInstance(PluginManagerCore.class);
@@ -632,11 +633,12 @@ public class PluginManagerCore {
       try {
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
         descriptor.readExternal(descriptorFile.toURI().toURL());
+        validateDescriptor(descriptor);
         return descriptor;
       }
       catch (XmlSerializationException e) {
         getLogger().info("Cannot load " + file, e);
-        prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
+        prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
       }
       catch (Throwable e) {
         getLogger().info("Cannot load " + file, e);
@@ -662,29 +664,37 @@ public class PluginManagerCore {
     try {
       URL jarURL = URLUtil.getJarEntryURL(file, FileUtil.toCanonicalPath(META_INF + '/' + fileName, '/'));
 
-      ZipFile zipFile = context.myOpenedFiles.get(file);
-      if (zipFile == null) {
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        context.myOpenedFiles.put(file, zipFile = new ZipFile(file));
-      }
+      ZipFile zipFile = context.open(file);
       ZipEntry entry = zipFile.getEntry(META_INF + '/' + fileName);
       if (entry != null) {
         Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
         descriptor.readExternal(document, jarURL, pathResolver);
+        validateDescriptor(descriptor);
         context.myLastZipFileContainingDescriptor = file;
         return descriptor;
       }
     }
     catch (XmlSerializationException e) {
       getLogger().info("Cannot load " + file, e);
-      prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
+      prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
     }
     catch (Throwable e) {
       getLogger().info("Cannot load " + file, e);
     }
 
     return null;
+  }
+
+  private static void validateDescriptor(IdeaPluginDescriptorImpl descriptor) {
+    /*
+    if (descriptor.getPluginId() == null) {
+      throw new IllegalStateException("Skipped plugin with null ID: " + descriptor);
+    }
+    else if (descriptor.getName() == null) {
+      throw new IllegalStateException("Skipped plugin without name: " + descriptor);
+    }
+    */
   }
 
   @Nullable
@@ -702,6 +712,15 @@ public class PluginManagerCore {
   private static class LoadingContext implements AutoCloseable {
     private final Map<File, ZipFile> myOpenedFiles = new THashMap<>();
     private File myLastZipFileContainingDescriptor;
+
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    private ZipFile open(File file) throws IOException {
+      ZipFile zipFile = myOpenedFiles.get(file);
+      if (zipFile == null) {
+        myOpenedFiles.put(file, zipFile = new ZipFile(file));
+      }
+      return zipFile;
+    }
 
     @Override
     public void close() {
@@ -881,10 +900,6 @@ public class PluginManagerCore {
       for (File file : files) {
         IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML, bundled);
         if (descriptor == null) continue;
-        if (descriptor.getName() == null) {
-          getLogger().warn("Skipped plugin without name: " + descriptor);
-          continue;
-        }
         if (progress != null) {
           progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_PART * ((float)++i / pluginsCount));
         }
@@ -1014,12 +1029,13 @@ public class PluginManagerCore {
       return;
     }
 
-    Collection<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
+    // plugin projects may have the same plugins in plugin path (sandbox or SDK) and on the classpath; latter should be ignored
+    Set<IdeaPluginDescriptorImpl> found = ContainerUtil.newHashSet(result);
 
     int i = 0;
     for (URL url : urls.keySet()) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url, urls.get(url), true);
-      if (descriptor != null && existingResults.add(descriptor)) {
+      if (descriptor != null && found.add(descriptor)) {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
         if (progress != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
@@ -1106,13 +1122,10 @@ public class PluginManagerCore {
   @NotNull // used in upsource
   public static IdeaPluginDescriptorImpl[] topoSortPlugins(@NotNull List<IdeaPluginDescriptorImpl> result, @NotNull List<String> errors) {
     IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
-    final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<>();
+
+    Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
-      PluginId id = descriptor.getPluginId();
-      if (id == null) {
-        LOG.error("null 'id': " + descriptor);
-      }
-      idToDescriptorMap.put(id, descriptor);
+      idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
 
     Arrays.sort(pluginDescriptors, getPluginDescriptorComparator(idToDescriptorMap, errors));
@@ -1452,7 +1465,7 @@ public class PluginManagerCore {
       descriptor = loadDescriptorFromJar(pluginRoot, fileName, true);
     }
     if (descriptor != null) {
-      registerExtensionPointsAndExtensions(area, Collections.singletonList(descriptor));
+      registerExtensionPointsAndExtensions(area, singletonList(descriptor));
     }
     else {
       getLogger().error("Cannot load " + fileName + " from " + pluginRoot);

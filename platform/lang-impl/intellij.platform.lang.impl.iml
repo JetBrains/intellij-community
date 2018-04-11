@@ -33,5 +33,6 @@
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="XStream" level="project" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>

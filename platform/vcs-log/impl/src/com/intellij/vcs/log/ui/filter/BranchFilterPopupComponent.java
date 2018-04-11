@@ -33,6 +33,7 @@ import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,8 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
   private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
@@ -89,7 +92,21 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected List<List<String>> getRecentValuesFromSettings() {
-    return myUiProperties.getRecentlyFilteredBranchGroups();
+    List<List<String>> groups = myUiProperties.getRecentlyFilteredBranchGroups();
+    return ContainerUtil.filter(groups, group -> (group.size() == 1 && isPattern(group.get(0))) || group.size() > 1);
+  }
+
+  private static boolean isPattern(@NotNull String string) {
+    if (string.startsWith("-")) return true;
+    if (VcsLogUtil.maybeRegexp(string)) {
+      try {
+        Pattern.compile(string);
+        return true;
+      }
+      catch (PatternSyntaxException ignored) {
+      }
+    }
+    return false;
   }
 
   @Override

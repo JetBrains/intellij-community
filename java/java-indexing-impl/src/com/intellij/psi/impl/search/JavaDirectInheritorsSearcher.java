@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -43,7 +41,7 @@ import java.util.stream.Stream;
  */
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<PsiClass> consumer) {
+  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> consumer) {
     PsiClass baseClass = getClassToSearch(parameters);
     assert parameters.isCheckInheritance();
 
@@ -282,7 +280,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   }
 
   private static boolean processInheritorCandidates(@NotNull Stream<PsiElement> classStream,
-                                                    @NotNull Processor<PsiClass> consumer,
+                                                    @NotNull Processor<? super PsiClass> consumer,
                                                     boolean acceptAnonymous) {
     if (!acceptAnonymous) {
       classStream = classStream.filter(c -> !(c instanceof PsiAnonymousClass));

@@ -4,63 +4,86 @@ package com.intellij.util.ui;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 
 /**
- * A wrapper over unscaled value, applying {@link JBUI#scale} on request.
+ * A wrapper over an unscaled value which lazily scales it via {@link JBUI#scale}.
  *
  * @author tav
  */
 public abstract class JBValue {
-  protected final float value;
-
-  protected JBValue(float value) {
-    this.value = value;
-  }
+  protected JBValue() {}
 
   /**
    * Returns scaled rounded to int value.
    */
   public int get() {
     // for backward compatibility rely on the rounding mode applied in JBUI.scale(int)
-    return JBUI.scale((int)value);
+    return JBUI.scale((int)getUnscaled());
   }
 
   /**
    * Returns scaled rounded to int (according to {@code rm}) value.
    */
   public int get(@NotNull RoundingMode rm) {
-    return rm.round(JBUI.scale(value));
+    return rm.round(JBUI.scale(getUnscaled()));
   }
 
   /**
-   * JBValue int representation.
+   * Returns initial unscaled value.
+   */
+  protected abstract float getUnscaled();
+
+  /**
+   * JBValue wrapper over an integer value in {@link UIManager}.
+   */
+  public static class UIManagerInteger extends JBValue {
+    private final String key;
+
+    public UIManagerInteger(@NotNull String key) {
+      this.key = key;
+    }
+
+    @Override
+    protected float getUnscaled() {
+      return UIManager.getInt(key);
+    }
+  }
+
+  /**
+   * JBValue wrapper over an integer.
    */
   public static class Integer extends JBValue {
+    private final int value;
+
     /**
      * @param value unscaled value
      * @see JBUI#intValue(int)
      */
     public Integer(int value) {
-      super(value);
+      this.value = value;
     }
 
-    @SuppressWarnings("unused")
-    public int getUnscaled() {
-      return (int)value;
+    @Override
+    protected float getUnscaled() {
+      return value;
     }
   }
 
   /**
-   * JBValue float representation.
+   * JBValue wrapper over a float.
    */
   public static class Float extends JBValue {
+    private final float value;
+
     /**
      * @param value unscaled value
      * @see JBUI#floatValue(float)
      */
     public Float(float value) {
-      super(value);
+      this.value = value;
     }
 
     @Override
@@ -75,8 +98,8 @@ public abstract class JBValue {
       return JBUI.scale(value);
     }
 
-    @SuppressWarnings("unused")
-    public float getUnscaled() {
+    @Override
+    protected float getUnscaled() {
       return value;
     }
   }

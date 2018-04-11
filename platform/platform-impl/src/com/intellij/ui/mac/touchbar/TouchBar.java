@@ -19,7 +19,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   protected long myCounter = 0;
   protected final List<TBItem> myItems = new ArrayList<>();
 
-  TouchBar(String touchbarName) {
+  public TouchBar(String touchbarName) {
     myName = touchbarName;
     myNativePeer = NST.createTouchBar(touchbarName, this);
   }
@@ -46,56 +46,75 @@ public class TouchBar implements NSTLibrary.ItemCreator {
     myNativePeer = ID.NIL;
   }
 
+  public void closeAndRelease() {
+    TouchBarsManager.closeTouchBar(this);
+    release();
+  }
+
+  public void show() {
+    selectVisibleItemsToShow();
+    TouchBarsManager.showTouchBar(this);
+  }
+
   //
   // NOTE: must call 'selectVisibleItemsToShow' after touchbar filling
   //
 
-  TBItemButton addButton(Icon icon, String text, NSTLibrary.Action action) {
+  public TBItemButton addButton() {
+    final String uid = String.format("%s.button.%d", myName, myCounter++);
+    final TBItemButton butt = new TBItemButton(uid, null, null, null);
+    myItems.add(butt);
+    return butt;
+  }
+
+  public TBItemButton addButton(Icon icon, String text, NSTLibrary.Action action) {
     final String uid = String.format("%s.button.%d", myName, myCounter++);
     final TBItemButton butt = new TBItemButton(uid, icon, text, action);
     myItems.add(butt);
     return butt;
   }
 
-  TBItemButton addButton(Icon icon, String text, String actionId) {
+  public TBItemButton addButton(Icon icon, String text, String actionId) {
     final String uid = String.format("%s.button.%d", myName, myCounter++);
     final TBItemButton butt = new TBItemButton(uid, icon, text, new PlatformAction(actionId));
     myItems.add(butt);
     return butt;
   }
 
-  TBItemButton addButton(Icon icon, String text, AnAction act) {
+  public TBItemButton addButton(Icon icon, String text, AnAction act) {
     final String uid = String.format("%s.button.%d", myName, myCounter++);
     final TBItemButton butt = new TBItemButton(uid, icon, text, new PlatformAction(act));
     myItems.add(butt);
     return butt;
   }
 
-  TBItemPopover addPopover(Icon icon, String text, int width, TouchBar expandTB, TouchBar tapAndHoldTB) {
+  public TBItemPopover addPopover(Icon icon, String text, int width, TouchBar expandTB, TouchBar tapAndHoldTB) {
     final String uid = String.format("%s.popover.%d", myName, myCounter++);
     final TBItemPopover popover = new TBItemPopover(uid, icon, text, width, expandTB, tapAndHoldTB);
     myItems.add(popover);
     return popover;
   }
 
-  TBItemScrubber addScrubber(int width) {
+  public TBItemScrubber addScrubber(int width) {
     final String uid = String.format("%s.scrubber.%d", myName, myCounter++);
     final TBItemScrubber scrubber = new TBItemScrubber(uid, width);
     myItems.add(scrubber);
     return scrubber;
   }
 
-  void addSpacing(boolean large) {
+  public TBItemScrubber addScrubber() { return addScrubber(500); }
+
+  public void addSpacing(boolean large) {
     final SpacingItem spacing = new SpacingItem(large ? "static_touchbar_item_large_space" : "static_touchbar_item_small_space");
     myItems.add(spacing);
   }
 
-  void addFlexibleSpacing() {
+  public void addFlexibleSpacing() {
     final SpacingItem spacing = new SpacingItem("static_touchbar_item_flexible_space");
     myItems.add(spacing);
   }
 
-  void selectVisibleItemsToShow() {
+  public void selectVisibleItemsToShow() {
     if (myItems.isEmpty())
       return;
 

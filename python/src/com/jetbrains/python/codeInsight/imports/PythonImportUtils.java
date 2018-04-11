@@ -34,7 +34,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -243,7 +242,7 @@ public final class PythonImportUtils {
     // Add modules
     FilenameIndex.processFilesByName(refText + ".py", false, true, item -> {
       ProgressManager.checkCanceled();
-      if (isImportableModule(targetFile, item)) {
+      if (isImportable(targetFile, item)) {
         result.add(item);
       }
       return true;
@@ -252,7 +251,10 @@ public final class PythonImportUtils {
     return result;
   }
 
-  public static boolean isImportableModule(PsiFile targetFile, @NotNull PsiFileSystemItem file) {
+  /**
+   * Checks whether {@param file} representing Python module or package can be imported into {@param file}.
+   */
+  public static boolean isImportable(PsiFile targetFile, @NotNull PsiFileSystemItem file) {
     PsiDirectory parent = (PsiDirectory)file.getParent();
     return parent != null && file != targetFile &&
            (ImportFromExistingAction.isRoot(parent) ||

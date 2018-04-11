@@ -1,0 +1,3 @@
+deprecated: class_filter.png
+deprecated: newWatch.png
+deprecated: watches.png

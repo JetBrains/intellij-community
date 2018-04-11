@@ -73,8 +73,8 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
 
   @Nullable
   @Override
-  public Object getData(Collection<AbstractTreeNode> selection, String id) {
-    if (id != null && selection != null && !selection.isEmpty()) {
+  public Object getData(@NotNull Collection<AbstractTreeNode> selection, String id) {
+    if (id != null && !selection.isEmpty()) {
       for (TreeStructureProvider provider : providers) {
         try {
           Object data = provider.getData(selection, id);

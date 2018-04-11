@@ -42,7 +42,6 @@ public class JsonLiteralAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    final String text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);
     JsonLiteralChecker[] extensions = JsonLiteralChecker.EP_NAME.getExtensions();
     if (element instanceof JsonReferenceExpression) {
       highlightPropertyKey(element, holder);
@@ -51,6 +50,7 @@ public class JsonLiteralAnnotator implements Annotator {
       final JsonStringLiteral stringLiteral = (JsonStringLiteral)element;
       final int elementOffset = element.getTextOffset();
       highlightPropertyKey(element, holder);
+      final String text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);
       final int length = text.length();
 
       // Check that string literal is closed properly
@@ -72,8 +72,12 @@ public class JsonLiteralAnnotator implements Annotator {
       }
     }
     else if (element instanceof JsonNumberLiteral) {
+      String text = null;
       for (JsonLiteralChecker checker: extensions) {
         if (!checker.isApplicable(element)) continue;
+        if (text == null) {
+          text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);
+        }
         String error = checker.getErrorForNumericLiteral(text);
         if (error != null) {
           holder.createErrorAnnotation(element, error);

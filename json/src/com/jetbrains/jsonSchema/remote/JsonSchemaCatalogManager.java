@@ -25,7 +25,7 @@ public class JsonSchemaCatalogManager {
   @NotNull private final ConcurrentMap<String, String> myResolvedMappings = ContainerUtil.newConcurrentMap();
   private static final String NO_CACHE = "$_$_WS_NO_CACHE_$_$";
   private static final String EMPTY = "$_$_WS_EMPTY_$_$";
-  private static final AtomicBoolean myIsEnabled = new AtomicBoolean(!ApplicationManager.getApplication().isUnitTestMode());
+  private static final AtomicBoolean myIsEnabled = new AtomicBoolean(true);
 
   public JsonSchemaCatalogManager(@NotNull Project project) {
     myProject = project;
@@ -37,6 +37,7 @@ public class JsonSchemaCatalogManager {
   }
 
   public void startUpdates() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     RemoteFileManager instance = RemoteFileManager.getInstance();
     instance.addRemoteContentProvider(myRemoteContentProvider);
     myCatalog = JsonFileResolver.urlToFile(DEFAULT_CATALOG);
@@ -44,6 +45,7 @@ public class JsonSchemaCatalogManager {
 
   @Nullable
   public VirtualFile getSchemaFileForFile(@NotNull VirtualFile file) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (!myIsEnabled.get()) return null;
 
     String name = file.getName();
