@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.branchConfig;
 
@@ -110,7 +108,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       final String key = root.getPath();
       final SvnBranchConfigurationNew configOrig = myBunch.getConfig(root);
       final SvnBranchConfiguration configuration =
-        new SvnBranchConfiguration(configOrig.getTrunkUrl(), configOrig.getBranchUrls(), configOrig.isUserinfoInUrl());
+        new SvnBranchConfiguration(configOrig.getTrunkUrl(), configOrig.getBranchUrls(), configOrig.isUserInfoInUrl());
 
       result.myConfigurationMap.put(key, helper.prepareForSerialization(configuration));
     }
@@ -151,7 +149,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       }
       final SvnBranchConfigurationNew newConfig = new SvnBranchConfigurationNew();
       newConfig.setTrunkUrl(configToConvert.getTrunkUrl());
-      newConfig.setUserinfoInUrl(configToConvert.isUserinfoInUrl());
+      newConfig.setUserInfoInUrl(configToConvert.isUserinfoInUrl());
       for (String branchUrl : configToConvert.getBranchUrls()) {
         List<SvnBranchItem> stored = getStored(branchUrl);
         if (stored != null && !stored.isEmpty()) {
