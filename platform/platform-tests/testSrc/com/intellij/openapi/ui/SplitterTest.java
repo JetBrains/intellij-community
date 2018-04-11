@@ -22,12 +22,20 @@ import java.awt.*;
 
 public class SplitterTest extends TestCase{
 
-  public void testResizeVert() {
-    resizeTest(new Splitter(true));
-  }
+  public void testAll() {
+    for (Splitter.LackOfSpaceStrategy strategy : Splitter.LackOfSpaceStrategy.values()) {
+      {
+        Splitter splitter = new Splitter(true);
+        splitter.setLackOfSpaceStrategy(strategy);
+        resizeTest(splitter);
+      }
 
-  public void testResizeHoriz() {
-    resizeTest(new Splitter(false));
+      {
+        Splitter splitter = new Splitter(false);
+        splitter.setLackOfSpaceStrategy(strategy);
+        resizeTest(splitter);
+      }
+    }
   }
 
   private static void resizeTest(Splitter splitter) {
@@ -106,9 +114,18 @@ public class SplitterTest extends TestCase{
     if(splitter.isHonorMinimumSize()) {
       Dimension firstMinimum = splitter.getFirstComponent().getMinimumSize();
       Dimension secondMinimum = splitter.getSecondComponent().getMinimumSize();
-
-      assertTrue(firstSize.width < firstMinimum.width == secondSize.width < secondMinimum.width);
-      assertTrue(firstSize.height < firstMinimum.height == secondSize.height < secondMinimum.height);
+      switch (splitter.getLackOfSpaceStrategy()) {
+        case SIMPLE_RATIO:
+          assertTrue(firstSize.width < firstMinimum.width == secondSize.width < secondMinimum.width);
+          assertTrue(firstSize.height < firstMinimum.height == secondSize.height < secondMinimum.height);
+          break;
+        case HONOR_THE_FIRST_MIN_SIZE:
+          assertTrue(splitter.getOrientation() ? firstSize.height >= firstMinimum.height : firstSize.width >= firstMinimum.width);
+          break;
+        case HONOR_THE_SECOND_MIN_SIZE:
+          assertTrue(splitter.getOrientation() ? secondSize.height >= secondMinimum.height : secondSize.width >= secondMinimum.width);
+          break;
+      }
     }
   }
 }
