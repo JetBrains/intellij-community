@@ -898,7 +898,12 @@ public class PluginManagerCore {
         if (oldIndex >= 0) {
           IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
           if (StringUtil.compareVersionNumbers(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
-            result.set(oldIndex, descriptor);
+            if (isIncompatible(descriptor) && isCompatible(oldDescriptor)) {
+              getLogger().info("newer plugin is incompatible, ignoring: " + descriptor.getPath());
+            }
+            else {
+              result.set(oldIndex, descriptor);
+            }
           }
         }
         else {
