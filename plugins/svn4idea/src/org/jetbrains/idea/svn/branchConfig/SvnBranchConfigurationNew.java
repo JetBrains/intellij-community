@@ -24,15 +24,9 @@ import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class SvnBranchConfigurationNew {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew");
-  private String myTrunkUrl;
-  // need public for serialization
-  public Map<String, InfoStorage<List<SvnBranchItem>>> myBranchMap;
+  private String myTrunkUrl = "";
+  private final Map<String, InfoStorage<List<SvnBranchItem>>> myBranchMap = new HashMap<>();
   private boolean myUserinfoInUrl;
-
-  public SvnBranchConfigurationNew() {
-    myTrunkUrl = "";
-    myBranchMap = new HashMap<>();
-  }
 
   public boolean isUserinfoInUrl() {
     return myUserinfoInUrl;
@@ -98,7 +92,6 @@ public class SvnBranchConfigurationNew {
     SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
     result.myUserinfoInUrl = myUserinfoInUrl;
     result.myTrunkUrl = myTrunkUrl;
-    result.myBranchMap = new HashMap<>();
     for (Map.Entry<String, InfoStorage<List<SvnBranchItem>>> entry : myBranchMap.entrySet()) {
       final InfoStorage<List<SvnBranchItem>> infoStorage = entry.getValue();
       result.myBranchMap.put(entry.getKey(), new InfoStorage<>(
