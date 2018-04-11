@@ -46,7 +46,8 @@ public interface PsiAnnotationOwner {
    * @since 2018.2
    */
   default boolean hasAnnotation(@NotNull @NonNls String qualifiedName) {
-    return hasAnnotation(qualifiedName);
+    //noinspection SSBasedInspection
+    return findAnnotation(qualifiedName) != null;
   }
 
   /**
