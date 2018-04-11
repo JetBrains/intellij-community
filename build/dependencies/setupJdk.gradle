@@ -143,8 +143,14 @@ private void createMissingLauncher(String outputDir) {
 setupJdk16.onlyIf { inJetBrainsNetwork }
 
 def intellijProjectDir() {
-  def communityDir = project.file("../..")
-  communityDir.name == 'community' ? communityDir.parent : communityDir
+  def projectDir = project.file("../..")
+  if (projectDir.name == 'community') {
+    while (new File(projectDir.parentFile, ".idea").exists()) {
+      projectDir = projectDir.parentFile
+    }
+    return projectDir
+  }
+  return projectDir
 }
 
 static def jdk16Version() {
