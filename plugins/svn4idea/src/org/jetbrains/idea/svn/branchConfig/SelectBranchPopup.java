@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -97,7 +97,7 @@ public class SelectBranchPopup {
 
   @NotNull
   private static String getBranchName(@NotNull SvnBranchItem branch) {
-    return Url.tail(branch.getUrl());
+    return branch.getUrl().getTail();
   }
 
   private static class BranchBasesPopupStep extends BaseListPopupStep<String> {
@@ -196,7 +196,7 @@ public class SelectBranchPopup {
           }
           SvnBranchItem item = (SvnBranchItem)v;
           if (item != null) {
-            myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
+            myCallback.branchSelected(myProject, myConfiguration, item.getUrl().toDecodedString(), item.getRevision());
           }
         })
         .setNamerForFiltering(item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
