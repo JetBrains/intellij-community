@@ -74,7 +74,7 @@ class CompilationContextImpl implements CompilationContext {
     }
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
-    logFreeDiskSpace(messages, projectHome, "before dwonloading dependencies")
+    logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, SystemProperties.getJavaHome())
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle)
