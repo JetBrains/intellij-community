@@ -54,14 +54,14 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
         for (name in arrayOf("checkBox", "radio", "gear", "spinnerRight")) {
           val iconWrapper = when (name) {
                               "gear" -> IconLoader.getIcon("/general/gear.png")
-                              else -> IconCache.getCachedIcon(name, false)
+                              else -> IconCache.getIcon(name, findIfNotInCache = false)
                             } as? IconLoader.CachedImageIcon ?: continue
           if (iconWrapper.doGetRealIcon()?.image == image) {
             return getIconRelativePath(iconWrapper)
           }
         }
         for (name in arrayOf("checkBox", "radio")) {
-          val iconWrapper = IconCache.getCachedIcon(name, true) as IconLoader.CachedImageIcon
+          val iconWrapper = IconCache.getIcon(name, selected = true, findIfNotInCache = false) as? IconLoader.CachedImageIcon ?: continue
           if (iconWrapper.doGetRealIcon()?.image == image) {
             return getIconRelativePath(iconWrapper)
           }
