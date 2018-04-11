@@ -26,6 +26,35 @@ public class ValueContainersTest extends TestCase {
     runSimpleAddRemoveIteration(new Integer[] { 25, 33, 77}, new int[][]{{ 10, 20, 30}, { 11, 22 }, {44}});
   }
 
+  public void testTolerateHashcodeProblems() {
+    class MutableValue {
+      int id;
+      MutableValue(int _id) {
+        id = _id;
+      }
+
+      @Override
+      public int hashCode() {
+        return id;
+      }
+    }
+    
+    ValueContainerImpl<MutableValue> container = new ValueContainerImpl<>();
+    MutableValue value1 = new MutableValue(1);
+    container.addValue(value1.id, value1);
+    MutableValue value2 = new MutableValue(2);
+    container.addValue(value2.id, value2);
+    value2.id = 1;
+    container.removeValue(value1.id, value1);
+
+    InvertedIndexValueIterator<MutableValue> iterator = container.getValueIterator();
+    assertTrue(iterator.hasNext());
+    MutableValue valueFromIterator = iterator.next();
+    assertEquals(value2, valueFromIterator);
+    assertNotNull(iterator.getFileSetObject());
+    assertFalse(iterator.hasNext());
+  }
+
   private static <T> void runSimpleAddRemoveIteration(T[] values, int[][] inputIds) {
     HashMap<T, TIntArrayList> valueToIdList = new HashMap<>();
     ValueContainerImpl<T> container = new ValueContainerImpl<>();
