@@ -65,7 +65,7 @@ public class PsiLiteralExpressionImpl
     if (type == JavaTokenType.CHARACTER_LITERAL) {
       return PsiType.CHAR;
     }
-    if (type == JavaTokenType.STRING_LITERAL) {
+    if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.RAW_STRING_LITERAL) {
       PsiManagerEx manager = getManager();
       GlobalSearchScope resolveScope = ResolveScopeManager.getElementResolveScope(this);
       return PsiType.getJavaLangString(manager, resolveScope);
@@ -111,6 +111,11 @@ public class PsiLiteralExpressionImpl
     if (type == JavaTokenType.STRING_LITERAL) {
       String innerText = getInnerText();
       return innerText == null ? null : internedParseStringCharacters(innerText);
+    }
+
+    if (type == JavaTokenType.RAW_STRING_LITERAL) {
+      String rawString = getRawString();
+      return rawString == null ? null : internedParseStringCharacters(rawString);
     }
 
     String text = NUMERIC_LITERALS.contains(type) ? getCanonicalText().toLowerCase(Locale.ENGLISH) : getCanonicalText();
@@ -164,6 +169,18 @@ public class PsiLiteralExpressionImpl
     }
     return text;
   }
+  
+  private String getRawString() {
+    String text = getCanonicalText();
+    int pos = 0;
+    int length = text.length();
+
+    while (pos < length && text.charAt(pos) == '`') pos++;
+
+    if (length - pos <= pos) return null;
+
+    return text.substring(pos, length - pos);
+  }
 
   @Nullable
   private static String internedParseStringCharacters(final String chars) {
@@ -193,14 +210,15 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public boolean isValidHost() {
-    return getLiteralElementType() == JavaTokenType.STRING_LITERAL;
+    IElementType elementType = getLiteralElementType();
+    return elementType == JavaTokenType.STRING_LITERAL || elementType == JavaTokenType.RAW_STRING_LITERAL;
   }
 
   @Override
   @NotNull
   public PsiReference[] getReferences() {
     IElementType type = getLiteralElementType();
-    if (type != JavaTokenType.STRING_LITERAL && type != JavaTokenType.INTEGER_LITERAL) {
+    if (type != JavaTokenType.STRING_LITERAL && type != JavaTokenType.RAW_STRING_LITERAL && type != JavaTokenType.INTEGER_LITERAL) {
       return PsiReference.EMPTY_ARRAY; // there are references in int literals in SQL API parameters
     }
     return PsiReferenceService.getService().getContributedReferences(this);
