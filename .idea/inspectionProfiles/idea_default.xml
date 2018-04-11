@@ -783,6 +783,14 @@
       <replaceConfiguration name="incorrect DumbAware check" created="1522680840725" text="$target$ instanceof DumbAware" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.project.DumbService.isDumbAware($target$)">
         <constraint name="target" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="findAnnotation(name) != null -&gt; hasAnnotation(name)" created="1523461479091" text="$Instance$.findAnnotation($Parameter$) != null" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.hasAnnotation($Parameter$)">
+        <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="findAnnotation(name) == null -&gt; !hasAnnotation(name)" created="1523461974706" text="$Instance$.findAnnotation($Parameter$) == null&#10;" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$Instance$.hasAnnotation($Parameter$)">
+        <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
