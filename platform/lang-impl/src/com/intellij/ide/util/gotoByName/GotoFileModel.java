@@ -24,7 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.ProjectUICustomization;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +95,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
     if (NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
       return null;
     }
-    return ProjectUICustomization.replaceProjectConceptName(IdeBundle.message("checkbox.include.non.project.files"));
+    return IdeBundle.message("checkbox.include.non.project.files", IdeUICustomization.getInstance().getProjectConceptName());
   }
 
   @Override

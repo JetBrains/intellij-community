@@ -676,7 +676,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                             UIManager.getColor("SearchEverywhere.shortcutForeground") : foregroundColor;
 
       StringBuilder cbText = new StringBuilder("<html>");
-      cbText.append(ProjectUICustomization.replaceProjectConceptName(IdeBundle.message("checkbox.include.non.project.items")));
+      cbText.append(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
       cbText.append(" ");
       if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("<b>");
       cbText.append("<font color=#").append(ColorUtil.toHex(shortcutColor)).append(">").append(getShortcut()).append("</font>");

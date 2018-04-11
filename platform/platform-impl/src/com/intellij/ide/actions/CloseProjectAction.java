@@ -26,9 +26,13 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
-import com.intellij.ui.ProjectUICustomization;
+import com.intellij.ui.IdeUICustomization;
 
 public class CloseProjectAction extends AnAction implements DumbAware {
+  public CloseProjectAction() {
+    getTemplatePresentation().setText(IdeUICustomization.getInstance().getCloseProjectActionText());
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
@@ -44,10 +48,10 @@ public class CloseProjectAction extends AnAction implements DumbAware {
     Project project = event.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null);
     if (ProjectAttachProcessor.canAttachToProject() && project != null && ModuleManager.getInstance(project).getModules().length > 1) {
-      presentation.setText(ProjectUICustomization.replaceProjectConceptNameForAction(IdeBundle.message("action.close.projects.in.current.window")));
+      presentation.setText(IdeBundle.message("action.close.projects.in.current.window"));
     }
     else {
-      presentation.setText(ProjectUICustomization.replaceProjectConceptNameForAction(IdeBundle.message("action.close.project")));
+      presentation.setText(IdeUICustomization.getInstance().getCloseProjectActionText());
     }
   }
 }

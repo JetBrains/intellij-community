@@ -16,9 +16,11 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,7 @@ import java.util.Collections;
 public final class SystemOptionsTopHitProvider extends OptionsTopHitProvider {
   private static final Collection<OptionDescription> ourOptions = Collections.unmodifiableCollection(Arrays.asList(
     option(messageIde("checkbox.show.tips.on.startup"), "showTipsOnStartup", "setShowTipsOnStartup"),
-    option(messageIde("checkbox.reopen.last.project.on.startup"), "isReopenLastProject", "setReopenLastProject"),
+    option(IdeBundle.message("checkbox.reopen.last.project.on.startup", IdeUICustomization.getInstance().getProjectConceptName()), "isReopenLastProject", "setReopenLastProject"),
     option(messageIde("checkbox.support.screen.readers"), "isSupportScreenReaders", "setSupportScreenReaders"),
     option(messageIde("checkbox.confirm.application.exit"), "isConfirmExit", "setConfirmExit"),
     option(messageIde("checkbox.synchronize.files.on.frame.activation"), "isSyncOnFrameActivation", "setSyncOnFrameActivation"),
