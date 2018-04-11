@@ -9,9 +9,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
+import org.junit.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -30,17 +28,17 @@ public class TestScaleHelper {
   private static final Map<String, String> originalSysProps = new HashMap<>();
   private static final Map<String, String> originalRegProps = new HashMap<>();
 
-  private float originalUserScale;
-  private boolean originalJreHiDPIEnabled;
+  private static float originalUserScale;
+  private static boolean originalJreHiDPIEnabled;
 
-  @Before
-  public void setState() {
+  @BeforeClass
+  public static void setState() {
     originalUserScale = JBUI.scale(1f);
     originalJreHiDPIEnabled = UIUtil.isJreHiDPIEnabled();
   }
 
-  @After
-  public void restoreState() {
+  @AfterClass
+  public static void restoreState() {
     JBUI.setUserScaleFactor(originalUserScale);
     overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
     restoreRegistryProperties();

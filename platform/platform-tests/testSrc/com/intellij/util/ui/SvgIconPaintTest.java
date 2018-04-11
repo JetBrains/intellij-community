@@ -7,7 +7,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import com.intellij.util.ui.paint.ImageComparator.AASmootherComparator;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.awt.*;
@@ -22,11 +22,11 @@ import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
  *
  * @author tav
  */
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class SvgIconPaintTest extends TestScaleHelper {
-  @Before
-  @Override
-  public void setState() {
-    super.setState();
+  @BeforeClass
+  public static void setState() {
+    TestScaleHelper.setState();
     setRegistryProperty("ide.svg.icon", "true");
   }
 

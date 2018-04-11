@@ -7,7 +7,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import junit.framework.TestCase;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -22,11 +22,11 @@ import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
  *
  * @author tav
  */
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class IconScaleTest extends TestScaleHelper {
-  @Before
-  @Override
-  public void setState() {
-    super.setState();
+  @BeforeClass
+  public static void setState() {
+    TestScaleHelper.setState();
     setRegistryProperty("ide.svg.icon", "true");
   }
 
@@ -79,7 +79,7 @@ public class IconScaleTest extends TestScaleHelper {
     TestCase.assertEquals("unexpected scaled icon real height", ICON_SCALED_REAL_SIZE, ImageUtil.getRealHeight(IconUtil.toImage(scaledIcon)));
   }
 
-  private String getIconPath() {
+  private static String getIconPath() {
     return PlatformTestUtil.getPlatformTestDataPath() + "ui/abstractClass.svg";
   }
 }

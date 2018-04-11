@@ -32,14 +32,12 @@ import javax.swing.plaf.metal.MetalLookAndFeel
 internal val isUpdateSnapshotsGlobal by lazy { SystemPropertyUtil.getBoolean("test.update.snapshots", false) }
 
 class NoScaleRule : ExternalResource() {
-  private var scaleHelper = TestScaleHelper()
-
   override fun before() {
-    scaleHelper.setState()
+    TestScaleHelper.setState()
   }
 
   override fun after() {
-    scaleHelper.restoreState()
+    TestScaleHelper.restoreState()
   }
 }
 
