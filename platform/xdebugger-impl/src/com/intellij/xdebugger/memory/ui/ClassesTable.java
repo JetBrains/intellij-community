@@ -60,7 +60,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private static final int DIFF_COLUMN_MIN_WIDTH = 80;
   private static final UnknownDiffValue UNKNOWN_VALUE = new UnknownDiffValue();
 
-  private final DiffViewTableModel myModel = new DiffViewTableModel();
+  private final DiffViewTableModel myModel;
   private final Map<TypeInfo, DiffValue> myCounts = new ConcurrentHashMap<>();
   private final InstancesTracker myInstancesTracker;
   private final ClassesFilteredViewBase myParent;
@@ -80,6 +80,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public ClassesTable(@NotNull Project project, @NotNull ClassesFilteredViewBase parent, boolean onlyWithDiff,
                       boolean onlyWithInstances,
                       boolean onlyTracked) {
+    myModel = getTableModel();
     setModel(myModel);
 
     myOnlyWithDiff = onlyWithDiff;
@@ -88,17 +89,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     myInstancesTracker = InstancesTracker.getInstance(project);
     myParent = parent;
 
-    final TableColumnModel columnModel = getColumnModel();
-    TableColumn classesColumn = columnModel.getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
-    TableColumn countColumn = columnModel.getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);
-    TableColumn diffColumn = columnModel.getColumn(DiffViewTableModel.DIFF_COLUMN_INDEX);
-
-    setAutoResizeMode(AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-    classesColumn.setPreferredWidth(JBUI.scale(CLASSES_COLUMN_PREFERRED_WIDTH));
-
-    countColumn.setMinWidth(JBUI.scale(COUNT_COLUMN_MIN_WIDTH));
-
-    diffColumn.setMinWidth(JBUI.scale(DIFF_COLUMN_MIN_WIDTH));
+    customizeColumns();
 
     setShowGrid(false);
     setIntercellSpacing(new JBDimension(0, 0));
@@ -107,28 +98,6 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     setDefaultRenderer(Long.class, new MyCountColumnRenderer());
     setDefaultRenderer(DiffValue.class, new MyDiffColumnRenderer());
 
-    TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
-    sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {
-      @Override
-      public boolean include(Entry<? extends DiffViewTableModel, ? extends Integer> entry) {
-        int ix = entry.getIdentifier();
-        TypeInfo ref = myItems.get(ix);
-        DiffValue diff = myCounts.getOrDefault(ref, UNKNOWN_VALUE);
-
-        boolean isFilteringOptionsRefused = myOnlyWithDiff && diff.diff() == 0
-                                            || myOnlyWithInstances && !diff.hasInstance()
-                                            || myOnlyTracked && myParent.getStrategy(ref) == null;
-        return !(isFilteringOptionsRefused) && myMatcher.matches(ref.name());
-      }
-    });
-
-    List<RowSorter.SortKey> myDefaultSortingKeys = Arrays.asList(
-      new RowSorter.SortKey(DiffViewTableModel.DIFF_COLUMN_INDEX, SortOrder.DESCENDING),
-      new RowSorter.SortKey(DiffViewTableModel.COUNT_COLUMN_INDEX, SortOrder.DESCENDING),
-      new RowSorter.SortKey(DiffViewTableModel.CLASSNAME_COLUMN_INDEX, SortOrder.ASCENDING)
-    );
-    sorter.setSortKeys(myDefaultSortingKeys);
-    setRowSorter(sorter);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myCountProvider = new ReferenceCountProvider() {
@@ -150,6 +119,53 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     };
   }
 
+  @NotNull
+  protected DiffViewTableModel getTableModel() {
+    return new DiffViewTableModel();
+  }
+
+  protected void customizeColumns() {
+    final TableColumnModel columnModel = getColumnModel();
+    TableColumn classesColumn = columnModel.getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
+    TableColumn countColumn = columnModel.getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);
+    TableColumn diffColumn = columnModel.getColumn(DiffViewTableModel.DIFF_COLUMN_INDEX);
+
+    setAutoResizeMode(AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+    classesColumn.setPreferredWidth(JBUI.scale(CLASSES_COLUMN_PREFERRED_WIDTH));
+
+    countColumn.setMinWidth(JBUI.scale(COUNT_COLUMN_MIN_WIDTH));
+
+    diffColumn.setMinWidth(JBUI.scale(DIFF_COLUMN_MIN_WIDTH));
+
+    TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
+    sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {
+      @Override
+      public boolean include(Entry<? extends DiffViewTableModel, ? extends Integer> entry) {
+        int ix = entry.getIdentifier();
+        TypeInfo ref = getTypeInfoAt(ix);
+        DiffValue diff = myCounts.getOrDefault(ref, UNKNOWN_VALUE);
+
+        boolean isFilteringOptionsRefused = myOnlyWithDiff && diff.diff() == 0
+          || myOnlyWithInstances && !diff.hasInstance()
+          || myOnlyTracked && myParent.getStrategy(ref) == null;
+        return !(isFilteringOptionsRefused) && myMatcher.matches(ref.name());
+      }
+    });
+
+    List<RowSorter.SortKey> myDefaultSortingKeys = getTableSortingKeys();
+    sorter.setSortKeys(myDefaultSortingKeys);
+    setRowSorter(sorter);
+  }
+
+  @NotNull
+  protected List<RowSorter.SortKey> getTableSortingKeys() {
+    return Arrays.asList(
+      new RowSorter.SortKey(DiffViewTableModel.DIFF_COLUMN_INDEX, SortOrder.DESCENDING),
+      new RowSorter.SortKey(DiffViewTableModel.COUNT_COLUMN_INDEX, SortOrder.DESCENDING),
+      new RowSorter.SortKey(DiffViewTableModel.CLASSNAME_COLUMN_INDEX, SortOrder.ASCENDING)
+    );
+  }
+
   public interface ReferenceCountProvider {
 
     int getTotalCount(@NotNull TypeInfo ref);
@@ -164,7 +180,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     int selectedRow = getSelectedRow();
     if (selectedRow != -1) {
       int ix = convertRowIndexToModel(selectedRow);
-      return myItems.get(ix);
+      return getTypeInfoAt(ix);
     }
 
     return null;
@@ -397,26 +413,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     private boolean myIsWithContent = false;
 
     DiffViewTableModel() {
-      super(new AbstractTableColumnDescriptor[]{
-        new AbstractTableColumnDescriptor("Class", TypeInfo.class) {
-          @Override
-          public Object getValue(int ix) {
-            return myItems.get(ix);
-          }
-        },
-        new AbstractTableColumnDescriptor("Count", Long.class) {
-          @Override
-          public Object getValue(int ix) {
-            return myCounts.getOrDefault(myItems.get(ix), UNKNOWN_VALUE).myCurrentCount;
-          }
-        },
-        new AbstractTableColumnDescriptor("Diff", DiffValue.class) {
-          @Override
-          public Object getValue(int ix) {
-            return myCounts.getOrDefault(myItems.get(ix), UNKNOWN_VALUE);
-          }
-        }
-      });
+      super(getColumnDescriptors());
     }
 
     TypeInfo getSelectedClassBeforeHide() {
@@ -447,6 +444,34 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     public int getRowCount() {
       return myIsWithContent ? myItems.size() : 0;
     }
+  }
+
+  @NotNull
+  protected AbstractTableColumnDescriptor[] getColumnDescriptors() {
+    return new AbstractTableColumnDescriptor[]{
+      new AbstractTableColumnDescriptor("Class", TypeInfo.class) {
+        @Override
+        public Object getValue(int ix) {
+          return getTypeInfoAt(ix);
+        }
+      },
+      new AbstractTableColumnDescriptor("Count", Long.class) {
+        @Override
+        public Object getValue(int ix) {
+          return myCounts.getOrDefault(getTypeInfoAt(ix), UNKNOWN_VALUE).myCurrentCount;
+        }
+      },
+      new AbstractTableColumnDescriptor("Diff", DiffValue.class) {
+        @Override
+        public Object getValue(int ix) {
+          return myCounts.getOrDefault(getTypeInfoAt(ix), UNKNOWN_VALUE);
+        }
+      }
+    };
+  }
+
+  protected TypeInfo getTypeInfoAt(int ix) {
+    return myItems.get(ix);
   }
 
   /**
@@ -508,7 +533,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     }
   }
 
-  private abstract static class MyTableCellRenderer extends ColoredTableCellRenderer {
+  public abstract static class MyTableCellRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean isSelected,
                                          boolean hasFocus, int row, int column) {
@@ -577,7 +602,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         setTransparentIconBackground(true);
       }
 
-      TypeInfo ref = myItems.get(convertRowIndexToModel(row));
+      TypeInfo ref = getTypeInfoAt(convertRowIndexToModel(row));
 
       long diff = myCountProvider.getDiffCount(ref);
       String text = String.format("%s%d", diff > 0 ? "+" : "", diff);

@@ -76,8 +76,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
     final MemoryViewManagerState memoryViewManagerState = MemoryViewManager.getInstance().getState();
 
-    myTable = new ClassesTable(myProject,this, memoryViewManagerState.isShowWithDiffOnly,
-      memoryViewManagerState.isShowWithInstancesOnly, memoryViewManagerState.isShowTrackedOnly);
+    myTable = createClassesTable(memoryViewManagerState);
     getMyTable().getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
     Disposer.register(this, getMyTable());
 
@@ -171,6 +170,12 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     topPanel.addToRight(button);
     addToTop(topPanel);
     addToCenter(scroll);
+  }
+
+  @NotNull
+  protected ClassesTable createClassesTable(MemoryViewManagerState memoryViewManagerState) {
+    return new ClassesTable(myProject,this, memoryViewManagerState.isShowWithDiffOnly,
+      memoryViewManagerState.isShowWithInstancesOnly, memoryViewManagerState.isShowTrackedOnly);
   }
 
   protected abstract void scheduleUpdateClassesCommand(XSuspendContext context);
