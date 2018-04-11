@@ -53,7 +53,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
 
   public void show() {
     selectVisibleItemsToShow();
-    TouchBarsManager.pushTouchBar(this);
+    TouchBarsManager.showTouchBar(this);
   }
 
   //

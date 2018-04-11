@@ -8,6 +8,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
 
@@ -27,33 +28,32 @@ public class TouchBarsManager {
       @Override
       public void projectOpened(Project project) {
         trace("opened project %s, set general touchbar", project);
-        pushTouchBar(TouchBarGeneral.instance(project));
+        showTouchBar(TouchBarGeneral.instance(project));
       }
       @Override
       public void projectClosed(Project project) {
         trace("closed project %s, hide touchbar", project);
-        popTouchBar();
+        closeTouchBar(TouchBarGeneral.instance(project));
         TouchBarGeneral.release(project);
+
+        // TODO: implement _closeAllProjectBars (to destroy all project-dependent bars : Debug, Editor, e.t.c.)
       }
     });
   }
 
   public static boolean isTouchBarAvailable() { return NST.isAvailable(); }
 
-  synchronized public static void pushTouchBar(TouchBar bar) {
+  synchronized public static void showTouchBar(@NotNull TouchBar bar) {
+    final TouchBar top = ourTouchBarStack.peek();
+    if (top == bar)
+      return;
+
+    ourTouchBarStack.remove(bar);
     ourTouchBarStack.push(bar);
     NST.setTouchBar(bar);
   }
 
-  synchronized public static void popTouchBar() {
-    if (ourTouchBarStack.isEmpty())
-      return;
-
-    ourTouchBarStack.pop();
-    NST.setTouchBar(ourTouchBarStack.peek());
-  }
-
-  synchronized public static void closeTouchBar(TouchBar tb) {
+  synchronized public static void closeTouchBar(@NotNull TouchBar tb) {
     if (ourTouchBarStack.isEmpty())
       return;
 
@@ -65,7 +65,6 @@ public class TouchBarsManager {
       ourTouchBarStack.remove(tb);
     }
   }
-
 
   private static void trace(String fmt, Object... args) {
     if (IS_LOGGING_ENABLED)
