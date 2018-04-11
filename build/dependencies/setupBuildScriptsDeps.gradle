@@ -3,6 +3,7 @@ repositories {
   mavenCentral()
   if (project.ext.inJetBrainsNetwork) {
     maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
+    maven { url "http://repo.labs.intellij.net/intellij" }
   }
   maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
   jcenter()
@@ -40,7 +41,7 @@ dependencies {
   ).each { properties ->
     buildScriptsDeps(properties.first, { transitive = properties.second })
   }
-  testDiscoveryDeps('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.1') {
+  testDiscoveryDeps('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.26') {
     exclude group: 'org.codehaus.groovy', module: 'groovy-all'
   }
 }
