@@ -243,6 +243,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Class_filter = IconLoader.getIcon("/debugger/class_filter.png"); // 16x16
+    public static final Icon ClassLevelWatch = IconLoader.getIcon("/debugger/classLevelWatch.svg"); // 16x16
     public static final Icon CommandLine = IconLoader.getIcon("/debugger/commandLine.png"); // 16x16
     public static final Icon Console = IconLoader.getIcon("/debugger/console.png"); // 16x16
     public static final Icon Console_log = IconLoader.getIcon("/debugger/console_log.png"); // 16x16

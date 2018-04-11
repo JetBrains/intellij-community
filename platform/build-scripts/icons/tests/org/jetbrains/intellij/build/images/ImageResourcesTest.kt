@@ -201,7 +201,7 @@ private class MyOptimumSizeChecker(val projectHome: File, val iconsOnly: Boolean
     val images = allImages.filter { it.file != null }
 
     images.forEach { image ->
-      image.files.values.forEach { file ->
+      image.files.forEach { file ->
         val optimized = ImageSizeOptimizer.optimizeImage(file)
         if (optimized != null && !optimized.hasOptimumSize) {
           failures.add(FailedTest(module, "image size can be optimized: ${optimized.compressionStats}", image, file))
@@ -229,7 +229,7 @@ class FailedTest internal constructor(val module: String, val message: String, v
     this(module.name, message, image.id, listOf(file.absolutePath))
 
   internal constructor(module: JpsModule, message: String, image: ImagePaths) :
-    this(module.name, message, image.id, image.files.values.map { it.absolutePath }.toList())
+    this(module.name, message, image.id, image.files.map { it.absolutePath }.toList())
 
   internal constructor(module: JpsModule, message: String, file: File) :
     this(module.name, message, file.name, listOf(file.path))

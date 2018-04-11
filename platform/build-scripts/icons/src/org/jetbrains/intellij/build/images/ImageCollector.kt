@@ -33,11 +33,16 @@ internal class ImagePaths(val id: String,
                           val deprecated: Boolean,
                           val deprecationReplacement: String?,
                           val deprecationComment: String?) {
-  var files: MutableMap<ImageType, File> = HashMap()
-  var ambiguous: Boolean = false
+  var files: MutableList<File> = ArrayList()
 
-  val file: File? get() = files[ImageType.BASIC]
-  val presentablePath: File get() = file ?: files.values.first() ?: File("<unknown>")
+  fun getFiles(vararg types: ImageType): List<File> = files.filter { ImageType.fromFile(it) in types }
+
+  val file: File?
+    get() = getFiles(ImageType.BASIC)
+      .sortedBy { ImageExtension.fromFile(it) }
+      .firstOrNull()
+
+  val presentablePath: File get() = file ?: files.first() ?: File("<unknown>")
 }
 
 internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {
@@ -90,9 +95,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
   }
 
   private fun processImageFile(file: File, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>) {
-    val nameWithoutExtension = FileUtil.getNameWithoutExtension(file.name)
-    val type = ImageType.fromName(nameWithoutExtension)
-    val id = type.getBasicName((prefix + nameWithoutExtension).joinToString("/"))
+    val id = ImageType.getBasicName(file, prefix)
 
     val flags = robotData.getImageFlags(file)
     if (flags.skipped) return
@@ -100,12 +103,8 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     val iconPaths = result.computeIfAbsent(id, {
       ImagePaths(id, sourceRoot, flags.used, flags.deprecated, flags.deprecationReplacement, flags.deprecationComment)
     })
-    if (type !in iconPaths.files) {
-      iconPaths.files[type] = file
-    }
-    else {
-      iconPaths.ambiguous = true
-    }
+
+    iconPaths.files.add(file)
   }
 
   private fun upToProjectHome(dir: File): IconRobotsData {
