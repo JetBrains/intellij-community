@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
@@ -107,7 +108,7 @@ public class Restarter {
     scheduleRestart(false, beforeRestart);
   }
 
-  public static void scheduleRestart(Boolean elevate, @NotNull String... beforeRestart) throws IOException {
+  public static void scheduleRestart(boolean elevate, @NotNull String... beforeRestart) throws IOException {
     Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
     if (SystemInfo.isWindows) {
       restartOnWindows(elevate, beforeRestart);
@@ -123,7 +124,7 @@ public class Restarter {
     }
   }
 
-  private static void restartOnWindows(Boolean elevate, String... beforeRestart) throws IOException {
+  private static void restartOnWindows(boolean elevate, String... beforeRestart) throws IOException {
     Kernel32 kernel32 = Native.loadLibrary("kernel32", Kernel32.class);
     Shell32 shell32 = Native.loadLibrary("shell32", Shell32.class);
 
@@ -146,19 +147,30 @@ public class Restarter {
       argv[0] = Native.toString(buffer);
     }
 
-    List<String> args = new ArrayList<>();
+    ParametersList args = new ParametersList();
     args.add(String.valueOf(pid));
     args.add(String.valueOf(beforeRestart.length));
-    Collections.addAll(args, beforeRestart);
+    args.addAll(beforeRestart);
     if (elevate) {
-      args.add(String.valueOf(argv.length + 1));
-      args.add(new File(PathManager.getBinPath(), "launcher.exe").getPath());
+      File launcher = PathManager.findBinFile("launcher.exe");
+      if (launcher != null) {
+        args.add(launcher.getPath());
+        args.add(String.valueOf(argv.length + 1));
+      }
+      else {
+        args.add(String.valueOf(argv.length));
+      }
     }
     else {
       args.add(String.valueOf(argv.length));
     }
-    Collections.addAll(args, argv);
-    runRestarter(new File(PathManager.getBinPath(), "restarter.exe"), args);
+    args.addAll(argv);
+
+    File restarter = PathManager.findBinFile("restarter.exe");
+    if (restarter == null) {
+      throw new IOException("Can't find restarter.exe; please reinstall the IDE");
+    }
+    runRestarter(restarter, args.getList());
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
