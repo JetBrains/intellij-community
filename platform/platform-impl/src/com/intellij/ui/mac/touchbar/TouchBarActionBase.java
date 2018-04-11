@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 
+import java.awt.*;
+
 import static com.intellij.openapi.application.ModalityState.NON_MODAL;
 
 public class TouchBarActionBase extends TouchBar {
@@ -54,11 +56,14 @@ public class TouchBarActionBase extends TouchBar {
       final TBItemAnActionButton item = (TBItemAnActionButton)tbitem;
       final AnAction act = item.getAnAction();
       final Presentation presentation = myPresentationFactory.getPresentation(act);
-      final DataContext ctx = DataManagerImpl.getInstance().getDataContext();
+      final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+      final Component focusOwner = focusManager.getFocusedWindow();
+      final DataContext ctx = DataManagerImpl.getInstance().getDataContext(focusOwner);
+
       final AnActionEvent e = new AnActionEvent(
         null,
         ctx,
-        ActionPlaces.UNKNOWN, // TODO: add and use action place 'TOUCHBAR'
+        ActionPlaces.TOUCHBAR_GENERAL,
         presentation,
         ActionManagerEx.getInstanceEx(),
         0

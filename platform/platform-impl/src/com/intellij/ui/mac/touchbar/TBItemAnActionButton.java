@@ -52,8 +52,10 @@ public class TBItemAnActionButton extends TBItemButton {
 
     final boolean isVisible = presentation.isVisible() && (presentation.isEnabled() || !myHiddenWhenDisabled);
     final boolean visibilityChanged = isVisible != myIsVisible;
-    if (visibilityChanged)
+    if (visibilityChanged) {
       myIsVisible = isVisible;
+      // LOG.info(String.format("[%s:%s] visibility changed: now is %s", myUid, myActionId, isVisible ? "visible" : "hidden"));
+    }
     return visibilityChanged;
   }
   void updateView(Presentation presentation) { // called from EDT
@@ -80,7 +82,7 @@ public class TBItemAnActionButton extends TBItemButton {
       icon != myIcon ||
       (text == null ? myText != null : text.equals(myText))
     ) {
-      System.out.println("\tupdateView ["+myUid+"]");
+      // LOG.info(String.format("[%s:%s] updateView", myUid, myActionId));
       update(icon, text);
     }
   }
@@ -88,11 +90,11 @@ public class TBItemAnActionButton extends TBItemButton {
   private void _performAction() {
     // TODO: check action state (isEnabled, canBePerformed)
     final ActionManagerEx actionManagerEx = ActionManagerEx.getInstanceEx();
-    final KeyboardFocusManager focusManager=KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     final Component focusOwner = focusManager.getFocusedWindow();
 
     final InputEvent ie = new KeyEvent(focusOwner, COMPONENT_FIRST, System.currentTimeMillis(), 0, 0, '\0');
-    actionManagerEx.tryToExecute(myAnAction, ie, focusOwner, ActionPlaces.UNKNOWN, false);
+    actionManagerEx.tryToExecute(myAnAction, ie, focusOwner, ActionPlaces.TOUCHBAR_GENERAL, false);
   }
 
   private static String _printPresentation(Presentation presentation) {

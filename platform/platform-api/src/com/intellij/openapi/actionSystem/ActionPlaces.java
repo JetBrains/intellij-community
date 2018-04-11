@@ -133,6 +133,8 @@ public abstract class ActionPlaces {
 
   public static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
 
+  public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
+
   private static final Set<String> ourToolbarPlaces = ContainerUtil.newHashSet(
     EDITOR_TOOLBAR, PROJECT_VIEW_TOOLBAR, TESTTREE_VIEW_TOOLBAR, MAIN_TOOLBAR, TOOLBAR, RUNNER_TOOLBAR,
     ANT_EXPLORER_TOOLBAR, ANT_MESSAGES_TOOLBAR, COMPILER_MESSAGES_TOOLBAR, TODO_VIEW_TOOLBAR, STRUCTURE_VIEW_TOOLBAR, USAGE_VIEW_TOOLBAR,
