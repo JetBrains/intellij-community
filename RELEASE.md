@@ -66,9 +66,10 @@ betas.)
     they can't notice/update to the next canary. The relevant change to disable
     it is:
 
+    ```
     -private static final boolean SKIP_UPDATE_CHANNEL_IMPORT = true;
     +private static final boolean SKIP_UPDATE_CHANNEL_IMPORT = false;
-
+    ```
 
  6. Make sure assertions are turned off and `-OmitStackTraceInFastThrow` is removed.
 
@@ -104,21 +105,21 @@ betas.)
     Edit .idea/kotlinc.xml and make sure null assertions are disabled by
     adding the following lines:
 
-   ```diff
-   diff --git a/.idea/kotlinc.xml b/.idea/kotlinc.xml
-   index 894c2d2f197..8f910907aee 100644
-   --- a/.idea/kotlinc.xml
-   +++ b/.idea/kotlinc.xml
-   @@ -7,8 +7,11 @@
-      <component name="Kotlin2JvmCompilerArguments">
-        <option name="jvmTarget" value="1.8" />
-      </component>
-   +  <component name="KotlinCompilerSettings">
-   +    <option name="additionalArguments" value="-version -Xno-param-assertions -Xno-call-assertions -Xno-receiver-assertions" />
-   +  </component>
-      <component name="KotlinCommonCompilerArguments">
-        <option name="apiVersion" value="1.1"/>
-        <option name="languageVersion" value="1.1"/>
+    ```diff
+    diff --git a/.idea/kotlinc.xml b/.idea/kotlinc.xml
+    index 894c2d2f197..8f910907aee 100644
+    --- a/.idea/kotlinc.xml
+    +++ b/.idea/kotlinc.xml
+    @@ -7,8 +7,11 @@
+       <component name="Kotlin2JvmCompilerArguments">
+         <option name="jvmTarget" value="1.8" />
+       </component>
+    +  <component name="KotlinCompilerSettings">
+    +    <option name="additionalArguments" value="-version -Xno-param-assertions -Xno-call-assertions -Xno-receiver-assertions" />
+    +  </component>
+       <component name="KotlinCommonCompilerArguments">
+         <option name="apiVersion" value="1.1"/>
+         <option name="languageVersion" value="1.1"/>
     ```
 
  8. Turn off CLASS retention in
@@ -194,15 +195,17 @@ betas.)
     ```
 
 --------------------------------------------------------------------------------
-For final build (post RC) :
+For stable, RC, beta builds :
 
- 1. Ensure that the default Update channel (for new users downloading this build)
-    is set to stable, not something else.
+ 1. Ensure that the default update channel is set to RELEASE for stable build,
+    or BETA for beta or RC builds. This is so that new users of beta, RC, stable
+    builds are not prompted to upgrade to canary by default.
 
-    Edit UpdateSettings.State.UPDATE_CHANNEL_TYPE in
-      platform/platform-impl/src/com/intellij/openapi/updateSettings/impl/UpdateSettings.java
-    and make sure it's set to ChannelStatus.BETA.getCode() (for beta releases)
-    or ChannelStatus.RELEASE.getCode() (for final.)
+    Edit platform/platform-impl/src/com/intellij/openapi/updateSettings/impl/UpdateOptions.kt
+    to make sure `updateChannelType` is set to:
+    * `ChannelStatus.RELEASE.code` for stable releases, or
+    * `ChannelStatus.BETA.code` for beta, RC releases, or
+    * `ChannelStatus.EAP.code` otherwise.
 
 --------------------------------------------------------------------------------
 For AOSP push:
