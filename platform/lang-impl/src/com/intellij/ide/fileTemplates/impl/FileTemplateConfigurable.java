@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.ex.util.LayerDescriptor;
 import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.options.Configurable;
@@ -227,7 +228,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       public void documentChanged(DocumentEvent e) {
         onTextChanged();
       }
-    });
+    }, ((EditorImpl)editor).getDisposable());
 
     ((EditorEx)editor).setHighlighter(createHighlighter());
     

@@ -312,7 +312,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
   void dispose() {
     doClearFoldRegions();
-    myRegionTree.dispose();
+    myRegionTree.dispose(myEditor.getDocument());
   }
 
   @Override
