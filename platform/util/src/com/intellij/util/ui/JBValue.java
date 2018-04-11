@@ -21,20 +21,20 @@ public abstract class JBValue {
    */
   public int get() {
     // for backward compatibility rely on the rounding mode applied in JBUI.scale(int)
-    return JBUI.scale((int)getUnscaledValue());
+    return JBUI.scale((int)getUnscaled());
   }
 
   /**
    * Returns scaled rounded to int (according to {@code rm}) value.
    */
   public int get(@NotNull RoundingMode rm) {
-    return rm.round(JBUI.scale(getUnscaledValue()));
+    return rm.round(JBUI.scale(getUnscaled()));
   }
 
   /**
    * Returns initial unscaled value.
    */
-  protected abstract float getUnscaledValue();
+  protected abstract float getUnscaled();
 
   /**
    * JBValue wrapper over an integer value in {@link UIManager}.
@@ -47,7 +47,7 @@ public abstract class JBValue {
     }
 
     @Override
-    protected float getUnscaledValue() {
+    protected float getUnscaled() {
       return UIManager.getInt(key);
     }
   }
@@ -67,7 +67,7 @@ public abstract class JBValue {
     }
 
     @Override
-    protected float getUnscaledValue() {
+    protected float getUnscaled() {
       return value;
     }
   }
@@ -99,7 +99,7 @@ public abstract class JBValue {
     }
 
     @Override
-    protected float getUnscaledValue() {
+    protected float getUnscaled() {
       return value;
     }
   }
