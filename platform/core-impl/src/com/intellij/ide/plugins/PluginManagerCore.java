@@ -632,6 +632,7 @@ public class PluginManagerCore {
       try {
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
         descriptor.readExternal(descriptorFile.toURI().toURL());
+        validateDescriptor(descriptor);
         return descriptor;
       }
       catch (XmlSerializationException e) {
@@ -672,6 +673,7 @@ public class PluginManagerCore {
         Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
         descriptor.readExternal(document, jarURL, pathResolver);
+        validateDescriptor(descriptor);
         context.myLastZipFileContainingDescriptor = file;
         return descriptor;
       }
@@ -685,6 +687,15 @@ public class PluginManagerCore {
     }
 
     return null;
+  }
+
+  private static void validateDescriptor(IdeaPluginDescriptorImpl descriptor) {
+    if (descriptor.getPluginId() == null) {
+      throw new IllegalStateException("Skipped plugin with null ID: " + descriptor);
+    }
+    else if (descriptor.getName() == null) {
+      throw new IllegalStateException("Skipped plugin without name: " + descriptor);
+    }
   }
 
   @Nullable
@@ -881,10 +892,6 @@ public class PluginManagerCore {
       for (File file : files) {
         IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML, bundled);
         if (descriptor == null) continue;
-        if (descriptor.getName() == null) {
-          getLogger().warn("Skipped plugin without name: " + descriptor);
-          continue;
-        }
         if (progress != null) {
           progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_PART * ((float)++i / pluginsCount));
         }
@@ -1106,13 +1113,10 @@ public class PluginManagerCore {
   @NotNull // used in upsource
   public static IdeaPluginDescriptorImpl[] topoSortPlugins(@NotNull List<IdeaPluginDescriptorImpl> result, @NotNull List<String> errors) {
     IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
-    final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<>();
+
+    Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
-      PluginId id = descriptor.getPluginId();
-      if (id == null) {
-        LOG.error("null 'id': " + descriptor);
-      }
-      idToDescriptorMap.put(id, descriptor);
+      idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
 
     Arrays.sort(pluginDescriptors, getPluginDescriptorComparator(idToDescriptorMap, errors));
