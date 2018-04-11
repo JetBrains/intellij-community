@@ -258,10 +258,10 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     ASTNode parsedNode =
       parseFile(myLanguage, forcedLanguage, documentWindow, myHostVirtualFile, myHostDocument, myHostPsiFile, myProject, documentWindow.getText(),
                 placeInfos, decodedChars, fileName);
-    PsiFile psiFile1 = (PsiFile)parsedNode.getPsi();
-    InjectedFileViewProvider viewProvider = (InjectedFileViewProvider)psiFile1.getViewProvider();
+    PsiFile psiFile = (PsiFile)parsedNode.getPsi();
+    InjectedFileViewProvider viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
     synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
-      PsiFile psiFile = createInjectedFile(myHostPsiFile, documentManager, place, documentWindow, psiFile1, viewProvider);
+      psiFile = createInjectedFile(myHostPsiFile, documentManager, place, documentWindow, psiFile, viewProvider);
       addFileToResults(psiFile);
 
       DocumentWindowImpl retrieved = (DocumentWindowImpl)documentManager.getDocument(psiFile);
