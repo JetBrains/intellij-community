@@ -35,12 +35,12 @@ public abstract class RunAnythingItem<T> {
   public abstract Icon getIcon();
 
   /**
-   * Returns current item {@link Component} presentation
+   * Creates current item {@link Component}
    *
    * @param isSelected true if item is selected in the list
    */
   @NotNull
-  public abstract Component getComponent(boolean isSelected);
+  public abstract Component createComponent(boolean isSelected);
 
   /**
    * Sends statistic if current item action is being executed

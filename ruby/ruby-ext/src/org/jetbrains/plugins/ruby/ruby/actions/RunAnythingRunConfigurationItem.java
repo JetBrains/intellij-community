@@ -65,8 +65,8 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
 
   @NotNull
   @Override
-  public Component getComponent(boolean isSelected) {
-    return RunAnythingUtil.getRunConfigurationCellRendererComponent(myWrapper, isSelected);
+  public Component createComponent(boolean isSelected) {
+    return RunAnythingUtil.createRunConfigurationCellRendererComponent(myWrapper, isSelected);
   }
 
   @Override

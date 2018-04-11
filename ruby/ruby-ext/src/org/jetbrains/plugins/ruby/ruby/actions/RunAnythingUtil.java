@@ -215,7 +215,7 @@ public class RunAnythingUtil {
     return new JLabel(layeredIcon);
   }
 
-  static Component getActionCellRendererComponent(@NotNull AnAction value, boolean isSelected, @NotNull String text) {
+  static Component createActionCellRendererComponent(@NotNull AnAction value, boolean isSelected, @NotNull String text) {
     boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
     //boolean showIcon = true;
     JPanel panel = new JPanel(new BorderLayout());
@@ -266,7 +266,7 @@ public class RunAnythingUtil {
     return panel;
   }
 
-  static Component getRunConfigurationCellRendererComponent(ChooseRunConfigurationPopup.ItemWrapper value, boolean isSelected) {
+  static Component createRunConfigurationCellRendererComponent(ChooseRunConfigurationPopup.ItemWrapper value, boolean isSelected) {
     boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(2));
@@ -309,7 +309,7 @@ public class RunAnythingUtil {
     return panel;
   }
 
-  static Component getUndefinedCommandCellRendererComponent(@NotNull RunAnythingCommandItem value, boolean isSelected) {
+  static Component createUndefinedCommandCellRendererComponent(@NotNull RunAnythingCommandItem value, boolean isSelected) {
     boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
     //boolean showIcon = true;
     JPanel panel = new JPanel(new BorderLayout());

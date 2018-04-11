@@ -115,7 +115,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   static final String RUN_ANYTHING = "RunAnything";
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
-  private Component myFocusComponent;
   private JBPopup myPopup;
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private JBList myList;
@@ -320,7 +319,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         search.getTextEditor().setForeground(UIUtil.getLabelForeground());
         search.selectText();
         editor.setColumns(SEARCH_FIELD_COLUMNS);
-        myFocusComponent = e.getOppositeComponent();
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
           final JComponent parent = (JComponent)editor.getParent();
@@ -937,14 +935,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       Component cmp = null;
-      String pattern = "*" + myPopupField.getText();
       if (isMoreItem(index)) {
         cmp = RunAnythingMore.get(isSelected);
       }
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).getComponent(isSelected);
+          cmp = ((RunAnythingItem)value).createComponent(isSelected);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
@@ -1319,7 +1316,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       final Object lock = myCalcThread;
       if (lock != null) {
         synchronized (lock) {
-          myFocusComponent = null;
           myContextComponent = null;
           myFocusOwner = null;
           myPopup = null;

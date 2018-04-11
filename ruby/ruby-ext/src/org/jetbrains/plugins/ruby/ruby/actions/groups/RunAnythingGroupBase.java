@@ -9,7 +9,7 @@ public abstract class RunAnythingGroupBase extends RunAnythingGroup {
   /**
    * Adds limited number of matched items into the list.
    *
-   * @param model           list model
+   * @param model           needed to avoid adding duplicates into the list
    * @param pattern         input search string
    * @param textToMatch     an item presentation text to be matched with
    * @param isInsertionMode if true gets {@link #getMaxItemsToInsert()} group items, else limits to {@link #getMaxInitialItems()}

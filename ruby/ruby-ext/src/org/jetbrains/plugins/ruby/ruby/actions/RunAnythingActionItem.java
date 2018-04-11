@@ -52,8 +52,8 @@ public class RunAnythingActionItem extends RunAnythingItem<AnAction> {
 
   @NotNull
   @Override
-  public Component getComponent(boolean isSelected) {
-    return RunAnythingUtil.getActionCellRendererComponent(myAction, isSelected, myText);
+  public Component createComponent(boolean isSelected) {
+    return RunAnythingUtil.createActionCellRendererComponent(myAction, isSelected, myText);
   }
 
   @Override

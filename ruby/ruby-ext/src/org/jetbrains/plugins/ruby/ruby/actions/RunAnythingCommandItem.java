@@ -220,7 +220,7 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
 
   @NotNull
   @Override
-  public Component getComponent(boolean isSelected) {
-    return RunAnythingUtil.getUndefinedCommandCellRendererComponent(this, isSelected);
+  public Component createComponent(boolean isSelected) {
+    return RunAnythingUtil.createUndefinedCommandCellRendererComponent(this, isSelected);
   }
 }

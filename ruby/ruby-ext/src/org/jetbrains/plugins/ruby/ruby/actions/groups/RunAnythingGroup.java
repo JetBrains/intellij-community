@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.actions.groups;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,6 @@ import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingCache;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingItem;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingSearchListModel;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -66,7 +66,7 @@ public abstract class RunAnythingGroup {
   /**
    * Gets current group items to add into the main list.
    *
-   * @param model           list model
+   * @param model           needed to avoid adding duplicates into the list
    * @param pattern         input search string
    * @param isInsertionMode if true gets {@link #getMaxItemsToInsert()} group items, else limits to {@link #getMaxInitialItems()}
    * @param check           checks 'load more' calculation process to be cancelled
@@ -81,7 +81,7 @@ public abstract class RunAnythingGroup {
   /**
    * Gets all current group matched by {@code pattern} items if its visibility turned on and empty collection otherwise
    *
-   * @param model
+   * @param model           needed to avoid adding duplicates into the list
    * @param pattern         input search string
    * @param isInsertionMode limits group items to get by a constant group specific value
    * @param check           checks 'load more' calculation process to be cancelled
@@ -195,36 +195,33 @@ public abstract class RunAnythingGroup {
   /**
    * Adds current group matched items into the list.
    *
-   * @param model      main list model
-   * @param pattern    input search string
-   * @param check      checks 'load more' calculation process to be cancelled
-   * @param isCanceled computes if 'load more' calculation process has already cancelled
+   * @param model               needed to avoid adding duplicates into the list
+   * @param pattern             input search string
+   * @param cancellationChecker runnable that should throw a {@code ProcessCancelledException} if 'load more' process was cancelled
+   * @param isCanceled          computes if 'load more' calculation process has already cancelled
    */
   public final synchronized void collectItems(@NotNull Project project,
                                               @Nullable Module module,
                                               @NotNull RunAnythingSearchListModel model,
                                               @NotNull String pattern,
-                                              @NotNull Runnable check,
+                                              @NotNull Runnable cancellationChecker,
                                               @NotNull Computable<Boolean> isCanceled) {
-    SearchResult result = getVisibleItems(project, module, model, pattern, false, check);
+    SearchResult result = getVisibleItems(project, module, model, pattern, false, cancellationChecker);
 
-    check.run();
+    cancellationChecker.run();
     if (result.size() > 0) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (isCanceled.compute()) return;
 
         myTitleIndex = model.size();
-        for (Object element : result) {
-          model.addElement(element);
-        }
+        result.forEach(model::addElement);
         myMoreIndex = result.myNeedMore ? model.getSize() - 1 : -1;
       });
     }
   }
 
   /**
-   * Represents collection of the group items with {@code myNeedMore} flag is set to true is limit is exceeded
+   * Represents collection of the group items with {@code myNeedMore} flag is set to true when limit is exceeded
    */
   public static class SearchResult extends ArrayList<RunAnythingItem> {
     boolean myNeedMore;
