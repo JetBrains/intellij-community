@@ -227,7 +227,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
                                                                                  sessionTab.getRunContentDescriptor());
     }
     if (myActiveSession.compareAndSet(session, null)) {
-      onActiveSessionChanged();
+      onActiveSessionChanged(session, null);
     }
   }
 
@@ -240,12 +240,13 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     }
   }
 
-  private void onActiveSessionChanged() {
+  private void onActiveSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
     myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
     ApplicationManager.getApplication().invokeLater(() -> {
       ValueLookupManager.getInstance(myProject).hideHint();
       DebuggerUIUtil.repaintCurrentEditor(myProject); // to update inline debugger data
     }, myProject.getDisposed());
+    myProject.getMessageBus().syncPublisher(TOPIC).currentSessionChanged(previousSession, currentSession);
   }
 
   @Override
@@ -287,7 +288,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   }
 
   void setCurrentSession(@Nullable XDebugSessionImpl session) {
-    boolean sessionChanged = myActiveSession.getAndSet(session) != session;
+    XDebugSessionImpl previousSession = myActiveSession.getAndSet(session);
+    boolean sessionChanged = previousSession != session;
     if (sessionChanged) {
       if (session != null) {
         XDebugSessionTab tab = session.getSessionTab();
@@ -298,7 +300,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       else {
         myExecutionPointHighlighter.hide();
       }
-      onActiveSessionChanged();
+      onActiveSessionChanged(previousSession, session);
     }
   }
 
