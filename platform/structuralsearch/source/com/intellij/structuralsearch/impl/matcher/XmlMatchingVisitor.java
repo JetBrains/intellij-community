@@ -8,6 +8,7 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
+import com.intellij.xml.util.XmlUtil;
 
 /**
 * @author Eugene.Kudelevsky
@@ -21,16 +22,15 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
 
   @Override public void visitXmlAttribute(XmlAttribute attribute) {
     final XmlAttribute another = (XmlAttribute)myMatchingVisitor.getElement();
-    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(attribute.getName());
-
-    if (!myMatchingVisitor.setResult(isTypedVar || myMatchingVisitor.matchText(attribute.getName(), another.getName()))) return;
-    final XmlAttributeValue valueElement = attribute.getValueElement();
-    if (valueElement != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(valueElement, another.getValueElement()))) return;
-
-    if (isTypedVar) {
-      final SubstitutionHandler handler =
-        (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(attribute.getName());
-      myMatchingVisitor.setResult(handler.handle(another, myMatchingVisitor.getMatchContext()));
+    myMatchingVisitor.getMatchContext().pushResult();
+    final XmlElement name = attribute.getNameElement();
+    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(name);
+    try {
+      if (!myMatchingVisitor.setResult(isTypedVar || myMatchingVisitor.matchText(name, another.getNameElement()))) return;
+      final XmlAttributeValue valueElement = attribute.getValueElement();
+      myMatchingVisitor.setResult(valueElement == null || myMatchingVisitor.matchSingle(valueElement, another.getValueElement()));
+    } finally {
+      myMatchingVisitor.scopeMatch(name, isTypedVar, another);
     }
   }
 
@@ -50,7 +50,9 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
 
   @Override public void visitXmlTag(XmlTag tag) {
     final XmlTag another = (XmlTag)myMatchingVisitor.getElement();
-    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(tag.getName());
+    final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
+    final XmlToken name = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_NAME);
+    final boolean isTypedVar = pattern.isTypedVar(name);
 
     if (!myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.matchText(tag.getName(), another.getName())) &&
                                      myMatchingVisitor.matchInAnyOrder(tag.getAttributes(), another.getAttributes()))) return;
@@ -63,11 +65,9 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     }
 
     if (isTypedVar) {
-      final PsiElement[] children = another.getChildren();
-      if (children.length > 1) {
-        final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(tag.getName());
-        myMatchingVisitor.setResult(handler.handle(children[1], myMatchingVisitor.getMatchContext()));
-      }
+      final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(name);
+      myMatchingVisitor.setResult(handler.handle(XmlUtil.getTokenOfType(another, XmlTokenType.XML_NAME),
+                                                 myMatchingVisitor.getMatchContext()));
     }
   }
 

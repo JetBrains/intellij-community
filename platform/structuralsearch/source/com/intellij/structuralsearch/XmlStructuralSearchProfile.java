@@ -53,6 +53,12 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
+  public String getTypedVarString(PsiElement element) {
+    return element instanceof XmlText ? element.getText().trim() : super.getTypedVarString(element);
+  }
+
+  @NotNull
+  @Override
   public NodeFilter getLexicalNodesFilter() {
     return element -> {
       if (element instanceof XmlText) {
@@ -85,8 +91,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
                                         boolean physical) {
     final String ext = extension != null ? extension : fileType.getDefaultExtension();
     String text1 = context == PatternTreeContext.File ? text : "<QQQ>" + text + "</QQQ>";
-    final PsiFile fileFromText = PsiFileFactory.getInstance(project)
-      .createFileFromText("dummy." + ext, fileType, text1, LocalTimeCounter.currentTime(), physical, true);
+    final PsiFile fileFromText =
+      PsiFileFactory.getInstance(project).createFileFromText("dummy." + ext, fileType, text1, LocalTimeCounter.currentTime(), physical, true);
 
     final XmlDocument document = HtmlUtil.getRealXmlDocument(((XmlFile)fileFromText).getDocument());
     if (context == PatternTreeContext.File) {
@@ -147,13 +153,13 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
-    return new MyReplaceHandler(context);
+    return new XmlReplaceHandler(context);
   }
 
-  private static class MyReplaceHandler extends StructuralReplaceHandler {
+  private static class XmlReplaceHandler extends StructuralReplaceHandler {
     private final ReplacementContext myContext;
 
-    MyReplaceHandler(ReplacementContext context) {
+    XmlReplaceHandler(ReplacementContext context) {
       myContext = context;
     }
 
