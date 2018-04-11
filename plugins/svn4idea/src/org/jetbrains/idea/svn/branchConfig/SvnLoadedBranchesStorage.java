@@ -1,35 +1,27 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.idea.svn.SmallMapSerializer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SmallMapSerializer;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static java.lang.String.CASE_INSENSITIVE_ORDER;
+import static java.util.Comparator.comparing;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnLoadedBranchesStorage {
   private final Object myLock;
@@ -91,10 +83,10 @@ public class SvnLoadedBranchesStorage {
         for (String key : keys) {
           out.writeUTF(key);
           List<SvnBranchItem> list = new ArrayList<>(value.get(key));
-          Collections.sort(list, SerializationComparator.getInstance());
+          Collections.sort(list, comparing(item -> item.getUrl().toDecodedString(), CASE_INSENSITIVE_ORDER));
           out.writeInt(list.size());
           for (SvnBranchItem item : list) {
-            out.writeUTF(item.getUrl());
+            out.writeUTF(item.getUrl().toDecodedString());
             out.writeLong(item.getCreationDateMillis());
             out.writeLong(item.getRevision());
           }
@@ -110,28 +102,22 @@ public class SvnLoadedBranchesStorage {
           final int size = in.readInt();
           final ArrayList<SvnBranchItem> list = new ArrayList<>(size);
           for (int j = 0; j < size; j++) {
-            String url = in.readUTF();
+            String urlValue = in.readUTF();
             long creation = in.readLong();
             long revision = in.readLong();
-            list.add(new SvnBranchItem(url, new Date(creation), revision));
+            Url url;
+            try {
+              url = createUrl(urlValue, false);
+            }
+            catch (SvnBindException e) {
+              throw new IOException("Could not parse url " + urlValue, e);
+            }
+            list.add(new SvnBranchItem(url, creation, revision));
           }
           map.put(key, list);
         }
         return map;
       }
     };
-  }
-  
-  private static class SerializationComparator implements Comparator<SvnBranchItem> {
-    private final static SerializationComparator ourInstance = new SerializationComparator();
-    
-    public static SerializationComparator getInstance() {
-      return ourInstance;
-    }
-    
-    @Override
-    public int compare(SvnBranchItem o1, SvnBranchItem o2) {
-      return o1.getUrl().compareToIgnoreCase(o2.getUrl());
-    }
   }
 }

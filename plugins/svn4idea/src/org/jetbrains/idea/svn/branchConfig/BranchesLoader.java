@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.project.Project;
@@ -78,7 +78,7 @@ public class BranchesLoader implements Runnable {
   private static DirectoryEntryConsumer createConsumer(@NotNull final List<SvnBranchItem> result) {
     return entry -> {
       if (entry.getDate() != null) {
-        result.add(new SvnBranchItem(entry.getUrl().toDecodedString(), entry.getDate(), entry.getRevision()));
+        result.add(new SvnBranchItem(entry.getUrl(), entry.getDate().getTime(), entry.getRevision()));
       }
     };
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -154,7 +154,7 @@ public class SvnBranchConfigurationNew {
     for (String branchUrl : sortBranchLocations(myBranchMap.keySet())) {
       final List<SvnBranchItem> children = myBranchMap.get(branchUrl).getValue();
       for (SvnBranchItem child : children) {
-        if (listener.accept(child.getUrl())) {
+        if (listener.accept(child.getUrl().toDecodedString())) {
           return;
         }
       }
