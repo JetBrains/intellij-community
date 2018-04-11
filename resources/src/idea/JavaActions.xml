@@ -260,7 +260,7 @@
               id="MemoryView.ShowOnlyWithInstances"
               text="Show With Instances Only"/>
 
-      <action class="com.intellij.debugger.memory.action.ShowClassesWithDiffAction"
+      <action class="com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction"
               id="MemoryView.ShowOnlyWithDiff"
               text="Show Non-Zero Diff Only"/>
 
@@ -274,7 +274,7 @@
               id="MemoryView.EnableTrackingWithClosedWindow"
               text="Enable Tracking With Hidden Memory View"/>
 
-      <action class="com.intellij.debugger.memory.action.SwitchUpdateModeAction"
+      <action class="com.intellij.xdebugger.memory.action.SwitchUpdateModeAction"
               id="MemoryView.SwitchUpdateMode"
               text="Update Loaded Classes On Debugger Stop"
               description="Load classes on debugger pause (may increase overhead on debugger stepping)"/>
