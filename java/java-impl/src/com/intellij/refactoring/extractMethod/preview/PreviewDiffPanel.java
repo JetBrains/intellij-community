@@ -273,8 +273,9 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
   @NotNull
   private static TextRange getLinesRange(@NotNull TextRange textRange, @NotNull Document document) {
-    return new TextRange(document.getLineStartOffset(document.getLineNumber(textRange.getStartOffset())),
-                         document.getLineEndOffset(document.getLineNumber(textRange.getEndOffset())) + 1);
+    int startLine = document.getLineNumber(textRange.getStartOffset());
+    int endLine = document.getLineNumber(Math.min(textRange.getEndOffset(), document.getTextLength()));
+    return new TextRange(document.getLineStartOffset(startLine), document.getLineEndOffset(endLine));
   }
 
   private static void doExtractImpl(@NotNull JavaDuplicatesExtractMethodProcessor processor,

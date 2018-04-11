@@ -99,7 +99,7 @@ class PreviewDiffRequest extends SimpleDiffRequest {
           int newOffset = e.getEditor().logicalPositionToOffset(e.getNewPosition());
           for (Map.Entry<FragmentNode, Couple<TextRange>> entry : myLinesBounds.entrySet()) {
             TextRange range = mySideGetter.apply(entry.getValue());
-            if (range.contains(newOffset)) {
+            if (range.containsOffset(newOffset)) {
               mySelectNode.consume(entry.getKey());
               break;
             }
