@@ -487,8 +487,16 @@ public class JBUI {
     return new JBValue.Integer(value);
   }
 
+  public static JBValue.Integer intValue(int value, JBValue.UpdateTracker tracker) {
+    return new JBValue.CachedInteger(value, tracker);
+  }
+
   public static JBValue.Float floatValue(float value) {
     return new JBValue.Float(value);
+  }
+
+  public static JBValue.Float floatValue(float value, JBValue.UpdateTracker tracker) {
+    return new JBValue.CachedFloat(value, tracker);
   }
 
   public static JBDimension size(int width, int height) {
