@@ -57,7 +57,9 @@ task setupBuildScriptsDeps(dependsOn: configurations.buildScriptsDeps, type: Syn
 task setupTestDiscoveryDeps {
   doFirst {
     def dir = "${project.buildDir}/test-discovery-deps"
-    file(dir).mkdirs()
+    def testDiscoveryDeps = file(dir)
+    testDiscoveryDeps.deleteDir()
+    testDiscoveryDeps.mkdirs()
     configurations.detachedConfiguration(
       (dependencies
         .create('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.27') as ModuleDependency)
