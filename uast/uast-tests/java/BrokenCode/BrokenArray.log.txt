@@ -1,0 +1,7 @@
+UFile (package = )
+    UClass (name = BrokenArray)
+        UMethod (name = foo)
+            UBlockExpression
+                UDeclarationsExpression
+                    ULocalVariable (name = s)
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))

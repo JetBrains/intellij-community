@@ -16,6 +16,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.ElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.uast.*
@@ -117,7 +118,7 @@ class JavaConstructorUCallExpression(
   override val kind by lz {
     when {
       psi.arrayInitializer != null -> UastCallKind.NEW_ARRAY_WITH_INITIALIZER
-      psi.arrayDimensions.isNotEmpty() -> UastCallKind.NEW_ARRAY_WITH_DIMENSIONS
+      hasNonEmptyArrayDimensions(psi) -> UastCallKind.NEW_ARRAY_WITH_DIMENSIONS
       else -> UastCallKind.CONSTRUCTOR_CALL
     }
   }
@@ -142,7 +143,7 @@ class JavaConstructorUCallExpression(
       val initializer = psi.arrayInitializer
       return when {
         initializer != null -> initializer.initializers.size
-        psi.arrayDimensions.isNotEmpty() -> psi.arrayDimensions.size
+        hasNonEmptyArrayDimensions(psi) -> psi.arrayDimensions.size
         else -> psi.argumentList?.expressions?.size ?: 0
       }
     }
@@ -151,7 +152,7 @@ class JavaConstructorUCallExpression(
     val initializer = psi.arrayInitializer
     when {
       initializer != null -> initializer.initializers.map { JavaConverter.convertOrEmpty(it, this) }
-      psi.arrayDimensions.isNotEmpty() -> psi.arrayDimensions.map { JavaConverter.convertOrEmpty(it, this) }
+      hasNonEmptyArrayDimensions(psi) -> psi.arrayDimensions.map { JavaConverter.convertOrEmpty(it, this) }
       else -> psi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
     }
   }
@@ -254,4 +255,13 @@ class JavaAnnotationArrayInitializerUCallExpression(
 
   override val receiverType: PsiType?
     get() = null
+}
+
+private fun hasNonEmptyArrayDimensions(psi: PsiNewExpression): Boolean {
+  val qualifier = psi.qualifier
+  if (qualifier != null && !ElementType.ARRAY_DIMENSION_BIT_SET.contains(qualifier.node?.elementType)) {
+    // then it is unsafe to call `arrayDimensions` (IDEA-189834)
+    return false
+  }
+  return psi.arrayDimensions.isNotEmpty()
 }

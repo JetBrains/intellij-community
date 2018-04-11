@@ -1,0 +1,5 @@
+public class BrokenArray {
+    fun foo() : void {
+        var s: Function<Integer,int[]> = <noref>()
+    }
+}
