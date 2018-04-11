@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -111,26 +110,23 @@ public class ImportMavenRepositoriesTask extends ReadTask {
 
     final PsiFile[] psiFiles = ArrayUtil.toObjectArray(psiFileList, PsiFile.class);
 
-    final Set<MavenRemoteRepository> mavenRemoteRepositories = new ReadAction<Set<MavenRemoteRepository>>() {
-      @Override
-      protected void run(@NotNull Result<Set<MavenRemoteRepository>> result) throws Throwable {
-        Set<MavenRemoteRepository> myRemoteRepositories = ContainerUtil.newHashSet();
-        for (PsiFile psiFile : psiFiles) {
-          List<GrClosableBlock> repositoriesBlocks = ContainerUtil.newArrayList();
-          repositoriesBlocks.addAll(findClosableBlocks(psiFile, "repositories"));
+    final Set<MavenRemoteRepository> mavenRemoteRepositories = ReadAction.compute(() -> {
+      Set<MavenRemoteRepository> myRemoteRepositories = ContainerUtil.newHashSet();
+      for (PsiFile psiFile : psiFiles) {
+        List<GrClosableBlock> repositoriesBlocks = ContainerUtil.newArrayList();
+        repositoriesBlocks.addAll(findClosableBlocks(psiFile, "repositories"));
 
-          for (GrClosableBlock closableBlock : findClosableBlocks(psiFile, "buildscript", "subprojects", "allprojects", "project", "configure")) {
-            repositoriesBlocks.addAll(findClosableBlocks(closableBlock, "repositories"));
-          }
-
-          for (GrClosableBlock repositoriesBlock : repositoriesBlocks) {
-            myRemoteRepositories.addAll(findMavenRemoteRepositories(repositoriesBlock));
-          }
+        for (GrClosableBlock closableBlock : findClosableBlocks(psiFile, "buildscript", "subprojects", "allprojects", "project",
+                                                                "configure")) {
+          repositoriesBlocks.addAll(findClosableBlocks(closableBlock, "repositories"));
         }
 
-        result.setResult(myRemoteRepositories);
+        for (GrClosableBlock repositoriesBlock : repositoriesBlocks) {
+          myRemoteRepositories.addAll(findMavenRemoteRepositories(repositoriesBlock));
+        }
       }
-    }.execute().getResultObject();
+      return myRemoteRepositories;
+    });
 
     if (mavenRemoteRepositories == null || mavenRemoteRepositories.isEmpty()) return;
 

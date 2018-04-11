@@ -76,9 +76,8 @@ public class GitResetOperation {
 
   public void execute() {
     saveAllDocuments();
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     Map<GitRepository, GitCommandResult> results = ContainerUtil.newHashMap();
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Git Reset")) {
       for (Map.Entry<GitRepository, Hash> entry : myCommits.entrySet()) {
         GitRepository repository = entry.getKey();
         VirtualFile root = repository.getRoot();
@@ -99,9 +98,6 @@ public class GitResetOperation {
         updateAndRefreshVfs(repository, changes);
         VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
       }
-    }
-    finally {
-      token.finish();
     }
     notifyResult(results);
   }

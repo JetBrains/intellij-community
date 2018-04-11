@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -10,7 +8,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.util.ArrayUtil;
-import java.util.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -157,7 +154,7 @@ public final class DesktopLayout {
   @NotNull
   final WindowInfoImpl[] getInfos() {
     if (myRegisteredInfos == null) {
-      myRegisteredInfos = myRegisteredId2Info.values().toArray(new WindowInfoImpl[myRegisteredId2Info.size()]);
+      myRegisteredInfos = myRegisteredId2Info.values().toArray(new WindowInfoImpl[0]);
     }
     return myRegisteredInfos;
   }
@@ -168,7 +165,7 @@ public final class DesktopLayout {
   @NotNull
   private WindowInfoImpl[] getUnregisteredInfos() {
     if (myUnregisteredInfos == null) {
-      myUnregisteredInfos = myUnregisteredId2Info.values().toArray(new WindowInfoImpl[myUnregisteredId2Info.size()]);
+      myUnregisteredInfos = myUnregisteredId2Info.values().toArray(new WindowInfoImpl[0]);
     }
     return myUnregisteredInfos;
   }

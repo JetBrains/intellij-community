@@ -4,6 +4,7 @@ package com.intellij.openapi.project;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -34,7 +35,7 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -74,6 +75,31 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myProject = project;
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
     myStartupManager = startupManager;
+
+    //noinspection SSBasedInspection
+    ApplicationManager.getApplication().getMessageBus().connect(project)
+                      .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
+                        @SuppressWarnings("UnnecessaryFullyQualifiedName") // synchronized, can be accessed from different threads
+                        java.util.Stack<AccessToken> stack = new Stack<>(); 
+
+                        @Override
+                        public void batchChangeStarted(@NotNull Project project,
+                                                       @Nullable String activityName) {
+                          if (project == myProject) {
+                            stack.push(heavyActivityStarted(activityName != null ? activityName : "file system changes"));
+                          }
+                        }
+
+                        @Override
+                        public void batchChangeCompleted(@NotNull Project project) {
+                          if (project != myProject) return;
+
+                          Stack<AccessToken> tokens = stack;
+                          if (!tokens.isEmpty()) { // just in case
+                            tokens.pop().finish();
+                          }
+                        }
+                      });
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -114,20 +140,28 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
+    try (AccessToken ignore = heavyActivityStarted(activityName)) {
+      activity.run();
+    }
+  }
+
+  @NotNull
+  private AccessToken heavyActivityStarted(@NotNull String activityName) {
     String reason = "Indexing paused due to " + activityName;
     synchronized (myRequestedSuspensions) {
       myRequestedSuspensions.add(reason);
     }
 
     suspendCurrentTask(reason);
-    try {
-      activity.run();
-    } finally {
-      synchronized (myRequestedSuspensions) {
-        myRequestedSuspensions.remove(reason);
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        synchronized (myRequestedSuspensions) {
+          myRequestedSuspensions.remove(reason);
+        }
+        resumeAutoSuspendedTask(reason);
       }
-      resumeAutoSuspendedTask(reason);
-    }
+    };
   }
 
   private void suspendCurrentTask(String reason) {
@@ -184,7 +218,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void runWhenSmart(@Debugger.Capture @NotNull Runnable runnable) {
+  public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
     myStartupManager.runWhenProjectIsInitialized(() -> {
       synchronized (myRunWhenSmartQueue) {
         if (isDumb()) {
@@ -326,7 +360,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   // Extracted to have a capture point
-  private static void doRun(@Debugger.Insert Runnable runnable) {
+  private static void doRun(@Async.Execute Runnable runnable) {
     try {
       runnable.run();
     }

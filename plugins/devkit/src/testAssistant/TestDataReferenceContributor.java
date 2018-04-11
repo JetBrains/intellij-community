@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.patterns.uast.UastPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -32,10 +33,12 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UastLiteralUtils;
 
 import java.util.Collection;
 
-import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
 import static org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider.*;
 
 /**
@@ -45,23 +48,51 @@ import static org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider
 public class TestDataReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(literalExpression().annotationParam(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME),
-                                        new TestDataReferenceProvider());
+    UastReferenceRegistrar.registerUastReferenceProvider(registrar,
+                                                         UastPatterns.stringLiteralExpression()
+                                                                     .annotationParam(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME, "value"),
+                                                         new TestDataReferenceProvider(), PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  private static class TestDataReferenceProvider extends PsiReferenceProvider {
+  private static class TestDataReferenceProvider extends UastReferenceProvider {
     @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
-      final TestDataReferenceSet referenceSet = new TestDataReferenceSet(element);
+    public PsiReference[] getReferencesByElement(@NotNull final UElement element, @NotNull final ProcessingContext context) {
+      if (!(element instanceof ULiteralExpression)) return PsiReference.EMPTY_ARRAY;
+
+      ULiteralExpression literalExpression = (ULiteralExpression)element;
+
+      PsiLanguageInjectionHost host = UastLiteralUtils.getPsiLanguageInjectionHost(literalExpression);
+      if (host == null) return PsiReference.EMPTY_ARRAY;
+
+      TextRange range = ElementManipulators.getValueTextRange(host);
+
+      //ideally `literalExpression.getValue()` should be the right value for `stringValue`, but something is wrong with Kotlin
+      String stringValue;
+      if (literalExpression.getSourcePsi() == host) {
+        stringValue = range.substring(host.getText());
+      }
+      else {
+        StringBuilder chars = new StringBuilder();
+        host.createLiteralTextEscaper().decode(TextRange.from(0, host.getTextLength()), chars);
+        stringValue = chars.toString();
+      }
+
+      final TestDataReferenceSet referenceSet = new TestDataReferenceSet(stringValue,
+                                                                         host, range.getStartOffset(),
+                                                                         null, false);
       referenceSet.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, FileReferenceSet.ABSOLUTE_TOP_LEVEL);
       return referenceSet.getAllReferences();
     }
   }
 
   private static class TestDataReferenceSet extends FileReferenceSet {
-    public TestDataReferenceSet(@NotNull PsiElement element) {
-      super(element);
+    public TestDataReferenceSet(String str,
+                                @NotNull PsiElement element,
+                                int startInElement,
+                                @Nullable PsiReferenceProvider provider,
+                                final boolean isCaseSensitive) {
+      super(str, element, startInElement, provider, isCaseSensitive, true);
     }
 
     @Override

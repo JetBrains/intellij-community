@@ -1,15 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
 public class MutationSignature {
-  private static final String ATTR_MUTATES = "mutates";
+  public static final String ATTR_MUTATES = "mutates";
   private static final String CONTRACT_ANNOTATION = "org.jetbrains.annotations.Contract";
   private static final MutationSignature UNKNOWN = new MutationSignature(false, new boolean[0]);
   private static final MutationSignature PURE = new MutationSignature(false, new boolean[0]);
@@ -91,8 +92,17 @@ public class MutationSignature {
       if (ms.myThis && method.hasModifierProperty(PsiModifier.STATIC)) {
         return "Static method cannot mutate 'this'";
       }
-      if (ms.myArgs.length > method.getParameterList().getParametersCount()) {
-        return "Reference to argument #" + ms.myArgs.length + " is invalid";
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (ms.myArgs.length > parameters.length) {
+        return "Reference to parameter #" + ms.myArgs.length + " is invalid";
+      }
+      for (int i = 0; i < ms.myArgs.length; i++) {
+        if (ms.myArgs[i]) {
+          PsiType type = parameters[i].getType();
+          if (ClassUtils.isImmutable(type)) {
+            return "Parameter #" + (i + 1) + " has immutable type '" + type.getPresentableText() + "'";
+          }
+        }
       }
     }
     catch (IllegalArgumentException ex) {

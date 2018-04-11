@@ -23,13 +23,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class SetDefault implements ChangeListCommand {
   private final String myNewDefaultName;
+  private final boolean myAutomatic;
 
   private boolean myResult;
   private LocalChangeList myOldDefaultListCopy;
   private LocalChangeList myNewDefaultListCopy;
 
-  public SetDefault(@NotNull String newDefaultName) {
+  public SetDefault(@NotNull String newDefaultName, boolean automatic) {
     myNewDefaultName = newDefaultName;
+    myAutomatic = automatic;
   }
 
   public void apply(ChangeListWorker worker) {
@@ -48,7 +50,7 @@ public class SetDefault implements ChangeListCommand {
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
     if (myResult) {
-      dispatcher.getMulticaster().defaultListChanged(myOldDefaultListCopy, myNewDefaultListCopy);
+      dispatcher.getMulticaster().defaultListChanged(myOldDefaultListCopy, myNewDefaultListCopy, myAutomatic);
     }
   }
 }

@@ -171,7 +171,7 @@ public class AppUIUtil {
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
-    String wmClass = VENDOR_PREFIX + name;
+    String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
     if (DEBUG_MODE) wmClass += "-debug";
     return wmClass;
   }

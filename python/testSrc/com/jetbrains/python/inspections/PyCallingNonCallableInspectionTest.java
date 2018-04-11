@@ -103,6 +103,11 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-26555
+  public void testAfterModifierWrappingCall() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

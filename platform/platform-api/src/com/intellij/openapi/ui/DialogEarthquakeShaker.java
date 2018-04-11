@@ -24,7 +24,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DialogEarthquakeShaker {
-  private Window myWindow;
+  private final Window myWindow;
   private Point myNaturalLocation;
   private long myStartTime;
 

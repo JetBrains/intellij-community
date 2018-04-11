@@ -88,8 +88,8 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
   }
 
   private static class ElementToStringCollector extends PackagingElementProcessor<PackagingElement<?>> {
-    private StringBuilder myBuilder = new StringBuilder();
-    private boolean myAddParentPaths;
+    private final StringBuilder myBuilder = new StringBuilder();
+    private final boolean myAddParentPaths;
 
     private ElementToStringCollector() {
       myAddParentPaths = false;
@@ -117,7 +117,7 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
 
 
   private static class MyParentElementProcessor extends ParentElementProcessor {
-    private StringBuilder myLog = new StringBuilder();
+    private final StringBuilder myLog = new StringBuilder();
 
     @Override
     public boolean process(@NotNull CompositePackagingElement<?> element, @NotNull List<Pair<Artifact,CompositePackagingElement<?>>> parents, @NotNull Artifact artifact) {

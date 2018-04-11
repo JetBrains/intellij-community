@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -209,10 +210,10 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   //@top
-  static void checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
-                                             List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
-                                             boolean ignoreAbstractDeprecatedOverrides, ProblemsHolder holder,
-                                             boolean forRemoval, @NotNull ProblemHighlightType highlightType) {
+  private static void checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
+                                                     List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
+                                                     boolean ignoreAbstractDeprecatedOverrides, ProblemsHolder holder,
+                                                     boolean forRemoval, @NotNull ProblemHighlightType highlightType) {
     PsiMethod method = methodSignature.getMethod();
     PsiElement methodName = method.getNameIdentifier();
     if (methodName == null) return;
@@ -313,10 +314,10 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
     else if (value instanceof PsiExpression) {
       result = JavaConstantExpressionEvaluator.computeConstantExpression((PsiExpression)value, false);
     }
-    return result instanceof Boolean && ((Boolean)result);
+    return result instanceof Boolean && (Boolean)result;
   }
 
-  protected static void addSameOutermostClassCheckBox(MultipleCheckboxOptionsPanel panel) {
+  static void addSameOutermostClassCheckBox(MultipleCheckboxOptionsPanel panel) {
     panel.addCheckbox("Ignore in the same outermost class", "IGNORE_IN_SAME_OUTERMOST_CLASS");
   }
 
@@ -337,7 +338,7 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
 
     Collection<PsiDocTag> docTags = PsiTreeUtil.findChildrenOfType(doc, PsiDocTag.class);
     if (docTags.isEmpty()) return null;
-    PsiMethod tagMethod = (PsiMethod)docTags
+    return docTags
       .stream()
       .filter(t -> {
         String name = t.getName();
@@ -348,14 +349,15 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
       .map(value -> value.getReference())
       .filter(Objects::nonNull)
       .map(reference -> reference.resolve())
-      .filter(Objects::nonNull)
       .distinct()
+      .map(resolved -> (PsiMethod)(resolved instanceof PsiMethod ? resolved : null))
+      .filter(Objects::nonNull)
+      .filter(tagMethod -> !tagMethod.isDeprecated())
+      .filter(tagMethod -> !StringUtil.equals(tagMethod.getName(), method.getName()))
+      .filter(tagMethod -> !tagMethod.isEquivalentTo(method))
+      .filter(tagMethod -> areReplaceable(method, tagMethod, call))
       .collect(MoreCollectors.onlyOne())
-      .filter(resolved -> resolved instanceof PsiMethod)
       .orElse(null);
-    return tagMethod == null || tagMethod.isDeprecated() || tagMethod.isEquivalentTo(method) || !areReplaceable(method, tagMethod, call)
-           ? null
-           : tagMethod;
   }
 
   private static boolean areReplaceable(@NotNull PsiMethod initial,
@@ -377,9 +379,10 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
     String qualifierText;
     if (isInitialStatic) {
       qualifierText = ObjectUtils.notNull(suggestedReplacement.getContainingClass()).getQualifiedName() + ".";
-    } else {
+    }
+    else {
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-      qualifierText = qualifierExpression == null ? "" : (qualifierExpression.getText() + ".");
+      qualifierText = qualifierExpression == null ? "" : qualifierExpression.getText() + ".";
     }
 
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(initial.getProject());

@@ -27,7 +27,7 @@ import java.util.List;
  * @author max
  */
 public class RootContainer extends Container {
-    private File destDirectory;
+    private final File destDirectory;
 
     public RootContainer(File destDirectory) {
         this.destDirectory = destDirectory;

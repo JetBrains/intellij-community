@@ -105,10 +105,10 @@ public final class StoreUtil {
     return null;
   }
 
-  public static void saveDocumentsAndProjectsAndApp(boolean isForce) {
+  public static void saveDocumentsAndProjectsAndApp(boolean isForceSavingAllSettings) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    ApplicationManager.getApplication().saveSettings(isForce);
+    ApplicationManager.getApplication().saveSettings(isForceSavingAllSettings);
 
     ProjectManager projectManager = ProjectManager.getInstance();
     if (projectManager instanceof ProjectManagerEx) {
@@ -116,7 +116,7 @@ public final class StoreUtil {
     }
 
     for (Project project : projectManager.getOpenProjects()) {
-      saveProject(project, isForce);
+      saveProject(project, isForceSavingAllSettings);
     }
   }
 

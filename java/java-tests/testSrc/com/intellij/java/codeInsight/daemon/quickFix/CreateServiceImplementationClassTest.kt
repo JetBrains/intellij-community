@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
@@ -25,7 +23,7 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
     myFixture.checkResult("foo/bar/MyServiceImpl.java",
                           "package foo.bar;\n\n" +
                           "public class MyServiceImpl extends MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testExistingPackageInterfaceImported() {
@@ -36,7 +34,7 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
     myFixture.checkResult("foo/bar/MyServiceImpl.java",
                           "package foo.bar;\n\n" +
                           "public class MyServiceImpl extends MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testExistingPackageNested() {
@@ -67,7 +65,7 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
                           "import foo.bar.MyService;\n" +
                           "\n" +
                           "public class MyServiceImpl extends MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testNestedNonexistentPackage() {
@@ -80,7 +78,7 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
                           "import foo.bar.MyService;\n" +
                           "\n" +
                           "public class MyServiceImpl extends MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testNestedNonexistentPackageProviderMethod() {
@@ -96,7 +94,7 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
                           "    public static MyService provider() {\n" +
                           "        return null;\n" +
                           "    }\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testMultipleImplementations() {
@@ -108,7 +106,7 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
     myFixture.checkResult("foo/bar/MyServiceImpl.java",
                           "package foo.bar;\n\n" +
                           "public class MyServiceImpl extends MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testAbstractSuperclass() {
@@ -119,7 +117,7 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
     myFixture.checkResult("foo/bar/MyServiceImpl.java",
                           "package foo.bar;\n\n" +
                           "public class MyServiceImpl extends MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testServiceInterface() {
@@ -130,7 +128,7 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
     myFixture.checkResult("foo/bar/MyServiceImpl.java",
                           "package foo.bar;\n\n" +
                           "public class MyServiceImpl implements MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testServiceSuperclassFromOtherModule() {
@@ -144,7 +142,7 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
                           "import foo.bar.other.MyService;\n" +
                           "\n" +
                           "public class MyServiceImpl extends MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testServiceSuperclassFromNotReadableModule() {

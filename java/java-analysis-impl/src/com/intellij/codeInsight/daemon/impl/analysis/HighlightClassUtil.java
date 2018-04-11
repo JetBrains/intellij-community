@@ -113,7 +113,10 @@ public class HighlightClassUtil {
 
   @Nullable
   static HighlightInfo checkClassMustBeAbstract(final PsiClass aClass, final TextRange textRange) {
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null || aClass.isEnum() && hasEnumConstantsWithInitializer(aClass)) {
+    if (aClass.isEnum()) {
+      if (hasEnumConstantsWithInitializer(aClass)) return null; 
+    }
+    else if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null ) {
       return null;
     }
     return checkClassWithAbstractMethods(aClass, textRange);

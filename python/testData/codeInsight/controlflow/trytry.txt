@@ -20,18 +20,18 @@
 19(20,22,37) READ ACCESS: x
 20(21) element: PyStatementList. Condition: x == 0:true
 21(37,40) element: PyBreakStatement
-22(23,26,37) element: PyIfPartElif. Condition: x == 0:false
-23(24,37) READ ACCESS: x
-24(25,37) element: PyIfPartElif. Condition: x == 1:true
+22(23,37) element: PyIfPartElif. Condition: x == 0:false
+23(24,26,37) READ ACCESS: x
+24(25) element: PyStatementList. Condition: x == 1:true
 25(7,37) element: PyContinueStatement
-26(27,31,37) element: PyIfPartElif. Condition: x == 1:false
-27(28,37) READ ACCESS: x
-28(29,37) element: PyIfPartElif. Condition: x == 2:true
+26(27,37) element: PyIfPartElif. Condition: x == 1:false
+27(28,31,37) READ ACCESS: x
+28(29) element: PyStatementList. Condition: x == 2:true
 29(30,37) element: PyRaiseStatement
 30(37) READ ACCESS: Exception
-31(32,35,37) element: PyIfPartElif. Condition: x == 2:false
-32(33,37) READ ACCESS: x
-33(34,37) element: PyIfPartElif. Condition: x == 3:true
+31(32,37) element: PyIfPartElif. Condition: x == 2:false
+32(33,35,37) READ ACCESS: x
+33(34) element: PyStatementList. Condition: x == 3:true
 34(37) element: PyReturnStatement
 35(36,37) element: PyAssignmentStatement
 36(37,40) WRITE ACCESS: e
@@ -40,7 +40,7 @@
 39(45) WRITE ACCESS: f
 40(41,45) element: PyFinallyPart
 41(42,45) element: PyAssignmentStatement
-42(43,45) WRITE ACCESS: f
+42(43,45,48) WRITE ACCESS: f
 43(44,45) element: PyAssignmentStatement
 44(45,48) WRITE ACCESS: g
 45(46,55) element: PyFinallyPart
@@ -48,7 +48,7 @@
 47(55) WRITE ACCESS: h
 48(49,55) element: PyFinallyPart
 49(50,55) element: PyAssignmentStatement
-50(51,55) WRITE ACCESS: h
+50(51,53,55) WRITE ACCESS: h
 51(52,55) element: PyAssignmentStatement
 52(8,53,55) WRITE ACCESS: i
 53(54,55) element: PyAssignmentStatement

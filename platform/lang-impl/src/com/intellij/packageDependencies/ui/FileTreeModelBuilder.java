@@ -22,6 +22,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.scopeView.nodes.BasePsiNode;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
@@ -42,7 +43,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import java.util.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,10 +52,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class FileTreeModelBuilder {
   public static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
@@ -214,7 +211,7 @@ public class FileTreeModelBuilder {
     Runnable buildingRunnable = () -> {
       for (final PsiFile file : files) {
         if (file != null) {
-          buildFileNode(file.getVirtualFile(), null);
+          ReadAction.run(() -> buildFileNode(file.getVirtualFile(), null));
         }
       }
     };
@@ -592,15 +589,17 @@ public class FileTreeModelBuilder {
 
     @Override
     public boolean processFile(VirtualFile fileOrDir) {
-      if (!fileOrDir.isDirectory()) {
-        if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
+      ReadAction.run(() -> {
+        if (!fileOrDir.isDirectory()) {
+          if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
+            lastParent = null;
+          }
+          lastParent = buildFileNode(fileOrDir, lastParent);
+          dir = fileOrDir.getParent();
+        } else {
           lastParent = null;
         }
-        lastParent = buildFileNode(fileOrDir, lastParent);
-        dir = fileOrDir.getParent();
-      } else {
-        lastParent = null;
-      }
+      });
       return true;
     }
   }

@@ -718,7 +718,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static HighlightInfo checkUnhandledExceptions(@NotNull final PsiElement element, @Nullable TextRange textRange) {
-    final List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
+    List<PsiClassType> unhandledExceptions = ExceptionUtil.getOwnUnhandledExceptions(element);
     if (unhandledExceptions.isEmpty()) return null;
 
     final HighlightInfoType highlightType = getUnhandledExceptionHighlightType(element);
@@ -1650,13 +1650,13 @@ public class HighlightUtil extends HighlightUtilBase {
 
   private static ErrorWithFixes checkAccess(JavaModuleSystemEx system, PsiElement target, PsiElement place) {
     if (target instanceof PsiClass) return system.checkAccess((PsiClass)target, place);
-    if (target instanceof PsiPackage) return system.checkAccess((PsiPackage)target, place);
+    if (target instanceof PsiPackage) return system.checkAccess(((PsiPackage)target).getQualifiedName(), null, place);
     return null;
   }
 
   private static boolean isAccessible(JavaModuleSystem system, PsiElement target, PsiElement place) {
     if (target instanceof PsiClass) return system.isAccessible((PsiClass)target, place);
-    if (target instanceof PsiPackage) return system.isAccessible((PsiPackage)target, place);
+    if (target instanceof PsiPackage) return system.isAccessible(((PsiPackage)target).getQualifiedName(), null, place);
     return true;
   }
 
@@ -2128,7 +2128,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                                                             @NotNull PsiClass referencedClass,
                                                                             final String resolvedName,
                                                                             @NotNull PsiFile containingFile) {
-    if (PsiTreeUtil.getParentOfType(expression, PsiReferenceParameterList.class) != null) return null;
+    if (PsiTreeUtil.getParentOfType(expression, PsiReferenceParameterList.class, true, PsiExpression.class) != null) return null;
     PsiElement element = expression.getParent();
     while (element != null) {
       // check if expression inside super()/this() call

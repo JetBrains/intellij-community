@@ -273,6 +273,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     if (view instanceof JComponent && !isAutoscroll(bounds)) {
       JBInsets.addTo(bounds, getViewInsets((JComponent)view));
     }
+    if (bounds.width > getWidth()) bounds.width = getWidth();
+    if (bounds.height > getHeight()) bounds.height = getHeight();
     super.scrollRectToVisible(bounds);
   }
 

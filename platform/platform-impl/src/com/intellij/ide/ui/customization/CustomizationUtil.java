@@ -15,8 +15,10 @@
  */
 package com.intellij.ide.ui.customization;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.Pair;
@@ -34,8 +36,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -277,18 +277,14 @@ public class CustomizationUtil {
 
   @NotNull
   public static MouseListener installPopupHandler(JComponent component, @NotNull String groupId, String place) {
-    ActionManager actionManager = ActionManager.getInstance();
-    if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
-    PopupHandler popupHandler = new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
-        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(place, group);
-        popupMenu.setTargetComponent(component);
-        JPopupMenu menu = popupMenu.getComponent();
-        menu.show(comp, x, y);
-      }
-    };
-    component.addMouseListener(popupHandler);
-    return popupHandler;
+    return PopupHandler.installPopupHandler(
+      component, new ActionGroup() {
+        @NotNull
+        @Override
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
+          return group == null ? EMPTY_ARRAY : group.getChildren(e);
+        }
+      }, place, ActionManager.getInstance(), null);
   }
 }

@@ -49,6 +49,7 @@ import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
+import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -174,10 +175,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return derefTreeElement() != null;
   }
 
+  protected void assertReadAccessAllowed() {
+    if (myViewProvider.getVirtualFile() instanceof ReadOnlyLightVirtualFile) return;
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+  }
+
   @NotNull
   private FileElement loadTreeElement() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
+    assertReadAccessAllowed();
     final FileViewProvider viewProvider = getViewProvider();
     if (viewProvider.isPhysical() && myManager.isAssertOnFileLoading(viewProvider.getVirtualFile())) {
       LOG.error("Access to tree elements not allowed in tests. path='" + viewProvider.getVirtualFile().getPresentableUrl()+"'");
@@ -586,8 +591,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public void onContentReload() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    DebugUtil.startPsiModification("onContentReload");
-    try {
+    DebugUtil.performPsiModification("onContentReload", () -> {
       synchronized (myPsiLock) {
         myRefToPsi.invalidatePsi();
 
@@ -599,10 +603,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         updateTrees(myTrees.clearStub("onContentReload"));
         setTreeElementPointer(null);
       }
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    });
     clearCaches();
   }
 
@@ -635,7 +636,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   @Nullable
   public StubTree getStubTree() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    assertReadAccessAllowed();
 
     if (myTrees.astLoaded && !mayReloadStub()) return null;
     if (Boolean.TRUE.equals(getUserData(BUILDING_STUB))) return null;
@@ -1033,7 +1034,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       tree = derefStub();
 
       if (tree == null) {
-        ApplicationManager.getApplication().assertReadAccessAllowed();
+        assertReadAccessAllowed();
         IStubFileElementType contentElementType = getElementTypeForStubBuilder();
         if (contentElementType == null) {
           VirtualFile vFile = getVirtualFile();
@@ -1118,7 +1119,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private void checkWritable() {
     PsiDocumentManager docManager = PsiDocumentManager.getInstance(getProject());
-    if (docManager instanceof PsiDocumentManagerBase && !((PsiDocumentManagerBase)docManager).isCommitInProgress() && !(myViewProvider instanceof FreeThreadedFileViewProvider)) {
+    if (docManager instanceof PsiDocumentManagerBase &&
+        !((PsiDocumentManagerBase)docManager).isCommitInProgress() &&
+        !(myViewProvider instanceof FreeThreadedFileViewProvider)) {
       CheckUtil.checkWritable(this);
     }
   }

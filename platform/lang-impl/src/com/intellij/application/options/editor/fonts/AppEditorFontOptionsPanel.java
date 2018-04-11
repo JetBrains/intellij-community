@@ -46,7 +46,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
   private JPanel myWarningPanel;
   private JLabel myEditorFontLabel;
   private JButton myRestoreButton;
-  private FontPreferences myDefaultPreferences;
+  private final FontPreferences myDefaultPreferences;
 
   protected AppEditorFontOptionsPanel(EditorColorsScheme scheme) {
     myScheme = scheme;

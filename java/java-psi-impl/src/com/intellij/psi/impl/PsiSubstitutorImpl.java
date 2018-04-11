@@ -23,7 +23,6 @@ import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
-import java.util.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -31,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -143,7 +143,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return mySubstitutionMap != null ? mySubstitutionMap.hashCode() : 0;
   }
 
-  private static RecursionGuard ourGuard = RecursionManager.createGuard("substituteGuard");
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("substituteGuard");
   private PsiType rawTypeForTypeParameter(final PsiTypeParameter typeParameter) {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {
@@ -233,7 +233,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       }
       PsiClassType result = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
       PsiUtil.ensureValidType(result);
-      return result;
+      return result.annotate(classType.getAnnotationProvider());
     }
 
     private PsiType substituteTypeParameter(@NotNull PsiTypeParameter typeParameter) {

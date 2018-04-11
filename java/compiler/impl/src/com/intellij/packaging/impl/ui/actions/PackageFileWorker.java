@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -81,19 +80,16 @@ public class PackageFileWorker {
         try {
           for (final VirtualFile file : files) {
             indicator.checkCanceled();
-            new ReadAction() {
-              @Override
-              protected void run(@NotNull final Result result) {
-                try {
-                  packageFile(file, project, artifacts, packIntoArchives);
-                }
-                catch (IOException e) {
-                  LOG.info(e);
-                  String message = CompilerBundle.message("message.tect.package.file.io.error", e.toString());
-                  Notifications.Bus.notify(new Notification("Package File", "Cannot package file", message, NotificationType.ERROR));
-                }
+            ReadAction.run(() -> {
+              try {
+                packageFile(file, project, artifacts, packIntoArchives);
               }
-            }.execute();
+              catch (IOException e) {
+                LOG.info(e);
+                String message = CompilerBundle.message("message.tect.package.file.io.error", e.toString());
+                Notifications.Bus.notify(new Notification("Package File", "Cannot package file", message, NotificationType.ERROR));
+              }
+            });
             callback.setDone();
           }
         }

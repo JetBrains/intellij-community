@@ -223,7 +223,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
   private static class StringProjectBuilderLogger extends ProjectBuilderLoggerBase {
     private final String myRoot;
-    private StringBuilder myLog;
+    private final StringBuilder myLog;
 
     private StringProjectBuilderLogger(String root, StringBuilder log) {
       myRoot = root;

@@ -32,14 +32,14 @@ public class FormatProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
   
   private final WrapBlocksState myWrapState;
-  private boolean myReformatContext;
+  private final boolean myReformatContext;
   private final Document myDocument;
   
   @NotNull
   private final FormattingProgressCallback myProgressCallback;
 
   @NotNull
-  private StateProcessor myStateProcessor;
+  private final StateProcessor myStateProcessor;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,

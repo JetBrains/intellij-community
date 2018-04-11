@@ -15,11 +15,11 @@
  */
 package com.intellij.ui.paint;
 
+import com.intellij.ui.paint.LinePainter2D.StrokeType;
 import com.intellij.util.ui.RegionPainter;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Paint;
-import java.awt.Graphics2D;
+import java.awt.*;
 
 /**
  * @author Sergey.Malenkov
@@ -28,13 +28,15 @@ public enum RectanglePainter implements RegionPainter<Integer> {
   DRAW {
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, @Nullable Integer round) {
-      RectanglePainter2D.DRAW.paint(g, x, y, width, height, round == null ? null : Double.valueOf(round));
+      Object valueAA = round != null && round >= 0 ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_DEFAULT;
+      RectanglePainter2D.DRAW.paint(g, x, y, width, height, round == null ? null : Double.valueOf(round), StrokeType.INSIDE, 1, valueAA);
     }
   },
   FILL {
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, @Nullable Integer round) {
-      RectanglePainter2D.FILL.paint(g, x, y, width, height, round == null? null : Double.valueOf(round));
+      Object valueAA = round != null && round >= 0 ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_DEFAULT;
+      RectanglePainter2D.FILL.paint(g, x, y, width, height, round == null ? null : Double.valueOf(round), StrokeType.INSIDE, 1, valueAA);
     }
   };
 

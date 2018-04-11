@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PushSpec<S extends PushSource, T extends PushTarget> {
 
-  @NotNull private S mySource;
-  @NotNull private T myTarget;
+  @NotNull private final S mySource;
+  @NotNull private final T myTarget;
 
   public PushSpec(@NotNull S source, @NotNull T target) {
     mySource = source;

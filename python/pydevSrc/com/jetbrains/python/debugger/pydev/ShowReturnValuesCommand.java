@@ -3,7 +3,7 @@ package com.jetbrains.python.debugger.pydev;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowReturnValuesCommand extends AbstractCommand {
-  private boolean myShowReturnValues;
+  private final boolean myShowReturnValues;
 
   public ShowReturnValuesCommand(@NotNull RemoteDebugger debugger, boolean showReturnValues) {
     super(debugger, AbstractCommand.SHOW_RETURN_VALUES);

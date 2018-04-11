@@ -31,6 +31,7 @@ public enum FutureFeature {
   PRINT_FUNCTION("print_function", 26, 30),
   UNICODE_LITERALS("unicode_literals", 26, 30),
   BARRY_AS_FLUFL("barry_as_FLUFL", 31, 39), // last as of CPython 3.2
+  ANNOTATIONS("annotations", 37, 40)
   // NOTE: only add new features to the end unless you want to break existing stubs that rely on ordinal
   ;
   // TODO: link it to LanguageLevel
@@ -87,7 +88,5 @@ public enum FutureFeature {
     return level.getVersion() >= myRequiredVersion;
   }
 
-  public static final FutureFeature[] ALL = {
-    GENERATORS, DIVISION, ABSOLUTE_IMPORT, WITH_STATEMENT, PRINT_FUNCTION, UNICODE_LITERALS, BARRY_AS_FLUFL
-  };
+  public static final FutureFeature[] ALL = FutureFeature.values();
 }

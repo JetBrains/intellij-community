@@ -15,41 +15,51 @@
  */
 package com.jetbrains.python
 
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.EditorTestUtil
 import com.jetbrains.python.console.PyConsoleEnterHandler
-import com.jetbrains.python.console.PythonConsoleView
 import com.jetbrains.python.fixtures.PyTestCase
+import kotlin.math.max
 
 /**
  * Created by Yuli Fiterman on 9/20/2016.
  */
 class PyConsoleEnterHandlerTest : PyTestCase() {
 
-
-  lateinit private var myEditor: Editor
-  lateinit private var myEnterHandler: PyConsoleEnterHandler
-
+  private lateinit var editor: Editor
+  private lateinit var enterHandler: PyConsoleEnterHandler
 
   override fun setUp() {
     super.setUp()
     resetEditor()
-    myEnterHandler = PyConsoleEnterHandler()
+    enterHandler = PyConsoleEnterHandler()
   }
 
   private fun resetEditor() {
-    myEditor = disposeOnTearDown(PythonConsoleView(myFixture.project, "Console", projectDescriptor?.sdk, false)).consoleEditor
+    myFixture.configureByText(PythonFileType.INSTANCE, "")
+    editor = myFixture.editor
   }
 
-  fun push(text: String): Boolean {
-    text.forEach { EditorTestUtil.performTypingAction(myEditor, it) }
-    return myEnterHandler.handleEnterPressed(myEditor as EditorEx)
+  private fun pushWithoutTyping(text: String): Boolean {
+    // Avoid autocompletion while typing in some cases, to check incomplete statements
+    WriteCommandAction.runWriteCommandAction(myFixture.project, {
+      val lineCount = editor.document.lineCount
+      val endOffset = editor.document.getLineEndOffset(max(0, lineCount - 1))
+      editor.document.insertString(endOffset, text)
+    })
+    return enterHandler.handleEnterPressed(editor as EditorEx)
+  }
+
+  private fun push(text: String): Boolean {
+    text.forEach { EditorTestUtil.performTypingAction(editor, it) }
+    return enterHandler.handleEnterPressed(editor as EditorEx)
   }
 
   fun testTripleQuotes() {
-    assertFalse(push("'''abs"))
+    assertFalse(pushWithoutTyping("'''abs"))
   }
 
   fun testSingleQuote() {
@@ -64,9 +74,7 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
     resetEditor()
     assertFalse(push("for a in range(5):"))
     resetEditor()
-    assertFalse(push("a = [1,\n2,"))
-
-
+    assertFalse(pushWithoutTyping("a = [1,\n2,"))
   }
 
   fun testInputComplete1() {
@@ -156,13 +164,13 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
   }
 
   fun testDocstringDouble() {
-    assertFalse(push("a = \"\"\"test"))
+    assertFalse(pushWithoutTyping("a = \"\"\"test"))
     assertFalse(push("second"))
     assertTrue(push("third\"\"\""))
   }
 
   fun testDocstring() {
-    assertFalse(push("a = '''test"))
+    assertFalse(pushWithoutTyping("a = '''test"))
     assertFalse(push("second"))
     assertTrue(push("third'''"))
   }
@@ -179,6 +187,5 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
     Disposer.dispose(testRootDisposable)
     super.tearDown()
   }
-
 
 }

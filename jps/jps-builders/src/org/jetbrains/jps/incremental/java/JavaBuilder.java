@@ -68,6 +68,8 @@ import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 /**
  * @author Eugene Zhuravlev
  * @since 21.09.2011
@@ -507,7 +509,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (JpsModule module : modules) {
       final LanguageLevel moduleLevel = javaExt.getLanguageLevel(module);
       if (pair == null) {
-        pair = Pair.create(module.getName(), moduleLevel); // first value
+        pair = pair(module.getName(), moduleLevel); // first value
       }
       else if (!Comparing.equal(pair.getSecond(), moduleLevel)) {
         return "Modules " + pair.getFirst() + " and " + module.getName() +
@@ -525,7 +527,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (!StringUtil.isEmptyOrSpaces(opts)) {
           final Set<String> parsed = parseOptions(opts);
           if (overridden == null) {
-            overridden = Pair.create(module.getName(), parsed);
+            overridden = pair(module.getName(), parsed);
           }
           else {
             if (!overridden.second.equals(parsed)) {
@@ -734,24 +736,24 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                                                         ModuleChunk chunk,
                                                                         @Nullable ProcessorConfigProfile profile,
                                                                         @NotNull JavaCompilingTool compilingTool) {
-    final List<String> _compilationOptions = new ArrayList<>();
+    final List<String> compilationOptions = new ArrayList<>();
     final List<String> vmOptions = new ArrayList<>();
     final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCurrentCompilerOptions();
     if (compilerOptions.DEBUGGING_INFO) {
-      _compilationOptions.add("-g");
+      compilationOptions.add("-g");
     }
     if (compilerOptions.DEPRECATION) {
-      _compilationOptions.add("-deprecation");
+      compilationOptions.add("-deprecation");
     }
     if (compilerOptions.GENERATE_NO_WARNINGS) {
-      _compilationOptions.add("-nowarn");
+      compilationOptions.add("-nowarn");
     }
     if (compilerOptions instanceof EclipseCompilerOptions) {
       final EclipseCompilerOptions eclipseOptions = (EclipseCompilerOptions)compilerOptions;
       if (eclipseOptions.PROCEED_ON_ERROR) {
         Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
-        _compilationOptions.add("-proceedOnError");
+        compilationOptions.add("-proceedOnError");
       }
     }
 
@@ -799,7 +801,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
               vmOptions.add(userOption.substring("-J".length()));
             }
             else {
-              appender.accept(_compilationOptions, userOption);
+              appender.accept(compilationOptions, userOption);
             }
           }
         }
@@ -809,9 +811,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (ExternalJavacOptionsProvider extension : JpsServiceManager.getInstance().getExtensions(ExternalJavacOptionsProvider.class)) {
       vmOptions.addAll(extension.getOptions(compilingTool));
     }
-    addCompilationOptions(compilerSdkVersion, _compilationOptions, context, chunk, profile);
 
-    return Pair.create(vmOptions, _compilationOptions);
+    addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile);
+
+    return pair(vmOptions, compilationOptions);
   }
 
   public static void addCompilationOptions(List<String> options,
@@ -1011,7 +1014,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final int sdkVersion = sdkVersionPair.second;
       if (sdkVersion >= 6 && (sdkVersion < 9 || Math.abs(sdkVersion - targetLanguageLevel) <= 3)) {
         // current javac compiler does support required language level
-        return Pair.create(sdkVersionPair.first.getHomePath(), sdkVersion);
+        return pair(sdkVersionPair.first.getHomePath(), sdkVersion);
       }
     }
     final String fallbackJdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
@@ -1026,11 +1029,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     final int fallbackVersion = JpsJavaSdkType.parseVersion(fallbackJdkVersion);
     if (fallbackVersion < 6) {
-      LOG.info("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackJdkVersion + "')." +
+      LOG.info("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackVersion + "')." +
                " At least version 6 is required.");
       return null;
     }
-    return Pair.create(fallbackJdkHome, fallbackVersion);
+    return pair(fallbackJdkHome, fallbackVersion);
   }
 
   @Nullable
@@ -1038,7 +1041,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // assuming all modules in the chunk have the same associated JDK;
     // this constraint should be validated on build start
     final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
-    return sdk != null ? Pair.create(sdk, JpsJavaSdkType.getJavaVersion(sdk)) : null;
+    return sdk != null ? pair(sdk, JpsJavaSdkType.getJavaVersion(sdk)) : null;
   }
 
   @Override

@@ -34,7 +34,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     }
   }
 
-  private static AnonymousLambdaAlternative[] ALTERNATIVES = {
+  private static final AnonymousLambdaAlternative[] ALTERNATIVES = {
     new AnonymousLambdaAlternative("java.lang.ThreadLocal", "initialValue", "java.lang.ThreadLocal.withInitial($lambda$)",
                                    "ThreadLocal.withInitial()"),
     new AnonymousLambdaAlternative("java.lang.Thread", "run", "new java.lang.Thread($lambda$)",

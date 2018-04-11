@@ -22,7 +22,7 @@ public class TestModulePropertiesImpl extends TestModuleProperties implements Pe
                                                                               ProjectModelElement {
   private final ModulePointerManager myModulePointerManager;
   private ModulePointer myProductionModulePointer;
-  private Module myModule;
+  private final Module myModule;
 
   public TestModulePropertiesImpl(@NotNull Module module, @NotNull ModulePointerManager modulePointerManager) {
     myModule = module;

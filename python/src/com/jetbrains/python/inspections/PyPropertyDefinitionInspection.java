@@ -57,8 +57,8 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
 
-    private LanguageLevel myLevel;
-    private List<PyClass> myStringClasses;
+    private final LanguageLevel myLevel;
+    private final List<PyClass> myStringClasses;
     private PyFunction myOneParamFunction;
     private PyFunction myTwoParamFunction; // arglist with two args, 'self' and 'value'
 

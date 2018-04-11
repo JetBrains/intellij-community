@@ -87,9 +87,13 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   private FileEditorFixture myEditor;
   private MainToolbarFixture myToolbar;
   private NavigationBarFixture myNavBar;
+  private RunConfigurationListFixture myRCList;
 
   @NotNull
-  public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final File projectPath, @Nullable final String projectName, long timeoutInSeconds) {
+  public static IdeFrameFixture find(@NotNull final Robot robot,
+                                     @Nullable final File projectPath,
+                                     @Nullable final String projectName,
+                                     long timeoutInSeconds) {
     final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<IdeFrameImpl>(IdeFrameImpl.class) {
       @Override
       protected boolean isMatching(@NotNull IdeFrameImpl frame) {
@@ -116,7 +120,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
       IdeFrameImpl ideFrame = robot.finder().find(matcher);
       return new IdeFrameFixture(robot, ideFrame, new File(ideFrame.getProject().getBasePath()));
-    } catch (WaitTimedOutError timedOutError) {
+    }
+    catch (WaitTimedOutError timedOutError) {
       throw new ComponentLookupException("Unable to find IdeFrame in " + timeoutInSeconds + " second(s)");
     }
   }
@@ -243,6 +248,14 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     return myNavBar;
   }
 
+  @NotNull
+  public RunConfigurationListFixture getRunConfigurationList() {
+    if (myRCList == null) {
+      myRCList = new RunConfigurationListFixture(robot(), this);
+    }
+    return myRCList;
+  }
+
   //@NotNull
   //public GradleInvocationResult invokeProjectMake() {
   //  return invokeProjectMake(null);
@@ -343,7 +356,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       new MouseEvent(jMenuBar, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, MouseInfo.getPointerInfo().getLocation().x,
                      MouseInfo.getPointerInfo().getLocation().y, 1, false);
     ApplicationManager.getApplication()
-      .invokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
+                      .invokeLater(
+                        () -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
   }
 
   /**

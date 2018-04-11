@@ -39,7 +39,7 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
     //noinspection unchecked
     return ((Comparable)o1).compareTo(o2);
   };
-  private List<ProjectExternalDependency> myDependencies = new ArrayList<>();
+  private final List<ProjectExternalDependency> myDependencies = new ArrayList<>();
   
   @NotNull
   @Override

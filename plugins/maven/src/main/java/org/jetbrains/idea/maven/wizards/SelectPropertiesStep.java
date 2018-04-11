@@ -49,7 +49,7 @@ public class SelectPropertiesStep extends ModuleWizardStep {
   private MavenEnvironmentForm myEnvironmentForm;
   private MavenPropertiesPanel myMavenPropertiesPanel;
 
-  private Map<String, String> myAvailableProperties = new HashMap<>();
+  private final Map<String, String> myAvailableProperties = new HashMap<>();
 
   public SelectPropertiesStep(@Nullable Project project, MavenModuleBuilder builder) {
     myProjectOrNull = project;

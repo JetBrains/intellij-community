@@ -41,6 +41,9 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,6 +236,7 @@ public class MadTestingUtil {
     return () -> env -> new RunAll()
       .append(() -> {
         File ioFile = env.generateValue(randomFiles, "Working with %s");
+        System.out.println(ioFile);
         VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
         PsiFile psiFile = fixture.getPsiManager().findFile(vFile);
         if (psiFile instanceof PsiBinaryFile || psiFile instanceof PsiPlainTextFile) {
@@ -298,6 +302,8 @@ public class MadTestingUtil {
   }
 
   private static class FileGenerator implements Function<DataStructure, File> {
+    private static final com.intellij.util.Function<File, JBIterable<File>> FS_TRAVERSAL =
+      TreeTraversal.PRE_ORDER_DFS.traversal((File f) -> f.isDirectory() ? Arrays.asList(f.listFiles()) : Collections.emptyList());
     private final File myRoot;
     private final FileFilter myFilter;
 
@@ -314,7 +320,7 @@ public class MadTestingUtil {
     @Nullable
     private File generateRandomFile(DataStructure data, File file, Set<File> exhausted) {
       while (true) {
-        File[] children = file.listFiles(f -> !exhausted.contains(f) && myFilter.accept(f));
+        File[] children = file.listFiles(f -> !exhausted.contains(f) && containsAtLeastOneFileDeep(f) && myFilter.accept(f));
         if (children == null) {
           return file;
         }
@@ -331,6 +337,10 @@ public class MadTestingUtil {
           return generated;
         }
       }
+    }
+
+    private static boolean containsAtLeastOneFileDeep(File root) {
+      return FS_TRAVERSAL.fun(root).find(f -> f.isFile()) != null;
     }
 
     private static List<File> preferDirs(DataStructure data, File[] children) {

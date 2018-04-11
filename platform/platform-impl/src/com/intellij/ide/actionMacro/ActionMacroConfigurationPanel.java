@@ -38,8 +38,8 @@ import java.util.List;
 public class ActionMacroConfigurationPanel implements Disposable {
   private static final String SPLITTER_PROPORTION = "ActionMacroConfigurationPanel.SPLITTER_PROPORTION";
   private Splitter mySplitter;
-  private JList myMacrosList;
-  private JList myMacroActionsList;
+  private final JList myMacrosList;
+  private final JList myMacroActionsList;
   final DefaultListModel myMacrosModel = new DefaultListModel();
   private List<Couple<String>> myRenamingList;
 

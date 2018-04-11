@@ -78,12 +78,12 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
   }
 
-  public void testAbsAbstractProperty() {
+  public void testAbcDeprecatedAbstracts() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
       () -> {
         myFixture.enableInspections(PyDeprecationInspection.class);
-        myFixture.configureByFile("deprecation/abcAbstractProperty.py");
+        myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
         myFixture.checkHighlighting(true, false, false);
       }
     );
@@ -98,6 +98,13 @@ public class PyDeprecationTest extends PyTestCase {
 
     assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());
     assertNotParsed(file);
-    
+  }
+
+  // PY-28053
+  public void testHashlibMd5() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.copyDirectoryToProject("deprecation/hashlibMd5", "");
+    myFixture.configureByFile("a.py");
+    myFixture.checkHighlighting(true, false, false);
   }
 }

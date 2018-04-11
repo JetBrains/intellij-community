@@ -188,15 +188,7 @@ public class GitImpl extends GitImplBase {
     h.addParameters("--stdin");
     h.addParameters(new ArrayList<>(attributes));
     h.endOptions();
-    h.setInputProcessor((outputStream) -> {
-      try (OutputStreamWriter writer = new OutputStreamWriter(outputStream, h.getCharset())) {
-        for (String path : relativeFilePaths) {
-          writer.write(path);
-          writer.write("\n");
-        }
-        writer.flush();
-      }
-    });
+    h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(relativeFilePaths, h.getCharset()));
     return runCommand(h);
   }
 

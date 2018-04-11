@@ -32,7 +32,7 @@ import java.util.List;
  * @author lesya
  */
 class LoadingNode extends DefaultMutableTreeNode {
-  private String myText = CommonBundle.getLoadingTreeNodeText();
+  private final String myText = CommonBundle.getLoadingTreeNodeText();
   private int myPeriod = 0;
 
   private final Icon[] myIcons = new Icon[] {

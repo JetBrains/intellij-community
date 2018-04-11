@@ -45,7 +45,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
 
   private static final Logger LOG = Logger.getInstance(SearchForTestsTask.class);
   protected Socket mySocket;
-  private ServerSocket myServerSocket;
+  private final ServerSocket myServerSocket;
   private ProgressIndicator myProcessIndicator;
 
   public SearchForTestsTask(@Nullable final Project project,

@@ -30,7 +30,7 @@ import java.io.File;
 import java.util.*;
 
 public class MavenRunnerParameters implements Cloneable {
-  private boolean isPomExecution;
+  private final boolean isPomExecution;
   private Path myWorkingDirPath;
   private String myPomFileName;
   private final List<String> myGoals = new ArrayList<>();

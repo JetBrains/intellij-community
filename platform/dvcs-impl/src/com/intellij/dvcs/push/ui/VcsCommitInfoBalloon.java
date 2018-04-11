@@ -20,7 +20,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
@@ -52,9 +52,9 @@ public class VcsCommitInfoBalloon {
     myEditorPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     myEditorPane.setEditable(false);
     myEditorPane.setBackground(HintUtil.getInformationColor());
-    myEditorPane.setFont(VcsHistoryUtil.getCommitDetailsFont());
+    myEditorPane.setFont(FontUtil.getCommitMessageFont());
     myEditorPane.setBorder(HintUtil.createHintBorder());
-    Border margin = JBUI.Borders.empty(3, 3, 3, 3);
+    Border margin = JBUI.Borders.empty(3);
     myEditorPane.setBorder(new CompoundBorder(myEditorPane.getBorder(), margin));
     myEditorPane.addHyperlinkListener(new HyperlinkAdapter() {
       @Override

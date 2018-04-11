@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -356,7 +342,7 @@ public class ControlFlowUtil {
     if (LOG.isDebugEnabled()) {
       LOG.debug("output variables:");
       for (PsiVariable variable : outputVariables) {
-        LOG.debug("  " + variable.toString());
+        LOG.debug("  " + variable);
       }
     }
     return outputVariables;
@@ -757,10 +743,10 @@ public class ControlFlowUtil {
    * Also collects variables to be passed as additional parameters.
    *
    * @param array             Vector to collect variables to be passed as additional parameters
-   * @param scope             scope to be scanned (part of code fragement to be extracted)
+   * @param scope             scope to be scanned (part of code fragment to be extracted)
    * @param member            member containing the code to be extracted
-   * @param targetClassMember member in target class containing code fragement
-   * @return true if code fragement can be extracted outside
+   * @param targetClassMember member in target class containing code fragment
+   * @return true if code fragment can be extracted outside
    */
   public static boolean collectOuterLocals(List<PsiVariable> array, PsiElement scope, PsiElement member,
                                            PsiElement targetClassMember) {
@@ -1149,7 +1135,7 @@ public class ControlFlowUtil {
               && element == ((PsiForStatement)element.getParent()).getUpdate()) {
             continue;
           }
-          //filter out generated stmts
+          //filter out generated statements
           final int endOffset = myFlow.getEndOffset(element);
           if (endOffset != i + 1) continue;
           final int startOffset = myFlow.getStartOffset(element);
@@ -1453,7 +1439,7 @@ public class ControlFlowUtil {
   public static int getMinDefinitelyReachedOffset(final ControlFlow flow, final int sourceOffset,
                                                   final List references) {
     class MyVisitor extends InstructionClientVisitor<Integer> {
-      // set of exit posint reached from this offset
+      // set of exit points reached from this offset
       final TIntHashSet[] exitPoints = new TIntHashSet[flow.getSize()];
 
       @Override
@@ -1527,7 +1513,7 @@ public class ControlFlowUtil {
           instruction.execute(offset + 1);
           int newOffset = instruction.offset;
           // 'procedure' pointed by call instruction should be processed regardless of whether it was already visited or not
-          // clear procedure text and return instructions aftewards
+          // clear procedure text and return instructions afterwards
           int i;
           for (i = instruction.procBegin;
                i < clientVisitor.processedInstructions.length &&
@@ -1963,11 +1949,13 @@ public class ControlFlowUtil {
 
     @Nullable
     private static PsiElement getExpression(@NotNull PsiElement element) {
-      if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getLExpression() instanceof PsiReferenceExpression) {
-        return ((PsiAssignmentExpression)element).getLExpression();
+      if (element instanceof PsiAssignmentExpression) {
+        PsiExpression target = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)element).getLExpression());
+        return ObjectUtils.tryCast(target, PsiReferenceExpression.class);
       }
       else if (element instanceof PsiUnaryExpression) {
-        return ((PsiUnaryExpression)element).getOperand();
+        PsiExpression target = PsiUtil.skipParenthesizedExprDown(((PsiUnaryExpression)element).getOperand());
+        return ObjectUtils.tryCast(target, PsiReferenceExpression.class);
       }
       else if (element instanceof PsiDeclarationStatement) {
         //should not happen
@@ -2172,7 +2160,7 @@ public class ControlFlowUtil {
     if (codeBlock == null) return false;
     final ControlFlow flow;
     try {
-      flow = ControlFlowFactory.getInstance(codeBlock.getProject()).getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+      flow = ControlFlowFactory.getInstance(codeBlock.getProject()).getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), true);
     }
     catch (AnalysisCanceledException e) {
       return false;

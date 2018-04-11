@@ -60,6 +60,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   }
 
   @NotNull
+  @SuppressWarnings("PublicField")
   public PreferEmptyArray myMode = DEFAULT_MODE;
 
   @Nullable
@@ -188,7 +189,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
       final String typeText = componentType.getCanonicalText();
 
 
-      if (myEmptyPreferred || ExpressionUtils.isSimpleExpression(qualifier)) {
+      if (myEmptyPreferred || ExpressionUtils.isSafelyRecomputableExpression(qualifier)) {
         CommentTracker ct = new CommentTracker();
         String sizeClause = myEmptyPreferred ? "0" : collectionText + ".size()";
         @NonNls final String replacementText = "new " + typeText + '[' + sizeClause + "]";

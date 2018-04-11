@@ -150,12 +150,6 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     return getNameIdentifier().getTextOffset();
   }
 
-  @NotNull
-  @Override
-  public PsiElement getNavigationElement() {
-    return getNameIdentifier();
-  }
-
   @Override
   public PsiElement getOriginalElement() {
     return CachedValuesManager.getCachedValue(this, () -> {

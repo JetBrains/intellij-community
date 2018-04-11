@@ -25,7 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfigurationParams {
-  private JPanel myRootPanel;
+  private final JPanel myRootPanel;
 
   private final PythonTestLegacyRunConfigurationForm myTestRunConfigurationForm;
 

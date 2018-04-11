@@ -658,7 +658,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     final Document document = file.getViewProvider().getDocument();
     assertNotNull(document);
 
-    WriteAction.run(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update", 10000, () -> {
+    WriteAction.run(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update", 12_000, () -> {
       document.setText(StringUtil.repeat("foo foo \n", 50000));
       for (int i = 0; i < 10000; i++) {
         document.insertString(i * 20 + 100, "x\n");

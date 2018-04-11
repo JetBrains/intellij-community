@@ -45,7 +45,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
   protected JButton prevButton;
   protected JButton nextButton;
-  private FocusAdapter myFocusListener = new FocusAdapter() {
+  private final FocusAdapter myFocusListener = new FocusAdapter() {
     @Override
     public void focusGained(FocusEvent e) {
       spinner.repaint();

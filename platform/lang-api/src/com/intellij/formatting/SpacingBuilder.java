@@ -17,7 +17,7 @@ import java.util.List;
  * @author yole
  */
 public class SpacingBuilder {
-  private static Logger LOG = Logger.getInstance(SpacingBuilder.class);
+  private static final Logger LOG = Logger.getInstance(SpacingBuilder.class);
   
   private static class SpacingRule {
     protected final RuleCondition myRuleCondition;

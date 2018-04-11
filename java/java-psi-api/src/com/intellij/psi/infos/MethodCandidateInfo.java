@@ -129,7 +129,7 @@ public class MethodCandidateInfo extends CandidateInfo{
    */
   @ApplicabilityLevelConstant
   public int getPertinentApplicabilityLevelInner() {
-    if (myArgumentList == null || !PsiUtil.isLanguageLevel8OrHigher(myArgumentList)) {
+    if (myArgumentList == null || !myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       return getApplicabilityLevel();
     }
 

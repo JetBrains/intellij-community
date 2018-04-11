@@ -40,7 +40,7 @@ import java.util.Map;
  *
  * @author Rustam Vishnyakov
  */
-public class CommonCodeStyleSettingsManager {
+class CommonCodeStyleSettingsManager {
   private volatile Map<Language, CommonCodeStyleSettings> myCommonSettingsMap;
   private volatile Map<String, Content> myUnknownSettingsMap;
 
@@ -226,18 +226,6 @@ public class CommonCodeStyleSettingsManager {
     }
   }
 
-  public static void copy(@NotNull CommonCodeStyleSettings source, @NotNull CommonCodeStyleSettings target) {
-    CommonCodeStyleSettings.copyPublicFields(source, target);
-    CommonCodeStyleSettings.IndentOptions targetIndentOptions = target.getIndentOptions();
-    if (targetIndentOptions != null) {
-      CommonCodeStyleSettings.IndentOptions sourceIndentOptions = source.getIndentOptions();
-      if (sourceIndentOptions != null) {
-        CommonCodeStyleSettings.copyPublicFields(sourceIndentOptions, targetIndentOptions);
-      }
-    }
-    target.setSoftMargins(source.getSoftMargins());
-  }
-
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof CommonCodeStyleSettingsManager) {
@@ -251,7 +239,8 @@ public class CommonCodeStyleSettingsManager {
         CommonCodeStyleSettings otherSettings = other.getCommonSettings(language);
         if (!theseSettings.equals(otherSettings)) return false;
       }
+      return true;
     }
-    return true;
+    return false;
   }
 }

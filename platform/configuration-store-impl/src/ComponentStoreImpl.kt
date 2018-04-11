@@ -207,7 +207,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             info.lastSaved = nowInSeconds
           }
           else {
-            LOG.debug { "Skip $name: was already saved in last 4 minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
+            LOG.debug { "Skip $name: was already saved in last ${TimeUnit.SECONDS.toMinutes(NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT.toLong())} minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
             continue
           }
         }

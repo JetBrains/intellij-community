@@ -22,7 +22,7 @@ import com.siyeh.ig.LightInspectionTestCase;
  * @author Bas Leijdekkers
  */
 public class CollectionsMustHaveInitialCapacityInspectionTest extends LightInspectionTestCase {
-  private CollectionsMustHaveInitialCapacityInspection myInspection = new CollectionsMustHaveInitialCapacityInspection();
+  private final CollectionsMustHaveInitialCapacityInspection myInspection = new CollectionsMustHaveInitialCapacityInspection();
 
   @Override
   protected InspectionProfileEntry getInspection() {

@@ -29,7 +29,7 @@ import java.util.TreeMap;
 
 public class CoverageSuitesBundle {
   private final CoverageSuite[] mySuites;
-  private CoverageEngine myEngine;
+  private final CoverageEngine myEngine;
 
   private Set<Module> myProcessedModules;
 

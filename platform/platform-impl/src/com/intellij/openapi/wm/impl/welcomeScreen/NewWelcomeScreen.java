@@ -148,7 +148,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
   
   public static boolean isNewWelcomeScreen(@NotNull AnActionEvent e) {
-    return e.getPlace() == ActionPlaces.WELCOME_SCREEN && FlatWelcomeFrameProvider.isAvailable();
+    return e.getPlace() == ActionPlaces.WELCOME_SCREEN;
   }
 
   private static class WelcomeScreenGroup extends DefaultActionGroup {

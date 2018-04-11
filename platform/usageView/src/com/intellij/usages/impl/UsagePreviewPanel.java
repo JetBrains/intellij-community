@@ -238,7 +238,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
-  private static Key<Balloon> REPLACEMENT_BALLOON_KEY = Key.create("REPLACEMENT_BALLOON_KEY");
+  private static final Key<Balloon> REPLACEMENT_BALLOON_KEY = Key.create("REPLACEMENT_BALLOON_KEY");
 
   private static void showBalloon(Project project, Editor editor, TextRange range, @NotNull FindModel findModel) {
 
@@ -307,6 +307,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
     settings.setAnimatedScrolling(false);
+    settings.setAutoCodeFoldingEnabled(false);
   }
 
   @Override

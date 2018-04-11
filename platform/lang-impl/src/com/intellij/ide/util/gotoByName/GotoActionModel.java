@@ -47,6 +47,7 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -279,8 +280,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @NotNull
   public static AnActionEvent updateActionBeforeShow(@NotNull AnAction anAction, @NotNull DataContext dataContext) {
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, dataContext);
-    ActionUtil.performDumbAwareUpdate(anAction, event, false);
+    Presentation presentation = new Presentation();
+    presentation.copyFrom(anAction.getTemplatePresentation());
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, presentation, dataContext);
+    ActionUtil.performDumbAwareUpdate(false, anAction, event, false);
     return event;
   }
 
@@ -489,8 +492,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (compared != 0) return compared;
       Presentation myPresentation = myAction.getTemplatePresentation();
       Presentation oPresentation = o.getAction().getTemplatePresentation();
-      String myText = myPresentation.getText();
-      String oText = oPresentation.getText();
+      String myText = StringUtil.notNullize(myPresentation.getText());
+      String oText = StringUtil.notNullize(oPresentation.getText());
       int byText = StringUtil.compare(StringUtil.trimEnd(myText, "..."), StringUtil.trimEnd(oText, "..."), true);
       if (byText != 0) return byText;
       int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
@@ -503,20 +506,21 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     public boolean isAvailable() {
-      Presentation presentation = getPresentation();
-      return presentation != null && presentation.isEnabledAndVisible();
+      return getPresentation().isEnabledAndVisible();
     }
 
+    @NotNull
     public Presentation getPresentation() {
       if (myPresentation != null) return myPresentation;
       Runnable r = () -> myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
       if (ApplicationManager.getApplication().isDispatchThread()) {
         r.run();
-      } else {
+      }
+      else {
         myModel.updateOnEdt(r);
       }
 
-      return myPresentation;
+      return ObjectUtils.notNull(myPresentation, myAction.getTemplatePresentation());
     }
 
     private boolean hasPresentation() {
@@ -590,12 +594,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (value instanceof ActionWrapper) {
         ActionWrapper actionWithParentGroup = (ActionWrapper)value;
         AnAction anAction = actionWithParentGroup.getAction();
-        Presentation presentation = anAction.getTemplatePresentation();
         boolean toggle = anAction instanceof ToggleAction;
         String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
-        Presentation actionPresentation = actionWithParentGroup.getPresentation();
-        Color fg = defaultActionForeground(isSelected, actionPresentation);
-        boolean disabled = actionPresentation != null && (!actionPresentation.isEnabled() || !actionPresentation.isVisible());
+        Presentation presentation = actionWithParentGroup.getPresentation();
+        Color fg = defaultActionForeground(isSelected, presentation);
+        boolean disabled = !presentation.isEnabled() || !presentation.isVisible();
 
         if (disabled) {
           groupFg = UIUtil.getLabelDisabledForeground();

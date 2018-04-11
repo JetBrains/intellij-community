@@ -35,7 +35,7 @@ import javax.swing.*;
 public class AppEditorFontConfigurable implements SearchableConfigurable, NoScroll {
 
   public static final String ID = "editor.preferences.fonts.default";
-  private LazyInstance<AppEditorFontPanel> myFontPanelInstance = new LazyInstance<AppEditorFontPanel>() {
+  private final LazyInstance<AppEditorFontPanel> myFontPanelInstance = new LazyInstance<AppEditorFontPanel>() {
     @Override
     protected Class<AppEditorFontPanel> getInstanceClass() throws ClassNotFoundException {
       return AppEditorFontPanel.class;

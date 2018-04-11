@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -21,6 +22,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -426,6 +428,7 @@ public abstract class DialogWrapper {
   }
 
   public final void close(int exitCode) {
+    logCloseDialogEvent(exitCode);
     close(exitCode, exitCode != CANCEL_EXIT_CODE);
   }
 
@@ -634,7 +637,9 @@ public abstract class DialogWrapper {
       helpButton = createHelpButton(insets);
     }
 
-    if (helpButton != null || doNotAskCheckbox != null) {
+    JPanel eastPanel = createSouthAdditionalPanel();
+
+    if (helpButton != null || doNotAskCheckbox != null || eastPanel != null) {
       JPanel leftPanel = new JPanel(new BorderLayout());
 
       if (helpButton != null) leftPanel.add(helpButton, BorderLayout.WEST);
@@ -642,6 +647,11 @@ public abstract class DialogWrapper {
       if (doNotAskCheckbox != null) {
         doNotAskCheckbox.setBorder(JBUI.Borders.emptyRight(20));
         leftPanel.add(doNotAskCheckbox, BorderLayout.CENTER);
+      }
+
+
+      if(eastPanel != null) {
+        leftPanel.add(eastPanel, BorderLayout.EAST);
       }
 
       panel.add(leftPanel, BorderLayout.WEST);
@@ -666,13 +676,23 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
-    int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
+  protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
+    int hgap = JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 10 : 6);
     JPanel buttonsPanel = new NonOpaquePanel(new DialogWrapperButtonLayout(buttons.size(), hgap));
     for (final JButton button : buttons) {
       buttonsPanel.add(button);
     }
     return buttonsPanel;
+  }
+
+  /**
+   * Additional panel in the lower left part of dialog to the left from additional buttons
+   *
+   * @return panel to be shown or null if it's not required
+   */
+  @Nullable
+  protected JPanel createSouthAdditionalPanel() {
+    return null;
   }
 
   /**
@@ -1345,7 +1365,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  void startTrackingValidation() {
+  protected void startTrackingValidation() {
     SwingUtilities.invokeLater(() -> {
       if (!myValidationStarted && !myDisposed) {
         myValidationStarted = true;
@@ -1607,6 +1627,7 @@ public abstract class DialogWrapper {
    * @see #showAndGetOk()
    */
   public void show() {
+    logShowDialogEvent();
     invokeShow();
   }
 
@@ -1759,6 +1780,20 @@ public abstract class DialogWrapper {
       return wrapper != null && wrapper.getPeer().getCurrentModalEntities().length > 1;
     }
     return false;
+  }
+
+  private void logCloseDialogEvent(int exitCode) {
+    final String title = getTitle();
+    if (StringUtil.isNotEmpty(title)) {
+      FeatureUsageUiEvents.INSTANCE.logCloseDialog(title, exitCode);
+    }
+  }
+
+  private void logShowDialogEvent() {
+    final String title = getTitle();
+    if (StringUtil.isNotEmpty(title)) {
+      FeatureUsageUiEvents.INSTANCE.logShowDialog(title);
+    }
   }
 
   /**
@@ -1998,6 +2033,13 @@ public abstract class DialogWrapper {
     }
   }
 
+  /**
+   * Check if component is in error state validation-wise
+   */
+  protected boolean hasErrors(@NotNull JComponent component) {
+    return myInfo.stream().anyMatch(i -> component.equals(i.component));
+  }
+
   private void setErrorTipText(JComponent component, JLabel label, String text) {
     Insets insets = UIManager.getInsets("Balloon.error.textInsets");
     int oneLineWidth = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), text);
@@ -2072,7 +2114,7 @@ public abstract class DialogWrapper {
 
   private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
-    private List<String> errors = new ArrayList<>();
+    private final List<String> errors = new ArrayList<>();
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());

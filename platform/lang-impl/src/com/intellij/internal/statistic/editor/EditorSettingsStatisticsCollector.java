@@ -1,27 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
-import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
-import com.intellij.internal.statistic.CollectUsagesException;
-import com.intellij.internal.statistic.UsagesCollector;
-import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
@@ -35,13 +19,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
-class EditorSettingsStatisticsCollector extends UsagesCollector {
-  private static final GroupDescriptor GROUP_DESCRIPTOR = GroupDescriptor.create("Editor");
-
+class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
-  public GroupDescriptor getGroupId() {
-    return GROUP_DESCRIPTOR;
+  public String getGroupId() {
+    return "statistics.editor.settings.ide";
   }
 
   @NotNull
@@ -122,7 +104,9 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addBoolIfDiffers(set, cis, cisDefault, s -> s.HIGHLIGHT_IDENTIFIER_UNDER_CARET, "identifierUnderCaretHighlight");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY, "autoAddImports");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION, "completionHints");
-    
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_EXTERNAL_ANNOTATIONS_INLINE, "externalAnnotationsInline");
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_INFERRED_ANNOTATIONS_INLINE, "inferredAnnotationsInline");
+
     return set;
   }
 
@@ -144,16 +128,16 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     }
   }
 
-  public static class ProjectUsages extends AbstractProjectsUsagesCollector {
+  public static class ProjectUsages extends ProjectUsagesCollector {
     @NotNull
     @Override
-    public GroupDescriptor getGroupId() {
-      return GROUP_DESCRIPTOR;
+    public String getGroupId() {
+      return "statistics.editor.settings.project";
     }
 
     @NotNull
     @Override
-    public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
+    public Set<UsageDescriptor> getUsages(@NotNull Project project) {
       Set<UsageDescriptor> set = new HashSet<>();
       CodeInsightWorkspaceSettings ciws = CodeInsightWorkspaceSettings.getInstance(project);
       CodeInsightWorkspaceSettings ciwsDefault = new CodeInsightWorkspaceSettings();

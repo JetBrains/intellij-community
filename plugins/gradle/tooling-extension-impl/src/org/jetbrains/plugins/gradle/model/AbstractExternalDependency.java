@@ -35,7 +35,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
   @NotNull
   private final DefaultExternalDependencyId myId;
   private String myScope;
-  private Collection<ExternalDependency> myDependencies;
+  private final Collection<ExternalDependency> myDependencies;
   private String mySelectionReason;
   private int myClasspathOrder;
   private boolean myExported;

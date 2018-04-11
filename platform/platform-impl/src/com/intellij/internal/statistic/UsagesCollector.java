@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 import java.util.function.Function;
 
+@Deprecated // to be removed in 2018.2
 public abstract class UsagesCollector {
 
   public static final ExtensionPointName<UsagesCollector> EP_NAME = ExtensionPointName.create("com.intellij.statistics.usagesCollector");

@@ -37,6 +37,7 @@ public class FileEditorFixture extends EditorFixture {
 
   private final FileEditorManager myManager;
   private final IdeFrameFixture myFrame;
+  private final EditorTabsFixture tabs;
 
   public FileEditorFixture(Robot robot, IdeFrameFixture frame) {
     super(robot, null);
@@ -48,6 +49,7 @@ public class FileEditorFixture extends EditorFixture {
       }
     });
     myFrame = frame;
+    tabs = new EditorTabsFixture(robot, frame);
   }
 
   /**
@@ -330,4 +332,25 @@ public class FileEditorFixture extends EditorFixture {
       assertEquals(name, parent.getName());
     }
   }
+
+  /**
+   * Selects the editor with a given tab name.
+   */
+  public FileEditorFixture selectTab(@NotNull final String tabName) {
+    tabs.waitTab(tabName, 30).selectTab(tabName);
+    return this;
+  }
+
+  /**
+   * Closes the editor with a given tab name.
+   */
+  public FileEditorFixture closeTab(@NotNull final String tabName) {
+    tabs.closeTab(tabName);
+    return this;
+  }
+
+  public Boolean hasTab(@NotNull final String tabName) {
+    return tabs.hasTab(tabName);
+  }
+
 }

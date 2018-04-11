@@ -38,9 +38,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BuildTargetsState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetsState");
   private final BuildDataPaths myDataPaths;
-  private AtomicInteger myMaxTargetId = new AtomicInteger(0);
-  private ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<>(16, 0.75f, 1);
-  private JpsModel myModel;
+  private final AtomicInteger myMaxTargetId = new AtomicInteger(0);
+  private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final JpsModel myModel;
   private final BuildRootIndexImpl myBuildRootIndex;
 
   public BuildTargetsState(BuildDataPaths dataPaths, JpsModel model, BuildRootIndexImpl buildRootIndex) {

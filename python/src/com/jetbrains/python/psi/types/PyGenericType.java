@@ -35,7 +35,7 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
   @NotNull private final String myName;
   @Nullable private final PyType myBound;
   private boolean myIsDefinition = false;
-  private PyTargetExpression myTargetExpression;
+  private final PyTargetExpression myTargetExpression;
 
   public PyGenericType(@NotNull String name, @Nullable PyType bound) {
     this(name, bound, false);
@@ -130,12 +130,5 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
   @Override
   public PyGenericType toClass() {
     return myIsDefinition ? this : new PyGenericType(myName, myBound, true, myTargetExpression);
-  }
-
-  @Override
-  public void accept(@NotNull PyTypeVisitor visitor) {
-    if (visitor instanceof PyTypeVisitorExt) {
-      ((PyTypeVisitorExt)visitor).visitGenericType(this);
-    }
   }
 }

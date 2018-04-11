@@ -8,7 +8,7 @@ class Foo {
   @Contract(<warning descr="Method takes 2 parameters, while contract clause number 1 expects 1">"null -> _"</warning>)
   void wrongParameterCount(Object a, boolean b) {}
 
-  @Contract(pure=<warning descr="Pure methods must return something, void is not allowed as a return type">true</warning>)
+  @Contract(pure=true)
   void voidPureMethod() {}
 
   @Contract(<warning descr="Method returns void but the contract specifies null">"->null"</warning>)

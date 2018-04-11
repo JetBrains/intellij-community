@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -755,7 +756,7 @@ public class ResolveUtil {
 
     //search for getters
     for (PropertyKind kind : Arrays.asList(PropertyKind.GETTER, PropertyKind.BOOLEAN_GETTER)) {
-      PropertyProcessor propertyProcessor = new PropertyProcessor(thisType, methodName, kind, PsiType.EMPTY_ARRAY, place);
+      PropertyProcessor propertyProcessor = new PropertyProcessor(thisType, methodName, kind, () -> PsiType.EMPTY_ARRAY, place);
       processAllDeclarations(thisType, propertyProcessor, state, place);
       final List<GroovyResolveResult> candidates = propertyProcessor.getResults(); //can be only one candidate
       final List<GroovyResolveResult> applicable = new ArrayList<>();

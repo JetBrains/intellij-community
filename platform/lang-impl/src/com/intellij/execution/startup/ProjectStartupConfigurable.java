@@ -28,7 +28,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -180,7 +179,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   private void refreshDataUpdateSelection(RunnerAndConfigurationSettings settings) {
     if (myTable.isEmpty()) return;
     myModel.reValidateConfigurations(new Processor<RunnerAndConfigurationSettings>() {
-      private RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+      private final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
       @Override
       public boolean process(RunnerAndConfigurationSettings settings) {
         return runManager.getConfigurationById(settings.getUniqueID()) != null;
@@ -235,9 +234,9 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
                                                                               if (configuration != null) {
                                                                                 addConfiguration(configuration);
                                                                               }
-                                                                            }, ModalityState.any(), project.getDisposed());
+                                                                            }, project.getDisposed());
                                                                           }
-                                                                        }, ModalityState.any(), project.getDisposed()), null, EmptyRunnable.getInstance(), false);
+                                                                        }, project.getDisposed()), null, EmptyRunnable.getInstance(), false);
         showPopup(button, popup);
       }
 

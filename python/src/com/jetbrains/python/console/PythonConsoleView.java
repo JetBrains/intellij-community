@@ -34,9 +34,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -96,7 +98,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
-  private ActionCallback myInitialized = new ActionCallback();
+  private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
 
   /**
@@ -126,6 +128,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     if (isShowVars && communication instanceof PydevConsoleCommunication) {
       showVariables((PydevConsoleCommunication)communication);
     }
+  }
+
+  public void applySoftWrapping() {
+    // apply soft wrapping settings when console initialized
+    myInitialized.doWhenDone(() -> {
+      final boolean useSoftWraps = EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE);
+      getEditor().getSettings().setUseSoftWraps(useSoftWraps);
+      getConsoleEditor().getSettings().setUseSoftWraps(useSoftWraps);
+    });
   }
 
   @Nullable

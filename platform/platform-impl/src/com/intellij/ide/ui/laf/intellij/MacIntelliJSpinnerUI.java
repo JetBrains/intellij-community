@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -31,7 +32,7 @@ import java.awt.geom.Path2D;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
-  private static final Icon DEFAULT_ICON = EmptyIcon.create(MacIntelliJIconCache.getIcon("spinnerRight"));
+  private static final Icon DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("spinnerRight"));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -66,7 +67,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
       g2.fill(rect);
     }
 
-    Icon icon = MacIntelliJIconCache.getIcon("spinnerRight", false, false, c.isEnabled());
+    Icon icon = IconCache.getIcon("spinnerRight", false, false, c.isEnabled());
     icon.paintIcon(c, g, x, i.top);
   }
 

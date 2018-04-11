@@ -200,7 +200,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   }
 
   public static class ConvertNonFinalLocalToAtomicFix extends ConvertFieldToAtomicIntention implements HighPriorityAction {
-    private PsiElement myContext;
+    private final PsiElement myContext;
 
     public ConvertNonFinalLocalToAtomicFix(PsiElement context) {
       myContext = context;

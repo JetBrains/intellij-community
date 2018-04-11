@@ -24,7 +24,7 @@ import java.lang.reflect.Modifier;
 
 public class ClassSerializer {
   @NotNull
-  private String myInstanceName;
+  private final String myInstanceName;
   @NotNull
   private final Object myInstance;
 

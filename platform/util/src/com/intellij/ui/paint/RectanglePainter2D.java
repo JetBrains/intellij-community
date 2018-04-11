@@ -34,28 +34,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
      */
     @Override
     public void paint(@NotNull Graphics2D g, double x, double y, double width, double height) {
-      paint(g, x, y, width, height, null);
-    }
-
-    /**
-     * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
-     */
-    @Override
-    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, @Nullable Double arc) {
-      paint(g, x, y, width, height, arc, StrokeType.INSIDE, 1);
-    }
-
-    /**
-     * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
-     */
-    @Override
-    public void paint(@NotNull Graphics2D g,
-                      double x, double y, double width, double height,
-                      @Nullable Double arc,
-                      @NotNull StrokeType strokeType,
-                      double strokeWidth)
-    {
-      paint(g, x, y, width, height, arc, strokeType, strokeWidth, RenderingHints.VALUE_ANTIALIAS_ON);
+      paint(g, x, y, width, height, null, StrokeType.INSIDE, 1, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
     /**
@@ -70,6 +49,18 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
                       @NotNull Object valueAA)
     {
       paint(g, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), arc, strokeType, strokeWidth, valueAA);
+    }
+
+    /**
+     * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
+     */
+    @Override
+    public void paint(@NotNull Graphics2D g,
+                      double x, double y, double width, double height,
+                      @NotNull StrokeType strokeType,
+                      double strokeWidth)
+    {
+      paint(g, x, y, width, height, null, strokeType, strokeWidth, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
     /**
@@ -146,28 +137,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
      */
     @Override
     public void paint(@NotNull Graphics2D g, double x, double y, double width, double height) {
-      paint(g, x, y, width, height, null);
-    }
-
-    /**
-     * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
-     */
-    @Override
-    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, @Nullable Double arc) {
-      paint(g, x, y, width, height, arc, StrokeType.INSIDE, 1);
-    }
-
-    /**
-     * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
-     */
-    @Override
-    public void paint(@NotNull Graphics2D g,
-                      double x, double y, double width, double height,
-                      @Nullable Double arc,
-                      @NotNull StrokeType strokeType,
-                      double strokeWidth)
-    {
-      paint(g, x, y, width, height, arc, strokeType, strokeWidth, RenderingHints.VALUE_ANTIALIAS_ON);
+      paint(g, x, y, width, height, null, StrokeType.INSIDE, 1, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
     /**
@@ -182,6 +152,18 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
                       @NotNull Object valueAA)
     {
       paint(g, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), arc, strokeType, strokeWidth, valueAA);
+    }
+
+    /**
+     * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
+     */
+    @Override
+    public void paint(@NotNull Graphics2D g,
+                      double x, double y, double width, double height,
+                      @NotNull StrokeType strokeType,
+                      double strokeWidth)
+    {
+      paint(g, x, y, width, height, null, strokeType, strokeWidth, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
     /**

@@ -75,7 +75,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @NotNull
   private LocationSettingType myGradleHomeSettingType = LocationSettingType.UNKNOWN;
   private boolean myShowBalloonIfNecessary;
-  private ActionListener myActionListener;
+  private final ActionListener myActionListener;
 
 
   private boolean dropUseAutoImportBox;

@@ -67,7 +67,7 @@ public interface JavacRef {
   }
 
   class JavacClassImpl extends JavacRefBase implements JavacClass {
-    private boolean myAnonymous;
+    private final boolean myAnonymous;
 
     public JavacClassImpl(boolean anonymous, Set<Modifier> modifiers, String name) {
       super(name, modifiers);

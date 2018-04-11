@@ -27,8 +27,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class DownloadSelectedSourcesAndDocsAction extends MavenProjectsAction {
-  private boolean mySources;
-  private boolean myDocs;
+  private final boolean mySources;
+  private final boolean myDocs;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public DownloadSelectedSourcesAndDocsAction() {

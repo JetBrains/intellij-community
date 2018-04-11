@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CreateFileAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -20,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -244,17 +243,10 @@ public class PackageUtil {
 
         final PsiDirectory psiDirectory1 = psiDirectory;
         try {
-          psiDirectory = ActionRunner.runInsideWriteAction(new ActionRunner.InterruptibleRunnableWithResult<PsiDirectory>() {
-            public PsiDirectory run() throws Exception {
-              return psiDirectory1.createSubdirectory(name);
-            }
-          });
+          psiDirectory = WriteAction.compute(() -> psiDirectory1.createSubdirectory(name));
         }
         catch (IncorrectOperationException e) {
           throw e;
-        }
-        catch (IOException e) {
-          throw new IncorrectOperationException(e);
         }
         catch (Exception e) {
           LOG.error(e);

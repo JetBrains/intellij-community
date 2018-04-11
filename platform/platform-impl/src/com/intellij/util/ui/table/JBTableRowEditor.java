@@ -77,7 +77,7 @@ public abstract class JBTableRowEditor extends JPanel {
   }
 
   public class RowEditorChangeListener implements DocumentListener {
-    private int myColumn;
+    private final int myColumn;
 
     public RowEditorChangeListener(int column) {
       myColumn = column;

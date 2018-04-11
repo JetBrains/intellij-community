@@ -17,7 +17,7 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;

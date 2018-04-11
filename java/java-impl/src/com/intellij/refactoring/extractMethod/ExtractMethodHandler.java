@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -44,6 +45,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
@@ -171,7 +173,13 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
   private static boolean previewExtractMethod(@NotNull ExtractMethodProcessor processor) {
     processor.previewRefactoring();
-    new ExtractDuplicatesProcessor(processor).run();
+    boolean showToolWindow = Registry.is("extract.method.duplicates.tool.window");
+    if (showToolWindow) {
+      ExtractMethodPreviewManager.getInstance(processor.getProject()).showPreview(processor);
+    }
+    else {
+      new ExtractDuplicatesProcessor(processor).run();
+    }
     return true;
   }
 

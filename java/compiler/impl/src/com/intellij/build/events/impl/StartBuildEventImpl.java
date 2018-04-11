@@ -43,9 +43,9 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   private BuildProcessHandler myProcessHandler;
   private Consumer<ConsoleView> myAttachedConsoleConsumer;
   @NotNull
-  private List<AnAction> myRestartActions = new SmartList<>();
+  private final List<AnAction> myRestartActions = new SmartList<>();
   @NotNull
-  private List<Filter> myFilters = new SmartList<>();
+  private final List<Filter> myFilters = new SmartList<>();
   @Nullable
   private ExecutionEnvironment myExecutionEnvironment;
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.assignment;
 
 import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,7 @@ public class AssignmentToCatchBlockParameterInspectionBase extends BaseAssignmen
   }
 
   @Override
-  protected boolean isCorrectScope(PsiElement declarationScope) {
-    return declarationScope instanceof PsiCatchSection;
+  protected boolean isApplicable(PsiParameter parameter) {
+    return parameter.getDeclarationScope() instanceof PsiCatchSection;
   }
 }

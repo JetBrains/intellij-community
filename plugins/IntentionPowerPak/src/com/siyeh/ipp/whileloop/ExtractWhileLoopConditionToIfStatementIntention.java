@@ -19,6 +19,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
@@ -32,7 +33,8 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     WhileLoopPredicate predicate = new WhileLoopPredicate();
     return e -> predicate.satisfiedBy(e) &&
-                !(ExpressionUtils.computeConstantExpression(((PsiWhileStatement)e.getParent()).getCondition()) instanceof Boolean);
+                !(ExpressionUtils
+                    .isLiteral(PsiUtil.skipParenthesizedExprDown(((PsiWhileStatement)e.getParent()).getCondition()), Boolean.TRUE));
   }
 
   @Override

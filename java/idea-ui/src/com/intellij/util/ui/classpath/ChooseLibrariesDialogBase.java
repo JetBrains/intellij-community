@@ -322,7 +322,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
   private static class LibraryTableDescriptor extends LibrariesTreeNodeBase<LibraryTable> {
     private final int myWeight;
-    private boolean myAutoExpand;
+    private final boolean myAutoExpand;
 
     protected LibraryTableDescriptor(final Project project,
                                      final NodeDescriptor parentDescriptor,

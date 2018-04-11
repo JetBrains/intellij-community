@@ -35,7 +35,7 @@ public class RootsToWorkingCopies implements VcsListener {
   private final BackgroundTaskQueue myQueue;
   private final Project myProject;
   private final ZipperUpdater myZipperUpdater;
-  private Runnable myRechecker;
+  private final Runnable myRechecker;
   private final SvnVcs myVcs;
 
   public RootsToWorkingCopies(final SvnVcs vcs) {

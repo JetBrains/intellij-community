@@ -138,8 +138,14 @@ public class TargetElementUtil extends TargetElementUtilBase {
     else if (!isIdentifierPart(file, text, offset)) {
       correctedOffset--;
     }
-    if (correctedOffset < 0 || !isIdentifierPart(file, text, correctedOffset)) return offset;
-    return correctedOffset;
+    if (correctedOffset >= 0) {
+      char charAt = text.charAt(correctedOffset);
+      if (isIdentifierPart(file, text, correctedOffset) ||
+          charAt == '\'' || charAt == '"' || charAt == ')' || charAt == ']') {
+        return correctedOffset;
+      }
+    }
+    return offset;
   }
 
   private static boolean isIdentifierPart(@Nullable PsiFile file, CharSequence text, int offset) {

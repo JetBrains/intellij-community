@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
@@ -47,6 +48,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.Collections;
@@ -316,6 +318,12 @@ public class ScratchProjectViewPane extends ProjectViewPane {
                 //noinspection ConstantConditions
                 return getDirectoryChildrenImpl(getProject(), getValue(), getSettings(), getFilter());
               }
+
+              @Override
+              protected void updateImpl(PresentationData data) {
+                super.updateImpl(data);
+                customizePresentation(this, data);
+              }
             });
           }
           else if (element instanceof PsiFile) {
@@ -326,6 +334,12 @@ public class ScratchProjectViewPane extends ProjectViewPane {
                 Language language = value == null ? null : value.getLanguage();
                 LanguageFileType fileType = language == null ? null : language.getAssociatedFileType();
                 return fileType == null ? null : new ExtensionSortKey(fileType.getDefaultExtension());
+              }
+
+              @Override
+              protected void updateImpl(PresentationData data) {
+                super.updateImpl(data);
+                customizePresentation(this, data);
               }
             });
           }
@@ -339,5 +353,20 @@ public class ScratchProjectViewPane extends ProjectViewPane {
         return result;
       });
     }
+  }
+
+  private static void customizePresentation(@NotNull BasePsiNode node, @NotNull PresentationData data) {
+    VirtualFile file = ObjectUtils.notNull(node.getVirtualFile());
+    Project project = ObjectUtils.notNull(node.getProject());
+    AbstractTreeNode parent = node.getParent();
+    MyRootNode rootNode = parent instanceof MyRootNode ? (MyRootNode)parent :
+                          parent instanceof PsiDirectoryNode ? (MyRootNode)((PsiDirectoryNode)parent).getFilter() : null;
+    if (rootNode == null) return;
+    RootType rootType = rootNode.getRootType();
+    String name = rootType.substituteName(project, file);
+    if (name != null) data.setPresentableText(name);
+
+    Icon icon = rootType.substituteIcon(project, file);
+    if (icon != null) data.setIcon(icon);
   }
 }

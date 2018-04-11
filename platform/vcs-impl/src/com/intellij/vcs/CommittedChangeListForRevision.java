@@ -27,7 +27,7 @@ import java.util.Date;
 
 public class CommittedChangeListForRevision extends CommittedChangeListImpl implements VcsRevisionNumberAware {
 
-  @NotNull private VcsRevisionNumber myRevisionNumber;
+  @NotNull private final VcsRevisionNumber myRevisionNumber;
 
   public CommittedChangeListForRevision(@NotNull String subject,
                                         @NotNull String comment,

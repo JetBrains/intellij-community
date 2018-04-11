@@ -24,8 +24,8 @@ import static org.jetbrains.idea.svn.SvnUtil.SVN_ADMIN_DIR_NAME;
 
 public class UpgradeFormatDialog extends DialogWrapper  {
 
-  private ButtonGroup formatGroup = new ButtonGroup();
-  private List<JRadioButton> formatButtons = new ArrayList<>();
+  private final ButtonGroup formatGroup = new ButtonGroup();
+  private final List<JRadioButton> formatButtons = new ArrayList<>();
 
   private JBLoadingPanel myLoadingPanel;
 

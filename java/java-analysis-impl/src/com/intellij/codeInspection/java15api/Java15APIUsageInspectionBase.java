@@ -5,7 +5,10 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -53,7 +56,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
   private static final Set<String> ourIgnored16ClassesAPI = new THashSet<>(10);
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = ContainerUtil.newEnumMap(LanguageLevel.class);
 
-  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_1_9;
+  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_X;
 
   static {
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
@@ -62,6 +65,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_6, "1.7");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_7, "1.8");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_8, "1.9");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_1_9, "10");
 
     loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }

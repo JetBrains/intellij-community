@@ -44,7 +44,7 @@ public class OnePixelDivider extends Divider {
   });
 
   private boolean myVertical;
-  private Splittable mySplitter;
+  private final Splittable mySplitter;
   private boolean myResizeEnabled;
   private boolean mySwitchOrientationEnabled;
   protected Point myPoint;

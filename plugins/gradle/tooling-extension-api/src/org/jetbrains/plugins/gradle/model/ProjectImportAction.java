@@ -146,7 +146,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   public static class AllModels extends ModelsHolder<IdeaProject, GradleProject> {
 
-    private List<IdeaProject> includedBuilds = new ArrayList<IdeaProject>();
+    private final List<IdeaProject> includedBuilds = new ArrayList<IdeaProject>();
     private boolean isGradleProjectDirSupported;
 
     public AllModels(@NotNull IdeaProject ideaProject) {

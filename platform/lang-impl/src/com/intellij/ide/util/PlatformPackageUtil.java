@@ -17,6 +17,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -151,18 +152,10 @@ public class PlatformPackageUtil {
 
         final PsiDirectory psiDirectory_ = psiDirectory;
         try {
-          psiDirectory = ActionRunner.runInsideWriteAction(new ActionRunner.InterruptibleRunnableWithResult<PsiDirectory>() {
-            @Override
-            public PsiDirectory run() throws Exception {
-              return psiDirectory_ != null ? psiDirectory_.createSubdirectory(name) : null;
-            }
-          });
+          psiDirectory = WriteAction.compute(() -> psiDirectory_ != null ? psiDirectory_.createSubdirectory(name) : null);
         }
         catch (IncorrectOperationException e) {
           throw e;
-        }
-        catch (IOException e) {
-          throw new IncorrectOperationException(e);
         }
         catch (Exception e) {
           LOG.error(e);

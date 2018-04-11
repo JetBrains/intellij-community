@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ProjectTopics;
@@ -95,7 +81,6 @@ public class ModuleVcsDetector {
   }
 
   private void autoDetectVcsMappings(final boolean tryMapPieces) {
-    Set<AbstractVcs> usedVcses = new HashSet<>();
     Map<VirtualFile, AbstractVcs> vcsMap = new HashMap<>();
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     for(Module module: moduleManager.getModules()) {
@@ -105,30 +90,33 @@ public class ModuleVcsDetector {
         if (contentRootVcs != null) {
           vcsMap.put(file, contentRootVcs);
         }
-        usedVcses.add(contentRootVcs);
       }
     }
-    if (usedVcses.size() == 1) {
-      // todo I doubt this is correct, see IDEA-50527
-      final AbstractVcs[] abstractVcses = usedVcses.toArray(new AbstractVcs[1]);
-      final Module[] modules = moduleManager.getModules();
-      final Set<String> contentRoots = new HashSet<>();
-      for (Module module : modules) {
-        final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-        for (VirtualFile root : roots) {
-          contentRoots.add(root.getPath());
+    final VirtualFile projectBaseDir = myProject.getBaseDir();
+    // this case is only for project <-> one vcs.
+    // Additional check for the case when just content root should be mapped, not all project
+    if (vcsMap.size() == 1) {
+      final VirtualFile folder = vcsMap.keySet().iterator().next();
+      final AbstractVcs vcs = vcsMap.get(folder);
+      if (vcs != null && projectBaseDir != null && projectBaseDir.equals(folder)) {
+        // here we put the project <-> vcs mapping, and removing all inside-project-roots mappings
+        // (i.e. keeping all other mappings)
+        final Module[] modules = moduleManager.getModules();
+        final Set<String> contentRoots = new HashSet<>();
+        for (Module module : modules) {
+          final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+          for (VirtualFile root : roots) {
+            contentRoots.add(root.getPath());
+          }
         }
-      }
-
-      if (abstractVcses [0] != null) {
         final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<>(myVcsManager.getDirectoryMappings());
-        for (Iterator<VcsDirectoryMapping> iterator = vcsDirectoryMappings.iterator(); iterator.hasNext();) {
+        for (Iterator<VcsDirectoryMapping> iterator = vcsDirectoryMappings.iterator(); iterator.hasNext(); ) {
           final VcsDirectoryMapping mapping = iterator.next();
-          if (! contentRoots.contains(mapping.getDirectory())) {
+          if (!contentRoots.contains(mapping.getDirectory())) {
             iterator.remove();
           }
         }
-        myVcsManager.setAutoDirectoryMapping("", abstractVcses [0].getName());
+        myVcsManager.setAutoDirectoryMapping("", vcs.getName());
         for (VcsDirectoryMapping mapping : vcsDirectoryMappings) {
           myVcsManager.removeDirectoryMapping(mapping);
         }

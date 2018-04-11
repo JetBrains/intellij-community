@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.dashboard.RunDashboardNode;
 import com.intellij.execution.dashboard.RunDashboardAnimator;
+import com.intellij.execution.dashboard.RunDashboardNode;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.Disposable;
@@ -27,7 +27,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Konstantin Aleev
@@ -42,7 +44,7 @@ public class RunDashboardAnimatorImpl implements RunDashboardAnimator, Runnable,
   private long myLastInvocationTime = -1;
 
   private Alarm myAlarm;
-  private Set<RunDashboardNode> myNodes = new HashSet<>();
+  private final Set<RunDashboardNode> myNodes = new HashSet<>();
   private AbstractTreeBuilder myTreeBuilder;
 
   public RunDashboardAnimatorImpl(AbstractTreeBuilder builder) {

@@ -217,7 +217,8 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   public boolean hasProjectImports() {
     ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(getStartElement().getProject());
     for (ImportCandidateHolder anImport : myImports) {
-      VirtualFile file = anImport.getFile().getVirtualFile();
+      PsiFileSystemItem importFile = anImport.getFile();
+      VirtualFile file = importFile != null ? importFile.getVirtualFile() : null;
       if (file != null && fileIndex.isInContent(file)) {
         return true;
       }

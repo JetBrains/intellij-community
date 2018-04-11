@@ -132,14 +132,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final String myTitle;
   @Nullable private final String myWorkingDir;
   private final Consumer<String> myRerunAction;
-  @NotNull private Sdk mySdk;
+  @NotNull private final Sdk mySdk;
   protected int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
   protected PythonConsoleExecuteActionHandler myConsoleExecuteActionHandler;
-  private List<ConsoleListener> myConsoleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ConsoleListener> myConsoleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final PyConsoleType myConsoleType;
-  @NotNull private Map<String, String> myEnvironmentVariables;
+  @NotNull private final Map<String, String> myEnvironmentVariables;
   private String myCommandLine;
   @NotNull private final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
   private String[] myStatementsToExecute = ArrayUtil.EMPTY_STRING_ARRAY;
@@ -848,7 +848,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
   private static class RestartAction extends AnAction {
-    private PydevConsoleRunnerImpl myConsoleRunner;
+    private final PydevConsoleRunnerImpl myConsoleRunner;
 
 
     private RestartAction(PydevConsoleRunnerImpl runner) {
@@ -1012,9 +1012,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   public static class PythonConsoleRunParams implements PythonRunParams {
     private final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
-    private String myWorkingDir;
-    private Sdk mySdk;
-    private Map<String, String> myEnvironmentVariables;
+    private final String myWorkingDir;
+    private final Sdk mySdk;
+    private final Map<String, String> myEnvironmentVariables;
 
     public PythonConsoleRunParams(@NotNull PyConsoleOptions.PyConsoleSettings consoleSettings,
                                   @Nullable String workingDir,

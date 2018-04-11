@@ -44,7 +44,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
 
   @Nullable private Project myProject;
 
-  @NotNull private S myInitialSettings;
+  @NotNull private final S myInitialSettings;
 
   @Nullable
   private JBCheckBox myUseAutoImportBox;
@@ -53,7 +53,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   private JBRadioButton myUseQualifiedModuleNamesRadioButton;
   private JBRadioButton myUseModuleGroupsRadioButton;
   @NotNull
-  private ExternalSystemSettingsControlCustomizer myCustomizer;
+  private final ExternalSystemSettingsControlCustomizer myCustomizer;
 
   protected AbstractExternalProjectSettingsControl(@NotNull S initialSettings) {
     this(null, initialSettings, null);

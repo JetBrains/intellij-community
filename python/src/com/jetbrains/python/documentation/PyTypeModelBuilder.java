@@ -61,7 +61,7 @@ public class PyTypeModelBuilder {
   }
 
   static class OneOf extends TypeModel {
-    private Collection<TypeModel> oneOfTypes;
+    private final Collection<TypeModel> oneOfTypes;
 
     private OneOf(Collection<TypeModel> oneOfTypes) {
       this.oneOfTypes = oneOfTypes;
@@ -74,8 +74,8 @@ public class PyTypeModelBuilder {
   }
 
   static class CollectionOf extends TypeModel {
-    private String collectionName;
-    private List<TypeModel> elementTypes;
+    private final String collectionName;
+    private final List<TypeModel> elementTypes;
 
     private CollectionOf(String collectionName, List<TypeModel> elementTypes) {
       this.collectionName = collectionName;
@@ -94,7 +94,7 @@ public class PyTypeModelBuilder {
     private static final NamedType ANY = new NamedType(PyNames.UNKNOWN_TYPE);
 
     @Nullable
-    private String name;
+    private final String name;
 
     private NamedType(@Nullable String name) {
       this.name = name;
@@ -253,21 +253,12 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyCollectionType) {
       final String name = type.getName();
       final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes();
-      boolean nullOnlyTypes = true;
-      for (PyType elementType : elementTypes) {
-        if (elementType != null) {
-          nullOnlyTypes = false;
-          break;
-        }
-      }
       final List<TypeModel> elementModels = new ArrayList<>();
-      if (!nullOnlyTypes) {
-        for (PyType elementType : elementTypes) {
-          elementModels.add(build(elementType, true));
-        }
-        if (!elementModels.isEmpty()) {
-          result = new CollectionOf(name, elementModels);
-        }
+      for (PyType elementType : elementTypes) {
+        elementModels.add(build(elementType, true));
+      }
+      if (!elementModels.isEmpty()) {
+        result = new CollectionOf(name, elementModels);
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
@@ -419,11 +410,16 @@ public class PyTypeModelBuilder {
         add("Any");
       }
     }
+
+    @Override
+    public void collectionOf(CollectionOf collectionOf) {
+      typingGenericFormat(collectionOf);
+    }
   }
 
   private static class TypeToBodyWithLinksVisitor extends TypeNameVisitor {
-    private ChainIterable<String> myBody;
-    private PsiElement myAnchor;
+    private final ChainIterable<String> myBody;
+    private final PsiElement myAnchor;
 
     public TypeToBodyWithLinksVisitor(ChainIterable<String> body, PsiElement anchor) {
       myBody = body;
@@ -503,13 +499,24 @@ public class PyTypeModelBuilder {
         add("...");
         return;
       }
-      final String name = collectionOf.collectionName;
-      final String typingName = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(name);
-      addType(typingName != null ? typingName : name);
-      add("[");
-      processList(collectionOf.elementTypes);
-      add("]");
+      final boolean allTypeParamsAreAny = ContainerUtil.and(collectionOf.elementTypes, t -> t == NamedType.ANY);
+      if (allTypeParamsAreAny) {
+        name(collectionOf.collectionName);
+      }
+      else {
+        typingGenericFormat(collectionOf);
+      }
       myDepth--;
+    }
+
+    protected void typingGenericFormat(CollectionOf collectionOf) {
+      final String name = collectionOf.collectionName;
+      addType(PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.getOrDefault(name, name));
+      if (!collectionOf.elementTypes.isEmpty()) {
+        add("[");
+        processList(collectionOf.elementTypes);
+        add("]");
+      }
     }
 
     protected abstract void addType(String name);
@@ -576,12 +583,15 @@ public class PyTypeModelBuilder {
 
     @Override
     public void tuple(TupleType type) {
-      add("Tuple[");
-      processList(type.members);
-      if (type.homogeneous) {
-        add(", ...");
+      add("Tuple");
+      if (!type.members.isEmpty()) {
+        add("[");
+        processList(type.members);
+        if (type.homogeneous) {
+          add(", ...");
+        }
+        add("]");
       }
-      add("]");
     }
 
     @Override

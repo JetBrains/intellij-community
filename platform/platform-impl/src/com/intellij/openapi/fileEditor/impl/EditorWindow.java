@@ -30,6 +30,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
@@ -53,6 +54,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileTabBackgroundColor;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 /**
@@ -461,7 +463,7 @@ public class EditorWindow {
   void updateFileBackgroundColor(@NotNull VirtualFile file) {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
-      final Color color = EditorTabbedContainer.calcTabColor(getManager().getProject(), file);
+      final Color color = getFileTabBackgroundColor(getManager().getProject(), file);
       setBackgroundColorAt(index, color);
     }
   }
@@ -896,7 +898,7 @@ public class EditorWindow {
   void updateFileName(VirtualFile file) {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
-      setTitleAt(index, EditorTabbedContainer.calcTabTitle(getManager().getProject(), file));
+      setTitleAt(index, VfsPresentationUtil.getPresentableNameForUI(getManager().getProject(), file));
       setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips()
                               ? getManager().getFileTooltipText(file)
                               : null);

@@ -45,9 +45,9 @@ import java.awt.*;
  * For instance, a < b and b < c  -->  a < b < c
  */
 public class PyChainedComparisonsInspection extends PyInspection {
-  private static String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";
+  private static final String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";
   public boolean ignoreConstantInTheMiddle = false;
-  private static String ourIgnoreConstantOptionText = "Ignore statements with a constant in the middle";
+  private static final String ourIgnoreConstantOptionText = "Ignore statements with a constant in the middle";
 
   @Nls
   @NotNull

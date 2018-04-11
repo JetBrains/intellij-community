@@ -17,8 +17,10 @@ package org.jetbrains.git4idea.ssh;
 
 import com.trilead.ssh2.KnownHosts;
 import git4idea.commands.GitSSHGUIHandler;
+import net.i2p.crypto.eddsa.EdDSASecurityProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.UUID;
 import java.util.Vector;
@@ -35,6 +37,8 @@ public class GitXmlRpcSshService extends GitXmlRpcHandlerService<GitSSHGUIHandle
   @Override
   protected void customizeScriptGenerator(@NotNull ScriptGenerator generator) {
     generator.addClasses(KnownHosts.class);
+    generator.addClasses(EdDSASecurityProvider.class);
+    generator.addClasses(BCrypt.class);
     generator.addResource(SSHMainBundle.class, "/org/jetbrains/git4idea/ssh/SSHMainBundle.properties");
   }
 

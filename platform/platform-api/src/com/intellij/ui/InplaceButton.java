@@ -35,8 +35,8 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   private boolean myPainting = true;
   private boolean myActive = true;
 
-  private BaseButtonBehavior myBehavior;
-  private ActionListener myListener;
+  private final BaseButtonBehavior myBehavior;
+  private final ActionListener myListener;
 
   private Icon myIcon;
   private CenteredIcon myRegular;

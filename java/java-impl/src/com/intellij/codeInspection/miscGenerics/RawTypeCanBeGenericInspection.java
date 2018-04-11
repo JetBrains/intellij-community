@@ -72,7 +72,7 @@ public class RawTypeCanBeGenericInspection extends AbstractBaseJavaLocalInspecti
   }
 
   private static class MyLocalQuickFix implements LocalQuickFix {
-    private String myName;
+    private final String myName;
 
     public MyLocalQuickFix(@NotNull String name) {
       myName = name;

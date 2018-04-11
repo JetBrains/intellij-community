@@ -49,8 +49,8 @@ public class GenericPatchApplier {
   private final ArrayList<SplitHunk> myNotBound;
   private final ArrayList<SplitHunk> myNotExact;
   private boolean mySuppressNewLineInEnd;
-  @NotNull private List<AppliedTextPatch.AppliedSplitPatchHunk> myAppliedInfo;
-  private static IntPair EMPTY_OFFSET = new IntPair(0, 0);
+  @NotNull private final List<AppliedTextPatch.AppliedSplitPatchHunk> myAppliedInfo;
+  private static final IntPair EMPTY_OFFSET = new IntPair(0, 0);
 
   private static void debug(final String s) {
     if (LOG.isDebugEnabled()) {
@@ -624,11 +624,11 @@ public class GenericPatchApplier {
   }
 
   private static class Point {
-    private int myDistance;
-    private int myContextDistance;
-    private int myCommon;
+    private final int myDistance;
+    private final int myContextDistance;
+    private final int myCommon;
     private final boolean myUsesAlreadyApplied;
-    private TextRange myInOldDocument;
+    private final TextRange myInOldDocument;
 
     private Point(int distance, TextRange inOldDocument, boolean usesAlreadyApplied, int contextDistance, int common) {
       myDistance = distance;
@@ -662,7 +662,7 @@ public class GenericPatchApplier {
     private int myDistance;
     // in the end, will be [excluding] end of changing interval
     private int myIdx;
-    private int myStartIdx;
+    private final int myStartIdx;
     private final boolean myForward;
     private boolean myUsesAlreadyApplied;
 
@@ -938,12 +938,12 @@ public class GenericPatchApplier {
 
   // will not find consider fragments that intersect
   private class FragmentMatcher {
-    private int myIdx;
+    private final int myIdx;
     private int myOffsetIdxInHunk;
     // if we set index in hunk != 0, then we will check only one side
     private Boolean myBeforeSide;
     private boolean myIsInBefore;
-    private int myIdxInHunk;
+    private final int myIdxInHunk;
     private final BeforeAfter<List<String>> myBeforeAfter;
 
     private FragmentMatcher(int idx, BeforeAfter<List<String>> beforeAfter) {

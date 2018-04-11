@@ -48,7 +48,10 @@ public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
       }
     }
     else if (element instanceof YAMLScalar
-             || element instanceof YAMLKeyValue && ((YAMLKeyValue)element).getValue() instanceof YAMLCompoundValue) {
+             ||
+             element instanceof YAMLKeyValue && ((YAMLKeyValue)element).getValue() instanceof YAMLCompoundValue
+             ||
+             element instanceof YAMLSequenceItem && ((YAMLSequenceItem)element).getValue() instanceof YAMLCompoundValue) {
       descriptors.add(new FoldingDescriptor(element, nodeTextRange));
     }
 
@@ -94,6 +97,10 @@ public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
       return normalizePlaceHolderText(((YAMLKeyValue)psiElement).getKeyText())
              + ": "
              + getPlaceholderText(((YAMLKeyValue)psiElement).getValue());
+    }
+    else if (psiElement instanceof YAMLSequenceItem) {
+      return "- "
+             + getPlaceholderText(((YAMLSequenceItem)psiElement).getValue());
     }
     return "...";
   }

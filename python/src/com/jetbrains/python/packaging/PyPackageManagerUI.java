@@ -48,9 +48,9 @@ import java.util.*;
 public class PyPackageManagerUI {
   @NotNull private static final Logger LOG = Logger.getInstance(PyPackageManagerUI.class);
 
-  @Nullable private Listener myListener;
-  @NotNull private Project myProject;
-  @NotNull private Sdk mySdk;
+  @Nullable private final Listener myListener;
+  @NotNull private final Project myProject;
+  @NotNull private final Sdk mySdk;
 
   public interface Listener {
     void started();

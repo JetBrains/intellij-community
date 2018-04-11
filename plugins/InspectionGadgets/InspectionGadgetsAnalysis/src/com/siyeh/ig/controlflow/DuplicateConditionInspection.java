@@ -67,7 +67,7 @@ public class DuplicateConditionInspection extends BaseInspection {
   }
 
   private class DuplicateConditionVisitor extends BaseInspectionVisitor {
-    private Set<PsiIfStatement> myAnalyzedStatements = new HashSet<>();
+    private final Set<PsiIfStatement> myAnalyzedStatements = new HashSet<>();
 
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {

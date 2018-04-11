@@ -27,7 +27,7 @@ public class AlignmentCyclesDetector {
   private LeafBlockWrapper myOffsetResponsibleBlock;
   private int myBeforeTotalSpaces;
   
-  private Map<List<LeafBlockWrapper>, Set<Pair<Integer, Integer>>> map = ContainerUtil.newHashMap();
+  private final Map<List<LeafBlockWrapper>, Set<Pair<Integer, Integer>>> map = ContainerUtil.newHashMap();
 
   public AlignmentCyclesDetector(int totalAlignmentsCount) {
     myTotalAlignmentsCount = totalAlignmentsCount;

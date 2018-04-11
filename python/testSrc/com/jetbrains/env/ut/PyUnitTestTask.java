@@ -75,7 +75,7 @@ import java.util.List;
 public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   protected ProcessHandler myProcessHandler;
-  private boolean shouldPrintOutput = false;
+  private final boolean shouldPrintOutput = false;
   /**
    * Test root node
    */

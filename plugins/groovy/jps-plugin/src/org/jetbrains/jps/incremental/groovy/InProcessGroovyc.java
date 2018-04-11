@@ -80,7 +80,7 @@ class InProcessGroovyc implements GroovycFlavor {
 
     final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
     if (loader == null) {
-      parser.addCompilerMessage(parser.reportNoGroovy());
+      parser.addCompilerMessage(parser.reportNoGroovy(null));
       return null;
     }
 

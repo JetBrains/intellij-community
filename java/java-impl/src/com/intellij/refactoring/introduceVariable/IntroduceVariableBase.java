@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -266,7 +252,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (text.charAt(correctedOffset) == ';') {//initially caret on the end of line
         correctedOffset--;
       }
-      if (correctedOffset < 0 || text.charAt(correctedOffset) != ')') {
+      if (correctedOffset < 0 || text.charAt(correctedOffset) != ')' && text.charAt(correctedOffset) != '.') {
         correctedOffset = offset;
       }
     }
@@ -520,8 +506,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
   private static PsiExpression createArrayCreationExpression(String text, int startOffset, int endOffset, PsiCallExpression parent) {
     if (text == null || parent == null) return null;
-    final String[] varargsExpressions = text.split("s*,s*");
-    if (varargsExpressions.length > 1) {
+    if (text.contains(",")) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parent.getProject());
       final JavaResolveResult resolveResult = parent.resolveMethodGenerics();
       final PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
@@ -542,13 +527,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       while (startElement != null && startElement.getParent() != parent.getArgumentList()) {
         startElement = startElement.getParent();
       }
-      if (startElement == null || startOffset > startElement.getTextOffset()) return null;
+      if (!(startElement instanceof PsiExpression) || startOffset > startElement.getTextOffset()) return null;
 
       PsiElement endElement = containingFile.findElementAt(endOffset - 1);
       while (endElement != null && endElement.getParent() != parent.getArgumentList()) {
         endElement = endElement.getParent();
       }
-      if (endElement == null || endOffset < endElement.getTextRange().getEndOffset()) return null;
+      if (!(endElement instanceof PsiExpression) || endOffset < endElement.getTextRange().getEndOffset()) return null;
 
       final PsiType componentType = TypeConversionUtil.erasure(psiSubstitutor.substitute(psiType.getComponentType()));
       try {

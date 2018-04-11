@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.IntObjectCache;
 import junit.framework.TestCase;
@@ -28,14 +29,6 @@ import java.util.*;
 public class StringEnumeratorTest extends TestCase {
   private static final String COLLISION_1 = "";
   private static final String COLLISION_2 = "\u0000";
-  private static final String UTF_1 = "\ue534";
-  private static final String UTF_2 =
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
   private PersistentStringEnumerator myEnumerator;
   private File myFile;
@@ -93,14 +86,14 @@ public class StringEnumeratorTest extends TestCase {
     int id1 = myEnumerator.enumerate(COLLISION_1);
     
     assertEquals(id1, myEnumerator.tryEnumerate(COLLISION_1));
-    assertEquals(PersistentEnumerator.NULL_ID, myEnumerator.tryEnumerate(COLLISION_2));
+    assertEquals(PersistentEnumeratorBase.NULL_ID, myEnumerator.tryEnumerate(COLLISION_2));
     
     int id2 = myEnumerator.enumerate(COLLISION_2);
     assertFalse(id1 == id2);
 
     assertEquals(id1, myEnumerator.tryEnumerate(COLLISION_1));
     assertEquals(id2, myEnumerator.tryEnumerate(COLLISION_2));
-    assertEquals(PersistentEnumerator.NULL_ID, myEnumerator.tryEnumerate("some string"));
+    assertEquals(PersistentEnumeratorBase.NULL_ID, myEnumerator.tryEnumerate("some string"));
     
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
@@ -109,6 +102,8 @@ public class StringEnumeratorTest extends TestCase {
 
 
   public void testUTFString() throws Exception {
+    final String UTF_1 = "\ue534";
+    final String UTF_2 = StringUtil.repeatSymbol('a', 624);
     int id1 = myEnumerator.enumerate(UTF_1);
     int id2 = myEnumerator.enumerate(UTF_2);
     assertFalse(id1 == id2);
@@ -163,7 +158,7 @@ public class StringEnumeratorTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator.enumerate", 500, () -> {
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator.enumerate", 600, () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         final String string = createRandomString();

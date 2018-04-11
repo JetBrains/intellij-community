@@ -26,6 +26,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,9 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final String DEFAULT_GROUP_ID = null;
 
   public interface Builder {
+    @Contract(pure = true)
     @NotNull Builder withName(@Nullable String name);
+    @Contract(pure = true)
     @NotNull Builder withGroupId(@Nullable String groupId);
 
     <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E;
@@ -52,7 +55,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     private String myCommandName = DEFAULT_COMMAND_NAME;
     private String myGroupId = DEFAULT_GROUP_ID;
 
-    private BuilderImpl(Project project, PsiFile... files) {
+    private BuilderImpl(Project project, @NotNull PsiFile... files) {
       myProject = project;
       myFiles = files;
     }
@@ -72,7 +75,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
 
     @Override
-    public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) throws E {
+    public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) {
       new WriteCommandAction(myProject, myCommandName, myGroupId, myFiles) {
         @Override
         protected void run(@NotNull Result result) throws Throwable {
@@ -82,7 +85,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
 
     @Override
-    public <R, E extends Throwable> R compute(@NotNull final ThrowableComputable<R, E> action) throws E {
+    public <R, E extends Throwable> R compute(@NotNull final ThrowableComputable<R, E> action) {
       return new WriteCommandAction<R>(myProject, myCommandName, myGroupId, myFiles) {
         @Override
         protected void run(@NotNull Result<R> result) throws Throwable {
@@ -93,11 +96,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   @NotNull
+  @Contract(pure = true)
   public static Builder writeCommandAction(Project project) {
     return new BuilderImpl(project);
   }
 
   @NotNull
+  @Contract(pure = true)
   public static Builder writeCommandAction(@NotNull PsiFile first, @NotNull PsiFile... others) {
     return new BuilderImpl(first.getProject(), ArrayUtil.prepend(first, others));
   }
@@ -107,20 +112,19 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private final Project myProject;
   private final PsiFile[] myPsiFiles;
 
-  protected WriteCommandAction(@Nullable Project project, /*@NotNull*/ PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, @NotNull PsiFile... files) {
     this(project, DEFAULT_COMMAND_NAME, files);
   }
 
-  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, /*@NotNull*/ PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @NotNull PsiFile... files) {
     this(project, commandName, DEFAULT_GROUP_ID, files);
   }
 
-  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @Nullable String groupID, /*@NotNull*/ PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @Nullable String groupID, @NotNull PsiFile... files) {
     myCommandName = commandName;
     myGroupID = groupID;
     myProject = project;
-    if (files == null) LOG.warn("'files' parameter must not be null", new Throwable());
-    myPsiFiles = files == null || files.length == 0 ? PsiFile.EMPTY_ARRAY : files;
+    myPsiFiles = files.length == 0 ? PsiFile.EMPTY_ARRAY : files;
   }
 
   public final Project getProject() {
@@ -248,7 +252,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
                                            @NotNull PsiFile... files) {
     new Simple(project, commandName, groupID, files) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         runnable.run();
       }
     }.execute();
@@ -258,7 +262,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public static <T> T runWriteCommandAction(Project project, @NotNull final Computable<T> computable) {
     return new WriteCommandAction<T>(project) {
       @Override
-      protected void run(@NotNull Result<T> result) throws Throwable {
+      protected void run(@NotNull Result<T> result) {
         result.setResult(computable.compute());
       }
     }.execute().getResultObject();

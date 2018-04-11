@@ -39,7 +39,7 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
   private long myLastInvocationTime = -1;
 
   private Alarm myAlarm;
-  private List<ExecutionNode> myNodes = new SmartList<>();
+  private final List<ExecutionNode> myNodes = new SmartList<>();
   private BuildTreeConsoleView myTreeView;
 
   public ExecutionNodeProgressAnimator(BuildTreeConsoleView treeConsoleView) {

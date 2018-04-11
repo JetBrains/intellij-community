@@ -2,6 +2,7 @@ package com.jetbrains.python.fixtures;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.PyInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,12 @@ public abstract class PyInspectionTestCase extends PyTestCase {
    */
   protected void doTest() {
     final PsiFile currentFile = myFixture.configureByFile(getTestFilePath());
+    configureInspection();
+    assertSdkRootsNotParsed(currentFile);
+  }
+
+  protected void doTestByText(@NotNull String text) {
+    final PsiFile currentFile = myFixture.configureByText(PythonFileType.INSTANCE, text);
     configureInspection();
     assertSdkRootsNotParsed(currentFile);
   }

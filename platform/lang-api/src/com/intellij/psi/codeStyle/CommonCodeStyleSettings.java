@@ -62,7 +62,7 @@ public class CommonCodeStyleSettings {
   private final FileType myFileType;
   private boolean             myForceArrangeMenuAvailable;
 
-  private SoftMargins mySoftMargins = new SoftMargins();
+  private final SoftMargins mySoftMargins = new SoftMargins();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 
@@ -141,6 +141,17 @@ public class CommonCodeStyleSettings {
   static void copyPublicFields(Object from, Object to) {
     assert from != to;
     ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
+  }
+
+  public void copyFrom(@NotNull CommonCodeStyleSettings source) {
+    copyPublicFields(source, this);
+    if (myIndentOptions != null) {
+      CommonCodeStyleSettings.IndentOptions sourceIndentOptions = source.getIndentOptions();
+      if (sourceIndentOptions != null) {
+        myIndentOptions.copyFrom(sourceIndentOptions);
+      }
+    }
+    setSoftMargins(source.getSoftMargins());
   }
 
   @Nullable

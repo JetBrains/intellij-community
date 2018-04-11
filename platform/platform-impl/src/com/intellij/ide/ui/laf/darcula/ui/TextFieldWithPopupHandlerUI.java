@@ -64,6 +64,15 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private Object variant;
   private int cursor;
 
+  @Deprecated
+  protected JTextField myTextField;
+
+  public TextFieldWithPopupHandlerUI() {}
+
+  @Deprecated
+  public TextFieldWithPopupHandlerUI(JTextField textField) {
+    myTextField = textField;
+  }
   /**
    * @param insets a border insets without a space for icons
    * @see javax.swing.border.Border#getBorderInsets

@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.bw
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.lw
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getDisabledTextColor
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getTextColor
+import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI.getArrowButtonPreferredSize
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.scale
@@ -61,7 +62,7 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
   override fun configureArrowButton() = super.configureArrowButton().also { arrowButton.isOpaque = false }
   override fun unconfigureArrowButton() = super.unconfigureArrowButton().also { arrowButton.isOpaque = true }
 
-  override val arrowButtonPreferredSize get() = Dimension(scale(27), optionButton.preferredSize.height)
+  override val arrowButtonPreferredSize get() = Dimension(getArrowButtonPreferredSize(null).width, optionButton.preferredSize.height)
 
   override val showPopupXOffset get() = JBUI.scale(3)
 
@@ -75,6 +76,10 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
 
     mainButton.ui.paint(g, c)
     paintSeparator(g, c)
+
+    // clipXOffset is rather big and cuts arrow - so we also paint arrow part here
+    g.translate(mainButton.width, 0)
+    paintArrow(g, arrowButton)
   }
 
   protected open fun paintSeparator(g: Graphics2D, c: JComponent) {

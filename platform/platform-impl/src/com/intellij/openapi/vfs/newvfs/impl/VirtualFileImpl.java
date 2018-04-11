@@ -143,7 +143,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
       FileType fileType = ObjectUtils.notNull(((FileTypeManagerImpl)FileTypeManager.getInstance()).getByFile(this), UnknownFileType.INSTANCE);
 
       try {
-        // execute in impatient mode to not deadlock when the indexing process waits in under write action for queue to load contents in other threads
+        // execute in impatient mode to not deadlock when the indexing process waits under write action for the queue to load contents in other threads
         // and that other thread asks JspManager for encoding which requires read action for PSI
         ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType));
       }

@@ -19,9 +19,9 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 public class SequenceEnumeration implements Enumeration {
-  private Enumeration myFirst;
-  private Enumeration mySecond;
-  private Enumeration myThird;
+  private final Enumeration myFirst;
+  private final Enumeration mySecond;
+  private final Enumeration myThird;
   private Enumeration myCurrent;
   private int myCurrentIndex;
 

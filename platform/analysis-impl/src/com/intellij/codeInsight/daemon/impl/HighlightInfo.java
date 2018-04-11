@@ -85,6 +85,7 @@ public class HighlightInfo implements Segment {
 
   volatile RangeHighlighterEx highlighter;// modified in EDT only
 
+  @Nullable
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 

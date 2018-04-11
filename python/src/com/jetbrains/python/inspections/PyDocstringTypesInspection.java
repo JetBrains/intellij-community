@@ -19,6 +19,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.debugger.PySignature;
@@ -151,13 +153,13 @@ public class PyDocstringTypesInspection extends PyInspection {
     private final String myParamName;
     private final Substring myTypeSubstring;
     private final String myNewType;
-    private final PyStringLiteralExpression myStringLiteralExpression;
+    private final SmartPsiElementPointer<PyStringLiteralExpression> myStringLiteralExpression;
 
     private ChangeTypeQuickFix(String name, Substring substring, String type, PyStringLiteralExpression expression) {
       myParamName = name;
       myTypeSubstring = substring;
       myNewType = type;
-      myStringLiteralExpression = expression;
+      myStringLiteralExpression = SmartPointerManager.createPointer(expression);
     }
 
     @NotNull
@@ -178,7 +180,10 @@ public class PyDocstringTypesInspection extends PyInspection {
 
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-      myStringLiteralExpression.replace(elementGenerator.createDocstring(newValue).getExpression());
+      final PyStringLiteralExpression stringLiteralExpression = myStringLiteralExpression.getElement();
+      if (stringLiteralExpression != null) {
+        stringLiteralExpression.replace(elementGenerator.createDocstring(newValue).getExpression());
+      }
     }
   }
 }

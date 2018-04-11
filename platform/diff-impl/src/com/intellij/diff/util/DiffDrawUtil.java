@@ -314,13 +314,13 @@ public class DiffDrawUtil {
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,
                                                          boolean ignored,
                                                          boolean resolved,
-                                                         boolean isSkipped,
+                                                         boolean isExcluded,
                                                          boolean hideWithoutLineNumbers,
                                                          boolean hideStripeMarkers) {
     return new LineHighlighterBuilder(editor, startLine, endLine, type)
       .withIgnored(ignored)
       .withResolved(resolved)
-      .withSkipped(isSkipped)
+      .withExcluded(isExcluded)
       .withHideWithoutLineNumbers(hideWithoutLineNumbers)
       .withHideStripeMarkers(hideStripeMarkers)
       .done();
@@ -389,7 +389,7 @@ public class DiffDrawUtil {
 
     private boolean ignored = false;
     private boolean resolved = false;
-    private boolean skipped = false;
+    private boolean excluded = false;
     private boolean hideWithoutLineNumbers = false;
     private boolean hideStripeMarkers = false;
 
@@ -413,8 +413,8 @@ public class DiffDrawUtil {
     }
 
     @NotNull
-    public LineHighlighterBuilder withSkipped(boolean skipped) {
-      this.skipped = skipped;
+    public LineHighlighterBuilder withExcluded(boolean excluded) {
+      this.excluded = excluded;
       return this;
     }
 
@@ -442,14 +442,14 @@ public class DiffDrawUtil {
       int start = offsets.getStartOffset();
       int end = offsets.getEndOffset();
 
-      TextAttributes attributes = isEmptyRange || resolved || skipped ? null : getTextAttributes(type, editor, ignored);
-      TextAttributes stripeAttributes = isEmptyRange || resolved || hideStripeMarkers || skipped ? null : getStripeTextAttributes(type, editor);
+      TextAttributes attributes = isEmptyRange || resolved || excluded ? null : getTextAttributes(type, editor, ignored);
+      TextAttributes stripeAttributes = isEmptyRange || resolved || hideStripeMarkers || excluded ? null : getStripeTextAttributes(type, editor);
 
       RangeHighlighter highlighter = editor.getMarkupModel()
         .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, HighlighterTargetArea.LINES_IN_RANGE);
       highlighters.add(highlighter);
 
-      highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(highlighter, type, ignored, resolved, skipped,
+      highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(highlighter, type, ignored, resolved, excluded,
                                                                    hideWithoutLineNumbers, isEmptyRange, isFirstLine, isLastLine));
 
       if (isEmptyRange) {
@@ -460,7 +460,7 @@ public class DiffDrawUtil {
           highlighters.addAll(createLineMarker(editor, highlighter, startLine - 1, type, SeparatorPlacement.BOTTOM, true, resolved, hideStripeMarkers));
         }
       }
-      else if (resolved || skipped) {
+      else if (resolved || excluded) {
         highlighters.addAll(createLineMarker(editor, highlighter, startLine, type, SeparatorPlacement.TOP, false, resolved, hideStripeMarkers));
         highlighters.addAll(createLineMarker(editor, highlighter, endLine - 1, type, SeparatorPlacement.BOTTOM, false, resolved, hideStripeMarkers));
       }

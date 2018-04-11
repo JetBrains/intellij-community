@@ -21,7 +21,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -46,8 +45,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   @NotNull private final Document myDocument;
   @Nullable private final UndoManager myUndoManager;
 
-  @NotNull private TIntArrayList myStartLines = new TIntArrayList();
-  @NotNull private TIntArrayList myEndLines = new TIntArrayList();
+  @NotNull private final TIntArrayList myStartLines = new TIntArrayList();
+  @NotNull private final TIntArrayList myEndLines = new TIntArrayList();
 
   @NotNull private final TIntHashSet myChangesToUpdate = new TIntHashSet();
   private int myBulkChangeUpdateDepth;

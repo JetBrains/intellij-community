@@ -85,14 +85,14 @@ class DoNotSaveDefaultsTest {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     try {
       System.setProperty("store.save.use.modificationCount", "false")
-      app.doNotSave(false)
+      app.isSaveAllowed = true
       runInEdtAndWait {
         StoreUtil.save(componentManager.stateStore, null)
       }
     }
     finally {
       System.setProperty("store.save.use.modificationCount", useModCountOldValue ?: "false")
-      app.doNotSave(true)
+      app.isSaveAllowed = false
     }
 
     if (componentManager is Project) {

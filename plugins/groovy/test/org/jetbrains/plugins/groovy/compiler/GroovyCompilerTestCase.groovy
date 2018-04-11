@@ -12,6 +12,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
 import com.intellij.execution.process.*
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.module.ModuleGroupTestsKt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.command.WriteCommandAction
@@ -66,6 +67,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   @Override
   protected void setUp() throws Exception {
     super.setUp()
+    edt { ModuleGroupTestsKt.renameModule(myModule, "mainModule") }
     myCompilerTester = new CompilerTester(myModule)
   }
 

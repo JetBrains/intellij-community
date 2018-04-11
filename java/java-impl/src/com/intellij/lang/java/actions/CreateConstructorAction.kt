@@ -89,7 +89,7 @@ private class JavaConstructorRenderer(
 
       override fun templateFinished(template: Template, brokenOff: Boolean) {
         if (brokenOff) return
-        WriteCommandAction.runWriteCommandAction(project, this::setupBody)
+        WriteCommandAction.runWriteCommandAction(project) { setupBody() }
       }
 
       private fun setupBody() {

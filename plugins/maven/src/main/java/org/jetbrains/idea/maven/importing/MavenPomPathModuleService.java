@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "MavenCustomPomFilePath")
 public class MavenPomPathModuleService implements PersistentStateComponent<MavenPomPathModuleService.MavenPomPathState> {
 
-  private MavenPomPathState myState = new MavenPomPathState();
+  private final MavenPomPathState myState = new MavenPomPathState();
 
   public static MavenPomPathModuleService getInstance(final Module module) {
     return ModuleServiceManager.getService(module, MavenPomPathModuleService.class);

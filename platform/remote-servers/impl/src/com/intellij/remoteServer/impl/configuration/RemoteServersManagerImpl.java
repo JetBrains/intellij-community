@@ -27,8 +27,8 @@ import java.util.List;
 @State(name = "RemoteServers", storages = @Storage("remote-servers.xml"))
 public class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
   public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
-  private List<RemoteServer<?>> myServers = new ArrayList<>();
-  private List<RemoteServerState> myUnknownServers = new ArrayList<>();
+  private final List<RemoteServer<?>> myServers = new ArrayList<>();
+  private final List<RemoteServerState> myUnknownServers = new ArrayList<>();
   private final MessageBus myMessageBus;
 
   public RemoteServersManagerImpl(MessageBus messageBus) {

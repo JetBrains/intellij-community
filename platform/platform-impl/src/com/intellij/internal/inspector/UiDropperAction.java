@@ -42,7 +42,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,10 +69,8 @@ import java.awt.geom.RoundRectangle2D;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Vector;
 
 import static java.awt.event.MouseEvent.BUTTON1;
 import static java.awt.event.MouseEvent.MOUSE_CLICKED;
@@ -129,7 +126,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
     private InspectorTable myInspectorTable;
     private Component myComponent;
     private HighlightComponent myHighlightComponent;
-    private HierarchyTree myHierarchyTree;
+    private final HierarchyTree myHierarchyTree;
     private final JPanel myWrapperPanel;
 
     private InspectorWindow(@NotNull Component component) throws HeadlessException {
@@ -415,7 +412,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
 
   private static class MyLabel extends JLabel {
     private final JComponent myGlasspane;
-    private String myText;
+    private final String myText;
 
     private MyLabel(@NotNull String text, @NotNull JComponent glasspane) {
       super(text);

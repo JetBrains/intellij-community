@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -46,6 +47,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,7 +78,15 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myUpdateAlarm = new Alarm(getDisposable());
     mySplitter = new JBSplitter(true, 0.3f);
     mySplitter.setSplitterProportionKey(getDimensionServiceKey() + ".splitter");
-    myList = new JBList<>(new CollectionListModel<Item>());
+    myList = new JBList<Item>(new CollectionListModel<>()) {
+      @Override
+      protected void doCopyToClipboardAction() {
+        String text = getSelectedText();
+        if (!text.isEmpty()) {
+          CopyPasteManager.getInstance().setContents(new StringSelection(text));
+        }
+      }
+    };
 
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
@@ -169,7 +179,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       @Override
       public void componentResized(ComponentEvent e) {
         FontMetrics metrics = myList.getFontMetrics(myList.getFont());
-        int charWidth = metrics.charWidth('m');
+        int charWidth = metrics.charWidth('i');
         renderer.previewChars = myList.getParent().getParent().getWidth() / charWidth + 10;
       }
     });
@@ -348,7 +358,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);
     }
   }
-  
+
   private static class Item {
     final int index;
     final String longText;

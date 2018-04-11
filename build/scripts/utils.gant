@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 import com.intellij.openapi.util.SystemInfo
@@ -172,7 +170,7 @@ private String setupJdkPath(String propertyName, String defaultDir, String envVa
     this[propertyName]
   }
   catch (MissingPropertyException ignored) {
-    def jdk = SystemInfo.isMac ? "$defaultDir/Home" : defaultDir
+    def jdk = SystemInfo.isMac ? "$defaultDir/Contents/Home" : defaultDir
     if (new File(jdk).exists()) {
       projectBuilder.info("$propertyName set to $jdk")
     }

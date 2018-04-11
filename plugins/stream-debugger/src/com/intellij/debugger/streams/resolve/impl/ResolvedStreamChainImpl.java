@@ -36,7 +36,7 @@ public class ResolvedStreamChainImpl implements ResolvedStreamChain {
   }
 
   public static class Builder {
-    private List<ResolvedStreamCall.Intermediate> myIntermediates = new ArrayList<>();
+    private final List<ResolvedStreamCall.Intermediate> myIntermediates = new ArrayList<>();
     private ResolvedStreamCall.Terminator myTerminator;
 
     public void addIntermediate(@NotNull ResolvedStreamCall.Intermediate intermediate) {

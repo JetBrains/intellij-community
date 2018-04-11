@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.spellchecker.dictionary.*;
@@ -219,20 +218,22 @@ public class SpellCheckerManager implements Disposable {
     final String transformed = spellChecker.getTransformation().transform(word);
     final EditableDictionary dictionary = DictionaryLevel.PROJECT == dictionaryLevel ? myProjectDictionary : myAppDictionary;
     if (transformed != null) {
-      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
-        @Override
-        public void undo() {
-          dictionary.removeFromDictionary(word);
-          restartInspections();
-        }
+      if(file != null) {
+        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
+          @Override
+          public void undo() {
+            dictionary.removeFromDictionary(transformed);
+            restartInspections();
+          }
 
-        @Override
-        public void redo() {
-          dictionary.addToDictionary(word);
-          restartInspections();
-        }
-      });
-      dictionary.addToDictionary(word);
+          @Override
+          public void redo() {
+            dictionary.addToDictionary(transformed);
+            restartInspections();
+          }
+        });
+      }
+      dictionary.addToDictionary(transformed);
       restartInspections();
     }
   }
@@ -332,7 +333,7 @@ public class SpellCheckerManager implements Disposable {
 
   public enum DictionaryLevel {
     APP("application-level"), PROJECT("project-level"), NOT_SPECIFIED("not specified");
-    private String myName;
+    private final String myName;
     private final static Map<String, DictionaryLevel> DICTIONARY_LEVELS =
       Maps.uniqueIndex(EnumSet.allOf(DictionaryLevel.class), DictionaryLevel::getName);
 

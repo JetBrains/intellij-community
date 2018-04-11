@@ -15,12 +15,14 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.ui.render.LabelIcon;
@@ -34,13 +36,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 import static com.intellij.vcs.log.ui.frame.CommitPanel.getCommitDetailsBackground;
 
 public class ReferencesPanel extends JPanel {
   public static final int H_GAP = 4;
   protected static final int V_GAP = 0;
-  public static final int PADDING = 3;
 
   private final int myRefsLimit;
   @NotNull private List<VcsRef> myReferences;
@@ -105,7 +105,7 @@ public class ReferencesPanel extends JPanel {
   }
 
   protected int getIconHeight() {
-    return getFontMetrics(getLabelsFont()).getHeight() + JBUI.scale(PADDING);
+    return getFontMetrics(getLabelsFont()).getHeight();
   }
 
   @NotNull
@@ -144,7 +144,7 @@ public class ReferencesPanel extends JPanel {
 
   @NotNull
   protected Font getLabelsFont() {
-    return getCommitDetailsFont();
+    return FontUtil.getCommitMetadataFont();
   }
 
   @Override

@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   @NotNull private final Project myProject;
   @Nullable private final Module myModule;
-  private MySdkModelListener mySdkModelListener = new MySdkModelListener();
+  private final MySdkModelListener mySdkModelListener = new MySdkModelListener();
   private PyConfigurableInterpreterList myInterpreterList;
   private ProjectSdksModel myProjectSdksModel;
   private NullableConsumer<Sdk> myAddSdkCallback;

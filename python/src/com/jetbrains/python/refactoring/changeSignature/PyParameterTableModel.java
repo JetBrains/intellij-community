@@ -145,7 +145,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
     private final Project myProject;
     private final FileType myFileType;
     protected EditorTextField myEditorTextField;
-    private Set<DocumentListener> myListeners = new HashSet<>();
+    private final Set<DocumentListener> myListeners = new HashSet<>();
 
     public MyCodeFragmentTableCellEditor(Project project) {
       myProject = project;

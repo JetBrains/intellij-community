@@ -44,7 +44,6 @@ import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -181,13 +180,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   @Override
   @TestOnly
   public void clearUncommittedDocuments() {
-    SmartPointerManagerImpl smartPointerManager = getSmartPointerManager();
-    if (smartPointerManager != null) {
-      for (VirtualFile file : ContainerUtil.mapNotNull(getUncommittedDocuments(), PsiDocumentManagerBase::getVirtualFile)) {
-        smartPointerManager.clearPointers(file);
-      }
-    }
-
     super.clearUncommittedDocuments();
     ((DocumentCommitThread)myDocumentCommitThread).clearQueue();
   }

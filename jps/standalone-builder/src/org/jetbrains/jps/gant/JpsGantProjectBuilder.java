@@ -57,10 +57,10 @@ public class JpsGantProjectBuilder {
   private boolean myCompressJars;
   private boolean myBuildIncrementally;
   private File myDataStorageRoot;
-  private JpsModelLoader myModelLoader;
+  private final JpsModelLoader myModelLoader;
   private BuildInfoPrinter myBuildInfoPrinter = new DefaultBuildInfoPrinter();
-  private Set<String> myCompiledModules = new HashSet<>();
-  private Set<String> myCompiledModuleTests = new HashSet<>();
+  private final Set<String> myCompiledModules = new HashSet<>();
+  private final Set<String> myCompiledModuleTests = new HashSet<>();
   private boolean myStatisticsReported;
   private Logger.Factory myFileLoggerFactory;
 

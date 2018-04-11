@@ -673,6 +673,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (PyNames.CLASS_GETITEM.equals(funcName) && level.isAtLeast(LanguageLevel.PYTHON37)) {
         return CLASSMETHOD;
       }
+
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(getProject());
+      for (PyKnownDecoratorUtil.KnownDecorator knownDecorator : PyKnownDecoratorUtil.getKnownDecorators(this, context)) {
+        if (knownDecorator == PyKnownDecoratorUtil.KnownDecorator.ABC_ABSTRACTCLASSMETHOD) return CLASSMETHOD;
+        if (knownDecorator == PyKnownDecoratorUtil.KnownDecorator.ABC_ABSTRACTSTATICMETHOD) return STATICMETHOD;
+      }
     }
 
     final PyFunctionStub stub = getStub();

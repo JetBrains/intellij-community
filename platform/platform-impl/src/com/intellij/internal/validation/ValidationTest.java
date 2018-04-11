@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * @author Konstantin Bulenkov
  */
 public class ValidationTest extends DialogWrapper {
-  private ValidTest myPanel;
+  private final ValidTest myPanel;
   final ValidationInfo[] ERRORS;
 
   protected ValidationTest(Project project) {

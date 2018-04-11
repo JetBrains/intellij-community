@@ -97,7 +97,9 @@ public class XDebuggerHistoryManager implements PersistentStateComponent<Element
     @Tag("expression-string") String myExpression;
     @Tag("language-id") String myLanguageId;
     @Tag("custom-info") String myCustomInfo;
-    @Tag("evaluation-mode") EvaluationMode myEvaluationMode;
+
+    // we must save it always for backward compatibility
+    @Tag("evaluation-mode") EvaluationMode myEvaluationMode/* = EvaluationMode.EXPRESSION*/;
 
     @SuppressWarnings("unused")
     ExpressionState() {
@@ -113,6 +115,9 @@ public class XDebuggerHistoryManager implements PersistentStateComponent<Element
 
     @NotNull
     XExpression toXExpression() {
+      if (myEvaluationMode == null) {
+        myEvaluationMode = EvaluationMode.EXPRESSION;
+      }
       return new XExpressionImpl(myExpression, Language.findLanguageByID(myLanguageId), myCustomInfo, myEvaluationMode);
     }
   }

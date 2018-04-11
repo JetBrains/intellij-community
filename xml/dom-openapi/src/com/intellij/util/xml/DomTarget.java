@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public class DomTarget extends DelegatePsiTarget implements PsiDeclaredTarget, PomRenameableTarget {
   private final DomElement myDomElement;
   private final TextRange myRange;
-  private GenericDomValue myNameDomElement;
+  private final GenericDomValue myNameDomElement;
 
   private DomTarget(DomElement domElement, PsiElement navigationElement, TextRange range, final GenericDomValue nameElement) {
     super(navigationElement);

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashMap;
 
 public class TestEditorTabGroup {
-  private String name;
+  private final String name;
 
   private final LinkedHashMap<VirtualFile, Pair<FileEditor, FileEditorProvider>> myOpenedTabs = new LinkedHashMap<>();
   private VirtualFile myOpenedfile;

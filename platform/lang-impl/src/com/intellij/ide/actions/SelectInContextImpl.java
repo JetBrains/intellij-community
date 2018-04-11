@@ -17,7 +17,10 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.ide.*;
+import com.intellij.ide.FileEditorSelectInContext;
+import com.intellij.ide.FileSelectInContext;
+import com.intellij.ide.SelectInContext;
+import com.intellij.ide.SmartSelectInContext;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -124,7 +127,7 @@ public class SelectInContextImpl extends FileSelectInContext {
       file = contextFile;
     }
 
-    PsiFile psiFile = file == null ? null : PsiManager.getInstance(project).findFile(file);
+    PsiFile psiFile = file == null || !file.isValid() ? null : PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
       return null;
     }

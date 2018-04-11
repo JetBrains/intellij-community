@@ -85,8 +85,8 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
     }
   }
 
-  private StringLiteralTokenizer myStringLiteralTokenizer = new StringLiteralTokenizer();
-  private FormatStringTokenizer myFormatStringTokenizer = new FormatStringTokenizer();
+  private final StringLiteralTokenizer myStringLiteralTokenizer = new StringLiteralTokenizer();
+  private final FormatStringTokenizer myFormatStringTokenizer = new FormatStringTokenizer();
 
   @NotNull
   @Override

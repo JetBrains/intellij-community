@@ -178,17 +178,17 @@ public class SelectionManagerTest extends PlatformTestCase {
   }
 
   private static class FileStructure {
-    private VirtualFile myParent;
-    private VirtualFile myMiddle1;
-    private VirtualFile myMiddle2;
-    private VirtualFile myInner11;
-    private VirtualFile myInner12;
-    private VirtualFile myInner21;
-    private VirtualFile myInner22;
-    private VirtualFile myLeaf1;
-    private VirtualFile myLeaf2;
+    private final VirtualFile myParent;
+    private final VirtualFile myMiddle1;
+    private final VirtualFile myMiddle2;
+    private final VirtualFile myInner11;
+    private final VirtualFile myInner12;
+    private final VirtualFile myInner21;
+    private final VirtualFile myInner22;
+    private final VirtualFile myLeaf1;
+    private final VirtualFile myLeaf2;
 
-    private Map<VirtualFile, DefaultMutableTreeNode> myMap;
+    private final Map<VirtualFile, DefaultMutableTreeNode> myMap;
     private final Project myProject;
 
     private FileStructure(final Project project) throws IOException {

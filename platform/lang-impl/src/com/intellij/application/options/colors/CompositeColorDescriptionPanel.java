@@ -131,8 +131,8 @@ public class CompositeColorDescriptionPanel extends JPanel implements ColorDescr
   }
 
   private static class PaintLocker {
-    private Container myPaintHolder;
-    private boolean myPaintState;
+    private final Container myPaintHolder;
+    private final boolean myPaintState;
 
     public PaintLocker(@NotNull JComponent component) {
       myPaintHolder = component.getParent();

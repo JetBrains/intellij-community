@@ -28,7 +28,7 @@ import java.util.*;
 public class PropertyResolver extends PropertyProviderFinder {
   private final String myPropertyName;
   private PropertiesProvider myResult;
-  private Set<String> myVariants = new HashSet<>();
+  private final Set<String> myVariants = new HashSet<>();
 
   private PropertyResolver(@NotNull String propertyName, DomElement contextElement) {
     super(contextElement);

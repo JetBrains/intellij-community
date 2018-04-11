@@ -21,7 +21,7 @@ import com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection
 import com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection.PreferEmptyArray;
 
 public class ToArrayCallWithZeroLengthArrayArgumentFixTest extends IGQuickFixesTestCase {
-  private ToArrayCallWithZeroLengthArrayArgumentInspection myInspection = new ToArrayCallWithZeroLengthArrayArgumentInspection();
+  private final ToArrayCallWithZeroLengthArrayArgumentInspection myInspection = new ToArrayCallWithZeroLengthArrayArgumentInspection();
 
   @Override
   protected void setUp() throws Exception {

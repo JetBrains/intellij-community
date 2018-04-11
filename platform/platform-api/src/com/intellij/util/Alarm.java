@@ -20,7 +20,7 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -333,7 +333,7 @@ public class Alarm implements Disposable {
     private Future<?> myFuture; // guarded by LOCK
     private final long myDelay;
 
-    @Debugger.Capture
+    @Async.Schedule
     private Request(@NotNull final Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
       synchronized (LOCK) {
         myTask = task;
@@ -398,7 +398,7 @@ public class Alarm implements Disposable {
       }
     }
 
-    @Debugger.Insert
+    @Async.Execute
     private void runSafely(@Nullable Runnable task) {
       try {
         if (!myDisposed && task != null) {

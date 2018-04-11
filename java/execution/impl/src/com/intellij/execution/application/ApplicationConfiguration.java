@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -36,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration, RefactoringListenerProvider {
@@ -229,11 +228,13 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return ALTERNATIVE_JRE_PATH_ENABLED;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
-    //noinspection deprecation
+    boolean changed = ALTERNATIVE_JRE_PATH_ENABLED != enabled;
     ALTERNATIVE_JRE_PATH_ENABLED = enabled;
     getOptions().setAlternativeJrePathEnabled(enabled);
+    onAlternativeJreChanged(changed, getProject());
   }
 
   @Nullable
@@ -243,11 +244,19 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return ALTERNATIVE_JRE_PATH;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void setAlternativeJrePath(@Nullable String path) {
-    //noinspection deprecation
+    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
     ALTERNATIVE_JRE_PATH = path;
     getOptions().setAlternativeJrePath(path);
+    onAlternativeJreChanged(changed, getProject());
+  }
+
+  public static void onAlternativeJreChanged(boolean changed, Project project) {
+    if (changed) {
+      AlternativeSdkRootsProvider.reindexIfNeeded(project);
+    }
   }
 
   public boolean isProvidedScopeIncluded() {

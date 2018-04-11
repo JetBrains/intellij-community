@@ -30,9 +30,9 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
 
   public static final String TYPE = "file-editors";
 
-  private Project myProject;
-  private FileEditorManagerImpl myFileEditorManager;
-  private DockManager myDockManager;
+  private final Project myProject;
+  private final FileEditorManagerImpl myFileEditorManager;
+  private final DockManager myDockManager;
 
   public DockableEditorContainerFactory(Project project, FileEditorManagerImpl fileEditorManager, DockManager dockManager) {
     this.myProject = project;

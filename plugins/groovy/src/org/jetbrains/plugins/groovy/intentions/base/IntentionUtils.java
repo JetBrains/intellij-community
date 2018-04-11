@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -33,44 +19,64 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyModifiersUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression;
+import org.jetbrains.plugins.groovy.template.expressions.StringParameterNameExpression;
 
 public class IntentionUtils {
 
   private static final Logger LOG = Logger.getInstance(IntentionUtils.class);
 
-  public static void createTemplateForMethod(PsiType[] argTypes,
-                                             ChooseTypeExpression[] paramTypesExpressions,
+  public static void createTemplateForMethod(ChooseTypeExpression[] paramTypesExpressions,
                                              PsiMethod method,
                                              PsiClass owner,
                                              TypeConstraint[] constraints,
                                              boolean isConstructor,
                                              @NotNull final PsiElement context) {
+    ParameterNameExpression[] nameExpressions = new ParameterNameExpression[paramTypesExpressions.length];
+    for (int i = 0; i < nameExpressions.length; i++) {
+      nameExpressions[i] = StringParameterNameExpression.Companion.getEMPTY();
+    }
+
+    ChooseTypeExpression returnTypeExpression = new ChooseTypeExpression(
+      constraints,
+      owner.getManager(),
+      context.getResolveScope(),
+      method.getLanguage() == GroovyLanguage.INSTANCE
+    );
+    createTemplateForMethod(paramTypesExpressions, nameExpressions, method, owner, returnTypeExpression, isConstructor, context);
+  }
+
+  public static void createTemplateForMethod(ChooseTypeExpression[] paramTypesExpressions,
+                                             ParameterNameExpression[] paramNameExpressions,
+                                             PsiMethod method,
+                                             PsiClass owner,
+                                             ChooseTypeExpression returnTypeExpression,
+                                             boolean isConstructor,
+                                             @Nullable final PsiElement context) {
 
     final Project project = owner.getProject();
     PsiTypeElement typeElement = method.getReturnTypeElement();
-    ChooseTypeExpression expr =
-      new ChooseTypeExpression(constraints, PsiManager.getInstance(project), context.getResolveScope(),
-                               method.getLanguage() == GroovyLanguage.INSTANCE
-      );
+
     TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
     if (!isConstructor) {
       assert typeElement != null;
-      builder.replaceElement(typeElement, expr);
+      builder.replaceElement(typeElement, returnTypeExpression);
     }
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    assert parameters.length == argTypes.length;
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       PsiTypeElement parameterTypeElement = parameter.getTypeElement();
       builder.replaceElement(parameterTypeElement, paramTypesExpressions[i]);
-      builder.replaceElement(parameter.getNameIdentifier(), new ParameterNameExpression(null));
+      builder.replaceElement(parameter.getNameIdentifier(), paramNameExpressions[i]);
     }
 
     PsiCodeBlock body = method.getBody();
@@ -133,6 +139,10 @@ public class IntentionUtils {
               }
               if (hasNoReturnType) {
                 ((GrMethod)method1).setReturnType(null);
+              }
+
+              if (method1 instanceof GrMethod && GroovyModifiersUtil.isDefUnnecessary((GrMethod)method1)) {
+                ((GrMethod)method1).getModifierList().setModifierProperty(GrModifier.DEF, false);
               }
             }
             catch (IncorrectOperationException e) {

@@ -32,3 +32,21 @@ object CreateEnumConstantActionGroup : JvmActionGroup {
     return message("create.enum.constant.from.usage.text", requireNotNull(data?.entityName))
   }
 }
+
+object CreatePropertyActionGroup : JvmActionGroup {
+  override fun getDisplayText(data: JvmActionGroup.RenderData?): String {
+    return message("create.property.from.usage.text", requireNotNull(data?.entityName))
+  }
+}
+
+object CreateReadOnlyPropertyActionGroup : JvmActionGroup {
+  override fun getDisplayText(data: JvmActionGroup.RenderData?): String {
+    return message("create.read.only.property.from.usage.text", requireNotNull(data?.entityName))
+  }
+}
+
+object CreateWriteOnlyPropertyActionGroup : JvmActionGroup {
+  override fun getDisplayText(data: JvmActionGroup.RenderData?): String {
+    return message("create.write.only.property.from.usage.text", requireNotNull(data?.entityName))
+  }
+}

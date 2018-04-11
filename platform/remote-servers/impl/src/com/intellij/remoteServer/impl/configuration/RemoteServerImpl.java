@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RemoteServerImpl<C extends ServerConfiguration> implements RemoteServer<C> {
   private String myName;
-  private ServerType<C> myType;
-  private C myConfiguration;
+  private final ServerType<C> myType;
+  private final C myConfiguration;
 
   public RemoteServerImpl(String name, ServerType<C> type, C configuration) {
     myName = name;

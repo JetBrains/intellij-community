@@ -46,7 +46,7 @@ import java.util.Map;
 public class LibraryDownloadSettings {
   private final FrameworkLibraryVersion myVersion;
   private final DownloadableLibraryType myLibraryType;
-  private String myLibrariesPath;
+  private final String myLibrariesPath;
   private final String myLibraryName;
   private final boolean myDownloadSources;
   private final boolean myDownloadJavaDocs;

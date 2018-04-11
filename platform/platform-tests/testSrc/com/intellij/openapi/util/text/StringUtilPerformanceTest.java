@@ -29,7 +29,7 @@ public class StringUtilPerformanceTest {
   public void containsAnyChar() {
     assertTrue(StringUtil.containsAnyChar(TEST_STRING, Integer.toString(new Random().nextInt())));
 
-    PlatformTestUtil.startPerformanceTest("StringUtil.containsAnyChar()", 300, () -> {
+    PlatformTestUtil.startPerformanceTest("StringUtil.containsAnyChar()", 330, () -> {
       for (int i = 0; i < 1000000; i++) {
         if (StringUtil.containsAnyChar(TEST_STRING, "XYZ")) {
           throw new AssertionError();

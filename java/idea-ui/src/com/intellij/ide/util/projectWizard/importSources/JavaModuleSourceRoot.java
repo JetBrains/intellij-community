@@ -28,7 +28,7 @@ import java.util.List;
  * @author nik
  */
 public class JavaModuleSourceRoot extends DetectedSourceRoot {
-  private List<String> myLanguages;
+  private final List<String> myLanguages;
   private final boolean myWithModuleInfoFile; // module-info.java
 
   public JavaModuleSourceRoot(File directory, @Nullable String packagePrefix, @NotNull String language) {

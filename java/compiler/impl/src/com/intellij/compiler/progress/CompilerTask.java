@@ -137,11 +137,6 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   @Override
-  public String getProcessId() {
-    return "compilation";
-  }
-
-  @Override
   public boolean shouldStartInBackground() {
     return !myModal;
   }

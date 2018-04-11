@@ -3,7 +3,9 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +43,11 @@ public class PushLogTreeUtil {
     return tag;
   }
 
-  public static SimpleTextAttributes addTransparencyIfNeeded(@NotNull final SimpleTextAttributes baseStyle, boolean isActive) {
+  public static SimpleTextAttributes addTransparencyIfNeeded(@NotNull SimpleColoredComponent component,
+                                                             @NotNull SimpleTextAttributes baseStyle,
+                                                             boolean isActive) {
     if (isActive) return baseStyle;
-    return new SimpleTextAttributes(baseStyle.getStyle(), ColorUtil.toAlpha(baseStyle.getFgColor(), 85));
+    Color color = ObjectUtils.chooseNotNull(baseStyle.getFgColor(), component.getForeground());
+    return new SimpleTextAttributes(baseStyle.getStyle(), ColorUtil.toAlpha(color, 85));
   }
 }

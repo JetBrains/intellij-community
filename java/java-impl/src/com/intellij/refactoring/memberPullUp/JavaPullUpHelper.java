@@ -53,7 +53,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   private final PsiClass myTargetSuperClass;
   private final boolean myIsTargetInterface;
   private final DocCommentPolicy myJavaDocPolicy;
-  private Set<PsiMember> myMembersAfterMove;
+  private final Set<PsiMember> myMembersAfterMove;
   private final Set<PsiMember> myMembersToMove;
   private final Project myProject;
 

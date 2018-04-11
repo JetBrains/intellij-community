@@ -108,7 +108,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
       }
     }
 
-    if (element.isValid) element.getUserData(JAVA_CACHED_UELEMENT_KEY)?.let { ref ->
+    element.getUserData(JAVA_CACHED_UELEMENT_KEY)?.let { ref ->
       ref.get()?.let { return it }
     }
 

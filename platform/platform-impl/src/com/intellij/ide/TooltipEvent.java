@@ -23,13 +23,13 @@ import java.awt.event.InputEvent;
 
 public class TooltipEvent {
 
-  private InputEvent myInputEvent;
-  private boolean myIsEventInsideBalloon;
+  private final InputEvent myInputEvent;
+  private final boolean myIsEventInsideBalloon;
 
   @Nullable
-  private AnAction myAction;
+  private final AnAction myAction;
   @Nullable
-  private AnActionEvent myActionEvent;
+  private final AnActionEvent myActionEvent;
 
   public TooltipEvent(InputEvent inputEvent, boolean isEventInsideBalloon, @Nullable AnAction action, @Nullable AnActionEvent actionEvent) {
     myInputEvent = inputEvent;

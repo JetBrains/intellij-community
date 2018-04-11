@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
@@ -80,7 +80,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-    Icon icon = MacIntelliJIconCache.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
+    Icon icon = IconCache.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 

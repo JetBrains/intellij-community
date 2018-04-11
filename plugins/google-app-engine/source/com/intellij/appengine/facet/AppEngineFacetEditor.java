@@ -49,11 +49,11 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private JPanel mySdkEditorPanel;
   private JCheckBox myRunEnhancerOnMakeCheckBox;
   private JPanel myFilesToEnhancePanel;
-  private JList myFilesList;
+  private final JList myFilesList;
   private JComboBox myPersistenceApiComboBox;
   private JPanel myFilesPanel;
-  private AppEngineSdkEditor mySdkEditor;
-  private DefaultListModel myFilesListModel;
+  private final AppEngineSdkEditor mySdkEditor;
+  private final DefaultListModel myFilesListModel;
 
   public AppEngineFacetEditor(AppEngineFacetConfiguration facetConfiguration, FacetEditorContext context, FacetValidatorsManager validatorsManager) {
     myFacetConfiguration = facetConfiguration;

@@ -637,6 +637,25 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-27518
+  public void testAsyncFunctionReturnTypeInNumpyDocstring() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Coroutine[Any, Any, int]",
+                   "async def f():\n" +
+                   "    \"\"\"\n" +
+                   "    An integer.\n" +
+                   "\n" +
+                   "    Returns\n" +
+                   "    -------\n" +
+                   "    int\n" +
+                   "        A number\n" +
+                   "    \"\"\"\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
   // PY-26847
   public void testAwaitOnImportedCoroutine() {
     runWithLanguageLevel(

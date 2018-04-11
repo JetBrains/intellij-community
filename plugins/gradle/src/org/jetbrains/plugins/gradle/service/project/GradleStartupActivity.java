@@ -31,7 +31,7 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGenerator;
@@ -84,9 +84,12 @@ public class GradleStartupActivity implements StartupActivity {
       return;
     }
 
-    File baseDir = VfsUtilCore.virtualToIoFile(project.getBaseDir());
-    final File gradleFile = new File(baseDir, GradleConstants.DEFAULT_SCRIPT_NAME);
-    if (gradleFile.exists()) {
+    String baseDir = project.getBaseDir().getPath();
+    String gradleGroovyDslFile = baseDir + '/' + GradleConstants.DEFAULT_SCRIPT_NAME;
+    String kotlinDslGradleFile = baseDir + '/' + GradleConstants.KOTLIN_DSL_SCRIPT_NAME;
+    File gradleFile = FileUtil.findFirstThatExist(gradleGroovyDslFile, kotlinDslGradleFile);
+
+    if (gradleFile != null) {
       String message = String.format("%s<br>\n%s",
                                      GradleBundle.message("gradle.notifications.unlinked.project.found.msg", IMPORT_EVENT_DESCRIPTION),
                                      GradleBundle.message("gradle.notifications.do.not.show"));

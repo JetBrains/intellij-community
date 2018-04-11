@@ -18,10 +18,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +29,7 @@ public abstract class SuppressManager implements BatchSuppressManager, Inspectio
   }
 
   public static boolean isSuppressedInspectionName(PsiLiteralExpression expression) {
-    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(expression, PsiAnnotation.class, true, PsiCodeBlock.class, PsiField.class);
+    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(expression, PsiAnnotation.class, true, PsiCodeBlock.class, PsiField.class, PsiCall.class);
     return annotation != null && SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(annotation.getQualifiedName());
   }
 

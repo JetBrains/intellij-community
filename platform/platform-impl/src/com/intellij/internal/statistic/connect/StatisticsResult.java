@@ -16,8 +16,8 @@
 package com.intellij.internal.statistic.connect;
 
 public class StatisticsResult {
-  private ResultCode code;
-  private String description;
+  private final ResultCode code;
+  private final String description;
 
   public StatisticsResult(ResultCode code, String description) {
     this.code = code;

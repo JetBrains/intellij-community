@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -27,11 +25,14 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.UIUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
@@ -86,6 +87,8 @@ public class StartupUtil {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     boolean newConfigFolder = false;
 
+    checkHiDPISettings();
+
     if (!Main.isHeadless()) {
       AppUIUtil.updateFrameClass();
       if (!configImportDisabled()) {  // Android Studio
@@ -124,16 +127,21 @@ public class StartupUtil {
       System.exit(Main.INSTANCE_CHECK_FAILED);
     }
 
-    if (newConfigFolder) {
-      appStarter.beforeImportConfigs();
-      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
-    }
-
+    // the log initialization should happen only after locking the system directory
     Logger.setFactory(LoggerFactory.class);
     Logger log = Logger.getInstance(Main.class);
     startLogging(log);
     loadSystemLibraries(log);
     fixProcessEnvironment(log);
+
+    if (!Main.isHeadless()) {
+      UIUtil.initDefaultLAF();
+    }
+
+    if (newConfigFolder) {
+      appStarter.beforeImportConfigs();
+      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+    }
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
@@ -176,6 +184,18 @@ public class StartupUtil {
     }
 
     return true;
+  }
+
+  @TestOnly
+  public static void test_checkHiDPISettings() {
+    checkHiDPISettings();
+  }
+
+  private static void checkHiDPISettings() {
+    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+      // suppress JRE-HiDPI mode
+      System.setProperty("sun.java2d.uiScale.enabled", "false");
+    }
   }
 
   private static synchronized boolean checkSystemFolders() {

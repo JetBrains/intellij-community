@@ -36,6 +36,8 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -47,6 +49,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.availability.PsiAvailabilityService;
 import com.intellij.ui.Gray;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
@@ -93,6 +96,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true, breadcrumbs);
   private final BreadcrumbsProvider myInfoProvider;
   private final Update myUpdate = new MyUpdate(this);
+  private ProgressIndicator myPsiAvaiableProgress = null;
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
 
@@ -221,10 +225,21 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   private void updateCrumbs() {
-    if (breadcrumbs != null && myEditor != null && !myEditor.isDisposed()) {
-      breadcrumbs.setFont(getNewFont(myEditor));
-      updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
+    if (myEditor == null || myEditor.isDisposed()) return;
+
+    if (myPsiAvaiableProgress != null) {
+      myPsiAvaiableProgress.cancel();
     }
+
+    ProgressIndicator progress = new ProgressIndicatorBase();
+    myPsiAvaiableProgress = progress;
+
+    PsiAvailabilityService.getInstance(myProject).performWhenPsiAvailable(myEditor.getDocument(), () -> {
+      if (!progress.isCanceled() && myFile != null && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
+        breadcrumbs.setFont(getNewFont(myEditor));
+        updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
+      }
+    }, progress);
   }
 
   public void queueUpdate() {
@@ -399,16 +414,11 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   private void updateCrumbs(final LogicalPosition position) {
-    if (myFile != null && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
-      if (!breadcrumbs.isShowing()) {
-        breadcrumbs.setCrumbs(null);
-        return;
-      }
-      if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
-        return;
-      }
-      breadcrumbs.setCrumbs(getPresentableLineElements(position, myFile, myEditor, myProject, myInfoProvider));
+    if (!breadcrumbs.isShowing()) {
+      breadcrumbs.setCrumbs(null);
+      return;
     }
+    breadcrumbs.setCrumbs(getPresentableLineElements(position, myFile, myEditor, myProject, myInfoProvider));
   }
 
   @Nullable

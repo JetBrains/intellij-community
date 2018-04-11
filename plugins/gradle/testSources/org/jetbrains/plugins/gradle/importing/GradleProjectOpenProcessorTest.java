@@ -59,7 +59,7 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.exe
 @SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
 
-  private List<Sdk> removedSdks = new SmartList<>();
+  private final List<Sdk> removedSdks = new SmartList<>();
 
   /**
    * Needed only to reuse stuff in GradleImportingTestCase#setUp().

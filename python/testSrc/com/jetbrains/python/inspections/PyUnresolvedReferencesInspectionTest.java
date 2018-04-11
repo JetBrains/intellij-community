@@ -675,6 +675,45 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
   }
 
+
+  // PY-28332
+  public void testIndirectFromImport() {
+    doMultiFileTest();
+  }
+
+  // PY-18629
+  public void testPreferImportedModuleOverNamespacePackage() {
+    doMultiFileTest();
+  }
+
+  // PY-22221
+  public void testFunctionInIgnoredIdentifiers() {
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    final PsiFile currentFile = myFixture.configureFromTempProjectFile("a.py");
+
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.ignoredIdentifiers.add("mock.patch.*");
+
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+
+    assertProjectFilesNotParsed(currentFile);
+    assertSdkRootsNotParsed(currentFile);
+  }
+
+  // PY-23632
+  public void testMockPatchObject() {
+    doMultiFileTest();
+  }
+
+  // PY-20197
+  public void testClassLevelImportUsedInsideMethod() {
+    doTestByText("class DateParser:\n" +
+                 "    from datetime import datetime\n" +
+                 "    def __init__(self):\n" +
+                 "        self.value = self.datetime(2016, 1, 1)");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

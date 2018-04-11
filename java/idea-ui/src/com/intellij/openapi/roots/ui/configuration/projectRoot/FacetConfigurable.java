@@ -38,7 +38,7 @@ public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet
   private final Facet myFacet;
   private final ModulesConfigurator myModulesConfigurator;
   private String myFacetName;
-  private FacetProjectStructureElement myProjectStructureElement;
+  private final FacetProjectStructureElement myProjectStructureElement;
 
   public FacetConfigurable(final Facet facet, final StructureConfigurableContext context, final Runnable updateTree) {
     super(!facet.getType().isOnlyOneFacetAllowed() && !(facet instanceof InvalidFacet), updateTree);

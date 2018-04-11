@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class JavaCompilerConfigurationProxy {
-  private static ExtensionPointName<JavaCompilerConfigurationProxy> EP_NAME = new ExtensionPointName<>("com.intellij.javaCompilerConfigurationProxy");
+  private static final ExtensionPointName<JavaCompilerConfigurationProxy> EP_NAME = new ExtensionPointName<>("com.intellij.javaCompilerConfigurationProxy");
 
   abstract protected List<String> getAdditionalOptionsImpl(Project project, Module module);
   abstract protected void setAdditionalOptionsImpl(Project project, Module module, List<String> options);

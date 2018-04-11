@@ -499,6 +499,7 @@ class EditorPainter implements TextDrawingCallback {
 
   @Nullable
   private TextAttributes getInnerHighlighterAttributes(@NotNull FoldRegion region) {
+    if (Boolean.TRUE.equals(region.getUserData(FoldRegion.MUTE_INNER_HIGHLIGHTERS))) return null;
     List<RangeHighlighterEx> innerHighlighters = new ArrayList<>();
     collectVisibleInnerHighlighters(region, myEditor.getMarkupModel(), innerHighlighters);
     collectVisibleInnerHighlighters(region, myEditor.getFilteredDocumentMarkupModel(), innerHighlighters);
@@ -529,8 +530,7 @@ class EditorPainter implements TextDrawingCallback {
     int startOffset = region.getStartOffset();
     int endOffset = region.getEndOffset();
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, h -> {
-      if (Boolean.TRUE.equals(h.getUserData(RangeHighlighter.VISIBLE_IF_FOLDED)) && 
-          h.getAffectedAreaStartOffset() >= startOffset && h.getAffectedAreaEndOffset() <= endOffset) {
+      if (h.isVisibleIfFolded() && h.getAffectedAreaStartOffset() >= startOffset && h.getAffectedAreaEndOffset() <= endOffset) {
         highlighters.add(h);
       }
       return true;

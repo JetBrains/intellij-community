@@ -1,12 +1,11 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -53,6 +52,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     initEditor(showEditor, languageInside);
     fillComboBox();
     myComponent = JBUI.Panels.simplePanel().addToTop(myComboBox);
+    setExpression(myExpression);
   }
 
   public ComboBox getComboBox() {
@@ -102,22 +102,14 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   private void fillComboBox() {
+    myModel.setSelectedItem(null); // must do this to preserve current editor
     myModel.replaceAll(getRecentExpressions());
-    if (myComboBox.getItemCount() > 0) {
-      myComboBox.setSelectedIndex(0);
-    }
   }
 
   @Override
   protected void doSetText(XExpression text) {
-    if (myComboBox.getItemCount() > 0) {
-      myComboBox.setSelectedIndex(0);
-    }
-
-    //if (myComboBox.isEditable()) {
-      myEditor.setItem(text);
-    //}
     myExpression = text;
+    myEditor.getEditorTextField().setNewDocumentAndFileType(getFileType(text), createDocument(text));
   }
 
   @Override
@@ -159,6 +151,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
       myDelegate = new EditorComboBoxEditor(getProject(), getEditorsProvider().getFileType()) {
         @Override
         protected void onEditorCreate(EditorEx editor) {
+          editor.getSettings().setLineCursorWidth(new SettingsImpl().getLineCursorWidth());
           editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
           prepareEditor(editor);
           if (showMultiline) {
@@ -189,11 +182,9 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
     @Override
     public void setItem(Object anObject) {
-      if (anObject == null) {
-        anObject = XExpressionImpl.EMPTY_EXPRESSION;
+      if (anObject != null) { // do not reset the editor on null
+        setExpression((XExpression)anObject);
       }
-      XExpression expression = (XExpression)anObject;
-      myDelegate.getEditorComponent().setNewDocumentAndFileType(getFileType(expression), createDocument(expression));
     }
 
     @Override

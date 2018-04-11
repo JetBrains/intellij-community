@@ -8,7 +8,7 @@ import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
 public class StateAnnotation implements State {
-  private String name;
+  private final String name;
   @NotNull
   private final Storage[] storages;
 

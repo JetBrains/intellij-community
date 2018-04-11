@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     x = 0
 
-    from pydev import pydevd
+    import pydevd
     pydevd.settrace('localhost', port=port, stdoutToServer=True, stderrToServer=True)
 
     x = 1

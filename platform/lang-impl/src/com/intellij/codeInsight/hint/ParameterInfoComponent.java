@@ -62,7 +62,7 @@ public class ParameterInfoComponent extends JPanel {
     if (o1.getEndOffset() > o2.getEndOffset()) return 1;
     return -1;
   };
-  private boolean myRequestFocus;
+  private final boolean myRequestFocus;
 
   @TestOnly
   public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {

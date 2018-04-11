@@ -50,7 +50,7 @@
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
-    <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterBetweenBracketsHandler"/>
+    <enterBetweenBracesDelegate language="Python"  implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
     <editorActionHandler action="EditorCopy" implementationClass="com.jetbrains.python.console.PyConsoleCopyHandler"/>
 
     <editor.backspaceModeOverride language="Python" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
@@ -171,7 +171,7 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
     <runLineMarkerContributor language="Python"
-                              implementationClass="com.jetbrains.python.testing.PyTestLineMarkerProvider"/>
+                              implementationClass="com.jetbrains.python.testing.PyTestLineMarkerContributor"/>
 
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <codeInsight.typeInfo language="Python" implementationClass="com.jetbrains.python.actions.PythonExpressionTypeProvider"/>
@@ -689,7 +689,7 @@
     <extensionPoint qualifiedName="Pythonid.pythonSdkComparator" interface="com.jetbrains.python.sdk.PySdkComparator" />
     <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
                     interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"/>
-
+    <extensionPoint qualifiedName="Pythonid.pyAddSdkProvider" interface="com.jetbrains.python.sdk.add.PyAddSdkProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -708,14 +708,17 @@
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubType"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubType"/>
+    <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyTypingNewTypeStubType"/>
 
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassesTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTuplesTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTuplesOverridingTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.psi.types.PyCollectionTypeByModificationsProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibModuleMembersProvider"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
     <canonicalPathProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibCanonicalPathProvider"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.stdlib.PyStdlibInspectionExtension"/>
@@ -725,7 +728,7 @@
     <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.pyi.PyiModuleMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
-    <pyReferenceResolveProvider implementation="com.jetbrains.python.pyi.PyiReferenceResolveProvider"/>
+    <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PyForwardReferenceResolveProvider"/>
     <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
     <inspectionExtension implementation="com.jetbrains.python.pyi.PyiInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.codeInsight.typing.PyTypingInspectionExtension"/>
@@ -759,6 +762,9 @@
 
     <!-- PyQt -->
     <typeProvider implementation="com.jetbrains.pyqt.PyQtTypeProvider"/>
+
+    <!-- Type from ancestors -->
+    <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyAncestorTypeProvider"/>
 
     <!-- PyFunctionTypeAnnotation -->
     <visitorFilter language="PyFunctionTypeComment"

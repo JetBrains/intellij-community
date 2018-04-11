@@ -75,4 +75,11 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
   public void testPackageInstalledIntoModule() {
     doMultiFileTest();
   }
+
+  // PY-27337
+  public void testPackageInExtrasRequire() {
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    myFixture.configureFromTempProjectFile("a.py");
+    configureInspection();
+  }
 }

@@ -99,13 +99,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
 
         Map<String, YAMLScalar> siblingValues =
           siblingItems.stream()
-            .filter(i -> i.getKeysValues().isEmpty()) // we only need are interested in literal siblings
+            .filter(i -> i.getKeysValues().isEmpty()) // we only are interested in literal siblings
             .filter(i -> !currentItem.equals(i))
             .map(YAMLSequenceItem::getValue)
             .filter(Objects::nonNull)
             .filter(YAMLScalar.class::isInstance)
             .map(YAMLScalar.class::cast)
-            .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar));
+            .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar, (oldVal, newVal) -> newVal));
 
         addValueCompletions(insertedScalar, scalarType, result, siblingValues);
         return;
@@ -172,8 +172,8 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     }
     else {
       fieldList.stream()
-        .filter(childField -> !existingByKey.containsKey(childField.getName()))
-        .forEach(childField -> registerBasicKeyCompletion(childField, result, insertedScalar, needsSequenceItemMark));
+               .filter(childField -> !existingByKey.containsKey(childField.getName()))
+               .forEach(childField -> registerBasicKeyCompletion(metaClass, childField, result, insertedScalar, needsSequenceItemMark));
     }
   }
 
@@ -182,11 +182,12 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
            !parentField.hasRelationSpecificType(Field.Relation.OBJECT_CONTENTS);
   }
 
-  private static void registerBasicKeyCompletion(@NotNull Field toBeInserted,
+  private static void registerBasicKeyCompletion(@NotNull YamlMetaClass metaClass,
+                                                 @NotNull Field toBeInserted,
                                                  @NotNull CompletionResultSet result,
                                                  @NotNull PsiElement insertedScalar,
                                                  boolean needsSequenceItemMark) {
-    List<LookupElementBuilder> lookups = toBeInserted.getKeyLookups(insertedScalar);
+    List<LookupElementBuilder> lookups = toBeInserted.getKeyLookups(metaClass, insertedScalar);
     if (!lookups.isEmpty()) {
       InsertHandler<LookupElement> keyInsertHandler = new YamlKeyInsertHandlerImpl(needsSequenceItemMark, toBeInserted);
       lookups.stream()
@@ -209,11 +210,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
 
-    fields.forEach(field -> {
+    fields.stream()
+          .filter(field -> !field.isAnyNameAllowed())
+          .forEach(field -> {
       final List<Field> fieldPath = Stream.concat(currentPath.stream(), Stream.of(field)).collect(Collectors.toList());
       result.add(fieldPath);
       final YamlMetaType metaType = field.getType(field.getDefaultRelation());
-      if (metaType instanceof YamlMetaClass && !field.isAnyNameAllowed()) {
+            if (metaType instanceof YamlMetaClass) {
         doCollectPathsRec(((YamlMetaClass)metaType).getFeatures().stream().filter(Field::isEditable).collect(Collectors.toList()),
                           fieldPath, result, deepness);
       }

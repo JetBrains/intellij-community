@@ -33,7 +33,6 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ReflectionUtil;
-import java.util.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +42,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.Patches.JDK_BUG_ID_8147994;
 import static java.awt.event.MouseEvent.*;
@@ -398,7 +395,7 @@ public final class IdeMouseEventDispatcher {
 
   private static boolean isDiagramViewComponent(@Nullable Component component) {
     // in production yfiles classes is obfuscated
-    return UIUtil.isClientPropertyTrue(component, "y.view.Graph2DView");
+    return UIUtil.isClientPropertyTrue(component, "Diagram-View-Component-Key");
   }
 
   public void blockNextEvents(@NotNull MouseEvent e, @NotNull IdeEventQueue.BlockMode blockMode) {

@@ -12,4 +12,8 @@ class AssignmentToLambdaParameter {
     };
   }
 
+  void x() {
+    Runnable r = a -> <error descr="Incompatible types. Found: 'java.lang.String', required: '<lambda parameter>'">a = ""</error>;
+  }
+
 }

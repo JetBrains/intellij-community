@@ -108,7 +108,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   private JPanel myContentPane;
   private TableView<Item> myTable;
-  private AnActionButton myRemoveButton;
+  private final AnActionButton myRemoveButton;
   private JLabel myMessageLabel;
   private HoverHyperlinkLabel myFixLink;
   private JPanel myTablePanel;

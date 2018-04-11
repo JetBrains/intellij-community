@@ -29,11 +29,11 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private CodeStyleSettings mySettings;
-  private String myText = "public class T {\n" +
-                        "\tvoid run() {\n" +
-                        "\t\tint t = 1 + <caret>2;\n" +
-                        "\t}\n" +
-                        "}";
+  private final String myText = "public class T {\n" +
+                                "\tvoid run() {\n" +
+                                "\t\tint t = 1 + <caret>2;\n" +
+                                "\t}\n" +
+                                "}";
 
   @Override
   public void setUp() throws Exception {

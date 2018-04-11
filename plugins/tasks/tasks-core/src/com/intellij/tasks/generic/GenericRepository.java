@@ -359,7 +359,8 @@ public class GenericRepository extends BaseRepositoryImpl {
     }
   )
   public List<ResponseHandler> getResponseHandlers() {
-    return Collections.unmodifiableList(new ArrayList<>(myResponseHandlersMap.values()));
+    Collection<ResponseHandler> handlers = myResponseHandlersMap.values();
+    return new ArrayList<>(handlers);
   }
 
   @SuppressWarnings("UnusedDeclaration")

@@ -25,7 +25,7 @@ public class HighlightsExtractor {
   private int myIndex;
   private boolean myIsOpeningTag;
 
-  private List<TextRange> mySkipped = new ArrayList<>();
+  private final List<TextRange> mySkipped = new ArrayList<>();
 
   public HighlightsExtractor(@Nullable Map<String, TextAttributesKey> tags) {
     this(tags, null, null);

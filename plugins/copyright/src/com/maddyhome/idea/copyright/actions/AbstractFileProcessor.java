@@ -46,7 +46,7 @@ import java.util.List;
 public abstract class AbstractFileProcessor {
   private final Project myProject;
   private final Module myModule;
-  private PsiDirectory directory = null;
+  private final PsiDirectory directory = null;
   private PsiFile file = null;
   private PsiFile[] files = null;
   private final String message;

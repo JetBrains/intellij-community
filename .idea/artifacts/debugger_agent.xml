@@ -6,6 +6,7 @@
       <element id="directory" name="META-INF">
         <element id="file-copy" path="$PROJECT_DIR$/java/debugger/debugger-agent/META-INF/MANIFEST.MF" />
       </element>
+      <element id="extracted-dir" path="$PROJECT_DIR$/java/debugger/debugger-agent/lib/asm-capture.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

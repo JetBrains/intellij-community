@@ -34,7 +34,7 @@ import java.util.*;
 public class BuildTargetIndexImpl implements BuildTargetIndex {
   private final BuildTargetRegistry myRegistry;
   private final BuildRootIndexImpl myBuildRootIndex;
-  private Map<BuildTarget<?>, Collection<BuildTarget<?>>> myDependencies;
+  private final Map<BuildTarget<?>, Collection<BuildTarget<?>>> myDependencies;
   private List<BuildTargetChunk> myTargetChunks;
 
   public BuildTargetIndexImpl(BuildTargetRegistry targetRegistry, BuildRootIndexImpl buildRootIndex) {

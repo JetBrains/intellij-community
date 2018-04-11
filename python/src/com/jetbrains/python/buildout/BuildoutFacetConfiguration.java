@@ -92,7 +92,7 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
 
   private class Tab extends FacetEditorTab {
 
-    private BuildoutConfigPanel myPanel;
+    private final BuildoutConfigPanel myPanel;
 
     private Tab(Module module) {
       myPanel = new BuildoutConfigPanel(module, BuildoutFacetConfiguration.this);

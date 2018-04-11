@@ -138,12 +138,14 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         if (unboxedType.equals(PsiType.LONG) && expressionType.equals(PsiType.INT)) {
           return text + 'L';
         }
-        else if (unboxedType.equals(PsiType.FLOAT) && (expressionType.equals(PsiType.INT) || (expressionType.equals(PsiType.DOUBLE)) &&
-                                                                                             !StringUtil.endsWithIgnoreCase(text, "d"))) {
-          return text + 'f';
-        }
-        else if (unboxedType.equals(PsiType.DOUBLE) && expressionType.equals(PsiType.INT)) {
-          return text + 'd';
+        else if (!text.startsWith("0")) { // no octal & hex
+          if (unboxedType.equals(PsiType.FLOAT) &&
+              (expressionType.equals(PsiType.INT) || expressionType.equals(PsiType.DOUBLE) && !StringUtil.endsWithIgnoreCase(text, "d"))) {
+            return text + 'f';
+          }
+          else if (unboxedType.equals(PsiType.DOUBLE) && expressionType.equals(PsiType.INT)) {
+            return text + 'd';
+          }
         }
       }
       if (ParenthesesUtils.getPrecedence(unboxedExpression) > ParenthesesUtils.TYPE_CAST_PRECEDENCE) {

@@ -7,7 +7,9 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -123,12 +125,12 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     ApplicationManager.getApplication().getMessageBus().connect(myProject)
       .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
         @Override
-        public void batchChangeStarted(Project project) {
+        public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
           myRefreshRequestsQueue.suspend();
         }
 
         @Override
-        public void batchChangeCompleted(Project project) {
+        public void batchChangeCompleted(@NotNull Project project) {
           myRefreshRequestsQueue.resume();
         }
       });
@@ -540,7 +542,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
   private class MyFileChangeListener extends FileChangeListenerBase {
     private final ExternalSystemProjectsWatcherImpl myWatcher;
-    private MultiMap<String/* file path */, String /* project path */> myKnownFiles = MultiMap.createSet();
+    private final MultiMap<String/* file path */, String /* project path */> myKnownFiles = MultiMap.createSet();
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
 

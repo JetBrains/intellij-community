@@ -81,7 +81,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private static final com.intellij.openapi.util.Key<DataNodeCheckedTreeNode> CONNECTED_UI_NODE_KEY =
     com.intellij.openapi.util.Key.create("connectedUiNode");
   @NotNull
-  private Project myProject;
+  private final Project myProject;
   private JBLoadingPanel loadingPanel;
   private JPanel mainPanel;
   private JPanel contentPanel;
@@ -437,7 +437,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private class DataNodeCheckedTreeNode extends CheckedTreeNode {
     private final DataNode myDataNode;
     @Nullable
-    private Icon icon;
+    private final Icon icon;
     private String text;
     @Nullable
     private String comment;

@@ -402,7 +402,8 @@ public class RedundantCastUtil {
                 (!(newCall instanceof PsiCallExpression) ||
                  oldAnonymousClass != null && newAnonymousClass != null && Comparing.equal(oldAnonymousClass.getBaseClassType(), newAnonymousClass.getBaseClassType()) ||
                  Comparing.equal(PsiUtil.recaptureWildcards(((PsiCallExpression)newCall).getType(), expression), ((PsiCallExpression)expression).getType())) &&
-                newResult.isValidResult()) {
+                newResult.isValidResult() &&
+                !(newResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)newResult).getInferenceErrorMessage() != null)) {
               if (!(newArgs[i] instanceof PsiFunctionalExpression)) {
                 addToResults(cast);
               }

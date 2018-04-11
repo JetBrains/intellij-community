@@ -95,21 +95,19 @@ public class RepositoryHelper {
 
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl, @Nullable ProgressIndicator indicator) throws IOException {
-    return loadPlugins(repositoryUrl, null, null, indicator);
+    return loadPlugins(repositoryUrl, null, indicator);
   }
 
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
-                                                       @Nullable BuildNumber apiVersion,
                                                        @Nullable BuildNumber buildnumber,
                                                        @Nullable ProgressIndicator indicator) throws IOException {
     boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
-    return loadPlugins(repositoryUrl, apiVersion, buildnumber, forceHttps, indicator);
+    return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
   }
 
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
-                                                       @Nullable BuildNumber apiVersion,
                                                        @Nullable BuildNumber build,
                                                        boolean forceHttps,
                                                        @Nullable ProgressIndicator indicator) throws IOException {
@@ -132,8 +130,7 @@ public class RepositoryHelper {
       }
 
       if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
-        uriBuilder.addParameter("build",
-                                (apiVersion != null ? apiVersion.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+        uriBuilder.addParameter("build", build != null ? build.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion());
       }
 
       host = uriBuilder.getHost();

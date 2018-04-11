@@ -3,8 +3,8 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
-import com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector;
+import com.intellij.ide.ui.laf.IconCache;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -219,9 +219,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       }
       else if (!(getUI() instanceof GtkMenuItemUI)) {
         if (myToggled) {
-          setIcon(MacIntelliJIconCache.getIcon("checkmark", false, false, true));
-          setSelectedIcon(MacIntelliJIconCache.getIcon("checkmark", true, false, true));
-          setDisabledIcon(MacIntelliJIconCache.getIcon("checkmark", false, false, false));
+          setIcon(IconCache.getIcon("checkmark", false, false, true));
+          setSelectedIcon(IconCache.getIcon("checkmark", true, false, true));
+          setDisabledIcon(IconCache.getIcon("checkmark", false, false, false));
         }
         else {
           setIcon(EmptyIcon.ICON_16);

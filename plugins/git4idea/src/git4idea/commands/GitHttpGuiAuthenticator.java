@@ -44,9 +44,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
-import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
-import static com.intellij.credentialStore.CredentialAttributesKt.getAndMigrateCredentials;
+import static com.intellij.credentialStore.CredentialAttributesKt.*;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -67,6 +65,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final Project myProject;
   @NotNull private final String myTitle;
   @NotNull private final Collection<String> myUrlsFromCommand;
+  private final boolean myIgnoreAuthenticationRequest;
 
   @Nullable private String myPassword;
   @Nullable private String myPasswordKey;
@@ -78,10 +77,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable private GitHttpAuthDataProvider myDataProvider;
   private boolean myWasCancelled;
 
-  GitHttpGuiAuthenticator(@NotNull Project project, @NotNull GitCommand command, @NotNull Collection<String> url) {
+  GitHttpGuiAuthenticator(@NotNull Project project,
+                          @NotNull GitCommand command,
+                          @NotNull Collection<String> url,
+                          boolean ignoreAuthenticationRequest) {
     myProject = project;
     myTitle = "Git " + StringUtil.capitalize(command.name());
     myUrlsFromCommand = url;
+    myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
   }
 
   @Override
@@ -91,7 +94,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (myPassword != null) {  // already asked in askUsername
       return myPassword;
     }
-    if (myWasCancelled) { // already pressed cancel in askUsername
+    if (myWasCancelled || myIgnoreAuthenticationRequest) { // already pressed cancel in askUsername or force ignore authentication
       return "";
     }
     myUnifiedUrl = getUnifiedUrl(url);
@@ -101,7 +104,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myDataProvider = authData.first;
       myPassword = password;
       LOG.debug("askPassword. dataProvider=" + getCurrentDataProviderName() + ", unifiedUrl= " + getUnifiedUrl(url) +
-                ", login=" + authData.second.getLogin() + ", passwordKnown=" + (password != null));
+                ", login=" + authData.second.getLogin() + ", passwordKnown=true");
       myIsMemoryOnly = ThreeState.UNSURE;
       return password;
     }
@@ -140,6 +143,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Override
   @NotNull
   public String askUsername(@NotNull String url) {
+    if (myIgnoreAuthenticationRequest) return "";
+
     myUnifiedUrl = getUnifiedUrl(url);
     Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(getUnifiedUrl(url));
     String login = null;

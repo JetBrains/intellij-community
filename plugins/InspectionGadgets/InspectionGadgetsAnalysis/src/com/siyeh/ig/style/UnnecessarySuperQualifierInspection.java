@@ -86,7 +86,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
   }
 
   private static class UnnecessarySuperQualifierVisitor extends BaseInspectionVisitor {
-    private boolean myIgnoreClarification;
+    private final boolean myIgnoreClarification;
 
     public UnnecessarySuperQualifierVisitor(boolean ignoreClarification) {
       myIgnoreClarification = ignoreClarification;

@@ -17,7 +17,6 @@ package org.jetbrains.jps;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -29,9 +28,9 @@ import java.util.Set;
  */
 public class ModuleChunk {
   private static final NotNullFunction<JpsModule,String> GET_NAME = dom -> dom.getName();
-  private Set<JpsModule> myModules;
+  private final Set<JpsModule> myModules;
   private final boolean myContainsTests;
-  private Set<ModuleBuildTarget> myTargets;
+  private final Set<ModuleBuildTarget> myTargets;
 
   public ModuleChunk(Set<ModuleBuildTarget> targets) {
     boolean containsTests = false;

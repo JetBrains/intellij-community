@@ -416,5 +416,9 @@
     </group>
     -->
 
+    <action id="ChangesView.GroupBy.Module" text="Module" class="com.intellij.openapi.vcs.changes.actions.SetModuleChangesGroupingAction">
+      <add-to-group group-id="ChangesView.GroupBy"/>
+    </action>
+
   </actions>
 </idea-plugin>

@@ -220,7 +220,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
   public TableCellRenderer getRenderer(IdeaPluginDescriptor o) {
     if (columnIdx == COLUMN_RATE) {
       return new DefaultTableCellRenderer(){
-        private RatesPanel myPanel = new RatesPanel();
+        private final RatesPanel myPanel = new RatesPanel();
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
           final Component orig = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);

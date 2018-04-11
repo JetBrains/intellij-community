@@ -45,9 +45,11 @@ import static com.intellij.credentialStore.CredentialAttributesKt.*;
  */
 public class GitSSHGUIHandler {
   @Nullable private final Project myProject;
+  private final boolean myIgnoreAuthenticationRequest;
 
-  GitSSHGUIHandler(@Nullable Project project) {
+  GitSSHGUIHandler(@Nullable Project project, boolean ignoreAuthenticationRequest) {
     myProject = project;
+    myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
   }
 
   public boolean verifyServerHostKey(final String hostname,
@@ -64,7 +66,8 @@ public class GitSSHGUIHandler {
     }
     final AtomicBoolean rc = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(
-      () -> rc.set(Messages.YES == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null)), ModalityState.any());
+      () -> rc.set(Messages.YES == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null)),
+      ModalityState.any());
     return rc.get();
   }
 
@@ -77,6 +80,7 @@ public class GitSSHGUIHandler {
     if (credentials != null && !resetPassword) {
       return credentials.getPasswordAsString();
     }
+    if (myIgnoreAuthenticationRequest) return null;
     return CredentialPromptDialog.askPassword(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
                                               "Password for the SSH key \"" + PathUtil.getFileName(keyPath) + "\":",
                                               newAttributes, resetPassword, error);
@@ -143,6 +147,7 @@ public class GitSSHGUIHandler {
                                          final Vector<String> prompt,
                                          final Vector<Boolean> echo,
                                          final String lastError) {
+    if (myIgnoreAuthenticationRequest) return null;
     final AtomicReference<Vector<String>> rc = new AtomicReference<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       showError(lastError);
@@ -171,6 +176,7 @@ public class GitSSHGUIHandler {
     if (credentials != null) {
       return credentials.getPasswordAsString();
     }
+    if (myIgnoreAuthenticationRequest) return null;
     return CredentialPromptDialog.askPassword(myProject,
                                               GitBundle.getString("ssh.password.title"),
                                               GitBundle.message("ssh.password.message", username),

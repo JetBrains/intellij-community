@@ -50,7 +50,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
   private JRadioButton myExtractJarsRadioButton;
   private JRadioButton myCopyJarsRadioButton;
   private JCheckBox myIncludeTestsCheckBox;
-  private PackagingElementResolvingContext myContext;
+  private final PackagingElementResolvingContext myContext;
 
   public JarArtifactFromModulesDialog(PackagingElementResolvingContext context) {
     super(context.getProject());

@@ -35,7 +35,7 @@ public class JpsAppEngineModuleExtensionImpl extends JpsElementBase<JpsAppEngine
                                                                                                      JpsAppEngineModuleExtension {
   public static final JpsElementChildRole<JpsAppEngineModuleExtension> ROLE = JpsElementChildRoleBase.create("AppEngine");
   public static final String LIB_APPENGINE_TOOLS_API_JAR = "/lib/appengine-tools-api.jar";
-  private AppEngineModuleExtensionProperties myProperties;
+  private final AppEngineModuleExtensionProperties myProperties;
 
   public JpsAppEngineModuleExtensionImpl(AppEngineModuleExtensionProperties properties) {
     myProperties = properties;

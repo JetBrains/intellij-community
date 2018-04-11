@@ -153,8 +153,10 @@ public class ParameterHintsPresentationManager implements Disposable {
     @Override
     protected TextAttributes getTextAttributes(@NotNull Editor editor) {
       if (step > steps || startWidth != 0) {
-        return editor.getColorsScheme().getAttributes(highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
-                                                                  : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+        return editor.getColorsScheme().getAttributes(current 
+                                                      ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT 
+                                                      : highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
+                                                                    : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
       }
       return null;
     }
@@ -182,25 +184,6 @@ public class ParameterHintsPresentationManager implements Disposable {
     public int calcWidthInPixels(@NotNull Editor editor) {
       int endWidth = super.calcWidthInPixels(editor);
       return step <= steps ? Math.max(1, startWidth + (endWidth - startWidth) / steps * step) : endWidth;
-    }
-
-    @Override
-    protected void paintExtraEffect(@NotNull Editor editor,
-                                    @NotNull Graphics g,
-                                    @NotNull Rectangle r,
-                                    @NotNull TextAttributes textAttributes,
-                                    int gap) {
-      if (current) {
-        Color borderClr = editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_SELECTION_BORDER);
-        if (borderClr != null) {
-          g.setColor(borderClr);
-          Graphics2D g2d = (Graphics2D)g;
-          Object savedHint = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-          g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-          g.drawRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
-          g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
-        }
-      }
     }
   }
 

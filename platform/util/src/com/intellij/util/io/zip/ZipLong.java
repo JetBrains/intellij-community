@@ -41,7 +41,7 @@ public final class ZipLong implements Cloneable {
   private static final long BYTE_3_MASK = 0xFF000000L;
   private static final int BYTE_3_SHIFT = 24;
 
-  private long value;
+  private final long value;
 
   /**
    * Create instance from a number.

@@ -62,8 +62,6 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
         g.setClip(savedClip)
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, savedHint)
-
-        paintExtraEffect(editor, g, r, textAttributes, gap)
       }
     }
     val effectColor = textAttributes.effectColor
@@ -90,13 +88,6 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
       }
     }
-  }
-
-  protected open fun paintExtraEffect(editor: Editor,
-                                      g: Graphics,
-                                      r: Rectangle,
-                                      textAttributes: TextAttributes,
-                                      gap: Int) {
   }
 
   protected class MyFontMetrics constructor(editor: Editor, familyName: String, size: Int) {

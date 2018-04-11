@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -53,12 +52,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Con
 
     @Override
     public JComponent createComponent() {
-        myEditor = new ReadAction<AssociationsEditor>() {
-            @Override
-            protected void run(@NotNull Result<AssociationsEditor> result) throws Throwable {
-                result.setResult(new AssociationsEditor(myProject, myState.state));
-            }
-        }.execute().getResultObject();
+      myEditor = ReadAction.compute(() -> new AssociationsEditor(myProject, myState.state));
         return myEditor.getComponent();
     }
 

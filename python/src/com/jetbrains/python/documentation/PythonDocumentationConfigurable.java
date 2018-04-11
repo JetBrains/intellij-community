@@ -38,7 +38,7 @@ import java.util.HashSet;
  */
 public class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final String ID = "com.jetbrains.python.documentation.PythonDocumentationConfigurable";
-  private PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
+  private final PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
 
   @NotNull
   @Override

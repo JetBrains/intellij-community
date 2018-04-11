@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -183,7 +183,7 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   }
 
   private static ElementPattern<PsiElement> patternForReturnExpression() {
-    return psiElement().withSuperParent(2, PsiReturnStatement.class);
+    return psiElement().withParent(psiElement(PsiReferenceExpression.class).withText(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)).withSuperParent(2, PsiReturnStatement.class);
   }
 
   private static boolean suggestIterators(@NotNull CompletionParameters parameters) {

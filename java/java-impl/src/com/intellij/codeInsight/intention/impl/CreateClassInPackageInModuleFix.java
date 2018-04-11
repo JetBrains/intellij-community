@@ -136,7 +136,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     private final JBTextField myNameTextField = new JBTextField();
     private final ComboBoxWithWidePopup<PsiDirectory> myRootDirCombo = new ComboBoxWithWidePopup<>();
     private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
-    @Nullable private Project myProject;
+    @Nullable private final Project myProject;
 
     protected CreateClassInPackageDialog(@Nullable Project project, @NotNull PsiDirectory[] rootDirs) {
       super(project);

@@ -77,10 +77,10 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   private static final Logger LOG = Logger.getInstance(AbstractIdeModifiableModelsProvider.class);
 
   private ModifiableModuleModel myModifiableModuleModel;
-  private Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<>();
-  private Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<>();
-  private Map<Module, String> myProductionModulesForTestModules = new THashMap<>();
-  private Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<>();
+  private final Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<>();
+  private final Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<>();
+  private final Map<Module, String> myProductionModulesForTestModules = new THashMap<>();
+  private final Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<>();
   private ModifiableArtifactModel myModifiableArtifactModel;
   private AbstractIdeModifiableModelsProvider.MyPackagingElementResolvingContext myPackagingElementResolvingContext;
   private final ArtifactExternalDependenciesImporter myArtifactExternalDependenciesImporter;

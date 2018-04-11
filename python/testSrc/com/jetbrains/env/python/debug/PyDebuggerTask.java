@@ -20,6 +20,7 @@ import com.intellij.xdebugger.*;
 import com.jetbrains.env.python.PythonDebuggerTest;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.debugger.PyDebugValueExecutionService;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
@@ -232,6 +233,8 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
         // for some tests (with infinite loops, for example, it has no sense)
         waitFor(processHandler);
       }
+
+      PyDebugValueExecutionService.getInstance(getProject()).shutDownNow();
 
       if (!processHandler.isProcessTerminated()) {
         killDebugProcess();

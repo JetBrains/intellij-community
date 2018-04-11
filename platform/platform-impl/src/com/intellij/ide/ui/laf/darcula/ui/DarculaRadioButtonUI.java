@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -77,7 +77,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   }
 
   protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
-    Icon icon = MacIntelliJIconCache.getIcon("radio", ((AbstractButton)c).isSelected(), c.hasFocus(), c.isEnabled());
+    Icon icon = IconCache.getIcon("radio", ((AbstractButton)c).isSelected(), c.hasFocus(), c.isEnabled());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 

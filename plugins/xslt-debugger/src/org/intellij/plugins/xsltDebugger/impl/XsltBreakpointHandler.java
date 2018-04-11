@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XBreakpointProperties>> {
-  private XsltDebugProcess myXsltDebugProcess;
+  private final XsltDebugProcess myXsltDebugProcess;
 
   public XsltBreakpointHandler(XsltDebugProcess xsltDebugProcess, final Class<? extends XsltBreakpointType> typeClass) {
     super(typeClass);

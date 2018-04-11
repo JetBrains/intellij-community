@@ -36,7 +36,7 @@ public class LinkLabel<T> extends JLabel {
 
   private boolean myIsLinkActive;
 
-  private String myVisitedLinksKey;
+  private final String myVisitedLinksKey;
   private Icon myHoveringIcon;
   private Icon myInactiveIcon;
 

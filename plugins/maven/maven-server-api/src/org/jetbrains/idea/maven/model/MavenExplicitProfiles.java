@@ -24,8 +24,8 @@ import java.util.Collections;
 public class MavenExplicitProfiles implements Serializable {
   public static final MavenExplicitProfiles NONE = new MavenExplicitProfiles(Collections.<String>emptySet());
 
-  private Collection<String> myEnabledProfiles;
-  private Collection<String> myDisabledProfiles;
+  private final Collection<String> myEnabledProfiles;
+  private final Collection<String> myDisabledProfiles;
 
   public MavenExplicitProfiles(Collection<String> enabledProfiles, Collection<String> disabledProfiles) {
     myEnabledProfiles = enabledProfiles;

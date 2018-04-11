@@ -378,7 +378,7 @@ final class PaintersHelper implements Painter.Listener {
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
       Rectangle src = new Rectangle(x, y, cw, ch);
       Rectangle dst = new Rectangle(i.left, i.top, cw, ch);
-      UIUtil.drawImage(g, scaled, dst, src, null);
+      UIUtil.drawImage(g, scaled, dst, src, null, null);
       gc.restore();
     }
 

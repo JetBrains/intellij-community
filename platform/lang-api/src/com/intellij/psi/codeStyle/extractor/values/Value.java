@@ -33,7 +33,7 @@ public class Value {
     }
 
     @NotNull
-    private Object[] myPossibleValues;
+    private final Object[] myPossibleValues;
 
     VAR_KIND(@NotNull Object[] possibleValues) {
       myPossibleValues = possibleValues;

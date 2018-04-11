@@ -100,7 +100,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     getTree().setRootVisible(showProjectNode);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     getTree().setCellRenderer(new DefaultTreeCellRenderer() {
-      private SimpleColoredComponent myComponent = new SimpleColoredComponent();
+      private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
       @Override
       public Component getTreeCellRendererComponent(JTree tree,
                                                     Object value,

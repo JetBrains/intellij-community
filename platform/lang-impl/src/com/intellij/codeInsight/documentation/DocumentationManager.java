@@ -369,10 +369,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       //if (!(element instanceof PsiDocCommentOwner)) return null;
     }
 
+    PsiElement finalElement = element;
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       @Override
       public void updatePopup(Object lookupIteObject) {
         if (lookupIteObject == null) {
+          doShowJavaDocInfo(finalElement, false, this, originalElement, closeCallback, CodeInsightBundle.message("no.documentation.found"));
           return;
         }
         if (lookupIteObject instanceof PsiElement) {
@@ -388,7 +390,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           originalElement
         );
 
-        if (element == null) return;
+        if (element == null) {
+          doShowJavaDocInfo(finalElement, false, this, originalElement, closeCallback, CodeInsightBundle.message("no.documentation.found"));
+          return;
+        }
 
         if (myEditor != null) {
           final PsiFile file = element.getContainingFile();

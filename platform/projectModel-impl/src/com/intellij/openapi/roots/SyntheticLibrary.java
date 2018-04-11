@@ -1,11 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +47,11 @@ public abstract class SyntheticLibrary {
 
   @NotNull
   public abstract Collection<VirtualFile> getSourceRoots();
+
+  @NotNull
+  public Collection<VirtualFile> getBinaryRoots() {
+    return Collections.emptyList();
+  }
 
   @NotNull
   public Set<VirtualFile> getExcludedRoots() {
@@ -103,46 +110,55 @@ public abstract class SyntheticLibrary {
   public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots,
                                                      @NotNull Set<VirtualFile> excludedRoots,
                                                      @Nullable Condition<VirtualFile> excludeCondition) {
-    return new SyntheticLibrary() {
-      @NotNull
-      @Override
-      public Collection<VirtualFile> getSourceRoots() {
+    return newImmutableLibrary(sourceRoots, Collections.emptySet(), excludedRoots, excludeCondition);
+  }
+
+  @NotNull
+  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots,
+                                                     @NotNull Collection<VirtualFile> binaryRoots,
+                                                     @NotNull Set<VirtualFile> excludedRoots,
+                                                     @Nullable Condition<VirtualFile> excludeCondition) {
+    return new ImmutableSyntheticLibrary(sourceRoots, binaryRoots, excludedRoots, excludeCondition);
+  }
+
+  @NotNull
+  public final Collection<VirtualFile> getAllRoots() {
+    return getRoots(true, true);
+  }
+
+  @NotNull
+  private Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
+    if (includeSources && includeBinaries) {
+      Collection<VirtualFile> sourceRoots = getSourceRoots();
+      Collection<VirtualFile> binaryRoots = getBinaryRoots();
+      if (binaryRoots.isEmpty()) {
         return sourceRoots;
       }
-
-      @NotNull
-      @Override
-      public Set<VirtualFile> getExcludedRoots() {
-        return excludedRoots;
+      if (sourceRoots.isEmpty()) {
+        return binaryRoots;
       }
+      return ContainerUtil.union(sourceRoots, binaryRoots);
+    }
+    if (includeSources) {
+      return getSourceRoots();
+    }
+    if (includeBinaries) {
+      return getBinaryRoots();
+    }
+    return Collections.emptySet();
+  }
 
-      @Nullable
-      @Override
-      public Condition<VirtualFile> getExcludeFileCondition() {
-        return excludeCondition;
-      }
+  public final boolean contains(@NotNull VirtualFile file, boolean includeSources, boolean includeBinaries) {
+    Set<VirtualFile> roots = asSet(getRoots(includeSources, includeBinaries));
+    return VfsUtilCore.isUnder(file, roots) && !VfsUtilCore.isUnder(file, getExcludedRoots());
+  }
 
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SyntheticLibrary library = (SyntheticLibrary)o;
-        if (!sourceRoots.equals(library.getSourceRoots())) return false;
-        if (!excludedRoots.equals(library.getExcludedRoots())) return false;
-        if (excludeCondition != null ? !excludeCondition.equals(library.getExcludeFileCondition())
-                                     : library.getExcludeFileCondition() != null) {
-          return false;
-        }
-        return true;
-      }
+  public final boolean contains(@NotNull VirtualFile file) {
+    return contains(file, true, true);
+  }
 
-      @Override
-      public int hashCode() {
-        int result = sourceRoots.hashCode();
-        result = 31 * result + excludedRoots.hashCode();
-        result = 31 * result + (excludeCondition != null ? excludeCondition.hashCode() : 0);
-        return result;
-      }
-    };
+  @NotNull
+  private static Set<VirtualFile> asSet(@NotNull Collection<VirtualFile> collection) {
+    return collection instanceof Set ? (Set)collection : ContainerUtil.newTroveSet(collection);
   }
 }

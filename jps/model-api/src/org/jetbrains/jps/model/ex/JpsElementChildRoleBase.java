@@ -22,7 +22,7 @@ import org.jetbrains.jps.model.JpsElementChildRole;
  * @author nik
  */
 public class JpsElementChildRoleBase<E extends JpsElement> extends JpsElementChildRole<E> {
-  private String myDebugName;
+  private final String myDebugName;
 
   protected JpsElementChildRoleBase(String debugName) {
     myDebugName = debugName;

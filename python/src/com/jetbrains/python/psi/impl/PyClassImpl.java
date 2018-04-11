@@ -1269,8 +1269,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location) {
-    Map<String, PyTargetExpression> declarationsInMethod = new HashMap<>();
-    PyFunction instanceMethod = PsiTreeUtil.getParentOfType(location, PyFunction.class);
+    final Map<String, PyTargetExpression> declarationsInMethod = new HashMap<>();
+    final PyFunction instanceMethod = PsiTreeUtil.getStubOrPsiParentOfType(location, PyFunction.class);
     final PyClass containingClass = instanceMethod != null ? instanceMethod.getContainingClass() : null;
     if (instanceMethod != null && containingClass != null && CompletionUtil.getOriginalElement(containingClass) == this) {
       collectInstanceAttributes(instanceMethod, declarationsInMethod);
@@ -1420,7 +1420,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return null;
     }
 
-    if (LanguageLevel.forElement(this).isPython2() && getMetaClassQName() == null) {
+    if (LanguageLevel.forElement(this).isPython2() && getMetaClassQName() == null && !hasNewStyleMetaClass(this)) {
       final QualifiedName typesInstanceTypeQName = QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE);
       final PsiElement typesInstanceType = resolveTopLevelMember(typesInstanceTypeQName, fromFoothold(this));
 

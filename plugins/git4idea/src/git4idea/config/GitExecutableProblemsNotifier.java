@@ -9,6 +9,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.ui.GuiUtils;
 import git4idea.GitVcs;
@@ -37,21 +38,24 @@ public class GitExecutableProblemsNotifier {
   public static void showUnsupportedVersionDialog(@NotNull GitVersion version, @Nullable Project project) {
     GuiUtils.invokeLaterIfNeeded(
       () -> Messages.showWarningDialog(project,
-                                       GitBundle.message("git.executable.validation.error.version.subtitle", version.getPresentation())
-                                       + "\n\n" +
                                        GitBundle
                                          .message("git.executable.validation.error.version.message", GitVersion.MIN.getPresentation()),
-                                       GitBundle.getString("git.executable.validation.error.title")), ModalityState.defaultModalityState());
+                                       GitBundle.message("git.executable.validation.error.version.title", version.getPresentation())),
+      ModalityState.defaultModalityState());
   }
 
   @CalledInAny
-  public static void showExecutionErrorDialog(@NotNull Throwable e, @NotNull String pathToExecutable, @Nullable Project project) {
+  public static void showExecutionErrorDialog(@NotNull Throwable e, @Nullable Project project) {
+    boolean xcodeLicenseError = isXcodeLicenseError(e);
     GuiUtils.invokeLaterIfNeeded(
       () -> Messages.showErrorDialog(project,
-                                     GitBundle.message("git.executable.validation.error.start.subtitle", pathToExecutable)
-                                     + "\n\n" +
-                                     getPrettyErrorMessage(e),
-                                     GitBundle.getString("git.executable.validation.error.title")), ModalityState.defaultModalityState());
+                                     xcodeLicenseError
+                                     ? GitBundle.getString("git.executable.validation.error.xcode.message")
+                                     : getPrettyErrorMessage(e),
+                                     xcodeLicenseError
+                                     ? GitBundle.getString("git.executable.validation.error.xcode.title")
+                                     : GitBundle.getString("git.executable.validation.error.start.title")),
+      ModalityState.defaultModalityState());
   }
 
   @CalledInAny
@@ -62,10 +66,15 @@ public class GitExecutableProblemsNotifier {
   }
 
   @CalledInAny
-  public void notifyExecutionError(@NotNull String pathToExecutable, @NotNull Throwable exception) {
-    BadGitExecutableNotification notification = new ErrorRunningGitNotification(getPrettyErrorMessage(exception), pathToExecutable);
-    notification.addConfigureGitActions(myProject);
-    notify(notification);
+  public void notifyExecutionError(@NotNull Throwable exception) {
+    if (isXcodeLicenseError(exception)) {
+      notify(new XcodeLicenseNotAcceptedNotification());
+    }
+    else {
+      BadGitExecutableNotification notification = new ErrorRunningGitNotification(getPrettyErrorMessage(exception));
+      notification.addConfigureGitActions(myProject);
+      notify(notification);
+    }
   }
 
   private void notify(@NotNull BadGitExecutableNotification notification) {
@@ -116,8 +125,8 @@ public class GitExecutableProblemsNotifier {
   private static class UnsupportedGitVersionNotification extends BadGitExecutableNotification {
     public UnsupportedGitVersionNotification(@NotNull GitVersion unsupportedVersion) {
       super(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), null,
-            GitBundle.getString("git.executable.validation.error.title"),
-            GitBundle.message("git.executable.validation.error.version.subtitle", unsupportedVersion.getPresentation()),
+            GitBundle.message("git.executable.validation.error.version.title", unsupportedVersion.getPresentation()),
+            null,
             GitBundle.message("git.executable.validation.error.version.message", GitVersion.MIN.getPresentation()),
             NotificationType.WARNING, null);
     }
@@ -127,11 +136,24 @@ public class GitExecutableProblemsNotifier {
    * Notification about not being able to determine version
    */
   private static class ErrorRunningGitNotification extends BadGitExecutableNotification {
-    public ErrorRunningGitNotification(@NotNull String error, @NotNull String pathToExecutable) {
+    public ErrorRunningGitNotification(@NotNull String error) {
       super(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), null,
-            GitBundle.getString("git.executable.validation.error.title"),
-            GitBundle.message("git.executable.validation.error.start.subtitle", pathToExecutable),
+            GitBundle.getString("git.executable.validation.error.start.title"),
+            null,
             error,
+            NotificationType.ERROR, null);
+    }
+  }
+
+  /**
+   * Notification about not accepted xcode license
+   */
+  private static class XcodeLicenseNotAcceptedNotification extends BadGitExecutableNotification {
+    public XcodeLicenseNotAcceptedNotification() {
+      super(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), null,
+            GitBundle.getString("git.executable.validation.error.xcode.title"),
+            null,
+            GitBundle.getString("git.executable.validation.error.xcode.message"),
             NotificationType.ERROR, null);
     }
   }
@@ -181,5 +203,23 @@ public class GitExecutableProblemsNotifier {
       }
     }
     return errorMessage;
+  }
+
+  /**
+   * Check is validation failed because of not accepted xcode license
+   */
+  public static boolean isXcodeLicenseError(@NotNull Throwable exception) {
+    String message;
+    if (exception instanceof GitVersionIdentificationException) {
+      Throwable cause = exception.getCause();
+      message = cause != null ? cause.getMessage() : null;
+    }
+    else {
+      message = exception.getMessage();
+    }
+
+    return message != null
+           && SystemInfo.isMac
+           && message.contains("Agreeing to the Xcode/iOS license");
   }
 }

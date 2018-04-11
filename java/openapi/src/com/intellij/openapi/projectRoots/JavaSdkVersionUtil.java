@@ -30,7 +30,17 @@ public class JavaSdkVersionUtil {
       return JavaSdkVersion.JDK_1_8;
     }
 
-    return sdk != null && sdk.getSdkType() instanceof JavaSdk ? ((JavaSdk)sdk.getSdkType()).getVersion(sdk) : null;
+    if (sdk != null) {
+      SdkTypeId sdkType = sdk.getSdkType();
+      if (!(sdkType instanceof JavaSdk) && sdkType instanceof SdkType) {
+        sdkType = ((SdkType)sdkType).getDependencyType();
+      }
+
+      if (sdkType instanceof JavaSdk) {
+        return ((JavaSdk)sdkType).getVersion(sdk);
+      }
+    }
+    return null;
   }
 
   @Nullable

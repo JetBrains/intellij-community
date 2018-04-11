@@ -29,9 +29,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 public class SelectedTextFormatter {
-  private Project myProject;
-  private Editor myEditor;
-  private PsiFile myFile;
+  private final Project myProject;
+  private final Editor myEditor;
+  private final PsiFile myFile;
 
   private final String myTextBefore;
   private final int mySelectionStart;

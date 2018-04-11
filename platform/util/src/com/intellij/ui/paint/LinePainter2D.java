@@ -116,6 +116,7 @@ public class LinePainter2D {
   {
     boolean horizontal = y1 == y2;
     boolean vertical = x1 == x2;
+    boolean dot = horizontal && vertical;
     boolean straight = horizontal || vertical;
     boolean centered = strokeType == StrokeType.CENTERED || strokeType == StrokeType.CENTERED_CAPS_SQUARE;
     boolean thickStroke = PaintUtil.devValue(strokeWidth, g) > 1;
@@ -125,10 +126,12 @@ public class LinePainter2D {
       double swx_2 = 0, swx_1 = 0, swy_2 = 0, swy_1 = 0; // stroke offsets
       double capy_1 = 0, capy_2 = 0, capx_1 = 0, capx_2 = 0; // caps offsets
 
-      double angle = Math.atan2(y1 - y2, x2 - x1); // invert the sign of Y-axis, directing it bottom to top
-      double sin = Math.sin(angle);
-      double cos = Math.cos(angle);
-      if (straight) {
+      if (dot) y2 += strokeWidth - 1; // draw a dot as [strokeWidth x strokeWidth] vertical line
+
+      double angle = dot ? 0 : Math.atan2(y1 - y2, x2 - x1); // invert the sign of Y-axis, directing it bottom to top
+      double sin = dot ? 1 : Math.sin(angle);
+      double cos = dot ? 0 : Math.cos(angle);
+      if (straight && !dot) {
         sin = Math.abs(sin);
         cos = Math.abs(cos);
       }
@@ -148,7 +151,7 @@ public class LinePainter2D {
 
       // below x/y are aligned to int dev pixels to conform to RectanglePainter2D edges painting
 
-      if (vertical) {
+      if (vertical/*|| dot*/) {
         double y_min = Math.min(y1, y2);
         double y_max = Math.max(y1, y2);
         y1 = alignToInt(y_min, g);

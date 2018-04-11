@@ -1109,7 +1109,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     String expectedResult = "class A {\n" +
                             "  public int a = 1;\n" +
-                            "  public int b ;\n" +
+                            "  public int b;\n" +
                             "  private int c = 2;\n" +
                             "}";
 
@@ -2046,7 +2046,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("class A {  int i = 1 + 3;}", replacer.testReplace(in1, what2, by5, options, false));
 
     final String by6 = "1 + $a$ + 3";
-    assertEquals("class A {  int i = 1  + 3;}", replacer.testReplace(in1, what2, by6, options, false));
+    assertEquals("class A {  int i = 1 + 3;}", replacer.testReplace(in1, what2, by6, options, false));
 
     final String in2 = "class A {" +
                        "  boolean b = true && true;" +
@@ -2069,7 +2069,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     final String what = "assert '_a > '_b : '_c?;";
     final String by = "assert $b$ < $a$ : $c$;";
-    assertEquals("class A {  void m(int i) {    assert i < 10 ;  }}", replacer.testReplace(in, what, by, options, false));
+    assertEquals("class A {  void m(int i) {    assert i < 10;  }}", replacer.testReplace(in, what, by, options, false));
   }
 
   public void testReplaceMultipleVariablesInOneDeclaration() {
@@ -2085,7 +2085,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     final String what2 = "int '_a, '_b, '_c = '_d?;";
     final String by2 = "float $a$, $b$, $c$ = $d$;";
-    assertEquals("class A {  private float i, j, k ;  void m() {    float i, j, k ;  }}", replacer.testReplace(in, what2, by2, options));
+    assertEquals("class A {  private float i, j, k;  void m() {    float i, j, k;  }}", replacer.testReplace(in, what2, by2, options));
   }
 
   public void testReplaceWithScriptedVariable() {

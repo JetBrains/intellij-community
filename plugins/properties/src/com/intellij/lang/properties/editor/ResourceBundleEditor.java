@@ -108,13 +108,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private final Set<VirtualFile> myBackSlashPressed     = new THashSet<>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private JPanel              myValuesPanel;
-  private JPanel              myStructureViewPanel;
+  private final JPanel              myValuesPanel;
+  private final JPanel              myStructureViewPanel;
   private volatile boolean    myDisposed;
   private ResourceBundleEditorFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
-  private ResourceBundleEditorHighlighter myHighlighter;
+  private final ResourceBundleEditorHighlighter myHighlighter;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();

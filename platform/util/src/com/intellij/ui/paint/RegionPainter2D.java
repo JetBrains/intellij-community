@@ -16,16 +16,6 @@ import java.awt.geom.Rectangle2D;
  * @see RegionPainter
  */
 public interface RegionPainter2D<T> {
-  void paint(@NotNull Graphics2D g, double x, double y, double width, double height);
-
-  void paint(@NotNull Graphics2D g, double x, double y, double width, double height, @Nullable T object);
-
-  void paint(@NotNull Graphics2D g,
-             double x, double y, double width, double height,
-             @Nullable T object,
-             @NotNull StrokeType strokeType,
-             double strokeWidth);
-
   /**
    * Paints on the given {@link Graphics2D} object.
    *
@@ -37,8 +27,7 @@ public interface RegionPainter2D<T> {
    * @param object an optional configuration parameter
    * @param strokeType the stroke type
    * @param strokeWidth the stroke width
-   * @param valueAA overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA},
-   *                affecting a rounding rectangle only
+   * @param valueAA overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
   void paint(@NotNull Graphics2D g,
              double x, double y, double width, double height,
@@ -47,9 +36,13 @@ public interface RegionPainter2D<T> {
              double strokeWidth,
              @NotNull Object valueAA);
 
-  /**
-   * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
-   */
+  void paint(@NotNull Graphics2D g,
+             double x, double y, double width, double height,
+             @NotNull StrokeType strokeType,
+             double strokeWidth);
+
+  void paint(@NotNull Graphics2D g, double x, double y, double width, double height);
+
   void paint(@NotNull final Graphics2D g,
              Rectangle2D rect,
              @Nullable T object,

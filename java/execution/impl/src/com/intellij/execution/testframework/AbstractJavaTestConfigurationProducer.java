@@ -43,6 +43,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 
 import java.util.*;
 
@@ -56,6 +57,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   }
 
 
+  @Contract("null->false")
   protected boolean isTestClass(PsiClass psiClass) {
     if (psiClass != null) {
       JavaTestFramework framework = getCurrentFramework(psiClass);

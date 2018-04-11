@@ -759,7 +759,7 @@ public class ExpressionUtils {
    * @return true if the supplied expression is simple
    */
   @Contract("null -> false")
-  public static boolean isSimpleExpression(@Nullable PsiExpression expression) {
+  public static boolean isSafelyRecomputableExpression(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiLiteralExpression ||
         expression instanceof PsiThisExpression ||

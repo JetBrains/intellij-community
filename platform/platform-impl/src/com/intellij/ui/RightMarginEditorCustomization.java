@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RightMarginEditorCustomization extends SimpleEditorCustomization {
 
-  private int myRightMarginColumns;
+  private final int myRightMarginColumns;
 
   public RightMarginEditorCustomization(boolean enabled, int rightMarginColumns) {
     super(enabled);

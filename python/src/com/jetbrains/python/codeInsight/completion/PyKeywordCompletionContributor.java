@@ -235,7 +235,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static ElementPattern NOT_PARAMETER_OR_DEFAULT_VALUE = new FilterPattern(new NotParameterOrDefaultValue());
+  private static final ElementPattern NOT_PARAMETER_OR_DEFAULT_VALUE = new FilterPattern(new NotParameterOrDefaultValue());
 
   // ====== conditions
 

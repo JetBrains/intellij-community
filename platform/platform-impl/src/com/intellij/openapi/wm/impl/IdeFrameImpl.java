@@ -77,7 +77,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
   private boolean myRestoreFullScreen;
-  private LafManagerListener myLafListener;
+  private final LafManagerListener myLafListener;
 
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager, Application application) {
     super(ApplicationNamesInfo.getInstance().getFullProductName());

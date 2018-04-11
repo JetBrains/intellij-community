@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -27,8 +26,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
+import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -42,6 +44,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -298,16 +301,21 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       myBrowser = new AlienChangeListBrowser(project, changeList, changes);
       myBrowser.getViewer().setIncludedChanges(included);
+      myBrowser.getViewer().rebuildTree();
 
       myCommitMessageArea.setChangeList(changeList);
     }
     else {
+      LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
+
       MultipleLocalChangeListsBrowser browser = new MultipleLocalChangeListsBrowser(project, true, true, myShowVcsCommit);
       myBrowser = browser;
 
-      browser.getViewer().setIncludedChanges(included);
       if (initialSelection != null) browser.setSelectedChangeList(initialSelection);
       myCommitMessageArea.setChangeList(browser.getSelectedChangeList());
+      browser.getViewer().setIncludedChanges(included);
+      browser.getViewer().rebuildTree();
+      browser.getViewer().setKeepTreeState(true);
 
       DiffCommitMessageEditor commitMessageEditor = new DiffCommitMessageEditor(myProject, myCommitMessageArea);
       browser.setBottomDiffComponent(commitMessageEditor);
@@ -323,7 +331,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       });
 
       browser.getViewer().addSelectionListener(() -> SwingUtilities.invokeLater(() -> changeDetails()));
-      browser.getViewer().setKeepTreeState(true);
     }
 
     myChangesInfoCalculator = new ChangeInfoCalculator();
@@ -586,7 +593,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     ensureDataIsActual(() -> {
       try {
         DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-        CheckinHandler.ReturnResult result = runBeforeCommitHandlers(executor);
+        CheckinHandler.ReturnResult result = performBeforeCommitChecks(executor);
         if (result == CheckinHandler.ReturnResult.COMMIT) {
           close(OK_EXIT_CODE);
           doCommit(myResultHandler);
@@ -627,7 +634,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
 
       DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-      CheckinHandler.ReturnResult result = runBeforeCommitHandlers(commitExecutor);
+      CheckinHandler.ReturnResult result = performBeforeCommitChecks(commitExecutor);
       if (result == CheckinHandler.ReturnResult.COMMIT) {
         boolean success = false;
         try {
@@ -772,42 +779,59 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myUpdateButtonsRunnable.run();
   }
 
-  private CheckinHandler.ReturnResult runBeforeCommitHandlers(@Nullable CommitExecutor executor) {
-    Computable<CheckinHandler.ReturnResult> proceedRunnable = () -> {
+  @NotNull
+  private CheckinHandler.ReturnResult performBeforeCommitChecks(@Nullable CommitExecutor executor) {
+    stopUpdate();
+
+    Ref<CheckinHandler.ReturnResult> compoundResultRef = Ref.create();
+    Runnable proceedRunnable = () -> {
       FileDocumentManager.getInstance().saveAllDocuments();
-
-      for (CheckinHandler handler : myHandlers) {
-        if (!handler.acceptExecutor(executor)) continue;
-        CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myCommitOptions.getAdditionalData());
-        if (result == CheckinHandler.ReturnResult.COMMIT) continue;
-        if (result == CheckinHandler.ReturnResult.CANCEL) {
-          restartUpdate();
-          return CheckinHandler.ReturnResult.CANCEL;
-        }
-
-        if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
-          ChangeList changeList = myBrowser.getSelectedChangeList();
-          CommitHelper.moveToFailedList(changeList, getCommitMessage(), getIncludedChanges(),
-                                        message("commit.dialog.rejected.commit.template", changeList.getName()), myProject);
-          doCancelAction();
-          return CheckinHandler.ReturnResult.CLOSE_WINDOW;
-        }
-      }
-
-      return CheckinHandler.ReturnResult.COMMIT;
+      compoundResultRef.set(runBeforeCheckinHandlers(executor));
     };
 
-    stopUpdate();
-    Ref<CheckinHandler.ReturnResult> compoundResultRef = Ref.create();
-    Runnable runnable = () -> compoundResultRef.set(proceedRunnable.compute());
+    Runnable runnable = wrapIntoCheckinMetaHandlers(proceedRunnable);
+
+    if (myIsAlien) {
+      runnable.run();
+    }
+    else {
+      PartialChangesUtil.runUnderChangeList(myProject, myBrowser.getSelectedChangeList(), runnable);
+    }
+
+    return notNull(compoundResultRef.get(), CheckinHandler.ReturnResult.CANCEL);
+  }
+
+  @NotNull
+  private CheckinHandler.ReturnResult runBeforeCheckinHandlers(@Nullable CommitExecutor executor) {
+    for (CheckinHandler handler : myHandlers) {
+      if (!handler.acceptExecutor(executor)) continue;
+      CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myCommitOptions.getAdditionalData());
+      if (result == CheckinHandler.ReturnResult.COMMIT) continue;
+      if (result == CheckinHandler.ReturnResult.CANCEL) {
+        restartUpdate();
+        return CheckinHandler.ReturnResult.CANCEL;
+      }
+
+      if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
+        ChangeList changeList = myBrowser.getSelectedChangeList();
+        CommitHelper.moveToFailedList(changeList, getCommitMessage(), getIncludedChanges(),
+                                      message("commit.dialog.rejected.commit.template", changeList.getName()), myProject);
+        doCancelAction();
+        return CheckinHandler.ReturnResult.CLOSE_WINDOW;
+      }
+    }
+
+    return CheckinHandler.ReturnResult.COMMIT;
+  }
+
+  private Runnable wrapIntoCheckinMetaHandlers(Runnable runnable) {
     for (CheckinHandler handler : myHandlers) {
       if (handler instanceof CheckinMetaHandler) {
         Runnable previousRunnable = runnable;
         runnable = () -> ((CheckinMetaHandler)handler).runCheckinHandlers(previousRunnable);
       }
     }
-    runnable.run();
-    return compoundResultRef.get();
+    return runnable;
   }
 
   private boolean saveDialogState() {
@@ -861,6 +885,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myCommitOptions.saveChangeListComponentsState();
     saveCommentIntoChangeList();
     saveComments(false);
+    LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
     super.doCancelAction();
   }
 
@@ -893,7 +918,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public Collection<VirtualFile> getRoots() {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
-    return map2SetNotNull(myBrowser.getDisplayedChanges(), change -> vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
+    return map2SetNotNull(getDisplayedPaths(), filePath -> vcsManager.getVcsRootFor(filePath));
   }
 
   @NotNull
@@ -910,7 +935,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   @Override
   public Collection<VirtualFile> getVirtualFiles() {
-    return mapNotNull(getIncludedChanges(), change -> ChangesUtil.getFilePath(change).getVirtualFile());
+    return mapNotNull(getIncludedPaths(), filePath -> filePath.getVirtualFile());
   }
 
   @NotNull
@@ -922,7 +947,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   @Override
   public Collection<File> getFiles() {
-    return map(getIncludedChanges(), change -> ChangesUtil.getFilePath(change).getIOFile());
+    return map(getIncludedPaths(), filePath -> filePath.getIOFile());
   }
 
   @NotNull
@@ -997,6 +1022,30 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   private List<Change> getIncludedChanges() {
     return myBrowser.getIncludedChanges();
+  }
+
+  @NotNull
+  private List<FilePath> getIncludedPaths() {
+    List<FilePath> paths = new ArrayList<>();
+    for (Change change : myBrowser.getIncludedChanges()) {
+      paths.add(ChangesUtil.getFilePath(change));
+    }
+    for (VirtualFile file : myBrowser.getIncludedUnversionedFiles()) {
+      paths.add(VcsUtil.getFilePath(file));
+    }
+    return paths;
+  }
+
+  @NotNull
+  private List<FilePath> getDisplayedPaths() {
+    List<FilePath> paths = new ArrayList<>();
+    for (Change change : myBrowser.getDisplayedChanges()) {
+      paths.add(ChangesUtil.getFilePath(change));
+    }
+    for (VirtualFile file : myBrowser.getDisplayedUnversionedFiles()) {
+      paths.add(VcsUtil.getFilePath(file));
+    }
+    return paths;
   }
 
   @Override
@@ -1085,6 +1134,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       super(project, DiffPlaces.COMMIT_DIALOG);
 
       putContextUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK, true);
+      putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, true);
     }
 
     @NotNull

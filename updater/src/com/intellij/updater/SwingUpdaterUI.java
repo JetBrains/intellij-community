@@ -277,7 +277,7 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
     }
 
     private static class Item {
-      private ValidationResult validationResult;
+      private final ValidationResult validationResult;
       private ValidationResult.Option option;
 
       private Item(ValidationResult validationResult, ValidationResult.Option option) {

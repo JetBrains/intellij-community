@@ -46,7 +46,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
   private static final Logger LOG = Logger.getInstance(StaticImportMethodQuestionAction.class);
   private final Project myProject;
   private final Editor myEditor;
-  private List<T> myCandidates;
+  private final List<T> myCandidates;
   private final SmartPsiElementPointer<? extends PsiElement> myRef;
 
   public StaticImportMethodQuestionAction(Project project,

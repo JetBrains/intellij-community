@@ -31,7 +31,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -149,17 +149,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private volatile GotoSymbolModel2 mySymbolsModel;
   private Component myFocusComponent;
   private JBPopup myPopup;
-  private Map<String, String> myConfigurables = new HashMap<>();
+  private final Map<String, String> myConfigurables = new HashMap<>();
 
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private JBList myList;
   private JCheckBox myNonProjectCheckBox;
   private AnActionEvent myActionEvent;
-  private Set<AnAction> myDisabledActions = new HashSet<>();
+  private final Set<AnAction> myDisabledActions = new HashSet<>();
   private Component myContextComponent;
   private CalcThread myCalcThread;
-  private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
-  private static AtomicBoolean showAll = new AtomicBoolean(false);
+  private static final AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
+  private static final AtomicBoolean showAll = new AtomicBoolean(false);
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
@@ -528,7 +528,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
           }
           else {
-            GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
+            GotoActionAction.openOptionOrPerformAction(value, pattern, project, c);
           }
         });
         return ()->{};
@@ -631,7 +631,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       Disposer.dispose(myPopupField);
     }
     myPopupField = new MySearchTextField();
-    UIUtil.typeAheadUntilFocused(e.getInputEvent(), myPopupField.getTextEditor());
+    //UIUtil.typeAheadUntilFocused(e.getInputEvent(), myPopupField.getTextEditor());
     myPopupField.getTextEditor().addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {
@@ -1027,8 +1027,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private String myLocationString;
     private Icon myLocationIcon;
     private Project myProject;
-    private MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
-    private JLabel myTitle = new JLabel();
+    private final MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
+    private final JLabel myTitle = new JLabel();
 
     MyListRenderer(@NotNull JBList myList) {
       assert myList == SearchEverywhereAction.this.myList;

@@ -89,7 +89,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRenameVariablesInplace              = null;
   private Boolean myIsRefrainFromScrolling                = null;
   private Boolean myUseSoftWraps                          = null;
-  private Boolean myIsAllSoftWrapsShown                   = null;
+  private final Boolean myIsAllSoftWrapsShown                   = null;
   private Boolean myUseCustomSoftWrapIndent               = null;
   private Integer myCustomSoftWrapIndent                  = null;
   private Boolean myRenamePreselect                       = null;

@@ -25,8 +25,8 @@ import java.util.Map;
  * @noinspection HardCodedStringLiteral
  */
 public class ComparisonDetailsExtractor  {
-  private static Map EXPECTED = new HashMap();
-  private static Map ACTUAL = new HashMap();
+  private static final Map EXPECTED = new HashMap();
+  private static final Map ACTUAL = new HashMap();
   protected String myActual = "";
   protected String myExpected = "";
   private final Throwable myAssertion;

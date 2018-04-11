@@ -113,9 +113,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private InspectorTable myInspectorTable;
     private Component myComponent;
     private List<PropertyBean> myInfo;
-    private Component myInitialComponent;
+    private final Component myInitialComponent;
     private HighlightComponent myHighlightComponent;
-    private HierarchyTree myHierarchyTree;
+    private final HierarchyTree myHierarchyTree;
     private final JPanel myWrapperPanel;
 
     private InspectorWindow(@NotNull Component component) throws HeadlessException {

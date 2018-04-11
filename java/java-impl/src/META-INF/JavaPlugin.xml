@@ -36,11 +36,6 @@
     </component>
   </project-components>
 
-  <actions>
-    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
-    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
-  </actions>
-
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.methodImplementor"
                     interface="com.intellij.codeInsight.MethodImplementor"/>
@@ -185,7 +180,6 @@
     <inlineActionHandler implementation="com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineToAnonymousClassHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineParameterHandler"/>
-    <projectViewPane implementation="com.intellij.ide.projectView.impl.PackageViewPane"/>
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.JavaRainbowVisitor"/>
     <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
     <bundledKeymapProvider implementation="com.intellij.openapi.keymap.JBuilderKeymapProvider"/>
@@ -418,6 +412,7 @@
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgPrevParameterHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgNextParameterHandler"/>
     <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartHandler"/>
+    <editorActionHandler action="EditorLineStartWithSelection" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartWithSelectionHandler"/>
     <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.AutoFormatTypedHandler"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavadocTypedHandler" id="javadoc"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
@@ -912,6 +907,7 @@
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager"/>
 
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 
@@ -922,6 +918,9 @@
 
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
+
+    <actionPromoter implementation="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchActionPromoter"/>
+
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
       <category>Java/Control Flow</category>
@@ -1124,19 +1123,8 @@
       <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddNullableAnnotationIntention</className>
+      <className>com.intellij.codeInsight.intention.impl.AnnotateIntentionAction</className>
       <category>Java/Annotations</category>
-      <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddDeprecationAnnotationIntention</className>
-      <category>Java/Annotations</category>
-      <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention</className>
-      <category>Java/Annotations</category>
-      <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExtractIfConditionAction</className>

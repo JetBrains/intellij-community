@@ -61,8 +61,8 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   private JPanel contentPanel;
   @SuppressWarnings("unused")
   private JBLabel myDescriptionLbl;
-  private ExternalSystemUiAware myExternalSystemUiAware;
-  private CheckboxTree myTree;
+  private final ExternalSystemUiAware myExternalSystemUiAware;
+  private final CheckboxTree myTree;
 
   public GradleProjectCompositeSelectorDialog(@NotNull Project project, String compositeRootProjectPath) {
     super(project, true);

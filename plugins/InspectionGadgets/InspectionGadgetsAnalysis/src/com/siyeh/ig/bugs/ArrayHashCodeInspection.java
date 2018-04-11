@@ -122,27 +122,17 @@ public class ArrayHashCodeInspection extends BaseInspection {
   private static class ArrayHashCodeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.HASH_CODE.equals(methodName)) {
-        return;
-      }
+      if (!HardcodedMethodConstants.HASH_CODE.equals(methodName)) return;
       final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length != 0) {
-        return;
-      }
+      if (!argumentList.isEmpty()) return;
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
+      if (qualifier == null) return;
       final PsiType type = qualifier.getType();
-      if (!(type instanceof PsiArrayType)) {
-        return;
-      }
+      if (!(type instanceof PsiArrayType)) return;
       registerMethodCallError(expression, type);
     }
   }

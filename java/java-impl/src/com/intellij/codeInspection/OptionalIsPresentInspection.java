@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
@@ -242,7 +242,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   }
 
   static boolean isSimpleOrUnchecked(PsiExpression expression) {
-    return ExpressionUtils.isSimpleExpression(expression) || LambdaGenerationUtil.canBeUncheckedLambda(expression);
+    return ExpressionUtils.isSafelyRecomputableExpression(expression) || LambdaGenerationUtil.canBeUncheckedLambda(expression);
   }
 
   static class OptionalIsPresentFix implements LocalQuickFix {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -22,6 +8,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -134,15 +121,27 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     if (finder == null) return clsFile;
 
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
-    return index.getOrderEntriesForFile(clsFile.getContainingFile().getVirtualFile()).stream()
-      .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
-      .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)))
+    return findSourceRoots(index, clsFile.getContainingFile().getVirtualFile())
       .map(finder)
       .filter(source -> source != null && source.isValid())
       .map(clsFile.getManager()::findFile)
       .filter(PsiClassOwner.class::isInstance)
       .findFirst()
       .orElse(clsFile);
+  }
+
+  @NotNull
+  private Stream<VirtualFile> findSourceRoots(@NotNull ProjectFileIndex index, @NotNull VirtualFile virtualFile) {
+    Stream<VirtualFile> rootsByProjectModel = index.getOrderEntriesForFile(virtualFile).stream()
+      .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
+      .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)));
+
+    Stream<VirtualFile> syntheticLibraryRoots = Stream.of(Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME))
+      .flatMap(provider -> provider.getAdditionalProjectLibraries(myProject).stream())
+      .filter(syntheticLibrary -> syntheticLibrary.contains(virtualFile, false, true))
+      .flatMap(lib -> lib.getSourceRoots().stream());
+
+    return Stream.concat(rootsByProjectModel, syntheticLibraryRoots);
   }
 
   @NotNull

@@ -220,7 +220,7 @@ public class KShortestPathsFinder<Node> {
   }
 
   private static class Sidetracks<Node> implements Comparable<Sidetracks> {
-    private int myLength;
+    private final int myLength;
     private final FList<HeapNode<Node>> myEdges;
 
     private Sidetracks(int length, FList<HeapNode<Node>> edges) {
@@ -236,7 +236,7 @@ public class KShortestPathsFinder<Node> {
 
   private static class Heap<Node> {
     private final int mySize;
-    private HeapNode<Node> myRoot;
+    private final HeapNode<Node> myRoot;
 
     public Heap(HeapNode<Node> root) {
       myRoot = root;

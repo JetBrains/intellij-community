@@ -123,7 +123,7 @@ public class TranslatingCompilerFilesMonitor {
             final Set<File> toMark = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
             if (eventFile.isDirectory()) {
               VfsUtilCore.visitChildrenRecursively(eventFile, new VirtualFileVisitor() {
-                private StringBuilder filePath = new StringBuilder(root);
+                private final StringBuilder filePath = new StringBuilder(root);
 
                 @Override
                 public boolean visitFile(@NotNull VirtualFile child) {

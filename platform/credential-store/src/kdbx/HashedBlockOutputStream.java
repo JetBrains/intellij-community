@@ -50,8 +50,8 @@ public class HashedBlockOutputStream extends OutputStream {
   private static final byte[] ZERO_HASH = new byte[HASH_SIZE];
 
   private int nextSequenceNumber = 0;
-  private OutputStream outputStream;
-  private ByteArrayOutputStream blockOutputStream = new ByteArrayOutputStream();
+  private final OutputStream outputStream;
+  private final ByteArrayOutputStream blockOutputStream = new ByteArrayOutputStream();
   private boolean isClosed = false;
 
   private final MessageDigest md = KdbxHeaderKt.sha256MessageDigest();

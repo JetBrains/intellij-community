@@ -55,7 +55,7 @@ public class TerminalSettingsPanel {
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
 
-  private java.util.List<UnnamedConfigurable> myConfigurables = Lists.newArrayList();
+  private final java.util.List<UnnamedConfigurable> myConfigurables = Lists.newArrayList();
 
   public JComponent createPanel(@NotNull TerminalOptionsProvider provider, @NotNull TerminalProjectOptionsProvider projectOptionsProvider) {
     myOptionsProvider = provider;

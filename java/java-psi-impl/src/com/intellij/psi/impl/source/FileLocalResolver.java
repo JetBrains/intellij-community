@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -59,6 +60,7 @@ public class FileLocalResolver {
     boolean passedClass = false;
     LighterASTNode lastParent = ref;
     while (true) {
+      ProgressManager.checkCanceled();
       LighterASTNode scope = myTree.getParent(lastParent);
       if (scope == null) return LightResolveResult.NON_LOCAL;
 

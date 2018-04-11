@@ -30,13 +30,13 @@ import java.util.regex.Pattern;
 public class FileStatusResultParser {
 
   @NotNull
-  private Pattern myLinePattern;
+  private final Pattern myLinePattern;
 
   @Nullable
-  private ProgressTracker handler;
+  private final ProgressTracker handler;
 
   @NotNull
-  private Convertor<Matcher, ProgressEvent> myConvertor;
+  private final Convertor<Matcher, ProgressEvent> myConvertor;
 
   public FileStatusResultParser(@NotNull Pattern linePattern,
                                 @Nullable ProgressTracker handler,

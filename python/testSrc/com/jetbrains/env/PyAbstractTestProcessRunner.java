@@ -143,7 +143,11 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
   public final String getFormattedTestTree() {
     final StringBuilder builder = new StringBuilder("Test tree:\n");
 
-    formatLevel(getTestProxy(), 0, builder);
+    final SMRootTestProxy proxy = getTestProxy();
+    if (proxy.wasTerminated()) {
+      return "Test terminated";
+    }
+    formatLevel(proxy, 0, builder);
 
     return builder.toString();
   }
@@ -152,7 +156,15 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     builder.append(StringUtil.repeat(".", level));
     builder.append(test.getName());
     if (test.isLeaf()) {
-      builder.append(test.isPassed() ? "(+)" : (test.isIgnored() ? "(~)" : "(-)"));
+      if (test.wasTerminated()) {
+        builder.append("[T]");
+      } else if (test.isPassed()) {
+        builder.append("(+)");
+      } else if (test.isIgnored()) {
+        builder.append("(~)");
+      } else {
+        builder.append("(-)");
+      }
     }
     builder.append('\n');
     for (SMTestProxy child : test.getChildren()) {

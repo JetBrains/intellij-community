@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
@@ -70,32 +69,26 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
   private void doCheck(final ProjectStructureElement element) {
     final ProjectStructureProblemsHolderImpl problemsHolder = new ProjectStructureProblemsHolderImpl();
-    new ReadAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        if (myStopped.get()) return;
+    ReadAction.run(() -> {
+      if (myStopped.get()) return;
 
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("checking " + element);
-        }
-        ProjectStructureValidator.check(element, problemsHolder);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("checking " + element);
       }
-    }.execute();
+      ProjectStructureValidator.check(element, problemsHolder);
+    });
     myResultsUpdateQueue.queue(new ProblemsComputedUpdate(element, problemsHolder));
   }
 
   private void doCollectUsages(final ProjectStructureElement element) {
-    final List<ProjectStructureElementUsage> usages = new ReadAction<List<ProjectStructureElementUsage>>() {
-      @Override
-      protected void run(@NotNull final Result<List<ProjectStructureElementUsage>> result) {
-        if (myStopped.get()) return;
+    final List<ProjectStructureElementUsage> usages = ReadAction.compute(() -> {
+      if (myStopped.get()) return null;
 
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("collecting usages in " + element);
-        }
-        result.setResult(getUsagesInElement(element));
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("collecting usages in " + element);
       }
-    }.execute().getResultObject();
+      return getUsagesInElement(element);
+    });
     if (usages != null) {
       myResultsUpdateQueue.queue(new UsagesCollectedUpdate(element, usages));
     }

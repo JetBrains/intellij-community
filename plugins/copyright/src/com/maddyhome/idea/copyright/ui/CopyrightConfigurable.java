@@ -51,7 +51,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   private boolean myModified;
 
   private String myDisplayName;
-  private EditorTextField myEditor;
+  private final EditorTextField myEditor;
   private JButton myValidateButton;
   private JTextField myKeywordTf;
   private JTextField myAllowReplaceTextField;

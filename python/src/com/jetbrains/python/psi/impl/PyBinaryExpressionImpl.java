@@ -160,7 +160,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
         for (Map.Entry<PyExpression, PyCallableParameter> entry : result.getMappedParameters().entrySet()) {
           final PyType parameterType = entry.getValue().getArgumentType(context);
           final PyType argumentType = context.getType(entry.getKey());
-          if (!PyTypeChecker.match(parameterType, argumentType, context, new HashMap<>())) {
+          if (!PyTypeChecker.match(parameterType, argumentType, context)) {
             matched = false;
           }
         }

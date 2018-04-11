@@ -49,7 +49,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
 
       RefParameter[] parameters = refMethod.getParameters();
       for (RefParameter refParameter : parameters) {
-        Object value = refParameter.getActualValueIfSame();
+        Object value = refParameter.getActualConstValue();
         if (value != VALUE_IS_NOT_CONST && value != RefParameter.VALUE_UNDEFINED) {
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);

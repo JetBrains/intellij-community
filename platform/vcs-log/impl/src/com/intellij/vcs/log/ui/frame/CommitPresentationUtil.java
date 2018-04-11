@@ -28,25 +28,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
-import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
+import static com.intellij.openapi.vcs.ui.FontUtil.getCommitMessageFont;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class CommitPresentationUtil {
   @NotNull private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
-  private static final int PER_ROW = 2;
 
   @NotNull static final String GO_TO_HASH = "go-to-hash:";
   @NotNull static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
-
-  @NotNull
-  private static String getHtmlWithFonts(@NotNull String input) {
-    return getHtmlWithFonts(input, getCommitDetailsFont().getStyle());
-  }
-
-  @NotNull
-  private static String getHtmlWithFonts(@NotNull String input, int style) {
-    return FontUtil.getHtmlWithFonts(input, style, getCommitDetailsFont());
-  }
 
   @NotNull
   private static String escapeMultipleSpaces(@NotNull String text) {
@@ -113,18 +102,17 @@ public class CommitPresentationUtil {
   private static String formatCommitText(@NotNull Project project,
                                          @NotNull String subject,
                                          @NotNull String description,
-                                         @NotNull String hashAndAuthor,
                                          @NotNull Set<String> resolvedHashes) {
     Convertor<String, String> convertor = s -> replaceHashes(s, resolvedHashes);
+    Font font = getCommitMessageFont();
     return "<b>" +
-           getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, subject, convertor)), Font.BOLD) +
+           FontUtil.getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, subject, convertor)), Font.BOLD, font) +
            "</b>" +
-           getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, description, convertor))) +
-           "<br/><br/>" + hashAndAuthor;
+           FontUtil.getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, description, convertor)), font.getStyle(), font);
   }
 
   @NotNull
-  private static String getAuthorText(@NotNull VcsFullCommitDetails commit, int offset) {
+  private static String getAuthorText(@NotNull VcsFullCommitDetails commit) {
     long authorTime = commit.getAuthorTime();
     long commitTime = commit.getCommitTime();
 
@@ -137,22 +125,18 @@ public class CommitPresentationUtil {
       else {
         commitTimeText = "";
       }
-      authorText += getCommitterText(commit.getCommitter(), commitTimeText, offset);
+      authorText += "<br/>" + getCommitterText(commit.getCommitter(), commitTimeText);
     }
     else if (authorTime != commitTime) {
-      authorText += getCommitterText(null, formatDateTime(commitTime), offset);
+      authorText += "<br/>" + getCommitterText(null, formatDateTime(commitTime));
     }
     return authorText;
   }
 
   @NotNull
-  private static String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText, int offset) {
-    String alignment = "<br/>" + StringUtil.repeat("&nbsp;", offset);
-    String gray = ColorUtil.toHex(JBColor.GRAY);
-
-    String graySpan = "<span style='color:#" + gray + "'>";
-
-    String text = alignment + graySpan + "committed";
+  private static String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText) {
+    String graySpan = "<span style='color:#" + ColorUtil.toHex(JBColor.GRAY) + "'>";
+    String text = graySpan + "committed";
     if (committer != null) {
       text += " by " + VcsUserUtil.getShortPresentation(committer);
       if (!committer.getEmail().isEmpty()) {
@@ -180,99 +164,74 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
-  static String getBranchesText(@Nullable List<String> branches, boolean expanded) {
+  private static String formatCommitHashAndAuthor(@NotNull VcsFullCommitDetails commit) {
+    Font font = FontUtil.getCommitMetadataFont();
+    return FontUtil.getHtmlWithFonts(commit.getId().toShortString() + " " + getAuthorText(commit), font.getStyle(), font);
+  }
+
+  @NotNull
+  static String getBranchesText(@Nullable List<String> branches, boolean expanded, int availableWidth, @NotNull FontMetrics metrics) {
     if (branches == null) {
-      return "<i>In branches: loading...</i>";
+      return "In branches: loading...";
     }
-    if (branches.isEmpty()) return "<i>Not in any branch</i>";
+    if (branches.isEmpty()) return "Not in any branch";
+
+    String head = "In " + branches.size() + StringUtil.pluralize(" branch", branches.size()) + ": ";
 
     if (expanded) {
-      int rowCount = (int)Math.ceil((double)branches.size() / PER_ROW);
-
-      int[] means = new int[PER_ROW - 1];
-      int[] max = new int[PER_ROW - 1];
-
-      for (int i = 0; i < rowCount; i++) {
-        for (int j = 0; j < PER_ROW - 1; j++) {
-          int index = rowCount * j + i;
-          if (index < branches.size()) {
-            means[j] += branches.get(index).length();
-            max[j] = Math.max(branches.get(index).length(), max[j]);
-          }
-        }
-      }
-      for (int j = 0; j < PER_ROW - 1; j++) {
-        means[j] /= rowCount;
-      }
-
-      HtmlTableBuilder builder = new HtmlTableBuilder();
-      for (int i = 0; i < rowCount; i++) {
-        builder.startRow();
-        for (int j = 0; j < PER_ROW; j++) {
-          int index = rowCount * j + i;
-          if (index >= branches.size()) {
-            builder.append("");
-          }
-          else {
-            String branch = branches.get(index);
-            if (index != branches.size() - 1) {
-              int space = 0;
-              if (j < PER_ROW - 1 && branch.length() == max[j]) {
-                space = Math.max(means[j] + 20 - max[j], 5);
-              }
-              builder.append(branch + StringUtil.repeat("&nbsp;", space), "left");
-            }
-            else {
-              builder.append(branch, "left");
-            }
-          }
-        }
-
-        builder.endRow();
-      }
-
-      return "<i>In " + branches.size() + " branches:</i> " +
-             "<a href=\"" + SHOW_HIDE_BRANCHES + "\"><i>(click to hide)</i></a><br>" +
-             builder.build();
+      return head +
+             "<a href=\"" + SHOW_HIDE_BRANCHES + "\">Hide</a><br/>" +
+             StringUtil.join(branches, "<br/>");
     }
-    else {
-      int totalMax = 0;
-      int charCount = 0;
-      for (String b : branches) {
-        totalMax++;
-        charCount += b.length();
-        if (charCount >= 50) break;
-      }
 
-      String branchText;
-      if (branches.size() <= totalMax) {
-        branchText = StringUtil.join(branches, ", ");
+    String tail = "… <a href=\"" + SHOW_HIDE_BRANCHES + "\">Show all</a>";
+    int headWidth = metrics.stringWidth(head);
+    int tailWidth = metrics.stringWidth(StringUtil.removeHtmlTags(tail));
+    if (availableWidth <= headWidth + tailWidth) {
+      return head + tail; // oh well
+    }
+
+    availableWidth -= headWidth;
+    StringBuilder branchesText = new StringBuilder();
+    for (int i = 0; i < branches.size(); i++) {
+      String branch = branches.get(i) + (i != branches.size() - 1 ? ", " : "");
+      int branchWidth = metrics.stringWidth(branch);
+      if (branchWidth + tailWidth < availableWidth) {
+        branchesText.append(branch);
+        availableWidth -= branchWidth;
       }
       else {
-        branchText = StringUtil.join(ContainerUtil.getFirstItems(branches, totalMax), ", ") +
-                     "… <a href=\"" +
-                     SHOW_HIDE_BRANCHES +
-                     "\"><i>(click to show all)</i></a>";
+        StringBuilder shortenedBranch = new StringBuilder();
+        for (char c : branch.toCharArray()) {
+          if (metrics.stringWidth(shortenedBranch.toString() + c) + tailWidth >= availableWidth) {
+            break;
+          }
+          shortenedBranch.append(c);
+        }
+        branchesText.append(shortenedBranch);
+        branchesText.append(tail);
+        break;
       }
-      return "<i>In " + branches.size() + StringUtil.pluralize(" branch", branches.size()) + ":</i> " + branchText;
     }
+
+    return head + branchesText.toString();
   }
 
   @NotNull
   public static CommitPresentation buildPresentation(@NotNull Project project,
                                                      @NotNull VcsFullCommitDetails commit,
                                                      @NotNull Set<String> unresolvedHashes) {
-    String hash = commit.getId().toShortString();
-    String hashAndAuthor = getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1));
     String fullMessage = commit.getFullMessage();
     int separator = fullMessage.indexOf("\n\n");
     String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
     String description = fullMessage.substring(subject.length());
 
+    String text = formatCommitText(project, subject, description, Collections.emptySet());
+    String hashAndAuthor = formatCommitHashAndAuthor(commit);
+
     Set<String> unresolvedHashesForCommit = findHashes(project, subject, description);
-    String text = formatCommitText(project, subject, description, hashAndAuthor, Collections.emptySet());
     if (unresolvedHashesForCommit.isEmpty()) {
-      return new CommitPresentation(text, commit.getRoot(), MultiMap.empty());
+      return new CommitPresentation(text, hashAndAuthor, commit.getRoot(), MultiMap.empty());
     }
 
     unresolvedHashes.addAll(unresolvedHashesForCommit);
@@ -283,7 +242,6 @@ public class CommitPresentationUtil {
     private final Project myProject;
     private final String mySubject;
     private final String myDescription;
-    private final String myHashAndAuthor;
 
     public UnresolvedPresentation(@NotNull Project project,
                                   @NotNull VirtualFile root,
@@ -291,17 +249,16 @@ public class CommitPresentationUtil {
                                   @NotNull String description,
                                   @NotNull String hashAndAuthor,
                                   @NotNull String text) {
-      super(text, root, MultiMap.empty());
+      super(text, hashAndAuthor, root, MultiMap.empty());
       myProject = project;
       mySubject = subject;
       myDescription = description;
-      myHashAndAuthor = hashAndAuthor;
     }
 
     @NotNull
     public CommitPresentation resolve(@NotNull MultiMap<String, CommitId> resolvedHashes) {
-      String text = formatCommitText(myProject, mySubject, myDescription, myHashAndAuthor, resolvedHashes.keySet());
-      return new CommitPresentation(text, myRoot, resolvedHashes);
+      String text = formatCommitText(myProject, mySubject, myDescription, resolvedHashes.keySet());
+      return new CommitPresentation(text, myHashAndAuthor, myRoot, resolvedHashes);
     }
 
     @Override
@@ -312,12 +269,14 @@ public class CommitPresentationUtil {
 
   public static class CommitPresentation {
     @NotNull protected final String myText;
+    @NotNull protected final String myHashAndAuthor;
     @NotNull protected final VirtualFile myRoot;
     @NotNull private final MultiMap<String, CommitId> myResolvedHashes;
 
-    public CommitPresentation(@NotNull String text,
+    public CommitPresentation(@NotNull String text, @NotNull String hashAndAuthor,
                               @NotNull VirtualFile root, @NotNull MultiMap<String, CommitId> resolvedHashes) {
       myText = text;
+      myHashAndAuthor = hashAndAuthor;
       myRoot = root;
       myResolvedHashes = resolvedHashes;
     }
@@ -325,6 +284,11 @@ public class CommitPresentationUtil {
     @NotNull
     public String getText() {
       return myText;
+    }
+
+    @NotNull
+    public String getHashAndAuthor() {
+      return myHashAndAuthor;
     }
 
     @Nullable

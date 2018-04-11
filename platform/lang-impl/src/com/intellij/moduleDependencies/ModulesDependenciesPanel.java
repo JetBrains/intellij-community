@@ -60,7 +60,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (o1, o2) -> {
     if (!(o1.getUserObject() instanceof MyUserObject)) return 1;
     if (!(o2.getUserObject() instanceof MyUserObject)) return -1;
-    return (o1.getUserObject().toString().compareToIgnoreCase(o2.getUserObject().toString()));
+    return o1.getUserObject().toString().compareToIgnoreCase(o2.getUserObject().toString());
   };
 
   private static final ColoredTreeCellRenderer NODE_RENDERER = new ColoredTreeCellRenderer() {

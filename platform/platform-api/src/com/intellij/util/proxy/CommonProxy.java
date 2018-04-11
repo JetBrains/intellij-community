@@ -34,7 +34,7 @@ public class CommonProxy extends ProxySelector {
 
   public final static List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
   private final static long ourErrorInterval = TimeUnit.MINUTES.toMillis(3);
-  private static volatile AtomicInteger ourNotificationCount = new AtomicInteger();
+  private static final AtomicInteger ourNotificationCount = new AtomicInteger();
   private volatile static long ourErrorTime;
   private volatile static ProxySelector ourWrong;
   private static final AtomicReference<Map<String, String>> ourProps = new AtomicReference<>();

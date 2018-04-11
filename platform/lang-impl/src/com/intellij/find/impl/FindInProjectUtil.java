@@ -378,6 +378,7 @@ public class FindInProjectUtil {
       presentation.setSearchPattern(null);
       presentation.setReplacePattern(null);
     }
+    presentation.setReplaceMode(findModel.isReplaceState());
   }
 
   @NotNull

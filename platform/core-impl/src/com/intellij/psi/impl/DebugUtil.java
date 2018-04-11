@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -499,6 +500,7 @@ public class DebugUtil {
    * elements. This should help finding out why a specific PSI element has become invalid.
    *
    * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
+   * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
   public static void startPsiModification(@Nullable String trace) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
@@ -517,6 +519,7 @@ public class DebugUtil {
   /**
    * Finished PSI modification action.
    * @see #startPsiModification(String)
+   * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
   public static void finishPsiModification() {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
@@ -532,6 +535,25 @@ public class DebugUtil {
     }
     if (depth == 0) {
       ourPsiModificationTrace.set(null);
+    }
+  }
+
+  public static <T extends Throwable> void performPsiModification(String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
+    startPsiModification(trace);
+    try {
+      runnable.run();
+    }
+    finally {
+      finishPsiModification();
+    }
+  }
+  public static <T, E extends Throwable> T performPsiModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
+    startPsiModification(trace);
+    try {
+      return runnable.compute();
+    }
+    finally {
+      finishPsiModification();
     }
   }
 

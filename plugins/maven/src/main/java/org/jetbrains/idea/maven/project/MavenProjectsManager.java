@@ -7,7 +7,6 @@ import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
@@ -102,11 +101,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private ModificationTracker myModificationTracker;
+  private final ModificationTracker myModificationTracker;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
-  private MavenMergingUpdateQueue mySaveQueue;
+  private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
 
   public static MavenProjectsManager getInstance(Project p) {

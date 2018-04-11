@@ -46,9 +46,9 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   private static final Key<Map<File, BuildRootDescriptor>> ROOT_DESCRIPTOR_MAP = Key.create("_root_to_descriptor_map");
   private static final Key<Map<BuildTarget<?>, List<? extends BuildRootDescriptor>>> TEMP_TARGET_ROOTS_MAP = Key.create("_module_to_root_map");
   private final IgnoredFileIndex myIgnoredFileIndex;
-  private HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
-  private THashMap<File,List<BuildRootDescriptor>> myRootToDescriptors;
-  private ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
+  private final HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
+  private final THashMap<File,List<BuildRootDescriptor>> myRootToDescriptors;
+  private final ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
   
   public BuildRootIndexImpl(BuildTargetRegistry targetRegistry, JpsModel model, ModuleExcludeIndex index,
                             BuildDataPaths dataPaths, final IgnoredFileIndex ignoredFileIndex) {

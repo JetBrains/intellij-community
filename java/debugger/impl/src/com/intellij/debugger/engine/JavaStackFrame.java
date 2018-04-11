@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -67,7 +65,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   @Nullable private final XSourcePosition myXSourcePosition;
   private final NodeManagerImpl myNodeManager;
   @NotNull private final StackFrameDescriptorImpl myDescriptor;
-  private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
   private JavaDebuggerEvaluator myEvaluator = null;
   private final String myEqualityObject;
   private CapturePoint myInsertCapturePoint;
@@ -117,7 +114,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         }
       }
     }
-    FRAME_RENDERER.customizePresentation(myDescriptor, component, selectedDescriptor);
+    JavaFramesListRenderer.customizePresentation(myDescriptor, component, selectedDescriptor);
     if (myInsertCapturePoint != null) {
       component.setIcon(XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
     }

@@ -68,7 +68,7 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
     }
   }
 
-  public void testMultiTestings() {
+  public void multiTestings() {
     notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
     assertState(0, 0, 0, ColorProgressBar.GREEN);
@@ -84,7 +84,7 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
     assertState(0, 0, 0, ColorProgressBar.GREEN);
   }
 
-  public void testFailedThenSuccessTestings() {
+  public void failedThenSuccessTestings() {
     notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
     notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='sum-test.js']");

@@ -28,7 +28,7 @@ import java.util.Set;
 
 public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   private TestPlan myTestPlan;
-  private List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
+  private final List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
   private ArrayList myListeners;
   private Launcher myLauncher;
 

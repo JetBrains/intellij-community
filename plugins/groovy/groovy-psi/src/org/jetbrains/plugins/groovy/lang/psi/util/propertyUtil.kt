@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util
 
+import com.intellij.lang.java.beans.PropertyKind
+import com.intellij.lang.java.beans.PropertyKind.*
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType.getUnboxedType
 import com.intellij.psi.PsiType
-import org.jetbrains.plugins.groovy.lang.resolve.PropertyKind
-import org.jetbrains.plugins.groovy.lang.resolve.PropertyKind.*
 
 /**
  * This method doesn't check if method name is an accessor name
@@ -26,4 +26,17 @@ private fun PsiType?.isBooleanOrBoxed(): Boolean {
 
 internal fun String.isPropertyName(): Boolean {
   return GroovyPropertyUtils.isPropertyName(this)
+}
+
+/**
+ * @return accessor name by [propertyName] assuming it is valid
+ */
+fun PropertyKind.getAccessorName(propertyName: String): String {
+  val suffix = if (propertyName.length > 1 && propertyName[1].isUpperCase()) {
+    propertyName
+  }
+  else {
+    propertyName.capitalize()
+  }
+  return prefix + suffix
 }

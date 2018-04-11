@@ -68,8 +68,8 @@ public class TreeUtil {
 
   @Nullable
   public static ASTNode findChildBackward(ASTNode parent, IElementType type) {
-    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED && parent instanceof TreeElement) {
+      ((TreeElement)parent).assertReadAccessAllowed();
     }
     for (ASTNode element = parent.getLastChildNode(); element != null; element = element.getTreePrev()) {
       if (element.getElementType() == type) return element;

@@ -13,7 +13,7 @@ import java.util.Set;
 
 public class ProductivityUsageCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
 
-  private static String GROUP_ID = "statistics.productivity";
+  private static final String GROUP_ID = "statistics.productivity";
   @NotNull
   @Override
   public String getGroupId() {

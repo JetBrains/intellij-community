@@ -52,8 +52,8 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
 
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");
   private static final TokenSet CALL_TYPES = TokenSet.create(METHOD_CALL_EXPRESSION, NEW_EXPRESSION, ANONYMOUS_CLASS);
-  private boolean myOfflineMode = ApplicationManager.getApplication().isCommandLine() &&
-                                  !ApplicationManager.getApplication().isUnitTestMode();
+  private final boolean myOfflineMode = ApplicationManager.getApplication().isCommandLine() &&
+                                        !ApplicationManager.getApplication().isUnitTestMode();
 
   @NotNull
   @Override

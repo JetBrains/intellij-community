@@ -31,7 +31,7 @@ import org.junit.Test;
 public final class PyCaseSensitiveResolveTest extends PyEnvTestCase {
   @Test
   public void testCaseSensitive() {
-    runTest(new PyExecutionFixtureTestTask(null) {
+    runPythonTest(new PyExecutionFixtureTestTask(null) {
       @NotNull
       @Override
       protected String getTestDataPath() {
@@ -53,6 +53,6 @@ public final class PyCaseSensitiveResolveTest extends PyEnvTestCase {
                               myFixture.getFile().getText());
         });
       }
-    }, getTestName(false));
+    });
   }
 }

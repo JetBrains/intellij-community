@@ -2376,6 +2376,10 @@ public class ContainerUtil extends ContainerUtilRt {
     });
   }
 
+  /**
+   * @deprecated use {@link List#indexOf(Object)} instead, to be removed in 2018.3
+   */
+  @Deprecated
   @Contract(pure=true)
   public static <T> int indexOf(@NotNull List<T> list, @NotNull final T object) {
     return indexOf(list, new Condition<T>() {

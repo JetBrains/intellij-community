@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
   private final JediTermWidget myTerminal;
-  private TabbedSettingsProvider mySettingsProvider;
+  private final TabbedSettingsProvider mySettingsProvider;
 
   private final TabInfo myTabInfo;
 

@@ -160,7 +160,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
       myKey2Size.put(pair.first, size);
     }
     else {
-      myKey2Size.remove(key);
+      myKey2Size.remove(pair.first);
     }
   }
 

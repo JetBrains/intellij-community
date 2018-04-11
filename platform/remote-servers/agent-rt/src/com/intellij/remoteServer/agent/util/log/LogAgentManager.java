@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class LogAgentManager {
 
-  private Map<String, List<LogPipeBase>> myDeploymentName2ActiveLogPipes = new HashMap<String, List<LogPipeBase>>();
+  private final Map<String, List<LogPipeBase>> myDeploymentName2ActiveLogPipes = new HashMap<String, List<LogPipeBase>>();
 
   public void startListeningLog(String deploymentName, LogPipeProvider provider) {
     stopListeningLog(deploymentName);

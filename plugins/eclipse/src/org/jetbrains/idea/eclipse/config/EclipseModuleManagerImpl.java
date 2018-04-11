@@ -42,10 +42,10 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
   private final Module myModule;
   @NonNls private static final String LIBELEMENT = "libelement";
   private int myExpectedModuleSourcePlace;
-  private Map<String, Integer> mySrcPlace = new LinkedHashMap<>();
+  private final Map<String, Integer> mySrcPlace = new LinkedHashMap<>();
   private String myInvalidJdk;
 
-  private Set<String> myKnownCons = new LinkedHashSet<>();
+  private final Set<String> myKnownCons = new LinkedHashSet<>();
 
   public EclipseModuleManagerImpl(Module module) {
     myModule = module;

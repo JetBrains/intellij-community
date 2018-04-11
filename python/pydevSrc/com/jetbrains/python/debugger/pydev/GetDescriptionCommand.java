@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GetDescriptionCommand extends AbstractFrameCommand {
 
-  private String myActionToken;
+  private final String myActionToken;
   private String result = null;
 
   public GetDescriptionCommand(final RemoteDebugger debugger, String threadId, String frameId, final String myActionToken) {

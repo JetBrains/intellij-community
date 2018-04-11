@@ -58,10 +58,10 @@ public class ModalityHelper {
     return result;
   }
 
-  public static JDialog getModalBlockerFor (final Window window) {
-    JDialog result = null;
+  public static Dialog getModalBlockerFor (final Window window) {
+    Dialog result = null;
     try {
-      result = (JDialog)getModalBlockerMethod.invoke(window);
+      result = (Dialog)getModalBlockerMethod.invoke(window);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -69,7 +69,7 @@ public class ModalityHelper {
     return result;
   }
 
-  public static JDialog getBlockerForFrame(final IdeFrame ideFrame) {
+  public static Dialog getBlockerForFrame(final IdeFrame ideFrame) {
     if (ideFrame == null) return null;
     Component c = ideFrame.getComponent();
     if (c == null) return null;
@@ -79,7 +79,7 @@ public class ModalityHelper {
     return getModalBlockerFor(window);
   }
 
-  public static JDialog getBlockerForFocusedFrame() {
+  public static Dialog getBlockerForFocusedFrame() {
      return getBlockerForFrame(IdeFocusManagerImpl.getGlobalInstance().getLastFocusedFrame());
   }
 

@@ -35,7 +35,7 @@ public class IntroduceOperation {
   private final Editor myEditor;
   private final PsiFile myFile;
   private String myName;
-  private EnumSet<IntroduceHandler.InitPlace> myAvailableInitPlaces = EnumSet.of(IntroduceHandler.InitPlace.SAME_METHOD);
+  private final EnumSet<IntroduceHandler.InitPlace> myAvailableInitPlaces = EnumSet.of(IntroduceHandler.InitPlace.SAME_METHOD);
   private IntroduceHandler.InitPlace myInitPlace = IntroduceHandler.InitPlace.SAME_METHOD;
   private IntroduceHandler.InitPlace myInplaceInitPlace = IntroduceHandler.InitPlace.SAME_METHOD;
   private Boolean myReplaceAll;

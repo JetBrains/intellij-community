@@ -58,6 +58,11 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON37);
   }
 
+  // PY-14896
+  public void testPyMethodParametersInspectionAbstractClassAndStaticMethods() {
+    doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON34);
+  }
+
   public void testPyNestedDecoratorsInspection() {
     LocalInspectionTool inspection = new PyNestedDecoratorsInspection();
     doTest(getTestName(false), inspection);

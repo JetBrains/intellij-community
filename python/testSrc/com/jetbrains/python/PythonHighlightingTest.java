@@ -76,7 +76,7 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest();
   }
 
-  public void testContinueInFinallyBlock() {
+  public void testContinueOutsideOfLoop() {
     doTest(false, false);
   }
 

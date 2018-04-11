@@ -108,16 +108,16 @@ import java.util.Map;
  */
 
 public class HelpTooltip implements Disposable {
-  private static Color BACKGROUND_COLOR = new JBColor(Gray.xF7, new Color(0x474a4c));
-  private static Color FONT_COLOR = new JBColor(() -> UIUtil.isUnderDarcula() ? Gray.xBF : SystemInfo.isMac ? Gray.x33 : Gray.x1A);
-  private static Color SHORTCUT_COLOR = new JBColor(Gray.x78, Gray.x87);
-  private static Color BORDER_COLOR = new JBColor(Gray.xAD, new Color(0x636569));
+  private static final Color BACKGROUND_COLOR = new JBColor(Gray.xF7, new Color(0x474a4c));
+  private static final Color FONT_COLOR = new JBColor(() -> UIUtil.isUnderDarcula() ? Gray.xBF : SystemInfo.isMac ? Gray.x33 : Gray.x1A);
+  private static final Color SHORTCUT_COLOR = new JBColor(Gray.x78, Gray.x87);
+  private static final Color BORDER_COLOR = new JBColor(Gray.xAD, new Color(0x636569));
 
-  private static Border DEFAULT_BORDER = SystemInfo.isMac ?     JBUI.Borders.empty(9, 10, 11, 16) :
+  private static final Border DEFAULT_BORDER = SystemInfo.isMac ? JBUI.Borders.empty(9, 10, 11, 16) :
                                          SystemInfo.isWindows ? JBUI.Borders.empty(7, 10, 10, 16):
                                                                 JBUI.Borders.empty(10, 10, 10, 16);
 
-  private static Border SMALL_BORDER = SystemInfo.isMac ? JBUI.Borders.empty(4, 8, 5, 8) :
+  private static final Border SMALL_BORDER = SystemInfo.isMac ? JBUI.Borders.empty(4, 8, 5, 8) :
                                        SystemInfo.isWindows ? JBUI.Borders.empty(4, 8, 6, 8) :
                                        JBUI.Borders.empty(5, 8, 4, 8);
 
@@ -141,7 +141,7 @@ public class HelpTooltip implements Disposable {
   private JBPopup masterPopup;
   private ComponentPopupBuilder myPopupBuilder;
   private JBPopup myPopup;
-  private Alarm popupAlarm = new Alarm();
+  private final Alarm popupAlarm = new Alarm();
   private boolean isOverPopup;
   private boolean isMultiline;
   private int myDismissDelay;

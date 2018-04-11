@@ -23,23 +23,32 @@ class Iteration<T> {
   };
 
   final CheckSession<T> session;
-  final long iterationSeed;
+  long iterationSeed;
   final int sizeHint;
   final int iterationNumber;
+  private Random random;
 
   Iteration(CheckSession<T> session, long iterationSeed, int iterationNumber) {
     this.session = session;
-    this.iterationSeed = iterationSeed;
     this.sizeHint = session.sizeHintFun.applyAsInt(iterationNumber);
     this.iterationNumber = iterationNumber;
     if (sizeHint < 0) {
       throw new IllegalArgumentException("Size hint should be non-negative, found " + sizeHint);
     }
+    initSeed(iterationSeed);
+  }
+
+  private void initSeed(long seed) {
+    iterationSeed = seed;
+    random = new Random(seed);
   }
 
   @Nullable
-  private CounterExampleImpl<T> findCounterExample(Random random) {
+  private CounterExampleImpl<T> findCounterExample() {
     for (int i = 0; i < 100; i++) {
+      if (i > 0) {
+        initSeed(random.nextLong());
+      }
       StructureNode node = new StructureNode(new NodeId(session.generator));
       T value;
       try {
@@ -75,8 +84,7 @@ class Iteration<T> {
   Iteration<T> performIteration() {
     session.notifier.iterationStarted(iterationNumber);
 
-    Random random = new Random(iterationSeed);
-    CounterExampleImpl<T> example = findCounterExample(random);
+    CounterExampleImpl<T> example = findCounterExample();
     if (example != null) {
       session.notifier.counterExampleFound(this);
       throw new PropertyFalsified(new PropertyFailureImpl<>(example, this));

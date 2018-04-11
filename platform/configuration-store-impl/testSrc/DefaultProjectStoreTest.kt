@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.externalDependencies.DependencyOnPlugin
@@ -59,11 +60,11 @@ internal class DefaultProjectStoreTest {
       // dream about using in memory fs per test as ICS partially does and avoid such hacks
       path.refreshVfs()
 
-      val isDoNotSave = app.isDoNotSave
-      app.doNotSave(false);
+      val isSaveAllowed = app.isSaveAllowed
+      app.isSaveAllowed = true
       {
         try {
-          app.doNotSave(isDoNotSave)
+          app.isSaveAllowed = isSaveAllowed
         }
         finally {
           path.delete()

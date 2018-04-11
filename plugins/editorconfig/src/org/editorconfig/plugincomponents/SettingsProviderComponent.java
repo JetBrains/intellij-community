@@ -27,7 +27,7 @@ import java.util.*;
 public class SettingsProviderComponent extends SimpleModificationTracker {
   private static final Key<CachedValue<List<OutPair>>> CACHED_PAIRS = Key.create("editorconfig.cached.pairs");
   public static final String ERROR = "___error___";
-  private EditorConfig editorConfig;
+  private final EditorConfig editorConfig;
 
   public SettingsProviderComponent() {
     editorConfig = new EditorConfig();

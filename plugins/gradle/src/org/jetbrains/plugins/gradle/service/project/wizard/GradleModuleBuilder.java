@@ -187,7 +187,9 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     if (gradleBuildFile != null) {
       BuildScriptDataBuilder builder;
       if (myUseKotlinDSL) {
-        builder = new KotlinBuildScriptDataBuilder(gradleBuildFile);
+        GradleProjectSettings gradleProjectSettings = getExternalProjectSettings();
+        GradleVersion version = gradleProjectSettings.resolveGradleVersion();
+        builder = new KotlinBuildScriptDataBuilder(gradleBuildFile, version);
       } else {
         builder = new BuildScriptDataBuilder(gradleBuildFile);
       }

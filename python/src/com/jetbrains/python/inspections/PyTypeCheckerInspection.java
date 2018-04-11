@@ -31,7 +31,7 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
  */
 public class PyTypeCheckerInspection extends PyInspection {
   private static final Logger LOG = Logger.getInstance(PyTypeCheckerInspection.class.getName());
-  private static Key<Long> TIME_KEY = Key.create("PyTypeCheckerInspection.StartTime");
+  private static final Key<Long> TIME_KEY = Key.create("PyTypeCheckerInspection.StartTime");
 
   @NotNull
   @Override

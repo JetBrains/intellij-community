@@ -96,7 +96,7 @@ public class BuildDataManager implements StorageOwner {
     AtomicNotNullLazyValue<V> create(K key);
   }
 
-  private LazyValueFactory<BuildTarget<?>,SourceToOutputMappingImpl> SOURCE_OUTPUT_MAPPING_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, SourceToOutputMappingImpl>() {
+  private final LazyValueFactory<BuildTarget<?>,SourceToOutputMappingImpl> SOURCE_OUTPUT_MAPPING_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, SourceToOutputMappingImpl>() {
     @Override
     public AtomicNotNullLazyValue<SourceToOutputMappingImpl> create(final BuildTarget<?> key) {
       return new AtomicNotNullLazyValue<SourceToOutputMappingImpl>() {
@@ -114,7 +114,7 @@ public class BuildDataManager implements StorageOwner {
     }
   };
   
-  private LazyValueFactory<BuildTarget<?>,BuildTargetStorages> TARGET_STORAGES_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, BuildTargetStorages>() {
+  private final LazyValueFactory<BuildTarget<?>,BuildTargetStorages> TARGET_STORAGES_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, BuildTargetStorages>() {
     @Override
     public AtomicNotNullLazyValue<BuildTargetStorages> create(final BuildTarget<?> target) {
       return new AtomicNotNullLazyValue<BuildTargetStorages>() {

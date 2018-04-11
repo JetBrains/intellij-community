@@ -66,7 +66,7 @@ import java.util.Set;
  */
 public class GradleResourceCompilerConfigurationGenerator {
 
-  private static Logger LOG = Logger.getInstance(GradleResourceCompilerConfigurationGenerator.class);
+  private static final Logger LOG = Logger.getInstance(GradleResourceCompilerConfigurationGenerator.class);
 
   @NotNull
   private final Project myProject;

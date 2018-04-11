@@ -29,7 +29,7 @@ import java.util.Map;
  * @author nik
  */
 public class GroovyModelInitializer implements ParameterizedRunnable<JpsModel> {
-  private File myScriptFile;
+  private final File myScriptFile;
 
   public GroovyModelInitializer(File scriptFile) {
     myScriptFile = scriptFile;

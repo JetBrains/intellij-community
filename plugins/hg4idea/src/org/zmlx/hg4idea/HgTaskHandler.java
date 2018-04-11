@@ -42,7 +42,7 @@ import java.util.List;
 
 public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
 
-  private HgReferenceValidator myNameValidator;
+  private final HgReferenceValidator myNameValidator;
 
   public HgTaskHandler(@NotNull HgRepositoryManager repositoryManager,
                        @NotNull Project project) {

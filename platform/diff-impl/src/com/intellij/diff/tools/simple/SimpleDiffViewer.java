@@ -63,7 +63,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final StatusPanel myStatusPanel;
 
   @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<>();
-  @NotNull private final List<SimpleDiffChange> myNonSkippedDiffChanges = new ArrayList<>();
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<>();
   private boolean myIsContentsEqual;
 
@@ -204,7 +203,15 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       boolean isContentsEqual = (lineFragments == null || lineFragments.isEmpty()) &&
                                 StringUtil.equals(texts[0], texts[1]);
 
-      return apply(new CompareData(lineFragments, null, isContentsEqual));
+      if (lineFragments == null) {
+        return apply(new CompareData(null, isContentsEqual));
+      }
+      else {
+        List<SimpleDiffChange> changes = ContainerUtil.map(lineFragments, fragment -> {
+          return new SimpleDiffChange(this, fragment);
+        });
+        return apply(new CompareData(changes, isContentsEqual));
+      }
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -219,7 +226,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @NotNull
-  protected Runnable apply(@NotNull final CompareData data) {
+  protected Runnable apply(@NotNull CompareData data) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
@@ -232,21 +239,18 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
 
-      List<LineFragment> fragments = data.getFragments();
-      if (fragments != null) {
-        for (int i = 0; i < fragments.size(); i++) {
-          LineFragment fragment = fragments.get(i);
-          LineFragment previousFragment = i != 0 ? fragments.get(i - 1) : null;
-          boolean isSkipped = data.isSkipped(i);
-
-          SimpleDiffChange change = new SimpleDiffChange(this, fragment, previousFragment, isSkipped);
-
-          myDiffChanges.add(change);
-          if (!change.isSkipped()) myNonSkippedDiffChanges.add(change);
+      List<SimpleDiffChange> changes = data.getChanges();
+      if (changes != null) {
+        for (int i = 0; i < changes.size(); i++) {
+          SimpleDiffChange change = changes.get(i);
+          LineFragment previousChangeFragment = i != 0 ? changes.get(i - 1).getFragment() : null;
+          change.installHighlighter(previousChangeFragment);
         }
+
+        myDiffChanges.addAll(changes);
       }
 
-      myFoldingModel.install(myNonSkippedDiffChanges, myRequest, getFoldingModelSettings());
+      myFoldingModel.install(getNonSkippedDiffChanges(), myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 
@@ -281,7 +285,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       change.destroyHighlighter();
     }
     myDiffChanges.clear();
-    myNonSkippedDiffChanges.clear();
 
     for (SimpleDiffChange change : myInvalidDiffChanges) {
       change.destroyHighlighter();
@@ -323,7 +326,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @CalledInAwt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
-    SimpleDiffChange targetChange = scrollToPolicy.select(myNonSkippedDiffChanges);
+    SimpleDiffChange targetChange = scrollToPolicy.select(getNonSkippedDiffChanges());
     if (targetChange == null) targetChange = scrollToPolicy.select(myDiffChanges);
     if (targetChange == null) return false;
 
@@ -368,6 +371,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @NotNull
+  private List<SimpleDiffChange> getNonSkippedDiffChanges() {
+    return ContainerUtil.filter(myDiffChanges, it -> !it.isSkipped());
+  }
+
+  @NotNull
   @Override
   protected SyncScrollSupport.SyncScrollable getSyncScrollable() {
     return mySyncScrollable;
@@ -375,7 +383,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   @Override
-  protected JComponent getStatusPanel() {
+  protected StatusPanel getStatusPanel() {
     return myStatusPanel;
   }
 
@@ -406,25 +414,21 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   @CalledInAwt
-  private List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
-    final BitSet lines = DiffUtil.getSelectedLines(getEditor(side));
+  protected List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
+    EditorEx editor = getEditor(side);
+    BitSet lines = DiffUtil.getSelectedLines(editor);
 
-    List<SimpleDiffChange> affectedChanges = new ArrayList<>();
-    for (int i = myDiffChanges.size() - 1; i >= 0; i--) {
-      SimpleDiffChange change = myDiffChanges.get(i);
+    return ContainerUtil.filter(getDiffChanges(), change -> {
       int line1 = change.getStartLine(side);
       int line2 = change.getEndLine(side);
 
-      if (DiffUtil.isSelectedByLine(lines, line1, line2)) {
-        affectedChanges.add(change);
-      }
-    }
-    return affectedChanges;
+      return DiffUtil.isSelectedByLine(lines, line1, line2);
+    });
   }
 
   @Nullable
   @CalledInAwt
-  private SimpleDiffChange getSelectedChange(@NotNull Side side) {
+  protected SimpleDiffChange getSelectedChange(@NotNull Side side) {
     int caretLine = getEditor(side).getCaretModel().getLogicalPosition().line;
 
     for (SimpleDiffChange change : myDiffChanges) {
@@ -444,7 +448,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected List<SimpleDiffChange> getChanges() {
-      return myNonSkippedDiffChanges;
+      return getNonSkippedDiffChanges();
     }
 
     @NotNull
@@ -523,7 +527,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 
-      doPerform(e, side, selectedChanges);
+      doPerform(e, side, ContainerUtil.reverse(selectedChanges));
     }
 
     protected boolean isSomeChangeSelected(@NotNull Side side) {
@@ -773,9 +777,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void process(@NotNull Handler handler) {
       for (SimpleDiffChange diffChange : myDiffChanges) {
-        if (!handler.processSkippable(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
-                                      diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
-                                      getEditor1(), diffChange.getDiffType(), diffChange.isSkipped())) {
+        if (!handler.processExcludable(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
+                                       diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
+                                       getEditor1(), diffChange.getDiffType(), diffChange.isExcluded())) {
           return;
         }
       }
@@ -789,36 +793,34 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       if (myTextDiffProvider.isHighlightingDisabled()) {
         return DiffBundle.message("diff.highlighting.disabled.text");
       }
+      int excludedChanges = ContainerUtil.count(myDiffChanges, it -> it.isExcluded()) +
+                            ContainerUtil.count(myInvalidDiffChanges, it -> it.isExcluded());
       int changesCount = myDiffChanges.size() + myInvalidDiffChanges.size();
       if (changesCount == 0 && !myIsContentsEqual) {
         return DiffBundle.message("diff.all.differences.ignored.text");
       }
-      return DiffBundle.message("diff.count.differences.status.text", changesCount);
+      String message = DiffBundle.message("diff.count.differences.status.text", changesCount - excludedChanges);
+      if (excludedChanges > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", excludedChanges);
+      return message;
     }
   }
 
   protected static class CompareData {
-    @Nullable private final List<LineFragment> myFragments;
-    @Nullable private final BitSet myAreSkipped;
+    @Nullable private final List<SimpleDiffChange> myChanges;
     private final boolean myIsContentsEqual;
 
-    public CompareData(@Nullable List<LineFragment> fragments, @Nullable BitSet areSkipped, boolean isContentsEqual) {
-      myFragments = fragments;
-      myAreSkipped = areSkipped;
+    public CompareData(@Nullable List<SimpleDiffChange> changes, boolean isContentsEqual) {
+      myChanges = changes;
       myIsContentsEqual = isContentsEqual;
     }
 
     @Nullable
-    public List<LineFragment> getFragments() {
-      return myFragments;
+    public List<SimpleDiffChange> getChanges() {
+      return myChanges;
     }
 
     public boolean isContentsEqual() {
       return myIsContentsEqual;
-    }
-
-    public boolean isSkipped(int i) {
-      return myAreSkipped != null && myAreSkipped.get(i);
     }
   }
 

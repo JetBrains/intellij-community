@@ -41,9 +41,9 @@ public class CloudModuleWizardStep extends ModuleWizardStep {
   private final Project myProject;
   private final Disposable myParentDisposable;
 
-  private CloudAccountSelectionEditor myAccountSelectionPanel;
+  private final CloudAccountSelectionEditor myAccountSelectionPanel;
 
-  private Set<ServerType<?>> myApplicationConfigurableTypes;
+  private final Set<ServerType<?>> myApplicationConfigurableTypes;
 
   public CloudModuleWizardStep(CloudModuleBuilder moduleBuilder, Project project, Disposable parentDisposable) {
     myModuleBuilder = moduleBuilder;

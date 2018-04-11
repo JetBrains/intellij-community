@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.service.fus.collectors;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.beans.FSGroup;
 import com.intellij.internal.statistic.service.fus.beans.FSSession;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +35,9 @@ public class FUStatisticsStateService implements UsagesCollectorConsumer {
   //   4. third send: action was totally invoked 30 times. my.foo.MyCollector returns 30.
   //      action was not invoked from the previous send. we send NOTHING.
   @Nullable
-  public String getMergedDataToSend(@NotNull String actualDataFromCollectors) {
+  public String getMergedDataToSend(@NotNull String actualDataFromCollectors, @NotNull Set<String> approvedGroups) {
     @NotNull FSContent allDataFromCollectors = FSContent.fromJson(actualDataFromCollectors);
-    Set<String> differenceSenders = getFUStatisticsDifferenceSenders();
+    Set<String> differenceSenders = getFUStatisticsDifferenceSenders(approvedGroups);
     if (!differenceSenders.isEmpty()) {
       FSContent previousStateContent = loadContent();
       if (previousStateContent != null) {
@@ -89,7 +90,7 @@ public class FUStatisticsStateService implements UsagesCollectorConsumer {
     if (!keysToRemove.isEmpty()) actualMetrics.keySet().removeAll(keysToRemove);
   }
 
-  public Set<String> getFUStatisticsDifferenceSenders() {
+  public Set<String> getFUStatisticsDifferenceSenders(@NotNull Set<String> approvedGroups) {
     Set<String> senders = ContainerUtil.newHashSet();
     for (ProjectUsagesCollector collector : ProjectUsagesCollector.getExtensions(this)) {
       if (collector instanceof FUStatisticsDifferenceSender) {
@@ -101,7 +102,11 @@ public class FUStatisticsStateService implements UsagesCollectorConsumer {
         senders.add(collector.getGroupId());
       }
     }
-    return senders;
+    return senders.stream().map(s -> {
+      if (!approvedGroups.contains(s) && ApplicationManagerEx.getApplicationEx().isInternal()) {
+        return FUStatisticsAggregator.createDebugModeId(s);
+      } return s;
+    }).collect(Collectors.toSet());
   }
 
   @Nullable

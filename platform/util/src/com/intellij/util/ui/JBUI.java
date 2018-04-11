@@ -18,7 +18,6 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -235,7 +234,9 @@ public class JBUI {
     if (SYSTEM_SCALE_FACTOR != null) {
       return SYSTEM_SCALE_FACTOR;
     }
-
+    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+      return 1.0f;
+    }
     if (UIUtil.isJreHiDPIEnabled()) {
       GraphicsDevice gd = null;
       try {
@@ -244,10 +245,6 @@ public class JBUI {
       if (gd != null && gd.getDefaultConfiguration() != null) {
         return sysScale(gd.getDefaultConfiguration());
       }
-      return 1.0f;
-    }
-
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
       return 1.0f;
     }
 
@@ -378,7 +375,7 @@ public class JBUI {
    * ide.ui.scale=[float]
    */
   public static void setUserScaleFactor(float scale) {
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
       setUserScaleFactorProperty(1.0f);
       return;
     }
@@ -487,6 +484,7 @@ public class JBUI {
   }
 
   @NotNull
+  @SuppressWarnings("unchecked")
   public static <T extends JBIcon> T scale(@NotNull T icon) {
     return (T)icon.withIconPreScaled(false);
   }
@@ -707,6 +705,13 @@ public class JBUI {
     }
 
     /**
+     * Creates a context with all scale factors set to 1.
+     */
+    public static BaseScaleContext createIdentity() {
+      return create(USR_SCALE.of(1));
+    }
+
+    /**
      * Creates a context with the provided scale factors (system scale is ignored)
      */
     public static BaseScaleContext create(@NotNull Scale... scales) {
@@ -838,6 +843,18 @@ public class JBUI {
         case PIX_SCALE: pixScale = newScale; break;
       }
       return true;
+    }
+
+    public <T extends BaseScaleContext> T copy() {
+      BaseScaleContext ctx = createIdentity();
+      ctx.updateAll(this);
+      //noinspection unchecked
+      return (T)ctx;
+    }
+
+    @Override
+    public String toString() {
+      return usrScale + ", " + objScale + ", " + pixScale;
     }
   }
 
@@ -1000,6 +1017,19 @@ public class JBUI {
         compRef.clear();
       }
     }
+
+    @Override
+    public <T extends BaseScaleContext> T copy() {
+      ScaleContext ctx = createIdentity();
+      ctx.updateAll(this);
+      //noinspection unchecked
+      return (T)ctx;
+    }
+
+    @Override
+    public String toString() {
+      return usrScale + ", " + sysScale + ", " + objScale + ", " + pixScale;
+    }
   }
 
   /**
@@ -1101,6 +1131,28 @@ public class JBUI {
       myScaler.setPreScaled(preScaled);
     }
 
+    /**
+     * The pre-scaled state of the icon indicates whether the initial size of the icon
+     * is pre-scaled (by the global user scale) or not. If the size is not pre-scaled,
+     * then there're two approaches to deal with it:
+     * 1) scale its initial size right away and store;
+     * 2) scale its initial size every time it's requested.
+     * The 2nd approach is preferable because of the the following. Scaling of the icon may
+     * involve not only USR_SCALE but OBJ_SCALE as well. In which case applying all the scale
+     * factors and then rounding (the size is integer, the scale factors are not) gives more
+     * accurate result than rounding and then scaling.
+     * <p>
+     * For example, say we have an icon of 15x15 initial size, USR_SCALE is 1.5f, OBJ_SCALE is 1,5f.
+     * Math.round(Math.round(15 * USR_SCALE) * OBJ_SCALE) = 35
+     * Math.round(15 * USR_SCALE * OBJ_SCALE) = 34
+     * <p>
+     * Thus, JBUI.scale(MyIcon.create(w, h)) is preferable to MyIcon.create(JBUI.scale(w), JBUI.scale(h)).
+     * Here [w, h] is "raw" unscaled size.
+     *
+     * @param preScaled whether the icon is pre-scaled
+     * @return the icon in the provided pre-scaled state
+     * @see JBUI#scale(JBIcon)
+     */
     @NotNull
     public JBIcon withIconPreScaled(boolean preScaled) {
       setIconPreScaled(preScaled);
@@ -1236,11 +1288,20 @@ public class JBUI {
         return getColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
       }
 
-      /**
-       * Used for hover as well
-       */
+      public static Color tabHoveredBackground() {
+        return getColor("ToolWindow.header.tab.hovered.background", tabSelectedBackground());
+      }
+
+      public static Color tabHoveredActiveBackground() {
+        return getColor("ToolWindow.header.tab.hovered.active.background", tabSelectedActiveBackground());
+      }
+
       public static Color tabSelectedBackground(boolean active) {
         return active ? tabSelectedActiveBackground() : tabSelectedBackground();
+      }
+
+      public static Color tabHoveredBackground(boolean active) {
+        return active ? tabHoveredActiveBackground() : tabHoveredBackground();
       }
 
       public static Color headerBackground(boolean active) {
@@ -1251,8 +1312,16 @@ public class JBUI {
         return getColor("ToolWindow.header.background", 0xECECEC);
       }
 
+      public static Color headerBorderBackground() {
+        return getColor("ToolWindow.header.border.background", 0xC9C9C9);
+      }
+
       public static Color headerActiveBackground() {
         return getColor("ToolWindow.header.active.background", 0xE2E6EC);
+      }
+
+      public static int tabVerticalPadding() {
+        return getInt("ToolWindow.tab.verticalPadding", scale(3));
       }
 
       public static Font headerFont() {
@@ -1264,14 +1333,18 @@ public class JBUI {
         return font;
       }
 
-      public static Color closeButtonBackground(boolean tabActive, boolean tabSelected) {
-        return tabSelected ? getColor("ToolWindow.header.closeButton.background", 0xB9B9B9)
-                           : headerBackground(tabActive);
+      public static Color hoveredIconBackground() {
+        return getColor("ToolWindow.header.closeButton.background", 0xB9B9B9);
       }
 
       public static Icon closeTabIcon(boolean hovered) {
         return hovered ? getIcon("ToolWindow.header.closeButton.hovered.icon", AllIcons.Actions.CloseNewHovered)
                        : getIcon("ToolWindow.header.closeButton.icon", AllIcons.Actions.CloseNew);
+      }
+
+      public static Icon comboTabIcon(boolean hovered) {
+        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ComboArrow)
+                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ComboArrow);
       }
     }
 
@@ -1287,7 +1360,7 @@ public class JBUI {
 
       public static Color disabledForeground(boolean selected) {
         return selected ? getColor("Label.selectedDisabledForeground", 0x999999)
-                        : getColor("Label.disabledForeground", 0x999999);
+                        : getColor("Label.disabledForeground", getColor("Label.disabledText", 0x999999));
       }
 
       public static Color disabledForeground() {
@@ -1297,9 +1370,19 @@ public class JBUI {
   }
 
   private static Color getColor(String propertyName, int defaultColor) {
-    Color color = UIManager.getColor(propertyName);
-    return color == null ? new Color(defaultColor) : color;
+    return getColor(propertyName, new Color(defaultColor));
   }
+
+  private static Color getColor(String propertyName, Color defaultColor) {
+    Color color = UIManager.getColor(propertyName);
+    return color == null ? defaultColor : color;
+  }
+
+  private static int getInt(String propertyName, int defaultValue) {
+    Object value = UIManager.get(propertyName);
+    return value instanceof Integer ? (Integer)value : defaultValue;
+  }
+
   private static Icon getIcon(String propertyName, Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;

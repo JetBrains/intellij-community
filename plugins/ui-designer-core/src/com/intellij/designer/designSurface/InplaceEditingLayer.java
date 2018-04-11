@@ -34,7 +34,6 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,7 +68,7 @@ public class InplaceEditingLayer extends JComponent {
       finishEditing(true);
     }
   };
-  private PropertyEditorListener myEditorListener = new PropertyEditorListener() {
+  private final PropertyEditorListener myEditorListener = new PropertyEditorListener() {
     @Override
     public void valueCommitted(PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
       finishEditing(true);

@@ -45,14 +45,14 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         assertEquals("Nose genenerator produced bad tree", "Test tree:\n" +
-                                "[root]\n" +
-                                ".test_nose_generator\n" +
-                                "..test_evens\n" +
-                                "...(0, 0)(+)\n" +
-                                "...(1, 3)(-)\n" +
-                                "...(2, 6)(+)\n" +
-                                "...(3, 9)(-)\n" +
-                                "...(4, 12)(+)\n", runner.getFormattedTestTree());
+                                                           "[root]\n" +
+                                                           ".test_nose_generator\n" +
+                                                           "..test_evens\n" +
+                                                           "...(0, 0)(+)\n" +
+                                                           "...(1, 3)(-)\n" +
+                                                           "...(2, 6)(+)\n" +
+                                                           "...(3, 9)(-)\n" +
+                                                           "...(4, 12)(+)\n", runner.getFormattedTestTree());
       }
     });
   }
@@ -74,7 +74,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
    */
   @Test
   public void testRunModuleAsFile() {
-    runPythonTest(new RunModuleAsFileTask<PyNoseTestProcessRunner>(){
+    runPythonTest(new RunModuleAsFileTask<PyNoseTestProcessRunner>() {
       @NotNull
       @Override
       protected PyNoseTestProcessRunner createProcessRunner() {
@@ -99,10 +99,12 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   public void testMarkerWithSlow() {
     runPythonTest(new SlowRunnerTask("--attr=\"!slow\" -vvv"));
   }
+
   @Test
   public void testMarkerWithSlowSingleQuotes() {
     runPythonTest(new SlowRunnerTask("--attr='!slow' -vvv"));
   }
+
   @Test
   public void testMarkerWithSlowRegexp() {
     runPythonTest(new SlowRunnerTask("--attr='!slow' -vvv -m \"(?:^|[\\b_\\./-])[Tt]est\""));
@@ -161,13 +163,14 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
 
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Throwable {
-    new PyConfigurationValidationTask<PyNoseTestConfiguration>() {
-      @NotNull
-      @Override
-      protected PyNoseTestFactory createFactory() {
-        return PyNoseTestFactory.INSTANCE;
-      }
-    }.fetchException(this::runPythonTest);
+    runPythonTestWithException(
+      new PyConfigurationValidationTask<PyNoseTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyNoseTestFactory createFactory() {
+          return PyNoseTestFactory.INSTANCE;
+        }
+      });
   }
 
   @Test
@@ -284,10 +287,10 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                     @NotNull String stderr,
                                     @NotNull String all) {
       assertEquals("--slow runner broken on arguments" + myArguments, "Test tree:\n" +
-                                                  "[root]\n" +
-                                                  ".test_with_slow\n" +
-                                                  "..test_fast(+)\n",
-                          runner.getFormattedTestTree());
+                                                                      "[root]\n" +
+                                                                      ".test_with_slow\n" +
+                                                                      "..test_fast(+)\n",
+                   runner.getFormattedTestTree());
     }
   }
 }

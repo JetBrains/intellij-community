@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
@@ -49,12 +49,12 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return MacIntelliJIconCache.getIcon(clickable ? "searchWithHistory" : "search");
+    return IconCache.getIcon(clickable ? "searchWithHistory" : "search");
   }
 
   @Override
   protected Icon getClearIcon(boolean hovered, boolean clickable) {
-    return !clickable ? null : MacIntelliJIconCache.getIcon("clear");
+    return !clickable ? null : IconCache.getIcon("clear");
   }
 
   @Override

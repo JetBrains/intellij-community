@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
@@ -702,13 +703,25 @@ public final class PsiUtil extends PsiUtilCore {
 
   @Nullable
   public static PsiClass getTopLevelClass(@NotNull PsiElement element) {
-    final PsiFile file = element.getContainingFile();
-    if (file instanceof PsiClassOwner) {
-      final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
-      for (PsiClass aClass : classes) {
-        if (PsiTreeUtil.isAncestor(aClass, element, false)) return aClass;
+    PsiClass topClass = JBIterable.generate(element, PsiElement::getParent).filter(PsiClass.class).last();
+    return topClass instanceof PsiTypeParameter ? null : topClass;
+  }
+
+  @Nullable
+  public static String getPackageName(@NotNull PsiClass aClass) {
+    PsiClass topClass = getTopLevelClass(aClass);
+    if (topClass != null) {
+      String fqName = topClass.getQualifiedName();
+      if (fqName != null) {
+        return StringUtil.getPackageName(fqName);
       }
     }
+
+    PsiFile file = aClass.getContainingFile();
+    if (file instanceof PsiClassOwner) {
+      return ((PsiClassOwner)file).getPackageName();
+    }
+
     return null;
   }
 

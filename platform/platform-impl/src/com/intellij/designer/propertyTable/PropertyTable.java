@@ -36,7 +36,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.PairFunction;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -869,7 +868,7 @@ public abstract class PropertyTable extends JBTable {
    * @see javax.swing.plaf.basic.BasicTableUI
    */
   private class MySelectNextPreviousRowAction extends AbstractAction {
-    private boolean selectNext;
+    private final boolean selectNext;
 
     private MySelectNextPreviousRowAction(boolean selectNext) {
       this.selectNext = selectNext;

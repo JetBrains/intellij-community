@@ -46,6 +46,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -632,7 +633,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   private static void waitForCommits() {
-    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
     try {
       DocumentCommitThread.getInstance().waitForAllCommits();
     }
@@ -912,9 +912,20 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
         assertTrue(calledPerformWhenAllCommitted[0]);
       });
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      document.setText("");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> document.setText(""));
     waitForCommits();
+  }
+
+  public void testDefaultProjectDocumentsAreAutoCommitted() throws IOException {
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    VirtualFile vFile = getVirtualFile(createTempFile("a.java", ""));
+    PsiFile psiFile = PsiManager.getInstance(defaultProject).findFile(vFile);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(defaultProject);
+    Document document = documentManager.getDocument(psiFile);
+    ApplicationManager.getApplication().runWriteAction(() -> document.setText("// things"));
+    waitForCommits();
+    assertTrue(documentManager.isCommitted(document));
+    PsiElement firstChild = psiFile.getFirstChild();
+    assertTrue(firstChild instanceof PsiComment);
   }
 }

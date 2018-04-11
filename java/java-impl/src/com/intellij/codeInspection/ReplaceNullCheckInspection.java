@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
@@ -33,6 +33,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T")
   );
 
+  @SuppressWarnings("PublicField")
   public boolean noWarningReplacementBigger = true;
 
   @Nullable
@@ -157,7 +158,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
                                                        @NotNull Project project,
                                                        @NotNull PsiReferenceExpression nullableReference,
                                                        @NotNull PsiElement context) {
-    boolean isSimple = ExpressionUtils.isSimpleExpression(expression);
+    boolean isSimple = ExpressionUtils.isSafelyRecomputableExpression(expression);
     String expr = tracker.text(expression);
     if (!isSimple) {
       expr = "()->" + expr;
@@ -267,7 +268,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
 
   @NotNull
   private static String getMethod(PsiExpression expression) {
-    return ExpressionUtils.isSimpleExpression(expression) ? "requireNonNullElse" : "requireNonNullElseGet";
+    return ExpressionUtils.isSafelyRecomputableExpression(expression) ? "requireNonNullElse" : "requireNonNullElseGet";
   }
 
   @NotNull

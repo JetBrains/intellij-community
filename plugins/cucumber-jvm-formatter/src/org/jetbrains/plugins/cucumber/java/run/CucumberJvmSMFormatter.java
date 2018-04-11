@@ -29,9 +29,9 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   public static final String RESULT_STATUS_PENDING = "pending";
 
-  private Appendable appendable;
+  private final Appendable appendable;
 
-  private Queue<String> queue;
+  private final Queue<String> queue;
 
   private String uri;
   private String currentFeatureName;
@@ -42,7 +42,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   private Scenario currentScenario;
 
-  private Queue<Step> currentSteps;
+  private final Queue<Step> currentSteps;
 
   @SuppressWarnings("UnusedDeclaration")
   public CucumberJvmSMFormatter(Appendable appendable) {

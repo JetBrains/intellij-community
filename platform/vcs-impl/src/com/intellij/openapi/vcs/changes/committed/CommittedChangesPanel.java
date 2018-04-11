@@ -72,7 +72,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private final List<Runnable> myShouldBeCalledOnDispose;
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
-  private Consumer<String> myIfNotCachedReloader;
+  private final Consumer<String> myIfNotCachedReloader;
   private boolean myChangesLoaded;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,

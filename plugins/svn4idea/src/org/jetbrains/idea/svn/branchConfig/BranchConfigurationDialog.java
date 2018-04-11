@@ -37,7 +37,7 @@ import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 public class BranchConfigurationDialog extends DialogWrapper {
   private JPanel myTopPanel;
   private TextFieldWithBrowseButton myTrunkLocationTextField;
-  private JBList<String> myBranchLocationsList;
+  private final JBList<String> myBranchLocationsList;
   @NotNull private final MyListModel myBranchLocationsModel;
   private JPanel myListPanel;
   private JLabel myErrorPrompt;

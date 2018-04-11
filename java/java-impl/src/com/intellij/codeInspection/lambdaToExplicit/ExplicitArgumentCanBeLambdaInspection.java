@@ -4,6 +4,7 @@ package com.intellij.codeInspection.lambdaToExplicit;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -28,7 +29,7 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         for(LambdaAndExplicitMethodPair info : LambdaAndExplicitMethodPair.INFOS) {
           PsiExpression arg = info.getLambdaCandidateFromExplicitCall(call);
-          if(arg != null && !ExpressionUtils.isSimpleExpression(arg)) {
+          if(arg != null && !(arg instanceof PsiEmptyExpressionImpl) && !ExpressionUtils.isSafelyRecomputableExpression(arg)) {
             holder.registerProblem(arg, "Explicit argument can be converted to lambda",
                                    new ConvertExplicitCallToLambdaFix(info, info.getLambdaMethodName(call)));
             return;

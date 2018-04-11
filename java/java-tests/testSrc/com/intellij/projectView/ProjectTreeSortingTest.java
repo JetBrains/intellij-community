@@ -240,7 +240,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     PlatformTestUtil.waitWhileBusy(myPane.getTree());
     Object element = path.getLastPathComponent();
     assertNotNull("Element for " + getContentDirectory() + " not found", element);
-    assertEquals(expected, PlatformTestUtil.print(myPane.getTree(), element, new Queryable.PrintInfo(), false));
+    assertEquals(expected, PlatformTestUtil.print(myPane.getTree(), path, new Queryable.PrintInfo(), false));
   }
 
   static class MyOrderProvider implements TreeStructureProvider {

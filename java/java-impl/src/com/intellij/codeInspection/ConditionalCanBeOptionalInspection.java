@@ -36,7 +36,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
         PsiVariable variable = ternaryNullCheck.myVariable;
         PsiExpression nullBranch = ternaryNullCheck.myNullBranch;
         PsiExpression notNullBranch = ternaryNullCheck.myNotNullBranch;
-        if (!ExpressionUtils.isSimpleExpression(nullBranch) && !LambdaGenerationUtil.canBeUncheckedLambda(nullBranch, variable::equals)) {
+        if (!ExpressionUtils.isSafelyRecomputableExpression(nullBranch) && !LambdaGenerationUtil.canBeUncheckedLambda(nullBranch, variable::equals)) {
           return;
         }
         if (!VariableAccessUtils.variableIsUsed(variable, notNullBranch) ||
@@ -66,7 +66,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
   }
 
   private static class ReplaceConditionWithOptionalFix implements LocalQuickFix {
-    private boolean myChangesSemantics;
+    private final boolean myChangesSemantics;
 
     public ReplaceConditionWithOptionalFix(boolean changesSemantics) {
       myChangesSemantics = changesSemantics;
@@ -119,7 +119,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
       PsiExpression trueBody = (PsiExpression)trueLambda.getBody();
       String replacement = OptionalUtil.generateOptionalUnwrap(CommonClassNames.JAVA_UTIL_OPTIONAL + ".ofNullable(" + name + ")",
                                                                lambdaParameter, trueBody, ct.markUnchanged(nullBranch), ternary.getType(),
-                                                               !ExpressionUtils.isSimpleExpression(nullBranch));
+                                                               !ExpressionUtils.isSafelyRecomputableExpression(nullBranch));
       PsiElement result = ct.replaceAndRestoreComments(ternary, replacement);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);

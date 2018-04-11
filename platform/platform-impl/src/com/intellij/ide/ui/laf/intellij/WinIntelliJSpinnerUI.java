@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
@@ -160,7 +161,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
           g2.fill(outerRect);
 
           // paint icon
-          Icon icon = MacIntelliJIconCache.getIcon(iconName, false, false, isEnabled());
+          Icon icon = IconCache.getIcon(iconName, false, false, isEnabled());
           icon.paintIcon(this, g2, scale(5), scale(3));
 
           // paint border

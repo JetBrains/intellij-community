@@ -16,14 +16,12 @@
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
@@ -48,16 +46,14 @@ public class ArtifactCompilerUtil {
 
   public static MultiMap<String, Artifact> createOutputToArtifactMap(final Project project) {
     final MultiMap<String, Artifact> result = MultiMap.create(FileUtil.PATH_HASHING_STRATEGY);
-    new ReadAction() {
-      protected void run(@NotNull final Result r) {
-        for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
-          String outputPath = artifact.getOutputFilePath();
-          if (!StringUtil.isEmpty(outputPath)) {
-            result.putValue(outputPath, artifact);
-          }
+    ReadAction.run(() -> {
+      for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+        String outputPath = artifact.getOutputFilePath();
+        if (!StringUtil.isEmpty(outputPath)) {
+          result.putValue(outputPath, artifact);
         }
       }
-    }.execute();
+    });
 
 
     return result;

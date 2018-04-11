@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -48,7 +34,10 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final String myName;
   private final SmartPsiElementPointer<PsiVariable> myVariable;
 
-  public ModifierFix(PsiModifierList modifierList, @PsiModifier.ModifierConstant @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
+  public ModifierFix(PsiModifierList modifierList,
+                     @PsiModifier.ModifierConstant @NotNull String modifier,
+                     boolean shouldHave,
+                     boolean showContainingClass) {
     super(modifierList);
     myModifier = modifier;
     myShouldHave = shouldHave;
@@ -57,21 +46,17 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     myVariable = null;
   }
 
-  public ModifierFix(@NotNull PsiModifierListOwner owner, @PsiModifier.ModifierConstant @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
+  public ModifierFix(@NotNull PsiModifierListOwner owner,
+                     @PsiModifier.ModifierConstant @NotNull String modifier,
+                     boolean shouldHave,
+                     boolean showContainingClass) {
     super(owner.getModifierList());
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
     PsiVariable variable = owner instanceof PsiVariable ? (PsiVariable)owner : null;
     myName = format(variable, owner.getModifierList());
-
     myVariable = variable == null ? null : SmartPointerManager.getInstance(owner.getProject()).createSmartPsiElementPointer(variable);
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return myName;
   }
 
   private String format(PsiVariable variable, PsiModifierList modifierList) {
@@ -83,31 +68,38 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     else if (parent instanceof PsiJavaModule) {
       name = ((PsiJavaModule)parent).getName();
     }
-    else {
+    else if (parent instanceof PsiMethod) {
       int options = PsiFormatUtilBase.SHOW_NAME | (myShowContainingClass ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS : 0);
-      if (parent instanceof PsiMethod) {
-        name = PsiFormatUtil.formatMethod((PsiMethod)parent, PsiSubstitutor.EMPTY, options, 0);
-      }
-      else if (parent instanceof PsiVariable) {
-        name = PsiFormatUtil.formatVariable((PsiVariable)parent, options, PsiSubstitutor.EMPTY);
-      }
-      else if (parent instanceof PsiClassInitializer) {
-        PsiClass containingClass = ((PsiClassInitializer)parent).getContainingClass();
-        String className = containingClass instanceof PsiAnonymousClass
-                           ? QuickFixBundle.message("anonymous.class.presentation",
-                                                    ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText())
-                           : containingClass != null ? containingClass.getName() : "unknown";
-        name = QuickFixBundle.message("class.initializer.presentation", className);
-      }
+      name = PsiFormatUtil.formatMethod((PsiMethod)parent, PsiSubstitutor.EMPTY, options, 0);
+    }
+    else if (parent instanceof PsiVariable) {
+      int options = PsiFormatUtilBase.SHOW_NAME | (myShowContainingClass ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS : 0);
+      name = PsiFormatUtil.formatVariable((PsiVariable)parent, options, PsiSubstitutor.EMPTY);
+    }
+    else if (parent instanceof PsiClassInitializer) {
+      PsiClass containingClass = ((PsiClassInitializer)parent).getContainingClass();
+      String className = containingClass instanceof PsiAnonymousClass
+                         ? QuickFixBundle.message("anonymous.class.presentation",
+                                                  ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText())
+                         : containingClass != null ? containingClass.getName() : "unknown";
+      name = QuickFixBundle.message("class.initializer.presentation", className);
+    }
+    else if (parent instanceof PsiRequiresStatement) {
+      name = "requires " + ((PsiRequiresStatement)parent).getModuleName();
     }
 
     String modifierText = VisibilityUtil.toPresentableText(myModifier);
-
     return QuickFixBundle.message(myShouldHave ? "add.modifier.fix" : "remove.modifier.fix", name, modifierText);
   }
 
-  @Override
   @NotNull
+  @Override
+  public String getText() {
+    return myName;
+  }
+
+  @NotNull
+  @Override
   public String getFamilyName() {
     return QuickFixBundle.message("fix.modifiers.family");
   }
@@ -227,5 +219,4 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   public boolean startInWriteAction() {
     return false;
   }
-
 }

@@ -45,7 +45,7 @@ public class SkeletonVersionChecker {
   @NonNls static final String DEFAULT_NAME = "(default)"; // version required if a package is not explicitly mentioned
   @NonNls public static final String BUILTIN_NAME = "(built-in)"; // version required for built-ins
   @NonNls public static final String PREGENERATED = "(pre-generated)"; // pre-generated skeleton
-  private TreeMap<QualifiedName, Integer> myExplicitVersion; // versions of regularly named packages
+  private final TreeMap<QualifiedName, Integer> myExplicitVersion; // versions of regularly named packages
   private Integer myDefaultVersion; // version of (default)
   private Integer myBuiltinsVersion; // version of (built-it)
 

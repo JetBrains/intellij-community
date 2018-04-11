@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +59,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private boolean myStoppedAlready;
   private boolean myStarted;
   protected boolean myBackgrounded;
-  private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
   protected int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   private boolean myModalityEntered;
@@ -232,15 +230,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
            event.getID() == KeyEvent.KEY_PRESSED &&
            ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ESCAPE &&
            ((KeyEvent)event).getModifiers() == 0;
-  }
-
-  @NotNull
-  public String getProcessId() {
-    return myProcessId;
-  }
-
-  public void setProcessId(@NotNull String processId) {
-    myProcessId = processId;
   }
 
   protected void showDialog() {

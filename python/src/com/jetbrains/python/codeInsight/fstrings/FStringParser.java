@@ -178,7 +178,7 @@ public class FStringParser {
     private final int myContentEndOffset;
     private final boolean myContainsNamedUnicodeEscape;
     private final int myFirstHashOffset;
-    private int myDepth;
+    private final int myDepth;
 
     private Fragment(int leftBraceOffset,
                      int contentEndOffset,

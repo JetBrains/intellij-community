@@ -5,17 +5,23 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -25,18 +31,26 @@ import java.util.Set;
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
   private final List<String> myRoots;
+  @Nullable
+  private final LoggingRule myLoggingRule;
 
-  public PyEnvTaskRunner(List<String> roots) {
+  /**
+   * @param loggingRule to be passed by {@link PyEnvTestCase}.
+   *                    {@link LoggingRule#startLogging(Disposable, Iterable)} will be called
+   *                    if task has {@link PyExecutionFixtureTestTask#getClassesToEnableDebug()}
+   */
+  public PyEnvTaskRunner(List<String> roots, @Nullable final LoggingRule loggingRule) {
     myRoots = roots;
+    myLoggingRule = loggingRule;
   }
 
   // todo: doc
-  public void runTask(PyTestTask testTask, String testName, @NotNull final String... tagsRequiedByTest) {
+  public void runTask(PyTestTask testTask, String testName, @NotNull final String... tagsRequiredByTest) {
     boolean wasExecuted = false;
 
     List<String> passedRoots = Lists.newArrayList();
 
-    final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
+    final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiredByTest));
 
     final Set<String> tagsToCover = null;
 
@@ -80,26 +94,36 @@ public class PyEnvTaskRunner {
          */
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
         if (testTask.isLanguageLevelSupported(languageLevel)) {
+
+          if (myLoggingRule != null) {
+            final PyExecutionFixtureTestTask execTask = ObjectUtils.tryCast(testTask, PyExecutionFixtureTestTask.class);
+            if (execTask != null) {
+              // Fill be disabled automatically on project dispose
+              myLoggingRule.startLogging(execTask.getProject(), execTask.getClassesToEnableDebug());
+            }
+          }
+
+
           testTask.runTestOn(executable, sdk);
+
           passedRoots.add(root);
         }
         else {
           LOG.warn(String.format("Skipping root %s", root));
         }
       }
-      catch (final Throwable e) {
-        // Direct output of enteredTheMatrix may break idea or TC since can't distinguish test output from real test result
-        // Exception is thrown anyway, so we escape message before logging
-        if (e.getMessage().contains("enteredTheMatrix")) {
-          // .error( may lead to new exception with out of stacktrace.
-          LOG.warn(PyEnvTestCase.escapeTestMessage(e.getMessage()));
-        }
-        else {
-          LOG.error(e);
-        }
-        throw new RuntimeException(
-          PyEnvTestCase.joinStrings(passedRoots, "Tests passed environments: ") + "Test failed on " + getEnvType() + " environment " + root,
-          e);
+      catch (final RuntimeException | Error ex) {
+        // Runtime and error are logged including environment info
+        LOG.warn(joinStrings(passedRoots, "Tests passed environments: ") +
+                 "Test failed on " +
+                 getEnvType() +
+                 " environment " +
+                 root);
+        throw ex;
+      }
+      catch (final Exception e) {
+        // Exception can't be thrown with out of
+        throw new PyEnvWrappingException(e);
       }
       finally {
         try {
@@ -107,7 +131,7 @@ public class PyEnvTaskRunner {
           // thread leaks, and blocked main thread is considered as leaked
           testTask.tearDown();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
           throw new RuntimeException("Couldn't tear down task", e);
         }
       }
@@ -117,9 +141,9 @@ public class PyEnvTaskRunner {
       throw new RuntimeException("test" +
                                  testName +
                                  " was not executed.\n" +
-                                 PyEnvTestCase.joinStrings(myRoots, "All roots: ") +
+                                 joinStrings(myRoots, "All roots: ") +
                                  "\n" +
-                                 PyEnvTestCase.joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
+                                 joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
     }
   }
 
@@ -183,5 +207,10 @@ public class PyEnvTaskRunner {
 
   public static boolean isJython(@NotNull String sdkHome) {
     return sdkHome.toLowerCase().contains("jython");
+  }
+
+  @NotNull
+  private static String joinStrings(final Collection<String> roots, final String rootsName) {
+    return !roots.isEmpty() ? rootsName + StringUtil.join(roots, ", ") + "\n" : "";
   }
 }

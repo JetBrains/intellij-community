@@ -26,7 +26,7 @@ import javax.swing.*;
  * @author nik
  */
 public class InvalidArtifactConfigurable extends ArtifactConfigurableBase {
-  private String myErrorMessage;
+  private final String myErrorMessage;
 
   public InvalidArtifactConfigurable(InvalidArtifact originalArtifact,
                                      ArtifactsStructureConfigurableContextImpl artifactsStructureContext,

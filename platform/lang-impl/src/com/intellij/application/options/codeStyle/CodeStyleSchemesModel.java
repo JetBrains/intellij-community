@@ -319,7 +319,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   public static class ModelSettings extends CodeStyleSettings {
     private volatile boolean myLocked;
 
-    private static ModelSettings createFrom(@NotNull CodeStyleSettings settings) {
+    public static ModelSettings createFrom(@NotNull CodeStyleSettings settings) {
       ModelSettings modelSettings = new ModelSettings();
       modelSettings.copyFrom(settings);
       return modelSettings;

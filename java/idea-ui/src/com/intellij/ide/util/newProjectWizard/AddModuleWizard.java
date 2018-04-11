@@ -29,7 +29,7 @@ import java.util.function.Function;
 import static java.util.stream.Collectors.*;
 
 public class AddModuleWizard extends AbstractProjectWizard {
-  private ProjectImportProvider[] myImportProviders;
+  private final ProjectImportProvider[] myImportProviders;
   private final ModulesProvider myModulesProvider;
   private WizardMode myWizardMode;
 

@@ -352,9 +352,20 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private void showMessagePanel(String text) {
     Content selectedContent = myContentManager.getSelectedContent();
     if (selectedContent != null) {
-      myContentManager.removeContentManagerListener(myContentManagerListener);
-      myContentManager.removeFromSelection(selectedContent);
-      myContentManager.addContentManagerListener(myContentManagerListener);
+      // Invoke content selection change later after currently selected content correctly restores its state,
+      // since RunnerContentUi performs restoring later after addNotify call chain.
+      SwingUtilities.invokeLater(() -> {
+        if (myContentManager.isDisposed() || !myContentManager.isSelected(selectedContent)) return;
+
+        // Selected node may changed, we do not need to remove content from selection if it corresponds currently selected node.
+        if (myLastSelection instanceof RunDashboardNode) {
+          if (selectedContent == ((RunDashboardNode)myLastSelection).getContent()) return;
+        }
+
+        myContentManager.removeContentManagerListener(myContentManagerListener);
+        myContentManager.removeFromSelection(selectedContent);
+        myContentManager.addContentManagerListener(myContentManagerListener);
+      });
     }
 
     myMessagePanel.getEmptyText().setText(text);

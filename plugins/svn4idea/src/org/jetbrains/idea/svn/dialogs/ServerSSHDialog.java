@@ -29,7 +29,7 @@ import java.awt.*;
 
 public class ServerSSHDialog extends DialogWrapper {
   private AcceptResult myResult;
-  private String myFingerprints;
+  private final String myFingerprints;
   private JCheckBox myJCheckBox;
   private final boolean myStore;
   private final String myHost;

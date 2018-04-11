@@ -4,11 +4,8 @@ package com.intellij.util.ui.paint;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.ParityMode;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.util.FieldAccessor;
 import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.UIUtil;
-import org.junit.After;
-import org.junit.Before;
+import com.intellij.util.ui.TestScaleHelper;
 import org.junit.Test;
 
 import java.awt.*;
@@ -22,22 +19,7 @@ import static junit.framework.TestCase.assertTrue;
  *
  * @author tav
  */
-public class PaintUtilTest {
-  private static final FieldAccessor<UIUtil, Boolean> JRE_HIDPI_ACCESSOR =
-    new FieldAccessor<>(UIUtil.class, "jreHiDPI");
-
-  private boolean originalJreHiDPIEnabled;
-
-  @Before
-  public void setState() {
-    originalJreHiDPIEnabled = UIUtil.isJreHiDPIEnabled();
-  }
-
-  @After
-  public void restoreState() {
-    overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
-  }
-
+public class PaintUtilTest extends TestScaleHelper {
   @Test
   public void test() {
     overrideJreHiDPIEnabled(true);
@@ -71,9 +53,5 @@ public class PaintUtilTest {
     finally {
       g.dispose();
     }
-  }
-
-  public static void overrideJreHiDPIEnabled(boolean enabled) {
-    JRE_HIDPI_ACCESSOR.set(null, enabled);
   }
 }

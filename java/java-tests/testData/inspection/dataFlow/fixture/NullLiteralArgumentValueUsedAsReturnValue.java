@@ -8,6 +8,6 @@ class Test {
   }
 
   void m() {
-    useAndReturnValue(<warning descr="Passing 'null' argument to non annotated parameter">null</warning>);
+    useAndReturnValue(<warning descr="Passing 'null' argument to non-annotated parameter">null</warning>);
   }
 }

@@ -20,13 +20,11 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.LighterLazyParseableNode;
-import com.intellij.util.Function;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.WalkingState;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNodeVisitor {
@@ -97,6 +95,7 @@ public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNo
 
       @Override
       public void visit(@NotNull IndexedLighterASTNode iNode) {
+        ProgressManager.checkCanceled();
         LighterASTNode element = iNode.node;
         RecursiveLighterASTNodeWalkingVisitor visitor = RecursiveLighterASTNodeWalkingVisitor.this;
         if (element instanceof LighterLazyParseableNode) {

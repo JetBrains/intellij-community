@@ -108,7 +108,7 @@ public class SvnMergeInfoCache {
 
   static class CopyRevison {
     private final String myPath;
-    private volatile long myRevision;
+    private final long myRevision;
 
     CopyRevison(final SvnVcs vcs, final String path, @NotNull Url repositoryRoot, final String branchUrl, @NotNull Url trunkUrl) {
       myPath = path;

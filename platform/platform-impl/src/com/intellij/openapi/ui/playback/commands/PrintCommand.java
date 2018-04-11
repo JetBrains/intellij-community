@@ -20,7 +20,7 @@ import com.intellij.openapi.util.ActionCallback;
 
 public class PrintCommand extends AbstractCommand {
 
-  private String myText;
+  private final String myText;
   
   public PrintCommand(String text, int line) {
     super("", line);

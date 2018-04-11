@@ -382,13 +382,14 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Throwable {
-    new PyConfigurationValidationTask<PyTestConfiguration>() {
-      @NotNull
-      @Override
-      protected PyTestFactory createFactory() {
-        return PyTestFactory.INSTANCE;
-      }
-    }.fetchException(this::runPythonTest);
+    runPythonTestWithException(
+      new PyConfigurationValidationTask<PyTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyTestFactory createFactory() {
+          return PyTestFactory.INSTANCE;
+        }
+      });
   }
 
   @Test

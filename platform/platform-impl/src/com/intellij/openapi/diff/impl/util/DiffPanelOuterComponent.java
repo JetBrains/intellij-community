@@ -41,10 +41,10 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
   private ScrollingPanel myScrollingPanel = null;
   private final JPanel myBottomContainer;
   private JComponent myBottomComponent;
-  private JPanel myWrapper;
+  private final JPanel myWrapper;
   private Getter<Integer> myPreferredHeightGetter;
   private int myPrefferedWidth;
-  private Getter<Integer> myDefaultHeight;
+  private final Getter<Integer> myDefaultHeight;
 
   public DiffPanelOuterComponent(List<TextDiffType> diffTypes, @Nullable DiffRequest.ToolbarAddons toolbarAddons) {
     super(new BorderLayout());

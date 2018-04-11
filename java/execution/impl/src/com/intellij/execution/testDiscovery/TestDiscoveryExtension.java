@@ -72,7 +72,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
       final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
       final MessageBusConnection connection = configuration.getProject().getMessageBus().connect();
       connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
-        private List<String> myCompletedMethodNames = new ArrayList<>();
+        private final List<String> myCompletedMethodNames = new ArrayList<>();
         @Override
         public void onTestFinished(@NotNull SMTestProxy test) {
           final SMTestProxy.SMRootTestProxy root = test.getRoot();

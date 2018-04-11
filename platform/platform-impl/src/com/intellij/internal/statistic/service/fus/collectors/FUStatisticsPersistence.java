@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.service.fus.FUStatisticsSettingsService;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.beans.FSSession;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,7 +41,7 @@ public class FUStatisticsPersistence {
   // 4. collected data are persisted in system cache. one file for one project session. the session is pair: project + IJ build number
   public static String persistProjectUsages(@NotNull Project project) {
     Set<String> groups = FUStatisticsSettingsService.getInstance().getApprovedGroups();
-    if (groups.isEmpty()) return null;
+    if (groups.isEmpty() && !ApplicationManagerEx.getApplicationEx().isInternal()) return null;
     FUStatisticsAggregator aggregator = FUStatisticsAggregator.create();
     Map<String, Set<UsageDescriptor>> usages = aggregator.getProjectUsages(project, groups);
     if (usages.isEmpty()) return null;

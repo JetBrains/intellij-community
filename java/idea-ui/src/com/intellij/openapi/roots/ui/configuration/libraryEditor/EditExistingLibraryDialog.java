@@ -33,9 +33,9 @@ import java.awt.*;
  * @author nik
  */
 public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
-  private ExistingLibraryEditor myLibraryEditor;
-  private boolean myCommitChanges;
-  private LibraryTable.ModifiableModel myTableModifiableModel;
+  private final ExistingLibraryEditor myLibraryEditor;
+  private final boolean myCommitChanges;
+  private final LibraryTable.ModifiableModel myTableModifiableModel;
 
   public static EditExistingLibraryDialog createDialog(Component parent,
                                                        LibraryTableModifiableModelProvider modelProvider,

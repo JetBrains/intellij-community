@@ -68,7 +68,7 @@ public class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance(PySkeletonRefresher.class);
 
 
-  @Nullable private Project myProject;
+  @Nullable private final Project myProject;
   private @Nullable final ProgressIndicator myIndicator;
   @NotNull private final Sdk mySdk;
   private String mySkeletonsPath;
@@ -92,7 +92,7 @@ public class PySkeletonRefresher {
   private Map<String, Pair<Integer, Long>> myBlacklist;
   private SkeletonVersionChecker myVersionChecker;
 
-  private PySkeletonGenerator mySkeletonsGenerator;
+  private final PySkeletonGenerator mySkeletonsGenerator;
 
   public static synchronized boolean isGeneratingSkeletons() {
     return ourGeneratingCount > 0;
@@ -730,10 +730,10 @@ public class PySkeletonRefresher {
   }
 
   public static class PyBinaryItem {
-    private String myPath;
-    private String myModule;
-    private long myLength;
-    private long myLastModified;
+    private final String myPath;
+    private final String myModule;
+    private final long myLength;
+    private final long myLastModified;
 
     PyBinaryItem(String module, String path, long length, long lastModified) {
       myPath = path;

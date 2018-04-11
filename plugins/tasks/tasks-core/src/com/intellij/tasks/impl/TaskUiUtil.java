@@ -20,7 +20,7 @@ import java.util.Collection;
  */
 public class TaskUiUtil {
 
-  private static Logger LOG = Logger.getInstance(TaskUiUtil.class);
+  private static final Logger LOG = Logger.getInstance(TaskUiUtil.class);
 
   private TaskUiUtil() {
     // Utility class

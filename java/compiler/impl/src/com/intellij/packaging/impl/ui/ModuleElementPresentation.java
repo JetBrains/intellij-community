@@ -75,13 +75,12 @@ public class ModuleElementPresentation extends TreeNodePresentation {
     }
     String moduleName;
     if (module != null) {
-      moduleName = module.getName();
-      final ModifiableModuleModel moduleModel = myContext.getModifiableModuleModel();
+      ModifiableModuleModel moduleModel = myContext.getModifiableModuleModel();
       if (moduleModel != null) {
-        final String newName = moduleModel.getNewName(module);
-        if (newName != null) {
-          moduleName = newName;
-        }
+        moduleName = moduleModel.getActualName(module);
+      }
+      else {
+        moduleName = module.getName();
       }
     }
     else if (myModulePointer != null) {

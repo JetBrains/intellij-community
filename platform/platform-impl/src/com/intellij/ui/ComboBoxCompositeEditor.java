@@ -87,7 +87,7 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
     abstract I getItem(F component, I item);
   }
 
-  private ComboBoxCompositeEditorStrategy editorTextFieldStrategy = new ComboBoxCompositeEditorStrategy () {
+  private final ComboBoxCompositeEditorStrategy editorTextFieldStrategy = new ComboBoxCompositeEditorStrategy () {
 
     BiConsumer<I, EditorTextField> defaultOnSetHandler = (anObject, component) -> component.setText((anObject == null) ? "" : anObject.toString());
 
@@ -120,7 +120,7 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
     }
   };
 
-  private ComboBoxCompositeEditorStrategy jTextFieldStrategy =  new ComboBoxCompositeEditorStrategy() {
+  private final ComboBoxCompositeEditorStrategy jTextFieldStrategy =  new ComboBoxCompositeEditorStrategy() {
 
     BiConsumer<I, JTextField> defaultOnSetHandler = (anObject, component) ->  component.setText((anObject ==null) ? "" : anObject.toString());
 

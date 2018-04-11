@@ -515,7 +515,8 @@ public int method(int parameter) {
     getSettings().WRAP_LONG_LINES = true
 
     doClassTest(
-      """    /**
+      """
+    /**
      * @return <pre>this is a return value documentation with a very long description
      * that is longer than the right margin.</pre>
      */
@@ -523,8 +524,9 @@ public int method(int parameter) {
         return 0;
     }""",
 
-      """/**
- * @return <pre>this is a return value documentation with a very long
+"\n/**\n" +
+" * @return <pre>this is a return value documentation with a very long " +
+"""
  * description
  * that is longer than the right margin.</pre>
  */
@@ -1078,6 +1080,99 @@ module M {
      */
     void test(int a) {
     }
+}
+"""
+    )
+  }
+
+  /**
+   * See [IDEA-153768](https://youtrack.jetbrains.com/issue/IDEA-153768)
+   */
+  fun testPTagsBeforeTags() {
+    getJavaSettings().JD_P_AT_EMPTY_LINES = true
+    doTextTest(
+"""
+package com.company;
+
+public class Test {
+    /**
+     * Before title
+     *
+     * <h1>Title</h1>
+     *
+     * <p>Before another already existing tag
+     *
+     * Normal case, should be inserted.
+     */
+    void foo() {
+    }
+}
+""",
+"""
+package com.company;
+
+public class Test {
+    /**
+     * Before title
+     *
+     * <h1>Title</h1>
+     *
+     * <p>Before another already existing tag
+     * <p>
+     * Normal case, should be inserted.
+     */
+    void foo() {
+    }
+}
+""")
+  }
+
+  /**
+   * See [IDEA-21623](https://youtrack.jetbrains.com/issue/IDEA-21623)
+   */
+  fun testPreTagWithAttributes() {
+    getSettings().WRAP_COMMENTS = true
+    getSettings().RIGHT_MARGIN = 60
+
+    doTextTest(
+"""
+package com.company;
+
+interface Test {
+    /**
+     * The sample is below:
+     *
+     * <pre class="sample">
+     *     class Foo {
+     *         private int x;
+     *         private int y;
+     *         // The comment inside pre tag which shouldn't be wrapped despite being long
+     *     }
+     * </pre>
+     * @return Some value
+     */
+    String foo();
+}
+""",
+
+"""
+package com.company;
+
+interface Test {
+    /**
+     * The sample is below:
+     *
+     * <pre class="sample">
+     *     class Foo {
+     *         private int x;
+     *         private int y;
+     *         // The comment inside pre tag which shouldn't be wrapped despite being long
+     *     }
+     * </pre>
+     *
+     * @return Some value
+     */
+    String foo();
 }
 """
     )

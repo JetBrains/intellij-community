@@ -48,7 +48,7 @@ import java.util.Map;
  */
 public class HgMockVcsHelper extends AbstractVcsHelper {
 
-  private Collection<VcsHelperListener> myListeners = new THashSet<>();
+  private final Collection<VcsHelperListener> myListeners = new THashSet<>();
 
   public HgMockVcsHelper(@NotNull Project project) {
     super(project);

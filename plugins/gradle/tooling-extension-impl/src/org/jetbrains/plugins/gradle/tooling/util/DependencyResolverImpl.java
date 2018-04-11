@@ -73,13 +73,13 @@ import static org.gradle.internal.impldep.com.google.common.collect.Iterables.fi
  */
 public class DependencyResolverImpl implements DependencyResolver {
 
-  private static boolean is4OrBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
-  private static boolean isJavaLibraryPluginSupported = is4OrBetter ||
-                                                        (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0);
-  private static boolean isDependencySubstitutionsSupported = isJavaLibraryPluginSupported ||
-                                                              (GradleVersion.current().compareTo(GradleVersion.version("2.5")) > 0);
-  private static boolean isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
-                                                              (GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0);
+  private static final boolean is4OrBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
+  private static final boolean isJavaLibraryPluginSupported = is4OrBetter ||
+                                                              (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0);
+  private static final boolean isDependencySubstitutionsSupported = isJavaLibraryPluginSupported ||
+                                                                    (GradleVersion.current().compareTo(GradleVersion.version("2.5")) > 0);
+  private static final boolean isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
+                                                                    (GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0);
 
   @NotNull
   private final Project myProject;

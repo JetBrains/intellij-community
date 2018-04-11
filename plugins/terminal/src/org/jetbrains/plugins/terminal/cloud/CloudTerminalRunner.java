@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutionException;
 
 public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalProcess> {
   private final String myPipeName;
-  private CloudTerminalProcess myProcess;
+  private final CloudTerminalProcess myProcess;
 
   public CloudTerminalRunner(@NotNull Project project, String pipeName, CloudTerminalProcess process) {
     super(project);

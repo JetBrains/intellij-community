@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
@@ -161,7 +159,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       public void onDone(boolean isExcludeAction) {
         if (isExcludeAction) {
           if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-            removeSelectedNodes();
+            myTree.removeSelectedProblems();
           }
           myTree.repaint();
         }
@@ -945,55 +943,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     } else {
       GlobalInspectionContextImpl.NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.view.invalid.scope.message"), NotificationType.INFORMATION).notify(getProject());
     }
-  }
-
-
-  private boolean selectCommonNextSibling(@NotNull TreePath[] selected, @NotNull TreePath commonParent) {
-    final int pathCount = commonParent.getPathCount() + 1;
-    for (TreePath path : selected) {
-      if (path.getPathCount() != pathCount) {
-        return false;
-      }
-    }
-    final InspectionTreeNode parent = (InspectionTreeNode)commonParent.getLastPathComponent();
-    final int[] indices = new int[selected.length];
-    for (int i = 0; i < selected.length; i++) {
-      TreePath path = selected[i];
-      indices[i] = parent.getIndex((TreeNode)path.getLastPathComponent());
-    }
-    Arrays.sort(indices);
-    int prevIdx = -1;
-    for (int idx: indices) {
-      if (prevIdx != -1) {
-        if (idx - prevIdx != 1) {
-          return false;
-        }
-      }
-      prevIdx = idx;
-    }
-    final int toSelect = indices[indices.length - 1] + 1;
-    if (parent.getChildCount() > toSelect) {
-      final TreeNode nodeToSelect = parent.getChildAt(toSelect);
-      TreeUtil.removeSelected(myTree);
-      TreeUtil.selectNode(myTree, nodeToSelect);
-      return true;
-    }
-    return false;
-  }
-
-  public void removeSelectedNodes() {
-    synchronized (myTreeStructureUpdateLock) {
-      final TreePath[] selected = myTree.getSelectionPaths();
-      if (selected != null) {
-        final TreePath commonParent = TreeUtil.findCommonPath(selected);
-        if (!selectCommonNextSibling(selected, commonParent)) {
-          TreeUtil.removeSelected(myTree);
-          TreeUtil.selectPath(myTree, commonParent);
-        }
-      }
-    }
-    myTree.revalidate();
-    myTree.repaint();
   }
 
   @TestOnly

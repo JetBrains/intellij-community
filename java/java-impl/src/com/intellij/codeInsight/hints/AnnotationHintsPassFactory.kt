@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
 
 class AnnotationHintsPassFactory(project: Project, registrar: TextEditorHighlightingPassRegistrar) : AbstractProjectComponent(
   project), TextEditorHighlightingPassFactory {
@@ -18,9 +19,9 @@ class AnnotationHintsPassFactory(project: Project, registrar: TextEditorHighligh
   }
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-    if (editor.isOneLineMode) return null
-    val lastStamp = editor.getUserData<Long>(LAST_PASS_MODIFICATION_TIMESTAMP)
-    if (lastStamp != null && lastStamp == ParameterHintsPassFactory.getCurrentModificationStamp(file)) return null
+    if (editor.isOneLineMode ||
+        file !is PsiJavaFile ||
+        LAST_PASS_MODIFICATION_TIMESTAMP.get(editor, 0) == ParameterHintsPassFactory.getCurrentModificationStamp(file)) return null
     return AnnotationHintsPass(file, editor)
   }
 

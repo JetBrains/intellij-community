@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class CachedIconLoader {
-	private static Map<String, Icon> icons = new HashMap<>();
+	private static final Map<String, Icon> icons = new HashMap<>();
 
 	private CachedIconLoader() {
 	}

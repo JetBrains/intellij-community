@@ -29,7 +29,7 @@ import java.util.Map;
  * @author nik
  */
 public class JpsMacroExpander {
-  private ExpandMacroToPathMap myExpandMacroMap;
+  private final ExpandMacroToPathMap myExpandMacroMap;
 
   public JpsMacroExpander(Map<String, String> pathVariables) {
     myExpandMacroMap = new ExpandMacroToPathMap();

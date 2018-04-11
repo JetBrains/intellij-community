@@ -129,7 +129,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     result.clear();
   }
 
-  private static Set<String> ourToolsWithInformationProblems = new HashSet<>();
+  private static final Set<String> ourToolsWithInformationProblems = new HashSet<>();
   public void doInspectInBatch(@NotNull final GlobalInspectionContextImpl context,
                                @NotNull final InspectionManager iManager,
                                @NotNull final List<LocalInspectionToolWrapper> toolWrappers) {

@@ -59,4 +59,7 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
 
   @Test
   fun testAnnotation() = doTest("Simple/Annotation.java")
+
+  @Test
+  fun testComplexCalls() = doTest("Simple/ComplexCalls.java")
 }

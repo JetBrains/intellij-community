@@ -40,7 +40,7 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
   private JTextField myMethodNameTextField;
   private MethodSignatureComponent mySignaturePreviewTextArea;
   private JTextArea myOutputVariablesTextArea;
-  private ComboBoxVisibilityPanel<T> myVisibilityComboBox;
+  private final ComboBoxVisibilityPanel<T> myVisibilityComboBox;
   private final Project myProject;
   private final String myDefaultName;
   private final ExtractMethodValidator myValidator;

@@ -22,7 +22,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -87,11 +86,8 @@ public final class PythonImportUtils {
     Set<String> seenCandidateNames = new HashSet<>(); // true import names
 
     PsiFile existingImportFile = addCandidatesFromExistingImports(node, refText, fix, seenCandidateNames);
-    if (fix.getCandidates().isEmpty()|| fix.hasProjectImports() || Registry.is("python.import.always.ask")) {
-      // maybe some unimported file has it, too
-      ProgressManager.checkCanceled(); // before expensive index searches
-      addSymbolImportCandidates(node, refText, asName, fix, seenCandidateNames, existingImportFile);
-    }
+    ProgressManager.checkCanceled(); // before expensive index searches
+    addSymbolImportCandidates(node, refText, asName, fix, seenCandidateNames, existingImportFile);
 
     for(PyImportCandidateProvider provider: Extensions.getExtensions(PyImportCandidateProvider.EP_NAME)) {
       provider.addImportCandidates(reference, refText, fix);

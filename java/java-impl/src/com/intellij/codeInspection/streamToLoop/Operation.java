@@ -225,7 +225,7 @@ abstract class Operation {
   }
 
   static class FlatMapOperation extends Operation {
-    private String myVarName;
+    private final String myVarName;
     private final FunctionHelper myFn;
     private final List<StreamToLoopInspection.OperationRecord> myRecords;
     private PsiExpression myCondition;

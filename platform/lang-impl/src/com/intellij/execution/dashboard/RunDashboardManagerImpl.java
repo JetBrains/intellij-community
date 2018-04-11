@@ -66,7 +66,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   private Content myToolWindowContent;
   private ContentManager myToolWindowContentManager;
   private ContentManagerListener myToolWindowContentManagerListener;
-  private Map<Content, Content> myDashboardToToolWindowContents = new HashMap<>();
+  private final Map<Content, Content> myDashboardToToolWindowContents = new HashMap<>();
 
   public RunDashboardManagerImpl(@NotNull final Project project) {
     myProject = project;

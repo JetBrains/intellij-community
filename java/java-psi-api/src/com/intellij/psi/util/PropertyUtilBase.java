@@ -1,10 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -24,8 +26,10 @@ import java.util.*;
 public class PropertyUtilBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PropertyUtil");
 
+  @NonNls protected static final String GET_PREFIX = PropertyKind.GETTER.prefix;
+  @NonNls protected static final String IS_PREFIX = PropertyKind.BOOLEAN_GETTER.prefix;
+  @NotNull protected static final String SET_PREFIX = PropertyKind.SETTER.prefix;
 
-  @NonNls protected static final String IS_PREFIX = "is";
   @Nullable
   public static String getPropertyName(@NonNls @NotNull String methodName) {
     return StringUtil.getPropertyName(methodName);
@@ -258,7 +262,7 @@ public class PropertyUtilBase {
 
   @NotNull
   public static GetterFlavour getMethodNameGetterFlavour(@NotNull String methodName) {
-    if (checkPrefix(methodName, "get")) {
+    if (checkPrefix(methodName, GET_PREFIX)) {
       return GetterFlavour.GENERIC;
     }
     else if (checkPrefix(methodName, IS_PREFIX)) {
@@ -363,7 +367,7 @@ public class PropertyUtilBase {
   }
 
   public static boolean isSetterName(@NotNull String methodName) {
-    return checkPrefix(methodName, "set");
+    return checkPrefix(methodName, SET_PREFIX);
   }
 
   @Nullable
@@ -380,8 +384,8 @@ public class PropertyUtilBase {
   @NotNull
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     @NonNls String methodName = getterMethod.getName();
-    if (methodName.startsWith("get")) return StringUtil.decapitalize(methodName.substring(3));
-    if (methodName.startsWith("is")) return StringUtil.decapitalize(methodName.substring(2));
+    if (methodName.startsWith(GET_PREFIX)) return StringUtil.decapitalize(methodName.substring(3));
+    if (methodName.startsWith(IS_PREFIX)) return StringUtil.decapitalize(methodName.substring(2));
     return methodName;
   }
 
@@ -401,7 +405,7 @@ public class PropertyUtilBase {
   @NotNull
   public static String[] suggestGetterNames(@NotNull String propertyName) {
     final String str = StringUtil.capitalizeWithJavaBeanConvention(StringUtil.sanitizeJavaIdentifier(propertyName));
-    return new String[]{IS_PREFIX + str, "get" + str};
+    return new String[]{IS_PREFIX + str, GET_PREFIX + str};
   }
 
   public static String suggestGetterName(@NonNls @NotNull String propertyName, @Nullable PsiType propertyType) {
@@ -412,15 +416,15 @@ public class PropertyUtilBase {
     @NonNls StringBuilder name =
       new StringBuilder(StringUtil.capitalizeWithJavaBeanConvention(StringUtil.sanitizeJavaIdentifier(propertyName)));
     if (isBoolean(propertyType)) {
-      if (existingGetterName == null || !existingGetterName.startsWith("get")) {
+      if (existingGetterName == null || !existingGetterName.startsWith(GET_PREFIX)) {
         name.insert(0, IS_PREFIX);
       }
       else {
-        name.insert(0, "get");
+        name.insert(0, GET_PREFIX);
       }
     }
     else {
-      name.insert(0, "get");
+      name.insert(0, GET_PREFIX);
     }
 
     return name.toString();
@@ -428,7 +432,7 @@ public class PropertyUtilBase {
 
 
   public static String suggestSetterName(@NonNls @NotNull String propertyName) {
-    return suggestSetterName(propertyName, "set");
+    return suggestSetterName(propertyName, SET_PREFIX);
   }
 
   public static String suggestSetterName(@NonNls @NotNull String propertyName, String setterPrefix) {
@@ -656,4 +660,38 @@ public class PropertyUtilBase {
     return statement instanceof PsiReturnStatement ? ((PsiReturnStatement)statement).getReturnValue() : null;
   }
 
+  @Contract(pure = true)
+  @Nullable
+  public static PropertyKind getPropertyKind(@NotNull String accessorName) {
+    for (PropertyKind kind : PropertyKind.values()) {
+      String prefix = kind.prefix;
+      int prefixLength = prefix.length();
+      if (accessorName.startsWith(prefix) && accessorName.length() > prefixLength) {
+        return kind;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @see StringUtil#getPropertyName(String)
+   * @see Introspector
+   */
+  @Contract(pure = true)
+  @Nullable
+  public static Pair<String, PropertyKind> getPropertyNameAndKind(@NotNull String accessorName) {
+    PropertyKind kind = getPropertyKind(accessorName);
+    if (kind == null) {
+      return null;
+    }
+    String baseName = accessorName.substring(kind.prefix.length());
+    String propertyName = Introspector.decapitalize(baseName);
+    return Pair.create(propertyName, kind);
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  public static String getAccessorName(@NotNull String propertyName, @NotNull PropertyKind kind) {
+    return kind.prefix + StringUtil.capitalizeWithJavaBeanConvention(propertyName);
+  }
 }

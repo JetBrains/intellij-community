@@ -33,6 +33,8 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
 
 /**
  * @author vlan
@@ -108,6 +110,11 @@ fun Sdk.isAssociatedWithAnotherProject(project: Project?): Boolean {
 val Sdk.associatedProjectPath: String?
   // TODO: Support .project associations
   get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
+
+fun Sdk.adminPermissionsNeeded(): Boolean {
+  val homePath = homePath ?: return false
+  return !Files.isWritable(Paths.get(homePath))
+}
 
 fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
   val homeDir = homeDirectory ?: return null

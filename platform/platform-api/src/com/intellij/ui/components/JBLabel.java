@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnchorableComponent;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -230,6 +231,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   /**
    * In 'copyable' mode JBLabel has the same appearance but user can select text with mouse and copy it to clipboard with standard shortcut.
    * By default JBLabel is NOT copyable
+   * Also 'copyable' label supports web hyperlinks (e.g. opens browser on click)
    *
    * @return 'this' (the same instance)
    */
@@ -282,6 +284,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         myEditorPane.setEditable(false);
         myEditorPane.setBackground(UIUtil.TRANSPARENT_COLOR);
         myEditorPane.setOpaque(false);
+        myEditorPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
         UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
 
         myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());

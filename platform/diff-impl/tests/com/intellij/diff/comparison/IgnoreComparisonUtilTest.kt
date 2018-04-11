@@ -157,6 +157,16 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
          " +++", "",
          "----", "")
       .run()
+
+    Test("A_B_C_", "",
+         " +++++", "",
+         "--    ", "")
+      .run()
+
+    Test("A_B_C_", "",
+         "++++ +", "",
+         "    --", "")
+      .run()
   }
 
   fun testLines() {

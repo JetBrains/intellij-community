@@ -50,7 +50,7 @@ public class ApplyChangesState extends State {
   private int myIndex;
   private boolean myResetBulkUpdateState;
 
-  private BlockIndentOptions myBlockIndentOptions;
+  private final BlockIndentOptions myBlockIndentOptions;
 
   public ApplyChangesState(FormattingModel model, WrapBlocksState state, FormattingProgressCallback callback) {
     myModel = model;

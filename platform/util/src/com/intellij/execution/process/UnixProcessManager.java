@@ -253,7 +253,7 @@ public class UnixProcessManager {
   }
 
   private static class ProcessInfo {
-    private Map<Integer, List<Integer>> BY_PARENT = new TreeMap<Integer, List<Integer>>(); // pid -> list of children pids
+    private final Map<Integer, List<Integer>> BY_PARENT = new TreeMap<Integer, List<Integer>>(); // pid -> list of children pids
 
     public void register(Integer pid, Integer parentPid) {
       List<Integer> children = BY_PARENT.get(parentPid);

@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MockPlainTextImportOptimizer implements ImportOptimizer {
-  private Set<PsiFile> myProcessedFiles = new HashSet<>();
+  private final Set<PsiFile> myProcessedFiles = new HashSet<>();
   
   @Override
   public boolean supports(PsiFile file) {

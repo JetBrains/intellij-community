@@ -11,7 +11,7 @@ public abstract class AbstractExternalEntityData implements ExternalEntityData {
 
   private static final long serialVersionUID = 1L;
   
-  @NotNull private ProjectSystemId myOwner;
+  @NotNull private final ProjectSystemId myOwner;
   
   public AbstractExternalEntityData(@NotNull ProjectSystemId owner) {
     myOwner = owner;

@@ -178,7 +178,7 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
     private final JTextField myTextField = new JTextField();
     private final PropertiesTable myPropTable = new PropertiesTable();
     
-    private ActionListener myActionListener = new ActionListener() {
+    private final ActionListener myActionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         AntBuildTarget buildTarget = getTarget();

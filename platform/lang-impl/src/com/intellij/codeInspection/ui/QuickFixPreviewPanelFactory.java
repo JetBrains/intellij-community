@@ -189,7 +189,7 @@ public class QuickFixPreviewPanelFactory {
 
   private static class LoadingInProgressPreview extends JPanel implements InspectionTreeLoadingProgressAware {
     private final InspectionResultsView myView;
-    private SimpleColoredComponent myWaitingLabel;
+    private final SimpleColoredComponent myWaitingLabel;
 
     private LoadingInProgressPreview(InspectionResultsView view) {
       myView = view;

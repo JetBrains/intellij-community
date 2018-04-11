@@ -16,6 +16,7 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
  * @see ColorIcon
  */
 public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
-  private static final Map<Integer, EmptyIcon> cache = new HashMap<Integer, EmptyIcon>();
+  private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<Pair<Integer, Boolean>, EmptyIcon>();
 
   public static final Icon ICON_16 = JBUI.scale(create(16));
   public static final Icon ICON_18 = JBUI.scale(create(18));
@@ -119,15 +120,13 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   @Override
   public EmptyIcon withIconPreScaled(boolean preScaled) {
     if (myUseCache && isIconPreScaled() != preScaled) {
-      Integer key = key(width, height);
-      if (key != null) cache.remove(key); // rather useless to keep it in cache
       return create(width, height, preScaled);
     }
     return (EmptyIcon)super.withIconPreScaled(preScaled);
   }
 
   private static EmptyIcon create(int width, int height, boolean preScaled) {
-    Integer key = key(width, height);
+    Pair<Integer, Boolean> key = key(width, height, preScaled);
     EmptyIcon icon = key != null ? cache.get(key) : null;
     if (icon == null) {
       icon = new EmptyIcon(width, height, true);
@@ -138,8 +137,8 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   }
 
   @Nullable
-  private static Integer key(int width, int height) {
-    return width == height && width < 129 ? width : null;
+  private static Pair<Integer, Boolean> key(int width, int height, boolean preScaled) {
+    return width == height && width < 129 ? Pair.create(width, preScaled) : null;
   }
 
   @Override

@@ -48,7 +48,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected SMTestLocator myLocator = null;
   private final String myTestFrameworkName;
   private final Project myProject;
-  private TransferToEDTQueue<Runnable> myTransferToEDTQueue;
+  private final TransferToEDTQueue<Runnable> myTransferToEDTQueue;
   protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<>();
 
   protected boolean myTreeBuildBeforeStart = false;

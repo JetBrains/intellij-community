@@ -52,11 +52,6 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     deleteGist();
   }
 
-  @NotNull
-  protected GithubAuthDataHolder getAuthDataHolder() {
-    return new GithubAuthDataHolder(myGitHubSettings.getAuthData());
-  }
-
   protected void deleteGist() throws IOException {
     if (GIST_ID != null) {
       GithubApiUtil.deleteGist(new GithubConnection(myGitHubSettings.getAuthData()), GIST_ID);
@@ -107,12 +102,6 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     GithubGist result = getGist();
 
     assertFalse("Gist is not private", result.isPublic());
-  }
-
-  protected void checkGistAnonymous() {
-    GithubGist result = getGist();
-
-    assertTrue("Gist is not anonymous", result.getUser() == null);
   }
 
   protected void checkGistNotAnonymous() {

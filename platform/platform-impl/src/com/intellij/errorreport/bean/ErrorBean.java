@@ -27,7 +27,7 @@ import java.util.List;
  * @since May 5, 2003
  */
 public class ErrorBean {
-  private String lastAction;
+  private final String lastAction;
   private String pluginName;
   private String pluginVersion;
   private Integer previousException;

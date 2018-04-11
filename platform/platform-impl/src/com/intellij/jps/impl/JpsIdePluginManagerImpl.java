@@ -33,7 +33,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author nik
  */
 public class JpsIdePluginManagerImpl extends JpsPluginManager {
-  private List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
+  private final List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
 
   public JpsIdePluginManagerImpl() {
     ExtensionsArea rootArea = Extensions.getRootArea();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -137,7 +123,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -236,7 +221,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           // canceled because of an exception, no need to repeat the same a lot times
           throw e;
         }
-        
+
         PsiDocumentManager.getInstance(project).commitAllDocuments();
         UIUtil.dispatchAllInvocationEvents();
         exception = e;
@@ -586,6 +571,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getAvailableIntentions(getHostEditor(), getHostFileAtCaret());
   }
 
+  @NotNull
   private Editor getHostEditor() {
     return InjectedLanguageUtil.getTopLevelEditor(getEditor());
   }
@@ -1217,7 +1203,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     }
   }
-  
+
   protected boolean shouldTrackVirtualFilePointers() {
     return true;
   }
@@ -1242,7 +1228,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         myChooseByNamePopup = null;
       })
       .append(() -> disposeRootDisposable())
-      .append(() -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown())) 
+      .append(() -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown()))
       .append(() -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()))
       .append(() -> super.tearDown())
       .append(() -> {
@@ -1610,19 +1596,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    String newFileText1 = loader.newFileText;
+    String expectedText = loader.newFileText;
     if (stripTrailingSpaces) {
-      newFileText1 = stripTrailingSpaces(newFileText1);
+      expectedText = stripTrailingSpaces(expectedText);
     }
 
     actualText = StringUtil.convertLineSeparators(actualText);
 
-    if (!Comparing.equal(newFileText1, actualText)) {
+    if (!Comparing.equal(expectedText, actualText)) {
       if (loader.filePath != null) {
-        throw new FileComparisonFailure(expectedFile, newFileText1, actualText, loader.filePath);
+        throw new FileComparisonFailure(expectedFile, expectedText, actualText, loader.filePath);
       }
       else {
-        throw new ComparisonFailure(expectedFile, newFileText1, actualText);
+        throw new ComparisonFailure(expectedFile, expectedText, actualText);
       }
     }
 
@@ -1643,21 +1629,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   public String getFoldingDescription(boolean withCollapseStatus) {
-    final Editor topEditor = getTopEditor(myEditor);
+    final Editor topEditor = getHostEditor();
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
     return getTagsFromSegments(topEditor.getDocument().getText(),
                                Arrays.asList(topEditor.getFoldingModel().getAllFoldRegions()),
                                FOLD,
                                foldRegion -> "text=\'" + foldRegion.getPlaceholderText() + "\'"
                                              + (withCollapseStatus ? " expand=\'" + foldRegion.isExpanded() + "\'" : ""));
-  }
-
-  @Contract("null -> null")
-  private static Editor getTopEditor(Editor editor) {
-    while(editor instanceof EditorWindow) {
-      editor = ((EditorWindow)editor).getDelegate();
-    }
-    return editor;
   }
 
   @NotNull
@@ -1919,7 +1897,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
         catch (StubTextInconsistencyException e) {
           PsiTestUtil.compareStubTexts(e);
-        } 
+        }
       });
       UIUtil.dispatchAllInvocationEvents();
       checkPsiTextConsistency(project, vFile);

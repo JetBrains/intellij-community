@@ -51,10 +51,10 @@ public class ArrangementSectionRuleManager {
   private static final Set<ArrangementSettingsToken> MUTEXES = ContainerUtil.newHashSet(START_SECTION, END_SECTION);
   private static final Set<ArrangementSettingsToken> TOKENS = ContainerUtilRt.newHashSet(START_SECTION, END_SECTION, TEXT);
 
-  private Commenter myCommenter;
+  private final Commenter myCommenter;
 
-  private ArrangementSectionRulesControl myControl;
-  private ArrangementMatchingRuleEditor myEditor;
+  private final ArrangementSectionRulesControl myControl;
+  private final ArrangementMatchingRuleEditor myEditor;
 
   @Nullable
   public static ArrangementSectionRuleManager getInstance(@NotNull Language language,
@@ -193,8 +193,8 @@ public class ArrangementSectionRuleManager {
   }
 
   public static class ArrangementSectionRuleData {
-    private boolean myIsSectionStart;
-    private String myText;
+    private final boolean myIsSectionStart;
+    private final String myText;
 
     private ArrangementSectionRuleData(@NotNull String text, boolean isStart) {
       myText = text;

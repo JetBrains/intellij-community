@@ -36,7 +36,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
    */
   private final List<RemoteDebugger> myDebuggers = Lists.newArrayList();
 
-  private ThreadRegistry myThreadRegistry = new ThreadRegistry();
+  private final ThreadRegistry myThreadRegistry = new ThreadRegistry();
 
   /**
    * Indicates that this {@link ClientModeMultiProcessDebugger} has connected
@@ -258,7 +258,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
 
   private static class ThreadRegistry {
-    private Map<String, RemoteDebugger> myThreadIdToDebugger = Maps.newHashMap();
+    private final Map<String, RemoteDebugger> myThreadIdToDebugger = Maps.newHashMap();
 
     public void register(String id, RemoteDebugger debugger) {
       myThreadIdToDebugger.put(id, debugger);

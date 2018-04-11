@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
@@ -37,7 +23,7 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPH
 public class WinIntelliJButtonBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (!(c instanceof AbstractButton) || UIUtil.isHelpButton((JComponent)c)) return;
+    if (!(c instanceof AbstractButton) || UIUtil.isHelpButton(c)) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     AbstractButton b = (AbstractButton)c;
@@ -85,12 +71,12 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
     return JBUI.insets(1);
   }
 
-  public static boolean isWideBorder(@NotNull AbstractButton b) {
+  protected boolean isWideBorder(@NotNull AbstractButton b) {
     ButtonModel bm = b.getModel();
     return b.isEnabled() && !bm.isPressed() && !b.hasFocus() && !bm.isRollover() && DarculaButtonUI.isDefaultButton(b);
   }
 
-  public static int getBorderWidth(@NotNull AbstractButton b) {
+  protected int getBorderWidth(@NotNull AbstractButton b) {
     return isWideBorder(b) ? 2 : 1;
   }
 
@@ -98,7 +84,7 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
   public Insets getBorderInsets(Component c) {
     if (isSquare(c)) {
       return JBUI.insets(2).asUIResource();
-    } else if (UIUtil.isHelpButton((JComponent)c)) {
+    } else if (UIUtil.isHelpButton(c)) {
       return JBUI.insets(0, 0, 0, 10).asUIResource();
     } else if (DarculaButtonUI.isComboButton((JComponent)c)) {
       return JBUI.insets(4, 10).asUIResource();

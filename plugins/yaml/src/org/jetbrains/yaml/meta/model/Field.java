@@ -41,7 +41,7 @@ public class Field {
   private boolean myIsMany;
   private Relation myOverriddenDefaultRelation;
 
-  private Map<Relation, YamlMetaType> myPerRelationTypes = new HashMap<>();
+  private final Map<Relation, YamlMetaType> myPerRelationTypes = new HashMap<>();
 
   public Field(@NotNull String name, @NotNull YamlMetaType mainType) {
     myName = name;
@@ -216,12 +216,13 @@ public class Field {
   }
 
   @NotNull
-  public List<LookupElementBuilder> getKeyLookups(@NotNull PsiElement insertedScalar) {
+  public List<LookupElementBuilder> getKeyLookups(@NotNull YamlMetaClass ownerClass,
+                                                  @NotNull PsiElement insertedScalar) {
     if (isAnyNameAllowed()) {
       return Collections.emptyList();
     }
 
-    LookupElementBuilder lookup = LookupElementBuilder.create(getName())
+    LookupElementBuilder lookup = LookupElementBuilder.create(new TypeFieldPair(ownerClass, this), getName())
                                                       .withTypeText(myMainType.getDisplayName(), true)
                                                       .withIcon(getLookupIcon())
                                                       .withStrikeoutness(isDeprecated());

@@ -6,6 +6,7 @@
  */
 package com.intellij.debugger.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
@@ -44,7 +45,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
@@ -730,7 +730,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static String prepareValueText(String text, Project project) {
     text = StringUtil.unquoteString(text);
     text = StringUtil.unescapeStringCharacters(text);
-    int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(StdFileTypes.JAVA);
+    int tabSize = CodeStyle.getSettings(project).getTabSize(StdFileTypes.JAVA);
     if (tabSize < 0) {
       tabSize = 0;
     }

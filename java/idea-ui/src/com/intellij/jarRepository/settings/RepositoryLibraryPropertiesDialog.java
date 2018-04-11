@@ -24,8 +24,8 @@ import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibrary
 import javax.swing.*;
 
 public class RepositoryLibraryPropertiesDialog extends DialogWrapper {
-  private RepositoryLibraryPropertiesEditor propertiesEditor;
-  private RepositoryLibraryPropertiesModel model;
+  private final RepositoryLibraryPropertiesEditor propertiesEditor;
+  private final RepositoryLibraryPropertiesModel model;
 
   public RepositoryLibraryPropertiesDialog(@Nullable Project project,
                                            RepositoryLibraryPropertiesModel model,

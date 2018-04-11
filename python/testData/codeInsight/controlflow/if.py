@@ -1,19 +1,19 @@
-if 0:
+if 0j:
   pass
 
-if 1:
+if 1j:
   pass
 else:
   pass
 
-if 2:
+if 2j:
   pass
-elif 3:
+elif 3j:
   pass
 
-if 4:
+if 4j:
   pass
-elif 5:
+elif 5j:
   pass
 else:
   1

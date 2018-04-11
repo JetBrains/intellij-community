@@ -28,7 +28,7 @@ import java.text.StringCharacterIterator;
  * User : catherine
  */
 public class RestTitle extends RestElement {
-  private static String ourAdornmentSymbols = "=-`:.'\\~^_*+#>";
+  private static final String ourAdornmentSymbols = "=-`:.'\\~^_*+#>";
 
   public RestTitle(@NotNull final ASTNode node) {
     super(node);

@@ -32,8 +32,8 @@ public class DiffSettingsPanel {
   private JCheckBox myAutoApplyNonConflictedChangesCheckbox;
   private JCheckBox myMergeLstGutterMarkers;
 
-  @NotNull private TextDiffSettings myTextSettings = TextDiffSettings.getSettings();
-  @NotNull private DiffSettings myDiffSettings = DiffSettings.getSettings();
+  @NotNull private final TextDiffSettings myTextSettings = TextDiffSettings.getSettings();
+  @NotNull private final DiffSettings myDiffSettings = DiffSettings.getSettings();
 
   @NotNull
   public JComponent getPanel() {

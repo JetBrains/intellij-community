@@ -26,7 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PythonPathDialog extends IdeaDialog {
-  private PythonPathEditor myEditor;
+  private final PythonPathEditor myEditor;
 
   public PythonPathDialog(@NotNull final Project project, @NotNull final PythonPathEditor editor) {
     super(project);

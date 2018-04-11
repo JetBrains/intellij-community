@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -167,7 +168,7 @@ public class HighlightManagerImpl extends HighlightManager {
                                      Collection<RangeHighlighter> outHighlighters,
                                      Color scrollmarkColor) {
     RangeHighlighter highlighter = addSegmentHighlighter(editor, start, end, attributes, flags);
-    highlighter.putUserData(RangeHighlighter.VISIBLE_IF_FOLDED, Boolean.TRUE);
+    if (highlighter instanceof RangeHighlighterEx) ((RangeHighlighterEx)highlighter).setVisibleIfFolded(true);
     if (outHighlighters != null) {
       outHighlighters.add(highlighter);
     }

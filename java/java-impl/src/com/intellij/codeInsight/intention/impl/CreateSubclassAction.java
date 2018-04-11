@@ -212,7 +212,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   public static String suggestTargetClassName(PsiClass psiClass) {
-    JavaCodeStyleSettings javaSettings = CodeStyle.getSettings(psiClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(psiClass.getContainingFile());
     return javaSettings.SUBCLASS_NAME_PREFIX + psiClass.getName() + javaSettings.SUBCLASS_NAME_SUFFIX;
   }
 

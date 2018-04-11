@@ -28,16 +28,16 @@ import static com.intellij.ide.diff.DirDiffOperation.*;
  * @author Konstantin Bulenkov
  */
 public class DirDiffElementImpl implements DirDiffElement {
-  private DTree myParent;
+  private final DTree myParent;
   private DiffType myType;
   private DiffElement mySource;
   private long mySourceLength;
   private DiffElement myTarget;
   private long myTargetLength;
-  private String myName;
+  private final String myName;
   private DirDiffOperation myOperation;
   private DirDiffOperation myDefaultOperation;
-  private DTree myNode;
+  private final DTree myNode;
 
   private DirDiffElementImpl(DTree parent, @Nullable DiffElement source, @Nullable DiffElement target, DiffType type, String name,
                          @Nullable DirDiffOperation defaultOperation) {

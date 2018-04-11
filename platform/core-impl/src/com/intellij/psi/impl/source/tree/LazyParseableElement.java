@@ -181,14 +181,15 @@ public class LazyParseableElement extends CompositeElement {
       assert text != null;
     }
 
-    if (TreeUtil.getFileElement(this) == null) {
+    FileElement fileElement = TreeUtil.getFileElement(this);
+    if (fileElement == null) {
       LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
     }
+    else {
+      fileElement.assertReadAccessAllowed();
+    }
 
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    DebugUtil.startPsiModification("lazy-parsing");
-    try {
+    DebugUtil.performPsiModification("lazy-parsing", () -> {
       TreeElement parsedNode = (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this);
       assertTextLengthIntact(text, parsedNode);
 
@@ -205,10 +206,7 @@ public class LazyParseableElement extends CompositeElement {
         myParsed = true;
         myText = new SoftReference<>(text);
       }
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    });
   }
 
   private void assertTextLengthIntact(CharSequence text, TreeElement child) {

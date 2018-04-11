@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.tools;
 
+import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.RepositoryHelper;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,20 +34,20 @@ import java.util.stream.Stream;
 public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsagesCollector {
 
   private static final Predicate<ScopeToolState> BUNDLED = state -> {
-    final PluginDescriptor descriptor = state.getTool().getExtension().getPluginDescriptor();
-    return descriptor instanceof IdeaPluginDescriptor && ((IdeaPluginDescriptor)descriptor).isBundled();
+    final IdeaPluginDescriptor descriptor = getIdeaPluginDescriptor(state);
+    return descriptor != null && descriptor.isBundled();
   };
 
   private static final Predicate<ScopeToolState> LISTED = state -> {
-    final PluginDescriptor descriptor = state.getTool().getExtension().getPluginDescriptor();
-    if (descriptor instanceof IdeaPluginDescriptor) {
+    final IdeaPluginDescriptor descriptor = getIdeaPluginDescriptor(state);
+    if (descriptor != null) {
       String path;
       try {
         //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin
-        path = ((IdeaPluginDescriptor)descriptor).getPath().getCanonicalPath();
+        path = descriptor.getPath().getCanonicalPath();
       }
       catch (final IOException e) {
-        path = ((IdeaPluginDescriptor)descriptor).getPath().getAbsolutePath();
+        path = descriptor.getPath().getAbsolutePath();
       }
       if (path.startsWith(PathManager.getPluginsPath())) {
         final PluginId id = descriptor.getPluginId();
@@ -56,6 +58,11 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
     }
     return false;
   };
+
+  private static IdeaPluginDescriptor getIdeaPluginDescriptor(final ScopeToolState state) {
+    final InspectionEP extension = state.getTool().getExtension();
+    return extension != null ? ObjectUtils.tryCast(extension.getPluginDescriptor(), IdeaPluginDescriptor.class) : null;
+  }
 
   private static final Predicate<ScopeToolState> ENABLED = state -> !state.getTool().isEnabledByDefault() && state.isEnabled();
 
@@ -188,7 +195,13 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
         }
         else {
           // schedule plugins loading, will take them the next time
-          ApplicationManager.getApplication().executeOnPooledThread(() -> RepositoryHelper.loadPlugins(null));
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              RepositoryHelper.loadPlugins(null);
+            }
+            catch (final IOException ignored) {
+            }
+          });
         }
       }
       catch (final IOException ignored) {

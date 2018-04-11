@@ -559,8 +559,12 @@ public class GitMergeProvider implements MergeProvider2 {
       Conflict.Status status = isCurrent ? c.myStatusYours : c.myStatusTheirs;
       switch (status) {
         case MODIFIED:
+          String parameter = myReverseRoots.contains(c.myRoot)
+                             ? isCurrent ? "--theirs" : "--ours"
+                             : isCurrent ? "--ours" : "--theirs";
+
           GitLineHandler handler = new GitLineHandler(myProject, c.myRoot, GitCommand.CHECKOUT);
-          handler.addParameters(isCurrent ? "--ours" : "--theirs");
+          handler.addParameters(parameter);
           handler.endOptions();
           handler.addRelativeFiles(Collections.singletonList(c.myFile));
           GitCommandResult result = Git.getInstance().runCommand(handler);

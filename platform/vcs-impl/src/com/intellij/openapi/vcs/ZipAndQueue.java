@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class ZipAndQueue {
   private final ZipperUpdater myZipperUpdater;
   private final BackgroundTaskQueue myQueue;
-  private Runnable myInZipper;
+  private final Runnable myInZipper;
   private Task.Backgroundable myInvokedOnQueue;
 
   public ZipAndQueue(@NotNull Project project, final int interval, final String title, final Runnable runnable) {

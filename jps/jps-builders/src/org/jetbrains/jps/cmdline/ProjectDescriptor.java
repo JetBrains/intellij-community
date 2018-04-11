@@ -50,8 +50,8 @@ public final class ProjectDescriptor {
   private final BuildTargetsState myTargetsState;
   private final ModuleExcludeIndex myModuleExcludeIndex;
   private int myUseCounter = 1;
-  private Set<JpsSdk<?>> myProjectJavaSdks;
-  private CompilerEncodingConfiguration myEncodingConfiguration;
+  private final Set<JpsSdk<?>> myProjectJavaSdks;
+  private final CompilerEncodingConfiguration myEncodingConfiguration;
   private final BuildRootIndex myBuildRootIndex;
   private final BuildTargetIndex myBuildTargetIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;

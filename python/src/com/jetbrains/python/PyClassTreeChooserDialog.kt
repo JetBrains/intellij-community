@@ -36,6 +36,6 @@ class PyClassTreeChooserDialog(title: String, project: Project, scope: GlobalSea
                                initialClass: PyClass?)
   : PyTreeChooserDialog<PyClass>(title, PyClass::class.java, project, scope, classFilter, initialClass) {
 
-  override fun findElements(name: String, searchScope: GlobalSearchScope) = PyClassNameIndex.find(name, project, searchScope.isForceSearchingInLibrarySources)!!
-
+  override fun findElements(name: String, searchScope: GlobalSearchScope): Collection<PyClass> =
+    PyClassNameIndex.find(name, project, searchScope.isSearchInLibraries)!!
 }

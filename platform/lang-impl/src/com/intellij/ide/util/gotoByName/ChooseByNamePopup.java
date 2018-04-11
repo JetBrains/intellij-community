@@ -44,7 +44,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private ActionMap myActionMap;
   private InputMap myInputMap;
   private String myAdText;
-  private MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList);
+  private final MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList);
 
   protected ChooseByNamePopup(@Nullable final Project project,
                               @NotNull ChooseByNameModel model,
@@ -199,8 +199,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       return;
     }
 
+    myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
     if (isOk) {
-      myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
 
       final List<Object> chosenElements = getChosenElements();
       if (chosenElements != null) {

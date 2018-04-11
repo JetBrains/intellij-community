@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -235,17 +236,17 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
+  @NotNull
   @Override
   public Element getState() {
     Element element = super.getState();
-    assert element != null;
     if (mySkipImportStatements || mySkipImportStatementsWasSpecified) {
       element.addContent(new Element("option").setAttribute("name", "SKIP_IMPORT_STATEMENTS").setAttribute("value", Boolean.toString(mySkipImportStatements)));
     }
 
     State state = myState;
     if (!state.unnamedScopes.isEmpty()) {
-      String[] unnamedScopes = state.unnamedScopes.keySet().toArray(new String[state.unnamedScopes.size()]);
+      String[] unnamedScopes = ArrayUtil.toStringArray(state.unnamedScopes.keySet());
       Arrays.sort(unnamedScopes);
       for (String unnamedScope : unnamedScopes) {
         element.addContent(new Element(UNNAMED_SCOPE).setAttribute(VALUE, unnamedScope));

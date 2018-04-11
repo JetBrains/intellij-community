@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
 public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer {
 
@@ -97,7 +98,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
                                     : CommonDataKeys.PSI_ELEMENT.getData((DataProvider) value);
       if (psiElement != null && psiElement.isValid()) {
         VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
-        Color fileColor = virtualFile == null ? null : EditorTabbedContainer.calcTabColor(psiElement.getProject(), virtualFile);
+        Color fileColor = virtualFile == null ? null : getFileBackgroundColor(psiElement.getProject(), virtualFile);
         if (fileColor != null) {
           return fileColor;
         }
@@ -153,7 +154,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
             final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
             isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
 
-            Color fileColor = virtualFile == null ? null : EditorTabbedContainer.calcTabColor(project, virtualFile);
+            Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
             if (fileColor != null) {
               bgColor = fileColor;
             }

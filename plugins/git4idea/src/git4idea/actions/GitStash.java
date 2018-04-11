@@ -18,7 +18,6 @@ package git4idea.actions;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -54,7 +53,7 @@ public class GitStash extends GitRepositoryAction {
     new Task.Backgroundable(project, GitBundle.getString("stashing.title"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project)) {
+        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
           if (!result.success()) {
             VcsNotifier.getInstance(project).notifyError(GitBundle.getString("stashing.title"),

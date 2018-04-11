@@ -7,9 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SetNextStatementCommand extends AbstractThreadCommand {
-  private int myLine;
+  private final int myLine;
   @NotNull private final PyDebugCallback<Pair<Boolean, String>> myCallback;
-  @Nullable private String myFunctionName;
+  @Nullable private final String myFunctionName;
 
   protected SetNextStatementCommand(@NotNull RemoteDebugger debugger,
                                     @NotNull String threadId,

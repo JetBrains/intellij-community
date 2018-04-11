@@ -69,7 +69,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
   /**
    * The message bus connection to use
    */
-  private MessageBusConnection myMessageBusConnection;
+  private final MessageBusConnection myMessageBusConnection;
 
   /**
    * The constructor

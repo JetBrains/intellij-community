@@ -50,6 +50,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class TestPackage extends TestObject {
@@ -84,12 +85,8 @@ public class TestPackage extends TestObject {
             LOG.assertTrue(classFilter.getBase() != null);
             long start = System.currentTimeMillis();
             if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
-              String packageName = getPackageName(data);
-              PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
-              if (aPackage != null) {
-                collectClassesRecursively(aPackage, GlobalSearchScope.projectScope(myProject).intersectWith(classFilter.getScope()),
-                                          aClass -> ReadAction.compute(() -> classFilter.isAccepted(aClass)));
-              }
+              Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
+              collectClassesRecursively(classFilter, acceptClassCondition, myClasses);
             }
             else if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
               String packageName = getPackageName(data);
@@ -109,24 +106,6 @@ public class TestPackage extends TestObject {
           catch (CantRunException ignored) {}
           finally {
             instance.setAlternativeResolveEnabled(false);
-          }
-        }
-      }
-
-      private void collectClassesRecursively(PsiPackage aPackage,
-                                             GlobalSearchScope scope,
-                                             Condition<PsiClass> acceptAsTest) {
-        PsiPackage[] psiPackages = ReadAction.compute(() -> aPackage.getSubPackages(scope));
-        for (PsiPackage psiPackage : psiPackages) {
-          collectClassesRecursively(psiPackage, scope, acceptAsTest);
-        }
-        PsiClass[] psiClasses = ReadAction.compute(() -> aPackage.getClasses(scope));
-        for (PsiClass aClass : psiClasses) {
-          if (Registry.is("junit4.accept.inner.classes", true)) {
-            myClasses.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).filter(acceptAsTest).toList()));
-          }
-          else if (acceptAsTest.value(aClass)) {
-            myClasses.add(aClass);  
           }
         }
       }
@@ -161,6 +140,41 @@ public class TestPackage extends TestObject {
   protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
     return getPackage(data).getQualifiedName();
   }
+
+  protected void collectClassesRecursively(TestClassFilter classFilter,
+                                           Condition<PsiClass> acceptClassCondition,
+                                           Set<PsiClass> classes) throws CantRunException {
+    PsiPackage aPackage = getPackage(getConfiguration().getPersistentData());
+    if (aPackage != null) {
+      GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
+      collectClassesRecursively(aPackage, scope, acceptClassCondition, classes);
+    }
+  }
+
+  private static void collectClassesRecursively(PsiPackage aPackage,
+                                                GlobalSearchScope scope,
+                                                Condition<PsiClass> acceptAsTest,
+                                                Set<PsiClass> classes) {
+    PsiPackage[] psiPackages = ReadAction.compute(() -> aPackage.getSubPackages(scope));
+    for (PsiPackage psiPackage : psiPackages) {
+      collectClassesRecursively(psiPackage, scope, acceptAsTest, classes);
+    }
+    PsiClass[] psiClasses = ReadAction.compute(() -> aPackage.getClasses(scope));
+    for (PsiClass aClass : psiClasses) {
+      collectInnerClasses(aClass, acceptAsTest, classes);
+    }
+  }
+
+  protected static void collectInnerClasses(PsiClass aClass, Condition<PsiClass> acceptAsTest, Set<PsiClass> classes) {
+    if (Registry.is("junit4.accept.inner.classes", true)) {
+      classes
+        .addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).filter(acceptAsTest).toList()));
+    }
+    else if (acceptAsTest.value(aClass)) {
+      classes.add(aClass);
+    }
+  }
+
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {

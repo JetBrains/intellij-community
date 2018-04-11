@@ -49,12 +49,12 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
   private final List<VcsException> myExceptions;
 
-  private UpdateEventHandler myHandler;
-  private IMerger myMerger;
+  private final UpdateEventHandler myHandler;
+  private final IMerger myMerger;
   private ResolveWorker myResolveWorker;
   private FilePath myMergeTarget;
   private final String myTitle;
-  private boolean myDryRun;
+  private final boolean myDryRun;
 
   public SvnIntegrateChangesTask(final SvnVcs vcs, @NotNull WorkingCopyInfo info, final MergerFactory mergerFactory,
                                  final Url currentBranchUrl, final String title, final boolean dryRun, String branchName) {

@@ -82,8 +82,7 @@ class GitApplyChangesProcess(private val project: Project,
     val successfulCommits = mutableListOf<VcsFullCommitDetails>()
     val skippedCommits = mutableListOf<VcsFullCommitDetails>()
 
-    val token = DvcsUtil.workingTreeChangeStarted(project)
-    try {
+    DvcsUtil.workingTreeChangeStarted(project, operationName).use {
       for ((repository, value) in commitsInRoots) {
         val result = executeForRepo(repository, value, successfulCommits, skippedCommits)
         repository.update()
@@ -92,9 +91,6 @@ class GitApplyChangesProcess(private val project: Project,
         }
       }
       notifyResult(successfulCommits, skippedCommits)
-    }
-    finally {
-      token.finish()
     }
   }
 
@@ -113,7 +109,7 @@ class GitApplyChangesProcess(private val project: Project,
       val previousDefaultChangelist = changeListManager.defaultChangeList
 
       try {
-        changeListManager.defaultChangeList = changeList
+        changeListManager.setDefaultChangeList(changeList, true)
 
         val result = command(repository, commit.id, autoCommit,
                              listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
@@ -169,7 +165,7 @@ class GitApplyChangesProcess(private val project: Project,
         }
       }
       finally {
-        changeListManager.defaultChangeList = previousDefaultChangelist
+        changeListManager.setDefaultChangeList(previousDefaultChangelist, true)
         removeChangeListIfEmpty(changeList)
       }
     }
@@ -250,7 +246,8 @@ class GitApplyChangesProcess(private val project: Project,
 
   private fun removeChangeListIfEmpty(changeList: LocalChangeList) {
     val actualList = changeListManager.getChangeList(changeList.id)
-    if (actualList != null && actualList.changes.isEmpty()) {
+    if (actualList != null && actualList.changes.isEmpty() &&
+        !actualList.isReadOnly && !actualList.isDefault) {
       LOG.debug("Changelist $actualList is empty, removing. " +
                 "All changes in the CLM: ${getAllChangesInLogFriendlyPresentation(changeListManager)}")
       changeListManager.removeChangeList(actualList)

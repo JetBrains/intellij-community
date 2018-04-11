@@ -187,7 +187,7 @@ public class ChangesUtil {
   }
 
   @Nullable
-  public static ChangeList getChangeListIfOnlyOne(@NotNull Project project, @Nullable Change[] changes) {
+  public static LocalChangeList getChangeListIfOnlyOne(@NotNull Project project, @Nullable Change[] changes) {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     String changeListName = manager.getChangeListNameIfOnlyOne(changes);
 

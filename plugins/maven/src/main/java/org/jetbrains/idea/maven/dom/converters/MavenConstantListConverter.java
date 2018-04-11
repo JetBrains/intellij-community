@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class MavenConstantListConverter extends ResolvingConverter<String> {
-  private boolean myStrict;
+  private final boolean myStrict;
 
   protected MavenConstantListConverter() {
     this(true);

@@ -107,8 +107,8 @@ public final class HttpRequests {
   }
 
   public static class HttpStatusException extends IOException {
-    private int myStatusCode;
-    private String myUrl;
+    private final int myStatusCode;
+    private final String myUrl;
 
     public HttpStatusException(@NotNull String message, int statusCode, @NotNull String url) {
       super(message);

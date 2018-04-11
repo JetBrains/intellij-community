@@ -36,7 +36,7 @@ import java.util.List;
  */
 public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   protected ElementsChooser<T> myChooser;
-  private String myDescription;
+  private final String myDescription;
 
   public ChooseElementsDialog(Project project, List<? extends T> items, String title, final String description) {
     this(project, items, title, description, false);

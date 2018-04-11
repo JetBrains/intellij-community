@@ -135,7 +135,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static Condition<PsiElement> IS_TOPLEVEL = element -> PyUtil.isTopLevel(element);
+  private static final Condition<PsiElement> IS_TOPLEVEL = element -> PyUtil.isTopLevel(element);
 
   private static <T extends PsiNamedElement> void addVariantsFromIndex(@NotNull CompletionResultSet resultSet,
                                                                        @NotNull PsiFile targetFile,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,43 +21,18 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class VariableAccessUtils {
 
   private VariableAccessUtils() {}
-
-  /**
-   * Finds references to the specified variable in the specified context. This can be more than an order of magnitude faster for
-   * finding local references, compared to using {@link ReferencesSearch}.
-   * @param variable  the variable to find references to
-   * @param context  the context to find references in
-   * @return a list of found references
-   */
-  public static List<PsiReferenceExpression> findReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
-    if (context == null) {
-      return Collections.emptyList();
-    }
-    final List<PsiReferenceExpression> result = new SmartList<>();
-    context.acceptChildren(new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
-        if (expression.getQualifierExpression() != null) {
-          return;
-        }
-        if (variable == expression.resolve()) {
-          result.add(expression);
-        }
-      }
-    });
-    return result;
-  }
 
   public static boolean variableIsAssignedFrom(@NotNull PsiVariable variable,
                                                @Nullable PsiElement context) {

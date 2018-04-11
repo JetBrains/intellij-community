@@ -30,8 +30,8 @@ import java.util.regex.Pattern;
 public class VcsLinkedTextComponent extends JLabel {
   private static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
-  @NotNull private String myTextBefore;
-  @NotNull private String myTextAfter;
+  @NotNull private final String myTextBefore;
+  @NotNull private final String myTextAfter;
   @NotNull private String myHandledLink;
 
   @Nullable private final VcsLinkListener myLinkListener;
@@ -69,13 +69,13 @@ public class VcsLinkedTextComponent extends JLabel {
     SimpleTextAttributes linkTextAttributes = isActive ? SimpleTextAttributes.LINK_ATTRIBUTES : SimpleTextAttributes.SYNTHETIC_ATTRIBUTES;
     isActive = isActive || !myTransparent;
     SimpleTextAttributes wrappedTextAttributes = PushLogTreeUtil
-      .addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
+      .addTransparencyIfNeeded(renderer, SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
     if (!StringUtil.isEmptyOrSpaces(myTextBefore)) {
       renderer.append(myTextBefore, wrappedTextAttributes);
       renderer.append(" ");
     }
     if (!StringUtil.isEmptyOrSpaces(myHandledLink)) {
-      renderer.append(myHandledLink, PushLogTreeUtil.addTransparencyIfNeeded(linkTextAttributes, isActive), this);
+      renderer.append(myHandledLink, PushLogTreeUtil.addTransparencyIfNeeded(renderer, linkTextAttributes, isActive), this);
     }
     renderer.append(myTextAfter, wrappedTextAttributes);
   }

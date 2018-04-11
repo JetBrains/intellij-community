@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -315,12 +303,6 @@ public class AllIcons {
     public static final Icon ShowCurrentFrame = IconLoader.getIcon("/debugger/showCurrentFrame.png"); // 16x16
     public static final Icon SmartStepInto = IconLoader.getIcon("/debugger/smartStepInto.png"); // 16x16
     public static final Icon StackFrame = IconLoader.getIcon("/debugger/stackFrame.png"); // 16x16
-    
-    public static class StreamDebugger {
-      public static final Icon Stream_debugger = IconLoader.getIcon("/debugger/streamDebugger/stream_debugger.png"); // 16x16
-      public static final Icon Tab = IconLoader.getIcon("/debugger/streamDebugger/tab.png"); // 16x16
-
-    }
     public static final Icon ThreadAtBreakpoint = IconLoader.getIcon("/debugger/threadAtBreakpoint.png"); // 16x16
     public static final Icon ThreadCurrent = IconLoader.getIcon("/debugger/threadCurrent.png"); // 16x16
     public static final Icon ThreadFrozen = IconLoader.getIcon("/debugger/threadFrozen.png"); // 16x16
@@ -374,6 +356,8 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Diff = IconLoader.getIcon("/diff/Diff.png"); // 16x16
+    public static final Icon GutterCheckBox = IconLoader.getIcon("/diff/gutterCheckBox.png"); // 11x11
+    public static final Icon GutterCheckBoxSelected = IconLoader.getIcon("/diff/gutterCheckBoxSelected.png"); // 11x11
     public static final Icon MagicResolve = IconLoader.getIcon("/diff/magicResolve.png"); // 12x12
     public static final Icon MagicResolveToolbar = IconLoader.getIcon("/diff/magicResolveToolbar.png"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/diff/remove.png"); // 11x11
@@ -864,6 +848,7 @@ public class AllIcons {
     public static final Icon SetPackagePrefixRollover = IconLoader.getIcon("/modules/setPackagePrefixRollover.png"); // 9x9
     public static final Icon SourceFolder = IconLoader.getIcon("/modules/sourceFolder.png"); // 16x16
     public static final Icon SourceRoot = IconLoader.getIcon("/modules/sourceRoot.png"); // 16x16
+    public static final Icon SourceRootFileLayer = IconLoader.getIcon("/modules/sourceRootFileLayer.png"); // 16x16
     public static final Icon Sources = IconLoader.getIcon("/modules/sources.png"); // 16x16
     public static final Icon Split = IconLoader.getIcon("/modules/split.png"); // 16x16
     public static final Icon TestResourcesRoot = IconLoader.getIcon("/modules/testResourcesRoot.png"); // 16x16
@@ -1168,6 +1153,7 @@ public class AllIcons {
     public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.png"); // 16x16
     public static final Icon Hsqldb = IconLoader.getIcon("/providers/hsqldb.png"); // 16x16
     public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.png"); // 16x16
+    public static final Icon Mariadb = IconLoader.getIcon("/providers/mariadb.png"); // 16x16
     public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.png"); // 16x16
     public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.png"); // 16x16
     public static final Icon Oracle = IconLoader.getIcon("/providers/oracle.png"); // 16x16

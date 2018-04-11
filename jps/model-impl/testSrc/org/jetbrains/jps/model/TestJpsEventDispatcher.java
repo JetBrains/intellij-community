@@ -26,9 +26,9 @@ import java.util.List;
  * @author nik
  */
 class TestJpsEventDispatcher extends JpsEventDispatcherBase implements JpsEventDispatcher {
-  private List<JpsElement> myAdded = new ArrayList<>();
-  private List<JpsElement> myRemoved = new ArrayList<>();
-  private List<JpsElement> myChanged = new ArrayList<>();
+  private final List<JpsElement> myAdded = new ArrayList<>();
+  private final List<JpsElement> myRemoved = new ArrayList<>();
+  private final List<JpsElement> myChanged = new ArrayList<>();
 
   @Override
   public <T extends JpsElement> void fireElementAdded(@NotNull T element, @NotNull JpsElementChildRole<T> role) {

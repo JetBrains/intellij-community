@@ -55,7 +55,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ReferenceRange;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
@@ -80,6 +83,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Please don't use this class directly from plugins
@@ -133,6 +137,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
   private final CompletionThreadingBase myThreading;
+  private final Object myLock = new String("CompletionProgressIndicator");
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, OffsetMap offsetMap, OffsetsInFile hostOffsets,
@@ -171,22 +176,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (hasModifiers && !ApplicationManager.getApplication().isUnitTestMode()) {
       trackModifiers();
     }
-  }
-
-  private CompletionParameters createCompletionParameters(OffsetsInFile offsets) {
-    int offset = offsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
-    PsiFile fileCopy = offsets.getFile();
-    PsiFile originalFile = fileCopy.getOriginalFile();
-    PsiElement insertedElement = findCompletionPositionLeaf(offsets, offset, originalFile);
-    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, new CompletionContext(fileCopy, offsets.getOffsets()));
-    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, myInvocationCount, myEditor, this);
-  }
-
-  @NotNull
-  private static PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
-    PsiElement insertedElement = offsets.getFile().findElementAt(offset);
-    CompletionAssertions.assertCompletionPositionPsiConsistent(offsets, offset, originalFile, insertedElement);
-    return insertedElement;
   }
 
   void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
@@ -518,7 +507,17 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   void disposeIndicator() {
-    Disposer.dispose(this);
+    synchronized (myLock) {
+      Disposer.dispose(this);
+    }
+  }
+
+  void registerChildDisposable(@NotNull Supplier<Disposable> child) {
+    synchronized (myLock) {
+      // avoid registering stuff on an indicator being disposed concurrently
+      checkCanceled();
+      Disposer.register(this, child.get());
+    }
   }
 
   @TestOnly
@@ -788,8 +787,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return true;
   }
 
-  void runContributors(CompletionInitializationContext initContext, OffsetsInFile offsets) {
-    CompletionParameters parameters = createCompletionParameters(offsets);
+  void runContributors(CompletionInitializationContext initContext, CompletionParameters parameters) {
     myParameters = parameters;
 
     myThreading.startThread(ProgressWrapper.wrap(this), ()-> AsyncCompletion.tryReadOrCancel(this, () -> scheduleAdvertising(parameters)));

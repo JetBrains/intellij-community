@@ -31,6 +31,10 @@ import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -214,7 +218,7 @@ public class GroovycOutputParser {
     if (unparsedBuffer.length() != 0) {
       String msg = unparsedBuffer.toString();
       if (msg.contains(GroovyRtConstants.NO_GROOVY)) {
-        messages.add(reportNoGroovy());
+        messages.add(reportNoGroovy(msg));
       } else {
         messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.INFO, "While compiling " + myChunk.getPresentableShortName() + ":" + msg));
       }
@@ -234,8 +238,16 @@ public class GroovycOutputParser {
   }
 
   @NotNull
-  CompilerMessage reportNoGroovy() {
-    String moduleName = myChunk.representativeTarget().getModule().getName();
+  CompilerMessage reportNoGroovy(@Nullable String fullOutput) {
+    JpsModule module = myChunk.representativeTarget().getModule();
+    String moduleName = module.getName();
+    JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
+    if (fullOutput != null && fullOutput.contains("Bad version number")) {
+      return new CompilerMessage("", BuildMessage.Kind.ERROR,
+                                 "Cannot load Groovy compiler for module '" + moduleName + "': " +
+                                 "Groovy jars from dependencies contain class files of a version higher than the one supported by the module JDK" +
+                                 (sdk == null ? "" : " (" + sdk.getVersionString() + ")"));
+    }
     return new CompilerMessage("", BuildMessage.Kind.ERROR,
                                "Cannot compile Groovy files: no Groovy library is defined for module '" + moduleName + "'");
   }

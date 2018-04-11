@@ -215,7 +215,7 @@ class ScrollPainter extends RegionPainter.Alpha {
 
   private static class Protected implements RegionPainter<Float> {
     private RegionPainter<Float> myPainter;
-    private RegionPainter<Float> myFallback;
+    private final RegionPainter<Float> myFallback;
 
     private Protected(RegionPainter<Float> painter, RegionPainter<Float> fallback) {
       myPainter = painter;

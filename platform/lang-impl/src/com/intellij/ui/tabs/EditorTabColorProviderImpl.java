@@ -36,4 +36,11 @@ public class EditorTabColorProviderImpl implements EditorTabColorProvider {
     FileColorManager colorManager = FileColorManager.getInstance(project);
     return colorManager.isEnabledForTabs() ? colorManager.getFileColor(file) : null;
   }
+
+  @Nullable
+  @Override
+  public Color getProjectViewColor(@NotNull Project project, @NotNull VirtualFile file) {
+    FileColorManager colorManager = FileColorManager.getInstance(project);
+    return colorManager.isEnabledForProjectView() ? colorManager.getFileColor(file) : null;
+  }
 }

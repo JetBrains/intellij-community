@@ -34,6 +34,7 @@ import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PositionUtil;
@@ -186,11 +187,7 @@ public class GraphTableController {
 
   private void showToolTip(@NotNull String text, @NotNull MouseEvent e) {
     // standard tooltip does not allow to customize its location, and locating tooltip above can obscure some important info
-    Point point = new Point(e.getX() + 5, e.getY());
-
-    JEditorPane tipComponent = IdeTooltipManager.initPane(text, new HintHint(myTable, point).setAwtTooltip(true), null);
-    IdeTooltip tooltip = new IdeTooltip(myTable, point, new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.atRight);
-    IdeTooltipManager.getInstance().show(tooltip, false);
+    VcsLogUiUtil.showTooltip(myTable, new Point(e.getX() + 5, e.getY()), Balloon.Position.atRight, text);
   }
 
   private void showOrHideCommitTooltip(int row, int column, @NotNull MouseEvent e) {

@@ -40,7 +40,7 @@ import java.util.Collections;
  */
 public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private static final Logger LOG = Logger.getInstance(FileBasedArtifactRootDescriptor.class);
-  private FileCopyingHandler myCopyingHandler;
+  private final FileCopyingHandler myCopyingHandler;
 
   public FileBasedArtifactRootDescriptor(@NotNull File file,
                                          @NotNull SourceFileFilter filter,

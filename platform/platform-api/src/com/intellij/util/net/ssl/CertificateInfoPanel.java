@@ -31,7 +31,7 @@ import static com.intellij.util.net.ssl.CertificateWrapper.NOT_AVAILABLE;
  * @author Mikhail Golubev
  */
 public class CertificateInfoPanel extends JPanel {
-  private static DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.SHORT);
+  private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.SHORT);
 
   private final CertificateWrapper myCertificateWrapper;
 

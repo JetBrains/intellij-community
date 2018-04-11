@@ -59,7 +59,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
   private UnnamedConfigurable myVcsConfigurable;
   private VcsDirectoryMapping myMappingCopy;
   private JComponent myVcsConfigurableComponent;
-  private ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final Map<String, VcsDescriptor> myVcses;
 
   public VcsMappingConfigurationDialog(@NotNull Project project, String title) {

@@ -79,6 +79,9 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
         }
       }
     }
+    if (generator instanceof PythonProjectGenerator) {
+      ((PythonProjectGenerator)generator).afterProjectGenerated(newProject);
+    }
   }
 
   @Nullable

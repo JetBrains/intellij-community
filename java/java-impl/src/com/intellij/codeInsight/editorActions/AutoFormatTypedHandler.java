@@ -47,7 +47,7 @@ import java.util.List;
 public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   private static boolean myIsEnabledInTests;
   
-  private static char[] NO_SPACE_AFTER = { 
+  private static final char[] NO_SPACE_AFTER = {
     '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' ' 
   };
 

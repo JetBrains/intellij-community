@@ -25,7 +25,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class PackagingSourceItem {
-  private boolean myProvideElements;
+  private final boolean myProvideElements;
 
   protected PackagingSourceItem() {
     this(true);

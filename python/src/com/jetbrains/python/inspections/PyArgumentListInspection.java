@@ -123,6 +123,8 @@ public class PyArgumentListInspection extends PyInspection {
               decoratedClassInitCall(call.getCallee(), function, context)) {
             return;
           }
+
+          if (objectMethodCallViaSuper(call, function)) return;
         }
       }
     }
@@ -148,6 +150,42 @@ public class PyArgumentListInspection extends PyInspection {
         .anyMatch(
           element -> element instanceof PyClass && PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyClass)element, context)
         );
+    }
+
+    return false;
+  }
+
+  private static boolean objectMethodCallViaSuper(@NotNull PyCallExpression call, @NotNull PyFunction function) {
+    /*
+    Class could be designed to be used in cooperative multiple inheritance
+    so `super()` could be resolved to some non-object class that is able to receive passed arguments.
+
+    Example:
+
+      class Shape(object):
+        def __init__(self, shapename, **kwds):
+            self.shapename = shapename
+            # in case of ColoredShape the call below will be executed on Colored
+            # so warning should not be raised
+            super(Shape, self).__init__(**kwds)
+
+
+      class Colored(object):
+          def __init__(self, color, **kwds):
+              self.color = color
+              super(Colored, self).__init__(**kwds)
+
+
+      class ColoredShape(Shape, Colored):
+          pass
+     */
+
+    final PyClass receiverClass = function.getContainingClass();
+    if (receiverClass != null && PyUtil.isObjectClass(receiverClass)) {
+      final PyExpression receiverExpression = call.getReceiver(null);
+      if (receiverExpression instanceof PyCallExpression && PyUtil.isSuperCall((PyCallExpression)receiverExpression)) {
+        return true;
+      }
     }
 
     return false;

@@ -44,7 +44,7 @@ public class LaterInvocator {
     @NotNull private final Condition<?> expired;
     @Nullable private final ActionCallback callback;
 
-    @Debugger.Capture
+    @Async.Schedule
     RunnableInfo(@NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
                  @NotNull Condition<?> expired,
@@ -443,7 +443,7 @@ public class LaterInvocator {
     }
 
     // Extracted to have a capture point
-    private static void doRun(@Debugger.Insert RunnableInfo info) {
+    private static void doRun(@Async.Execute RunnableInfo info) {
       info.runnable.run();
     }
 

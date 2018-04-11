@@ -39,6 +39,10 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   default boolean supportsOverloadSwitching() { return false; }
   default void dispose(@NotNull DeleteParameterInfoContext context) {}
 
+  default boolean isWhitespaceSensitive() {
+    return false;
+  }
+
   /** @deprecated not used */
   default @Nullable Object[] getParametersForDocumentation(ParameterType p, ParameterInfoContext context) { return null; }
   /** @deprecated not used */

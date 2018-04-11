@@ -33,7 +33,7 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
   private final JPanel myPanel;
   private boolean myEnabled;
   private boolean myVisible;
-  private JButton myLoadMoreBtn;
+  private final JButton myLoadMoreBtn;
 
   protected MoreAction() {
     this(LOAD_MORE);

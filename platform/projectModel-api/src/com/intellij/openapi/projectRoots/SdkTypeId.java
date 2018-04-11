@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,13 +31,13 @@ public interface SdkTypeId {
   }
 
   /**
-   * A naive lexicographical comparator. Most probably you'll need to override this method.
+   * Note to implementors: you may need to override this method if SDKs of this type have non-trivial version strings.
    */
   default Comparator<Sdk> versionComparator() {
     return (sdk1, sdk2) -> {
       assert sdk1.getSdkType() == this : sdk1;
       assert sdk2.getSdkType() == this : sdk2;
-      return Comparing.compare(sdk1.getVersionString(), sdk2.getVersionString());
+      return StringUtil.compareVersionNumbers(sdk1.getVersionString(), sdk2.getVersionString());
     };
   }
 }

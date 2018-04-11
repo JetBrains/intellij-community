@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryParameters;
@@ -68,6 +69,7 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
     private final PsiElement myElement;
     private final SearchScope myScope;
     private final boolean myCheckDeep;
+    private final Project myProject;
 
     public SearchParameters(@NotNull final PsiElement element) {
       this(element, ReadAction.compute(element::getUseScope), true);
@@ -77,6 +79,7 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
       myElement = element;
       myScope = scope;
       myCheckDeep = checkDeep;
+      myProject = PsiUtilCore.getProjectInReadAction(myElement);
     }
 
     @NotNull
@@ -91,7 +94,7 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
     @Nullable
     @Override
     public Project getProject() {
-      return myElement.getProject();
+      return myProject;
     }
 
     @Override

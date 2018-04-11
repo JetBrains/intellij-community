@@ -77,7 +77,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private final List<AbstractFilePatchInProgress> myPatches;
   private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
-  @NotNull private EditorNotificationPanel myErrorNotificationPanel;
+  @NotNull private final EditorNotificationPanel myErrorNotificationPanel;
   @NotNull private final MyChangeTreeList myChangesTreeList;
   @Nullable private final Collection<Change> myPreselectedChanges;
   private final boolean myUseProjectRootAsPredefinedBase;
@@ -239,9 +239,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
         }
       };
-      final VirtualFileManager fileManager = VirtualFileManager.getInstance();
-      fileManager.addVirtualFileListener(myListener);
-      Disposer.register(getDisposable(), () -> fileManager.removeVirtualFileListener(myListener));
+      VirtualFileManager.getInstance().addVirtualFileListener(myListener, getDisposable());
     }
     updateOkActions();
   }
@@ -586,7 +584,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @NotNull
     @Override
     protected DefaultTreeModel buildTreeModel(@NotNull List<AbstractFilePatchInProgress.PatchChange> changes) {
-      return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), changes, myChangeNodeDecorator);
+      return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), changes, myChangeNodeDecorator);
     }
 
     @Override
@@ -1196,7 +1194,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       return new ChangeGoToChangePopupAction<MyDiffRequestChain>(this, getIndex()) {
         @NotNull
         @Override
-        protected DefaultTreeModel buildTreeModel(@NotNull Project project, boolean showFlatten) {
+        protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
           List<TreeModelBuilder.GenericNodeData> nodesData = new ArrayList<>();
           for (int i = 0; i < myChanges.size(); i++) {
             Change change = myChanges.get(i);
@@ -1205,7 +1203,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
             nodesData.add(new TreeModelBuilder.GenericNodeData(filePath, fileStatus, i));
           }
 
-          TreeModelBuilder builder = new TreeModelBuilder(project, showFlatten);
+          TreeModelBuilder builder = new TreeModelBuilder(project, grouping);
           builder.setGenericNodes(nodesData, null);
           return builder.build();
         }

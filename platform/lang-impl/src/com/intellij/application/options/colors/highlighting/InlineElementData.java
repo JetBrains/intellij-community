@@ -22,7 +22,7 @@ import static com.intellij.openapi.editor.colors.CodeInsightColors.BLINKING_HIGH
 
 public class InlineElementData extends HighlightData {
   private final String myText;
-  private boolean myAddBorder;
+  private final boolean myAddBorder;
 
   public InlineElementData(int offset, TextAttributesKey attributesKey, String text, ColorKey additionalColorKey) {
     this(offset, attributesKey, text, false, additionalColorKey);

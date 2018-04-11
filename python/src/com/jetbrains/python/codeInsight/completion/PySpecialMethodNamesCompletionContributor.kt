@@ -7,7 +7,7 @@ import com.intellij.util.ProcessingContext
 import com.jetbrains.extensions.python.afterDefInFunction
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.PyFile
 
 class PySpecialMethodNamesCompletionContributor : CompletionContributor() {
   override fun handleAutoCompletionPossibility(context: AutoCompletionContext) = autoInsertSingleItem(context)
@@ -33,7 +33,7 @@ class PySpecialMethodNamesCompletionContributor : CompletionContributor() {
           PyNames
             .getModuleBuiltinMethods(LanguageLevel.forElement(file))
             .forEach {
-              addMethodToResult(result, file as? PyTypedElement, typeEvalContext, it.key, it.value.signature) {
+              addFunctionToResult(result, file as? PyFile, it.key, it.value.signature) {
                 it.withTypeText("predefined")
               }
             }

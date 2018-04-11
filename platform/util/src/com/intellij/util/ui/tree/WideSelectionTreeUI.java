@@ -50,10 +50,10 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
   
   @NotNull private final Condition<Integer> myWideSelectionCondition;
-  private boolean myWideSelection;
+  private final boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
   private boolean myForceDontPaintLines = false;
-  private boolean mySkinny = false;
+  private final boolean mySkinny = false;
 
   @SuppressWarnings("unchecked")
   public WideSelectionTreeUI() {

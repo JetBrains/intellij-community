@@ -16,7 +16,6 @@
 
 package com.intellij.find.actions;
 
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.SearchScope;
@@ -44,6 +43,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
 /**
 * @author cdr
@@ -221,7 +222,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       VirtualFile virtualFile = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
       if (virtualFile != null) {
         Project project = myUsageView.getProject();
-        Color color = EditorTabbedContainer.calcTabColor(project, virtualFile);
+        Color color = getFileBackgroundColor(project, virtualFile);
         if (color != null) fileBgColor = color;
       }
     }

@@ -34,7 +34,7 @@ import java.util.Set;
 */
 public class JavaCompletionSession {
   private final Set<String> myAddedClasses = new HashSet<>();
-  private Set<String> myKeywords = new HashSet<>();
+  private final Set<String> myKeywords = new HashSet<>();
   private final MultiMap<CompletionResultSet, LookupElement> myBatchItems = MultiMap.create(); 
   private final CompletionResultSet myResult;
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
 /**
@@ -57,5 +56,5 @@ public class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey MARKUP_ENTITY = TextAttributesKey.createTextAttributesKey("DEFAULT_ENTITY", IDENTIFIER);
   public static final TextAttributesKey INLINE_PARAMETER_HINT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT");
   public static final TextAttributesKey INLINE_PARAMETER_HINT_HIGHLIGHTED = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_HIGHLIGHTED");
-  public static final ColorKey INLINE_PARAMETER_HINT_SELECTION_BORDER = ColorKey.createColorKey("INLINE_PARAMETER_HINT_SELECTION_BORDER");
+  public static final TextAttributesKey INLINE_PARAMETER_HINT_CURRENT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_CURRENT");
 }

@@ -74,14 +74,14 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private final PyConfigurableInterpreterList myInterpreterList;
   private final ProjectSdksModel myProjectSdksModel;
 
-  private Map<Sdk, SdkModificator> myModificators = FactoryMap.create(sdk -> sdk.getSdkModificator());
-  private Set<SdkModificator> myModifiedModificators = new HashSet<>();
+  private final Map<Sdk, SdkModificator> myModificators = FactoryMap.create(sdk -> sdk.getSdkModificator());
+  private final Set<SdkModificator> myModifiedModificators = new HashSet<>();
   private final Project myProject;
 
   private boolean myHideOtherProjectVirtualenvs = false;
   private final Module myModule;
-  private Runnable mySdkSettingsWereModified;
-  private NullableConsumer<Sdk> myShowMoreCallback;
+  private final Runnable mySdkSettingsWereModified;
+  private final NullableConsumer<Sdk> myShowMoreCallback;
   private SdkModel.Listener myListener;
 
   public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
@@ -483,7 +483,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     private final PyRemoteSdkAdditionalDataBase myRemoteSdkData;
     private final Sdk mySdk;
 
-    private List<PathMappingSettings.PathMapping> myNewMappings = Lists.newArrayList();
+    private final List<PathMappingSettings.PathMapping> myNewMappings = Lists.newArrayList();
 
     public PyRemotePathEditor(Sdk sdk) {
       super("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor());

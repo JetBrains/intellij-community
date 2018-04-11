@@ -65,7 +65,7 @@ public enum EventAction {
     }
   }
 
-  private String myKey;
+  private final String myKey;
 
   EventAction(String key) {
     myKey = key;

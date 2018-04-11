@@ -47,7 +47,7 @@ import java.io.IOException;
  */
 public class TerminalExecutionConsole implements ConsoleView {
   private JBTerminalWidget myTerminalWidget;
-  private Project myProject;
+  private final Project myProject;
   private final AppendableTerminalDataStream myDataStream;
 
   private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();

@@ -16,7 +16,7 @@ public class SvnPathThroughHistoryCorrection implements LogEntryConsumer {
   private String myBefore;
   private String myPath;
   private LogEntryPath myDirectlyMentioned;
-  private boolean myRoot;
+  private final boolean myRoot;
 
   public SvnPathThroughHistoryCorrection(String path) {
     myPath = path;

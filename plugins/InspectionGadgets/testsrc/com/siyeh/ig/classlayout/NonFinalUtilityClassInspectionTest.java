@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class NonFinalUtilityClassInspectionTest extends IGInspectionTestCase {
 
-  private DedicatedClassNameImplicitSubclassProvider myImplicitSubclassProvider =
+  private final DedicatedClassNameImplicitSubclassProvider myImplicitSubclassProvider =
     new DedicatedClassNameImplicitSubclassProvider("ConcreteNoUtilityClass");
 
   public void test() {
