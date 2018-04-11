@@ -26,7 +26,8 @@ import java.nio.file.Paths
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
 
-private class ImportSettingsAction : AnAction(), DumbAware {
+// for Rider purpose
+open class ImportSettingsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
     val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
@@ -48,7 +49,10 @@ private class ImportSettingsAction : AnAction(), DumbAware {
       }
   }
 
-  private fun doImport(saveFile: File) {
+  protected open fun getExportableComponents(relativePaths: Set<String>) = getExportableComponentsMap(false, true, onlyPaths = relativePaths)
+  protected open fun getMarkedComponents(components: Set<ExportableItem>): Set<ExportableItem> = components
+
+  protected open fun doImport(saveFile: File) {
     if (!saveFile.exists()) {
       Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", presentableFileName(saveFile)),
                                IdeBundle.message("title.file.not.found"))
@@ -65,7 +69,7 @@ private class ImportSettingsAction : AnAction(), DumbAware {
 
     val configPath = FileUtil.toSystemIndependentName(PathManager.getConfigPath())
     val dialog = ChooseComponentsToExportDialog(
-        getExportableComponentsMap(false, true, onlyPaths = relativePaths), false,
+        getExportableComponents(relativePaths), false,
         IdeBundle.message("title.select.components.to.import"),
         IdeBundle.message("prompt.check.components.to.import"))
     if (!dialog.showAndGet()) {
@@ -74,7 +78,7 @@ private class ImportSettingsAction : AnAction(), DumbAware {
 
     val tempFile = File(PathManager.getPluginTempPath(), saveFile.name)
     FileUtil.copy(saveFile, tempFile)
-    val filenameFilter = ImportSettingsFilenameFilter(getRelativeNamesToExtract(dialog.exportableComponents))
+    val filenameFilter = ImportSettingsFilenameFilter(getRelativeNamesToExtract(getMarkedComponents(dialog.exportableComponents)))
     StartupActionScriptManager.addActionCommands(listOf(
       StartupActionScriptManager.UnzipCommand(tempFile, File(configPath), filenameFilter),
       StartupActionScriptManager.DeleteCommand(tempFile)))
