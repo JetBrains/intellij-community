@@ -22,7 +22,7 @@ private fun sortBranchLocations(branchLocations: Collection<String>) = branchLoc
 class SvnBranchConfigurationNew {
   var trunkUrl: String = ""
   private val myBranchMap: MutableMap<String, InfoStorage<List<SvnBranchItem>>> = mutableMapOf()
-  var isUserinfoInUrl: Boolean = false
+  var isUserInfoInUrl: Boolean = false
 
   val branchUrls get() = myBranchMap.keys.map { it.removeSuffix("/") }.sorted()
   val branchMap get() = myBranchMap
@@ -51,7 +51,7 @@ class SvnBranchConfigurationNew {
 
   fun copy(): SvnBranchConfigurationNew {
     val result = SvnBranchConfigurationNew()
-    result.isUserinfoInUrl = isUserinfoInUrl
+    result.isUserInfoInUrl = isUserInfoInUrl
     result.trunkUrl = trunkUrl
     for ((key, infoStorage) in myBranchMap) {
       result.myBranchMap[key] = InfoStorage(infoStorage.value.toList(), infoStorage.infoReliability)
