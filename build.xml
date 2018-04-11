@@ -92,7 +92,7 @@
     <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant"/>
   </target>
 
-  <target name="uicoverage" depends="init">
+  <target name="uicoverage" depends="build-aswb">
     <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant" target="coverage"/>
     <typedef uri="antlib:org.jacoco.ant" classpath="${project.home}/plugins/coverage/lib/jacocoant.jar"/>
     <jacoco:report xmlns:jacoco="antlib:org.jacoco.ant">
