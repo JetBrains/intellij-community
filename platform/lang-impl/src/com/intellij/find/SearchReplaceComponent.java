@@ -28,6 +28,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -130,6 +131,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     };
 
     myLeftPanel = new NonOpaquePanel(new BorderLayout());
+    myLeftPanel.setMinimumSize(new JBDimension(200, 16));
     myLeftPanel.setBorder(JBUI.Borders.emptyLeft(6));
     myLeftPanel.add(mySearchFieldWrapper, BorderLayout.NORTH);
     myLeftPanel.add(myReplaceFieldWrapper, BorderLayout.SOUTH);
