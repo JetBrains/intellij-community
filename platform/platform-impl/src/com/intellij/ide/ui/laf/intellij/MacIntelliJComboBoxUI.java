@@ -46,7 +46,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   public void installUI(JComponent c) {
     super.installUI(c);
 
-    DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", comboBox.isEditable(), false, false, true));
+    DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", false, false, true, comboBox.isEditable()));
     comboBox.setOpaque(false);
     comboBox.setBorder(new MacComboBoxBorder());
 
@@ -87,7 +87,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     myEditableChangeListener = (evt) -> {
       Boolean editable = (Boolean)evt.getNewValue();
-      DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", editable, false, false, false));
+      DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", false, false, false, editable));
       comboBox.invalidate();
     };
     c.addPropertyChangeListener("editable", myEditableChangeListener);
@@ -116,7 +116,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       public void paint(Graphics g) {
         if (!UIUtil.isUnderDefaultMacTheme()) return; // Paint events may still arrive after UI switch until entire UI is updated.
 
-        Icon icon = IconCache.getIcon("comboRight", comboBox.isEditable(), false, false, comboBox.isEnabled());
+        Icon icon = IconCache.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() > icon.getIconWidth() || getHeight() > icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
           UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);

@@ -53,7 +53,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
       g2.fill(rect);
     }
 
-    Icon icon = IconCache.getIcon("spinnerRight", false, false, false, c.isEnabled());
+    Icon icon = IconCache.getIcon("spinnerRight", false, false, c.isEnabled());
     icon.paintIcon(c, g, x, i.top);
   }
 

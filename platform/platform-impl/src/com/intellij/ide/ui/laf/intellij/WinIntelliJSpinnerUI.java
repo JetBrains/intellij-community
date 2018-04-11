@@ -150,7 +150,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
           g2.fill(outerRect);
 
           // paint icon
-          Icon icon = IconCache.getIcon(iconName, false, false, false, isEnabled());
+          Icon icon = IconCache.getIcon(iconName, false, false, isEnabled());
           icon.paintIcon(this, g2, scale(5), scale(3));
 
           // paint border
