@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
@@ -677,7 +663,7 @@ public class PluginManagerCore {
       return loadDescriptorFromJar(file, pathName, pathResolver, context);
     }
   }
-  
+
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file,
                                                                 @NotNull String fileName,
@@ -731,7 +717,7 @@ public class PluginManagerCore {
       }
     }
   }
-  
+
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file,
                                                          @NotNull String pathName,
@@ -751,9 +737,9 @@ public class PluginManagerCore {
         if (files == null || files.length == 0) {
           return null;
         }
- 
+
         putMoreLikelyPluginJarsFirst(file, files);
-        
+
         PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(files);
         for (final File f : files) {
           if (FileUtil.isJarOrZip(f)) {
@@ -791,9 +777,9 @@ public class PluginManagerCore {
           optionalDescriptor = loadDescriptor(file, optPathName, context);
         }
         if (optionalDescriptor == null && (directory || resolveDescriptorsInResources())) {
-          // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream 
-          // and here code supports the same behavior. 
-          // Note that this code is meant for IDE development / testing purposes  
+          // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream
+          // and here code supports the same behavior.
+          // Note that this code is meant for IDE development / testing purposes
           URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optPathName);
           if (resource != null) {
             optionalDescriptor = loadDescriptorFromResource(resource, optPathName);
@@ -806,13 +792,13 @@ public class PluginManagerCore {
     return descriptor;
   }
 
-  private static boolean resolveDescriptorsInResources() {  
+  private static boolean resolveDescriptorsInResources() {
     return System.getProperty("resolve.descriptors.in.resources") != null;
   }
 
   /*
   Sort the files heuristically to load the plugin jar containing plugin descriptors without extra ZipFile accesses
-  File name preference: 
+  File name preference:
   a) last order for files with resources in name, like resources_en.jar
   b) last order for files that have -digit suffix is the name e.g. completion-ranking.jar is before gson-2.8.0.jar or junit-m5.jar
   c) jar with name close to plugin's directory name, e.g. kotlin-XXX.jar is before allopen-XXX.jar
@@ -836,14 +822,14 @@ public class PluginManagerCore {
       if (o2IsVersioned != o1IsVersioned) {
         return o2IsVersioned ? -1 : 1;
       }
-      
+
       boolean o2StartsWithNeededName = StringUtil.startsWithIgnoreCase(o2Name, pluginDirName);
       boolean o1StartsWithNeededName = StringUtil.startsWithIgnoreCase(o1Name, pluginDirName);
       if (o2StartsWithNeededName != o1StartsWithNeededName) {
         return o2StartsWithNeededName ? 1 : -1;
       }
 
-      
+
       return o1Name.length() - o2Name.length();
     });
   }
@@ -898,7 +884,7 @@ public class PluginManagerCore {
     if (files != null) {
       int i = result.size();
       Collection<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
-      
+
       for (File file : files) {
         final IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML);
         if (descriptor == null) continue;
@@ -912,7 +898,12 @@ public class PluginManagerCore {
         if (oldIndex >= 0) {
           final IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
           if (StringUtil.compareVersionNumbers(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
-            result.set(oldIndex, descriptor);
+            if (isIncompatible(descriptor) && isCompatible(oldDescriptor)) {
+              getLogger().info("newer plugin is incompatible, ignoring: " + descriptor.getPath());
+            }
+            else {
+              result.set(oldIndex, descriptor);
+            }
           }
         }
         else {
@@ -1034,7 +1025,7 @@ public class PluginManagerCore {
     }
 
     Collection<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
-    
+
     int i = 0;
     for (URL url : urls.keySet()) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url, urls.get(url));
@@ -1247,7 +1238,7 @@ public class PluginManagerCore {
     }
 
     try {
-      return isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild(), 
+      return isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild(),
                             descriptor.getName(), descriptor.toString());
     }
     catch (RuntimeException e) {
