@@ -8,6 +8,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 
@@ -222,8 +223,9 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
     // Parse header tail: TEXT is used as placeholder for invalid symbols in this context
     if (getTokenType() == TEXT) {
+      PsiBuilder.Marker err = myBuilder.mark();
       advanceLexer();
-
+      err.error(YAMLBundle.message("YAMLParser.invalid.header.symbols"));
     }
     PsiBuilder.Marker endOfValue = myBuilder.mark();
 

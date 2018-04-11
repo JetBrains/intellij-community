@@ -165,14 +165,14 @@ SCALAR_BLOCK_ERR_WORD = [^ \t#\n] [^ \t\n]*
 ///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE, SB_HEADER_TAIL
+%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE, BS_HEADER_TAIL
 
 %%
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// RULES declarations ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY, SB_HEADER_TAIL> {
+<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY, BS_HEADER_TAIL> {
 {COMMENT}                       {
                                   // YAML spec: when a comment follows another syntax element,
                                   //  it must be separated from it by space characters.
@@ -252,7 +252,7 @@ SCALAR_BLOCK_ERR_WORD = [^ \t#\n] [^ \t\n]*
 }
 }
 
-<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY, SB_HEADER_TAIL> {
+<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY, BS_HEADER_TAIL> {
 
 {WHITE_SPACE}                   { return getWhitespaceTypeAndUpdateIndent(); }
 
@@ -289,20 +289,21 @@ SCALAR_BLOCK_ERR_WORD = [^ \t#\n] [^ \t\n]*
 
 <YYINITIAL, VALUE, VALUE_BRACE, VALUE_OR_KEY>{
 
-">"("-"|"+")?                   {   yyBegin(SB_HEADER_TAIL);
+">"("-"|"+")?                   {   yyBegin(BS_HEADER_TAIL);
                                     valueTokenType = SCALAR_TEXT;
                                     return valueTokenType;
                                 }
 
-"|"("-"|"+")?                   {   yyBegin(SB_HEADER_TAIL);
+"|"("-"|"+")?                   {   yyBegin(BS_HEADER_TAIL);
                                     valueTokenType = SCALAR_LIST;
                                     return valueTokenType;
                                 }
 
 }
 
-<SB_HEADER_TAIL>{
-([^ \t#\n] [^ \t\n]* [ \t]* )+  { return TEXT; }
+<BS_HEADER_TAIL>{
+{BS_HEADER_ERR_WORD} ([ \t]* {BS_HEADER_ERR_WORD})*
+                                { return TEXT; }
 
 {EOL}                           {   yyBegin(INDENT_VALUE);
                                     valueIndent = currentLineIndent;
