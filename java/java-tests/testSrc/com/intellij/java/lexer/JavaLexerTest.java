@@ -149,8 +149,9 @@ public class JavaLexerTest extends LexerTestCase {
 
   public void testRawLiterals() {
     doTest(" ``.`.`` ", "WHITE_SPACE (' ')\nRAW_STRING_LITERAL ('``.`.``')\nWHITE_SPACE (' ')");
+    doTest(" ``.```.`` ", "WHITE_SPACE (' ')\nRAW_STRING_LITERAL ('``.```.``')\nWHITE_SPACE (' ')");
     doTest(" ``.`.` ", "WHITE_SPACE (' ')\nRAW_STRING_LITERAL ('``.`.` ')");
-    doTest(" ``.`.``` ", "WHITE_SPACE (' ')\nRAW_STRING_LITERAL ('``.`.``')\nRAW_STRING_LITERAL ('` ')");
+    doTest(" ``.`.``` ", "WHITE_SPACE (' ')\nRAW_STRING_LITERAL ('``.`.``` ')");
   }
 
   @Override

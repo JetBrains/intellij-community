@@ -257,16 +257,13 @@ public class JavaLexer extends LexerBase {
     while (pos < myBufferEndOffset && charAt(pos) == '`') pos++;
     int quoteLen = pos - offset;
 
-    outer:
-    while (pos < myBufferEndOffset) {
+    int start;
+    do {
       while (pos < myBufferEndOffset && charAt(pos) != '`') pos++;
-
-      int left = quoteLen;
-      while (pos < myBufferEndOffset && charAt(pos) == '`') {
-        pos++;
-        if (--left == 0) break outer;
-      }
+      start = pos;
+      while (pos < myBufferEndOffset && charAt(pos) == '`') pos++;
     }
+    while (pos - start != quoteLen && pos < myBufferEndOffset);
 
     return pos;
   }
