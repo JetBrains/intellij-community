@@ -327,7 +327,9 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
+      logFreeDiskSpace("before downloading JREs")
       buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS")
+      logFreeDiskSpace("after downloading JREs")
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
