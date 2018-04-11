@@ -11,6 +11,7 @@ import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.types.Path
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.TeamCityHelper
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -366,7 +367,7 @@ class TestingTasksImpl extends TestingTasks {
     List<String> teamCityFormatterClasspath = createTeamCityFormatterClasspath()
 
     String jvmExecutablePath = options.customJrePath != null ? "$options.customJrePath/bin/java" : ""
-    context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp, jvm: jvmExecutablePath, printsummary: (underTeamCity ? "off" : "on")) {
+    context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp, jvm: jvmExecutablePath, printsummary: (TeamCityHelper.isUnderTeamCity ? "off" : "on")) {
       jvmArgs.each { jvmarg(value: it) }
       systemProperties.each { key, value ->
         if (value != null) {
@@ -386,7 +387,7 @@ class TestingTasksImpl extends TestingTasks {
         formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter3", usefile: false)
         context.messages.info("Added TeamCity's formatter to JUnit task")
       }
-      if (!underTeamCity) {
+      if (!TeamCityHelper.isUnderTeamCity) {
         classpath {
           pathelement(location: context.getModuleTestsOutputPath(context.findRequiredModule("intellij.platform.buildScripts")))
         }
@@ -418,7 +419,7 @@ class TestingTasksImpl extends TestingTasks {
    * @return classpath for TeamCity's JUnit formatter or {@code null} if the formatter shouldn't be added
    */
   private List<String> createTeamCityFormatterClasspath() {
-    if (!underTeamCity) return null
+    if (!TeamCityHelper.isUnderTeamCity) return null
 
     if (context.ant.project.buildListeners.any { it.class.name.startsWith("jetbrains.buildServer.") }) {
       context.messages.info("TeamCity's BuildListener is registered in the Ant project so its formatter will be added to JUnit task automatically.")
@@ -442,10 +443,6 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
     return classpath
-  }
-
-  private static boolean isUnderTeamCity() {
-    System.getProperty("teamcity.buildType.id") != null
   }
 
   static boolean dependenciesInstalled
