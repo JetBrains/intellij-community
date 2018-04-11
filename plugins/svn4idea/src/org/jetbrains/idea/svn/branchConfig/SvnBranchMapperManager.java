@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Url;
 
 import java.io.File;
 import java.util.HashMap;
@@ -38,8 +39,8 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
     myStateHolder = state;
   }
 
-  public void put(final String url, final String value) {
-    myStateHolder.put(url, value);
+  public void put(final String url, @NotNull File file) {
+    myStateHolder.put(url, file.getAbsolutePath());
   }
 
   public void remove(final String url, final File value) {
@@ -50,11 +51,8 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
   }
 
   public void notifyBranchesChanged(final Project project, final VirtualFile vcsRoot, final SvnBranchConfigurationNew configuration) {
-    final Map<String, String> map = configuration.getUrl2FileMappings(project, vcsRoot);
-    if (map != null) {
-      for (Map.Entry<String, String> entry : map.entrySet()) {
-        put(entry.getKey(), entry.getValue());
-      }
+    for (Map.Entry<Url, File> entry : configuration.getUrl2FileMappings(project, vcsRoot).entrySet()) {
+      put(entry.getKey().toDecodedString(), entry.getValue());
     }
   }
 
