@@ -79,7 +79,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI implements VisualPa
   }
 
   protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
-    Icon icon = IconCache.getIcon("radio", ((AbstractButton)c).isSelected(), c.hasFocus(), c.isEnabled());
+    Icon icon = IconCache.getIcon("radio", false, ((AbstractButton)c).isSelected(), c.hasFocus(), c.isEnabled());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 

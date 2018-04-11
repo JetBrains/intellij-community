@@ -922,7 +922,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     private static final String NAME = "menuTriangle";
     private Win10MenuArrowIcon() {
       super(IconCache.getIcon(NAME),
-            IconCache.getIcon(NAME, true, false, true),
+            IconCache.getSelectedIcon(NAME),
             IconCache.getDisabledIcon(NAME));
     }
   }
