@@ -52,6 +52,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
   public boolean myWarnAboutComments = true;
   public boolean myWarnAboutNanInfinity = true;
+  public boolean myWarnAboutTrailingCommas = true;
   public boolean myWarnAboutMultipleTopLevelValues = true;
 
   @NotNull
@@ -91,6 +92,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.comments"), "myWarnAboutComments");
     optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.multiple.top.level.values"), "myWarnAboutMultipleTopLevelValues");
+    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.trailing.comma"), "myWarnAboutTrailingCommas");
     optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.nan.infinity"), "myWarnAboutNanInfinity");
     return optionsPanel;
   }
@@ -209,7 +211,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
     @Override
     public void visitArray(@NotNull JsonArray array) {
-      if (!allowTrailingCommas()) {
+      if (myWarnAboutTrailingCommas && !allowTrailingCommas()) {
         final PsiElement trailingComma = findTrailingComma(array, JsonElementTypes.R_BRACKET);
         if (trailingComma != null) {
           myHolder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
@@ -220,7 +222,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
     @Override
     public void visitObject(@NotNull JsonObject object) {
-      if (!allowTrailingCommas()) {
+      if (myWarnAboutTrailingCommas && !allowTrailingCommas()) {
         final PsiElement trailingComma = findTrailingComma(object, JsonElementTypes.R_CURLY);
         if (trailingComma != null) {
           myHolder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
