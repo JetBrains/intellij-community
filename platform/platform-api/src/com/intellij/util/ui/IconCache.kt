@@ -45,6 +45,12 @@ object IconCache {
   }
 
   @JvmStatic
+  fun getDisabledIcon(name: String) = getIcon(name, editable = false, selected = false, focused = false, enabled = false)!!
+
+  @JvmStatic
+  fun getSelectedIcon(name: String) = getIcon(name, editable = false, selected = true, focused = false, enabled = true)!!
+
+  @JvmStatic
   fun getIcon(name: String, selected: Boolean, focused: Boolean, enabled: Boolean): Icon? {
     return getIcon(name, false, selected, focused, enabled)
   }
