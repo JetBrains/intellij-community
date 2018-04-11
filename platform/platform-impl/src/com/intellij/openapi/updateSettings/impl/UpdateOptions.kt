@@ -38,7 +38,7 @@ class UpdateOptions : BaseState() {
   var lastBuildChecked by string()
 
   @get:OptionTag("UPDATE_CHANNEL_TYPE")
-  var updateChannelType by string(ChannelStatus.RELEASE.code)
+  var updateChannelType by string(ChannelStatus.EAP.code) // Android Studio: EAP as default unless building beta, RC, stable.
 
   @get:OptionTag("SECURE_CONNECTION")
   var isUseSecureConnection by property(true)
