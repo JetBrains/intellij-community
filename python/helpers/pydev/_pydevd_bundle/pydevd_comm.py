@@ -58,14 +58,12 @@ each command has a format:
     * PYDB - pydevd, the python end
 '''
 
-import os
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR
 
 from _pydev_bundle.pydev_imports import _queue
-from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
-from _pydev_imps._pydev_saved_modules import socket
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
+from _pydev_imps._pydev_saved_modules import time
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
     IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON
 
@@ -84,7 +82,7 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_tracing
 from _pydevd_bundle import pydevd_vm_type
-from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
@@ -163,6 +161,8 @@ CMD_PROCESS_CREATED = 149
 CMD_SHOW_CYTHON_WARNING = 150
 CMD_LOAD_FULL_VALUE = 151
 
+CMD_SET_TRAP_REQUEST = 152
+
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901
@@ -222,6 +222,7 @@ ID_TO_MEANING = {
     '149': 'CMD_PROCESS_CREATED',
     '150': 'CMD_SHOW_CYTHON_WARNING',
     '151': 'CMD_LOAD_FULL_VALUE',
+    '152': 'SET_TRAP_REQUEST',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',

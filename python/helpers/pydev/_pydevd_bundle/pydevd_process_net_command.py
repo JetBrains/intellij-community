@@ -2,12 +2,12 @@ import os
 import sys
 import traceback
 
+import pydevd_file_utils
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_traceproperty, pydevd_tracing, pydevd_dont_trace
-import pydevd_file_utils
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, update_exception_hook
 from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, CMD_THREAD_KILL, InternalTerminateThread, \
-    CMD_THREAD_SUSPEND, pydevd_find_thread_by_id, CMD_THREAD_RUN, InternalRunThread, CMD_STEP_INTO, CMD_STEP_OVER, \
+    CMD_THREAD_SUSPEND, pydevd_find_thread_by_id, CMD_THREAD_RUN, CMD_STEP_INTO, CMD_STEP_OVER, \
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, InternalStepThread, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, \
     CMD_SMART_STEP_INTO, InternalSetNextStatementThread, CMD_RELOAD_CODE, ReloadCodeCommand, CMD_CHANGE_VARIABLE, \
     InternalChangeVariable, CMD_GET_VARIABLE, InternalGetVariable, CMD_GET_ARRAY, InternalGetArray, CMD_GET_COMPLETIONS, \
@@ -17,10 +17,11 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
-    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
-    CMD_LOAD_FULL_VALUE
+    CMD_SHOW_RETURN_VALUES, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
+    CMD_LOAD_FULL_VALUE, CMD_SET_TRAP_REQUEST
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR
+from _pydevd_bundle.pydevd_gdb_helpers import set_fall_into_trap
 
 
 def process_net_command(py_db, cmd_id, seq, text):
@@ -708,7 +709,8 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                     mode = text.strip() == true_str
                     pydevd_dont_trace.trace_filter(mode)
-
+            elif cmd_id == CMD_SET_TRAP_REQUEST:
+                set_fall_into_trap(text)
             else:
                 #I have no idea what this is all about
                 cmd = py_db.cmd_factory.make_error_message(seq, "unexpected command " + str(cmd_id))

@@ -61,6 +61,8 @@ public abstract class AbstractCommand<T> {
   public static final int SHOW_CYTHON_WARNING = 150;
   public static final int LOAD_FULL_VALUE = 151;
 
+  public static final int SET_TRAP_REQUEST = 152;
+
   public static final int ERROR = 901;
 
   public static final int VERSION = 501;

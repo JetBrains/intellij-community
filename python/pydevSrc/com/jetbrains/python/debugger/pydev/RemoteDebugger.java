@@ -164,6 +164,12 @@ public class RemoteDebugger implements DebuggerCommunication, ProcessDebugger {
   }
 
   @Override
+  public void sendTrapRequest(String id) throws PyDebuggerException {
+      TrapRequestCommand command = new TrapRequestCommand(this, id);
+      command.execute();
+  }
+
+  @Override
   public ArrayChunk loadArrayItems(String threadId,
                                    String frameId,
                                    PyDebugValue var,

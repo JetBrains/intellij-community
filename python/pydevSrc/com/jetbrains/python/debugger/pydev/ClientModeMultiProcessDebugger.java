@@ -438,6 +438,13 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void sendTrapRequest(String id) throws PyDebuggerException {
+    for (RemoteDebugger debugger : allDebuggers()) {
+      debugger.sendTrapRequest(id);
+    }
+  }
+
+  @Override
   public void setShowReturnValues(boolean isShowReturnValues) {
     for (ProcessDebugger d : allDebuggers()) {
       d.setShowReturnValues(isShowReturnValues);

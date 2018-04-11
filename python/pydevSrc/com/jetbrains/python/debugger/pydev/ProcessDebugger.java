@@ -114,4 +114,6 @@ public interface ProcessDebugger {
   void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
 
   void suspendOtherThreads(PyThreadInfo thread);
+
+  void sendTrapRequest(String id) throws PyDebuggerException;
 }

@@ -12,7 +12,7 @@ import atexit
 import os
 import traceback
 
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OR_GREATER, IS_PYCHARM, get_thread_id, \
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY34_OR_GREATER, IS_PYCHARM, get_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV
 from _pydev_bundle import fix_getpass
@@ -31,19 +31,20 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, CMD_THREAD_SUSPEND, CMD_RUN_TO_LINE, \
     CMD_ADD_EXCEPTION_BREAK, CMD_SMART_STEP_INTO, InternalConsoleExec, NetCommandFactory, \
     PyDBDaemonThread, _queue, ReaderThread, GetGlobalDebugger, get_global_debugger, \
-    set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
+    set_global_debugger, WriterThread, pydevd_log, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
     InternalSendCurrExceptionTraceProceeded
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, show_tracing_warning
-from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, \
+from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, enable_cache_frames_without_breaks, \
     dummy_trace_dispatch, show_frame_eval_warning
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
 import _pydevd_bundle.pydevd_gdb_debugging_api
+import _pydevd_bundle.pydevd_gdb_helpers
 from pydevd_file_utils import get_fullname, rPath
 
 
@@ -805,6 +806,11 @@ class PyDB:
             self._activate_mpl_if_needed()
 
         while info.pydev_state == STATE_SUSPEND and not self._finish_debugging_session:
+            if _pydevd_bundle.pydevd_gdb_helpers.get_fall_into_trap() == get_thread_id(thread):
+                _pydevd_bundle.pydevd_gdb_helpers.cpython_trap()
+                _pydevd_bundle.pydevd_gdb_helpers.set_fall_into_trap(None)
+
+
             if self.mpl_in_use:
                 # call input hooks if only matplotlib is in use
                 self._call_mpl_hook()

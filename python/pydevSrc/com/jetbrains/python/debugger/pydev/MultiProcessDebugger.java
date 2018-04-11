@@ -181,6 +181,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
     return debugger(threadId).loadVariable(threadId, frameId, var);
   }
 
+  @Override
+  public void sendTrapRequest(String id) throws PyDebuggerException {
+    debugger(id).sendTrapRequest(id);
+  }
+
   public ArrayChunk loadArrayItems(String threadId,
                                    String frameId,
                                    PyDebugValue var,
