@@ -690,12 +690,14 @@ public class PluginManagerCore {
   }
 
   private static void validateDescriptor(IdeaPluginDescriptorImpl descriptor) {
+    /*
     if (descriptor.getPluginId() == null) {
       throw new IllegalStateException("Skipped plugin with null ID: " + descriptor);
     }
     else if (descriptor.getName() == null) {
       throw new IllegalStateException("Skipped plugin without name: " + descriptor);
     }
+    */
   }
 
   @Nullable
