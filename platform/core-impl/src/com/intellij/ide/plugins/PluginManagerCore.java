@@ -1029,12 +1029,13 @@ public class PluginManagerCore {
       return;
     }
 
-    Collection<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
+    // plugin projects may have the same plugins in plugin path (sandbox or SDK) and on the classpath; latter should be ignored
+    Set<IdeaPluginDescriptorImpl> found = ContainerUtil.newHashSet(result);
 
     int i = 0;
     for (URL url : urls.keySet()) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url, urls.get(url), true);
-      if (descriptor != null && existingResults.add(descriptor)) {
+      if (descriptor != null && found.add(descriptor)) {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
         if (progress != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
