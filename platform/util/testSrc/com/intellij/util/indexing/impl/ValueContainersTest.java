@@ -3,11 +3,13 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
+import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import junit.framework.TestCase;
 
 import java.util.HashMap;
+import java.util.Set;
 
 public class ValueContainersTest extends TestCase {
   public void testNullValueSingleId() {
@@ -51,7 +53,30 @@ public class ValueContainersTest extends TestCase {
     assertTrue(iterator.hasNext());
     MutableValue valueFromIterator = iterator.next();
     assertEquals(value2, valueFromIterator);
-    assertNotNull(iterator.getFileSetObject());
+    assertEquals(new Integer(0), iterator.getFileSetObject());
+    assertFalse(iterator.hasNext());
+    
+    container.addValue(value1.id, value1);
+    value1.id = 2;
+    value2.id = 1;
+
+    iterator = container.getValueIterator();
+    Set<MutableValue> processed = new THashSet<>();
+    
+    for(int i = 0; i < 2; ++i) {
+      assertTrue(iterator.hasNext());
+      valueFromIterator = iterator.next();
+
+      assertTrue(processed.add(valueFromIterator));
+      if (value1 == valueFromIterator) {
+        assertEquals(new Integer(1), iterator.getFileSetObject());
+      }
+      else {
+        assertEquals(value2, valueFromIterator);
+        assertEquals(new Integer(0), iterator.getFileSetObject());
+      }
+    }
+    
     assertFalse(iterator.hasNext());
   }
 
