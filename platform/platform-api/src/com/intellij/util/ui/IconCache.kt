@@ -2,17 +2,17 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.util.IconLoader
+import gnu.trove.THashMap
 import org.jetbrains.annotations.TestOnly
-
-import javax.swing.*
-import java.util.HashMap
+import javax.swing.Icon
 
 /**
  * @author Konstantin Bulenkov
  */
 object IconCache {
-  private val cache = HashMap<String, Icon>()
+  private val cache = THashMap<String, Icon>()
 
+  @JvmStatic
   fun getIcon(name: String, editable: Boolean, selected: Boolean, focused: Boolean, enabled: Boolean, pressed: Boolean): Icon? {
     return getIcon(name, editable, selected, focused, enabled, pressed, true)
   }
@@ -28,45 +28,47 @@ object IconCache {
     if (editable) key += "Editable"
     if (selected) key += "Selected"
 
-    if (pressed)
-      key += "Pressed"
-    else if (focused)
-      key += "Focused"
-    else if (!enabled) key += "Disabled"
-
-    var dir = ""
+    when {
+      pressed -> key += "Pressed"
+      focused -> key += "Focused"
+      !enabled -> key += "Disabled"
+    }
 
     // For Mac blue theme and other LAFs use default directory icons
-    if (UIUtil.isUnderDefaultMacTheme())
-      dir = if (UIUtil.isGraphite()) "graphite/" else ""
-    else if (UIUtil.isUnderWin10LookAndFeel())
-      dir = "win10/"
-    else if (UIUtil.isUnderDarcula())
-      dir = "darcula/"
-    else if (UIUtil.isUnderIntelliJLaF()) dir = "intellij/"
+    val dir = when {
+      UIUtil.isUnderDefaultMacTheme() -> if (UIUtil.isGraphite()) "graphite/" else ""
+      UIUtil.isUnderWin10LookAndFeel() -> "win10/"
+      UIUtil.isUnderDarcula() -> "darcula/"
+      UIUtil.isUnderIntelliJLaF() -> "intellij/"
+      else -> ""
+    }
 
     key = dir + key
 
-    var icon: Icon? = cache[key]
+    var icon: Icon? = cache.get(key)
     if (icon == null && findIfNotInCache) {
       icon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", IconCache::class.java, true)
-      cache[key] = icon
+      cache.put(key, icon)
     }
     return icon
   }
 
+  @JvmStatic
   fun getIcon(name: String, editable: Boolean, selected: Boolean, focused: Boolean, enabled: Boolean): Icon? {
     return getIcon(name, editable, selected, focused, enabled, false, true)
   }
 
+  @JvmStatic
   fun getIcon(name: String, selected: Boolean, focused: Boolean, enabled: Boolean): Icon? {
     return getIcon(name, false, selected, focused, enabled)
   }
 
+  @JvmStatic
   fun getIcon(name: String, selected: Boolean, focused: Boolean): Icon? {
     return getIcon(name, false, selected, focused, true)
   }
 
+  @JvmStatic
   fun getIcon(name: String): Icon? {
     return getIcon(name, false, false, false, true, false, true)
   }
