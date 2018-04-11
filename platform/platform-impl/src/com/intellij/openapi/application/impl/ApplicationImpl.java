@@ -706,7 +706,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public long getIdleTime() {
-    assertIsDispatchThread();
     return IdeEventQueue.getInstance().getIdleTime();
   }
 
