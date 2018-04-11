@@ -22,10 +22,10 @@ public interface JvmAnnotation extends JvmElement {
   String getQualifiedName();
 
   /**
-   * It method is preferable to {@link #findAttribute(String)}
+   * This method is preferable to {@link #findAttribute(String)}
    * because it allows to provide more efficient implementation.
    *
-   * @return {@code true} if this annotation has an attribute with the specified name
+   * @return {@code true} if this annotation has an attribute with the specified name, otherwise {@code false}
    */
   default boolean hasAttribute(@NonNls @NotNull String attributeName) {
     return findAttribute(attributeName) != null;
@@ -35,7 +35,7 @@ public interface JvmAnnotation extends JvmElement {
    * This method is preferable to manual search in results of {@link #getAttributes()}
    * because it allows to provide more efficient implementation.
    *
-   * @return attribute instance that
+   * @return attribute if this annotation has an attribute with specified name, otherwise {@code null}
    */
   @Nullable
   default JvmAnnotationAttribute findAttribute(@NonNls @NotNull String attributeName) {
