@@ -12,6 +12,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -24,6 +26,8 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author Vladislav.Soroka
@@ -51,17 +55,11 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
 
     importProject();
     assertModules("multiproject", "app",
-                  "buildSrc", "buildSrc_main", "buildSrc_test");
+                  "multiproject_buildSrc", "multiproject_buildSrc_main", "multiproject_buildSrc_test");
 
-    Module buildSrcModule = getModule("buildSrc_main");
+    Module buildSrcModule = getModule("multiproject_buildSrc_main");
     assertNotNull(buildSrcModule);
-    edt(() -> {
-      PsiClass[] buildSrcClasses =
-        JavaPsiFacade.getInstance(myProject).findClasses("org.buildsrc.BuildSrcClass", GlobalSearchScope.moduleScope(buildSrcModule));
-      assertEquals(1, buildSrcClasses.length);
-
-      assertUsagesCount(1, buildSrcClasses[0]);
-    });
+    assertUsages("org.buildsrc.BuildSrcClass", GlobalSearchScope.moduleScope(buildSrcModule), 1);
   }
 
   @Test
@@ -98,42 +96,93 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
 
     importProject();
     assertModules("multiproject", "app",
-                  "buildSrc", "buildSrc_main", "buildSrc_test",
-                  "buildSrcSubProject", "buildSrcSubProject_main", "buildSrcSubProject_test");
+                  "multiproject_buildSrc", "multiproject_buildSrc_main", "multiproject_buildSrc_test",
+                  "multiproject_buildSrcSubProject", "multiproject_buildSrcSubProject_main", "multiproject_buildSrcSubProject_test");
 
-    Module buildSrcModule = getModule("buildSrc_main");
-    assertNotNull(buildSrcModule);
-    Module buildSrcSubModule = getModule("buildSrcSubProject_main");
-    assertNotNull(buildSrcSubModule);
-    assertUsages(buildSrcModule, buildSrcSubModule);
+    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.buildsrc.BuildSrcAdditionalClass", 1));
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("multiproject", "app",
-                  "buildSrc",
-                  "buildSrcSubProject");
+                  "multiproject_buildSrc",
+                  "multiproject_buildSrcSubProject");
 
-    buildSrcModule = getModule("buildSrc");
-    assertNotNull(buildSrcModule);
-    buildSrcSubModule = getModule("buildSrcSubProject");
-    assertNotNull(buildSrcSubModule);
-    assertUsages(buildSrcModule, buildSrcSubModule);
+    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.buildsrc.BuildSrcAdditionalClass", 1));
   }
 
-  private void assertUsages(Module module1, Module module2) {
+  @Test
+  public void testIncludedBuildSrcClassesUsages() throws Exception {
+    createProjectSubFile("settings.gradle", "rootProject.name = 'multiproject'\n" +
+                                            "include ':app'\n" +
+                                            "includeBuild 'gradle-plugin'");
+    createProjectSubFile("buildSrc/src/main/groovy/org/buildsrc/BuildSrcClass.groovy", "package org.buildsrc;\n" +
+                                                                                       "public class BuildSrcClass {}");
+
+    createProjectSubFile("build.gradle", "def foo = new org.buildsrc.BuildSrcClass()");
+    createProjectSubFile("app/build.gradle", "def foo1 = new org.buildsrc.BuildSrcClass()");
+
+    // included build
+    createProjectSubFile("gradle-plugin/settings.gradle", "");
+    createProjectSubFile("gradle-plugin/build.gradle", "def foo = new org.buildsrc.IncludedBuildSrcClass()");
+    createProjectSubFile("gradle-plugin/buildSrc/src/main/groovy/org/included/buildsrc/IncludedBuildSrcClass.groovy",
+                         "package org.buildsrc;\n" +
+                         "public class IncludedBuildSrcClass {}");
+
+    importProject();
+    assertModules("multiproject", "app",
+                  "multiproject_buildSrc", "multiproject_buildSrc_main", "multiproject_buildSrc_test",
+                  "gradle-plugin",
+                  "gradle-plugin_buildSrc", "gradle-plugin_buildSrc_main", "gradle-plugin_buildSrc_test");
+
+    assertUsages("org.buildsrc.BuildSrcClass", 2);
+    assertUsages("org.buildsrc.IncludedBuildSrcClass", 1);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("multiproject", "app",
+                  "multiproject_buildSrc",
+                  "gradle-plugin",
+                  "gradle-plugin_buildSrc");
+    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.buildsrc.IncludedBuildSrcClass", 1));
+
+    // check for qualified module names
+    getCurrentExternalProjectSettings().setUseQualifiedModuleNames(true);
+    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(true);
+    importProject();
+    assertModules("multiproject", "multiproject.app",
+                  "multiproject.buildSrc", "multiproject.buildSrc.main", "multiproject.buildSrc.test",
+                  "gradle-plugin",
+                  "gradle-plugin.buildSrc", "gradle-plugin.buildSrc.main", "gradle-plugin.buildSrc.test");
+    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.buildsrc.IncludedBuildSrcClass", 1));
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("multiproject", "multiproject.app",
+                  "multiproject.buildSrc",
+                  "gradle-plugin",
+                  "gradle-plugin.buildSrc");
+    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.buildsrc.IncludedBuildSrcClass", 1));
+  }
+
+  private void assertUsages(String fqn, GlobalSearchScope scope, int count) {
     edt(() -> {
-      PsiClass[] buildSrcClasses =
-        JavaPsiFacade.getInstance(myProject).findClasses("org.buildsrc.BuildSrcClass", GlobalSearchScope.moduleScope(module1));
-      assertEquals(1, buildSrcClasses.length);
-
-      assertUsagesCount(2, buildSrcClasses[0]);
-
-      PsiClass[] buildSrcAdditionalClasses =
-        JavaPsiFacade.getInstance(myProject)
-                     .findClasses("org.buildsrc.BuildSrcAdditionalClass", GlobalSearchScope.moduleScope(module2));
-      assertEquals(1, buildSrcAdditionalClasses.length);
-
-      assertUsagesCount(1, buildSrcAdditionalClasses[0]);
+      PsiClass[] psiClasses = JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope);
+      assertEquals(1, psiClasses.length);
+      assertUsagesCount(count, psiClasses[0]);
     });
+  }
+
+  private void assertUsages(String fqn, int count) {
+    assertUsages(fqn, GlobalSearchScope.projectScope(myProject), count);
+  }
+
+  private void assertUsages(Trinity<String, GlobalSearchScope, Integer>... classUsageCount) {
+    for (Trinity<String, GlobalSearchScope, Integer> trinity : classUsageCount) {
+      assertUsages(trinity.first, trinity.second, trinity.third);
+    }
+  }
+
+  private void assertUsages(Pair<String, Integer>... classUsageCount) {
+    for (Pair<String, Integer> pair : classUsageCount) {
+      assertUsages(Trinity.create(pair.first, GlobalSearchScope.projectScope(myProject), pair.second));
+    }
   }
 
   private static void assertUsagesCount(int expectedUsagesCount, PsiElement resolved) throws Exception {
@@ -149,7 +198,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
           FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(resolved, false);
           assertNotNull(handler);
           final FindUsagesOptions options = handler.getFindUsagesOptions();
-          final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
+          final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
           for (PsiElement element : handler.getPrimaryElements()) {
             handler.processElementUsages(element, processor, options);
           }
