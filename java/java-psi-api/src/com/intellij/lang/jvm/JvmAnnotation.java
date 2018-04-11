@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.find;
+
 public interface JvmAnnotation extends JvmElement {
 
   /**
@@ -18,6 +20,27 @@ public interface JvmAnnotation extends JvmElement {
   @Nullable
   @NonNls
   String getQualifiedName();
+
+  /**
+   * It method is preferable to {@link #findAttribute(String)}
+   * because it allows to provide more efficient implementation.
+   *
+   * @return {@code true} if this annotation has an attribute with the specified name
+   */
+  default boolean hasAttribute(@NonNls @NotNull String attributeName) {
+    return findAttribute(attributeName) != null;
+  }
+
+  /**
+   * This method is preferable to manual search in results of {@link #getAttributes()}
+   * because it allows to provide more efficient implementation.
+   *
+   * @return attribute instance that
+   */
+  @Nullable
+  default JvmAnnotationAttribute findAttribute(@NonNls @NotNull String attributeName) {
+    return find(getAttributes(), attribute -> attributeName.equals(attribute.getAttributeName()));
+  }
 
   @NotNull
   List<JvmAnnotationAttribute> getAttributes();
