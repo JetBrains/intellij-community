@@ -27,7 +27,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeCollector;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.ProjectFileChangeListener;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -41,9 +43,12 @@ import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.ide.util.treeView.TreeState.expand;
+import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 
 class AsyncProjectViewSupport {
   private static final Logger LOG = Logger.getInstance(AsyncProjectViewSupport.class);
+  private final TreeCollector<VirtualFile> myFileRoots = TreeCollector.createFileRootsCollector();
+  private final ProjectFileChangeListener myChangeListener;
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
@@ -57,8 +62,14 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.setComparator(comparator);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
+    myChangeListener = new ProjectFileChangeListener(project, (module, file) -> {
+      if (myFileRoots.add(file)) {
+        myFileRoots.processLater(myStructureTreeModel.getInvoker(), roots -> roots.forEach(root -> updateByFile(root, true)));
+      }
+    });
     setModel(tree, myAsyncTreeModel);
     MessageBusConnection connection = project.getMessageBus().connect(parent);
+    connection.subscribe(VFS_CHANGES, myChangeListener);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
