@@ -14,7 +14,7 @@ object IconCache {
 
   @JvmStatic
   @JvmOverloads
-  fun getIcon(name: String, editable: Boolean, selected: Boolean, focused: Boolean, enabled: Boolean = true, pressed: Boolean = false, findIfNotInCache: Boolean = true): Icon? {
+  fun getIcon(name: String, editable: Boolean, selected: Boolean, focused: Boolean = false, enabled: Boolean = true, pressed: Boolean = false, findIfNotInCache: Boolean = true): Icon? {
     var key = name
     if (editable) key += "Editable"
     if (selected) key += "Selected"
@@ -45,24 +45,19 @@ object IconCache {
   }
 
   @JvmStatic
-  fun getDisabledIcon(name: String) = getIcon(name, editable = false, selected = false, focused = false, enabled = false)!!
+  fun getDisabledIcon(name: String) = getIcon(name, editable = false, selected = false, enabled = false)!!
 
   @JvmStatic
-  fun getSelectedIcon(name: String) = getIcon(name, editable = false, selected = true, focused = false)!!
-
-  @JvmStatic
-  fun getIcon(name: String, selected: Boolean, focused: Boolean): Icon? {
-    return getIcon(name, false, selected, focused)
-  }
+  fun getSelectedIcon(name: String) = getIcon(name, editable = false, selected = true)!!
 
   @JvmStatic
   fun getIcon(name: String): Icon? {
-    return getIcon(name, false, false, false)
+    return getIcon(name, false, false)
   }
 
   // this method will be not required when this class will be converted to Kotlin (since Kotlin supports named parameters)
   @TestOnly
   fun getCachedIcon(name: String, selected: Boolean): Icon? {
-    return getIcon(name, false, selected, false, findIfNotInCache = false)
+    return getIcon(name, false, selected, findIfNotInCache = false)
   }
 }
