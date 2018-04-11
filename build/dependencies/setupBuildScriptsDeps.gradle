@@ -1,3 +1,6 @@
+import java.nio.file.Files
+import java.nio.file.Paths
+
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 repositories {
   mavenCentral()
@@ -41,9 +44,6 @@ dependencies {
   ).each { properties ->
     buildScriptsDeps(properties.first, { transitive = properties.second })
   }
-  testDiscoveryDeps('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.26') {
-    exclude group: 'org.codehaus.groovy', module: 'groovy-all'
-  }
 }
 
 /**
@@ -54,9 +54,19 @@ task setupBuildScriptsDeps(dependsOn: configurations.buildScriptsDeps, type: Syn
   into "${project.buildDir}/build-scripts-deps"
 }
 
-task setupTestDiscoveryDeps(dependsOn: configurations.testDiscoveryDeps, type: Sync) {
-  from configurations.testDiscoveryDeps.files
-  into "${project.buildDir}/test-discovery-deps"
+task setupTestDiscoveryDeps {
+  doFirst {
+    def dir = "${project.buildDir}/test-discovery-deps"
+    file(dir).mkdirs()
+    configurations.detachedConfiguration(
+      (dependencies
+        .create('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.27') as ModuleDependency)
+        .exclude(group: 'org.codehaus.groovy', module: 'groovy-all')
+    ).files.each { from ->
+      def into = Paths.get("$dir/$from.name")
+      Files.copy(from.toPath(), into)
+    }
+  }
 }
 
 private Tuple2<String, Boolean> loadProjectLibraryProperties(String libraryName) {
