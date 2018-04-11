@@ -6,6 +6,7 @@ iml_module(
     iml_files = ["intellij.tools.jetCheck.iml"],
     tags = ["managed"],
     test_srcs = ["test"],
+    test_tags = ["manual"],  # b/77882590
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
