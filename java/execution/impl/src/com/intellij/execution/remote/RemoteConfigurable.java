@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
@@ -25,6 +26,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.Arrays;
 
 public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
@@ -126,7 +129,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
   private final JTextField myHostName = new JTextField();
   private final JTextField myAddress = new JTextField();
-  private final IntegerField myPort = new IntegerField("Port:", 0, 0xFFFF);
+  private final IntegerField myPort = new IntegerField("&Port:", 0, 0xFFFF);
 
   public RemoteConfigurable(Project project) {
     myTransportCombo.setSelectedItem(Transport.SOCKET);
@@ -149,6 +152,12 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myArgsArea.setEditable(false);
     myArgsArea.setBorder(new SideBorder(JBColor.border(), SideBorder.ALL));
     myArgsArea.setMinimumSize(myArgsArea.getPreferredSize());
+    myArgsArea.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myArgsArea.selectAll();
+      }
+    });
 
     updateArgsText(vi);
 
@@ -163,7 +172,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.weightx = 0;
     gc.insets = JBUI.insetsTop(10);
 
-    mainPanel.add(UI.PanelFactory.panel(myArgsArea).withLabel("Command line arguments for remote JVM:").
+    mainPanel.add(UI.PanelFactory.panel(myArgsArea).withLabel("&Command line arguments for remote JVM:").
       moveLabelOnTop().withTopRightComponent(ddl).
                                withComment("Copy and paste the arguments to the command line when JVM is started").createPanel(), gc);
 
@@ -178,7 +187,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.weightx = 0;
     gc.insets = JBUI.insetsTop(21);
-    mainPanel.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Use module classpath:").
+    mainPanel.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Use &module classpath:").
       withComment("First search for sources of the debugged classes in the selected module classpath").createPanel(), gc);
 
     gc.gridy++;
@@ -266,13 +275,20 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     return mainPanel;
   }
 
+  private static JLabel createLabelFor(String labelText, JComponent forComponent) {
+    JLabel label = new JLabel();
+    LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(labelText).setToLabel(label);
+    label.setLabelFor(forComponent);
+    return label;
+  }
+
   private JPanel createModePanel(GridBagConstraints gc) {
     JPanel panel = new JPanel(new GridBagLayout());
 
-    JLabel modeLabel = new JLabel("Debugger mode:");
-    JLabel transportLabel = new JLabel("Transport:");
-    JLabel hostLabel = new JLabel("Host:");
-    JLabel portLabel = new JLabel(myPort.getValueName());
+    JLabel modeLabel = createLabelFor("&Debugger mode:", myModeCombo);
+    JLabel transportLabel = createLabelFor("&Transport:", myTransportCombo);
+    JLabel hostLabel = createLabelFor("&Host:", myHostName);
+    JLabel portLabel = createLabelFor(myPort.getValueName(), myPort);
 
     panel.add(modeLabel, gc);
 
@@ -288,7 +304,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     panel.add(new JPanel(), gc);
 
     if (SystemInfo.isWindows) {
-      JLabel addressLabel = new JLabel("Address:");
+      JLabel addressLabel = createLabelFor("&Address:", myAddress);
 
       addressLabel.setVisible(false);
       myAddress.setVisible(false);
