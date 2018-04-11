@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -24,7 +25,7 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
   }
 
   @Override
-  public void processQuery(@NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
     boolean caseSensitive = refElement.getLanguage().isCaseSensitive();
 
