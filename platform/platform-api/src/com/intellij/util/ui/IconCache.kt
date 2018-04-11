@@ -13,17 +13,8 @@ object IconCache {
   private val cache = THashMap<String, Icon>()
 
   @JvmStatic
-  fun getIcon(name: String, editable: Boolean, selected: Boolean, focused: Boolean, enabled: Boolean, pressed: Boolean): Icon? {
-    return getIcon(name, editable, selected, focused, enabled, pressed, true)
-  }
-
-  private fun getIcon(name: String,
-                      editable: Boolean,
-                      selected: Boolean,
-                      focused: Boolean,
-                      enabled: Boolean,
-                      pressed: Boolean,
-                      findIfNotInCache: Boolean): Icon? {
+  @JvmOverloads
+  fun getIcon(name: String, editable: Boolean, selected: Boolean, focused: Boolean, enabled: Boolean, pressed: Boolean = false, findIfNotInCache: Boolean = true): Icon? {
     var key = name
     if (editable) key += "Editable"
     if (selected) key += "Selected"
@@ -54,28 +45,23 @@ object IconCache {
   }
 
   @JvmStatic
-  fun getIcon(name: String, editable: Boolean, selected: Boolean, focused: Boolean, enabled: Boolean): Icon? {
-    return getIcon(name, editable, selected, focused, enabled, false, true)
-  }
-
-  @JvmStatic
   fun getIcon(name: String, selected: Boolean, focused: Boolean, enabled: Boolean): Icon? {
     return getIcon(name, false, selected, focused, enabled)
   }
 
   @JvmStatic
   fun getIcon(name: String, selected: Boolean, focused: Boolean): Icon? {
-    return getIcon(name, false, selected, focused, true)
+    return getIcon(name, false, selected, focused, enabled = true)
   }
 
   @JvmStatic
   fun getIcon(name: String): Icon? {
-    return getIcon(name, false, false, false, true, false, true)
+    return getIcon(name, false, false, false, true, false)
   }
 
   // this method will be not required when this class will be converted to Kotlin (since Kotlin supports named parameters)
   @TestOnly
   fun getCachedIcon(name: String, selected: Boolean): Icon? {
-    return getIcon(name, false, selected, false, true, false, false)
+    return getIcon(name, false, selected, false, true, false, findIfNotInCache = false)
   }
 }
