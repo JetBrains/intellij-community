@@ -31,6 +31,13 @@ public class PluginDescriptorTest {
   }
 
   @Test
+  public void testOptionalDescriptors() {
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor("family");
+    assertNotNull(descriptor);
+    assertEquals(1, descriptor.getOptionalDescriptors().size());
+  }
+
+  @Test
   public void testMalformedDescriptor() {
     assertNull(loadDescriptor("malformed"));
   }
@@ -118,8 +125,14 @@ public class PluginDescriptorTest {
   }
 
   private static IdeaPluginDescriptorImpl loadDescriptor(String dirName) {
-    File dir = new File(getTestDataPath(), dirName);
-    assertTrue(dir + " does not exist", dir.exists());
-    return PluginManagerCore.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML);
+    try {
+      File dir = new File(getTestDataPath(), dirName);
+      assertTrue(dir + " does not exist", dir.exists());
+      return PluginManagerCore.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML);
+    }
+    catch (AssertionError e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("Problems found loading plugins"));
+      return null;
+    }
   }
 }

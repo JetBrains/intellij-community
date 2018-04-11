@@ -633,15 +633,14 @@ public class PluginManagerCore {
       try {
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
         descriptor.readExternal(descriptorFile.toURI().toURL());
-        validateDescriptor(descriptor);
         return descriptor;
       }
-      catch (XmlSerializationException e) {
-        getLogger().info("Cannot load " + file, e);
+      catch (XmlSerializationException | InvalidDataException e) {
+        getLogger().info("Cannot load " + descriptorFile, e);
         prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
       }
       catch (Throwable e) {
-        getLogger().info("Cannot load " + file, e);
+        getLogger().info("Cannot load " + descriptorFile, e);
       }
     }
 
@@ -670,31 +669,19 @@ public class PluginManagerCore {
         Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
         descriptor.readExternal(document, jarURL, pathResolver);
-        validateDescriptor(descriptor);
         context.myLastZipFileContainingDescriptor = file;
         return descriptor;
       }
     }
-    catch (XmlSerializationException e) {
-      getLogger().info("Cannot load " + file, e);
+    catch (XmlSerializationException | InvalidDataException e) {
+      getLogger().info("Cannot load " + file + "!/META-INF/" + fileName, e);
       prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
     }
     catch (Throwable e) {
-      getLogger().info("Cannot load " + file, e);
+      getLogger().info("Cannot load " + file + "!/META-INF/" + fileName, e);
     }
 
     return null;
-  }
-
-  private static void validateDescriptor(IdeaPluginDescriptorImpl descriptor) {
-    /*
-    if (descriptor.getPluginId() == null) {
-      throw new IllegalStateException("Skipped plugin with null ID: " + descriptor);
-    }
-    else if (descriptor.getName() == null) {
-      throw new IllegalStateException("Skipped plugin without name: " + descriptor);
-    }
-    */
   }
 
   @Nullable
@@ -780,6 +767,12 @@ public class PluginManagerCore {
     }
 
     if (descriptor != null) {
+      if (PLUGIN_XML.equals(pathName) && (descriptor.getPluginId() == null || descriptor.getName() == null)) {
+        getLogger().info("Cannot load descriptor from " + file + ": ID or name missing");
+        prepareLoadingPluginsErrorMessage(singletonList("'" + file.getName() + "' contains invalid plugin descriptor."));
+        return null;
+      }
+
       resolveOptionalDescriptors(pathName, descriptor, (@SystemIndependent String optPathName) -> {
         IdeaPluginDescriptorImpl optionalDescriptor = null;
         if (context.myLastZipFileContainingDescriptor != null) { // try last file that had the descriptor that worked
@@ -1491,11 +1484,7 @@ public class PluginManagerCore {
 
   @NotNull
   public static Logger getLogger() {
-    return LoggerHolder.ourLogger;
-  }
-
-  private static class LoggerHolder {
-    private static final Logger ourLogger = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
+    return Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
   }
 
   static class EssentialPluginMissingException extends RuntimeException {
