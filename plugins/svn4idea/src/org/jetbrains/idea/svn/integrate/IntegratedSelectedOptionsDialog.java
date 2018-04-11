@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.actionSystem.*;
@@ -191,7 +191,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     final DefaultListModel model = (DefaultListModel) myWorkingCopiesList.getModel();
     model.addElement(info);
     myWorkingCopiesList.setSelectedValue(info, true);
-    SvnBranchMapperManager.getInstance().put(mySelectedBranchUrl, file.getAbsolutePath());
+    SvnBranchMapperManager.getInstance().put(mySelectedBranchUrl, file);
   }
 
   private boolean underProject(final File file) {
