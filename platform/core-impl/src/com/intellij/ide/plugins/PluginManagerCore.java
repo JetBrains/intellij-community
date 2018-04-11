@@ -52,6 +52,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.intellij.util.ObjectUtils.notNull;
+import static java.util.Collections.singletonList;
 
 public class PluginManagerCore {
   private static final Logger LOG = Logger.getInstance(PluginManagerCore.class);
@@ -637,7 +638,7 @@ public class PluginManagerCore {
       }
       catch (XmlSerializationException e) {
         getLogger().info("Cannot load " + file, e);
-        prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
+        prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
       }
       catch (Throwable e) {
         getLogger().info("Cannot load " + file, e);
@@ -663,11 +664,7 @@ public class PluginManagerCore {
     try {
       URL jarURL = URLUtil.getJarEntryURL(file, FileUtil.toCanonicalPath(META_INF + '/' + fileName, '/'));
 
-      ZipFile zipFile = context.myOpenedFiles.get(file);
-      if (zipFile == null) {
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        context.myOpenedFiles.put(file, zipFile = new ZipFile(file));
-      }
+      ZipFile zipFile = context.open(file);
       ZipEntry entry = zipFile.getEntry(META_INF + '/' + fileName);
       if (entry != null) {
         Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
@@ -680,7 +677,7 @@ public class PluginManagerCore {
     }
     catch (XmlSerializationException e) {
       getLogger().info("Cannot load " + file, e);
-      prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
+      prepareLoadingPluginsErrorMessage(singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
     }
     catch (Throwable e) {
       getLogger().info("Cannot load " + file, e);
@@ -715,6 +712,15 @@ public class PluginManagerCore {
   private static class LoadingContext implements AutoCloseable {
     private final Map<File, ZipFile> myOpenedFiles = new THashMap<>();
     private File myLastZipFileContainingDescriptor;
+
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    private ZipFile open(File file) throws IOException {
+      ZipFile zipFile = myOpenedFiles.get(file);
+      if (zipFile == null) {
+        myOpenedFiles.put(file, zipFile = new ZipFile(file));
+      }
+      return zipFile;
+    }
 
     @Override
     public void close() {
@@ -1458,7 +1464,7 @@ public class PluginManagerCore {
       descriptor = loadDescriptorFromJar(pluginRoot, fileName, true);
     }
     if (descriptor != null) {
-      registerExtensionPointsAndExtensions(area, Collections.singletonList(descriptor));
+      registerExtensionPointsAndExtensions(area, singletonList(descriptor));
     }
     else {
       getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
