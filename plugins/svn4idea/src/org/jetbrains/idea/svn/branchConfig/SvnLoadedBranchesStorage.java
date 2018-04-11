@@ -43,7 +43,7 @@ public class SvnLoadedBranchesStorage {
     synchronized (myLock) {
       if (myState == null) return null;
       Map<String, Collection<SvnBranchItem>> map = myState.get("");
-      return map == null ? null : map.get(SvnBranchConfigurationNew.ensureEndSlash(url));
+      return map == null ? null : map.get(SvnBranchConfigurationNew.Companion.ensureEndSlash(url));
     }
   }
   

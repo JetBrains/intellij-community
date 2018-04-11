@@ -1,154 +1,119 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn.branchConfig;
+package org.jetbrains.idea.svn.branchConfig
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.info.Info;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil.map
+import com.intellij.util.containers.ContainerUtil.sorted
+import org.jetbrains.idea.svn.SvnUtil
+import org.jetbrains.idea.svn.SvnUtil.createUrl
+import org.jetbrains.idea.svn.SvnUtil.isAncestor
+import org.jetbrains.idea.svn.SvnVcs
+import org.jetbrains.idea.svn.api.Url
+import org.jetbrains.idea.svn.commandLine.SvnBindException
+import java.util.*
+import java.util.Comparator.comparingInt
 
-import java.io.File;
-import java.util.*;
+class SvnBranchConfigurationNew {
+  var trunkUrl: String? = ""
+  private val myBranchMap: MutableMap<String, InfoStorage<List<SvnBranchItem>>> = mutableMapOf()
+  var isUserinfoInUrl: Boolean = false
 
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static com.intellij.util.containers.ContainerUtil.sorted;
-import static java.util.Comparator.comparingInt;
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
-import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
+  val branchUrls: List<String>
+    get() {
+      val result = ArrayList(myBranchMap.keys)
+      val cutList = map<String, String>(result, { cutEndSlash(it) })
+      Collections.sort(cutList)
+      return cutList
+    }
 
-public class SvnBranchConfigurationNew {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew");
-  private String myTrunkUrl = "";
-  private final Map<String, InfoStorage<List<SvnBranchItem>>> myBranchMap = new HashMap<>();
-  private boolean myUserinfoInUrl;
+  val branchMap: Map<String, InfoStorage<List<SvnBranchItem>>>
+    get() = myBranchMap
 
-  public boolean isUserinfoInUrl() {
-    return myUserinfoInUrl;
-  }
-
-  public void setUserinfoInUrl(final boolean userinfoInUrl) {
-    myUserinfoInUrl = userinfoInUrl;
-  }
-
-  public void setTrunkUrl(final String trunkUrl) {
-    myTrunkUrl = trunkUrl;
-  }
-
-  public String getTrunkUrl() {
-    return myTrunkUrl;
-  }
-
-  public List<String> getBranchUrls() {
-    final ArrayList<String> result = new ArrayList<>(myBranchMap.keySet());
-    List<String> cutList = map(result, SvnBranchConfigurationNew::cutEndSlash);
-    Collections.sort(cutList);
-    return cutList;
-  }
-
-  public void addBranches(String branchParentName, final InfoStorage<List<SvnBranchItem>> items) {
-    branchParentName = ensureEndSlash(branchParentName);
-    InfoStorage<List<SvnBranchItem>> current = myBranchMap.get(branchParentName);
+  fun addBranches(branchParentName: String, items: InfoStorage<List<SvnBranchItem>>) {
+    var branchParentName = branchParentName
+    branchParentName = ensureEndSlash(branchParentName)
+    val current = myBranchMap[branchParentName]
     if (current != null) {
-      LOG.info("Branches list not added for : '" + branchParentName + "; this branch parent URL is already present.");
-      return;
+      LOG.info("Branches list not added for : '$branchParentName; this branch parent URL is already present.")
+      return
     }
-    myBranchMap.put(branchParentName, items);
+    myBranchMap[branchParentName] = items
   }
 
-  public static String ensureEndSlash(String name) {
-    return name.trim().endsWith("/") ? name : name + "/";
-  }
-  
-  private static String cutEndSlash(String name) {
-    return name.endsWith("/") && name.length() > 0 ? name.substring(0, name.length() - 1) : name;
-  }
-
-  public void updateBranch(String branchParentName, final InfoStorage<List<SvnBranchItem>> items) {
-    branchParentName = ensureEndSlash(branchParentName);
-    final InfoStorage<List<SvnBranchItem>> current = myBranchMap.get(branchParentName);
+  fun updateBranch(branchParentName: String, items: InfoStorage<List<SvnBranchItem>>) {
+    var branchParentName = branchParentName
+    branchParentName = ensureEndSlash(branchParentName)
+    val current = myBranchMap[branchParentName]
     if (current == null) {
-      LOG.info("Branches list not updated for : '" + branchParentName + "; since config has changed.");
-      return;
+      LOG.info("Branches list not updated for : '$branchParentName; since config has changed.")
+      return
     }
-    current.accept(items);
+    current.accept(items)
   }
 
-  public Map<String, InfoStorage<List<SvnBranchItem>>> getBranchMap() {
-    return myBranchMap;
+  fun getBranches(url: String): List<SvnBranchItem> {
+    var url = url
+    url = ensureEndSlash(url)
+    return myBranchMap[url]?.value ?: emptyList()
   }
 
-  public List<SvnBranchItem> getBranches(String url) {
-    url = ensureEndSlash(url);
-    return myBranchMap.get(url).getValue();
-  }
-
-  public SvnBranchConfigurationNew copy() {
-    SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
-    result.myUserinfoInUrl = myUserinfoInUrl;
-    result.myTrunkUrl = myTrunkUrl;
-    for (Map.Entry<String, InfoStorage<List<SvnBranchItem>>> entry : myBranchMap.entrySet()) {
-      final InfoStorage<List<SvnBranchItem>> infoStorage = entry.getValue();
-      result.myBranchMap.put(entry.getKey(), new InfoStorage<>(
-        new ArrayList<>(infoStorage.getValue()), infoStorage.getInfoReliability()));
+  fun copy(): SvnBranchConfigurationNew {
+    val result = SvnBranchConfigurationNew()
+    result.isUserinfoInUrl = isUserinfoInUrl
+    result.trunkUrl = trunkUrl
+    for ((key, infoStorage) in myBranchMap) {
+      result.myBranchMap.put(key, InfoStorage(ArrayList(infoStorage.value), infoStorage.infoReliability))
     }
-    return result;
+    return result
   }
 
-  @Nullable
-  public String getBaseUrl(String url) {
-    if (myTrunkUrl != null) {
-      if (Url.isAncestor(myTrunkUrl, url)) {
-        return cutEndSlash(myTrunkUrl);
+  fun getBaseUrl(url: String): String? {
+    if (trunkUrl != null) {
+      if (Url.isAncestor(trunkUrl!!, url)) {
+        return cutEndSlash(trunkUrl!!)
       }
     }
-    for (String branchUrl : sortBranchLocations(myBranchMap.keySet())) {
+    for (branchUrl in sortBranchLocations(myBranchMap.keys)) {
       if (Url.isAncestor(branchUrl, url)) {
-        String relativePath = Url.getRelative(branchUrl, url);
-        int secondSlash = relativePath.indexOf("/");
-        return cutEndSlash(branchUrl + (secondSlash == -1 ? relativePath : relativePath.substring(0, secondSlash)));
+        val relativePath = Url.getRelative(branchUrl, url)
+        val secondSlash = relativePath!!.indexOf("/")
+        return cutEndSlash(branchUrl + if (secondSlash == -1) relativePath else relativePath.substring(0, secondSlash))
       }
     }
-    return null;
+    return null
   }
 
-  @Nullable
-  public String getBaseName(String url) {
-    String baseUrl = getBaseUrl(url);
-    if (baseUrl == null) {
-      return null;
-    }
-    int lastSlash = baseUrl.lastIndexOf("/");
-    return lastSlash == -1 ? baseUrl : baseUrl.substring(lastSlash + 1);
+  fun getBaseName(url: String): String? {
+    val baseUrl = getBaseUrl(url) ?: return null
+    val lastSlash = baseUrl.lastIndexOf("/")
+    return if (lastSlash == -1) baseUrl else baseUrl.substring(lastSlash + 1)
   }
 
-  @Nullable
-  public String getRelativeUrl(String url) {
-    String baseUrl = getBaseUrl(url);
-    return baseUrl == null ? null : url.substring(baseUrl.length());
+  fun getRelativeUrl(url: String): String? {
+    val baseUrl = getBaseUrl(url)
+    return if (baseUrl == null) null else url.substring(baseUrl.length)
   }
 
-  @Nullable
-  public Url getWorkingBranch(@NotNull Url someUrl) throws SvnBindException {
-    String baseUrl = getBaseUrl(someUrl.toString());
-    return baseUrl == null ? null : createUrl(baseUrl);
+  @Throws(SvnBindException::class)
+  fun getWorkingBranch(someUrl: Url): Url? {
+    val baseUrl = getBaseUrl(someUrl.toString())
+    return if (baseUrl == null) null else createUrl(baseUrl)
   }
 
-  private void iterateUrls(final UrlListener listener) throws SvnBindException {
-    if (listener.accept(myTrunkUrl)) {
-      return;
+  @Throws(SvnBindException::class)
+  private fun iterateUrls(listener: UrlListener) {
+    if (listener.accept(trunkUrl)) {
+      return
     }
 
-    for (String branchUrl : sortBranchLocations(myBranchMap.keySet())) {
-      final List<SvnBranchItem> children = myBranchMap.get(branchUrl).getValue();
-      for (SvnBranchItem child : children) {
-        if (listener.accept(child.getUrl().toDecodedString())) {
-          return;
+    for (branchUrl in sortBranchLocations(myBranchMap.keys)) {
+      val children = myBranchMap[branchUrl]!!.value
+      for (child in children) {
+        if (listener.accept(child.url.toDecodedString())) {
+          return
         }
       }
 
@@ -159,64 +124,75 @@ public class SvnBranchConfigurationNew {
   }
 
   // to retrieve mappings between existing in the project working copies and their URLs
-  @Nullable
-  public Map<String,String> getUrl2FileMappings(final Project project, final VirtualFile root) {
+  fun getUrl2FileMappings(project: Project, root: VirtualFile): Map<String, String>? {
     try {
-      final BranchRootSearcher searcher = new BranchRootSearcher(SvnVcs.getInstance(project), root);
-      iterateUrls(searcher);
-      return searcher.getBranchesUnder();
+      val searcher = BranchRootSearcher(SvnVcs.getInstance(project), root)
+      iterateUrls(searcher)
+      return searcher.branchesUnder
     }
-    catch (SvnBindException e) {
-      return null;
+    catch (e: SvnBindException) {
+      return null
     }
+
   }
 
-  public void removeBranch(String url) {
-    url = ensureEndSlash(url);
-    myBranchMap.remove(url);
+  fun removeBranch(url: String) {
+    var url = url
+    url = ensureEndSlash(url)
+    myBranchMap.remove(url)
   }
 
-  /**
-   * Sorts branch locations by length descending as there could be cases when one branch location is under another.
-   */
-  @NotNull
-  private static Collection<String> sortBranchLocations(@NotNull Collection<String> branchLocations) {
-    return sorted(branchLocations, comparingInt(String::length).reversed());
-  }
-
-  private static class BranchRootSearcher implements UrlListener {
-    private final VirtualFile myRoot;
-    private final Url myRootUrl;
+  private class BranchRootSearcher constructor(vcs: SvnVcs, private val myRoot: VirtualFile) : UrlListener {
+    private val myRootUrl: Url?
     // url path to file path
-    private final Map<String, String> myBranchesUnder;
+    val myBranchesUnder: MutableMap<String, String>
 
-    private BranchRootSearcher(final SvnVcs vcs, final VirtualFile root) {
-      myRoot = root;
-      myBranchesUnder = new HashMap<>();
-      final Info info = vcs.getInfo(myRoot.getPath());
-      myRootUrl = info != null ? info.getURL() : null;
+    val branchesUnder: Map<String, String>
+      get() = myBranchesUnder
+
+    init {
+      myBranchesUnder = HashMap()
+      val info = vcs.getInfo(myRoot.path)
+      myRootUrl = info?.url
     }
 
-    public boolean accept(final String url) throws SvnBindException {
+    @Throws(SvnBindException::class)
+    override fun accept(url: String?): Boolean {
       if (myRootUrl != null) {
-        final File baseDir = virtualToIoFile(myRoot);
-        final String baseUrl = myRootUrl.getPath();
+        val baseDir = virtualToIoFile(myRoot)
+        val baseUrl = myRootUrl.path
 
-        final Url branchUrl = createUrl(url);
+        val branchUrl = createUrl(url!!)
         if (isAncestor(myRootUrl, branchUrl)) {
-          final File file = SvnUtil.fileFromUrl(baseDir, baseUrl, branchUrl.getPath());
-          myBranchesUnder.put(url, file.getAbsolutePath());
+          val file = SvnUtil.fileFromUrl(baseDir, baseUrl, branchUrl.path)
+          myBranchesUnder[url] = file.absolutePath
         }
       }
-      return false; // iterate everything
-    }
-
-    public Map<String, String> getBranchesUnder() {
-      return myBranchesUnder;
+      return false // iterate everything
     }
   }
 
   private interface UrlListener {
-    boolean accept(final String url) throws SvnBindException;
+    @Throws(SvnBindException::class)
+    fun accept(url: String?): Boolean
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew")
+
+    fun ensureEndSlash(name: String): String {
+      return if (name.trim { it <= ' ' }.endsWith("/")) name else "$name/"
+    }
+
+    private fun cutEndSlash(name: String): String {
+      return if (name.endsWith("/") && name.length > 0) name.substring(0, name.length - 1) else name
+    }
+
+    /**
+     * Sorts branch locations by length descending as there could be cases when one branch location is under another.
+     */
+    private fun sortBranchLocations(branchLocations: Collection<String>): Collection<String> {
+      return sorted(branchLocations, comparingInt<String>({ it.length }).reversed())
+    }
   }
 }
