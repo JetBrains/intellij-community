@@ -1,31 +1,36 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn.branchConfig;
+package org.jetbrains.idea.svn.branchConfig
 
-public class InfoStorage<T> {
-  public T myT;
-  public InfoReliability myInfoReliability;
+class InfoStorage<T>(value: T, infoReliability: InfoReliability) {
+  var value = value
+    private set
+  var infoReliability = infoReliability
+    private set
 
-  public InfoStorage(final T t, final InfoReliability infoReliability) {
-    myT = t;
-    myInfoReliability = infoReliability;
-  }
-
-  public boolean accept(final InfoStorage<T> infoStorage) {
-    boolean override = infoStorage.myInfoReliability.shouldOverride(myInfoReliability);
+  fun accept(infoStorage: InfoStorage<T>): Boolean {
+    val override = infoStorage.infoReliability.shouldOverride(infoReliability)
 
     if (override) {
-      myT = infoStorage.myT;
-      myInfoReliability = infoStorage.myInfoReliability;
+      value = infoStorage.value
+      infoReliability = infoStorage.infoReliability
     }
 
-    return override;
+    return override
   }
+}
 
-  public T getValue() {
-    return myT;
-  }
+enum class InfoReliability {
+  empty {
+    override val overriddenBy get() = arrayOf(defaultValues, setByUser)
+  },
+  defaultValues {
+    override val overriddenBy get() = arrayOf(setByUser)
+  },
+  setByUser {
+    override val overriddenBy get() = arrayOf(setByUser)
+  };
 
-  public InfoReliability getInfoReliability() {
-    return myInfoReliability;
-  }
+  protected abstract val overriddenBy: Array<InfoReliability>
+
+  fun shouldOverride(other: InfoReliability) = this in other.overriddenBy
 }
