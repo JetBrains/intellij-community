@@ -38,14 +38,16 @@ public enum LanguageLevel {
 
   private final String myPresentableText;
   private final JavaVersion myVersion;
+  private final boolean myPreview;
 
   LanguageLevel(@Nls String presentableText, int major) {
     myPresentableText = presentableText;
     myVersion = JavaVersion.compose(major);
+    myPreview = name().endsWith("_PREVIEW");
   }
 
   public boolean isPreview() {
-    return name().endsWith("_PREVIEW");
+    return myPreview;
   }
 
   /** @deprecated use {@link JavaSdkVersion#getDescription()} (to be removed in IDEA 2019) */
