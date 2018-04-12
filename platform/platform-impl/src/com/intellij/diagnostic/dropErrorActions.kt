@@ -18,7 +18,7 @@ class DropAnErrorAction : DumbAwareAction("Drop an error") {
   }
 }
 
-class DropAnErrorWithAttachmentsAction : DumbAwareAction("Drop An Error With Attachments", "Hold down SHIFT for multiple attachments", null) {
+class DropAnErrorWithAttachmentsAction : DumbAwareAction("Drop an error with attachments", "Hold down SHIFT for multiple attachments", null) {
   override fun actionPerformed(e: AnActionEvent) {
     val attachments = if (e.modifiers and InputEvent.SHIFT_MASK != 0) {
       arrayOf(Attachment("first.txt", "content"), Attachment("second.txt", "more content"), Attachment("third.txt", "even more content"))
@@ -38,18 +38,17 @@ class DropPluginErrorAction : DumbAwareAction("Drop an error in a random plugin"
   }
 }
 
-class DropAnOutOfMemoryErrorAction : DumbAwareAction("Drop an OutOfMemoryError") {
+class DropAnOutOfMemoryErrorAction : DumbAwareAction("Drop an OutOfMemoryError", "Hold down SHIFT for OOME in Metaspace", null) {
   override fun actionPerformed(e: AnActionEvent) {
-    val array = arrayOfNulls<Any>(Integer.MAX_VALUE)
-    for (i in array.indices) {
-      array[i] = arrayOfNulls<Any>(Integer.MAX_VALUE)
+    if (e.modifiers and InputEvent.SHIFT_MASK != 0) {
+      val array = arrayOfNulls<Any>(Integer.MAX_VALUE)
+      for (i in array.indices) {
+        array[i] = arrayOfNulls<Any>(Integer.MAX_VALUE)
+      }
+      throw OutOfMemoryError()
     }
-    throw OutOfMemoryError()
-  }
-}
-
-class DropAnOutOfMetaspaceErrorAction : DumbAwareAction("Drop an OutOfMemoryError in Metaspace") {
-  override fun actionPerformed(e: AnActionEvent) {
-    throw OutOfMemoryError("foo Metaspace foo")
+    else {
+      throw OutOfMemoryError("foo Metaspace foo")
+    }
   }
 }
