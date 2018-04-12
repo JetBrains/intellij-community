@@ -294,7 +294,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
                                       @NotNull PluginDescriptor descriptor,
                                       @NotNull ExtensionPoint.Kind kind) {
     if (hasExtensionPoint(extensionPointName)) {
-      if (extensionPointName.equals("org.jetbrains.uast.uastLanguagePlugin")) return;
       final String message =
         "Duplicate registration for EP: " + extensionPointName + ": original plugin " + getExtensionPoint(extensionPointName).getDescriptor().getPluginId() +
         ", new plugin " + descriptor.getPluginId();
