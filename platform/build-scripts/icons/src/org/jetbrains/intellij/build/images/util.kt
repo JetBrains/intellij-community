@@ -20,8 +20,6 @@ import com.intellij.util.SVGLoader
 import java.awt.Dimension
 import java.awt.Image
 import java.io.File
-import java.io.IOException
-import java.net.URL
 import javax.imageio.ImageIO
 
 internal val File.children: List<File> get() = if (isDirectory) listFiles().toList() else emptyList()
@@ -40,7 +38,11 @@ internal fun isIcon(file: File): Boolean {
 private fun isImage(file: File) = ImageExtension.fromFile(file) != null
 
 internal fun imageSize(file: File): Dimension? {
-  val image: Image = loadImage(file) ?: return null
+  val image = loadImage(file)
+  if (image == null) {
+    println("WARNING: can't load ${file.path}")
+    return null
+  }
   val width = image.getWidth(null)
   val height = image.getHeight(null)
   return Dimension(width, height)
@@ -48,12 +50,7 @@ internal fun imageSize(file: File): Dimension? {
 
 internal fun loadImage(file: File): Image? {
   if (file.name.endsWith(".svg")) {
-    try {
-      return SVGLoader.load(URL("file://" + file.path), 1.0f)
-    }
-    catch (e: IOException) {
-      return null
-    }
+    return SVGLoader.load(file.toURI().toURL(), 1.0f)
   }
   else {
     return ImageIO.read(file)
