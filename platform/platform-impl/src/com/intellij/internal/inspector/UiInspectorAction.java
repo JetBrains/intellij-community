@@ -476,6 +476,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         Pair<Class, String> pair = getClassAndFieldName(((HierarchyTree.ComponentNode)value).myComponent);
         if (pair != null) {
           return pair.first.getSimpleName() + '.' + pair.second;
+        } else {
+          return myComponent.getClass().getName();
         }
       }
       return super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);//todo
