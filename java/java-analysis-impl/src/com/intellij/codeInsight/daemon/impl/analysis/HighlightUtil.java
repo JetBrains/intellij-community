@@ -2550,7 +2550,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return "<font color='" + color +"'><b>" + getFQName(type, true) + "</b></font>";
   }
 
-  @NotNull 
+  @NotNull
   private static String getFQName(@Nullable PsiType type, boolean longName) {
     return type == null ? "" : XmlStringUtil.escapeString(longName ? type.getInternalCanonicalText() : type.getPresentableText());
   }
@@ -2626,7 +2626,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiElement refName = ref.getReferenceNameElement();
     if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
     PsiElement resolved = result.getElement();
-    
+
     PsiElement refParent = ref.getParent();
     PsiElement granny;
     if (refParent instanceof PsiReferenceExpression && (granny = refParent.getParent()) instanceof PsiMethodCallExpression) {
@@ -2899,12 +2899,10 @@ public class HighlightUtil extends HighlightUtilBase {
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
     MODULES(LanguageLevel.JDK_1_9, "feature.modules");
 
-    @NotNull
     private final LanguageLevel level;
-    @NotNull
     private final String key;
 
-    Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
+    Feature(LanguageLevel level, @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
       this.level = level;
       this.key = key;
     }
