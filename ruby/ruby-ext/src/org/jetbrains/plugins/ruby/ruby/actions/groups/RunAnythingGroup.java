@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,20 +197,18 @@ public abstract class RunAnythingGroup {
    * @param model               needed to avoid adding duplicates into the list
    * @param pattern             input search string
    * @param cancellationChecker runnable that should throw a {@code ProcessCancelledException} if 'load more' process was cancelled
-   * @param isCanceled          computes if 'load more' calculation process has already cancelled
    */
   public final synchronized void collectItems(@NotNull Project project,
                                               @Nullable Module module,
                                               @NotNull RunAnythingSearchListModel model,
                                               @NotNull String pattern,
-                                              @NotNull Runnable cancellationChecker,
-                                              @NotNull Computable<Boolean> isCanceled) {
+                                              @NotNull Runnable cancellationChecker) {
     SearchResult result = getVisibleItems(project, module, model, pattern, false, cancellationChecker);
 
     cancellationChecker.run();
     if (result.size() > 0) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (isCanceled.compute()) return;
+        cancellationChecker.run();
 
         myTitleIndex = model.size();
         result.forEach(model::addElement);

@@ -1,11 +1,8 @@
 package org.jetbrains.plugins.ruby.ruby.actions;
 
-import com.intellij.execution.Executor;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,16 +47,9 @@ public abstract class RunAnythingItem<T> {
   /**
    * Executes specific action on choosing current item in the list
    *
-   * @param executor      Defines whether the action is being executed in debug mode or not
-   * @param event         'Run Anything' action event
-   * @param workDirectory Working directory where the action will be executed
-   * @param focusOwner    Focus owner
+   * @param dataContext Use {@link DataContext} to extract focus owner component, original action event, working directory
    */
-  public void run(@NotNull Project project,
-                  @NotNull Executor executor,
-                  @Nullable AnActionEvent event,
-                  @Nullable VirtualFile workDirectory,
-                  @Nullable Component focusOwner) {
+  public void run(@NotNull Project project, @NotNull DataContext dataContext) {
     triggerUsage();
   }
 }

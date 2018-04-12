@@ -1,14 +1,12 @@
 package org.jetbrains.plugins.ruby.ruby.actions;
 
-import com.intellij.execution.Executor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,11 +22,9 @@ public class RunAnythingActionItem extends RunAnythingItem<AnAction> {
   }
 
   @Override
-  public void run(@NotNull Project project,
-                  @NotNull Executor executor,
-                  @Nullable AnActionEvent event,
-                  @Nullable VirtualFile workDirectory,
-                  @Nullable Component focusOwner) {
+  public void run(@NotNull Project project, @NotNull DataContext dataContext) {
+    Component focusOwner = dataContext.getData(RunAnythingAction.FOCUS_COMPONENT_KEY_NAME);
+    AnActionEvent event = dataContext.getData(RunAnythingAction.RUN_ANYTHING_EVENT_KEY);
     RunAnythingUtil.performRunAnythingAction(myAction, project, focusOwner, event);
   }
 

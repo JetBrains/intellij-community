@@ -4,13 +4,10 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,18 +21,14 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
   }
 
   @Override
-  public void run(@NotNull Project project,
-                  @NotNull Executor executor,
-                  @Nullable AnActionEvent event,
-                  @Nullable VirtualFile workDirectory,
-                  @Nullable Component focusOwner) {
-    super.run(project, executor, event, workDirectory, focusOwner);
+  public void run(@NotNull Project project, @NotNull DataContext dataContext) {
+    super.run(project, dataContext);
 
     Object value = myWrapper.getValue();
     if (value instanceof RunnerAndConfigurationSettings) {
       Executor runExecutor = RunAnythingUtil.findExecutor((RunnerAndConfigurationSettings)value);
       if (runExecutor != null) {
-        myWrapper.perform(project, runExecutor, DataManager.getInstance().getDataContext(focusOwner));
+        myWrapper.perform(project, runExecutor, dataContext);
       }
     }
   }

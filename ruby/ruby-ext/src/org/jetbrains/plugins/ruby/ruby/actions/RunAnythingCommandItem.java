@@ -5,7 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -54,13 +54,14 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
   }
 
   @Override
-  public void run(@NotNull Project project,
-                  @NotNull Executor executor, @Nullable AnActionEvent event,
-                  @Nullable VirtualFile workDirectory,
-                  @Nullable Component focusOwner) {
-    super.run(project, executor, event, workDirectory, focusOwner);
+  public void run(@NotNull Project project, @NotNull DataContext dataContext) {
+    super.run(project, dataContext);
 
+    VirtualFile workDirectory = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
+    Executor executor = dataContext.getData(RunAnythingAction.EXECUTOR_KEY);
     LOG.assertTrue(workDirectory != null);
+    LOG.assertTrue(executor != null);
+
     runCommand(workDirectory, project, myCommandLine, myModule, executor);
   }
 

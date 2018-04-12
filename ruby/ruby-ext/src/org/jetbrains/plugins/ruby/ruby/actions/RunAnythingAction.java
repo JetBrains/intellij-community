@@ -100,6 +100,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
   public static final DataKey<AnActionEvent> RUN_ANYTHING_EVENT_KEY = DataKey.create("RUN_ANYTHING_EVENT_KEY");
+  public static final DataKey<Component> FOCUS_COMPONENT_KEY_NAME = DataKey.create("FOCUS_COMPONENT_KEY_NAME");
+  public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
 
   private static final int MAX_RUN_ANYTHING_HISTORY = 50;
   private static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
@@ -427,7 +429,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
       VirtualFile directory = getWorkDirectory(module);
       if (value instanceof RunAnythingCommandItem) {
-        onDone = () -> ((RunAnythingCommandItem)value).run(project, getExecutor(), null, directory, null);
+        onDone = () -> ((RunAnythingCommandItem)value).run(project, createDataContext(directory, null, null));
       }
       else if (value == null) {
         onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(myDataContext, pattern, directory);
@@ -451,8 +453,30 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       Component c = comp;
       if (c == null) c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
-      value.run(project, getExecutor(), event, null, c);
+      value.run(project, createDataContext(null, c, event));
     });
+  }
+
+  @NotNull
+  private static DataContext createDataContext(@Nullable VirtualFile directory,
+                                               @Nullable Component focusOwner,
+                                               @Nullable AnActionEvent event) {
+    HashMap<String, Object> map = ContainerUtil.newHashMap();
+    if (directory != null) {
+      map.put(CommonDataKeys.VIRTUAL_FILE.getName(), directory);
+    }
+
+    if (event != null) {
+      map.put(RUN_ANYTHING_EVENT_KEY.getName(), event);
+    }
+
+    map.put(EXECUTOR_KEY.getName(), getExecutor());
+
+    if (focusOwner != null) {
+      map.put(FOCUS_COMPONENT_KEY_NAME.getName(), focusOwner);
+    }
+
+    return SimpleDataContext.getSimpleContext(map, DataContext.EMPTY_CONTEXT);
   }
 
   @NotNull
@@ -1093,7 +1117,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     private void buildGroups(boolean isRecent) {
-      buildAllGroups(myPattern, () -> check(), () -> isCanceled(), isRecent);
+      buildAllGroups(myPattern, () -> check(), isRecent);
       updatePopup();
     }
 
@@ -1111,16 +1135,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       assert myCalcThread == this : "There are two CalcThreads running before one of them was cancelled";
     }
 
-    private void buildAllGroups(@NotNull String pattern,
-                                @NotNull Runnable check,
-                                @NotNull Computable<Boolean> isCanceled,
-                                boolean isRecent) {
+    private void buildAllGroups(@NotNull String pattern, @NotNull Runnable checkCancellation, boolean isRecent) {
       Condition<RunAnythingGroup> recent = isRecent ? ((group) -> group.shouldBeShownInitially()) : Condition.TRUE;
       Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions())
             .filter(group -> recent.value(group))
             .forEach(runAnythingGroup -> {
-              runReadAction(() -> runAnythingGroup.collectItems(myProject, myModule, myListModel, pattern, check, isCanceled));
-              check.run();
+              runReadAction(() -> runAnythingGroup.collectItems(myProject, myModule, myListModel, pattern, checkCancellation));
+              checkCancellation.run();
             });
     }
 
