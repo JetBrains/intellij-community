@@ -126,7 +126,7 @@ public class SplitConditionUtil {
       PsiExpression nextCondition = PsiUtil.skipParenthesizedExprDown(nextIf.getCondition());
       if (nextCondition == null) break;
       if (PsiEquivalenceUtil.areElementsEquivalent(extract, nextCondition) && nextIf.getThenBranch() != null) {
-        elseChain.add(nextIf.getThenBranch().getText());
+        elseChain.add(tracker.text(nextIf.getThenBranch()));
         chainFinished = true;
       }
       else {
@@ -160,7 +160,7 @@ public class SplitConditionUtil {
       thenString = createIfString(leave, thenBranch, (String)null, tracker);
     }
     else {
-      thenString = "{" + createIfString(leave, thenBranch, String.join(" else ", elseChain), tracker) + "}";
+      thenString = "{" + createIfString(leave, thenBranch, String.join("\nelse ", elseChain), tracker) + "\n}";
     }
     String ifString = createIfString(extract, thenString, elseBranch, tracker);
     return (PsiIfStatement)factory.createStatementFromText(ifString, thenBranch);
