@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -41,8 +40,6 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
-import java.util.prefs.BackingStoreException;
-import java.util.prefs.Preferences;
 
 /**
  * @author cdr
@@ -110,14 +107,6 @@ public class ThreadTracker {
                                "ApplicationImpl pooled thread ",
                                ProcessIOExecutorService.POOLED_THREAD_PREFIX);
     }
-
-    try {
-      // init zillions of timers in e.g. MacOSXPreferencesFile
-      Preferences.userRoot().flush();
-    }
-    catch (BackingStoreException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   // marks Thread with this name as long-running, which should be ignored from the thread-leaking checks
@@ -168,7 +157,12 @@ public class ThreadTracker {
           continue;
         }
 
-        String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
+        @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
+        String trace = "Thread leaked: " + thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
+        for (final StackTraceElement stackTraceElement : stackTrace) {
+          trace += " at "+stackTraceElement +"\n";
+        }
+        trace += "---\n";
         Assert.fail(trace);
       }
     }
