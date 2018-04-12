@@ -27,6 +27,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -100,8 +101,8 @@ public class Restarter {
   };
 
   private static String checkRestarter(String restarterName) {
-    File restarter = new File(PathManager.getBinPath(), restarterName);
-    return restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
+    File restarter = PathManager.findBinFile(restarterName);
+    return restarter != null && restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
   }
 
   public static void scheduleRestart(@NotNull String... beforeRestart) throws IOException {
@@ -147,10 +148,10 @@ public class Restarter {
       argv[0] = Native.toString(buffer);
     }
 
-    ParametersList args = new ParametersList();
+    ArrayList<String> args = new ArrayList<>();
     args.add(String.valueOf(pid));
     args.add(String.valueOf(beforeRestart.length));
-    args.addAll(beforeRestart);
+    Collections.addAll(args, beforeRestart);
     if (elevate) {
       File launcher = PathManager.findBinFile("launcher.exe");
       if (launcher != null) {
@@ -164,13 +165,13 @@ public class Restarter {
     else {
       args.add(String.valueOf(argv.length));
     }
-    args.addAll(argv);
+    Collections.addAll(args, argv);
 
     File restarter = PathManager.findBinFile("restarter.exe");
     if (restarter == null) {
       throw new IOException("Can't find restarter.exe; please reinstall the IDE");
     }
-    runRestarter(restarter, args.getList());
+    runRestarter(restarter, args);
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
@@ -228,7 +229,7 @@ public class Restarter {
 
   private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
     restarterArgs.add(0, createTempExecutable(restarterFile).getPath());
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
+    Runtime.getRuntime().exec(ParametersListUtil.join(restarterArgs));
   }
 
   @NotNull
