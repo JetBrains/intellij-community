@@ -491,6 +491,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         return annotatedType;
       }
 
+      final PyExpression assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(target);
+      if (assignedValue != null) {
+        final PyType type = getGenericTypeFromTypeVar(assignedValue, new Context(context));
+        if (type != null) {
+          return Ref.create(type);
+        }
+      }
+
       final String name = target.getReferencedName();
       final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(target);
       if (name == null || scopeOwner == null) {
