@@ -3,7 +3,6 @@ package com.intellij.ui.laf
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
@@ -23,6 +22,7 @@ import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.awt.GridLayout
 import java.nio.file.Paths
 import javax.swing.*
 
@@ -65,7 +65,7 @@ class LafTest {
   fun components() {
     doTest {
       val spacing = createIntelliJSpacingConfiguration()
-      val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, spacing.horizontalGap, spacing.verticalGap, true, false))
+      val panel = JPanel(GridLayout(0, 1, spacing.horizontalGap, spacing.verticalGap))
       panel.add(JTextField("text"))
       panel.add(JPasswordField("secret"))
       panel.add(JComboBox<String>(arrayOf("one", "two")))
