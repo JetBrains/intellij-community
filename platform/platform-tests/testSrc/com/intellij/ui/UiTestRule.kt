@@ -11,7 +11,7 @@ import java.awt.Rectangle
 import java.nio.file.Path
 import javax.swing.JPanel
 
-class UiTestRule(private val testDataRoot: Path) {
+class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
   // must be lazy, otherwise we cannot change `java.awt.headless`
   private val graphicsConfiguration by lazy {
     object : GraphicsConfigurationWithTransparency() {

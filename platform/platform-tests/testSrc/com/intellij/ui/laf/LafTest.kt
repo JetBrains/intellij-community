@@ -8,7 +8,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.RestoreScaleRule
 import com.intellij.ui.UiTestRule
 import com.intellij.ui.changeLafIfNeed
 import com.intellij.ui.components.CheckBox
@@ -37,11 +36,9 @@ class LafTest {
     @Parameterized.Parameters(name = "{0}")
     fun lafNames() = listOf("Darcula", "IntelliJ")
 
-    private val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf"))
-
     @JvmField
     @ClassRule
-    val noScaleRule = RestoreScaleRule()
+    val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf"))
   }
 
   @Suppress("MemberVisibilityCanBePrivate")

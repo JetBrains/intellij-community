@@ -7,6 +7,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
@@ -16,12 +17,14 @@ import com.intellij.util.ui.TestScaleHelper
 import com.intellij.util.ui.UIUtil
 import io.netty.util.internal.SystemPropertyUtil
 import net.miginfocom.swing.MigLayout
+import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import java.awt.Component
 import java.awt.Container
+import java.awt.GraphicsEnvironment
 import java.io.File
 import java.nio.file.Path
 import javax.swing.AbstractButton
@@ -30,6 +33,21 @@ import javax.swing.UIManager
 import javax.swing.plaf.metal.MetalLookAndFeel
 
 internal val isUpdateSnapshotsGlobal by lazy { SystemPropertyUtil.getBoolean("test.update.snapshots", false) }
+
+open class RequireHeadlessMode : ExternalResource() {
+  override fun before() {
+    // there is some difference if run as not headless (on retina monitor, at least), not yet clear why, so, just require to run in headless mode
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      assumeTrue("headless mode is required", GraphicsEnvironment.isHeadless())
+    }
+    else {
+      System.setProperty("java.awt.headless", "true")
+      if (!GraphicsEnvironment.isHeadless()) {
+        throw RuntimeException("must be headless")
+      }
+    }
+  }
+}
 
 open class RestoreScaleRule : ExternalResource() {
   override fun before() {

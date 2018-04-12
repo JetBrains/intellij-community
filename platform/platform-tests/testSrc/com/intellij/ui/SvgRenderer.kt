@@ -20,8 +20,6 @@ import java.awt.image.BufferedImage
 import java.io.StringWriter
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
 import javax.swing.Icon
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
@@ -82,7 +80,7 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
       override fun handleError(error: SVGGraphics2DRuntimeException) = throw error
     }
 
-    class PrefixInfo(val specifier: String) {
+    class PrefixInfo() {
       var currentId = 0
     }
 
@@ -90,12 +88,8 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
       private val prefixMap = THashMap<String, PrefixInfo>()
 
       override fun generateID(prefix: String): String {
-        val info = prefixMap.getOrPut(prefix) {
-          // use time to avoid huge diff in case if new element is added in the beginning or in the middle of the document
-          val time = ZonedDateTime.now(ZoneOffset.UTC )
-          PrefixInfo(time.dayOfYear.toString(32) + "-" + (time.year - 2000).toString(32) + "-")
-        }
-        return "${if (prefix == "clipPath") "" else prefix}${info.specifier}${info.currentId++}"
+        val info = prefixMap.getOrPut(prefix) { PrefixInfo() }
+        return "${if (prefix == "clipPath") "" else prefix}${info.currentId++}"
       }
     }
   }

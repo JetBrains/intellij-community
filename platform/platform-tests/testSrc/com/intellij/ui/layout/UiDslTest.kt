@@ -6,7 +6,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.ui.RestoreScaleRule
 import com.intellij.ui.UiTestRule
 import com.intellij.ui.changeLafIfNeed
 import net.miginfocom.layout.LayoutUtil
@@ -30,9 +29,7 @@ class UiDslTest {
 
     @JvmField
     @ClassRule
-    val noScaleRule = RestoreScaleRule()
-
-    private val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"))
+    val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"))
 
     init {
       System.setProperty("idea.ui.set.password.echo.char", "true")
