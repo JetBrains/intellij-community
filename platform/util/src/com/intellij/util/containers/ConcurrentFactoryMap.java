@@ -175,23 +175,23 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   }
 
   @Override
-  public V putIfAbsent(@NotNull K key, V value) {
-    return myMap.putIfAbsent(key, ConcurrentFactoryMap.<V>notNull(value));
+  public V putIfAbsent(K key, V value) {
+    return nullize(myMap.putIfAbsent(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value)));
   }
 
   @Override
-  public boolean remove(@NotNull Object key, Object value) {
-    return myMap.remove(key, notNull(value));
+  public boolean remove(Object key, Object value) {
+    return myMap.remove(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value));
   }
 
   @Override
-  public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    return myMap.replace(key, oldValue, newValue);
+  public boolean replace(K key, V oldValue, V newValue) {
+    return myMap.replace(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(oldValue), ConcurrentFactoryMap.<V>notNull(newValue));
   }
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
-    return myMap.replace(key, value);
+    return nullize(myMap.replace(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value)));
   }
 
   /**
