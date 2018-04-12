@@ -2,22 +2,18 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.ui.tree.render.CustomFieldInplaceEditor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.Icon;
 
 /**
  * @author egor
  */
 public class NewCustomFieldAction extends XDebuggerTreeActionBase {
-  private static final Icon ClassLevelWatch = IconLoader.getIcon("/debugger/classLevelWatch.svg");
-
   public NewCustomFieldAction() {
-    getTemplatePresentation().setIcon(ClassLevelWatch);
+    getTemplatePresentation().setIcon(AllIcons.Debugger.ClassLevelWatch);
   }
 
   @Override

@@ -341,6 +341,7 @@
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.JavadocCopyPastePreProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
+    <customPasteProvider implementation="com.intellij.codeInsight.editorActions.RawStringLiteralPasteProcessor"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ArrayVariableMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.VariableOfTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ComponentTypeOfMacro"/>

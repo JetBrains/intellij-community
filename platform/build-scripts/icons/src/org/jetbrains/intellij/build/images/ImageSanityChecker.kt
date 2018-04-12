@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.images
 
+import org.jetbrains.intellij.build.images.ImageExtension.*
 import org.jetbrains.intellij.build.images.ImageSanityCheckerBase.Severity.*
 import org.jetbrains.intellij.build.images.ImageType.*
 import org.jetbrains.jps.model.module.JpsModule
@@ -33,21 +34,20 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     checkHaveCompleteIconSet(images, module)
     checkHaveValidSize(images, module)
     checkAreNotAmbiguous(images, module)
+    checkSvgIconsFallbackVersions(images, module)
   }
 
   private fun checkHaveRetinaVersion(images: List<ImagePaths>, module: JpsModule) {
     process(images, Severity.INFO, "image without retina version", module) { image ->
-      val hasRetina = RETINA in image.files
-      val hasRetinaDarcula = RETINA_DARCULA in image.files
-      return@process hasRetina || hasRetinaDarcula
+      return@process image.getFiles(RETINA, RETINA_DARCULA).isNotEmpty()
     }
   }
 
   private fun checkHaveCompleteIconSet(images: List<ImagePaths>, module: JpsModule) {
     process(images, WARNING, "image without complete set of additional icons", module) { image ->
-      val hasRetina = RETINA in image.files
-      val hasDarcula = DARCULA in image.files
-      val hasRetinaDarcula = RETINA_DARCULA in image.files
+      val hasRetina = image.getFiles(RETINA).isNotEmpty()
+      val hasDarcula = image.getFiles(DARCULA).isNotEmpty()
+      val hasRetinaDarcula = image.getFiles(RETINA_DARCULA).isNotEmpty()
 
       if (hasRetinaDarcula) {
         return@process hasRetina && hasDarcula
@@ -61,23 +61,33 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
   private fun checkHaveValidSize(images: List<ImagePaths>, module: JpsModule) {
     process(images, WARNING, "icon with suspicious size", module) { image ->
       if (!isIcon(image.file!!)) return@process true
-      val sizes = image.files.mapValues { imageSize(it.value) }
+      val basicSizes = image.getFiles(BASIC, DARCULA).mapNotNull { imageSize(it) }.toSet()
+      val retinaSizes = image.getFiles(RETINA, RETINA_DARCULA).mapNotNull { imageSize(it) }.toSet()
 
-      val sizeBasic = sizes[BASIC]!!
-      val sizeRetina = sizes[RETINA]
-      val sizeDarcula = sizes[DARCULA]
-      val sizeRetinaDarcula = sizes[RETINA_DARCULA]
-
-      val sizeBasicTwice = Dimension(sizeBasic.width * 2, sizeBasic.height * 2)
-      return@process (sizeDarcula == null || sizeBasic == sizeDarcula) &&
-                     (sizeRetina == null || sizeRetinaDarcula == null || sizeRetina == sizeRetinaDarcula) &&
-                     (sizeRetina == null || sizeBasicTwice == sizeRetina)
+      if (basicSizes.size > 1) return@process false
+      if (retinaSizes.size > 1) return@process false
+      if (basicSizes.size == 1 && retinaSizes.size == 1) {
+        val sizeBasic = basicSizes.single()
+        val sizeRetina = retinaSizes.single()
+        val sizeBasicTwice = Dimension(sizeBasic.width * 2, sizeBasic.height * 2)
+        return@process sizeBasicTwice == sizeRetina
+      }
+      return@process true
     }
   }
 
   private fun checkAreNotAmbiguous(images: List<ImagePaths>, module: JpsModule) {
-    process(images, WARNING, "image with ambiguous definition (ex: has both '.png' and '.gif' versions)", module) { image ->
-      return@process !image.ambiguous
+    process(images, WARNING, "image with ambiguous definition (has both '.png' and '.gif' versions)", module) { image ->
+      val extensions = image.files.map { ImageExtension.fromFile(it) }
+      return@process GIF !in extensions || PNG !in extensions
+    }
+  }
+
+  private fun checkSvgIconsFallbackVersions(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "svg image with non-fallback legacy version", module) { image ->
+      val extensions = image.files.map { ImageExtension.fromFile(it) }
+      if (SVG !in extensions) return@process true
+      return@process image.files.filter { ImageExtension.fromFile(it) != SVG }.filter { ImageType.fromFile(it) != BASIC }.isEmpty()
     }
   }
 

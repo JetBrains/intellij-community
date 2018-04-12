@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -99,15 +101,15 @@ public class Restarter {
   };
 
   private static String checkRestarter(String restarterName) {
-    File restarter = new File(PathManager.getBinPath(), restarterName);
-    return restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
+    File restarter = PathManager.findBinFile(restarterName);
+    return restarter != null && restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
   }
 
   public static void scheduleRestart(@NotNull String... beforeRestart) throws IOException {
     scheduleRestart(false, beforeRestart);
   }
 
-  public static void scheduleRestart(Boolean elevate, @NotNull String... beforeRestart) throws IOException {
+  public static void scheduleRestart(boolean elevate, @NotNull String... beforeRestart) throws IOException {
     Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
     if (SystemInfo.isWindows) {
       restartOnWindows(elevate, beforeRestart);
@@ -123,7 +125,7 @@ public class Restarter {
     }
   }
 
-  private static void restartOnWindows(Boolean elevate, String... beforeRestart) throws IOException {
+  private static void restartOnWindows(boolean elevate, String... beforeRestart) throws IOException {
     Kernel32 kernel32 = Native.loadLibrary("kernel32", Kernel32.class);
     Shell32 shell32 = Native.loadLibrary("shell32", Shell32.class);
 
@@ -146,19 +148,30 @@ public class Restarter {
       argv[0] = Native.toString(buffer);
     }
 
-    List<String> args = new ArrayList<>();
+    ArrayList<String> args = new ArrayList<>();
     args.add(String.valueOf(pid));
     args.add(String.valueOf(beforeRestart.length));
     Collections.addAll(args, beforeRestart);
     if (elevate) {
-      args.add(String.valueOf(argv.length + 1));
-      args.add(new File(PathManager.getBinPath(), "launcher.exe").getPath());
+      File launcher = PathManager.findBinFile("launcher.exe");
+      if (launcher != null) {
+        args.add(launcher.getPath());
+        args.add(String.valueOf(argv.length + 1));
+      }
+      else {
+        args.add(String.valueOf(argv.length));
+      }
     }
     else {
       args.add(String.valueOf(argv.length));
     }
     Collections.addAll(args, argv);
-    runRestarter(new File(PathManager.getBinPath(), "restarter.exe"), args);
+
+    File restarter = PathManager.findBinFile("restarter.exe");
+    if (restarter == null) {
+      throw new IOException("Can't find restarter.exe; please reinstall the IDE");
+    }
+    runRestarter(restarter, args);
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
@@ -216,7 +229,7 @@ public class Restarter {
 
   private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
     restarterArgs.add(0, createTempExecutable(restarterFile).getPath());
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
+    Runtime.getRuntime().exec(ParametersListUtil.join(restarterArgs));
   }
 
   @NotNull

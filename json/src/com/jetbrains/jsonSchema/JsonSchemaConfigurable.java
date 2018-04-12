@@ -30,21 +30,24 @@ import java.io.File;
  */
 public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSchemaConfiguration> {
   private final Project myProject;
-  @NotNull private final String mySchemaFilePath;
+  @NotNull private String mySchemaFilePath;
   @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
   @Nullable private final Runnable myTreeUpdater;
+  private boolean myFresh;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
   private String myError;
 
   public JsonSchemaConfigurable(Project project,
                                 @NotNull String schemaFilePath, @NotNull UserDefinedJsonSchemaConfiguration schema,
-                                @Nullable Runnable updateTree) {
+                                @Nullable Runnable updateTree,
+                                boolean fresh) {
     super(true, updateTree);
     myProject = project;
     mySchemaFilePath = schemaFilePath;
     mySchema = schema;
     myTreeUpdater = updateTree;
+    myFresh = fresh;
     myDisplayName = mySchema.getName();
   }
 
@@ -110,12 +113,16 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     return couple.first.startsWith("http");
   }
 
-  private static boolean isValidURL(@NotNull final String url) {
+  public static boolean isValidURL(@NotNull final String url) {
     return isHttpPath(url) && Urls.parse(url, false) != null;
   }
 
   private void doValidation() throws ConfigurationException {
     String schemaSubPath = myView.getSchemaSubPath();
+
+    if (StringUtil.isEmptyOrSpaces(schemaSubPath)) {
+      throw new ConfigurationException((!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Schema path is empty");
+    }
 
     VirtualFile vFile;
     String filename;
@@ -144,7 +151,6 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     }
 
     if (StringUtil.isEmptyOrSpaces(myDisplayName)) throw new ConfigurationException(filename + ": Schema name is empty");
-    if (StringUtil.isEmptyOrSpaces(schemaSubPath)) throw new ConfigurationException(filename + ": Schema path is empty");
 
     // we don't validate remote schemas while in options dialog
     if (vFile instanceof HttpVirtualFile) return;
@@ -180,6 +186,25 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
       info.setRelativePathToSchema(mySchema.getRelativePathToSchema());
     }
     return info;
+  }
+
+  @Override
+  public void updateName() {
+    if (myFresh) {
+      myView.runFileChooser();
+      String schemaSubPath = myView.getSchemaSubPath();
+      if (schemaSubPath.isEmpty())  {
+        myFresh = false;
+        super.updateName();
+        return;
+      }
+      File file = new File(myProject.getBasePath(), schemaSubPath);
+      mySchemaFilePath = file.getPath();
+      myDisplayName = FileUtil.getNameWithoutExtension(file);
+      mySchema.setName(myDisplayName);
+      myFresh = false;
+    }
+    super.updateName();
   }
 
   @Override
