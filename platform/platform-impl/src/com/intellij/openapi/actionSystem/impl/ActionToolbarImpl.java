@@ -176,7 +176,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
-    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
+    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);
 
     myUpdater.updateActions(updateActionsNow, false);

@@ -1,1 +1,3 @@
 deprecated: debug.png -> /actions/startDebugger.png
+deprecated: projectSettings.png -> /general/gearPlain.png
+deprecated: secondaryGroup.png -> /general/gearPlain.png

@@ -627,7 +627,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   @NotNull
   protected JComponent createSettingsButton() {
-    JLabel label = new JLabel(AllIcons.General.SecondaryGroup);
+    JLabel label = new JLabel(AllIcons.General.GearPlain);
     label.setBorder(JBUI.Borders.empty(0, 2));
     label.setHorizontalAlignment(SwingConstants.RIGHT);
     label.setVerticalAlignment(SwingConstants.CENTER);

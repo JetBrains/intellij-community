@@ -570,7 +570,10 @@ public class AllIcons {
     public static final Icon ProjectConfigurable = IconLoader.getIcon("/general/projectConfigurable.png"); // 9x9
     public static final Icon ProjectConfigurableBanner = IconLoader.getIcon("/general/projectConfigurableBanner.png"); // 9x9
     public static final Icon ProjectConfigurableSelected = IconLoader.getIcon("/general/projectConfigurableSelected.png"); // 9x9
-    public static final Icon ProjectSettings = IconLoader.getIcon("/general/projectSettings.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ProjectSettings = IconLoader.getIcon("/general/gearPlain.png"); // 16x16
     public static final Icon ProjectStructure = IconLoader.getIcon("/general/projectStructure.png"); // 16x16
     public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.png"); // 16x16
     public static final Icon QuestionDialog = IconLoader.getIcon("/general/questionDialog.png"); // 32x32
@@ -582,7 +585,10 @@ public class AllIcons {
     public static final Icon RunWithCoverage = IconLoader.getIcon("/general/runWithCoverage.png"); // 16x16
     public static final Icon SafeMode = IconLoader.getIcon("/general/safeMode.png"); // 13x13
     public static final Icon SearchEverywhereGear = IconLoader.getIcon("/general/searchEverywhereGear.png"); // 16x16
-    public static final Icon SecondaryGroup = IconLoader.getIcon("/general/secondaryGroup.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SecondaryGroup = IconLoader.getIcon("/general/gearPlain.png"); // 16x16
     public static final Icon SeparatorH = IconLoader.getIcon("/general/separatorH.png"); // 17x11
     public static final Icon Settings = IconLoader.getIcon("/general/settings.png"); // 16x16
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.png"); // 16x16

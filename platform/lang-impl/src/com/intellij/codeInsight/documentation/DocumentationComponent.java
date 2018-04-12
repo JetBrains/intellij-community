@@ -1485,7 +1485,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     private MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
       super(action, presentation, place, minimumSize);
-      myPresentation.setIcon(AllIcons.General.SecondaryGroup);
+      myPresentation.setIcon(AllIcons.General.GearPlain);
     }
   }
 

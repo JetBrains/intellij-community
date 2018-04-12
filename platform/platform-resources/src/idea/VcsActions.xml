@@ -178,7 +178,7 @@
       <reference ref="ShelvedChanges.ShowHideDeleted" />
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
      <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"
-              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.SecondaryGroup"/>
+              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.GearPlain"/>
     </group>
 
     <!--a group for plugins to add their actions-->

@@ -481,7 +481,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     });
     tabResultsContextGroup.setPopup(true);
     Presentation tabSettingsPresentation = new Presentation();
-    tabSettingsPresentation.setIcon(AllIcons.General.SecondaryGroup);
+    tabSettingsPresentation.setIcon(AllIcons.General.GearPlain);
     myTabResultsButton =
       new ActionButton(tabResultsContextGroup, tabSettingsPresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     new AnAction() {

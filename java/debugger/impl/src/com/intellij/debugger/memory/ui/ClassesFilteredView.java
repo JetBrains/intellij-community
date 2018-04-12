@@ -276,7 +276,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("MemoryView.SettingsPopupActionGroup");
     group.setPopup(true);
     final Presentation actionsPresentation = new Presentation("Memory View Settings");
-    actionsPresentation.setIcon(AllIcons.General.SecondaryGroup);
+    actionsPresentation.setIcon(AllIcons.General.GearPlain);
 
     final ActionButton button = new ActionButton(group, actionsPresentation, ActionPlaces.UNKNOWN, new JBDimension(25, 25));
     final BorderLayoutPanel topPanel = new BorderLayoutPanel();
