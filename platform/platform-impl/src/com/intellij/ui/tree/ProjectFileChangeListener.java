@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
+
 public final class ProjectFileChangeListener implements BulkFileListener {
   private final BiConsumer<Module, VirtualFile> consumer;
   private final Project project;
@@ -59,6 +61,15 @@ public final class ProjectFileChangeListener implements BulkFileListener {
   public void invalidate(@NotNull VirtualFile file) {
     ProjectFileIndex index = project.isDisposed() ? null : ProjectFileIndex.getInstance(project);
     Module module = index == null ? null : index.getModuleForFile(file);
-    if (module != null) consumer.accept(module, file);
+    if (module != null) {
+      consumer.accept(module, file);
+    }
+    else {
+      VirtualFile ancestor = project.getBaseDir();
+      if (ancestor != null && isAncestor(ancestor, file, false)) {
+        // file does not belong to any content root, but it is located under the project directory
+        consumer.accept(null, file);
+      }
+    }
   }
 }
