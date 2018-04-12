@@ -2897,7 +2897,8 @@ public class HighlightUtil extends HighlightUtilBase {
     INTERSECTION_CASTS(LanguageLevel.JDK_1_8, "feature.intersections.in.casts"),
     STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
-    MODULES(LanguageLevel.JDK_1_9, "feature.modules");
+    MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
+    RAW_LITERALS(LanguageLevel.JDK_11_PREVIEW, "feature.raw.literals");
 
     private final LanguageLevel level;
     private final String key;
