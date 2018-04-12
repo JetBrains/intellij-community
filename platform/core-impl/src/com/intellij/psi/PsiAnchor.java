@@ -17,6 +17,7 @@
 package com.intellij.psi;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -27,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.smartPointers.Identikit;
 import com.intellij.psi.impl.smartPointers.SelfElementInfo;
 import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
@@ -83,7 +85,7 @@ public abstract class PsiAnchor {
       return new HardReference(element);
     }
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return new HardReference(element);
+    if (virtualFile == null || virtualFile instanceof VirtualFileWindow) return new HardReference(element);
 
     PsiAnchor stubRef = createStubReference(element, file);
     if (stubRef != null) return stubRef;
@@ -144,7 +146,7 @@ public abstract class PsiAnchor {
     return null;
   }
 
-  private static boolean canHaveStub(PsiFile file) {
+  private static boolean canHaveStub(@NotNull PsiFile file) {
     if (!(file instanceof PsiFileImpl)) return false;
 
     VirtualFile vFile = file.getVirtualFile();
@@ -235,11 +237,12 @@ public abstract class PsiAnchor {
   public static class HardReference extends PsiAnchor {
     private final PsiElement myElement;
 
-    public HardReference(final PsiElement element) {
+    public HardReference(@NotNull PsiElement element) {
       myElement = element;
     }
 
     @Override
+    @NotNull
     public PsiElement retrieve() {
       return myElement;
     }
@@ -285,7 +288,8 @@ public abstract class PsiAnchor {
       myLanguage = findLanguage(psiFile);
     }
 
-    private static Language findLanguage(PsiFile file) {
+    @NotNull
+    private static Language findLanguage(@NotNull PsiFile file) {
       FileViewProvider vp = file.getViewProvider();
       Set<Language> languages = vp.getLanguages();
       for (Language language : languages) {
@@ -424,6 +428,9 @@ public abstract class PsiAnchor {
       myLanguage = language;
       myElementType = elementType;
       myVirtualFile = file.getVirtualFile();
+      if (file.getViewProvider() instanceof FreeThreadedFileViewProvider) {
+        throw new IllegalArgumentException("Must not use StubIndexReference for injected file; take a closer look at HardReference instead");
+      }
       myProject = file.getProject();
       myIndex = index;
     }
@@ -444,6 +451,7 @@ public abstract class PsiAnchor {
       return ReadAction.compute(() -> restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType, false));
     }
 
+    @NotNull
     public String diagnoseNull() {
       final PsiFile file = ReadAction.compute(this::getFile);
       try {
