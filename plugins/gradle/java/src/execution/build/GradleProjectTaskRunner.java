@@ -42,12 +42,15 @@ import com.intellij.task.impl.JpsProjectTaskRunner;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -223,6 +226,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     if (ContainerUtil.isEmpty(projectTasks)) return Collections.emptyList();
 
     List<Module> affectedModules = new SmartList<>();
+    Map<Module, String> rootPathsMap = FactoryMap.create(module -> getGradleRootProjectPath(module));
     final CachedModuleDataFinder moduleDataFinder = new CachedModuleDataFinder();
     for (ProjectTask projectTask : projectTasks) {
       if (!(projectTask instanceof ModuleBuildTask)) continue;
@@ -231,8 +235,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       Module module = moduleBuildTask.getModule();
       affectedModules.add(module);
 
-      final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-      if (rootProjectPath == null) continue;
+      final String rootProjectPath = rootPathsMap.get(module);
+      if (StringUtil.isEmpty(rootProjectPath)) continue;
 
       final String projectId = ExternalSystemApiUtil.getExternalProjectId(module);
       if (projectId == null) continue;
@@ -279,6 +283,27 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       }
     }
     return affectedModules;
+  }
+
+  @NotNull
+  private static String getGradleRootProjectPath(Module module) {
+    Project project = module.getProject();
+    String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+    if (rootProjectPath == null) return "";
+
+    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+    if (projectPath == null) return "";
+
+    GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(rootProjectPath);
+    if (projectSettings != null && projectSettings.getCompositeBuild() != null) {
+      List<BuildParticipant> buildParticipants = projectSettings.getCompositeBuild().getCompositeParticipants();
+      return buildParticipants.stream()
+                              .filter(participant -> participant.getProjects().contains(projectPath))
+                              .findFirst()
+                              .map(BuildParticipant::getRootPath)
+                              .orElse(rootProjectPath);
+    }
+    return rootProjectPath;
   }
 
   private static void addArtifactsBuildTasks(@Nullable Collection<? extends ProjectTask> tasks,
