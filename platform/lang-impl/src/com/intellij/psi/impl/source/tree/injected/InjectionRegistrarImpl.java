@@ -164,7 +164,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
 
   private void checkThreading() {
     if (currentThread != Thread.currentThread()) {
-      throw new IllegalStateException("Wow, you must not start injecting in one thread ("+currentThread+") but finish the other");
+      throw new IllegalStateException("Wow, you must not start injecting in one thread ("+currentThread+") and finish in the other ("+Thread.currentThread()+")");
     }
   }
 
