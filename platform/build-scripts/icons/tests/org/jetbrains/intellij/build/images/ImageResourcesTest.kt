@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.images
 
+import com.intellij.idea.Bombed
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.model.JpsElementFactory
@@ -31,6 +32,7 @@ import org.junit.runners.Parameterized.Parameters
 import java.io.File
 import java.util.*
 
+@Bombed(user = "Sergey.Malenkov", year = 2018, month = Calendar.APRIL, day = 25)
 class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
