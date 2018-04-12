@@ -52,6 +52,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -547,14 +548,16 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @NotNull
   protected JComponent createCenterPanel() {
-    return PanelFactory.grid()
-                       .add(PanelFactory.panel(JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
-                                                          .addToCenter(myRepositoryUrlCombobox)
-                                                          .addToRight(myTestButton))
-                                        .withLabel(DvcsBundle.getString("clone.repository.url.label")))
-                       .add(PanelFactory.panel(myDirectoryField)
-                                        .withLabel(DvcsBundle.getString("clone.destination.directory.label")))
-                       .createPanel();
+    JPanel panel = PanelFactory.grid()
+                               .add(PanelFactory.panel(JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
+                                                                  .addToCenter(myRepositoryUrlCombobox)
+                                                                  .addToRight(myTestButton))
+                                                .withLabel(DvcsBundle.getString("clone.repository.url.label")))
+                               .add(PanelFactory.panel(myDirectoryField)
+                                                .withLabel(DvcsBundle.getString("clone.destination.directory.label")))
+                               .createPanel();
+    panel.setPreferredSize(new JBDimension(500, 50, true));
+    return panel;
   }
 
   protected static class TestResult {
