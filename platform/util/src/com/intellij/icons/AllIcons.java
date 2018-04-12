@@ -242,7 +242,7 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Class_filter = IconLoader.getIcon("/debugger/class_filter.png"); // 16x16
+    public static final Icon Class_filter = IconLoader.getIcon("/general/filter.png"); // 16x16
     public static final Icon ClassLevelWatch = IconLoader.getIcon("/debugger/classLevelWatch.svg"); // 16x16
     public static final Icon CommandLine = IconLoader.getIcon("/debugger/commandLine.png"); // 16x16
     public static final Icon Console = IconLoader.getIcon("/debugger/console.png"); // 16x16
@@ -316,7 +316,7 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon NewWatch = IconLoader.getIcon("/debugger/newWatch.png"); // 16x16
+    public static final Icon NewWatch = IconLoader.getIcon("/general/add.png"); // 16x16
     public static final Icon Overhead = IconLoader.getIcon("/debugger/overhead.png"); // 16x16
     public static final Icon Question_badge = IconLoader.getIcon("/debugger/question_badge.png"); // 6x9
     public static final Icon RestoreLayout = IconLoader.getIcon("/debugger/restoreLayout.png"); // 16x16
@@ -356,7 +356,7 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Watches = IconLoader.getIcon("/debugger/watches.png"); // 16x16
+    public static final Icon Watches = IconLoader.getIcon("/debugger/watch.png"); // 16x16
     public static final Icon WatchLastReturnValue = IconLoader.getIcon("/debugger/watchLastReturnValue.png"); // 16x16
 
   }
