@@ -206,7 +206,7 @@ public abstract class RunAnythingGroup {
     SearchResult result = getVisibleItems(project, module, model, pattern, false, cancellationChecker);
 
     cancellationChecker.run();
-    if (result.size() > 0) {
+    if (!result.isEmpty()) {
       ApplicationManager.getApplication().invokeLater(() -> {
         cancellationChecker.run();
 

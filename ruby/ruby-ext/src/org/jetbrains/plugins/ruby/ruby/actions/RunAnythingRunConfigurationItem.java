@@ -39,6 +39,12 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
     return myWrapper.getText();
   }
 
+  @NotNull
+  @Override
+  public String getAdText() {
+    return RunAnythingAction.AD_MODULE_CONTEXT + " , " + RunAnythingAction.AD_DEBUG_TEXT;
+  }
+
   @Override
   public void triggerUsage() {
     RunAnythingUtil.triggerDebuggerStatistics();

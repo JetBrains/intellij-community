@@ -26,6 +26,12 @@ public abstract class RunAnythingItem<T> {
   public abstract String getText();
 
   /**
+   * Returns advertisement text painted under the input field
+   */
+  @NotNull
+  public abstract String getAdText();
+
+  /**
    * Returns icon of {@link T}
    */
   @NotNull

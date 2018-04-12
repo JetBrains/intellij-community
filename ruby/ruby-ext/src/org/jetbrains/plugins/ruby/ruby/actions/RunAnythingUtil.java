@@ -153,7 +153,7 @@ public class RunAnythingUtil {
     final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
 
-    Executor executor = !RunAnythingAction.ourShiftIsPressed.get() ? runExecutor : debugExecutor;
+    Executor executor = !RunAnythingAction.SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
     RunConfiguration runConf = settings.getConfiguration();
     if (executor == null) return null;
     ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runConf);

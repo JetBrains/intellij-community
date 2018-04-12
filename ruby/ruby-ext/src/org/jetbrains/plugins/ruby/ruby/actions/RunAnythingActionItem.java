@@ -36,6 +36,12 @@ public class RunAnythingActionItem extends RunAnythingItem<AnAction> {
 
   @NotNull
   @Override
+  public String getAdText() {
+    return RunAnythingAction.AD_ACTION_TEXT;
+  }
+
+  @NotNull
+  @Override
   public Icon getIcon() {
     return ObjectUtils.notNull(myAction.getTemplatePresentation().getIcon(), AllIcons.Toolwindows.ToolWindowRun);
   }

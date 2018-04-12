@@ -204,6 +204,12 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
 
   @NotNull
   @Override
+  public String getAdText() {
+    return RunAnythingAction.AD_MODULE_CONTEXT + " , " + RunAnythingAction.AD_REMOVE_COMMAND;
+  }
+
+  @NotNull
+  @Override
   public Icon getIcon() {
     return UNDEFINED_COMMAND_ICON;
   }

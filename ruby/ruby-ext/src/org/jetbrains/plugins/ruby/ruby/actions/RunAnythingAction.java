@@ -95,24 +95,25 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final String RUN_ANYTHING_HISTORY_KEY = "RunAnythingHistoryKey";
   public static final int SEARCH_FIELD_COLUMNS = 25;
   public static final String UNKNOWN_CONFIGURATION = "UNKNOWN_CONFIGURATION";
-  public static final AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
-  public static final AtomicBoolean ourAltIsPressed = new AtomicBoolean(false);
+  public static final AtomicBoolean SHIFT_IS_PRESSED = new AtomicBoolean(false);
+  public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
   public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
   public static final DataKey<AnActionEvent> RUN_ANYTHING_EVENT_KEY = DataKey.create("RUN_ANYTHING_EVENT_KEY");
   public static final DataKey<Component> FOCUS_COMPONENT_KEY_NAME = DataKey.create("FOCUS_COMPONENT_KEY_NAME");
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
 
+  static final String SHIFT_SHORTCUT_TEXT = KeymapUtil.getShortcutText(KeyboardShortcut.fromString(("SHIFT")));
+  static final String AD_ACTION_TEXT = String.format("Press %s to run with default settings", SHIFT_SHORTCUT_TEXT);
+  static final String AD_DEBUG_TEXT = String.format("%s to debug", SHIFT_SHORTCUT_TEXT);
+  static final String AD_MODULE_CONTEXT =
+    String.format("Press %s to run in the current file context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
+  static final String AD_REMOVE_COMMAND =
+    String.format("%s to delete recent command", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
+
   private static final int MAX_RUN_ANYTHING_HISTORY = 50;
   private static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
-  private static final String SHIFT_SHORTCUT_TEXT = KeymapUtil.getShortcutText(KeyboardShortcut.fromString(("SHIFT")));
-  private static final String AD_ACTION_TEXT = String.format("Press %s to run with default settings", SHIFT_SHORTCUT_TEXT);
-  private static final String AD_DEBUG_TEXT = String.format("%s to debug", SHIFT_SHORTCUT_TEXT);
-  private static final String AD_MODULE_CONTEXT =
-    String.format("Press %s to run in the current file context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
-  private static final String AD_REMOVE_COMMAND =
-    String.format("%s to delete recent command", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(RubyIcons.RunAnything.Run_anything, 16, 16);
   static final String RUN_ANYTHING = "RunAnything";
   private RunAnythingAction.MyListRenderer myRenderer;
@@ -164,10 +165,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       if (event instanceof KeyEvent) {
         final int keyCode = ((KeyEvent)event).getKeyCode();
         if (keyCode == KeyEvent.VK_SHIFT) {
-          ourShiftIsPressed.set(event.getID() == KeyEvent.KEY_PRESSED);
+          SHIFT_IS_PRESSED.set(event.getID() == KeyEvent.KEY_PRESSED);
         }
         else if (keyCode == KeyEvent.VK_ALT) {
-          ourAltIsPressed.set(event.getID() == KeyEvent.KEY_PRESSED);
+          ALT_IS_PRESSED.set(event.getID() == KeyEvent.KEY_PRESSED);
         }
       }
       return false;
@@ -493,7 +494,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @NotNull
   private VirtualFile getWorkDirectory(@Nullable Module module) {
-    if (ourAltIsPressed.get() && myVirtualFile != null) {
+    if (ALT_IS_PRESSED.get() && myVirtualFile != null) {
       return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
     }
 
@@ -798,18 +799,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private void updateAdText() {
     Object value = myList.getSelectedValue();
 
-    String text = AD_MODULE_CONTEXT;
-    if (value instanceof RunAnythingRunConfigurationItem) {
-      text += " , " + AD_DEBUG_TEXT;
+    if (value instanceof RunAnythingItem) {
+      setAdText(((RunAnythingItem)value).getAdText());
     }
-    else if (value instanceof RunAnythingActionItem) {
-      text = AD_ACTION_TEXT;
-    }
-    else if (value instanceof RunAnythingCommandItem) {
-      text += " , " + AD_REMOVE_COMMAND;
-    }
-
-    setAdText(text);
   }
 
   private void showSettings() {
@@ -949,7 +941,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
 
-    return !ourShiftIsPressed.get() ? runExecutor : debugExecutor;
+    return !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
   }
 
   private class MyListRenderer extends ColoredListCellRenderer {
