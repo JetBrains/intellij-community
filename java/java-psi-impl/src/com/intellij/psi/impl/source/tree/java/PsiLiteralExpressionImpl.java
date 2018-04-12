@@ -114,8 +114,7 @@ public class PsiLiteralExpressionImpl
     }
 
     if (type == JavaTokenType.RAW_STRING_LITERAL) {
-      String rawString = getRawString();
-      return rawString == null ? null : internedParseStringCharacters(rawString);
+      return getRawString();
     }
 
     String text = NUMERIC_LITERALS.contains(type) ? getCanonicalText().toLowerCase(Locale.ENGLISH) : getCanonicalText();
