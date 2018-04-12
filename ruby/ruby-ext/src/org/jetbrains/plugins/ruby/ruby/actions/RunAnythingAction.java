@@ -625,6 +625,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myTextField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
+        if (e.isShiftDown() && e.isAltDown()) {
+          myTextFieldTitle.setText(RBundle.message("run.anything.run.in.context.debug.title"));
+          return;
+        }
+
         switch (e.getKeyCode()) {
           case KeyEvent.VK_SHIFT:
             myTextFieldTitle.setText(RBundle.message("run.anything.run.debug.title"));
