@@ -134,15 +134,11 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       result = ContainerUtil.list("clean" + StringUtil.capitalize(taskName), taskName);
     }
 
-    final String path;
-    if(!externalProjectId.startsWith(":")) {
-      path = ":";
-    } else {
-      final List<String> pathParts = StringUtil.split(externalProjectId, ":");
-      if (trimSourceSet && !pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
-      final String join = StringUtil.join(pathParts, ":");
-      path = ":" + join + (!join.isEmpty() ? ":" : "");
-    }
+    final List<String> pathParts = StringUtil.split(externalProjectId, ":");
+    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) pathParts.remove(0);
+    if (trimSourceSet && !pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
+    String join = StringUtil.join(pathParts, ":");
+    String path = ":" + join + (!join.isEmpty() ? ":" : "");
     return ContainerUtil.map(result, s -> path + s);
   }
 }
