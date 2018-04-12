@@ -2907,6 +2907,10 @@ public class HighlightUtil extends HighlightUtilBase {
       this.level = level;
       this.key = key;
     }
+
+    private boolean isSufficient(LanguageLevel useSiteLevel) {
+      return level.isPreview() ? useSiteLevel == level : useSiteLevel.isAtLeast(level);
+    }
   }
 
   @Nullable
@@ -2914,7 +2918,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                     @NotNull Feature feature,
                                     @NotNull LanguageLevel level,
                                     @NotNull PsiFile file) {
-    if (file.getManager().isInProject(file) && !level.isAtLeast(feature.level)) {
+    if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(element, feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(feature.level));
