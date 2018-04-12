@@ -399,11 +399,13 @@
 
     <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"/>
 
-    <!-- Toolbar -->
-    <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction">
-      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
-    </action>
+    <group id="RevealGroup">
+      <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
 
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </group>
+
+    <!-- Toolbar -->
     <group id="ToolbarFindGroup">
       <add-to-group group-id="MainToolBar" relative-to-action="Back" anchor="before"/>
     </group>
