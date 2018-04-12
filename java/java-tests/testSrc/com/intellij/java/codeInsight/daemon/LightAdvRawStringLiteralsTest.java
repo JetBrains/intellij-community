@@ -7,7 +7,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class LightAdvRawStringLiteralsHighlightingTest extends LightCodeInsightFixtureTestCase {
+public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
@@ -26,6 +26,14 @@ public class LightAdvRawStringLiteralsHighlightingTest extends LightCodeInsightF
 
   public void testPasteInRawStringLiteral() {
     doTestPaste("class A {{String s = `q<caret>`;}}", "a\nb`\nc", "class A {{String s = ``qa\nb`\nc``;}}");
+  }
+
+  public void testPasteInRawStringLiteralOneAndTwo() {
+    doTestPaste("class A {{String s = `q<caret>`;}}", "a\n``b`\nc", "class A {{String s = ```qa\n``b`\nc```;}}");
+  }
+
+  public void testPasteInRawStringLiteralOnlyTwo() {
+    doTestPaste("class A {{String s = `q<caret>`;}}", "a\n``b\nc", "class A {{String s = `qa\n``b\nc`;}}");
   }
 
   public void testPasteInRawStringLiteralNoTicInside() {

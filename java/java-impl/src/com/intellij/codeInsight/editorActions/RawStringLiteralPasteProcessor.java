@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 
 /**
  * Disable all preprocessing to get the string AS IS
@@ -42,22 +41,34 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
 
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement stringLiteral = findLiteralAtCaret(file, offset);
+    PsiElement stringLiteral = findRawStringLiteralAtCaret(file, offset);
     if (stringLiteral == null) return;
 
     String literalText = stringLiteral.getText();
     int length = literalText.length();
-    int quotesLength = 0;
-    while (quotesLength < length && literalText.charAt(quotesLength) == '`') quotesLength++;
+    int quotesLength = getQuotesSequence(literalText, length, 0);
 
     String quotes = literalText.substring(0, quotesLength);
-    while (text.contains(quotes)) {
-      quotes += "`";
+    int textLength = text.length();
+    int idx = quotesLength;
+    int maxQuotesNumber = -1;
+    boolean hasToReplace = false;
+    while ((idx = text.indexOf(quotes, idx)) > 0 && idx < textLength) {
+      int additionalQuotesLength = getQuotesSequence(text, textLength, idx + quotesLength);
+      if (additionalQuotesLength == 0) {
+        hasToReplace = true;
+      }
+      maxQuotesNumber = Math.max(maxQuotesNumber, additionalQuotesLength);
+      idx += additionalQuotesLength + quotesLength;
     }
 
-    int additionalQuotesLength = quotes.length() - quotesLength;
+    insertAtCaret(text, hasToReplace ? StringUtil.repeat("`", maxQuotesNumber + 1) : "", stringLiteral, editor);
+  }
 
-    insertAtCaret(text, additionalQuotesLength > 0 ? StringUtil.repeat("`", additionalQuotesLength) : "", stringLiteral, editor);
+  private static int getQuotesSequence(String literalText, int length, int startIndex) {
+    int quotesLength = startIndex;
+    while (quotesLength < length && literalText.charAt(quotesLength) == '`') quotesLength++;
+    return quotesLength - startIndex;
   }
 
   @Override
@@ -67,7 +78,7 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
 
     return editor != null &&
            file != null &&
-           findLiteralAtCaret(file, editor.getCaretModel().getOffset()) != null &&
+           findRawStringLiteralAtCaret(file, editor.getCaretModel().getOffset()) != null &&
            getTextInClipboard() != null;
   }
 
@@ -78,19 +89,11 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
 
   @Nullable
   private static String getTextInClipboard() {
-    CopyPasteManager manager = CopyPasteManager.getInstance();
-    Transferable transferable = manager.areDataFlavorsAvailable(DataFlavor.stringFlavor) ? manager.getContents() : null;
-    if (transferable == null) return null;
-    try {
-      return (String)transferable.getTransferData(DataFlavor.stringFlavor);
-    }
-    catch (Exception e) {
-      return null;
-    }
+    return CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
   }
 
   @Nullable
-  private static PsiElement findLiteralAtCaret(PsiFile file, int offset) {
+  private static PsiElement findRawStringLiteralAtCaret(PsiFile file, int offset) {
     final PsiElement elementAtSelectionStart = file.findElementAt(offset);
     if (elementAtSelectionStart == null) {
       return null;
@@ -109,14 +112,12 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
 
     RangeMarker range = editor.getDocument().createRangeMarker(element.getTextRange());
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    documentManager.commitDocument(editor.getDocument());
 
     final PsiFile file = documentManager.getPsiFile(editor.getDocument());
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     WriteCommandAction.runWriteCommandAction(project, "Raw paste", null, () -> {
       Document document = editor.getDocument();
-      documentManager.doPostponedOperationsAndUnblockDocument(document);
       documentManager.commitDocument(document);
 
       EditorModificationUtil.insertStringAtCaret(editor, text);
