@@ -48,6 +48,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
+import org.jetbrains.plugins.gradle.service.project.GradleBuildSrcProjectsResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -245,6 +246,11 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
       final DataNode<? extends ModuleData> moduleDataNode = moduleDataFinder.findMainModuleData(module);
       if (moduleDataNode == null) continue;
+
+      // all buildSrc runtime projects will be built by gradle implicitly
+      if (Boolean.parseBoolean(moduleDataNode.getData().getProperty(GradleBuildSrcProjectsResolver.BUILD_SRC_MODULE_PROPERTY))) {
+        continue;
+      }
 
       List<String> gradleTasks = ContainerUtil.mapNotNull(ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TASK),
                                                     node -> node.getData().isInherited() ? null : node.getData().getName());
