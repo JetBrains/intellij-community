@@ -81,12 +81,12 @@ public class JBValueTest {
   }
 
   @Test
-  public void testUIManagerInteger() {
+  public void testUIDefaultsInteger() {
     JBUI.setUserScaleFactor(1);
     String key = "JBValue.int";
     UIManager.put(key, 2);
 
-    JBValue.UIManagerInteger value = new JBValue.UIManagerInteger(key);
+    JBValue.UIDefaultsInteger value = new JBValue.UIDefaultsInteger(key);
 
     JBUI.setUserScaleFactor(2);
 

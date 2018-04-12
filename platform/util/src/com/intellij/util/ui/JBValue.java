@@ -22,6 +22,9 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
  * a {@link CachedInteger} or {@link CachedFloat} classes can be used instead. Either with a separate
  * {@link UpdateTracker} (better to use for many JBValue objects), or with a dedicated one (for a single
  * JBValue object) as in the {@link SelfCachedInteger} or {@link SelfCachedFloat} classes.
+ * <p>
+ * Also, the {@link UIDefaultsInteger} class can be used for auto-scaling an integer value stored in
+ * {@link UIDefaults}.
  *
  * @author tav
  * @see JBUI#intValue(int)
@@ -60,12 +63,12 @@ public abstract class JBValue {
   }
 
   /**
-   * JBValue wrapper over an integer value in {@link UIManager}.
+   * JBValue wrapper over an integer value in {@link UIDefaults}.
    */
-  public static class UIManagerInteger extends JBValue {
+  public static class UIDefaultsInteger extends JBValue {
     private final @NotNull String key;
 
-    public UIManagerInteger(@NotNull String key) {
+    public UIDefaultsInteger(@NotNull String key) {
       this.key = key;
     }
 
