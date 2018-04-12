@@ -7,14 +7,12 @@ import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.idea.svn.SmallMapSerializer
 import org.jetbrains.idea.svn.SvnUtil.createUrl
-import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
 import java.io.IOException
 import java.lang.String.CASE_INSENSITIVE_ORDER
-import java.util.*
 
 class SvnLoadedBranchesStorage(private val myProject: Project) {
   private val myLock = Any()
@@ -28,35 +26,27 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
     myFile = File(file, myProject.locationHash)
   }
 
-  operator fun get(url: String): Collection<SvnBranchItem>? {
-    synchronized(myLock) {
-      if (myState == null) return null
-      val map = myState!!.get("")
-      return if (map == null) null else map[SvnBranchConfigurationNew.ensureEndSlash(url)]
-    }
+  operator fun get(url: String) = synchronized(myLock) {
+    myState?.get("")?.get(SvnBranchConfigurationNew.ensureEndSlash(url))
   }
 
-  fun activate() {
-    synchronized(myLock) {
-      myState = SmallMapSerializer(myFile, EnumeratorStringDescriptor.INSTANCE, createExternalizer())
-    }
+  fun activate() = synchronized(myLock) {
+    myState = SmallMapSerializer(myFile, EnumeratorStringDescriptor.INSTANCE, createExternalizer())
   }
-
 
   fun deactivate() {
-    val branchLocationToBranchItemsMap = mutableMapOf<String, Collection<SvnBranchItem>>()
-    val manager = SvnBranchConfigurationManager.getInstance(myProject)
-    val mapCopy = manager!!.svnBranchConfigManager.mapCopy
-    for ((_, configuration) in mapCopy) {
-      val branchMap = configuration.branchMap
-      for ((branchLocation, branches) in branchMap) {
-        branchLocationToBranchItemsMap[branchLocation] = branches.value
+    val branchLocations = mutableMapOf<String, Collection<SvnBranchItem>>()
+    val branchConfigurations = SvnBranchConfigurationManager.getInstance(myProject)!!.svnBranchConfigManager.mapCopy
+
+    for (configuration in branchConfigurations.values) {
+      for ((branchLocation, branches) in configuration.branchMap) {
+        branchLocations[branchLocation] = branches.value
       }
     }
     synchronized(myLock) {
       // TODO: Possibly implement optimization - do not perform save if there are no changes in branch locations and branch items
       // ensure myState.put() is called - so myState will treat itself as dirty and myState.force() will invoke real persisting
-      myState!!.put("", branchLocationToBranchItemsMap)
+      myState!!.put("", branchLocations)
       myState!!.force()
       myState = null
     }
@@ -64,48 +54,47 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
 
   private fun createExternalizer() = object : DataExternalizer<Map<String, Collection<SvnBranchItem>>> {
     @Throws(IOException::class)
-    override fun save(out: DataOutput, value: Map<String, Collection<SvnBranchItem>>) {
-      out.writeInt(value.size)
-      val keys = ArrayList(value.keys)
-      Collections.sort(keys)
-      for (key in keys) {
-        out.writeUTF(key)
-        val list = ArrayList(value[key])
-        Collections.sort(list, compareBy(CASE_INSENSITIVE_ORDER) { it.url.toDecodedString() })
-        out.writeInt(list.size)
-        for (item in list) {
-          out.writeUTF(item.url.toDecodedString())
-          out.writeLong(item.creationDateMillis)
-          out.writeLong(item.revision)
+    override fun save(out: DataOutput, branchLocations: Map<String, Collection<SvnBranchItem>>) = with(out) {
+      writeInt(branchLocations.size)
+      for ((branchLocation, branches) in branchLocations.entries.sortedBy { it.key }) {
+        writeUTF(branchLocation)
+        writeInt(branches.size)
+        for (item in branches.sortedWith(compareBy(CASE_INSENSITIVE_ORDER) { it.url.toDecodedString() })) {
+          writeUTF(item.url.toDecodedString())
+          writeLong(item.creationDateMillis)
+          writeLong(item.revision)
         }
       }
     }
 
     @Throws(IOException::class)
-    override fun read(`in`: DataInput): Map<String, Collection<SvnBranchItem>> {
-      val map = HashMap<String, Collection<SvnBranchItem>>()
-      val mapSize = `in`.readInt()
-      for (i in 0 until mapSize) {
-        val key = `in`.readUTF()
-        val size = `in`.readInt()
-        val list = ArrayList<SvnBranchItem>(size)
-        for (j in 0 until size) {
-          val urlValue = `in`.readUTF()
-          val creation = `in`.readLong()
-          val revision = `in`.readLong()
-          val url: Url
-          try {
-            url = createUrl(urlValue, false)
+    override fun read(`in`: DataInput) = with(`in`) {
+      val branchLocations = mutableMapOf<String, Collection<SvnBranchItem>>()
+      val branchLocationsSize = readInt()
+
+      repeat(branchLocationsSize) {
+        val branchLocation = readUTF()
+        val branchesSize = readInt()
+        val branches = mutableListOf<SvnBranchItem>()
+
+        repeat(branchesSize) {
+          val urlValue = readUTF()
+          val creationDateMillis = readLong()
+          val revision = readLong()
+          val url = try {
+            createUrl(urlValue, false)
           }
           catch (e: SvnBindException) {
             throw IOException("Could not parse url $urlValue", e)
           }
 
-          list.add(SvnBranchItem(url, creation, revision))
+          branches.add(SvnBranchItem(url, creationDateMillis, revision))
         }
-        map[key] = list
+
+        branchLocations[branchLocation] = branches
       }
-      return map
+
+      branchLocations
     }
   }
 }
