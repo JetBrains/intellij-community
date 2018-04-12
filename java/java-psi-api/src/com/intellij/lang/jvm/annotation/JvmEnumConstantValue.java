@@ -4,6 +4,7 @@ package com.intellij.lang.jvm.annotation;
 import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmEnumField;
 import com.intellij.lang.jvm.JvmField;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -12,31 +13,42 @@ import org.jetbrains.annotations.Nullable;
 public interface JvmEnumConstantValue extends JvmAttributeValue {
 
   /**
-   * This method could be implemented to return class value even if field is unresolved
-   *
-   * @return
+   * @return referenced enum field or {@code null} if field cannot be resolved
    */
   @Nullable
-  default JvmClassValue getClassValue() {
-    JvmField field = getField();
-    JvmClass clazz = field == null ? null : field.getContainingClass();
-    return clazz == null ? null : new JvmEnumConstantClassValue(this, clazz);
-  }
+  JvmEnumField getField();
 
   /**
-   * This method could be implemented to return enum field name if field is unresolved
+   * This method could be implemented to return value even if the field cannot be resolved.
    *
-   * @return enum field referenced name
+   * @return name of the referenced enum field
    */
   @Nullable
-  default String getName() {
+  default String getFieldName() {
     JvmField field = getField();
     return field == null ? null : field.getName();
   }
 
   /**
-   * @return referenced enum field
+   * This method could be implemented to return value even if the field cannot be resolved.
+   *
+   * @return containing class of the referenced enum field
    */
   @Nullable
-  JvmEnumField getField();
+  default JvmClass getContainingClass() {
+    JvmEnumField field = getField();
+    return field == null ? null : field.getContainingClass();
+  }
+
+  /**
+   * This method could be implemented to return value even if the field or the containing class cannot be resolved.
+   *
+   * @return fully qualified name of the containing class of the referenced enum field
+   */
+  @NonNls
+  @Nullable
+  default String getContainingClassName() {
+    JvmClass containingClass = getContainingClass();
+    return containingClass == null ? null : containingClass.getQualifiedName();
+  }
 }
