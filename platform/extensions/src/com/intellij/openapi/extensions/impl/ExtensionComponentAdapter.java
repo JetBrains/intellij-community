@@ -39,7 +39,6 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   private final PicoContainer myContainer;
   private final PluginDescriptor myPluginDescriptor;
   private final boolean myDeserializeInstance;
-  private ComponentAdapter myDelegate;
   @NotNull
   private Object myImplementationClassOrName; // Class or String
   private boolean myNotificationSent;
@@ -74,7 +73,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
           myComponentInstance = myExtensionElement;
         }
         else {
-          Object componentInstance = getDelegate().getComponentInstance(container);
+          Class impl = loadImplementationClass();
+          Object componentInstance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
 
           if (myDeserializeInstance) {
             try {
@@ -162,15 +162,6 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
       }
     }
     return (Class)implementationClassOrName;
-  }
-
-  private synchronized ComponentAdapter getDelegate() {
-    if (myDelegate == null) {
-      Class impl = loadImplementationClass();
-      myDelegate = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true);
-    }
-
-    return myDelegate;
   }
 
   @Override
