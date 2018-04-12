@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -57,7 +58,9 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     Module module = ModuleUtilCore.findModuleForFile(file);
-    return module != null && JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel);
+    return module != null &&
+           JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel) &&
+           AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(myLevel);
   }
 
   @Override
