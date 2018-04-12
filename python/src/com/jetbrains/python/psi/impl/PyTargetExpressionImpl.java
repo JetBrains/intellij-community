@@ -128,9 +128,12 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         // imported via __all__
         return null;
       }
-      final PyType pyType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(this, context, null);
+      final Ref<PyType> pyType = StreamEx.of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
+                                         .map(provider -> provider.getTargetExpressionType(this, context))
+                                         .findFirst(Objects::nonNull)
+                                         .orElse(null);
       if (pyType != null) {
-        return pyType;
+        return pyType.get();
       }
       PyType type = getTypeFromDocString();
       if (type != null) {

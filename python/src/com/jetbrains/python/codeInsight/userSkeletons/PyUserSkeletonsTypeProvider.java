@@ -16,7 +16,6 @@
 package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
@@ -67,15 +66,14 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public PyType getReferenceType(@NotNull PsiElement target, TypeEvalContext context, @Nullable PsiElement anchor) {
+  @Nullable
+  public Ref<PyType> getTargetExpressionType(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
     if (PyiUtil.isInsideStub(target)) {
       return null;
     }
-    if (target instanceof PyTargetExpression) {
-      final PyTargetExpression targetSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext((PyTargetExpression)target, context);
-      if (targetSkeleton != null) {
-        return context.getType(targetSkeleton);
-      }
+    final PyTargetExpression targetSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(target, context);
+    if (targetSkeleton != null) {
+      return Ref.create(context.getType(targetSkeleton));
     }
     return null;
   }

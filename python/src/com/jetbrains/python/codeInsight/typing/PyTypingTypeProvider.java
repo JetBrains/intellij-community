@@ -18,7 +18,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
@@ -40,7 +39,6 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub;
@@ -434,98 +432,95 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyTargetExpression) {
-      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
-      // Depends on typing.Generic defined as a target expression
-      if (GENERIC.equals(target.getQualifiedName())) {
-        return createTypingGenericType(target);
-      }
-      // Depends on typing.Protocol defined as a target expression
-      if (PROTOCOL.equals(target.getQualifiedName())) {
-        return createTypingProtocolType(target);
-      }
-      // Depends on typing.Callable defined as a target expression
-      if (CALLABLE.equals(target.getQualifiedName())) {
-        return createTypingCallableType(referenceTarget);
-      }
+  @Nullable
+  public Ref<PyType> getTargetExpressionType(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    // Depends on typing.Generic defined as a target expression
+    if (GENERIC.equals(target.getQualifiedName())) {
+      return Ref.create(createTypingGenericType(target));
+    }
+    // Depends on typing.Protocol defined as a target expression
+    if (PROTOCOL.equals(target.getQualifiedName())) {
+      return Ref.create(createTypingProtocolType(target));
+    }
+    // Depends on typing.Callable defined as a target expression
+    if (CALLABLE.equals(target.getQualifiedName())) {
+      return Ref.create(createTypingCallableType(target));
+    }
 
-      final PyType collection = getCollection(target, context);
-      if (collection instanceof PyInstantiableType) {
-        return ((PyInstantiableType)collection).toClass();
-      }
+    final PyType collection = getCollection(target, context);
+    if (collection instanceof PyInstantiableType) {
+      return Ref.create(((PyInstantiableType)collection).toClass());
+    }
 
-      final PyType newType = getNewTypeCreationForTarget(target, context);
-      if (newType != null) {
-        return newType;
-      }
+    final PyType newType = getNewTypeCreationForTarget(target, context);
+    if (newType != null) {
+      return Ref.create(newType);
+    }
 
-      final Ref<PyType> annotatedType = getTypeFromTargetExpressionAnnotation(target, context);
-      if (annotatedType != null) {
-        return annotatedType.get();
-      }
+    final Ref<PyType> annotatedType = getTypeFromTargetExpressionAnnotation(target, context);
+    if (annotatedType != null) {
+      return annotatedType;
+    }
 
-      final String name = target.getReferencedName();
-      final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(target);
-      if (name == null || scopeOwner == null) {
-        return null;
-      }
+    final String name = target.getReferencedName();
+    final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(target);
+    if (name == null || scopeOwner == null) {
+      return null;
+    }
 
-      final PyClass pyClass = target.getContainingClass();
+    final PyClass pyClass = target.getContainingClass();
 
-      if (target.isQualified()) {
-        if (pyClass != null && scopeOwner instanceof PyFunction) {
-          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    if (target.isQualified()) {
+      if (pyClass != null && scopeOwner instanceof PyFunction) {
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
 
-          boolean isInstanceAttribute = false;
-          if (context.maySwitchToAST(target)) {
-            isInstanceAttribute = StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
-              .select(PyParameter.class)
-              .filter(PyParameter::isSelf)
-              .anyMatch(p -> PsiTreeUtil.getParentOfType(p, PyFunction.class) == scopeOwner);
-          }
-          else {
-            isInstanceAttribute = PyUtil.isInstanceAttribute(target);
-          }
-          if (!isInstanceAttribute) {
-            return null;
-          }
-          // Set isDefinition=true to start searching right from the class level.
-          final PyClassTypeImpl classType = new PyClassTypeImpl(pyClass, true);
-          final List<? extends RatedResolveResult> classAttrs = classType.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
-          if (classAttrs == null) {
-            return null;
-          }
-          final Ref<PyType> combined = StreamEx.of(classAttrs)
-                                               .map(RatedResolveResult::getElement)
-                                               .select(PyTargetExpression.class)
-                                               .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
-                                               .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
-                                               .collect(PyTypeUtil.toUnionFromRef());
-          return Ref.deref(combined);
-        }
-      }
-      else {
-        StreamEx<PyTargetExpression> candidates = null;
+        boolean isInstanceAttribute = false;
         if (context.maySwitchToAST(target)) {
-          final Scope scope = ControlFlowCache.getScope(scopeOwner);
-          candidates = StreamEx.of(scope.getNamedElements(name, false)).select(PyTargetExpression.class);
+          isInstanceAttribute = StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
+            .select(PyParameter.class)
+            .filter(PyParameter::isSelf)
+            .anyMatch(p -> PsiTreeUtil.getParentOfType(p, PyFunction.class) == scopeOwner);
         }
-        // Unqualified target expression in either class or module
-        else if (scopeOwner instanceof PyFile) {
-          candidates = StreamEx.of(((PyFile)scopeOwner).getTopLevelAttributes()).filter(t -> name.equals(t.getName()));
+        else {
+          isInstanceAttribute = PyUtil.isInstanceAttribute(target);
         }
-        else if (scopeOwner instanceof PyClass) {
-          candidates = StreamEx.of(((PyClass)scopeOwner).getClassAttributes()).filter(t -> name.equals(t.getName()));
+        if (!isInstanceAttribute) {
+          return null;
         }
-        if (candidates != null) {
-          return candidates
-            .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
-            .nonNull()
-            .findFirst()
-            .map(Ref::get)
-            .orElse(null);
+        // Set isDefinition=true to start searching right from the class level.
+        final PyClassTypeImpl classType = new PyClassTypeImpl(pyClass, true);
+        final List<? extends RatedResolveResult> classAttrs = classType.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
+        if (classAttrs == null) {
+          return null;
         }
+        final Ref<PyType> combined = StreamEx.of(classAttrs)
+                                             .map(RatedResolveResult::getElement)
+                                             .select(PyTargetExpression.class)
+                                             .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
+                                             .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
+                                             .collect(PyTypeUtil.toUnionFromRef());
+        return combined;
+      }
+    }
+    else {
+      StreamEx<PyTargetExpression> candidates = null;
+      if (context.maySwitchToAST(target)) {
+        final Scope scope = ControlFlowCache.getScope(scopeOwner);
+        candidates = StreamEx.of(scope.getNamedElements(name, false)).select(PyTargetExpression.class);
+      }
+      // Unqualified target expression in either class or module
+      else if (scopeOwner instanceof PyFile) {
+        candidates = StreamEx.of(((PyFile)scopeOwner).getTopLevelAttributes()).filter(t -> name.equals(t.getName()));
+      }
+      else if (scopeOwner instanceof PyClass) {
+        candidates = StreamEx.of(((PyClass)scopeOwner).getClassAttributes()).filter(t -> name.equals(t.getName()));
+      }
+      if (candidates != null) {
+        return candidates
+          .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
+          .nonNull()
+          .findFirst()
+          .orElse(null);
       }
     }
     return null;

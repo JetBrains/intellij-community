@@ -35,8 +35,20 @@ public interface PyTypeProvider {
   @Nullable
   PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context);
 
+  /**
+   * @see #getReferenceExpressionType(PyReferenceExpression, TypeEvalContext)
+   * @see #getTargetExpressionType(PyTargetExpression, TypeEvalContext)
+   * @see #getCallableType(PyCallable, TypeEvalContext)
+   * @deprecated Use one of the other more specific methods of a provider
+   */
+  @Deprecated
   @Nullable
   PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor);
+
+  @Nullable
+  default Ref<PyType> getTargetExpressionType(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    return null;
+  }
 
   @Nullable
   Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context);
