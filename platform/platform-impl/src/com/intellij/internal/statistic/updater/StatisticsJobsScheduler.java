@@ -21,8 +21,6 @@ import com.intellij.ide.FrameStateManager;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -68,11 +66,6 @@ public class StatisticsJobsScheduler implements ApplicationComponent {
 
   public StatisticsJobsScheduler(@NotNull FrameStateManager frameStateManager) {
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
-    NotificationsConfiguration.getNotificationsConfiguration().register(
-      StatisticsNotificationManager.GROUP_DISPLAY_ID,
-      NotificationDisplayType.STICKY_BALLOON,
-      false);
-
     myFrameStateManager = frameStateManager;
   }
 
