@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents an <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.16.1-130">enum_const_value</a> struct.
  */
-public interface JvmEnumConstantValue extends JvmAttributeValue {
+public interface JvmAnnotationEnumFieldValue extends JvmAnnotationAttributeValue {
 
   /**
    * @return referenced enum field or {@code null} if field cannot be resolved

@@ -2,7 +2,7 @@
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
-import com.intellij.lang.jvm.annotation.JvmAttributeValue;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +76,7 @@ public interface PsiNameValuePair extends PsiElement, JvmAnnotationAttribute {
 
   @Nullable
   @Override
-  default JvmAttributeValue getAttributeValue() {
+  default JvmAnnotationAttributeValue getAttributeValue() {
     return getAnnotationAttributeValue(this);
   }
 }

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.16.1-130">const_value_index</a> value.
  */
-public interface JvmConstantValue extends JvmAttributeValue {
+public interface JvmAnnotationConstantValue extends JvmAnnotationAttributeValue {
 
   /**
    * @return primitive or string value or {@code null} if constant value cannot be computed

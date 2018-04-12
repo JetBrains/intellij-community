@@ -4,7 +4,7 @@ package com.intellij.psi;
 import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.lang.jvm.JvmEnumField;
 import com.intellij.lang.jvm.JvmModifier;
-import com.intellij.lang.jvm.annotation.JvmAttributeValue;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -121,29 +121,29 @@ class PsiJvmConversionHelper {
   }
 
   @Nullable
-  static JvmAttributeValue getAnnotationAttributeValue(@NotNull PsiNameValuePair pair) {
+  static JvmAnnotationAttributeValue getAnnotationAttributeValue(@NotNull PsiNameValuePair pair) {
     return getAnnotationAttributeValue(pair.getValue());
   }
 
   @Nullable
-  static JvmAttributeValue getAnnotationAttributeValue(@Nullable PsiAnnotationMemberValue value) {
+  static JvmAnnotationAttributeValue getAnnotationAttributeValue(@Nullable PsiAnnotationMemberValue value) {
     if (value instanceof PsiClassObjectAccessExpression) {
-      return new PsiClassValue((PsiClassObjectAccessExpression)value);
+      return new PsiAnnotationClassValue((PsiClassObjectAccessExpression)value);
     }
     if (value instanceof PsiAnnotation) {
-      return new PsiAnnotationValue((PsiAnnotation)value);
+      return new PsiNestedAnnotationValue((PsiAnnotation)value);
     }
     if (value instanceof PsiArrayInitializerMemberValue) {
-      return new PsiArrayValue((PsiArrayInitializerMemberValue)value);
+      return new PsiAnnotationArrayValue((PsiArrayInitializerMemberValue)value);
     }
     if (value instanceof PsiReferenceExpression) {
       PsiElement resolved = ((PsiReferenceExpression)value).resolve();
       if (resolved instanceof JvmEnumField) {
-        return new PsiEnumConstantValue((PsiReferenceExpression)value, (JvmEnumField)resolved);
+        return new PsiAnnotationEnumFieldValue((PsiReferenceExpression)value, (JvmEnumField)resolved);
       }
     }
     if (value instanceof PsiExpression) {
-      return new PsiConstantValue((PsiExpression)value);
+      return new PsiAnnotationConstantValue((PsiExpression)value);
     }
 
     if (value != null) {

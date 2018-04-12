@@ -7,5 +7,5 @@ import com.intellij.lang.jvm.JvmElement;
  * Represents a <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.16.1">value</a>
  * of a name-value pair in an annotation.
  */
-public interface JvmAttributeValue extends JvmElement {
+public interface JvmAnnotationAttributeValue extends JvmElement {
 }

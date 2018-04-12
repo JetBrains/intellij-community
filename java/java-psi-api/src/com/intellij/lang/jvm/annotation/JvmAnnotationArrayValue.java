@@ -8,8 +8,8 @@ import java.util.List;
 /**
  * Represents an <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.16.1-130">array_value</a> struct.
  */
-public interface JvmArrayValue extends JvmAttributeValue {
+public interface JvmAnnotationArrayValue extends JvmAnnotationAttributeValue {
 
   @NotNull
-  List<JvmAttributeValue> getValues();
+  List<JvmAnnotationAttributeValue> getValues();
 }

@@ -14,5 +14,5 @@ public interface JvmAnnotationAttribute {
   String getAttributeName();
 
   @Nullable
-  JvmAttributeValue getAttributeValue();
+  JvmAnnotationAttributeValue getAttributeValue();
 }

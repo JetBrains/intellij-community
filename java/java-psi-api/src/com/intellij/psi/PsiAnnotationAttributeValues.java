@@ -12,11 +12,11 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 
-abstract class PsiAttributeValue<T extends PsiAnnotationMemberValue> implements JvmAttributeValue {
+abstract class PsiAnnotationAttributeValue<T extends PsiAnnotationMemberValue> implements JvmAnnotationAttributeValue {
 
   protected final T myElement;
 
-  protected PsiAttributeValue(@NotNull T value) {
+  protected PsiAnnotationAttributeValue(@NotNull T value) {
     myElement = value;
   }
 
@@ -45,9 +45,9 @@ abstract class PsiAttributeValue<T extends PsiAnnotationMemberValue> implements 
   }
 }
 
-class PsiConstantValue extends PsiAttributeValue<PsiExpression> implements JvmConstantValue {
+class PsiAnnotationConstantValue extends PsiAnnotationAttributeValue<PsiExpression> implements JvmAnnotationConstantValue {
 
-  PsiConstantValue(@NotNull PsiExpression value) {
+  PsiAnnotationConstantValue(@NotNull PsiExpression value) {
     super(value);
   }
 
@@ -59,9 +59,9 @@ class PsiConstantValue extends PsiAttributeValue<PsiExpression> implements JvmCo
   }
 }
 
-class PsiClassValue extends PsiAttributeValue<PsiClassObjectAccessExpression> implements JvmClassValue {
+class PsiAnnotationClassValue extends PsiAnnotationAttributeValue<PsiClassObjectAccessExpression> implements JvmAnnotationClassValue {
 
-  PsiClassValue(@NotNull PsiClassObjectAccessExpression value) {
+  PsiAnnotationClassValue(@NotNull PsiClassObjectAccessExpression value) {
     super(value);
   }
 
@@ -86,9 +86,9 @@ class PsiClassValue extends PsiAttributeValue<PsiClassObjectAccessExpression> im
   }
 }
 
-class PsiAnnotationValue extends PsiAttributeValue<PsiAnnotation> implements JvmAnnotationValue {
+class PsiNestedAnnotationValue extends PsiAnnotationAttributeValue<PsiAnnotation> implements JvmNestedAnnotationValue {
 
-  PsiAnnotationValue(@NotNull PsiAnnotation value) {
+  PsiNestedAnnotationValue(@NotNull PsiAnnotation value) {
     super(value);
   }
 
@@ -99,11 +99,11 @@ class PsiAnnotationValue extends PsiAttributeValue<PsiAnnotation> implements Jvm
   }
 }
 
-class PsiEnumConstantValue extends PsiAttributeValue<PsiReferenceExpression> implements JvmEnumConstantValue {
+class PsiAnnotationEnumFieldValue extends PsiAnnotationAttributeValue<PsiReferenceExpression> implements JvmAnnotationEnumFieldValue {
 
   private final JvmEnumField myEnumField;
 
-  PsiEnumConstantValue(@NotNull PsiReferenceExpression value, @NotNull JvmEnumField field) {
+  PsiAnnotationEnumFieldValue(@NotNull PsiReferenceExpression value, @NotNull JvmEnumField field) {
     super(value);
     myEnumField = field;
   }
@@ -115,15 +115,15 @@ class PsiEnumConstantValue extends PsiAttributeValue<PsiReferenceExpression> imp
   }
 }
 
-class PsiArrayValue extends PsiAttributeValue<PsiArrayInitializerMemberValue> implements JvmArrayValue {
+class PsiAnnotationArrayValue extends PsiAnnotationAttributeValue<PsiArrayInitializerMemberValue> implements JvmAnnotationArrayValue {
 
-  PsiArrayValue(@NotNull PsiArrayInitializerMemberValue value) {
+  PsiAnnotationArrayValue(@NotNull PsiArrayInitializerMemberValue value) {
     super(value);
   }
 
   @NotNull
   @Override
-  public List<JvmAttributeValue> getValues() {
+  public List<JvmAnnotationAttributeValue> getValues() {
     return map(myElement.getInitializers(), PsiJvmConversionHelper::getAnnotationAttributeValue);
   }
 }

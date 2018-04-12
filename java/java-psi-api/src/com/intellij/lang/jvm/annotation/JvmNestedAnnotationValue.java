@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents an <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.16.1-130">annotation_value</a> struct.
  */
-public interface JvmAnnotationValue extends JvmAttributeValue {
+public interface JvmNestedAnnotationValue extends JvmAnnotationAttributeValue {
 
   @NotNull
   JvmAnnotation getValue();

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.16.1-130">class_info_index</a> value.
  */
-public interface JvmClassValue extends JvmAttributeValue {
+public interface JvmAnnotationClassValue extends JvmAnnotationAttributeValue {
 
   /**
    * This method could be implemented to return value even if class is unresolved
