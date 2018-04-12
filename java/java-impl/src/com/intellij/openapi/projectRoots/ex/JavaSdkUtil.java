@@ -53,10 +53,10 @@ public class JavaSdkUtil {
     return isJdkSupportsLevel(getRelevantJdk(project, module), level);
   }
 
-  private static boolean isJdkSupportsLevel(@Nullable final Sdk jdk, @NotNull LanguageLevel level) {
+  private static boolean isJdkSupportsLevel(@Nullable Sdk jdk, @NotNull LanguageLevel level) {
     if (jdk == null) return true;
     JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
-    return version != null && version.getMaxLanguageLevel().isAtLeast(level);
+    return version != null && version.isAtLeast(JavaSdkVersion.fromLanguageLevel(level));
   }
 
   @Nullable
