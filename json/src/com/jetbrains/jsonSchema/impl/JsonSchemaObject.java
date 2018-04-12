@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -206,6 +205,10 @@ public class JsonSchemaObject {
 
   public void setProperties(@NotNull Map<String, JsonSchemaObject> properties) {
     myProperties = properties;
+  }
+
+  public boolean hasPatternProperties() {
+    return myPatternProperties != null;
   }
 
   public void setPatternProperties(@NotNull Map<String, JsonSchemaObject> patternProperties) {
