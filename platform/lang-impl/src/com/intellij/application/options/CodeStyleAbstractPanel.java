@@ -16,7 +16,6 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -198,7 +197,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private int getAdjustedRightMargin() {
     int result = getRightMargin();
-    return result > 0 ? result : CodeStyleFacade.getInstance(ProjectUtil.guessCurrentProject(getPanel())).getRightMargin(getDefaultLanguage());
+    return result > 0 ? result : CodeStyle.getSettings(ProjectUtil.guessCurrentProject(getPanel())).getRightMargin(getDefaultLanguage());
   }
 
   protected abstract int getRightMargin();

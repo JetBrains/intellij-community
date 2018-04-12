@@ -74,14 +74,9 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
     return indent != null ? indent : (allowDocCommit ? getLineIndent(editor.getDocument(), offset) : null);
   }
 
-  /**
-   * @deprecated Use {@code getLineSeparator()} method of {@link CodeStyle#getSettings(PsiFile)} or
-   *             {@link CodeStyle#getSettings(Project)} if there is no {@code PsiFile}
-   */
-  @Deprecated
   @Override
   public String getLineSeparator() {
-    return CodeStyleSettingsManager.getSettings(myProject).getLineSeparator();
+    return CodeStyle.getSettings(myProject).getLineSeparator();
   }
 
   @Override
@@ -96,21 +91,21 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
 
   @Override
   public int getRightMargin(Language language) {
-    return CodeStyleSettingsManager.getSettings(myProject).getRightMargin(language);
+    return CodeStyle.getSettings(myProject).getRightMargin(language);
   }
 
   @Override
   public int getTabSize(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).getTabSize(fileType);
+    return CodeStyle.getSettings(myProject).getTabSize(fileType);
   }
 
   @Override
   public boolean isSmartTabs(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).isSmartTabs(fileType);
+    return CodeStyle.getSettings(myProject).isSmartTabs(fileType);
   }
 
   @Override
   public boolean useTabCharacter(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).useTabCharacter(fileType);
+    return CodeStyle.getSettings(myProject).useTabCharacter(fileType);
   }
 }
