@@ -125,6 +125,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn;
   private boolean myTransparentOnlyUpdate;
+  private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
 
   ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager) {
     myKeymapManager = (KeymapManagerEx)keymapManager;
@@ -1130,7 +1131,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
     if (oldAction != null) {
       if (newAction instanceof OverridingAction) {
-        ((OverridingAction) newAction).setBaseAction(oldAction);
+        myBaseActions.put((OverridingAction) newAction, oldAction);
       }
       boolean isGroup = oldAction instanceof ActionGroup;
       if (isGroup != newAction instanceof ActionGroup) {
@@ -1147,6 +1148,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     registerAction(actionId, newAction, pluginId);
     return oldAction;
+  }
+
+  /**
+   * Returns the action overridden by the specified overriding action (with overrides="true" in plugin.xml).
+   */
+  public AnAction getBaseAction(OverridingAction overridingAction) {
+    return myBaseActions.get(overridingAction);
   }
 
   private void flushActionPerformed() {
