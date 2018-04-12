@@ -2,7 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.NoScaleRule;
+import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.RetinaImage;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -26,7 +26,7 @@ import static junit.framework.TestCase.assertEquals;
  */
 public class DrawImageTest {
   @ClassRule
-  public static final ExternalResource manageState = new NoScaleRule();
+  public static final ExternalResource manageState = new RestoreScaleRule();
 
   private final static int IMAGE_SIZE = 4;
   private final static int IMAGE_QUARTER_SIZE = IMAGE_SIZE / 2;

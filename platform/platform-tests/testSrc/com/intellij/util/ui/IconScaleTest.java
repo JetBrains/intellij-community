@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.ui.NoScaleRule;
+import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import junit.framework.TestCase;
@@ -28,7 +28,7 @@ import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
  */
 public class IconScaleTest {
   @ClassRule
-  public static final ExternalResource manageState = new NoScaleRule();
+  public static final ExternalResource manageState = new RestoreScaleRule();
 
   @BeforeClass
   public static void beforeClass() {

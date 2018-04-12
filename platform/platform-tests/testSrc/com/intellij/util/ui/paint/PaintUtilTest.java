@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.paint;
 
-import com.intellij.ui.NoScaleRule;
+import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.ParityMode;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
@@ -24,7 +24,7 @@ import static junit.framework.TestCase.assertTrue;
  */
 public class PaintUtilTest {
   @ClassRule
-  public static final ExternalResource manageState = new NoScaleRule();
+  public static final ExternalResource manageState = new RestoreScaleRule();
 
   @Test
   public void test() {

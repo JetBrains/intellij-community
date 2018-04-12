@@ -2,7 +2,7 @@
 package com.intellij.util.ui.paint;
 
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.ui.NoScaleRule;
+import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.paint.ImageComparator.AASmootherComparator;
@@ -24,7 +24,7 @@ import static java.lang.Math.ceil;
  */
 public abstract class AbstractPainter2DTest {
   @ClassRule
-  public static final ExternalResource manageState = new NoScaleRule();
+  public static final ExternalResource manageState = new RestoreScaleRule();
 
   public void testGoldenImages() {
     ImageComparator comparator = new ImageComparator(

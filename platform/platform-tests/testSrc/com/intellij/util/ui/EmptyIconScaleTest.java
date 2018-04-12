@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.ui.NoScaleRule;
+import com.intellij.ui.RestoreScaleRule;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -17,7 +17,7 @@ import static junit.framework.TestCase.assertNotNull;
  */
 public class EmptyIconScaleTest {
   @ClassRule
-  public static final ExternalResource manageState = new NoScaleRule();
+  public static final ExternalResource manageState = new RestoreScaleRule();
 
 
   final static String MSG = "the icon size mismatch";

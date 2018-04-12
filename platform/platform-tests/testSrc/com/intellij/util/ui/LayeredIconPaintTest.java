@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.NoScaleRule;
+import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import com.intellij.util.ui.paint.ImageComparator.AASmootherComparator;
@@ -22,9 +22,7 @@ import java.net.MalformedURLException;
 import java.util.function.BiFunction;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
-import static com.intellij.util.ui.TestScaleHelper.createImageAndGraphics;
-import static com.intellij.util.ui.TestScaleHelper.loadImage;
-import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
+import static com.intellij.util.ui.TestScaleHelper.*;
 
 /**
  * Tests {@link com.intellij.ui.LayeredIcon} painting.
@@ -33,7 +31,7 @@ import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
  */
 public class LayeredIconPaintTest {
   @ClassRule
-  public static final ExternalResource manageState = new NoScaleRule();
+  public static final ExternalResource manageState = new RestoreScaleRule();
 
   @Test
   public void test() throws MalformedURLException {
