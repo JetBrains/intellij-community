@@ -25,6 +25,18 @@ public class CaptionPanel extends JPanel {
     }
   });
 
+  /**
+   * @deprecated use {@link JBUI.CurrentTheme.Popup#borderColor} instead,
+   * to be removed in 2019.1
+   */
+  public static final Color BND_ACTIVE_COLOR = new JBColor(new NotNullProducer<Color>() {
+    @NotNull
+    @Override
+    public Color produce() {
+      return JBUI.CurrentTheme.Popup.borderColor(true);
+    }
+  });
+
   private boolean myActive = false;
   private ActiveComponent myButtonComponent;
   private JComponent mySettingComponent;
@@ -78,5 +90,13 @@ public class CaptionPanel extends JPanel {
     final Point p = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), this);
     final Component c = findComponentAt(p);
     return c != null && c != myButtonComponent;
+  }
+
+  /**
+   * @deprecated use {@link JBUI.CurrentTheme.Popup#borderColor} instead,
+   * to be removed in 2019.1
+   */
+  public static Color getBorderColor(boolean isActive) {
+    return JBUI.CurrentTheme.Popup.borderColor(isActive);
   }
 }
