@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
@@ -38,16 +37,12 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
  */
 public class VcsLogContentUtil {
-  private static final Logger LOG = Logger.getInstance(VcsLogContentUtil.class);
-
   public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
                                                                           @NotNull Class<U> clazz,
                                                                           @NotNull Condition<U> condition) {
@@ -142,13 +137,5 @@ public class VcsLogContentUtil {
       }
     }
     return false;
-  }
-
-  public static void closeLogTabs(@NotNull ToolWindow toolWindow, @NotNull Collection<String> tabs) {
-    for (String tabName : tabs) {
-      boolean closed = ContentUtilEx.closeContentTab(toolWindow.getContentManager(), tabName);
-      LOG.assertTrue(closed, "Could not find content component for tab " + tabName + "\nExisting content: " +
-                             Arrays.toString(toolWindow.getContentManager().getContents()) + "\nTabs to close: " + tabs);
-    }
   }
 }

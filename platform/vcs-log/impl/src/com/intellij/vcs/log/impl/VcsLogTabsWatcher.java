@@ -3,6 +3,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -12,6 +13,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -21,9 +23,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public class VcsLogTabsWatcher implements Disposable {
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
+  private static final Logger LOG = Logger.getInstance(VcsLogTabsWatcher.class);
 
   @NotNull private final PostponableLogRefresher myRefresher;
 
@@ -84,13 +90,22 @@ public class VcsLogTabsWatcher implements Disposable {
 
   public void closeLogTabs() {
     if (myToolWindow != null) {
-      VcsLogContentUtil.closeLogTabs(myToolWindow,
-                                     StreamEx.of(myRefresher.getLogWindows())
-                                       .select(VcsLogTab.class)
-                                       .map(VcsLogTab::getTabName)
-                                       .filter(name -> !VcsLogContentProvider.TAB_NAME.equals(name))
-                                       .toList());
+      Collection<String> tabs = getTabs();
+      for (String tabName : tabs) {
+        boolean closed = ContentUtilEx.closeContentTab(myToolWindow.getContentManager(), tabName);
+        LOG.assertTrue(closed, "Could not find content component for tab " + tabName + "\nExisting content: " +
+                               Arrays.toString(myToolWindow.getContentManager().getContents()) + "\nTabs to close: " + tabs);
+      }
     }
+  }
+
+  @NotNull
+  private List<String> getTabs() {
+    return StreamEx.of(myRefresher.getLogWindows())
+                   .select(VcsLogTab.class)
+                   .map(VcsLogTab::getTabName)
+                   .filter(name -> !VcsLogContentProvider.TAB_NAME.equals(name))
+                   .toList();
   }
 
   @Override
