@@ -211,6 +211,9 @@
     <applicationService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                         serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.editorActions.TabOutScopesTracker"
+                        serviceImplementation="com.intellij.codeInsight.editorActions.TabOutScopesTrackerImpl"/>
+
     <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                     serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
 
