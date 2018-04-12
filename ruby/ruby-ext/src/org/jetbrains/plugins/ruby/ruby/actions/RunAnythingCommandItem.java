@@ -205,7 +205,7 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
   @NotNull
   @Override
   public String getAdText() {
-    return RunAnythingAction.AD_MODULE_CONTEXT + " , " + RunAnythingAction.AD_REMOVE_COMMAND;
+    return RunAnythingAction.AD_MODULE_CONTEXT + " , " + RunAnythingAction.AD_DEBUG_TEXT + ", " + RunAnythingAction.AD_REMOVE_COMMAND;
   }
 
   @NotNull
