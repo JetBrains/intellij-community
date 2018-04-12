@@ -703,4 +703,42 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(schema, "{\"prop\": <warning>5</warning>}");
     doTest(schema, "{\"prop\": \"foo\"}");
   }
+
+  public void testNestedOneOf() throws Exception {
+    @Language("JSON") String schema = "{\"type\":\"object\",\n" +
+                                      "  \"oneOf\": [\n" +
+                                      "    {\n" +
+                                      "      \"properties\": {\n" +
+                                      "        \"type\": {\n" +
+                                      "          \"type\": \"string\",\n" +
+                                      "          \"oneOf\": [\n" +
+                                      "            {\n" +
+                                      "              \"pattern\": \"(good)\"\n" +
+                                      "            },\n" +
+                                      "            {\n" +
+                                      "              \"pattern\": \"(ok)\"\n" +
+                                      "            }\n" +
+                                      "          ]\n" +
+                                      "        }\n" +
+                                      "      }\n" +
+                                      "    },\n" +
+                                      "    {\n" +
+                                      "      \"properties\": {\n" +
+                                      "        \"type\": {\n" +
+                                      "          \"type\": \"string\",\n" +
+                                      "          \"pattern\": \"^(fine)\"\n" +
+                                      "        },\n" +
+                                      "        \"extra\": {\n" +
+                                      "          \"type\": \"string\"\n" +
+                                      "        }\n" +
+                                      "      },\n" +
+                                      "      \"required\": [\"type\", \"extra\"]\n" +
+                                      "    }\n" +
+                                      "  ]}";
+
+    doTest(schema, "{\"type\": \"good\"}");
+    doTest(schema, "{\"type\": \"ok\"}");
+    doTest(schema, "{\"type\": <warning>\"doog\"</warning>}");
+    doTest(schema, "{\"type\": <warning>\"ko\"</warning>}");
+  }
 }
