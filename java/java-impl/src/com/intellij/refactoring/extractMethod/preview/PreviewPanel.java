@@ -42,7 +42,6 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
   private Content myContent;
   private final PreviewDiffPanel myDiffPanel;
-  private final long myInitialPsiStamp;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public PreviewPanel(ExtractMethodProcessor processor) {
@@ -69,8 +68,6 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     UsageModelTracker usageModelTracker = new UsageModelTracker(myProject);
     Disposer.register(this, usageModelTracker);
     usageModelTracker.addListener(isPropertyChange -> updateLater(), this);
-
-    myInitialPsiStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
 
     Disposer.register(processor.getProject(), this);
     Disposer.register(this, myTree);
@@ -142,9 +139,6 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   }
 
   private void updateLater() {
-    if (!myTree.isValid()) {
-      return;
-    }
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(() -> {
       if (myProject.isDisposed()) return;
@@ -157,12 +151,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
 
-    if (PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myInitialPsiStamp) {
-      myTree.setValid(false);
-    }
-    else {
-      myTree.setValid(true);
-    }
+    myTree.setValid(!myDiffPanel.isModified());
   }
 
   private class ButtonsPanel extends JPanel {

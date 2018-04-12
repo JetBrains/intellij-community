@@ -62,7 +62,9 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   private final ExtractMethodSnapshot mySnapshot;
   private final SmartPsiElementPointer<PsiElement> myAnchor;
   private final DiffRequestPanel myDiffPanel;
-  private PreviewDiffRequest myDiffRequest; // accessed from EDT
+  private PreviewDiffRequest myDiffRequest; // accessed in EDT
+  private Document myPatternDocument; // accessed in EDT
+  private long myInitialDocumentStamp; // accessed in EDT
 
   public PreviewDiffPanel(@NotNull ExtractMethodProcessor processor, PreviewTree tree) {
     myProject = processor.getProject();
@@ -183,15 +185,9 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
         documentManager.doPostponedOperationsAndUnblockDocument(refactoredDocument);
         MethodNode methodNode = myTree.getModel().updateMethod(method);
 
-        PsiFile patternFile = pattern[0].getContainingFile();
-        Document patternDocument = FileDocumentManager.getInstance().getDocument(patternFile.getViewProvider().getVirtualFile());
-
-        if (patternDocument != null) {
-          initDiff(pattern, patternDocument,
-                   patternReplacement, refactoredDocument,
-                   methodNode, method.getTextRange(),
-                   duplicateReplacements);
-        }
+        initDiff(pattern, patternReplacement, refactoredDocument,
+                 methodNode, method.getTextRange(),
+                 duplicateReplacements);
 
         myTree.onUpdateLater();
       });
@@ -199,12 +195,18 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   private void initDiff(@NotNull PsiElement[] pattern,
-                        @NotNull Document patternDocument,
                         @NotNull ElementsRange patternReplacement,
                         @NotNull Document refactoredDocument,
                         @NotNull MethodNode methodNode,
                         @NotNull TextRange methodRange,
                         @NotNull Map<DuplicateNode, ElementsRange> duplicateReplacements) {
+    PsiFile patternFile = pattern[0].getContainingFile();
+    myPatternDocument = FileDocumentManager.getInstance().getDocument(patternFile.getViewProvider().getVirtualFile());
+    if (myPatternDocument == null) {
+      return;
+    }
+    myInitialDocumentStamp = myPatternDocument.getModificationStamp();
+
     List<Range> diffRanges = new ArrayList<>();
     Map<FragmentNode, Couple<TextRange>> linesBounds = new HashMap<>();
 
@@ -212,17 +214,17 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       DuplicateNode duplicateNode = entry.getKey();
       TextRange patternRange = duplicateNode.getTextRange();
       TextRange matchRange = entry.getValue().getTextRange();
-      Range diffRange = getDiffRange(patternRange, patternDocument, matchRange, refactoredDocument);
+      Range diffRange = getDiffRange(patternRange, myPatternDocument, matchRange, refactoredDocument);
       if (diffRange != null) {
         diffRanges.add(diffRange);
-        linesBounds.put(duplicateNode, Couple.of(getLinesRange(patternRange, patternDocument),
+        linesBounds.put(duplicateNode, Couple.of(getLinesRange(patternRange, myPatternDocument),
                                                  getLinesRange(matchRange, refactoredDocument)));
       }
     }
     PsiElement anchorElement = myAnchor.getElement();
     if (anchorElement != null) {
       int anchorOffset = anchorElement.getTextRange().getEndOffset();
-      int anchorLineNumber = patternDocument.getLineNumber(anchorOffset);
+      int anchorLineNumber = myPatternDocument.getLineNumber(anchorOffset);
       Range diffRange = new Range(anchorLineNumber,
                                   anchorLineNumber,
                                   getStartLineNumber(refactoredDocument, methodRange),
@@ -233,16 +235,16 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     }
     TextRange patternRange = ExtractableFragment.getTextRange(pattern);
     TextRange replacementRange = patternReplacement.getTextRange();
-    Range diffRange = getDiffRange(patternRange, patternDocument, replacementRange, refactoredDocument);
+    Range diffRange = getDiffRange(patternRange, myPatternDocument, replacementRange, refactoredDocument);
     if (diffRange != null) {
       diffRanges.add(diffRange);
-      linesBounds.put(myTree.getModel().getPatternNode(), Couple.of(getLinesRange(patternRange, patternDocument),
+      linesBounds.put(myTree.getModel().getPatternNode(), Couple.of(getLinesRange(patternRange, myPatternDocument),
                                                                     getLinesRange(replacementRange, refactoredDocument)));
     }
     diffRanges.sort(Comparator.comparing(r -> r.start1));
 
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-    DocumentContent oldContent = contentFactory.create(myProject, patternDocument);
+    DocumentContent oldContent = contentFactory.create(myProject, myPatternDocument);
     DocumentContent newContent = contentFactory.create(myProject, refactoredDocument);
 
     myDiffRequest = new PreviewDiffRequest(linesBounds, oldContent, newContent, node -> myTree.selectNode(node));
@@ -384,6 +386,10 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       return editors[0];
     }
     return EditorFactory.getInstance().createEditor(document, myProject);
+  }
+
+  boolean isModified() {
+    return myPatternDocument == null || myPatternDocument.getModificationStamp() != myInitialDocumentStamp;
   }
 
   private static class Bounds {
