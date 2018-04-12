@@ -169,17 +169,9 @@ public class PsiLiteralExpressionImpl
     }
     return text;
   }
-  
-  private String getRawString() {
-    String text = getCanonicalText();
-    int pos = 0;
-    int length = text.length();
 
-    while (pos < length && text.charAt(pos) == '`') pos++;
-
-    if (length - pos <= pos) return null;
-
-    return text.substring(pos, length - pos);
+  public String getRawString() {
+    return StringUtil.nullize(StringUtil.trimLeading(StringUtil.trimTrailing(getCanonicalText(), '`'), '`'));
   }
 
   @Nullable

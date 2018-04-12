@@ -3,6 +3,10 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +42,19 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
 
   public void testPasteInRawStringLiteralNoTicInside() {
     doTestPaste("class A {{String s = `a<caret>`;}}", "a\nb\nc", "class A {{String s = `aa\nb\nc`;}}");
+  }
+
+  public void testRawStringValue() {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+
+    PsiExpression rawStringLiteral = factory.createExpressionFromText("``abc``", null);
+    assertEquals("abc", ((PsiLiteralExpressionImpl)rawStringLiteral).getRawString());
+
+    rawStringLiteral = factory.createExpressionFromText("``abc`", null);
+    assertEquals("abc", ((PsiLiteralExpressionImpl)rawStringLiteral).getRawString());
+
+    rawStringLiteral = factory.createExpressionFromText("`abc````", null);
+    assertEquals("abc", ((PsiLiteralExpressionImpl)rawStringLiteral).getRawString());
   }
 
   private void doTestHighlighting() {
