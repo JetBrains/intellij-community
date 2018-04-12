@@ -21,9 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBRadioButton;
@@ -35,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -47,6 +46,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
+import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isValidURL;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.
@@ -89,7 +89,9 @@ public class JsonSchemaMappingsView implements Disposable {
       }
     });
 
-    mySchemaField = new TextFieldWithBrowseButton();
+    JBTextField schemaFieldBacking = new JBTextField();
+    schemaFieldBacking.getEmptyText().setText("Please specify schema file or URL here");
+    mySchemaField = new TextFieldWithBrowseButton(schemaFieldBacking);
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     attachNavigateToSchema();
@@ -103,8 +105,13 @@ public class JsonSchemaMappingsView implements Disposable {
     });
 
     final FormBuilder builder = FormBuilder.createFormBuilder();
-    final JBLabel label = new JBLabel(JsonBundle.message("json.schema.file.selector.title"));
+    final ErrorLabel label = new ErrorLabel(JsonBundle.message("json.schema.file.selector.title"));
+    schemaFieldBacking.getDocument().addDocumentListener(new SchemaFieldErrorMessageProvider(schemaFieldBacking, label));
+    if (schemaFieldBacking.getText().isEmpty()) {
+      label.setErrorText("Schema path cannot be empty", JBColor.RED);
+    }
     builder.addLabeledComponent(label, mySchemaField);
+    label.setLabelFor(mySchemaField);
     label.setBorder(JBUI.Borders.empty(0, 10));
     mySchemaField.setBorder(JBUI.Borders.emptyRight(10));
     final JPanel wrapper = new JPanel(new BorderLayout());
@@ -163,6 +170,10 @@ public class JsonSchemaMappingsView implements Disposable {
     String schemaFieldText = mySchemaField.getText();
     if (isHttpPath(schemaFieldText)) return schemaFieldText;
     return FileUtil.toSystemDependentName(getRelativePath(myProject, schemaFieldText));
+  }
+
+  public void runFileChooser() {
+    mySchemaField.getButton().doClick();
   }
 
   private static ColumnInfo[] createColumns() {
@@ -368,5 +379,35 @@ public class JsonSchemaMappingsView implements Disposable {
     if (!ioFile.isAbsolute()) return text;
     final String relativePath = FileUtil.getRelativePath(new File(project.getBasePath()), ioFile);
     return relativePath == null ? text : relativePath;
+  }
+
+  private static class SchemaFieldErrorMessageProvider extends DocumentAdapter {
+    private final JBTextField mySchemaFieldBacking;
+    private final ErrorLabel myLabel;
+
+    public SchemaFieldErrorMessageProvider(JBTextField schemaFieldBacking, ErrorLabel label) {
+      mySchemaFieldBacking = schemaFieldBacking;
+      myLabel = label;
+    }
+
+    protected void textChanged(DocumentEvent e) {
+      String text = mySchemaFieldBacking.getText().trim();
+      if (text.isEmpty()) {
+        myLabel.setErrorText("Schema path cannot be empty", JBColor.RED);
+        return;
+      }
+
+      if (isHttpPath(text)) {
+        if (!isValidURL(text)) {
+          myLabel.setErrorText("Invalid schema URL", JBColor.RED);
+          return;
+        }
+      }
+      else if (!new File(text).exists()) {
+        myLabel.setErrorText("Schema file doesn't exist", JBColor.RED);
+        return;
+      }
+      myLabel.setErrorText(null, null);
+    }
   }
 }
