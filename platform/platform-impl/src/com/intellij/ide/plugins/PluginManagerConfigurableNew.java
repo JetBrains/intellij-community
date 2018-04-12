@@ -20,10 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -38,7 +35,9 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
@@ -116,7 +115,6 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
           color = new JBColor(0xEAEAEC, 0x4D4D4D);
         }
 
-
         return new TagComponent(tag, tooltip, color);
       }
     };
@@ -185,6 +183,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
     JBTextField editor = mySearchTextField.getTextEditor();
     editor.getEmptyText().appendText("Search plugins");
+    editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setOpaque(true);
     editor.setBorder(JBUI.Borders.empty(0, 25));
     mySearchTextField.setBorder(JBUI.Borders.customLine(new JBColor(0xC5C5C5, 0x515151)));
@@ -458,6 +457,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     bundled.sortByName();
     bundled.titleWithCount("Bundled", bundledEnabled);
     panel.addGroup(bundled);
+    myPluginsModel.setEnabledGroup(bundled);
 
     return createScrollPane(panel);
   }
@@ -928,6 +928,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       JLabel title = new JLabel(group.title);
       title.setForeground(new JBColor(0x787878, 0x999999));
       panel.add(title, BorderLayout.WEST);
+      group.titleLabel = title;
 
       if (group.rightAction != null) {
         panel.add(group.rightAction, BorderLayout.EAST);
@@ -941,10 +942,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         uiGroup.plugins.add(pluginComponent);
         add(pluginComponent);
         pluginComponent.addMouseListeners(myMouseHandler);
-        //noinspection unchecked
-        pluginComponent.myIconLabel.setListener(myListener, descriptor);
-        //noinspection unchecked
-        pluginComponent.myName.setListener(myListener, descriptor);
+        pluginComponent.setLinkListener(myListener);
       }
     }
   }
@@ -1147,6 +1145,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
   private static class PluginsGroup {
     public String title;
+    public JLabel titleLabel;
     public LinkLabel rightAction;
     public List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
 
@@ -1215,6 +1214,15 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       myMouseComponents.add(myName);
     }
 
+    protected void updateIcon(boolean errors, boolean disabled) {
+      boolean jb = myPlugin.isBundled() || PluginManagerMain.isDevelopedByJetBrains(myPlugin);
+
+      myIconLabel.setIcon(PluginLogoInfo.getIcon(false, jb, errors, false));
+      if (disabled) {
+        myIconLabel.setDisabledIcon(PluginLogoInfo.getIcon(false, jb, errors, true));
+      }
+    }
+
     protected void addDescriptionComponent(@NotNull JPanel parent, @Nullable String description, @NotNull LineFunction function) {
       if (StringUtil.isEmptyOrSpaces(description)) {
         return;
@@ -1276,6 +1284,13 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       if (myDescription != null) {
         myDescription.setForeground(grayedFg);
       }
+    }
+
+    public void setLinkListener(@NotNull LinkListener<IdeaPluginDescriptor> listener) {
+      //noinspection unchecked
+      myIconLabel.setListener(listener, myPlugin);
+      //noinspection unchecked
+      myName.setListener(listener, myPlugin);
     }
 
     public void addMouseListeners(@NotNull MouseAdapter listener) {
@@ -1376,8 +1391,6 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       myNameButtons = new NonOpaquePanel(new BorderLayout());
       myNameButtons.add(createButtons(update), BorderLayout.EAST);
       centerPanel.add(myNameButtons, VerticalLayout.FILL_HORIZONTAL);
-
-      myIconLabel.setDisabledIcon(AllIcons.Plugins.PluginLogoDisabled_40);
 
       addNameComponent(myNameButtons, BorderLayout.WEST);
       myName.setVerticalAlignment(SwingConstants.TOP);
@@ -1486,7 +1499,11 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
 
     public void updateErrors() {
-      if (PluginManagerCore.isIncompatible(myPlugin) || myPluginsModel.hasProblematicDependencies(myPlugin.getPluginId())) {
+      boolean errors = PluginManagerCore.isIncompatible(myPlugin) || myPluginsModel.hasProblematicDependencies(myPlugin.getPluginId());
+
+      updateIcon(errors, true);
+
+      if (errors) {
         if (myErrorPanel == null) {
           myErrorPanel = createNameBaselinePanel();
 
@@ -1576,7 +1593,6 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     @Override
     protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
       super.updateColors(grayedFg, background);
-      myIconLabel.setEnabled(mySelection != SelectionType.NONE || myPlugin.isEnabled());
 
       if (myVersion != null) {
         myVersion.setForeground(grayedFg);
@@ -1585,11 +1601,12 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         myLastUpdated.setForeground(grayedFg);
       }
 
-      if (!myPlugin.isEnabled()) {
-        myName.setForeground(mySelection == SelectionType.NONE ? DisabledColor : null);
-        if (myDescription != null) {
-          myDescription.setForeground(mySelection == SelectionType.NONE ? DisabledColor : null);
-        }
+      boolean enabled = myPluginsModel.isEnabled(myPlugin);
+
+      myIconLabel.setEnabled(enabled);
+      myName.setForeground(enabled ? null : DisabledColor);
+      if (myDescription != null) {
+        myDescription.setForeground(enabled ? grayedFg : DisabledColor);
       }
 
       if (myEnableDisableButton != null) {
@@ -1658,6 +1675,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         myEnableDisableUninstallButton.setText(getEnabledTitle());
       }
       updateErrors();
+      setSelection(mySelection);
     }
   }
 
@@ -1690,6 +1708,9 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
           }
         }
       });
+      if (myDescription != null) {
+        UIUtil.setCursor(myDescription, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      }
 
       createMetricsPanel(centerPanel);
 
@@ -1725,6 +1746,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         }
       });
 
+      updateIcon(false, false);
       setSelection(SelectionType.NONE);
     }
 
@@ -1778,6 +1800,44 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
 
     @Override
+    public void setLinkListener(@NotNull LinkListener<IdeaPluginDescriptor> listener) {
+      super.setLinkListener(listener);
+
+      MouseListener mouseListener = new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent event) {
+          myName.entered(event);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent event) {
+          myName.exited(event);
+        }
+      };
+      myIconLabel.addMouseListener(mouseListener);
+
+      if (myDescription != null) {
+        myDescription.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent event) {
+            if (SwingUtilities.isLeftMouseButton(event)) {
+              listener.linkSelected(myName, myPlugin);
+            }
+          }
+        });
+        myDescription.addMouseListener(mouseListener);
+      }
+    }
+
+    @Override
+    public void addMouseListeners(@NotNull MouseAdapter listener) {
+    }
+
+    @Override
+    public void removeMouseListeners(@NotNull MouseAdapter listener) {
+    }
+
+    @Override
     protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
       super.updateColors(grayedFg, background);
 
@@ -1807,6 +1867,8 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
   private class DetailsPageListComponent extends OpaquePanel {
     private final IdeaPluginDescriptor myPlugin;
+    private JLabel myNameComponent;
+    private JLabel myIconLabel;
     private JButton myUpdateButton;
     private JButton myInstallButton;
     private JButton myEnableDisableButton;
@@ -1834,17 +1896,17 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset5()));
       JPanel nameButtons = new NonOpaquePanel(new BorderLayout(offset5(), 0));
 
-      JLabel nameComponent = new JLabel(myPlugin.getName());
-      nameComponent.setOpaque(false);
-      Font font = nameComponent.getFont();
+      myNameComponent = new JLabel(myPlugin.getName());
+      myNameComponent.setOpaque(false);
+      Font font = myNameComponent.getFont();
       if (font != null) {
-        nameComponent.setFont(font.deriveFont(Font.BOLD, 30));
+        myNameComponent.setFont(font.deriveFont(Font.BOLD, 30));
       }
-      if (!myPlugin.isEnabled()) {
-        nameComponent.setForeground(DisabledColor);
+      if (!(myPlugin instanceof PluginNode) && !myPluginsModel.isEnabled(myPlugin)) {
+        myNameComponent.setForeground(DisabledColor);
       }
 
-      nameButtons.add(nameComponent, BorderLayout.WEST);
+      nameButtons.add(myNameComponent, BorderLayout.WEST);
       nameButtons.add(createButtons(update), BorderLayout.EAST);
       centerPanel.add(nameButtons, VerticalLayout.FILL_HORIZONTAL);
 
@@ -1860,7 +1922,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         versionComponent.setForeground(new JBColor(Gray._130, Gray._120));
         nameButtons.add(versionComponent);
 
-        int nameBaseline = nameComponent.getBaseline(nameComponent.getWidth(), nameComponent.getHeight());
+        int nameBaseline = myNameComponent.getBaseline(myNameComponent.getWidth(), myNameComponent.getHeight());
         int versionBaseline = versionComponent.getBaseline(versionComponent.getWidth(), versionComponent.getHeight());
         versionComponent.setBorder(JBUI.Borders.empty(nameBaseline - versionBaseline + JBUI.scale(6), 4, 0, 0));
       }
@@ -1919,12 +1981,15 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       header.setBorder(JBUI.Borders.emptyRight(20));
       add(header, BorderLayout.NORTH);
 
-      JLabel iconLabel = new JLabel(AllIcons.Plugins.PluginLogo_80);
-      iconLabel.setDisabledIcon(AllIcons.Plugins.PluginLogoDisabled_80);
-      iconLabel.setVerticalAlignment(SwingConstants.TOP);
-      iconLabel.setOpaque(false);
-      iconLabel.setEnabled(myPlugin.isEnabled());
-      header.add(iconLabel, BorderLayout.WEST);
+      boolean jb = PluginManagerMain.isDevelopedByJetBrains(myPlugin);
+      boolean errors = PluginManagerCore.isIncompatible(myPlugin) || myPluginsModel.hasProblematicDependencies(myPlugin.getPluginId());
+
+      myIconLabel = new JLabel(PluginLogoInfo.getIcon(true, jb, errors, false));
+      myIconLabel.setDisabledIcon(PluginLogoInfo.getIcon(true, jb, errors, true));
+      myIconLabel.setVerticalAlignment(SwingConstants.TOP);
+      myIconLabel.setOpaque(false);
+      myIconLabel.setEnabled(myPlugin instanceof PluginNode || myPluginsModel.isEnabled(myPlugin));
+      header.add(myIconLabel, BorderLayout.WEST);
 
       return header;
     }
@@ -2075,6 +2140,12 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     private void changeEnableDisable() {
       myPluginsModel.changeEnableDisable(myPlugin);
 
+      if (!(myPlugin instanceof PluginNode)) {
+        boolean enabled = myPluginsModel.isEnabled(myPlugin);
+        myNameComponent.setForeground(enabled ? null : DisabledColor);
+        myIconLabel.setEnabled(enabled);
+      }
+
       String title = myPluginsModel.getEnabledTitle(myPlugin);
       if (myEnableDisableButton != null) {
         myEnableDisableButton.setText(title);
@@ -2120,16 +2191,31 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   private static class TagComponent extends LinkComponent {
+    private final Color myColor;
+
     public TagComponent(@NotNull String name, @Nullable String tooltip, @NotNull Color color) {
+      myColor = color;
       setText(name);
       if (tooltip != null) {
         setToolTipText(tooltip);
       }
-      setForeground(new JBColor(0x787878, 0xBBBBBB));
-      setBackground(color);
+      setForeground(new JBColor(0x787878, 0x999999));
       setPaintUnderline(false);
-      setOpaque(true);
-      setBorder(JBUI.Borders.empty(2));
+      setOpaque(false);
+      setBorder(JBUI.Borders.empty(0, 8));
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      //noinspection UseJBColor
+      g.setColor(myUnderline ? new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), 100) : myColor);
+      g.fillRect(0, 0, getWidth(), getHeight());
+      super.paintComponent(g);
+    }
+
+    @Override
+    protected boolean isInClickableArea(Point pt) {
+      return true;
     }
   }
 
@@ -2401,6 +2487,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     private final List<ListPluginComponent> myListComponents = new ArrayList<>();
     private final Map<String, ListPluginComponent> myListMap = new HashMap<>();
     private final Map<String, GridCellPluginComponent> myGridMap = new HashMap<>();
+    private PluginsGroup myEnabledGroup;
 
     public boolean needRestart;
     public boolean createShutdownCallback = true;
@@ -2415,9 +2502,17 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       }
     }
 
+    public void setEnabledGroup(@NotNull PluginsGroup group) {
+      myEnabledGroup = group;
+    }
+
+    public boolean isEnabled(@NotNull IdeaPluginDescriptor plugin) {
+      return isEnabled(plugin.getPluginId());
+    }
+
     @NotNull
     public String getEnabledTitle(@NotNull IdeaPluginDescriptor plugin) {
-      return isEnabled(plugin.getPluginId()) ? "Disable" : "Enable";
+      return isEnabled(plugin) ? "Disable" : "Enable";
     }
 
     public void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {
@@ -2426,6 +2521,15 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       for (ListPluginComponent component : myListComponents) {
         component.updateEnabledState();
       }
+
+      int enabled = 0;
+      for (IdeaPluginDescriptor descriptor : myEnabledGroup.descriptors) {
+        if (isEnabled(descriptor)) {
+          enabled++;
+        }
+      }
+      myEnabledGroup.titleWithCount("Bundled", enabled);
+      myEnabledGroup.titleLabel.setText(myEnabledGroup.title);
     }
 
     public void doUninstall(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor plugin, @Nullable Runnable update) {
@@ -2534,6 +2638,100 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     @NotNull
     private static String stripTags(@NotNull String s) {
       return TAG_PATTERN.matcher(s).replaceAll("").trim();
+    }
+  }
+
+  private static final class PluginLogoInfo {
+    private static final Icon ModifierInvalid = IconLoader.getIcon("/plugins/modifierInvalid.svg", AllIcons.class); // 15x15
+    private static final Icon ModifierJBLogo = IconLoader.getIcon("/plugins/modifierJBLogo.svg", AllIcons.class); // 14x14
+
+    private static final LayeredIcon PluginLogoJB_40 = new LayeredIcon(2);
+    private static final LayeredIcon PluginLogoError_40 = new LayeredIcon(2);
+    private static final LayeredIcon PluginLogoJBError_40 = new LayeredIcon(3);
+
+    private static final LayeredIcon PluginLogoDisabledJB_40 = new LayeredIcon(2);
+    private static final LayeredIcon PluginLogoDisabledError_40 = new LayeredIcon(2);
+    private static final LayeredIcon PluginLogoDisabledJBError_40 = new LayeredIcon(3);
+
+    private static final LayeredIcon PluginLogoJB_80 = new LayeredIcon(2);
+    private static final LayeredIcon PluginLogoError_80 = new LayeredIcon(2);
+    private static final LayeredIcon PluginLogoJBError_80 = new LayeredIcon(3);
+
+    private static final LayeredIcon PluginLogoDisabledJB_80 = new LayeredIcon(2);
+    private static final LayeredIcon PluginLogoDisabledError_80 = new LayeredIcon(2);
+    private static final LayeredIcon PluginLogoDisabledJBError_80 = new LayeredIcon(3);
+
+    static {
+      setSouthEast(PluginLogoJB_40, AllIcons.Plugins.PluginLogo_40, ModifierJBLogo);
+      setSouthWest(PluginLogoError_40, AllIcons.Plugins.PluginLogo_40, ModifierInvalid);
+      setSouthEastWest(PluginLogoJBError_40, AllIcons.Plugins.PluginLogo_40, ModifierJBLogo, ModifierInvalid);
+
+      Icon disabledJBLogo = IconLoader.getDisabledIcon(ModifierJBLogo);
+      assert disabledJBLogo != null;
+
+      setSouthEast(PluginLogoDisabledJB_40, AllIcons.Plugins.PluginLogoDisabled_40, disabledJBLogo);
+      setSouthWest(PluginLogoDisabledError_40, AllIcons.Plugins.PluginLogoDisabled_40, ModifierInvalid);
+      setSouthEastWest(PluginLogoDisabledJBError_40, AllIcons.Plugins.PluginLogoDisabled_40, disabledJBLogo, ModifierInvalid);
+
+      Icon jbLogo2x = IconUtil.scale(ModifierJBLogo, 2);
+      Icon errorLogo2x = IconUtil.scale(ModifierInvalid, 2);
+
+      setSouthEast(PluginLogoJB_80, AllIcons.Plugins.PluginLogo_80, jbLogo2x);
+      setSouthWest(PluginLogoError_80, AllIcons.Plugins.PluginLogo_80, errorLogo2x);
+      setSouthEastWest(PluginLogoJBError_80, AllIcons.Plugins.PluginLogo_80, jbLogo2x, errorLogo2x);
+
+      Icon disabledJBLogo2x = IconLoader.getDisabledIcon(jbLogo2x);
+      assert disabledJBLogo2x != null;
+
+      setSouthEast(PluginLogoDisabledJB_80, AllIcons.Plugins.PluginLogoDisabled_80, disabledJBLogo2x);
+      setSouthWest(PluginLogoDisabledError_80, AllIcons.Plugins.PluginLogoDisabled_80, errorLogo2x);
+      setSouthEastWest(PluginLogoDisabledJBError_80, AllIcons.Plugins.PluginLogoDisabled_80, disabledJBLogo2x, errorLogo2x);
+    }
+
+    private static void setSouthEast(@NotNull LayeredIcon layeredIcon, @NotNull Icon main, @NotNull Icon southEast) {
+      layeredIcon.setIcon(main, 0);
+      layeredIcon.setIcon(southEast, 1, SwingConstants.SOUTH_EAST);
+    }
+
+    private static void setSouthWest(@NotNull LayeredIcon layeredIcon, @NotNull Icon main, @NotNull Icon southWest) {
+      layeredIcon.setIcon(main, 0);
+      layeredIcon.setIcon(southWest, 1, SwingConstants.SOUTH_WEST);
+    }
+
+    private static void setSouthEastWest(@NotNull LayeredIcon layeredIcon,
+                                         @NotNull Icon main,
+                                         @NotNull Icon southEast,
+                                         @NotNull Icon southWest) {
+      layeredIcon.setIcon(main, 0);
+      layeredIcon.setIcon(southEast, 1, SwingConstants.SOUTH_EAST);
+      layeredIcon.setIcon(southWest, 2, SwingConstants.SOUTH_WEST);
+    }
+
+    @NotNull
+    public static Icon getIcon(boolean big, boolean jb, boolean error, boolean disabled) {
+      if (jb && !error) {
+        if (big) {
+          return disabled ? PluginLogoDisabledJB_80 : PluginLogoJB_80;
+        }
+        return disabled ? PluginLogoDisabledJB_40 : PluginLogoJB_40;
+      }
+      if (!jb && error) {
+        if (big) {
+          return disabled ? PluginLogoDisabledError_80 : PluginLogoError_80;
+        }
+        return disabled ? PluginLogoDisabledError_40 : PluginLogoError_40;
+      }
+      if (jb/* && error*/) {
+        if (big) {
+          return disabled ? PluginLogoDisabledJBError_80 : PluginLogoJBError_80;
+        }
+        return disabled ? PluginLogoDisabledJBError_40 : PluginLogoJBError_40;
+      }
+      // !jb && !error
+      if (big) {
+        return disabled ? AllIcons.Plugins.PluginLogoDisabled_80 : AllIcons.Plugins.PluginLogo_80;
+      }
+      return disabled ? AllIcons.Plugins.PluginLogoDisabled_40 : AllIcons.Plugins.PluginLogo_40;
     }
   }
 }
