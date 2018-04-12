@@ -1450,6 +1450,20 @@ public class JBUI {
         return foreground(false);
       }
     }
+
+    public static class Popup {
+      public static Color headerBackground(boolean active) {
+        return active
+               ? getColor("Popup.header.activeBackground", 0xe6e6e6)
+               : getColor("Popup.header.inactiveBackground", 0xededed);
+      }
+
+      public static Color borderColor(boolean active) {
+        return active
+               ? getColor("Popup.borderColor", 0x808080)
+               : getColor("Popup.inactiveBorderColor", 0xaaaaaa);
+      }
+    }
   }
 
   private static Color getColor(String propertyName, int defaultColor) {
