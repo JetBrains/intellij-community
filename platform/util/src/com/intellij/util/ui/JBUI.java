@@ -1018,15 +1018,23 @@ public class JBUI {
      * Creates a context based on the component's (or graphics's) scale and sticks to it via the {@link #update()} method.
      */
     @NotNull
-    public static ScaleContext create(@Nullable Component component, @Nullable Graphics graphics) {
+    public static ScaleContext create(@Nullable Component component, @Nullable Graphics2D graphics) {
       // Component is preferable to Graphics as a scale provider, as it lets the context stick
       // to the comp's actual scale via the update method.
-      if (component == null || component.getGraphicsConfiguration() == null && graphics instanceof Graphics2D) {
-        return create((Graphics2D)graphics);
+      if (component != null) {
+        GraphicsConfiguration gc = component.getGraphicsConfiguration();
+        if (gc == null ||
+            gc.getDevice().getType() == GraphicsDevice.TYPE_IMAGE_BUFFER ||
+            gc.getDevice().getType() == GraphicsDevice.TYPE_PRINTER)
+        {
+          // can't rely on gc in this case as it may provide incorrect transform or scale
+          component = null;
+        }
       }
-      else {
+      if (component != null) {
         return create(component);
       }
+      return create(graphics);
     }
 
     /**

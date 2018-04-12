@@ -518,7 +518,8 @@ public final class IconLoader {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      getRealIcon(ScaleContext.create(c, g)).paintIcon(c, g, x, y);
+      Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
+      getRealIcon(ScaleContext.create(c, g2d)).paintIcon(c, g, x, y);
     }
 
     @Override
