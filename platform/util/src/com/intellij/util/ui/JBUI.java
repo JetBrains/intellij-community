@@ -302,7 +302,7 @@ public class JBUI {
    * Returns the system scale factor, corresponding to the graphics configuration.
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
-  public static float sysScale(@Nullable GraphicsConfiguration gc) {
+    public static float sysScale(@Nullable GraphicsConfiguration gc) {
     if (UIUtil.isJreHiDPIEnabled() && gc != null) {
       if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
         if (SystemInfo.isMac && UIUtil.isJreHiDPI_earlierVersion()) {

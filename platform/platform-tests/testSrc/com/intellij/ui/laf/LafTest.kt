@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.JBIntSpinner
+import com.intellij.ui.RestoreScaleRule
 import com.intellij.ui.UiTestRule
 import com.intellij.ui.changeLafIfNeed
 import com.intellij.ui.components.CheckBox
@@ -16,6 +17,7 @@ import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -36,6 +38,10 @@ class LafTest {
     fun lafNames() = listOf("Darcula", "IntelliJ")
 
     private val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf"))
+
+    @JvmField
+    @ClassRule
+    val noScaleRule = RestoreScaleRule()
   }
 
   @Suppress("MemberVisibilityCanBePrivate")

@@ -3,6 +3,7 @@ package com.intellij.ui
 
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
+import org.apache.xmlgraphics.java2d.GenericGraphicsDevice
 import org.apache.xmlgraphics.java2d.GraphicsConfigurationWithTransparency
 import org.junit.rules.TestName
 import org.junit.runners.model.MultipleFailureException
@@ -14,7 +15,13 @@ class UiTestRule(private val testDataRoot: Path) {
   // must be lazy, otherwise we cannot change `java.awt.headless`
   private val graphicsConfiguration by lazy {
     object : GraphicsConfigurationWithTransparency() {
+      private val device = object : GenericGraphicsDevice(this) {
+        override fun getType() = TYPE_RASTER_SCREEN
+      }
+
       override fun getBounds() = Rectangle(0, 0, 1000, 1000)
+
+      override fun getDevice() = device
     }
   }
 
