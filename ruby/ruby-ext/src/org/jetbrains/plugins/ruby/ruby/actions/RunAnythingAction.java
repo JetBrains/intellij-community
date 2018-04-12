@@ -882,8 +882,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }).registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), editor, balloon);
 
     DumbAwareAction.create(e -> executeCommand())
-                   .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER", "shift ENTER", "alt ENTER", "meta ENTER"), editor,
-                                              balloon);
+                   .registerCustomShortcutSet(
+                     CustomShortcutSet.fromString("ENTER", "shift ENTER", "alt ENTER", "alt shift ENTER", "meta ENTER"), editor, balloon);
 
     DumbAwareAction.create(e -> {
       RunAnythingSearchListModel model = getSearchingModel(myList);
