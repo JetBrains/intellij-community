@@ -361,6 +361,8 @@ class CtorTest {
     System.out.println(test.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
   }
 
+  <error descr="Missing method body, or declare abstract">CtorTest(String noBody);</error>
+
   void something() {
     test = Optional.empty();
   }

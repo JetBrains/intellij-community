@@ -96,13 +96,15 @@ public class CommonDataflow {
     List<DfaMemoryState> states = visitor.myEndOfInitializerStates;
     for (PsiMethod method : ((PsiClass)block).getConstructors()) {
       List<DfaMemoryState> initialStates;
+      PsiCodeBlock body = method.getBody();
+      if (body == null) continue;
       PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
       if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && hasImplicitImpureSuperCall((PsiClass)block, method))) {
         initialStates = Collections.singletonList(runner.createMemoryState());
       } else {
         initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();
       }
-      if(runner.analyzeBlockRecursively(method.getBody(), initialStates, visitor) == RunnerResult.OK) {
+      if(runner.analyzeBlockRecursively(body, initialStates, visitor) == RunnerResult.OK) {
         dfr = visitor.myResult.copy();
       } else {
         visitor.myResult = dfr;
