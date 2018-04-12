@@ -38,9 +38,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author vlan
@@ -165,7 +163,7 @@ public class PyResolveUtil {
     }
     else {
       return StreamEx
-        .of(resolveLocally(expression))
+        .of(fullMultiResolveLocally(expression))
         .select(PyImportElement.class)
         .map(
           element -> {
@@ -260,14 +258,27 @@ public class PyResolveUtil {
     return PyPsiUtils.strValue(nameExpression);
   }
 
+  /**
+   * Follows one of 'target-reference` chain and returns assigned value or null.
+   *
+   * @param referenceExpression expression to resolve
+   * @return resolved assigned value.
+   * @see PyResolveUtil#fullMultiResolveLocally(PyReferenceExpression)
+   */
   @Nullable
   public static PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
+    return fullResolveLocally(referenceExpression, new HashSet<>());
+  }
+
+  @Nullable
+  private static PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression,
+                                                 @NotNull Set<PyReferenceExpression> visited) {
     for (PsiElement element : resolveLocally(referenceExpression)) {
       if (element instanceof PyTargetExpression) {
         final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
 
-        if (assignedValue instanceof PyReferenceExpression) {
-          return fullResolveLocally((PyReferenceExpression)assignedValue);
+        if (assignedValue instanceof PyReferenceExpression && visited.add((PyReferenceExpression)assignedValue)) {
+          return fullResolveLocally((PyReferenceExpression)assignedValue, visited);
         }
 
         return assignedValue;
@@ -275,6 +286,39 @@ public class PyResolveUtil {
     }
 
     return null;
+  }
+
+  /**
+   * Runs DFS on assignment chains and returns all reached assigned values.
+   *
+   * @param referenceExpression expression to resolve
+   * @return resolved assigned values.
+   * <i>Note: the returned list could contain null values.</i>
+   */
+  @NotNull
+  public static List<PsiElement> fullMultiResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
+    return fullMultiResolveLocally(referenceExpression, new HashSet<>());
+  }
+
+  @NotNull
+  private static List<PsiElement> fullMultiResolveLocally(@NotNull PyReferenceExpression referenceExpression,
+                                                          @NotNull Set<PyReferenceExpression> visited) {
+    final List<PsiElement> result = new ArrayList<>();
+
+    for (PsiElement element : resolveLocally(referenceExpression)) {
+      if (element instanceof PyTargetExpression) {
+        final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
+
+        if (assignedValue instanceof PyReferenceExpression && visited.add((PyReferenceExpression)assignedValue)) {
+          result.addAll(fullMultiResolveLocally((PyReferenceExpression)assignedValue, visited));
+          continue;
+        }
+      }
+
+      result.add(element);
+    }
+
+    return result;
   }
 
   /**

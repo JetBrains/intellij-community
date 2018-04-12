@@ -94,6 +94,144 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "T55 = TypeVar('T55', bound=my_list_int)");
   }
 
+  // PY-28227
+  public void testPlainGenericInheritance() {
+    doTestByText("from typing import Generic\n" +
+                 "\n" +
+                 "class A(<error descr=\"Cannot inherit from plain 'Generic'\">Generic</error>):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "B = Generic\n" +
+                 "class C(<error descr=\"Cannot inherit from plain 'Generic'\">B</error>):\n" +
+                 "    pass");
+  }
+
+  // PY-28227
+  public void testGenericInstantiation() {
+    doTestByText("from typing import Generic\n" +
+                 "\n" +
+                 "<error descr=\"Type 'Generic' cannot be instantiated; it can be used only as a base class\">Generic()</error>\n" +
+                 "\n" +
+                 "B = Generic\n" +
+                 "<error descr=\"Type 'Generic' cannot be instantiated; it can be used only as a base class\">B()</error>");
+  }
+
+  // PY-28227
+  public void testGenericParametersTypes() {
+    doTestByText("from typing import Generic, TypeVar\n" +
+                 "\n" +
+                 "class A1(Generic[<error descr=\"Parameters to 'Generic[...]' must all be type variables\">0</error>]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class B1(Generic[<error descr=\"Parameters to 'Generic[...]' must all be type variables\">int</error>]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class A2(Generic[<error descr=\"Parameters to 'Generic[...]' must all be type variables\">0</error>, <error descr=\"Parameters to 'Generic[...]' must all be type variables\">0</error>]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class B2(Generic[<error descr=\"Parameters to 'Generic[...]' must all be type variables\">int</error>, <error descr=\"Parameters to 'Generic[...]' must all be type variables\">int</error>]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "null = 0\n" +
+                 "class A3(Generic[<error descr=\"Parameters to 'Generic[...]' must all be type variables\">null</error>]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "my_int = int\n" +
+                 "class B3(Generic[<error descr=\"Parameters to 'Generic[...]' must all be type variables\">my_int</error>]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "T = TypeVar('T')\n" +
+                 "S = TypeVar('S')\n" +
+                 "\n" +
+                 "class C1(Generic[T]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class C2(Generic[T, S]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "my_t = T\n" +
+                 "class C3(Generic[my_t]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class D1:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class D2:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class E1(Generic[<error descr=\"Parameters to 'Generic[...]' must all be type variables\">D1</error>]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class F1(Generic[<error descr=\"Parameters to 'Generic[...]' must all be type variables\">D1</error>, <error descr=\"Parameters to 'Generic[...]' must all be type variables\">D2</error>]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "my_d = D1\n" +
+                 "class E2(Generic[<error descr=\"Parameters to 'Generic[...]' must all be type variables\">my_d</error>]):\n" +
+                 "    pass");
+  }
+
+  // PY-28227
+  public void testGenericParametersDuplication() {
+    doTestByText("from typing import Generic, TypeVar\n" +
+                 "\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "class C(Generic[T, <error descr=\"Parameters to 'Generic[...]' must all be unique\">T</error>]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "B = Generic\n" +
+                 "class A(B[T, <error descr=\"Parameters to 'Generic[...]' must all be unique\">T</error>]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "T1 = T\n" +
+                 "class D(Generic[T1, <error descr=\"Parameters to 'Generic[...]' must all be unique\">T</error>]):\n" +
+                 "    pass");
+  }
+
+  // PY-28227
+  public void testGenericDuplication() {
+    doTestByText("from typing import Generic, TypeVar\n" +
+                 "\n" +
+                 "T = TypeVar('T')\n" +
+                 "S = TypeVar('S')\n" +
+                 "\n" +
+                 "class C(Generic[T], <error descr=\"Cannot inherit from 'Generic[...]' multiple times\">Generic[S]</error>):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "B = Generic\n" +
+                 "class D(B[T], <error descr=\"Cannot inherit from 'Generic[...]' multiple times\">Generic[S]</error>):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "E = Generic[T]\n" +
+                 "class A(E, <error descr=\"Cannot inherit from 'Generic[...]' multiple times\">Generic[S]</error>):\n" +
+                 "    pass");
+  }
+
+  // PY-28227
+  public void testGenericCompleteness() {
+    doTestByText("from typing import Generic, TypeVar, Iterable\n" +
+                 "\n" +
+                 "T = TypeVar('T')\n" +
+                 "S = TypeVar('S')\n" +
+                 "\n" +
+                 "class C<error descr=\"Some type variables (S) are not listed in 'Generic[T]'\">(Generic[T], Iterable[S])</error>:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "B = Generic\n" +
+                 "D = T\n" +
+                 "class A<error descr=\"Some type variables (S) are not listed in 'Generic[T]'\">(B[D], Iterable[S])</error>:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class E(Generic[T], Iterable[T]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class F(B[D], Iterable[D]):\n" +
+                 "    pass\n" +
+                 "    \n" +
+                 "class G(Iterable[T]):\n" +
+                 "    pass");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
