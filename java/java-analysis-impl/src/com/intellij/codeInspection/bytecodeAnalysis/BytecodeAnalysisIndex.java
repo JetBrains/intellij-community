@@ -150,7 +150,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
 
     @Override
     public void save(@NotNull DataOutput out, HMember value) throws IOException {
-      out.write(value.myBytes);
+      out.write(value.asBytes());
     }
 
     @Override
@@ -279,7 +279,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     }
 
     private static void writeKey(@NotNull DataOutput out, EKey key, MessageDigest md) throws IOException {
-      out.write(key.member.hashed(md).myBytes);
+      out.write(key.member.hashed(md).asBytes());
       int rawDirKey = key.negated ? -key.dirKey : key.dirKey;
       DataInputOutputUtil.writeINT(out, rawDirKey);
       out.writeBoolean(key.stable);
