@@ -34,9 +34,9 @@ class NGramIndexingPermissionActivity : StartupActivity {
     const val DO_NOT_ASK_AGAIN_KEY = "com.intellij.plugin.completion.ngram.indexing.not.ask"
     const val ANSWERED = "com.intellij.plugin.completion.ngram.indexing.answered"
     const val PLUGIN_NAME = "Completion Stats Collector"
-    private const val MESSAGE_TEXT = """We're going to use ngrams frequencies to rank completion items better. This may
-      increase the indexing time by ~20-50% on large projects (especially, on the MS Windows). Do you allow
-      us to perform this experiment on this project?
+    private const val MESSAGE_TEXT = """We’re going to use ngram frequencies to rank completion items better. This
+        can increase the indexing time by ~20-50% on large projects (especially on MS Windows). Will you allow us
+        to perform this experiment on your project?
     """
   }
 
