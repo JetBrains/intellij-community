@@ -1096,6 +1096,9 @@ package com.company;
 
 public class Test {
     /**
+     * Do not remove existing
+     * <p>
+     * <b>Some text</b>
      * Before title
      *
      * <h1>Title</h1>
@@ -1113,6 +1116,9 @@ package com.company;
 
 public class Test {
     /**
+     * Do not remove existing
+     * <p>
+     * <b>Some text</b>
      * Before title
      *
      * <h1>Title</h1>
