@@ -59,4 +59,10 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
   public String patchPath(String path) {
     return ourDeprecatedIconsReplacements.get(path);
   }
+
+  @Nullable
+  @Override
+  public Class getContextClass(String path) {
+    return DeprecatedDuplicatesIconPathPatcher.class;
+  }
 }
