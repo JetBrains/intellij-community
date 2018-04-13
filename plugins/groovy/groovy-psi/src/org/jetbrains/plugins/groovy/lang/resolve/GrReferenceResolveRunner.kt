@@ -166,21 +166,20 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
     }
   }
 
-  if (qualifier == null || qualifier.isThisExpression()) {
-    val field = resolveToField(name).singleOrNull()
-    if (field != null && checkCurrentClass(field.element, this)) {
-      return field
-    }
-  }
-
   if (parent !is GrMethodCall) {
+    if (qualifier == null || qualifier.isThisExpression()) {
+      val field = resolveToField(name).singleOrNull()
+      if (field != null && checkCurrentClass(field.element, this)) {
+        return field
+      }
+    }
     if (qualifier == null) {
       // at this point:
       // - the reference is org.codehaus.groovy.ast.expr.VariableExpression
       // - the reference doesn't resolve to a variable, meaning it accesses org.codehaus.groovy.ast.DynamicVariable
       return resolveUnqualifiedType(name)
     }
-    else if (qualifier is GrReferenceExpression) {
+    if (qualifier is GrReferenceExpression) {
       return resolveQualifiedType(name, qualifier)
     }
   }
