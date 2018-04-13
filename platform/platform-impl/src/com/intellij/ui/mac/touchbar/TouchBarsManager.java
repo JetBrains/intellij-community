@@ -6,18 +6,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.KeyEvent;
 import java.util.ArrayDeque;
 
 public class TouchBarsManager {
   private final static boolean IS_LOGGING_ENABLED = false;
   private static final Logger LOG = Logger.getInstance(TouchBar.class);
-  private static final ArrayDeque<TouchBar> ourTouchBarStack = new ArrayDeque<>();
+  private static final ArrayDeque<BarContainer> ourTouchBarStack = new ArrayDeque<>();
+  private static TouchBar ourCurrentBar;
 
   public static void initialize() {
     if (!isTouchBarAvailable())
@@ -30,59 +32,95 @@ public class TouchBarsManager {
       @Override
       public void projectOpened(Project project) {
         trace("opened project %s, set general touchbar", project);
-        showTouchBar(TouchBarGeneral.instance(project));
+        showTouchBar(ProjectBarsStorage.instance(project).getBarContainer(ProjectBarsStorage.GENERAL));
 
         final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
         twm.addToolWindowManagerListener(new ToolWindowManagerListener() {
+          private BarContainer myDebuggerBar = ProjectBarsStorage.instance(project).getBarContainer(ProjectBarsStorage.DEBUGGER);
+
           @Override
           public void toolWindowRegistered(@NotNull String id) {}
           @Override
           public void stateChanged() {
             final String activeId = twm.getActiveToolWindowId();
             if (activeId != null && activeId.equals("Debug"))
-              showTouchBar(TouchBarDebugger.instance(project));
-            else {
-              TouchBarDebugger tbd = TouchBarDebugger.findInstance(project);
-              if (tbd != null)
-                closeTouchBar(tbd);
-            }
+              showTouchBar(myDebuggerBar);
+            else
+              closeTouchBar(myDebuggerBar);
           }
         });
       }
       @Override
       public void projectClosed(Project project) {
         trace("closed project %s, hide touchbar", project);
-        closeTouchBar(TouchBarGeneral.instance(project));
-        TouchBarGeneral.release(project);
-
-        // TODO: implement _closeAllProjectBars (to destroy all project-dependent bars : Debug, Editor, e.t.c.)
+        closeTouchBar(ProjectBarsStorage.instance(project).getBarContainer(ProjectBarsStorage.GENERAL));
+        ProjectBarsStorage.instance(project).releaseAll();
       }
     });
   }
 
   public static boolean isTouchBarAvailable() { return NST.isAvailable(); }
 
-  synchronized public static void showTouchBar(@NotNull TouchBar bar) {
-    final TouchBar top = ourTouchBarStack.peek();
+  public static void onKeyEvent(KeyEvent e) {
+    if (!isTouchBarAvailable())
+      return;
+
+    if (
+      e.getID() != KeyEvent.KEY_PRESSED
+      && e.getID() != KeyEvent.KEY_RELEASED
+    )
+      return;
+
+    if (
+      e.getKeyCode() != KeyEvent.VK_CONTROL
+      && e.getKeyCode() != KeyEvent.VK_ALT
+      && e.getKeyCode() != KeyEvent.VK_META
+    )
+      return;
+
+    long keymask = e.getModifiersEx(); // TODO: calc + ensure
+    synchronized (TouchBarsManager.class) {
+      for (BarContainer itb: ourTouchBarStack) {
+        if (itb instanceof MultiBarContainer)
+          ((MultiBarContainer)itb).selectBarByKeyMask(keymask);
+      }
+
+      _setTouchBar(ourTouchBarStack.peek());
+    }
+  }
+
+  synchronized public static void showTouchBar(@NotNull BarContainer bar) {
+    final BarContainer top = ourTouchBarStack.peek();
     if (top == bar)
       return;
 
     ourTouchBarStack.remove(bar);
     ourTouchBarStack.push(bar);
-    NST.setTouchBar(bar);
+    _setTouchBar(bar.get());
   }
 
-  synchronized public static void closeTouchBar(@NotNull TouchBar tb) {
+  synchronized public static void closeTouchBar(@NotNull BarContainer tb) {
     if (ourTouchBarStack.isEmpty())
       return;
 
-    final TouchBar top = ourTouchBarStack.peek();
+    BarContainer top = ourTouchBarStack.peek();
     if (top == tb) {
       ourTouchBarStack.pop();
-      NST.setTouchBar(ourTouchBarStack.peek());
+      _setTouchBar(ourTouchBarStack.peek());
     } else {
       ourTouchBarStack.remove(tb);
     }
+  }
+
+
+  private static void _setTouchBar(@NotNull BarContainer barProvider) { _setTouchBar(barProvider == null ? null : barProvider.get()); }
+
+  private static void _setTouchBar(TouchBar bar) {
+    if (ourCurrentBar == bar)
+      return;
+
+    ourCurrentBar = bar;
+    NST.setTouchBar(bar);
   }
 
   private static void trace(String fmt, Object... args) {

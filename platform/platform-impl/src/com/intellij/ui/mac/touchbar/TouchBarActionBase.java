@@ -7,16 +7,19 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 import static com.intellij.openapi.application.ModalityState.NON_MODAL;
 
-public class TouchBarActionBase extends TouchBar {
+public class TouchBarActionBase extends TouchBarProjectBase {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
 
-  TouchBarActionBase(String touchbarName) {
-    super(touchbarName);
+  TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project) {
+    super(touchbarName, project);
 
     ActionManager.getInstance().addTimerListener(500, new TimerListener() {
       @Override

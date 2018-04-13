@@ -8,22 +8,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class TouchBarGeneral extends TouchBarActionBase {
-  private static final Map<Project, TouchBarGeneral> ourInstances = new HashMap<>();
-
-  private final Project   myProject;
-
   private TBItemButton    myButtonAddRunConf;
 
   private TBItemPopover   myPopoverRunConf;
@@ -35,9 +27,8 @@ public class TouchBarGeneral extends TouchBarActionBase {
   private TBItemAnActionButton    myButtonDebug;
   private TBItemAnActionButton    myButtonStop;
 
-  private TouchBarGeneral(Project project) {
-    super("general");
-    myProject = project;
+  TouchBarGeneral(@NotNull Project project) {
+    super("general", project);
 
     addAnActionButton("CompileDirty", false); // NOTE: IdeActions.ACTION_COMPILE doesn't work
 
@@ -105,28 +96,6 @@ public class TouchBarGeneral extends TouchBarActionBase {
   }
 
   public TouchBar getPopoverRunConfExpandTB() { return myPopoverRunConfExpandTB; }
-
-  public static @NotNull TouchBarGeneral instance(@NotNull Project project) {
-    // NOTE: called from EDT only
-    TouchBarGeneral result = ourInstances.get(project);
-    if (result == null) {
-      final ID pool = Foundation.invoke("NSAutoreleasePool", "new");
-      try {
-        result = new TouchBarGeneral(project);
-        ourInstances.put(project, result);
-      } finally {
-        Foundation.invoke(pool, "release");
-      }
-    }
-    return result;
-  }
-
-  public static void release(@NotNull Project project) {
-    // NOTE: called from EDT only
-    TouchBarGeneral result = ourInstances.remove(project);
-    if (result != null)
-      result.release();
-  }
 
   private void _updateSelectedConf() {
     final Icon icon;

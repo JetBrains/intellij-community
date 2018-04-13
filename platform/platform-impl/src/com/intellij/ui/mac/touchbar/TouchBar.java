@@ -14,18 +14,20 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   static final Logger LOG = Logger.getInstance(TouchBar.class);
   private static final boolean IS_LOGGING_ENABLED = false;
 
-  protected final String myName;    // just for logging/debugging
+  protected final @NotNull String myName;    // just for logging/debugging
   protected ID myNativePeer;        // java wrapper holds native object
   protected long myCounter = 0;
   protected final List<TBItem> myItems = new ArrayList<>();
 
-  public TouchBar(String touchbarName) {
+  private BarContainer myContainer = null;
+
+  public TouchBar(@NotNull String touchbarName) {
     myName = touchbarName;
     myNativePeer = NST.createTouchBar(touchbarName, this);
   }
 
   @Override
-  public ID createItem(String uid) {
+  public ID createItem(@NotNull String uid) {
     TBItem item = findItem(uid);
     if (item == null) {
       trace("can't find TBItem with uid '%s'", uid);
@@ -47,13 +49,27 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   }
 
   public void closeAndRelease() {
-    TouchBarsManager.closeTouchBar(this);
+    if (myContainer == null)
+      return;
+
+    TouchBarsManager.closeTouchBar(myContainer);
+    myContainer = null;
     release();
   }
 
   public void show() {
+    if (myContainer != null)
+      return;
+
     selectVisibleItemsToShow();
-    TouchBarsManager.showTouchBar(this);
+    final TouchBar finalThis = this;
+    myContainer = new BarContainer() {
+      @Override
+      public TouchBar get() { return finalThis; }
+      @Override
+      public void release() { finalThis.release(); }
+    };
+    TouchBarsManager.showTouchBar(myContainer);
   }
 
   //
