@@ -13,7 +13,10 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.options.*
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.SettingsEditorConfigurable
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent.create
 import com.intellij.openapi.ui.Messages
@@ -66,7 +69,7 @@ private fun getName(userObject: Any): String {
   }
 }
 
-open class RunConfigurable @JvmOverloads constructor(private val myProject: Project, var runDialog: RunDialogBase? = null) : BaseConfigurable(), Disposable {
+open class RunConfigurable @JvmOverloads constructor(private val myProject: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable {
   @Volatile private var isDisposed: Boolean = false
   val root = DefaultMutableTreeNode("Root")
   val treeModel = MyTreeModel(root)
@@ -83,6 +86,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   private var isFolderCreating: Boolean = false
   private val toolbarAddAction = MyToolbarAddAction()
   private val runDashboardTypesPanel = RunDashboardTypesPanel(myProject)
+
+  private var isModified = false
 
   companion object {
     fun collectNodesRecursively(parentNode: DefaultMutableTreeNode,
@@ -747,7 +752,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   }
 
   override fun isModified(): Boolean {
-    if (super.isModified()) {
+    if (isModified) {
       return true
     }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
-import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TitledSeparator;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class JsonSchemaCatalogConfigurable extends BaseConfigurable {
+public class JsonSchemaCatalogConfigurable implements Configurable {
   @NonNls public static final String SETTINGS_JSON_SCHEMA_CATALOG = "settings.json.schema.catalog";
   public static final String JSON_SCHEMA_CATALOG = "JSON Schema Catalog";
   @NotNull private final Project myProject;

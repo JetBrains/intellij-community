@@ -13,7 +13,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.OptionalConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -66,9 +69,7 @@ import static com.intellij.ide.plugins.PluginManagerCore.getPlugins;
 /**
  * @author Alexander Lobas
  */
-public class PluginManagerConfigurableNew extends BaseConfigurable
-  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider,
-             OptionalConfigurable {
+public class PluginManagerConfigurableNew implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider, OptionalConfigurable {
   public static final String ID = "preferences.pluginManager2";
 
   private static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";

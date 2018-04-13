@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.OptionsBundle;
@@ -248,11 +247,8 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    if (myConfigurable instanceof BaseConfigurable) {
-      JComponent preferred = ((BaseConfigurable)myConfigurable).getPreferredFocusedComponent();
-      if (preferred != null) return preferred;
-    }
-    return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myCenterPanel);
+    JComponent preferred = myConfigurable.getPreferredFocusedComponent();
+    return preferred == null ? IdeFocusTraversalPolicy.getPreferredFocusedComponent(myCenterPanel) : preferred;
   }
 
   @Override
