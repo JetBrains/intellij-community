@@ -23,6 +23,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.stats.ngram.NGramFileBasedIndex
 
 /**
  * @author Vitaliy.Bibaev
@@ -34,8 +35,8 @@ class NGramIndexingPermissionActivity : StartupActivity {
     const val ANSWERED = "com.intellij.plugin.completion.ngram.indexing.answered"
     const val PLUGIN_NAME = "Completion Stats Collector"
     private const val MESSAGE_TEXT = """We're going to use ngrams frequencies to rank completion items better. This may
-      increase the indexing time by ~20-50% on large projects (especially, on the MS Windows). Do you want to allow
-      us to perform this experiment on this project?.
+      increase the indexing time by ~20-50% on large projects (especially, on the MS Windows). Do you allow
+      us to perform this experiment on this project?
     """
   }
 
@@ -50,6 +51,7 @@ class NGramIndexingPermissionActivity : StartupActivity {
         .addAction(object : NotificationAction("Allow") {
           override fun actionPerformed(event: AnActionEvent, notification: Notification) {
             NGramIndexingProperty.setEnabled(project, true)
+            NGramFileBasedIndex.requestRebuild()
             answered(project, notification)
           }
         })

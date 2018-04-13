@@ -47,6 +47,10 @@ class NGramFileBasedIndex : FileBasedIndexExtension<NGram, Int>() {
         val KEY = ID.create<NGram, Int>("ngram.index")
         const val INDEX_VERSION = 1
 
+        fun requestRebuild() {
+            FileBasedIndex.getInstance().requestRebuild(KEY)
+        }
+
         fun getNumberOfOccurrences(key: NGram, scope: GlobalSearchScope): Int {
             return FileBasedIndex.getInstance().getValues(KEY, key, scope).sum()
         }
