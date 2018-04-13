@@ -1532,22 +1532,22 @@ public class JBUI {
     public static class Popup {
       public static Color headerBackground(boolean active) {
         return active
-               ? getColor("Popup.header.activeBackground", 0xe6e6e6)
-               : getColor("Popup.header.inactiveBackground", 0xededed);
+               ? getColor("Popup.Header.activeBackground", 0xe6e6e6)
+               : getColor("Popup.Header.inactiveBackground", 0xededed);
       }
 
       public static Color borderColor(boolean active) {
         return active
-               ? getColor("Popup.borderColor", 0x808080)
-               : getColor("Popup.inactiveBorderColor", 0xaaaaaa);
+               ? getColor("Popup.Border.color", 0x808080)
+               : getColor("Popup.Border.inactiveColor", 0xaaaaaa);
       }
 
-      public static Color preferencesPanelColor() {
-        return getColor("Popup.preferences.background", 0xf7f7f7);
+      public static Color toolbarPanelColor() {
+        return getColor("Popup.Toolbar.background", 0xf7f7f7);
       }
 
-      public static Color preferencesBorderColor() {
-        return getColor("Popup.preferences.borderColor", 0xe6e6e6);
+      public static Color toolbarBorderColor() {
+        return getColor("Popup.Toolbar.Border.color", 0xe6e6e6);
       }
     }
   }

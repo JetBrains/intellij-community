@@ -564,7 +564,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     topPanel.add(createSettingsButton(), BorderLayout.EAST);
 
-    topPanel.setBackground(JBUI.CurrentTheme.Popup.preferencesPanelColor());
+    topPanel.setBackground(JBUI.CurrentTheme.Popup.toolbarPanelColor());
     Dimension prefSize = topPanel.getPreferredSize();
     prefSize.height = 28;
     topPanel.setPreferredSize(prefSize);
@@ -572,7 +572,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     panel.add(topPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    scrollPane.setBorder(IdeBorderFactory.createBorder(JBUI.CurrentTheme.Popup.preferencesBorderColor(), SideBorder.TOP | SideBorder.BOTTOM));
+    scrollPane.setBorder(IdeBorderFactory.createBorder(JBUI.CurrentTheme.Popup.toolbarBorderColor(), SideBorder.TOP | SideBorder.BOTTOM));
     panel.add(scrollPane, BorderLayout.CENTER);
     //panel.add(createSouthPanel(), BorderLayout.SOUTH);
     DataManager.registerDataProvider(panel, new DataProvider() {
