@@ -158,7 +158,7 @@ public class AnnotationUtil {
       }
 
       //noinspection unchecked
-      List<T> list = result.isEmpty() ? Collections.emptyList() : (List<T>)Arrays.asList(result.toArray());
+      List<T> list = result.isEmpty() ? Collections.emptyList() : Arrays.asList((T[])result.toArray());
 
       return CachedValueProvider.Result.create(list, PsiModificationTracker.MODIFICATION_COUNT);
     });
