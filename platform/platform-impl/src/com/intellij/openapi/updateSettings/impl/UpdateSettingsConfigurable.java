@@ -142,7 +142,8 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
 
       String packageManager = mySettings.getPackageManagerName();
       if (packageManager != null) {
-        myUpdateChannels.setEnabled(false);
+        myCheckForUpdates.setText(IdeBundle.message("updates.settings.checkbox.external"));
+        myUpdateChannels.setVisible(false);
         myChannelWarning.setText(IdeBundle.message("updates.settings.external", packageManager));
         myChannelWarning.setForeground(JBColor.GRAY);
         myChannelWarning.setVisible(true);
