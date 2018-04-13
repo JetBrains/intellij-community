@@ -158,18 +158,19 @@ private fun GrReferenceExpression.resolveStatic(): Collection<GroovyResolveResul
     if (locals.size == 1) return locals
   }
 
-  if (qualifier == null || qualifier.isThisExpression()) {
-    val fields = resolveToField(name)
-    val field = fields.singleOrNull()
-    if (field != null && checkCurrentClass(field.element, this)) return fields
-  }
-
-  if (qualifier == null && parent !is GrMethodCall) {
-    // at this point:
-    // - the reference is org.codehaus.groovy.ast.expr.VariableExpression
-    // - the reference doesn't resolve to a variable, meaning it accesses org.codehaus.groovy.ast.DynamicVariable
-    val classes = resolveUnqualifiedType(name)
-    if (classes.isNotEmpty()) return classes
+  if (parent !is GrMethodCall) {
+    if (qualifier == null || qualifier.isThisExpression()) {
+      val fields = resolveToField(name)
+      val field = fields.singleOrNull()
+      if (field != null && checkCurrentClass(field.element, this)) return fields
+    }
+    if (qualifier == null) {
+      // at this point:
+      // - the reference is org.codehaus.groovy.ast.expr.VariableExpression
+      // - the reference doesn't resolve to a variable, meaning it accesses org.codehaus.groovy.ast.DynamicVariable
+      val classes = resolveUnqualifiedType(name)
+      if (classes.isNotEmpty()) return classes
+    }
   }
 
   return emptyList()
