@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.images
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.diff.Diff
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -29,7 +30,7 @@ import java.util.*
 class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeChangesToDisk: Boolean = true) {
   private var processedClasses = 0
   private var processedIcons = 0
-  private var modifiedClasses = ArrayList<Pair<JpsModule, File>>()
+  private var modifiedClasses = ArrayList<Triple<JpsModule, File, String>>()
 
   fun processModule(module: JpsModule) {
     val customLoad: Boolean
@@ -81,12 +82,29 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
       processedClasses++
 
       if (!outFile.exists() || outFile.readText().lines() != text.lines()) {
-        modifiedClasses.add(Pair(module, outFile))
-
         if (writeChangesToDisk) {
           outFile.parentFile.mkdirs()
           outFile.writeText(text)
           println("Updated icons class: ${outFile.name}")
+        }
+        else {
+          val oldLines = outFile.readText().lines()
+          val newLines = text.lines()
+
+          val sb = StringBuilder()
+          var ch = Diff.buildChanges(oldLines.toTypedArray(), newLines.toTypedArray())
+          while (ch != null) {
+            val deleted = oldLines.subList(ch.line0, ch.line0 + ch.deleted)
+            val inserted = newLines.subList(ch.line1, ch.line1 + ch.inserted)
+
+            if (sb.isNotEmpty()) sb.append("=".repeat(20)).append("\n")
+            deleted.forEach { sb.append("-").append(it).append("\n") }
+            inserted.forEach { sb.append("+").append(it).append("\n") }
+
+            ch = ch.link
+          }
+
+          modifiedClasses.add(Triple(module, outFile, sb.toString()))
         }
       }
     }
