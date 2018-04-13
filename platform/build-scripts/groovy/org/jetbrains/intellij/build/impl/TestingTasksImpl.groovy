@@ -205,7 +205,7 @@ class TestingTasksImpl extends TestingTasks {
           context.messages.error(e.message, e)
         }
       }
-      context.messages.buildStatus("Runned with Test Discovery, {build.status.text}")
+      context.messages.buildStatus("Run with Test Discovery, {build.status.text}")
     }
   }
 
