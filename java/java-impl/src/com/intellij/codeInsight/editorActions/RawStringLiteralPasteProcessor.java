@@ -123,8 +123,8 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
       EditorModificationUtil.insertStringAtCaret(editor, text);
 
       if (!additionalQuotes.isEmpty()) {
-        editor.getDocument().insertString(range.getStartOffset(), additionalQuotes);
-        editor.getDocument().insertString(range.getEndOffset(), additionalQuotes);
+        document.insertString(range.getStartOffset(), additionalQuotes);
+        document.insertString(range.getEndOffset(), additionalQuotes);
       }
     });
   }
