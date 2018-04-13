@@ -10,10 +10,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -33,12 +33,15 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.List;
 
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
+import static org.jetbrains.idea.svn.branchConfig.BranchConfigurationDialog.DECODED_URL_RENDERER;
 
 public class CreateBranchOrTagDialog extends DialogWrapper {
   @NotNull private final File mySrcFile;
@@ -56,6 +59,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myRepositoryField;
   private SvnRevisionPanel myRevisionPanel;
   private ComboboxWithBrowseButton myBranchTagBaseComboBox;
+  @NotNull private final CollectionComboBoxModel<Url> myBranchTagBaseModel = new CollectionComboBoxModel<>();
   private JTextField myBranchTextField;
   private JRadioButton myBranchOrTagRadioButton;
   private JRadioButton myAnyLocationRadioButton;
@@ -147,6 +151,10 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     });
     updateToURL();
     myProjectButton.addActionListener(e -> myRepositoryField.setText(myWcRootUrl.toString()));
+    //noinspection unchecked
+    myBranchTagBaseComboBox.getComboBox().setRenderer(DECODED_URL_RENDERER);
+    //noinspection unchecked
+    myBranchTagBaseComboBox.getComboBox().setModel(myBranchTagBaseModel);
     myBranchTagBaseComboBox.addActionListener(e -> {
       BranchConfigurationDialog.configureBranches(myProject, mySrcVirtualFile);
       updateBranchTagBases();
@@ -160,8 +168,10 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
   private void updateBranchTagBases() {
     myBranchConfiguration = SvnBranchConfigurationManager.getInstance(myProject).get(mySrcVirtualFile);
-    final String[] strings = ArrayUtil.toStringArray(myBranchConfiguration.getBranchUrls());
-    myBranchTagBaseComboBox.getComboBox().setModel(new DefaultComboBoxModel(strings));
+
+    List<Url> branchLocations = myBranchConfiguration.getBranchLocations();
+    myBranchTagBaseModel.replaceAll(branchLocations);
+    myBranchTagBaseModel.setSelectedItem(getFirstItem(branchLocations));
   }
 
   private void updateToURL() {
@@ -176,14 +186,14 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       relativeUrl = myBranchConfiguration.getRelativeUrl(myRepositoryField.getText());
     }
 
-    final Object selectedBranch = myBranchTagBaseComboBox.getComboBox().getSelectedItem();
+    Url selectedBranch = myBranchTagBaseModel.getSelected();
     if (relativeUrl != null && selectedBranch != null) {
       myToURLText.setText(selectedBranch.toString() + "/" + myBranchTextField.getText() + relativeUrl);
     }
   }
 
   private String getToURLTextFromBranch() {
-    final Object selectedBranch = myBranchTagBaseComboBox.getComboBox().getSelectedItem();
+    Url selectedBranch = myBranchTagBaseModel.getSelected();
     if (selectedBranch != null) {
       return selectedBranch + "/" + myBranchTextField.getText();
     }
@@ -264,7 +274,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    if (myBranchOrTagRadioButton.isSelected() && myBranchTagBaseComboBox.getComboBox().getSelectedItem() == null) {
+    if (myBranchOrTagRadioButton.isSelected() && myBranchTagBaseModel.getSelected() == null) {
       return new ValidationInfo(message("create.branch.no.base.location.error"), myBranchTagBaseComboBox.getComboBox());
     }
 
