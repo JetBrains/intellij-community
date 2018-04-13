@@ -12,7 +12,8 @@ import com.intellij.psi.search.GlobalSearchScope
 
 class NGramContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-        if (!NGramIndexingProperty.isEnabled(parameters.position.project)) {
+        if (!NGramIndexingProperty.isEnabled(parameters.position.project) ||
+                parameters.originalFile.fileType !in NGramElementProvider.getSupportedFileTypes()) {
             super.fillCompletionVariants(parameters, result)
             return
         }
