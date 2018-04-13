@@ -12,7 +12,7 @@
       Ever since 0.1.0, the plugin builds an index with frequencies of all 2-3-4-5 grams over the AST of the project
       source code files. This can increase the indexing time of the source code and is disabled by default. The plugin
       will ask for permission for each opened project. If you change your mind and want to forbid the indexing, please
-      switch off the “Enable NGram indexing for completion” option (Help - Find Action...). As usual, no source code
+      switch off the "Enable NGram indexing for completion" option (Help - Find Action...). As usual, no source code
       or personal data will be collected.
     ]]></description>
 
@@ -109,8 +109,8 @@
   </extensions>
 
   <actions>
-    <action class="com.intellij.plugin.ToggleManualMlSorting" id="ToggleManualMlSorting" internal="true"/>
     <action class="com.intellij.plugin.ToggleNGramIndexing" id="ToggleNGramIndexing"/>
+    <action class="com.intellij.plugin.ToggleManualMlSorting" id="ToggleManualMlSorting" internal="true"/>
   </actions>
 
   <application-components>

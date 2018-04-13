@@ -49,7 +49,7 @@ data class NGram(val elements: List<String>) {
         fun getNGramForElement(element: PsiElement) : NGram {
             val elements = TreeTraversal.getElements(element.containingFile ?: return NGram.INVALID)
             val index = elements.indexOf(element.parent.node)
-            if (index == -1) {
+            if (index == -1 || index < NGram.N) {
                 return NGram.INVALID
             }
             val nGramElements = ArrayList<String>()
