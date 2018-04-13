@@ -49,6 +49,12 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
     int quotesLength = getQuotesSequence(literalText, length, 0);
 
     String quotes = literalText.substring(0, quotesLength);
+    String additionalQuotes = getAdditionalQuotes(text, quotes);
+    insertAtCaret(text, additionalQuotes, stringLiteral, editor);
+  }
+
+  public static String getAdditionalQuotes(String text, String quotes) {
+    int quotesLength = quotes.length();
     int textLength = text.length();
     int idx = quotesLength;
     int maxQuotesNumber = -1;
@@ -62,7 +68,7 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
       idx += additionalQuotesLength + quotesLength;
     }
 
-    insertAtCaret(text, hasToReplace ? StringUtil.repeat("`", maxQuotesNumber + 1) : "", stringLiteral, editor);
+    return hasToReplace ? StringUtil.repeat("`", maxQuotesNumber + 1) : "";
   }
 
   private static int getQuotesSequence(String literalText, int length, int startIndex) {

@@ -36,6 +36,14 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
     doTestIntention(QuickFixBundle.message("convert.to.string.text"));
   }
 
+  public void testStringToRawTransformation() {
+    doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
+  }
+
+  public void testStringToRawTransformationWithTicsInside() {
+    doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
+  }
+
   public void testPasteInRawStringLiteral() {
     doTestPaste("class A {{String s = `q<caret>`;}}", "a\nb`\nc", "class A {{String s = ``qa\nb`\nc``;}}");
   }
