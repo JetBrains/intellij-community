@@ -31,6 +31,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
+import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.TreeUtil
@@ -817,13 +818,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
     additionalSettings.forEach { it.first.disposeUIResources() }
 
-    TreeUtil.traverseDepth(root) { node ->
-      if (node is DefaultMutableTreeNode) {
-        val userObject = node.userObject
-        (userObject as? SingleConfigurationConfigurable<*>)?.disposeUIResources()
+    TreeUtil.treeNodeTraverser(root)
+      .traverse(TreeTraversal.PRE_ORDER_DFS)
+      .processEach { node ->
+        ((node as? DefaultMutableTreeNode)?.userObject as? SingleConfigurationConfigurable<*>)?.disposeUIResources()
+        true
       }
-      true
-    }
     rightPanel.removeAll()
     splitter.dispose()
   }
