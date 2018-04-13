@@ -24,6 +24,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.mac.touchbar.NSAutoreleaseLock;
 import com.intellij.ui.mac.touchbar.TBItemScrubber;
 import com.intellij.ui.mac.touchbar.TouchBar;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -276,22 +278,24 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   private static TouchBar createStopSelectTouchBar(List<RunContentDescriptor> stoppableDescriptors) {
-    TouchBar result = new TouchBar("select_running_to_stop");
-    result.addButton(null, "Stop all", () -> {
-      for (RunContentDescriptor sd : stoppableDescriptors)
-        ExecutionManagerImpl.stopProcess(sd);
-      result.closeAndRelease();
-    });
-    final TBItemScrubber stopScrubber = result.addScrubber();
-    List<TBItemScrubber.ItemData> scrubItems = new ArrayList<>();
-    for (RunContentDescriptor sd : stoppableDescriptors) {
-      scrubItems.add(new TBItemScrubber.ItemData(sd.getIcon(), sd.getDisplayName(), () -> {
-        ExecutionManagerImpl.stopProcess(sd);
-        result.closeAndRelease();
-      }));
+    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+      TouchBar result = new TouchBar("select_running_to_stop");
+      result.addButton(null, "Stop all", () -> {
+        for (RunContentDescriptor sd : stoppableDescriptors)
+          ExecutionManagerImpl.stopProcess(sd);
+        ApplicationManager.getApplication().invokeLater(()->result.closeAndRelease());
+      });
+      final TBItemScrubber stopScrubber = result.addScrubber();
+      List<TBItemScrubber.ItemData> scrubItems = new ArrayList<>();
+      for (RunContentDescriptor sd : stoppableDescriptors) {
+        scrubItems.add(new TBItemScrubber.ItemData(sd.getIcon(), sd.getDisplayName(), () -> {
+          ExecutionManagerImpl.stopProcess(sd);
+          ApplicationManager.getApplication().invokeLater(()->result.closeAndRelease());
+        }));
+      }
+      stopScrubber.setItems(scrubItems);
+      return result;
     }
-    stopScrubber.setItems(scrubItems);
-    return result;
   }
 
   abstract static class HandlerItem {
