@@ -101,16 +101,18 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
 
     if (modules != null) {
       JavaProjectModelModificationService service = JavaProjectModelModificationService.getInstance(project);
-      for (Module module : modules) {
-        if (module != null) {
-          service.changeLanguageLevel(module, languageLevel);
+      WriteAction.run(() -> {
+        for (Module module : modules) {
+          if (module != null) {
+            service.changeLanguageLevel(module, languageLevel);
+          }
+          else {
+            LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
+            projectExtension.setLanguageLevel(languageLevel);
+            projectExtension.setDefault(false);
+          }
         }
-        else {
-          LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
-          projectExtension.setLanguageLevel(languageLevel);
-          projectExtension.setDefault(false);
-        }
-      }
+      });
     }
   }
 
