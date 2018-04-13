@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
@@ -77,13 +78,15 @@ class ShowEditorHighlighterTokensAction extends EditorAction {
 
     @Override
     protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      return editor.getUserData(LISTENER_ADDED) != null || myDelegate.isEnabled(editor, caret, dataContext);
+      Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      return hostEditor.getUserData(LISTENER_ADDED) != null || myDelegate.isEnabled(editor, caret, dataContext);
     }
 
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      if (editor.getUserData(LISTENER_ADDED) != null) {
-        cleanup(editor);
+      Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      if (hostEditor.getUserData(LISTENER_ADDED) != null) {
+        cleanup(hostEditor);
       }
       else {
         myDelegate.execute(editor, caret, dataContext);
