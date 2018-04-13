@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.LineSeparator
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.diff.Diff
 import org.jetbrains.jps.model.JpsSimpleElement
@@ -76,21 +77,25 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
       outFile = File(targetRoot, "${className}.java")
     }
 
-    val copyrightComment = getCopyrightComment(outFile)
-    val text = generate(module, className, packageName, customLoad, copyrightComment)
-    if (text != null) {
+    val oldText = if (outFile.exists()) outFile.readText() else null
+    val copyrightComment = getCopyrightComment(oldText)
+    val separator = getSeparators(oldText)
+
+    val newText = generate(module, className, packageName, customLoad, copyrightComment)
+
+    val oldLines = oldText?.lines() ?: emptyList()
+    val newLines = newText?.lines() ?: emptyList()
+
+    if (newLines.isNotEmpty()) {
       processedClasses++
 
-      if (!outFile.exists() || outFile.readText().lines() != text.lines()) {
+      if (oldLines != newLines) {
         if (writeChangesToDisk) {
           outFile.parentFile.mkdirs()
-          outFile.writeText(text)
+          outFile.writeText(newLines.joinToString(separator = separator.separatorString))
           println("Updated icons class: ${outFile.name}")
         }
         else {
-          val oldLines = outFile.readText().lines()
-          val newLines = text.lines()
-
           val sb = StringBuilder()
           var ch = Diff.buildChanges(oldLines.toTypedArray(), newLines.toTypedArray())
           while (ch != null) {
@@ -127,13 +132,17 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     return className
   }
 
-  private fun getCopyrightComment(file: File): String {
-    if (!file.isFile) return ""
-    val text = file.readText()
+  private fun getCopyrightComment(text: String?): String {
+    if (text == null) return ""
     val i = text.indexOf("package ")
     if (i == -1) return ""
     val comment = text.substring(0, i)
     return if (comment.trim().endsWith("*/") || comment.trim().startsWith("//")) comment else ""
+  }
+
+  private fun getSeparators(text: String?): LineSeparator {
+    if (text == null) return LineSeparator.LF
+    return StringUtil.detectSeparators(text) ?: LineSeparator.LF
   }
 
   private fun generate(module: JpsModule, className: String, packageName: String, customLoad: Boolean, copyrightComment: String): String? {
