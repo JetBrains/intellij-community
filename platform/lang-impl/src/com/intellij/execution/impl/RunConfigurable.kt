@@ -65,7 +65,7 @@ private fun getName(userObject: Any): String {
   }
 }
 
-open class RunConfigurable @JvmOverloads constructor(private val myProject: Project, private var myRunDialog: RunDialogBase? = null) : BaseConfigurable(), Disposable {
+open class RunConfigurable @JvmOverloads constructor(private val myProject: Project, var runDialog: RunDialogBase? = null) : BaseConfigurable(), Disposable {
   @Volatile private var isDisposed: Boolean = false
   val root = DefaultMutableTreeNode("Root")
   val treeModel = MyTreeModel(root)
@@ -357,10 +357,6 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     return userObject
   }
 
-  fun setRunDialog(runDialog: RunDialogBase) {
-    myRunDialog = runDialog
-  }
-
   fun updateRightPanel(configurable: Configurable) {
     rightPanel.removeAll()
     selectedConfigurable = configurable
@@ -449,10 +445,10 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     addIcon.border = JBUI.Borders.empty(0, 3, 0, 3)
     messagePanel.add(addIcon)
 
-    val configurationTypeDescription = if (configurationType != null)
-      configurationType.configurationTypeDescription
-    else
-      ExecutionBundle.message("run.configuration.default.type.description")
+    val configurationTypeDescription = when {
+      configurationType != null -> configurationType.configurationTypeDescription
+      else -> ExecutionBundle.message("run.configuration.default.type.description")
+    }
     messagePanel.add(JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label3", configurationTypeDescription)))
 
     rightPanel.removeAll()
@@ -555,10 +551,10 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
     wholePanel = JPanel(BorderLayout())
     DataManager.registerDataProvider(wholePanel!!) { dataId ->
-      if (RunConfigurationSelector.KEY.name == dataId)
-        RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
-      else
-        null
+      when (dataId) {
+        RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
+        else -> null
+      }
     }
 
     splitter.firstComponent = createLeftPanel()
@@ -645,8 +641,9 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   }
 
   fun updateActiveConfigurationFromSelected() {
-    if (selectedConfigurable != null && selectedConfigurable is SingleConfigurationConfigurable<*>) {
-      runManager.selectedConfiguration = (selectedConfigurable as SingleConfigurationConfigurable<*>).settings as RunnerAndConfigurationSettings
+    val selectedConfigurable = selectedConfigurable
+    if (selectedConfigurable is SingleConfigurationConfigurable<*>) {
+      runManager.selectedConfiguration = selectedConfigurable.settings
     }
   }
 
@@ -832,7 +829,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   }
 
   private fun updateDialog() {
-    val executor = (if (myRunDialog != null) myRunDialog!!.executor else null) ?: return
+    val runDialog = runDialog
+    val executor = runDialog?.executor ?: return
     val buffer = StringBuilder()
     buffer.append(executor.id)
     val configuration = selectedConfiguration
@@ -840,8 +838,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       buffer.append(" - ")
       buffer.append(configuration.nameText)
     }
-    myRunDialog!!.setOKActionEnabled(canRunConfiguration(configuration, executor))
-    myRunDialog!!.setTitle(buffer.toString())
+    runDialog.setOKActionEnabled(canRunConfiguration(configuration, executor))
+    runDialog.setTitle(buffer.toString())
   }
 
   private fun setupDialogBounds() {
@@ -871,7 +869,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   }
 
   private fun clickDefaultButton() {
-    myRunDialog?.clickDefaultButton()
+    runDialog?.clickDefaultButton()
   }
 
   private val selectedConfigurationTypeNode: DefaultMutableTreeNode?
