@@ -13,16 +13,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
-import com.intellij.ui.JBSplitter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.usages.impl.UsageModelTracker;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +44,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     myProject = processor.getProject();
     myTree = new PreviewTree(processor);
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree.getComponent());
-    treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
+    treePane.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
 
     myDiffPanel = new PreviewDiffPanel(processor, myTree);
     myTree.addTreeListener(myDiffPanel);
@@ -57,7 +53,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     leftPanel.addToCenter(treePane);
     leftPanel.addToBottom(new ButtonsPanel(myProject));
 
-    JBSplitter splitter = new JBSplitter(false);
+    JBSplitter splitter = new OnePixelSplitter(false);
     splitter.setProportion(0.3f);
     splitter.setFirstComponent(leftPanel);
     splitter.setSecondComponent(myDiffPanel);

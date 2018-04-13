@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.ParametrizedDuplicates;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -31,12 +32,13 @@ class PreviewTreeModel extends DefaultTreeModel {
     setValidImpl(true);
     DefaultMutableTreeNode root = getRoot();
 
-    myMethodGroup = new DefaultMutableTreeNode("Method to extract");
+    myMethodGroup = new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.method"));
     root.add(myMethodGroup);
     PsiMethod emptyMethod = processor.generateEmptyMethod(processor.getMethodName(), processor.getTargetClass());
     myMethodGroup.add(new MethodNode(emptyMethod)); // will be replaced in updateMethod()
 
-    DefaultMutableTreeNode originalGroup = new DefaultMutableTreeNode("Original code fragment");
+    DefaultMutableTreeNode originalGroup =
+      new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.original"));
     root.add(originalGroup);
     PsiElement[] elements = processor.getElements();
     myPatternNode = new PatternNode(elements);
@@ -44,7 +46,7 @@ class PreviewTreeModel extends DefaultTreeModel {
 
     List<Match> duplicates = getDuplicates(processor);
     if (!ContainerUtil.isEmpty(duplicates)) {
-      myDuplicatesGroup = new DefaultMutableTreeNode("Duplicate code fragments");
+      myDuplicatesGroup = new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.duplicates"));
       root.add(myDuplicatesGroup);
       for (Match duplicate : duplicates) {
         myDuplicatesGroup.add(new DuplicateNode(duplicate));
