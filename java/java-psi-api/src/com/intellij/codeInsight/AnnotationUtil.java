@@ -97,6 +97,10 @@ public class AnnotationUtil {
   }
 
   private static PsiAnnotation findNonCodeAnnotation(final PsiModifierListOwner listOwner, Collection<String> annotationNames) {
+    if (listOwner instanceof PsiLocalVariable) {
+      // Non-code annotations for local variables are not supported: don't bother to search them
+      return null;
+    }
     Map<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
