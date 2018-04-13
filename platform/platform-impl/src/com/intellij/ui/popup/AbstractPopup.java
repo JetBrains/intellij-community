@@ -973,11 +973,12 @@ public class AbstractPopup implements JBPopup {
       myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data));
     }
 
+    myWindow = window;
+    setMinimumSize(myMinSize);
+
     myPopup.show();
 
     WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
-
-    myWindow = window;
 
     myWindowListener = new MyWindowListener();
     window.addWindowListener(myWindowListener);
@@ -990,8 +991,6 @@ public class AbstractPopup implements JBPopup {
         WindowManager.getInstance().doNotSuggestAsParent(myWindow);
       }
     }
-
-    setMinimumSize(myMinSize);
 
     final Runnable afterShow = () -> {
       if (isDisposed()) {
