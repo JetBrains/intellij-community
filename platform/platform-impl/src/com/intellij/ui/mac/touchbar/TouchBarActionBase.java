@@ -1,6 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.execution.ExecutionListener;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -15,7 +19,7 @@ import java.awt.*;
 
 import static com.intellij.openapi.application.ModalityState.NON_MODAL;
 
-public class TouchBarActionBase extends TouchBarProjectBase {
+public class TouchBarActionBase extends TouchBarProjectBase implements ExecutionListener {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
 
   TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project) {
@@ -31,6 +35,9 @@ public class TouchBarActionBase extends TouchBarProjectBase {
         _updateActionItems();
       }
     });
+
+    final MessageBus mb = project.getMessageBus();
+    mb.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, this);
   }
 
   TBItemAnActionButton addAnActionButton(String actId) {
@@ -48,7 +55,18 @@ public class TouchBarActionBase extends TouchBarProjectBase {
     return butt;
   }
 
-  private void _updateActionItems() {
+  @Override
+  public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
+    _updateActionItems();
+  }
+  @Override
+  public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
+    ApplicationManager.getApplication().invokeLater(()->{
+      _updateActionItems();
+    });
+  }
+
+  protected void _updateActionItems() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     boolean layoutChanged = false;

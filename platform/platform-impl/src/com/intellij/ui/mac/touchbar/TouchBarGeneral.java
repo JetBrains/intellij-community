@@ -66,19 +66,6 @@ public class TouchBarGeneral extends TouchBarActionBase {
 
     final MessageBus mb = myProject.getMessageBus();
 
-    mb.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
-      @Override
-      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
-        _updateRunButtons();
-      }
-      @Override
-      public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
-        ApplicationManager.getApplication().invokeLater(()->{
-          _updateRunButtons();
-        });
-      }
-    });
-
     mb.connect().subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
       public void runConfigurationSelected() {
@@ -96,6 +83,17 @@ public class TouchBarGeneral extends TouchBarActionBase {
   }
 
   public TouchBar getPopoverRunConfExpandTB() { return myPopoverRunConfExpandTB; }
+
+  @Override
+  public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
+    super.processStarted(executorId, env, handler);
+    _updateRunButtons();
+  }
+  @Override
+  public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
+    super.processTerminated(executorId, env, handler, exitCode);
+    ApplicationManager.getApplication().invokeLater(()->_updateRunButtons());
+  }
 
   private void _updateSelectedConf() {
     final Icon icon;
