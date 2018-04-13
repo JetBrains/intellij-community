@@ -24,11 +24,14 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +61,11 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myDimensionKey = dimensionKey;
     myShowApplyButton = showApplyButton;
     String title = createTitleString(configurable);
-    if (project != null && project.isDefault()) title = "Default " + title;
+    if (project != null && project.isDefault()) {
+      title = OptionsBundle.message("title.for.new.projects",
+                                    title, StringUtil.capitalize(IdeUICustomization.getInstance().getProjectConceptName()));
+    }
+
     setTitle(title);
 
     myProject = project;
