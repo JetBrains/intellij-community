@@ -946,6 +946,10 @@
       <category>Java/Strings</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertRawToStringLiteralAction</className>
+      <category>Java/Strings</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InsertLiteralUnderscoresAction</className>
       <category>Java/Numbers</category>
     </intentionAction>

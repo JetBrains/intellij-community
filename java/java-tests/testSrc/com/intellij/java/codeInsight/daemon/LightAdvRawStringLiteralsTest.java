@@ -2,6 +2,8 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
@@ -10,6 +12,8 @@ import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCase {
 
@@ -26,6 +30,10 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
 
   public void testStringAssignability() {
     doTestHighlighting();
+  }
+
+  public void testRawToStringTransformation() {
+    doTestIntention(QuickFixBundle.message("convert.to.string.text"));
   }
 
   public void testPasteInRawStringLiteral() {
@@ -68,6 +76,14 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
     myFixture.configureByText("a.java", documentTextBefore);
     performPaste();
     myFixture.checkResult(expectedDocumentText);
+  }
+
+  private void doTestIntention(final String hint) {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    List<IntentionAction> actions = myFixture.filterAvailableIntentions(hint);
+    assertNotEmpty(actions);
+    myFixture.launchAction(actions.get(0));
+    myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 
   private void performPaste() {
