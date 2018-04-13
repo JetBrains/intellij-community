@@ -1541,6 +1541,14 @@ public class JBUI {
                ? getColor("Popup.borderColor", 0x808080)
                : getColor("Popup.inactiveBorderColor", 0xaaaaaa);
       }
+
+      public static Color preferencesPanelColor() {
+        return getColor("Popup.preferences.background", 0xf7f7f7);
+      }
+
+      public static Color preferencesBorderColor() {
+        return getColor("Popup.preferences.borderColor", 0xe6e6e6);
+      }
     }
   }
 

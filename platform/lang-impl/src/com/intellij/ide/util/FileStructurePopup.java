@@ -516,6 +516,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     JPanel panel = new JPanel(new BorderLayout());
     JPanel chkPanel = new JPanel(new GridLayout(0, checkBoxCount > 0 && checkBoxCount % 4 == 0 ? checkBoxCount / 2 : 3,
       JBUI.scale(UIUtil.DEFAULT_HGAP), 0));
+    chkPanel.setOpaque(false);
 
     Shortcut[] F4 = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet().getShortcuts();
     Shortcut[] ENTER = CustomShortcutSet.fromString("ENTER").getShortcuts();
@@ -562,11 +563,16 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     topPanel.add(chkPanel, BorderLayout.WEST);
 
     topPanel.add(createSettingsButton(), BorderLayout.EAST);
+
+    topPanel.setBackground(JBUI.CurrentTheme.Popup.preferencesPanelColor());
+    Dimension prefSize = topPanel.getPreferredSize();
+    prefSize.height = 28;
+    topPanel.setPreferredSize(prefSize);
     topPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
 
     panel.add(topPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
+    scrollPane.setBorder(IdeBorderFactory.createBorder(JBUI.CurrentTheme.Popup.preferencesBorderColor(), SideBorder.TOP | SideBorder.BOTTOM));
     panel.add(scrollPane, BorderLayout.CENTER);
     //panel.add(createSouthPanel(), BorderLayout.SOUTH);
     DataManager.registerDataProvider(panel, new DataProvider() {
@@ -628,7 +634,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   @NotNull
   protected JComponent createSettingsButton() {
     JLabel label = new JLabel(AllIcons.General.GearPlain);
-    label.setBorder(JBUI.Borders.empty(0, 2));
+    label.setBorder(JBUI.Borders.empty(0, 4));
     label.setHorizontalAlignment(SwingConstants.RIGHT);
     label.setVerticalAlignment(SwingConstants.CENTER);
 
@@ -786,6 +792,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
 
     JBCheckBox checkBox = new JBCheckBox();
+    checkBox.setOpaque(false);
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, checkBox);
 
     boolean selected = getDefaultValue(action);
