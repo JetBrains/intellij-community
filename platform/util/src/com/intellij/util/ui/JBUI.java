@@ -1549,6 +1549,10 @@ public class JBUI {
       public static Color toolbarBorderColor() {
         return getColor("Popup.Toolbar.Border.color", 0xe6e6e6);
       }
+
+      public static int toolbarHeight() {
+        return scale(28);
+      }
     }
   }
 

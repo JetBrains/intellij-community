@@ -566,7 +566,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     topPanel.setBackground(JBUI.CurrentTheme.Popup.toolbarPanelColor());
     Dimension prefSize = topPanel.getPreferredSize();
-    prefSize.height = 28;
+    prefSize.height = JBUI.CurrentTheme.Popup.toolbarHeight();
     topPanel.setPreferredSize(prefSize);
     topPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
 
