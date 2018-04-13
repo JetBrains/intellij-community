@@ -40,6 +40,15 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
     doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
   }
 
+  public void testStringToRawTransformationLeadingTics() {
+    doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
+  }
+
+  public void testStringToRawTransformationOnlyTics() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    assertEmpty(myFixture.filterAvailableIntentions(QuickFixBundle.message("convert.to.raw.string.text")));
+  }
+
   public void testStringToRawTransformationWithTicsInside() {
     doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
   }

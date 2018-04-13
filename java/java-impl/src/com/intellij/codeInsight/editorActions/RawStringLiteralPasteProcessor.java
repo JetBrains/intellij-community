@@ -13,11 +13,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,36 +41,10 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
     if (stringLiteral == null) return;
 
     String literalText = stringLiteral.getText();
-    int length = literalText.length();
-    int quotesLength = getQuotesSequence(literalText, length, 0);
-
-    String quotes = literalText.substring(0, quotesLength);
-    String additionalQuotes = getAdditionalQuotes(text, quotes);
+    int ticsLength = PsiRawStringLiteralUtil.getLeadingTicsSequence(literalText);
+    String quotes = literalText.substring(0, ticsLength);
+    String additionalQuotes = PsiRawStringLiteralUtil.getAdditionalTics(text, quotes);
     insertAtCaret(text, additionalQuotes, stringLiteral, editor);
-  }
-
-  public static String getAdditionalQuotes(String text, String quotes) {
-    int quotesLength = quotes.length();
-    int textLength = text.length();
-    int idx = quotesLength;
-    int maxQuotesNumber = -1;
-    boolean hasToReplace = false;
-    while ((idx = text.indexOf(quotes, idx)) > 0 && idx < textLength) {
-      int additionalQuotesLength = getQuotesSequence(text, textLength, idx + quotesLength);
-      if (additionalQuotesLength == 0) {
-        hasToReplace = true;
-      }
-      maxQuotesNumber = Math.max(maxQuotesNumber, additionalQuotesLength);
-      idx += additionalQuotesLength + quotesLength;
-    }
-
-    return hasToReplace ? StringUtil.repeat("`", maxQuotesNumber + 1) : "";
-  }
-
-  private static int getQuotesSequence(String literalText, int length, int startIndex) {
-    int quotesLength = startIndex;
-    while (quotesLength < length && literalText.charAt(quotesLength) == '`') quotesLength++;
-    return quotesLength - startIndex;
   }
 
   @Override

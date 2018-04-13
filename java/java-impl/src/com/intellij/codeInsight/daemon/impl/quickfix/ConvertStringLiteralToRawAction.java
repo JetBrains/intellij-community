@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.editorActions.RawStringLiteralPasteProcessor;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
@@ -33,8 +32,15 @@ public class ConvertStringLiteralToRawAction implements IntentionAction, LowPrio
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    return PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL) && 
-           PsiUtil.getLanguageLevel(file) == LanguageLevel.JDK_11_PREVIEW;
+    if (PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL) && 
+        PsiUtil.getLanguageLevel(file) == LanguageLevel.JDK_11_PREVIEW) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiLiteralExpressionImpl) {
+        String text = ((PsiLiteralExpressionImpl)parent).getInnerText();
+        return text != null && PsiRawStringLiteralUtil.getLeadingTicsSequence(text) < text.length();
+      }
+    }
+    return false;
   }
 
   @Override
@@ -55,10 +61,21 @@ public class ConvertStringLiteralToRawAction implements IntentionAction, LowPrio
           if (innerText == null) return;
           text = StringUtil.unescapeStringCharacters(innerText);
         }
-        String additionalQuotes = RawStringLiteralPasteProcessor.getAdditionalQuotes(text, "`");
+        String prefix = "";
+        int startingSeq = PsiRawStringLiteralUtil.getLeadingTicsSequence(text);
+        if (startingSeq > 0) {
+          prefix = "\"" + StringUtil.repeat("`", startingSeq) + "\" + ";
+        }
+        String suffix = "";
+        int tailingSequence = PsiRawStringLiteralUtil.getTailingTicsSequence(text);
+        if (tailingSequence > 0) {
+          suffix = "+ \"" + StringUtil.repeat("`", tailingSequence) + "\"";
+        }
+        String textTicsTrimmed = text.substring(Math.max(startingSeq, 0), text.length() - Math.max(tailingSequence, 0));
+        String additionalQuotes = PsiRawStringLiteralUtil.getAdditionalTics(textTicsTrimmed, "`");
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         CodeStyleManager.getInstance(project).reformat(
-          elementToReplace.replace(elementFactory.createExpressionFromText('`' + additionalQuotes + text + additionalQuotes + '`', null)));
+          elementToReplace.replace(elementFactory.createExpressionFromText(prefix + '`' + additionalQuotes + textTicsTrimmed + additionalQuotes + '`' + suffix, null)));
       }
     }
   }
