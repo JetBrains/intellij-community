@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.*
@@ -31,10 +31,10 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
-import com.intellij.util.containers.HashMap
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.TreeUtil
+import gnu.trove.THashMap
 import gnu.trove.THashSet
 import gnu.trove.TObjectIntHashMap
 import net.miginfocom.swing.MigLayout
@@ -52,7 +52,7 @@ import javax.swing.tree.*
 private val DEFAULTS = object : Any() {
   override fun toString() = "Defaults"
 }
-private val INITIAL_VALUE_KEY = "initialValue"
+private const val INITIAL_VALUE_KEY = "initialValue"
 private val LOG = logger<RunConfigurable>()
 
 private fun getName(userObject: Any): String {
@@ -77,7 +77,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   private val recentsLimit = JTextField("5", 2)
   private val confirmation = JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true)
   private val additionalSettings = ArrayList<Pair<UnnamedConfigurable, JComponent>>()
-  private val storedComponents = HashMap<ConfigurationFactory, Configurable>()
+  private val storedComponents = THashMap<ConfigurationFactory, Configurable>()
   private var toolbarDecorator: ToolbarDecorator? = null
   private var isFolderCreating: Boolean = false
   private val toolbarAddAction = MyToolbarAddAction()
@@ -197,22 +197,19 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       val configurations = manager.getConfigurationSettingsList(type).nullize() ?: continue
       val typeNode = DefaultMutableTreeNode(type)
       root.add(typeNode)
-      val folderMapping = HashMap<String, DefaultMutableTreeNode>()
-      var folderCounter = 0
+      val folderMapping = THashMap<String, DefaultMutableTreeNode>()
       for (configuration in configurations) {
         val folder = configuration.folderName
-        if (folder != null) {
-          var node: DefaultMutableTreeNode? = folderMapping[folder]
-          if (node == null) {
-            node = DefaultMutableTreeNode(folder)
-            typeNode.insert(node, folderCounter)
-            folderCounter++
-            folderMapping.put(folder, node)
-          }
-          node.add(DefaultMutableTreeNode(configuration))
+        if (folder == null) {
+          typeNode.add(DefaultMutableTreeNode(configuration))
         }
         else {
-          typeNode.add(DefaultMutableTreeNode(configuration))
+          val node = folderMapping.getOrPut(folder) {
+            val node = DefaultMutableTreeNode(folder)
+            typeNode.insert(node, folderMapping.size)
+            node
+          }
+          node.add(DefaultMutableTreeNode(configuration))
         }
       }
     }
