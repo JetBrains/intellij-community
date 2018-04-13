@@ -247,7 +247,8 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    JComponent preferred = myConfigurable.getPreferredFocusedComponent();
+    Configurable configurable = myConfigurable;
+    JComponent preferred = configurable == null ? null : configurable.getPreferredFocusedComponent();
     return preferred == null ? IdeFocusTraversalPolicy.getPreferredFocusedComponent(myCenterPanel) : preferred;
   }
 
