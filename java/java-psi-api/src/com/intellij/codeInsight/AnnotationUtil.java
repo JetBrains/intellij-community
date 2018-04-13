@@ -77,23 +77,28 @@ public class AnnotationUtil {
   }
 
   private static PsiAnnotation findOwnAnnotation(final PsiModifierListOwner listOwner, Collection<String> annotationNames) {
+    if (listOwner instanceof PsiLocalVariable) {
+      return findAnnotationDirectly(listOwner, annotationNames);
+    }
     Map<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
-        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(annotationNames1-> {
-            final PsiModifierList list = listOwner.getModifierList();
-            if (list == null) return null;
-            for (PsiAnnotation annotation : list.getAnnotations()) {
-              if (annotationNames1.contains(annotation.getQualifiedName())) {
-                return annotation;
-              }
-            }
-            return null;
-          }
-        );
+        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(names -> findAnnotationDirectly(listOwner, names));
         return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
       });
     return map.get(annotationNames);
+  }
+
+  @Nullable
+  private static PsiAnnotation findAnnotationDirectly(PsiModifierListOwner listOwner, Collection<String> annotationNames) {
+    final PsiModifierList list = listOwner.getModifierList();
+    if (list == null) return null;
+    for (PsiAnnotation annotation : list.getAnnotations()) {
+      if (annotationNames.contains(annotation.getQualifiedName())) {
+        return annotation;
+      }
+    }
+    return null;
   }
 
   private static PsiAnnotation findNonCodeAnnotation(final PsiModifierListOwner listOwner, Collection<String> annotationNames) {
