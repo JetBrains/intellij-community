@@ -26,6 +26,16 @@ class SvnBranchConfigurationNew {
   var isUserInfoInUrl: Boolean = false
 
   val branchUrls get() = myBranchMap.keys.map { it.removeSuffix("/") }.sorted()
+  val branchLocations
+    get() = branchUrls.mapNotNull {
+      try {
+        createUrl(it)
+      }
+      catch (e: SvnBindException) {
+        LOG.info("Could not parse url $it", e)
+        null
+      }
+    }
   val branchMap get() = myBranchMap
 
   fun addBranches(branchParentName: String, items: InfoStorage<List<SvnBranchItem>>) {
