@@ -736,7 +736,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     };
     scrollPane.setBorder(JBUI.Borders.empty());
     splitter.setFirstComponent(scrollPane);
-    JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 0 4, fillx, hidemode 2, gap 0"));
+    JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 0 4, fillx, hidemode 3, gap 0"));
     bottomPanel.add(myTabResultsButton);
     bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
     myOKHintLabel = new JBLabel("");
@@ -745,11 +745,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     bottomPanel.add(myOKHintLabel);
     String btnGapLeft = "gapleft " + Math.max(0, (JBUI.scale(12) - insets.left - insets.right));
     bottomPanel.add(myOKButton, btnGapLeft);
-
-    if (myHelper.isReplaceState()) {
-      bottomPanel.add(myReplaceAllButton, btnGapLeft);
-      bottomPanel.add(myReplaceSelectedButton, btnGapLeft);
-    }
+    bottomPanel.add(myReplaceAllButton, btnGapLeft);
+    bottomPanel.add(myReplaceSelectedButton, btnGapLeft);
 
     myCodePreviewComponent = myUsagePreviewPanel.createComponent();
     splitter.setSecondComponent(myCodePreviewComponent);
@@ -962,6 +959,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER_WITH_MODIFIERS));
     }
     myOKButton.setText(FindBundle.message("find.popup.find.button"));
+    myReplaceAllButton.setVisible(isReplaceState);
+    myReplaceSelectedButton.setVisible(isReplaceState);
   }
 
   private void updateControls() {
