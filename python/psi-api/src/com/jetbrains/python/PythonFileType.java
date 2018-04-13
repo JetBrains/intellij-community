@@ -64,7 +64,7 @@ public class PythonFileType extends LanguageFileType {
 
   @NotNull
   public String getDescription() {
-    return "Python files";
+    return "Python";
   }
 
   @Override

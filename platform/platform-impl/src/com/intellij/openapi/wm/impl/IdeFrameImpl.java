@@ -183,7 +183,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     if (myProject != null) {
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
-      if (focusOwner instanceof EditorComponentImpl) {
+      if (focusOwner instanceof EditorComponentImpl && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
         String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
         ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
         if (toolWindow != null) {

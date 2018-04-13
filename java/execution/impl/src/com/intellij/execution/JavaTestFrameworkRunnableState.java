@@ -301,7 +301,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
-        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject()) && forkPerModule()) {
+        ShortenCommandLine shortenCommandLine = getConfiguration().getShortenCommandLine();
+        boolean useDynamicClasspathForForkMode = shortenCommandLine == null 
+                                                 ? JdkUtil.useDynamicClasspath(getConfiguration().getProject()) 
+                                                 : shortenCommandLine != ShortenCommandLine.NONE;
+        if (useDynamicClasspathForForkMode && forkPerModule()) {
           writer.println("use classpath jar");
         }
         else {

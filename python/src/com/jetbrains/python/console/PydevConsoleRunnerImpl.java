@@ -233,17 +233,17 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Override
   public void open() {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
-    if (toolWindow != null) {
+    if (toolWindow != null && toolWindow.isInitialized()) {
       toolWindow.getToolWindow().activate(() -> {
       }, true);
     }
     else {
-      runSync();
+      runSync(true);
     }
   }
 
   @Override
-  public void runSync() {
+  public void runSync(boolean requestEditorFocus) {
     myPorts = findAvailablePorts(myProject, myConsoleType);
 
     assert myPorts != null;
@@ -259,6 +259,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setText("Connecting to console...");
           connect(myStatementsToExecute);
+          if (requestEditorFocus) {
+            myConsoleView.requestFocus();
+          }
         }
       });
     }
@@ -270,7 +273,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
   @Override
-  public void run() {
+  public void run(boolean requestEditorFocus) {
     TransactionGuard.submitTransaction(myProject, () -> FileDocumentManager.getInstance().saveAllDocuments());
 
     myPorts = findAvailablePorts(myProject, myConsoleType);
@@ -288,6 +291,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           try {
             initAndRun(generalCommandLine);
             connect(myStatementsToExecute);
+            if (requestEditorFocus) {
+              myConsoleView.requestFocus();
+            }
           }
           catch (final Exception e) {
             LOG.warn("Error running console", e);
@@ -941,7 +947,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     public void actionPerformed(AnActionEvent e) {
       PydevConsoleRunner runner =
         PythonConsoleRunnerFactory.getInstance().createConsoleRunner(e.getData(CommonDataKeys.PROJECT), e.getData(LangDataKeys.MODULE));
-      runner.run();
+      runner.run(true);
     }
   }
 

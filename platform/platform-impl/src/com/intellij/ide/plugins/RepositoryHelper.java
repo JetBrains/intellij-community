@@ -102,7 +102,8 @@ public class RepositoryHelper {
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber buildnumber,
                                                        @Nullable ProgressIndicator indicator) throws IOException {
-    boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
+    boolean hostEligibleForHttpsForcing = repositoryUrl == null || repositoryUrl.equals(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
+    boolean forceHttps = hostEligibleForHttpsForcing && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
     return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
   }
 

@@ -206,7 +206,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void requestFocus() {
-    IdeFocusManager.findInstance().requestFocus(getConsoleEditor().getContentComponent(), true);
+    myInitialized.doWhenDone(() ->
+                               IdeFocusManager.getGlobalInstance().requestFocus(getConsoleEditor().getContentComponent(), true));
   }
 
   @Override

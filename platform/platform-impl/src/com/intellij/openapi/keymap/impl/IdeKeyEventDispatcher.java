@@ -568,9 +568,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
       DataContext ctx = actionEvent.getDataContext();
       if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
         ActionGroup group = (ActionGroup)action;
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(group.getTemplatePresentation().getText(), group, ctx, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
-          .showInBestPositionFor(ctx);
+        String groupId = ActionManager.getInstance().getId(action);
+        JBPopupFactory.getInstance().createActionGroupPopup(
+          group.getTemplatePresentation().getText(), group, ctx,
+          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+          false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(groupId))
+                      .showInBestPositionFor(ctx);
       }
       else {
         ActionUtil.performActionDumbAware(action, actionEvent);
@@ -628,6 +631,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     if (!nonDumbAwareAction.isEmpty()) {
+
+      if (dumbModeWarningListener != null) {
+        dumbModeWarningListener.actionCanceledBecauseOfDumbMode();
+      }
+
+      IdeEventQueue.getInstance().flushDelayedKeyEvents();
+
       showDumbModeWarningLaterIfNobodyConsumesEvent(e, nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
@@ -642,6 +652,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
           ActionUtil.showDumbModeWarning(actionEvents);
         });
       }
+  }
+
+  private static DumbModeWarningListener dumbModeWarningListener  = null;
+
+  public static void addDumbModeWarningListener (DumbModeWarningListener listener) {
+    dumbModeWarningListener = listener;
   }
 
   /**

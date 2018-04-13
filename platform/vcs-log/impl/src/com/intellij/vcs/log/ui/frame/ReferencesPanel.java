@@ -120,7 +120,7 @@ public class ReferencesPanel extends JPanel {
     if (refIndex == 0) {
       Color color = type.getBackgroundColor();
       return new LabelIcon(this, height, getBackground(),
-                           refs.size() > 1 ? new Color[]{color, color} : new Color[]{color});
+                           refs.size() > 1 ? ContainerUtil.newArrayList(color, color) : Collections.singletonList(color));
     }
     return null;
   }

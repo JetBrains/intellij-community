@@ -280,7 +280,7 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
 
       withModule("intellij.android.gradle.jps", "jps/android-gradle-jps.jar")
-      withModule("intellij.android.jps", "jps/android-jps-plugin.jar")
+      withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
