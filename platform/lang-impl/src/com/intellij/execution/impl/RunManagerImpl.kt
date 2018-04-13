@@ -924,14 +924,20 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
     else {
       val templateConfiguration = getConfigurationTemplate(configuration.factory).configuration
-      val templateTasks = if (templateConfiguration === configuration) {
+      val isTemplate = templateConfiguration === configuration
+      val templateTasks = if (isTemplate) {
         getHardcodedBeforeRunTasks(configuration)
       }
       else {
         getTemplateBeforeRunTasks(templateConfiguration)
       }
 
-      if (templateConfiguration === configuration) {
+      if (isTemplate) {
+        if (tasks == templateTasks) {
+          // nothing is changed
+          return
+        }
+
         // we must update all existing configuration tasks to ensure that effective tasks (own + template) are the same as before template configuration change
         // see testTemplates test
         lock.read {
