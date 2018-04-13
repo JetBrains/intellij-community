@@ -19,22 +19,25 @@ public class UnknownConfigurationType extends ConfigurationTypeBase {
   protected UnknownConfigurationType(@NotNull Icon icon) {
     super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), icon);
 
-    addFactory(FACTORY);
+    addFactory(new ConfigurationFactory(this) {
+      @NotNull
+      @Override
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+        return new UnknownRunConfiguration(this, project);
+      }
+
+      @Contract(pure = true)
+      @Override
+      public boolean canConfigurationBeSingleton() {
+        return false;
+      }
+    });
   }
 
   public static final String NAME = "Unknown";
 
-  public static final ConfigurationFactory FACTORY = new ConfigurationFactory(new UnknownConfigurationType()) {
-    @NotNull
-    @Override
-    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-      return new UnknownRunConfiguration(this, project);
-    }
-
-    @Contract(pure = true)
-    @Override
-    public boolean canConfigurationBeSingleton() {
-      return false;
-    }
-  };
+  @NotNull
+  public static ConfigurationFactory getFactory() {
+    return INSTANCE.getConfigurationFactories()[0];
+  }
 }

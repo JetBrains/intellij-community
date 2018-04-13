@@ -111,7 +111,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     }
     else if (scheme.isTemplate) {
       val factory = scheme.factory
-      if (factory != UnknownConfigurationType.FACTORY) {
+      if (factory != UnknownConfigurationType.getFactory()) {
         val templateSettings = manager.createTemplateSettings(factory)
         if (JDOMUtil.areElementsEqual(result, templateSettings.writeScheme())) {
           return null
