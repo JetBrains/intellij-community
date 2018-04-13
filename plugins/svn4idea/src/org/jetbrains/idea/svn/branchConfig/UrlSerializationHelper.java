@@ -1,16 +1,18 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 /**
@@ -40,11 +42,11 @@ public class UrlSerializationHelper {
     return new SvnBranchConfiguration(trunkUrl, newBranchesList, withUserInfo.isNull() ? false : withUserInfo.get());
   }
 
-  public SvnBranchConfiguration afterDeserialization(final String path, final SvnBranchConfiguration configuration) {
+  public SvnBranchConfiguration afterDeserialization(@NotNull VirtualFile root, final SvnBranchConfiguration configuration) {
     if (! configuration.isUserinfoInUrl()) {
       return configuration;
     }
-    final String userInfo = getUserInfo(path);
+    final String userInfo = getUserInfo(root);
     if (userInfo == null) {
       return configuration;
     }
@@ -79,8 +81,8 @@ public class UrlSerializationHelper {
   }
 
   @Nullable
-  private String getUserInfo(final String path) {
-    final Url svnurl = myVcs.getSvnFileUrlMapping().getUrlForFile(new File(path));
+  private String getUserInfo(@NotNull VirtualFile file) {
+    final Url svnurl = myVcs.getSvnFileUrlMapping().getUrlForFile(virtualToIoFile(file));
     return svnurl != null ? svnurl.getUserInfo() : null;
   }
 
