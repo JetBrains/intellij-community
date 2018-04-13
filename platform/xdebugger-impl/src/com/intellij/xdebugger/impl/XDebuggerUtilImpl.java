@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lang.Language;
@@ -24,6 +25,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.TextRange;
@@ -157,7 +160,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
     if (breakpoint != null) {
       if (!temporary && canRemove) {
-        WriteAction.run(() -> breakpointManager.removeBreakpoint(breakpoint));
+        removeBreakpointWithConfirmation(project, breakpoint);
       }
       return resolvedPromise();
     }
@@ -299,6 +302,29 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                          XLineBreakpointType<P> type,
                                                                          Boolean temporary) {
     res.setResult(WriteAction.compute(() -> breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
+  }
+
+  public static void removeBreakpointWithConfirmation(final Project project, final XBreakpoint<?> breakpoint) {
+    if ((isEmptyExpression(breakpoint.getConditionExpression()) && isEmptyExpression(breakpoint.getLogExpressionObject())) ||
+        ApplicationManager.getApplication().isHeadlessEnvironment() ||
+        ApplicationManager.getApplication().isUnitTestMode() ||
+        !XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isConfirmBreakpointRemoval() ||
+        Messages.showOkCancelDialog(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"),
+                                    XDebuggerBundle.message("message.confirm.breakpoint.removal.title"),
+                                    CommonBundle.message("button.remove"),
+                                    Messages.CANCEL_BUTTON,
+                                    Messages.getQuestionIcon(),
+                                    new DialogWrapper.DoNotAskOption.Adapter() {
+                                      @Override
+                                      public void rememberChoice(boolean isSelected, int exitCode) {
+                                        if (isSelected) {
+                                          XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings()
+                                                                     .setConfirmBreakpointRemoval(false);
+                                        }
+                                      }
+                                    }) == Messages.OK) {
+      getInstance().removeBreakpoint(project, breakpoint);
+    }
   }
 
   @Override
