@@ -90,9 +90,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   private var isModified = false
 
   companion object {
-    fun collectNodesRecursively(parentNode: DefaultMutableTreeNode,
-                                nodes: MutableList<DefaultMutableTreeNode>,
-                                vararg allowed: RunConfigurableNodeKind) {
+    fun collectNodesRecursively(parentNode: DefaultMutableTreeNode, nodes: MutableList<DefaultMutableTreeNode>, vararg allowed: RunConfigurableNodeKind) {
       for (i in 0 until parentNode.childCount) {
         val child = parentNode.getChildAt(i) as DefaultMutableTreeNode
         if (ArrayUtilRt.find(allowed, getKind(child)) != -1) {
@@ -797,19 +795,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
         }
       }
     }
-    if (allSettings.size != currentSettingCount) {
-      return true
-    }
 
-    for (configurable in storedComponents.values) {
-      if (configurable.isModified) return true
-    }
-
-    for (each in additionalSettings) {
-      if (each.first.isModified) return true
-    }
-
-    return false
+    return allSettings.size != currentSettingCount || storedComponents.values.any { it.isModified } || additionalSettings.any { it.first.isModified }
   }
 
   override fun disposeUIResources() {
