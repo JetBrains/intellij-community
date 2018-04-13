@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.images
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.intellij.build.images.ImageCollector.ImageFlags.Companion.mergeImageFlags
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -28,13 +29,17 @@ import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 
 internal class ImagePaths(val id: String,
-                          val sourceRoot: JpsModuleSourceRoot,
-                          val used: Boolean,
-                          val deprecated: Boolean,
-                          val deprecationReplacement: String?,
-                          val deprecationComment: String?) {
-  var files: MutableList<File> = ArrayList()
+                          val sourceRoot: JpsModuleSourceRoot) {
+  private var flags: ImageCollector.ImageFlags = ImageCollector.ImageFlags()
+  private var images: MutableList<File> = ArrayList()
 
+  fun addImage(file: File, fileFlags: ImageCollector.ImageFlags) {
+    images.add(file)
+    flags = mergeImageFlags(flags, fileFlags, file.path)
+  }
+
+
+  val files: List<File> get() = images
   fun getFiles(vararg types: ImageType): List<File> = files.filter { ImageType.fromFile(it) in types }
 
   val file: File?
@@ -43,6 +48,12 @@ internal class ImagePaths(val id: String,
       .firstOrNull()
 
   val presentablePath: File get() = file ?: files.first() ?: File("<unknown>")
+
+
+  val used: Boolean get() = flags.used
+  val deprecated: Boolean get() = flags.deprecated
+  val deprecationReplacement: String? get() = flags.deprecationReplacement
+  val deprecationComment: String? get() = flags.deprecationComment
 }
 
 internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {
@@ -100,11 +111,8 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     val flags = robotData.getImageFlags(file)
     if (flags.skipped) return
 
-    val iconPaths = result.computeIfAbsent(id, {
-      ImagePaths(id, sourceRoot, flags.used, flags.deprecated, flags.deprecationReplacement, flags.deprecationComment)
-    })
-
-    iconPaths.files.add(file)
+    val iconPaths = result.computeIfAbsent(id, { ImagePaths(id, sourceRoot) })
+    iconPaths.addImage(file, flags)
   }
 
   private fun upToProjectHome(dir: File): IconRobotsData {
@@ -143,7 +151,28 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
                    val used: Boolean,
                    val deprecated: Boolean,
                    val deprecationReplacement: String?,
-                   val deprecationComment: String?)
+                   val deprecationComment: String?) {
+    constructor() : this(false, false, false, null, null)
+
+    companion object {
+      fun mergeImageFlags(flags1: ImageFlags,
+                          flags2: ImageFlags,
+                          comment: String): ImageFlags {
+        return ImageFlags(flags1.skipped || flags2.skipped,
+                          flags1.used || flags2.used,
+                          flags1.deprecated || flags2.deprecated,
+                          mergeOptions(flags1.deprecationReplacement, flags2.deprecationReplacement,
+                                       "Different deprecation replacements found for same icon: $comment"),
+                          mergeOptions(flags1.deprecationComment, flags2.deprecationComment,
+                                       "Different deprecation comments found for same icon: $comment"))
+      }
+
+      private fun <T> mergeOptions(val1: T?, val2: T?, comment: String): T? {
+        if (val1 == null || val2 == null || val1 == val2) return val1 ?: val2
+        throw AssertionError("$comment\n$val1\n$val2")
+      }
+    }
+  }
 
   private class DeprecatedData(val matcher: Matcher, val replacement: String?, val comment: String?)
 
@@ -158,13 +187,9 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
       val deprecationData = findDeprecatedData(file)
       val ourFlags = ImageFlags(isSkipped, isUsed, deprecationData != null, deprecationData?.replacement, deprecationData?.comment)
 
-      val parentFlags = parent?.getImageFlags(file) ?: ImageFlags(false, false, false, null, null)
+      val parentFlags = parent?.getImageFlags(file) ?: ImageFlags()
 
-      return ImageFlags(ourFlags.skipped || parentFlags.skipped,
-                        ourFlags.used || parentFlags.used,
-                        ourFlags.deprecated || parentFlags.deprecated,
-                        ourFlags.deprecationReplacement ?: parentFlags.deprecationReplacement,
-                        ourFlags.deprecationComment ?: parentFlags.deprecationComment)
+      return mergeImageFlags(ourFlags, parentFlags, file.path)
     }
 
     fun isSkipped(file: File): Boolean = getImageFlags(file).skipped
