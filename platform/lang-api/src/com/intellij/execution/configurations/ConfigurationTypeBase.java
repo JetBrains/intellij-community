@@ -14,65 +14,53 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.configurations;
+package com.intellij.execution.configurations
 
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ArrayUtil
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 
-import javax.swing.*;
+import javax.swing.*
 
 /**
  * @author yole
  */
-public abstract class ConfigurationTypeBase implements ConfigurationType {
-  private static final ConfigurationFactory[] EMPTY_FACTORIES = new ConfigurationFactory[0];
+abstract class ConfigurationTypeBase protected constructor(@param:NonNls private val myId: String, @param:Nls private val myDisplayName: String, @param:Nls private val myDescription: String,
+                                                           private val myIcon: Icon) : ConfigurationType {
+  private var myFactories: Array<ConfigurationFactory>? = null
 
-  private final String myId;
-  private final String myDisplayName;
-  private final String myDescription;
-  private final Icon myIcon;
-  private ConfigurationFactory[] myFactories;
-
-  protected ConfigurationTypeBase(@NotNull @NonNls String id, @Nls String displayName, @Nls String description, Icon icon) {
-    myId = id;
-    myDisplayName = displayName;
-    myDescription = description;
-    myIcon = icon;
-    myFactories = EMPTY_FACTORIES;
+  init {
+    myFactories = EMPTY_FACTORIES
   }
 
-  protected void addFactory(ConfigurationFactory factory) {
-    myFactories = ArrayUtil.append(myFactories, factory);
+  protected fun addFactory(factory: ConfigurationFactory) {
+    myFactories = ArrayUtil.append(myFactories!!, factory)
   }
 
-  @Override
   @Nls
-  public String getDisplayName() {
-    return myDisplayName;
+  override fun getDisplayName(): String {
+    return myDisplayName
   }
 
-  @Override
   @Nls
-  public String getConfigurationTypeDescription() {
-    return myDescription;
+  override fun getConfigurationTypeDescription(): String {
+    return myDescription
   }
 
-  @Override
-  public Icon getIcon() {
-    return myIcon;
+  override fun getIcon(): Icon {
+    return myIcon
   }
 
-  @Override
-  @NotNull
   @NonNls
-  public String getId() {
-    return myId;
+  override fun getId(): String {
+    return myId
   }
 
-  @Override
-  public ConfigurationFactory[] getConfigurationFactories() {
-    return myFactories;
+  override fun getConfigurationFactories(): Array<ConfigurationFactory>? {
+    return myFactories
+  }
+
+  companion object {
+    private val EMPTY_FACTORIES = arrayOfNulls<ConfigurationFactory>(0)
   }
 }
