@@ -407,7 +407,16 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     if (matcher.matches(groupName + " " + text)) {
       return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
     }
-    return matcher.matches(text + " " + groupName) ? MatchMode.GROUP : MatchMode.NONE;
+    if (matcher.matches(text + " " + groupName)) {
+      return MatchMode.GROUP;
+    }
+
+    for (GotoActionAliasMatcher m : GotoActionAliasMatcher.EP_NAME.getExtensions()) {
+      if (m.match(anAction, pattern)) {
+        return MatchMode.NAME;
+      }
+    }
+    return MatchMode.NONE;
   }
 
   @Nullable

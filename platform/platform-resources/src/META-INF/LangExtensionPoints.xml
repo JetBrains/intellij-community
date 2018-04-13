@@ -277,6 +277,8 @@
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
     <extensionPoint name="outOfSourcesChecker" interface="com.intellij.openapi.projectRoots.OutOfSourcesChecker"/>
 
+    <extensionPoint name="gotoActionAliasMatcher"
+                    interface="com.intellij.ide.util.gotoByName.GotoActionAliasMatcher"/>
     <extensionPoint name="gotoClassContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="gotoSymbolContributor"
