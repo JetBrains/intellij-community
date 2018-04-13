@@ -2,6 +2,7 @@ package com.intellij.stats.ngram
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.plugin.NGramIndexingProperty
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.search.GlobalSearchScope
@@ -12,7 +13,7 @@ import java.io.DataInput
 import java.io.DataOutput
 
 class NGramFileBasedIndex : FileBasedIndexExtension<NGram, Int>() {
-    val inputFilter = DefaultFileTypeSpecificInputFilter(*NGramElementProvider.getSupportedFileTypes().toTypedArray())
+    private val inputFilter = DefaultFileTypeSpecificInputFilter(*NGramElementProvider.getSupportedFileTypes().toTypedArray())
 
     override fun getValueExternalizer(): DataExternalizer<Int> {
         return IntDataExternalizer
@@ -46,6 +47,10 @@ class NGramFileBasedIndex : FileBasedIndexExtension<NGram, Int>() {
         val KEY = ID.create<NGram, Int>("ngram.index")
         const val INDEX_VERSION = 1
 
+        fun requestRebuild() {
+            FileBasedIndex.getInstance().requestRebuild(KEY)
+        }
+
         fun getNumberOfOccurrences(key: NGram, scope: GlobalSearchScope): Int {
             return FileBasedIndex.getInstance().getValues(KEY, key, scope).sum()
         }
@@ -54,7 +59,8 @@ class NGramFileBasedIndex : FileBasedIndexExtension<NGram, Int>() {
 
 private object NGramIndexer : DataIndexer<NGram, Int, FileContent> {
     override fun map(fileContent: FileContent): Map<NGram, Int> {
-        if (ModuleUtil.findModuleForFile(fileContent.file, fileContent.project) == null) {
+        if (ModuleUtil.findModuleForFile(fileContent.file, fileContent.project) == null ||
+                !NGramIndexingProperty.isEnabled(fileContent.project)) {
             return emptyMap()
         }
         return NGram.processFile(fileContent.psiFile, fileContent.contentAsText)

@@ -18,10 +18,11 @@ package com.intellij.completion
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
-import com.jetbrains.completion.ranker.features.*
-import com.jetbrains.completion.ranker.features.impl.FeatureInterpreterImpl
-import com.jetbrains.completion.ranker.features.impl.FeatureManagerFactory
-import com.jetbrains.completion.ranker.features.impl.FeatureReader
+import com.jetbrains.completion.feature.*
+import com.jetbrains.completion.feature.impl.CompletionFactors
+import com.jetbrains.completion.feature.impl.FeatureInterpreterImpl
+import com.jetbrains.completion.feature.impl.FeatureManagerFactory
+import com.jetbrains.completion.feature.impl.FeatureReader
 
 /**
  * @author Vitaliy.Bibaev

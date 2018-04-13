@@ -22,10 +22,10 @@ import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.stats.personalization.UserFactor
 import com.intellij.stats.personalization.UserFactorsManager
-import com.jetbrains.completion.ranker.features.BinaryFeature
-import com.jetbrains.completion.ranker.features.CatergorialFeature
-import com.jetbrains.completion.ranker.features.DoubleFeature
-import com.jetbrains.completion.ranker.features.impl.FeatureUtils
+import com.jetbrains.completion.feature.BinaryFeature
+import com.jetbrains.completion.feature.CatergorialFeature
+import com.jetbrains.completion.feature.DoubleFeature
+import com.jetbrains.completion.feature.impl.FeatureUtils
 
 /**
  * @author Vitaliy.Bibaev

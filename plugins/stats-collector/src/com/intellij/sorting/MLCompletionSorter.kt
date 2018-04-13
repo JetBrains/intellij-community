@@ -15,11 +15,11 @@
  */
 package com.intellij.sorting
 
-import com.jetbrains.completion.ranker.features.FeatureManager
+import com.jetbrains.completion.feature.FeatureManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.jetbrains.completion.ranker.CompletionRanker
-import com.jetbrains.completion.ranker.features.Transformer
+import com.jetbrains.completion.feature.Transformer
 
 
 interface Ranker {

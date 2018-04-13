@@ -19,7 +19,7 @@ package com.intellij.sorting
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.util.Pair
-import com.jetbrains.completion.ranker.features.impl.FeatureUtils
+import com.jetbrains.completion.feature.impl.FeatureUtils
 import org.assertj.core.api.Assertions
 
 

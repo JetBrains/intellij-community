@@ -1,0 +1,21 @@
+[
+  "cerp_length",
+  "frozen",
+  "prox_phpNamespace",
+  "prox_phpSameFile",
+  "prox_phpScope",
+  "com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher",
+  "prox_scalaClassObjectWeigher",
+  "prox_scalaExplicitlyImportedWeigher",
+  "com.intellij.scala.play.language.routing.completion.Play2ControllerMethodsCompletionWeigher",
+  "scalaSbtDefinitionWeigher",
+  "scalaContainingClassWeigher",
+  "prox_rubyOwnCode",
+  "com.intellij.psi.css.impl.util.completion.CssValuesCompletionWeigher",
+  "prox_goPackageProximity",
+
+  "naiveNGramWeigher",
+  "before_rerank_order",
+  "ml_rank",
+  "invokationCount"
+]

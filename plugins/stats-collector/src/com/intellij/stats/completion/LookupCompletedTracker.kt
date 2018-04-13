@@ -23,7 +23,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.FeatureManagerImpl
 import com.intellij.stats.personalization.UserFactorDescriptions
 import com.intellij.stats.personalization.UserFactorStorage
-import com.jetbrains.completion.ranker.features.impl.FeatureUtils
+import com.jetbrains.completion.feature.impl.FeatureUtils
 
 /**
  * @author Vitaliy.Bibaev

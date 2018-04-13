@@ -7,10 +7,16 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.project.Project
+import com.intellij.plugin.NGramIndexingProperty
 import com.intellij.psi.search.GlobalSearchScope
 
 class NGramContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+        if (!NGramIndexingProperty.isEnabled(parameters.position.project)) {
+            super.fillCompletionVariants(parameters, result)
+            return
+        }
+
         val naiveNGramWeigher = NaiveNGramWeigher(parameters)
         result.runRemainingContributors(parameters, { completionResult ->
             val wrapped = CompletionResult.wrap(completionResult.lookupElement,

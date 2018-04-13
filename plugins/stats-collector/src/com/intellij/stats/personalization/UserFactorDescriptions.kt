@@ -17,9 +17,9 @@
 package com.intellij.stats.personalization
 
 import com.intellij.stats.personalization.impl.*
-import com.jetbrains.completion.ranker.features.BinaryFeature
-import com.jetbrains.completion.ranker.features.CatergorialFeature
-import com.jetbrains.completion.ranker.features.DoubleFeature
+import com.jetbrains.completion.feature.BinaryFeature
+import com.jetbrains.completion.feature.CatergorialFeature
+import com.jetbrains.completion.feature.DoubleFeature
 
 /**
  * @author Vitaliy.Bibaev

@@ -17,8 +17,8 @@
 package com.intellij.stats.personalization.impl
 
 import com.intellij.stats.personalization.*
-import com.jetbrains.completion.ranker.features.DoubleFeature
-import com.jetbrains.completion.ranker.features.impl.FeatureUtils
+import com.jetbrains.completion.feature.DoubleFeature
+import com.jetbrains.completion.feature.impl.FeatureUtils
 
 /**
  * @author Vitaliy.Bibaev
