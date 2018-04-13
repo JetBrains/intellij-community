@@ -568,9 +568,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
       DataContext ctx = actionEvent.getDataContext();
       if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
         ActionGroup group = (ActionGroup)action;
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(group.getTemplatePresentation().getText(), group, ctx, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
-          .showInBestPositionFor(ctx);
+        String groupId = ActionManager.getInstance().getId(action);
+        JBPopupFactory.getInstance().createActionGroupPopup(
+          group.getTemplatePresentation().getText(), group, ctx,
+          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+          false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(groupId))
+                      .showInBestPositionFor(ctx);
       }
       else {
         ActionUtil.performActionDumbAware(action, actionEvent);
