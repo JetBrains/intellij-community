@@ -1878,10 +1878,9 @@ public abstract class DialogWrapper {
   }
 
   private void recordAction(String name, AWTEvent event) {
-    ActionsCollector actionsCollector = ActionsCollector.getInstance();
-    if (event instanceof KeyEvent && actionsCollector != null) {
+    if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
       String shortcut = getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event));
-      actionsCollector.record(name + " " + shortcut);
+      ActionsCollector.getInstance().record(name + " " + shortcut);
     }
   }
 
