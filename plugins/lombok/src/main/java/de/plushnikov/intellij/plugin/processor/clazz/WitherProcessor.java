@@ -15,6 +15,7 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import lombok.Builder;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +24,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class WitherProcessor extends AbstractClassProcessor {
+  private static final String BUILDER_DEFAULT_ANNOTATION = Builder.Default.class.getName().replace("$", ".");
+
   private final WitherFieldProcessor fieldProcessor;
 
   public WitherProcessor(WitherFieldProcessor fieldProcessor) {
@@ -83,8 +86,9 @@ public class WitherProcessor extends AbstractClassProcessor {
       if (null != modifierList) {
         // Skip static fields.
         createWither = !modifierList.hasModifierProperty(PsiModifier.STATIC);
-        // Skip final fields
-        createWither &= !(modifierList.hasModifierProperty(PsiModifier.FINAL) && psiField.hasInitializer());
+        // Skip final fields that are initialized and not annotated with @Builder.Default
+        createWither &= !(modifierList.hasModifierProperty(PsiModifier.FINAL) && psiField.hasInitializer() &&
+          PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION) == null);
         // Skip fields that start with $
         createWither &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         // Skip fields having Wither annotation already

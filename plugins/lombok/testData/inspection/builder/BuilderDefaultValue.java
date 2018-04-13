@@ -1,8 +1,10 @@
 import lombok.Builder;
 import lombok.Value;
+import lombok.experimental.Wither;
 
 @Builder
 @Value
+@Wither
 public class BuilderDefaultValue
 {
   @lombok.Builder.Default
@@ -20,5 +22,12 @@ public class BuilderDefaultValue
       .<error descr="Cannot resolve method 'canNotSet(int)'">canNotSet</error>(1);
 
     new BuilderDefaultValue(1,1);
+
+    BuilderDefaultValue bdv = BuilderDefaultValue.builder()
+      .mustSet(1)
+      .canSet(1)
+      .build();
+
+    bdv.withCanSet(2).withMustSet(2);
   }
 }
