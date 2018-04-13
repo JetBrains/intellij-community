@@ -94,8 +94,8 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
   protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
                                                     final boolean staticProblem, final boolean accessible, final boolean varargs) {
-    return new MethodCandidateInfoForCall(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,
-                                          getTypeArguments(), getLanguageLevel(), varargs);
+    return new VarargsAwareMethodCandidateInfo(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,
+                                               getTypeArguments(), getLanguageLevel(), varargs);
   }
 
   protected static PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
@@ -137,17 +137,17 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return infos;
   }
 
-  private static class MethodCandidateInfoForCall extends MethodCandidateInfo {
+  private static class VarargsAwareMethodCandidateInfo extends MethodCandidateInfo {
     private final PsiExpressionList myArgumentList;
     private final boolean myVarargs;
     private PsiType[] myExpressionTypes;
 
-    public MethodCandidateInfoForCall(PsiMethod method,
-                                      PsiSubstitutor substitutor,
-                                      boolean accessible,
-                                      boolean staticProblem,
-                                      PsiExpressionList argumentList,
-                                      PsiElement context, PsiType[] arguments, LanguageLevel level, boolean varargs) {
+    public VarargsAwareMethodCandidateInfo(PsiMethod method,
+                                           PsiSubstitutor substitutor,
+                                           boolean accessible,
+                                           boolean staticProblem,
+                                           PsiExpressionList argumentList,
+                                           PsiElement context, PsiType[] arguments, LanguageLevel level, boolean varargs) {
       super(method, substitutor, !accessible, staticProblem, argumentList, context, null, arguments, level);
       myArgumentList = argumentList;
       myVarargs = varargs;
