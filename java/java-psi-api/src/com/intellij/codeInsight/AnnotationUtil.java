@@ -157,8 +157,14 @@ public class AnnotationUtil {
         collectSuperParameters(result, (PsiParameter)element);
       }
 
-      //noinspection unchecked
-      List<T> list = result.isEmpty() ? Collections.emptyList() : Arrays.asList((T[])result.toArray());
+      List<T> list;
+      if(result.isEmpty()) {
+        list = Collections.emptyList();
+      } else {
+        PsiModifierListOwner[] array = result.toArray(new PsiModifierListOwner[0]);
+        //noinspection unchecked
+        list = Arrays.asList((T[])array);
+      }
 
       return CachedValueProvider.Result.create(list, PsiModificationTracker.MODIFICATION_COUNT);
     });
