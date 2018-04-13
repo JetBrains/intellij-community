@@ -1,7 +1,6 @@
 // "Extract if (a)" "true"
 class Test {
   void f(boolean a, boolean b, boolean c, boolean d){
-      //a
       if (a) {
           if (b) {
               System.out.println("a&b");//first comment
