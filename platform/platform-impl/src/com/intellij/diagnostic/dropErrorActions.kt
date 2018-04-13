@@ -20,11 +20,11 @@ class DropAnErrorAction : DumbAwareAction("Drop an error") {
 
 class DropAnErrorWithAttachmentsAction : DumbAwareAction("Drop an error with attachments", "Hold down SHIFT for multiple attachments", null) {
   override fun actionPerformed(e: AnActionEvent) {
-    val attachments = if (e.modifiers and InputEvent.SHIFT_MASK != 0) {
-      arrayOf(Attachment("first.txt", "content"), Attachment("second.txt", "more content"), Attachment("third.txt", "even more content"))
+    val attachments = if (e.modifiers and InputEvent.SHIFT_MASK == 0) {
+      arrayOf(Attachment("attachment.txt", "content"))
     }
     else {
-      arrayOf(Attachment("attachment.txt", "content"))
+      arrayOf(Attachment("first.txt", "content"), Attachment("second.txt", "more content"), Attachment("third.txt", "even more content"))
     }
     Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, Exception(), *attachments)
   }
@@ -40,7 +40,7 @@ class DropPluginErrorAction : DumbAwareAction("Drop an error in a random plugin"
 
 class DropAnOutOfMemoryErrorAction : DumbAwareAction("Drop an OutOfMemoryError", "Hold down SHIFT for OOME in Metaspace", null) {
   override fun actionPerformed(e: AnActionEvent) {
-    if (e.modifiers and InputEvent.SHIFT_MASK != 0) {
+    if (e.modifiers and InputEvent.SHIFT_MASK == 0) {
       val array = arrayOfNulls<Any>(Integer.MAX_VALUE)
       for (i in array.indices) {
         array[i] = arrayOfNulls<Any>(Integer.MAX_VALUE)
