@@ -5,7 +5,7 @@ import com.intellij.lang.cacheBuilder.WordsScanner
 import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiFormatUtil.*
-import org.jetbrains.plugins.groovy.lang.message
+import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable

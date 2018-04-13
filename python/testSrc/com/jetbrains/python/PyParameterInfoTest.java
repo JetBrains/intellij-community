@@ -28,7 +28,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import java.util.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -752,10 +751,25 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-28957
+  public void testDataclassesReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(4);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: A, *, a: int=..., b: str=\"str\"", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: C, *, a: int=..., b: str=\"str\"", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj, **changes", new String[]{"**changes"});
+      }
+    );
+  }
+
   // EA-102450
   public void testKeywordOnlyWithFilledPositional() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> {
         final Map<String, PsiElement> test = loadTest(4);
 

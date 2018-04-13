@@ -13,7 +13,7 @@ public final class MantisFilter {
   }
 
   private int myId;
-  private String myName;
+  private String myName = "";
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MantisFilter() {

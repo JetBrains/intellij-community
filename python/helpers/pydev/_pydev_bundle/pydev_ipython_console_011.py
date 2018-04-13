@@ -76,7 +76,6 @@ def create_editor_hook(pydev_host, pydev_client_port):
     return call_editor
 
 
-
 class PyDevIPCompleter(IPCompleter):
 
     def __init__(self, *args, **kwargs):
@@ -84,7 +83,10 @@ class PyDevIPCompleter(IPCompleter):
             in addition to the completion support provided by IPython """
         IPCompleter.__init__(self, *args, **kwargs)
         # Use PyDev for python matches, see getCompletions below
-        self.matchers.remove(self.python_matches)
+        if self.python_matches in self.matchers:
+            # `self.python_matches` matches attributes or global python names
+            self.matchers.remove(self.python_matches)
+
 
 class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     banner1 = Unicode(default_pydev_banner, config=True,

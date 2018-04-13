@@ -475,10 +475,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     if (myLastFocusedFrame != null) {
       toFocus = myLastFocused.get(myLastFocusedFrame);
       if (toFocus == null || !toFocus.isShowing()) {
-        JComponent component = myLastFocusedFrame.getComponent();
-        if (component != null) {
-          toFocus = getFocusTargetFor(component);
-        }
+        toFocus = getFocusTargetFor(myLastFocusedFrame.getComponent());
       }
     }
     else {

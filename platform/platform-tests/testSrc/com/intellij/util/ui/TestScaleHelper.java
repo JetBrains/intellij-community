@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 
 import java.awt.*;
@@ -16,6 +18,8 @@ import java.util.Map;
  */
 @SuppressWarnings("JUnitTestCaseWithNoTests")
 public class TestScaleHelper {
+  private static final String STANDALONE_PROP = "intellij.test.standalone";
+
   private static final Map<String, String> origProps = new HashMap<>();
 
   private float originalUserScale;
@@ -56,6 +60,10 @@ public class TestScaleHelper {
 
   public static void overrideJreHiDPIEnabled(boolean enabled) {
     UIUtil.test_jreHiDPI().set(enabled);
+  }
+
+  public static void assumeStandalone() {
+    Assume.assumeTrue("not in " + STANDALONE_PROP + " mode", SystemProperties.is(STANDALONE_PROP));
   }
 
   public static Graphics2D createGraphics(double scale) {

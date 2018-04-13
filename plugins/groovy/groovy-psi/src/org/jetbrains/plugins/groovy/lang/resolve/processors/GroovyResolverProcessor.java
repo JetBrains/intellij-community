@@ -280,7 +280,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       if (kind == GroovyResolveKind.PROPERTY) {
         myAccessorProcessors.forEach(
           it -> it.getResults().stream().filter(
-            result -> applicable == result.isApplicable()
+            result -> applicable == result.isValidResult()
           ).forEach(results::add)
         );
       }

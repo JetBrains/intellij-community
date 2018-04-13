@@ -1,9 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class UndoableGroup {
+class UndoableGroup implements Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
 
   private final String myCommandName;
@@ -101,6 +100,9 @@ class UndoableGroup {
   }
 
   private void undoOrRedo(boolean isUndo) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Performing " + (isUndo ? "undo" : "redo") + " for " + dumpState());
+    }
     LocalHistoryAction action;
     if (myProject != null && isGlobal()) {
       String actionName = CommonBundle.message(isUndo ? "local.vcs.action.name.undo.command" : "local.vcs.action.name.redo.command", myCommandName);
@@ -158,6 +160,14 @@ class UndoableGroup {
       }
     });
     if (exception[0] != null) reportUndoProblem(exception[0], isUndo);
+  }
+
+  @NotNull
+  @Override
+  public String dumpState() {
+    return "UndoableGroup[project=" + myProject + ", name=" + myCommandName + ", global=" + myGlobal + ", transparent=" + myTransparent +
+           ", stamp=" + myCommandTimestamp + ", policy=" + myConfirmationPolicy + ", temporary=" + myTemporary + ", valid=" + myValid +
+           ", actions=" + myActions + ", documents=" + getAffectedDocuments() + "]";
   }
 
   private static DocumentEx getDocumentToSetBulkMode(UndoableAction action) {

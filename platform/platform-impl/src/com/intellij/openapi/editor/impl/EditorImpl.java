@@ -1155,10 +1155,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean processKeyTyped(char c) {
-    // [vova] This is patch for Mac OS X. Under Mac "input methods"
-    // is handled before our EventQueue consume upcoming KeyEvents.
-    IdeEventQueue queue = IdeEventQueue.getInstance();
-    if (queue.shouldNotTypeInEditor() || ProgressManager.getInstance().hasModalProgressIndicator()) {
+
+    if (ProgressManager.getInstance().hasModalProgressIndicator()) {
       return false;
     }
     FileDocumentManager manager = FileDocumentManager.getInstance();
@@ -3205,6 +3203,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean processKeyTyped(@NotNull KeyEvent e) {
+
     if (e.getID() != KeyEvent.KEY_TYPED) return false;
     char c = e.getKeyChar();
     if (UIUtil.isReallyTypedEvent(e)) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction

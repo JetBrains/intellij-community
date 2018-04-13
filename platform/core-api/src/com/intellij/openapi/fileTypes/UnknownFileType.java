@@ -35,7 +35,7 @@ public class UnknownFileType implements FileType {
   @Override
   @NotNull
   public String getDescription() {
-    return "UNKNOWN";
+    return "Unknown";
   }
 
   @Override

@@ -1505,4 +1505,15 @@ class Foo {
     disableTransformations testRootDisposable
     resolveByText 'def abc = 42; [:].with { <caret>abc }', GrVariable
   }
+
+  void 'test Class property vs instance property'() {
+    def property = resolveByText '''\
+class A {
+  int getName() { 42 }
+}
+
+println A.<caret>name
+''', PsiMethod
+    assert property.containingClass.qualifiedName == 'java.lang.Class'
+  }
 }

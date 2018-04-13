@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       annotateGroup((Group)element, holder);
     }
     else if (element instanceof Component) {
-      annotateComponent((Component) element, holder);
+      annotateComponent((Component)element, holder);
       if (element instanceof Component.Project) {
         annotateProjectComponent((Component.Project)element, holder);
       }
@@ -133,6 +133,11 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   private static void annotateIdeaPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
     //noinspection deprecation
     highlightAttributeNotUsedAnymore(ideaPlugin.getIdeaPluginVersion(), holder);
+    //noinspection deprecation
+    if (DomUtil.hasXml(ideaPlugin.getUseIdeaClassloader())) {
+      //noinspection deprecation
+      highlightDeprecated(ideaPlugin.getUseIdeaClassloader(), "Deprecated", holder, true, true);
+    }
   }
 
   private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
@@ -184,7 +189,6 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
       ComponentModuleRegistrationChecker.checkProperModule(extensionPoint, holder);
     }
-
   }
 
   private static boolean isValidEpName(GenericAttributeValue<String> nameAttrValue) {
@@ -395,7 +399,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     try {
       LoadingOrder.readOrder(orderValue);
-    } catch (AssertionError ignore) {
+    }
+    catch (AssertionError ignore) {
       holder.createProblem(attributeValue, HighlightSeverity.ERROR, DevKitBundle.message("inspections.plugin.xml.invalid.order.attribute"));
       return; // no need to resolve references for invalid attribute value
     }

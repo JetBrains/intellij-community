@@ -1001,7 +1001,7 @@ public class PyCallExpressionHelper {
 
     return StreamEx
       .of(elements)
-      .groupingBy(element -> ScopeUtil.getScopeOwner(mapper.apply(element)))
+      .groupingBy(element -> Optional.ofNullable(ScopeUtil.getScopeOwner(mapper.apply(element))))
       .values()
       .stream()
       .flatMap(oneScopeElements -> takeOverloadsOtherwiseImplementations(oneScopeElements, mapper, context));
@@ -1035,7 +1035,14 @@ public class PyCallExpressionHelper {
       return elements.stream();
     }
 
-    return elements.stream().filter(element -> PyiUtil.isOverload(mapper.apply(element), context));
+    return elements
+      .stream()
+      .filter(
+        element -> {
+          final PsiElement mapped = mapper.apply(element);
+          return mapped != null && PyiUtil.isOverload(mapped, context);
+        }
+      );
   }
 
   public static class ArgumentMappingResults {

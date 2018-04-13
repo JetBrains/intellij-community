@@ -27,11 +27,12 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
       .registerUastReferenceProvider(
         registrar,
         UastPatterns.stringLiteralExpression().inCall(UastPatterns.callExpression()),
-        new UastReferenceProvider() {
+        new UastLiteralReferenceProvider() {
           @NotNull
           @Override
-          public PsiReference[] getReferencesByElement(@NotNull UElement element, @NotNull ProcessingContext context) {
-            ULiteralExpression expression = (ULiteralExpression)element;
+          public PsiReference[] getReferencesByULiteral(@NotNull ULiteralExpression expression,
+                                                        @NotNull PsiLanguageInjectionHost host,
+                                                        @NotNull ProcessingContext context) {
             UCallExpression call = UastUtils.getUCallExpression(expression);
             if (call == null) return PsiReference.EMPTY_ARRAY;
 
@@ -46,9 +47,6 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
             }
 
             String directory = PathUtil.getParentPath(testDataFilePath);
-
-            PsiLanguageInjectionHost host = UastLiteralUtils.getPsiLanguageInjectionHost(expression);
-            if (host == null) return PsiReference.EMPTY_ARRAY;
 
             FileReferenceSet fileReferenceSet = new FileReferenceSet(host);
             fileReferenceSet.addCustomization(

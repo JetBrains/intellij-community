@@ -49,6 +49,8 @@ class LineOffsetsTest : DiffTestCase() {
     for (i in 0 until lineOffsets1.lineCount) {
       assertEquals(lineOffsets1.getLineStart(i), lineOffsets2.getLineStart(i))
       assertEquals(lineOffsets1.getLineEnd(i), lineOffsets2.getLineEnd(i))
+      assertEquals(lineOffsets1.getLineEnd(i, false), lineOffsets2.getLineEnd(i, false))
+      assertEquals(lineOffsets1.getLineEnd(i, true), lineOffsets2.getLineEnd(i, true))
     }
 
     for (i in 0..lineOffsets1.textLength) {

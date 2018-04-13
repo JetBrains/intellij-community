@@ -613,6 +613,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     if (!nonDumbAwareAction.isEmpty()) {
+
+      if (dumbModeWarningListener != null) {
+        dumbModeWarningListener.actionCanceledBecauseOfDumbMode();
+      }
+
+      IdeEventQueue.getInstance().flushDelayedKeyEvents();
+
       showDumbModeWarningLaterIfNobodyConsumesEvent(e, nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
@@ -627,6 +634,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
           ActionUtil.showDumbModeWarning(actionEvents);
         });
       }
+  }
+
+  private static DumbModeWarningListener dumbModeWarningListener  = null;
+
+  public static void addDumbModeWarningListener (DumbModeWarningListener listener) {
+    dumbModeWarningListener = listener;
   }
 
   /**

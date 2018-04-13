@@ -27,7 +27,9 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
-import com.intellij.navigation.*;
+import com.intellij.navigation.AnonymousElementProvider;
+import com.intellij.navigation.ChooseByNameRegistry;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -64,7 +66,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       super.actionPerformed(e);
     }
     else {
-      String message = IdeBundle.message("go.to.class.dumb.mode.message", StringUtil.capitalize(GotoClassPresentationUpdater.getMainElementKind()));
+      String message = IdeBundle.message("go.to.class.dumb.mode.message", GotoClassPresentationUpdater.getActionTitle());
       DumbService.getInstance(project).showDumbModeNotification(message);
       AnAction action = ActionManager.getInstance().getAction(GotoFileAction.ID);
       InputEvent event = ActionCommand.getInputEvent(GotoFileAction.ID);
@@ -83,7 +85,9 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final GotoClassModel2 model = new GotoClassModel2(project);
-    String title = IdeBundle.message("go.to.class.toolwindow.title", StringUtil.capitalize(StringUtil.pluralize(GotoClassPresentationUpdater.getMainElementKind())));
+    String pluralKinds = StringUtil.capitalize(
+      StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), s -> StringUtil.pluralize(s), "/"));
+    String title = IdeBundle.message("go.to.class.toolwindow.title", pluralKinds);
     showNavigationPopup(e, model, new GotoActionCallback<Language>() {
       @Override
       protected ChooseByNameFilter<Language> createFilter(@NotNull ChooseByNamePopup popup) {

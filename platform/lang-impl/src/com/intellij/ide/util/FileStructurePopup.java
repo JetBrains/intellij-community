@@ -143,6 +143,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     //Stop code analyzer to speedup EDT
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
+    IdeFocusManager.getInstance(myProject).typeAheadUntil(myTreeHasBuilt, "FileStructurePopup");
 
     myTreeActionsOwner = new TreeStructureActionsOwner(myTreeModel);
     myTreeActionsOwner.setActionIncluded(Sorter.ALPHA_SORTER, true);

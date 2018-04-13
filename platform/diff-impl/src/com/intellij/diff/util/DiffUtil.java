@@ -287,7 +287,10 @@ public class DiffUtil {
     if (convertor1 == null && convertor2 == null) return null;
     if (convertor1 == null) return convertor2;
     if (convertor2 == null) return convertor1;
-    return value -> convertor1.execute(convertor2.execute(value));
+    return value -> {
+      int value2 = convertor2.execute(value);
+      return value2 >= 0 ? convertor1.execute(value2) : value2;
+    };
   }
 
   //

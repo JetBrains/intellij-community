@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -53,7 +52,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         editor.setHorizontalScrollbarVisible(multiline);
         editor.setVerticalScrollbarVisible(multiline);
         editor.getSettings().setUseSoftWraps(isUseSoftWraps());
-        editor.getSettings().setLineCursorWidth(new SettingsImpl().getLineCursorWidth());
+        editor.getSettings().setLineCursorWidth(EditorUtil.getDefaultCaretWidth());
         editor.getColorsScheme().setEditorFontName(getFont().getFontName());
         editor.getColorsScheme().setEditorFontSize(getFont().getSize());
         if (multiline) {

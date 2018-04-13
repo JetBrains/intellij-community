@@ -25,7 +25,7 @@ public class A11YUsagesCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.ui.a11y.screen.reader";
+    return "statistics.ui.accessibility.screen.reader";
   }
 }
 

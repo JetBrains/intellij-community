@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,9 @@ public interface IdeaPlugin extends DomElement {
   @NotNull
   GenericAttributeValue<String> getUrl();
 
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
+  @Deprecated
   GenericAttributeValue<Boolean> getUseIdeaClassloader();
 
   @NotNull

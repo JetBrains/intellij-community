@@ -19,4 +19,8 @@ public interface PostfixTemplateEditor extends Disposable {
 
   @NotNull
   JComponent getComponent();
+
+  default String getHelpId() {
+    return null;
+  }
 }

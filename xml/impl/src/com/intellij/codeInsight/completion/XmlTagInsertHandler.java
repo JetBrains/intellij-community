@@ -195,7 +195,6 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
                                                      Template template,
                                                      PsiFile containingFile) {
 
-    boolean htmlCode = HtmlUtil.hasHtml(containingFile) || HtmlUtil.supportsXmlTypedHandlers(containingFile);
     Set<String> notRequiredAttributes = Collections.emptySet();
 
     if (tag instanceof HtmlTag) {
@@ -224,8 +223,8 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         if (!shouldBeInserted) continue;
 
         AttributeValuePresentation presenter =
-          extension.getAttributeValuePresentation(attributeDecl, XmlEditUtil.getAttributeQuote(htmlCode));
-
+          extension.getAttributeValuePresentation(attributeDecl, XmlEditUtil.getAttributeQuote(containingFile));
+        boolean htmlCode = HtmlUtil.hasHtml(containingFile) || HtmlUtil.supportsXmlTypedHandlers(containingFile);
         if (tag == null || tag.getAttributeValue(attributeName) == null) {
           if (!notRequiredAttributes.contains(attributeName)) {
             if (!extension.isIndirectSyntax(attributeDecl)) {
@@ -254,8 +253,6 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
                                    XmlTag tag,
                                    Template template,
                                    StringBuilder indirectRequiredAttrs) {
-    boolean htmlCode = HtmlUtil.hasHtml(tag.getContainingFile()) || HtmlUtil.supportsXmlTypedHandlers(tag.getContainingFile());
-
     if (completionChar == '>' || (completionChar == '/' && indirectRequiredAttrs != null)) {
       template.addTextSegment(">");
       boolean toInsertCDataEnd = false;
@@ -291,7 +288,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
       if (WebEditorOptions.getInstance().isAutomaticallyStartAttribute() &&
           (descriptor.getAttributesDescriptors(tag).length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
-        completeAttribute(template, htmlCode);
+        completeAttribute(tag.getContainingFile(), template);
         return true;
       }
     }
@@ -302,7 +299,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       else {
         if (needAlLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute() && tag.getAttributes().length == 0
             && template.getSegmentsCount() == 0) {
-          completeAttribute(template, htmlCode);
+          completeAttribute(tag.getContainingFile(), template);
           return true;
         }
         else {
@@ -323,12 +320,12 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     return needsSpace ? " />" : "/>";
   }
 
-  private static void completeAttribute(Template template, boolean htmlCode) {
+  private static void completeAttribute(PsiFile file, Template template) {
     template.addTextSegment(" ");
     template.addVariable(new MacroCallNode(new CompleteMacro()), true);
-    template.addTextSegment("=" + XmlEditUtil.getAttributeQuote(htmlCode));
+    template.addTextSegment("=" + XmlEditUtil.getAttributeQuote(file));
     template.addEndVariable();
-    template.addTextSegment(XmlEditUtil.getAttributeQuote(htmlCode));
+    template.addTextSegment(XmlEditUtil.getAttributeQuote(file));
   }
 
   private static boolean needAlLeastOneAttribute(XmlTag tag) {

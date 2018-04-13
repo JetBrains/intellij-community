@@ -133,6 +133,11 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor {
     return myPanel;
   }
 
+  @Override
+  public String getHelpId() {
+    return "reference.custom.postfix.templates";
+  }
+
   private static Document createDocument(@Nullable Project project) {
     if (project == null) {
       return EditorFactory.getInstance().createDocument("");

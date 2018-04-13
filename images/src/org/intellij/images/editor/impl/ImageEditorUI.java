@@ -376,26 +376,26 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   private class ImageZoomModelImpl implements ImageZoomModel {
-    private boolean myZoomLevelChanged = false;
+    private boolean myZoomLevelChanged;
+    private Double zoomFactor = null;
 
     public double getZoomFactor() {
-      Dimension size = imageComponent.getCanvasSize();
-      BufferedImage image = imageComponent.getDocument().getValue();
-      return image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
+      if (zoomFactor == null) {
+        Dimension size = imageComponent.getCanvasSize();
+        BufferedImage image = imageComponent.getDocument().getValue();
+        zoomFactor = image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
+      }
+      return zoomFactor;
     }
 
     public void setZoomFactor(double zoomFactor) {
       double oldZoomFactor = getZoomFactor();
 
       if (Double.compare(oldZoomFactor, zoomFactor) == 0) return;
+      this.zoomFactor = zoomFactor;
 
       // Change current size
-      Dimension size = imageComponent.getCanvasSize();
-      BufferedImage image = imageComponent.getDocument().getValue();
-      if (image != null) {
-        size.setSize((double)image.getWidth() * zoomFactor, (double)image.getHeight() * zoomFactor);
-        imageComponent.setCanvasSize(size);
-      }
+      updateImageComponentSize();
 
       revalidate();
       repaint();
@@ -507,8 +507,18 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     return 1.0d;
   }
 
+  private void updateImageComponentSize() {
+    BufferedImage image = imageComponent.getDocument().getValue();
+    if (image != null) {
+      final double zoom = getZoomModel().getZoomFactor();
+      imageComponent.setCanvasSize((int)Math.ceil(image.getWidth() * zoom), (int)Math.ceil(image.getHeight() * zoom));
+    }
+  }
+
   private class DocumentChangeListener implements ChangeListener {
     public void stateChanged(@NotNull ChangeEvent e) {
+      updateImageComponentSize();
+
       ImageDocument document = imageComponent.getDocument();
       BufferedImage value = document.getValue();
 

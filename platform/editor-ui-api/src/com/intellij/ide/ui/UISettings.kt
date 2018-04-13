@@ -242,6 +242,13 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   companion object {
     private val LOG = Logger.getInstance(UISettings::class.java)
 
+    init {
+      verbose("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale)
+    }
+
+    @JvmStatic
+    private fun verbose(msg: String, vararg args: Any) = if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, *args)) else {}
+
     const val ANIMATION_DURATION = 300 // Milliseconds
 
     /** Not tabbed pane.  */
@@ -367,6 +374,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     fun restoreFontSize(readSize: Int, readScale: Float?): Int {
       var size = readSize
       if (readScale == null || readScale <= 0) {
+        verbose("Reset font to default")
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
         if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = defFontSize
       }
@@ -378,6 +386,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
             // [tav] todo: temp workaround for transitioning IDEA 173 to 181
             // not converting fonts stored with scale equal to the old calculation
             oldDefFontScale = fdata.second / 12f
+            verbose("oldDefFontScale=%.2f", oldDefFontScale)
           }
         }
         if (readScale != defFontScale && readScale != oldDefFontScale) size = Math.round((readSize / readScale) * defFontScale)

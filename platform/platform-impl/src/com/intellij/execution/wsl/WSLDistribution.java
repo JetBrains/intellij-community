@@ -109,7 +109,8 @@ public class WSLDistribution {
     try {
       final String key = "PRETTY_NAME";
       final String releaseInfo = "/etc/os-release"; // available for all distributions
-      final ProcessOutput output = executeOnWsl(1000, "cat", releaseInfo);
+      final ProcessOutput output = executeOnWsl(10000, "cat", releaseInfo);
+      if (!output.checkSuccess(LOG)) return null;
       for (String line : output.getStdoutLines(true)) {
         if (line.startsWith(key) && line.length() >= (key.length() + 1)) {
           final String prettyName = line.substring(key.length() + 1);

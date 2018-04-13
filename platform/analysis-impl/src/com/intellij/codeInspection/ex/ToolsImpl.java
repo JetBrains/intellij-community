@@ -229,6 +229,12 @@ public class ToolsImpl implements Tools {
     myEnabled = isEnabled;
   }
 
+  /**
+   * Warning: Usage of this method is discouraged as if separate tool options are defined for different scopes, it just returns
+   * the options for the first scope which may lead to unexpected results. Consider using {@link #getInspectionTool(PsiElement)} instead.
+   *
+   * @return an InspectionToolWrapper associated with this tool.
+   */
   @NotNull
   @Override
   public InspectionToolWrapper getTool() {

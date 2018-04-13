@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.serialization.facet;
 
+import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,9 @@ public abstract class JpsFacetConfigurationSerializer<E extends JpsElement> {
       state.setName(myFacetName);
       Element tag = new Element(JpsFacetSerializer.CONFIGURATION_TAG);
       saveExtension(extension, tag, module);
-      state.setConfiguration(tag);
+      if (!JDOMUtil.isEmpty(tag)) {
+        state.setConfiguration(tag);
+      }
       states.add(state);
     }
   }

@@ -433,7 +433,19 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
       }
     }
-    JpsFacetSerializer.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"));
+    Element facetsTag = JDomSerializationUtil.findComponent(moduleRoot, "FacetManager");
+    Element externalFacetsTag = JDomSerializationUtil.findComponent(moduleRoot, "ExternalFacetManager");
+    Element mergedFacetsTag;
+    if (facetsTag == null) {
+      mergedFacetsTag = externalFacetsTag;
+    }
+    else if (externalFacetsTag != null) {
+      mergedFacetsTag = JDOMUtil.deepMerge(facetsTag, externalFacetsTag);
+    }
+    else {
+      mergedFacetsTag = facetsTag;
+    }
+    JpsFacetSerializer.loadFacets(module, mergedFacetsTag);
     return module;
   }
 

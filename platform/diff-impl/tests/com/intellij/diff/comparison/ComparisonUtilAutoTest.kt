@@ -16,18 +16,23 @@
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
+import com.intellij.diff.HeavyDiffTestCase
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.fragments.MergeLineFragment
 import com.intellij.diff.fragments.MergeWordFragment
+import com.intellij.diff.tools.util.base.HighlightPolicy
+import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Range
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.ex.createRanges
 
-class ComparisonUtilAutoTest : DiffTestCase() {
+class ComparisonUtilAutoTest : HeavyDiffTestCase() {
   val RUNS = 30
   val MAX_LENGTH = 300
 
@@ -49,6 +54,10 @@ class ComparisonUtilAutoTest : DiffTestCase() {
 
   fun testLineTrimSquashed() {
     doTestLineTrimSquashed(System.currentTimeMillis(), RUNS, MAX_LENGTH)
+  }
+
+  fun testExplicitBlocks() {
+    doTestExplicitBlocks(System.currentTimeMillis(), RUNS, MAX_LENGTH)
   }
 
   fun testMerge() {
@@ -131,6 +140,31 @@ class ComparisonUtilAutoTest : DiffTestCase() {
     }
   }
 
+  private fun doTestExplicitBlocks(seed: Long, runs: Int, maxLength: Int) {
+    val ignorePolicies = listOf(IgnorePolicy.DEFAULT, IgnorePolicy.TRIM_WHITESPACES, IgnorePolicy.IGNORE_WHITESPACES, IgnorePolicy.IGNORE_WHITESPACES_CHUNKS)
+    val highlightPolicies = listOf(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD, HighlightPolicy.BY_WORD_SPLIT)
+
+    doTest(seed, runs, maxLength) { text1, text2, debugData ->
+      for (highlightPolicy in highlightPolicies) {
+        for (ignorePolicy in ignorePolicies) {
+          debugData.put("HighlightPolicy", highlightPolicy)
+          debugData.put("IgnorePolicy", ignorePolicy)
+
+          val sequence1 = text1.charsSequence
+          val sequence2 = text2.charsSequence
+
+          val ranges = createRanges(sequence2, sequence1).map { Range(it.vcsLine1, it.vcsLine2, it.line1, it.line2) }
+          debugData.put("Ranges", ranges)
+
+          val fragments = compareExplicitBlocks(sequence1, sequence2, ranges, highlightPolicy, ignorePolicy)
+          debugData.put("Fragments", fragments)
+
+          checkResultLine(text1, text2, fragments, ignorePolicy.comparisonPolicy, !highlightPolicy.isShouldSquash)
+        }
+      }
+    }
+  }
+
   private fun doTestMerge(seed: Long, runs: Int, maxLength: Int) {
     val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
@@ -157,6 +191,16 @@ class ComparisonUtilAutoTest : DiffTestCase() {
 
   private fun doTest(seed: Long, runs: Int, maxLength: Int, policies: List<ComparisonPolicy>,
                      test: (Document, Document, ComparisonPolicy, DiffTestCase.DebugData) -> Unit) {
+    doTest(seed, runs, maxLength) { text1, text2, debugData ->
+      for (comparisonPolicy in policies) {
+        debugData.put("Policy", comparisonPolicy)
+        test(text1, text2, comparisonPolicy, debugData)
+      }
+    }
+  }
+
+  private fun doTest(seed: Long, runs: Int, maxLength: Int,
+                     test: (Document, Document, DiffTestCase.DebugData) -> Unit) {
     doAutoTest(seed, runs) { debugData ->
       debugData.put("MaxLength", maxLength)
 
@@ -166,10 +210,7 @@ class ComparisonUtilAutoTest : DiffTestCase() {
       debugData.put("Text1", textToReadableFormat(text1.charsSequence))
       debugData.put("Text2", textToReadableFormat(text2.charsSequence))
 
-      for (comparisonPolicy in policies) {
-        debugData.put("Policy", comparisonPolicy)
-        test(text1, text2, comparisonPolicy, debugData)
-      }
+      test(text1, text2, debugData)
     }
   }
 

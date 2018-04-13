@@ -5,8 +5,9 @@ import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.AnnotationHint
 import org.jetbrains.plugins.groovy.lang.resolve.ClassResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
-class ClassProcessor(
+internal open class ClassProcessor(
   name: String,
   private val place: PsiElement?,
   private val typeArguments: Array<out PsiType> = PsiType.EMPTY_ARRAY,
@@ -24,6 +25,9 @@ class ClassProcessor(
     val clazz = element as? PsiClass ?: return null
     if (clazz is PsiTypeParameter) return null
 
+    val elementName = state[importedNameKey] ?: element.name
+    if (elementName != name) return null
+
     val substitutor = state.get(PsiSubstitutor.KEY) ?: PsiSubstitutor.EMPTY
     return ClassResolveResult(
       element = clazz,
@@ -33,4 +37,3 @@ class ClassProcessor(
     )
   }
 }
-

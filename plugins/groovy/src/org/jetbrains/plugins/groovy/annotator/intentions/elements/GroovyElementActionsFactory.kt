@@ -36,11 +36,15 @@ class GroovyElementActionsFactory : JvmElementActionsFactory() {
     val requestedModifiers = request.modifiers
     val staticMethodRequested = JvmModifier.STATIC in requestedModifiers
 
+    val result = ArrayList<IntentionAction>()
+
     if (groovyClass.isInterface) {
       return if (staticMethodRequested) emptyList() else listOf(CreateMethodAction(groovyClass, request, true))
+    } else {
+        result += CreatePropertyAction(groovyClass, request, true)
+        result += CreatePropertyAction(groovyClass, request, false)
     }
 
-    val result = ArrayList<IntentionAction>()
     result += CreateMethodAction(groovyClass, request, false)
     if (!staticMethodRequested && groovyClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       result += CreateMethodAction(groovyClass, request, true)

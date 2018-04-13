@@ -20,6 +20,8 @@ public interface LineOffsets {
 
   int getLineEnd(int line);
 
+  int getLineEnd(int line, boolean includeNewline);
+
   int getLineNumber(int offset);
 
   int getLineCount();

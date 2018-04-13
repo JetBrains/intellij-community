@@ -101,7 +101,8 @@ private fun resolveQualifiedName(name: QualifiedName,
 
   val foreignResults = foreignResults(name, context)
   val pythonResults = listOf(relativeResults,
-                             resolveFromRoots(name, context),
+                             // TODO: replace with resolveFromRoots when namespace package magic features PY-16688, PY-23087 are implemented
+                             resultsFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
   val allResults = pythonResults + foreignResults
   val results = if (name.componentCount > 0) findFirstResults(pythonResults, context.module) + foreignResults else allResults
@@ -122,7 +123,7 @@ private fun resolveModuleFromRoots(name: QualifiedName, context: PyQualifiedName
   return nameNoHead.components.fold(resultsFromRoots(head, context)) { results, component ->
     findFirstResults(results, context.module)
       .asSequence()
-      .filterIsInstance<PsiDirectory>()
+      .filterIsInstance<PsiFileSystemItem>()
       .flatMap { resolveModuleAt(QualifiedName.fromComponents(component), it, context).asSequence() }
       .toList()
   }
@@ -143,15 +144,15 @@ fun resolveTopLevelMember(name: QualifiedName, context : PyQualifiedNameResolveC
 }
 
 /**
- * Resolves a [name] relative to the specified [directory].
+ * Resolves a [name] relative to the specified [item].
  */
-fun resolveModuleAt(name: QualifiedName, directory: PsiDirectory?, context: PyQualifiedNameResolveContext): List<PsiElement> {
+fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQualifiedNameResolveContext): List<PsiElement> {
   checkAccess()
   val empty = emptyList<PsiElement>()
-  if (directory == null || !directory.isValid) {
+  if (item == null || !item.isValid) {
     return empty
   }
-  return name.components.fold(listOf<PsiElement>(directory)) { seekers, component ->
+  return name.components.fold(listOf<PsiElement>(item)) { seekers, component ->
     if (component == null) empty
     else seekers.flatMap {
       val children = ResolveImportUtil.resolveChildren(it, component, context.footholdFile, !context.withMembers,

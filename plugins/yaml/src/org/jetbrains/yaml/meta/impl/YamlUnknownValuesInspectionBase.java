@@ -20,7 +20,7 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
     return new ValuesChecker(holder, metaTypeProvider);
   }
 
-  private static class ValuesChecker extends SimpleYamlPsiVisitor {
+  protected static class ValuesChecker extends SimpleYamlPsiVisitor {
     private final YamlMetaTypeProvider myMetaTypeProvider;
     private final ProblemsHolder myProblemsHolder;
 
@@ -45,14 +45,18 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
         return;
       }
 
+      validateMultiplicity(meta, value);
+
+      meta.getMetaType().validateKeyValue(keyValue, myProblemsHolder);
+    }
+
+    protected void validateMultiplicity(@NotNull YamlMetaTypeProvider.MetaTypeProxy meta, @NotNull YAMLValue value) {
       if (meta.getField().isMany()) {
         requireMultiplicityMany(value);
       }
       else if (!meta.getField().hasRelationSpecificType(Field.Relation.SEQUENCE_ITEM)) {
         requireMultiplicityOne(value);
       }
-
-      meta.getMetaType().validateKeyValue(keyValue, myProblemsHolder);
     }
 
     protected void requireMultiplicityOne(@NotNull YAMLValue value) {

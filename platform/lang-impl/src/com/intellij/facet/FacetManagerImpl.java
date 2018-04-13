@@ -51,10 +51,13 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   private boolean myInsideCommit;
   private final MessageBus myMessageBus;
   private boolean myModuleAdded;
+  private final FacetFromExternalSourcesStorage myExternalSourcesStorage;
 
-  public FacetManagerImpl(final Module module, MessageBus messageBus) {
+  public FacetManagerImpl(final Module module, MessageBus messageBus, FacetFromExternalSourcesStorage externalSourcesStorage) {
     myModule = module;
     myMessageBus = messageBus;
+    //explicit dependency on FacetFromExternalSourcesStorage is required to ensure that it'll initialized and its settings will be stored on save
+    myExternalSourcesStorage = externalSourcesStorage;
   }
 
   @Override
@@ -284,7 +287,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
 
   protected void doLoadState(@Nullable FacetManagerState state) {
     ModifiableFacetModel model = new FacetModelImpl(this);
-    FacetManagerState importedFacetsState = FacetFromExternalSourcesStorage.getInstance(myModule).getLoadedState();
+    FacetManagerState importedFacetsState = myExternalSourcesStorage.getLoadedState();
     addFacets(ContainerUtil.concat(state == null ? Collections.emptyList() : state.getFacets(), importedFacetsState.getFacets()), null, model);
     commit(model, false);
   }

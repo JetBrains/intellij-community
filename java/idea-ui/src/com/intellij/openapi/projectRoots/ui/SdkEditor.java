@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.ui;
 
 import com.google.common.collect.Lists;
@@ -182,8 +180,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
     if (mySdk != null) {
       myInitialName = mySdk.getName();
       myInitialPath = mySdk.getHomePath();
-      final SdkModificator sdkModificator = mySdk.getSdkModificator();
-      sdkModificator.setHomePath(FileUtil.toSystemDependentName(getHomeValue()));
+      SdkModificator sdkModificator = mySdk.getSdkModificator();
+      sdkModificator.setHomePath(FileUtil.toSystemIndependentName(getHomeValue()));
       for (SdkPathEditor pathEditor : myPathEditors.values()) {
         pathEditor.apply(sdkModificator);
       }

@@ -33,7 +33,8 @@ public class TrelloBoard extends TrelloModel {
 
   private boolean closed;
   private String idOrganization;
-  private String name;
+  @NotNull
+  private String name = "";
 
   /**
    * Serialization constructor

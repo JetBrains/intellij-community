@@ -32,7 +32,7 @@ public class IpnbRunConfigurationType implements ConfigurationType {
 
   @NotNull
   public String getId() {
-    return "Python.Ipnb";
+    return "JupiterNotebook";
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {

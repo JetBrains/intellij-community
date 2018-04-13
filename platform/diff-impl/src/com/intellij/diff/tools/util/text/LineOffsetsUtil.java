@@ -69,6 +69,12 @@ public class LineOffsetsUtil {
     }
 
     @Override
+    public int getLineEnd(int line, boolean includeNewline) {
+      checkLineIndex(line);
+      return myLineEnds[line] + (includeNewline && line != myLineEnds.length - 1 ? 1 : 0);
+    }
+
+    @Override
     public int getLineNumber(int offset) {
       if (offset < 0 || offset > getTextLength()) {
         throw new IndexOutOfBoundsException("Wrong offset: " + offset + ". Available text length: " + getTextLength());
@@ -110,6 +116,12 @@ public class LineOffsetsUtil {
     @Override
     public int getLineEnd(int line) {
       return myDocument.getLineEndOffset(line);
+    }
+
+    @Override
+    public int getLineEnd(int line, boolean includeNewline) {
+      if (myDocument.getLineCount() == 0) return 0;
+      return myDocument.getLineEndOffset(line) + (includeNewline ? myDocument.getLineSeparatorLength(line) : 0);
     }
 
     @Override

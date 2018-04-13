@@ -34,7 +34,9 @@ public class SuspiciousNameCombinationTest extends LightInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new SuspiciousNameCombinationInspection();
+    SuspiciousNameCombinationInspection inspection = new SuspiciousNameCombinationInspection();
+    inspection.addNameGroup("someWord,otherWord");
+    return inspection;
   }
 
   public void testAssignment() { doTest();}
@@ -42,4 +44,5 @@ public class SuspiciousNameCombinationTest extends LightInspectionTestCase {
   public void testParameter() { doTest();}
   public void testReturnValue() { doTest();}
   public void testExcluded() { doTest();}
+  public void testTwoWords() { doTest();}
 }

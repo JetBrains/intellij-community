@@ -1898,21 +1898,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testXsiType() throws Exception {
-    final String testName = getTestName(false);
-
-    doTest(
-      new VirtualFile[] {
-        getVirtualFile(BASE_PATH + testName + ".xml"),
-        getVirtualFile(BASE_PATH + testName + "_TypesV1.00.xsd"),
-        getVirtualFile(BASE_PATH + testName + "_ActivationRequestV1.00.xsd"),
-        getVirtualFile(BASE_PATH + testName + "_GenericActivationRequestV1.00.xsd")
-      },
-      true,
-      false
-    );
-  }
-
   public void testMappedSchemaLocation() {
     doTestWithLocations(new String[][]{
       {"schemas/Forms.xsd", "Forms.xsd"}

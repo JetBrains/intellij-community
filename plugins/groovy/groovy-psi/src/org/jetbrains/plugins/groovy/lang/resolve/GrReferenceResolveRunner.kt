@@ -22,12 +22,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.isThisExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUpAndGet
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.canResolveToMethod
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isDefinitelyKeyOfMap
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.CodeFieldProcessor
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessorBuilder
-import org.jetbrains.plugins.groovy.lang.resolve.processors.LocalVariableProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.*
 
-private class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
+class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
 
   fun resolveReferenceExpression(): Boolean {
     val processNonCode = PsiTreeUtil.skipParentsOfType(
@@ -167,6 +164,14 @@ private fun GrReferenceExpression.resolveStatic(): Collection<GroovyResolveResul
     if (field != null && checkCurrentClass(field.element, this)) return fields
   }
 
+  if (qualifier == null && parent !is GrMethodCall) {
+    // at this point:
+    // - the reference is org.codehaus.groovy.ast.expr.VariableExpression
+    // - the reference doesn't resolve to a variable, meaning it accesses org.codehaus.groovy.ast.DynamicVariable
+    val classes = resolveUnqualifiedType(name)
+    if (classes.isNotEmpty()) return classes
+  }
+
   return emptyList()
 }
 
@@ -200,4 +205,13 @@ private fun PsiElement.resolveToField(name: String): Collection<ElementGroovyRes
 private fun checkCurrentClass(field: GrField, place: PsiElement): Boolean {
   val containingClass = field.containingClass ?: return false
   return containingClass == place.getOwner()
+}
+
+/**
+ * @see org.codehaus.groovy.control.ResolveVisitor.transformVariableExpression
+ */
+private fun PsiElement.resolveUnqualifiedType(name: String): List<ClassResolveResult> {
+  val processor = ReferenceExpressionClassProcessor(name, this)
+  processUnqualified(processor, ResolveState.initial())
+  return processor.results
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
@@ -28,7 +29,7 @@ public class DefaultGutterIconNavigationHandler<T extends PsiElement> implements
   @Override
   public void navigate(MouseEvent e, T elt) {
     PsiElementListNavigator.openTargets(e,
-                                        myReferences.toArray(new NavigatablePsiElement[0]),
+                                        myReferences.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY),
                                         myTitle, null, createListCellRenderer());
   }
 

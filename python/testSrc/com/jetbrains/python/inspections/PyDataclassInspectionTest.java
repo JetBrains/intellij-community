@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-27398
-  public void testAssignmentsToFrozen() {
+  public void testMutatingFrozen() {
     doTest();
   }
 
@@ -73,6 +73,26 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-27398
   public void testFieldDefaultAndDefaultFactory() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testUselessReprEq() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testUselessOrder() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testUselessFrozen() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testUselessUnsafeHash() {
     doTest();
   }
 

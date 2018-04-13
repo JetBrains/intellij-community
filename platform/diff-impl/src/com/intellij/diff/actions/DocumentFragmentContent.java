@@ -63,6 +63,7 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
 
     TIntFunction originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
     putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, value -> {
+      if (!myRangeMarker.isValid()) return -1;
       int line = value + document1.getLineNumber(myRangeMarker.getStartOffset());
       return originalLineConvertor != null ? originalLineConvertor.execute(line) : line;
     });

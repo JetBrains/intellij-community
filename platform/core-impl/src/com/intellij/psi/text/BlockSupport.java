@@ -28,7 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.text.DiffLog;
+import com.intellij.psi.impl.DiffLog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

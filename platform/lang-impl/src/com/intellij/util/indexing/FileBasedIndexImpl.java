@@ -1078,9 +1078,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         final TIntArrayList filesSet = new TIntArrayList();
         iterateIndexableFiles(fileOrDir -> {
           ProgressManager.checkCanceled();
-          if (fileOrDir instanceof VirtualFileWithId) {
-            filesSet.add(((VirtualFileWithId)fileOrDir).getId());
-          }
+          filesSet.add(((VirtualFileWithId)fileOrDir).getId());
           return true;
         }, project, SilentProgressIndicator.create());
         ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
