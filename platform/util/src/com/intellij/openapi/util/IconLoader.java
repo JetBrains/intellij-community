@@ -119,6 +119,7 @@ public final class IconLoader {
       return (Icon)field.get(null);
     }
     catch (Exception e) {
+      LOG.info(e);
       return null;
     }
   }
