@@ -342,7 +342,9 @@ public abstract class PsiAnchor {
   }
   
   private static class PsiDirectoryReference extends PsiAnchor {
+    @NotNull
     private final VirtualFile myFile;
+    @NotNull
     private final Project myProject;
     
     private PsiDirectoryReference(@NotNull VirtualFile file, @NotNull Project project) {
@@ -418,10 +420,14 @@ public abstract class PsiAnchor {
   }
 
   public static class StubIndexReference extends PsiAnchor {
+    @NotNull
     private final VirtualFile myVirtualFile;
+    @NotNull
     private final Project myProject;
     private final int myIndex;
+    @NotNull
     private final Language myLanguage;
+    @NotNull
     private final IStubElementType myElementType;
 
     private StubIndexReference(@NotNull final PsiFile file, final int index, @NotNull Language language, @NotNull IStubElementType elementType) {
@@ -485,7 +491,7 @@ public abstract class PsiAnchor {
 
     @Override
     public int hashCode() {
-      return ((31 * myVirtualFile.hashCode() + myIndex) * 31 + (myElementType == null ? 0 : myElementType.hashCode())) * 31 + myLanguage.hashCode();
+      return ((31 * myVirtualFile.hashCode() + myIndex) * 31 + myElementType.hashCode()) * 31 + myLanguage.hashCode();
     }
 
     @NonNls
@@ -502,18 +508,22 @@ public abstract class PsiAnchor {
 
     @Override
     public int getStartOffset() {
-      final PsiElement resolved = retrieve();
-      if (resolved == null) throw new PsiInvalidElementAccessException(null, "Element type: " + myElementType + "; " + myVirtualFile);
-      return resolved.getTextRange().getStartOffset();
+      return getTextRange().getStartOffset();
     }
 
     @Override
     public int getEndOffset() {
-      final PsiElement resolved = retrieve();
-      if (resolved == null) throw new PsiInvalidElementAccessException(null, "Element type: " + myElementType + "; " + myVirtualFile);
-      return resolved.getTextRange().getEndOffset();
+      return getTextRange().getEndOffset();
     }
 
+    @NotNull
+    private TextRange getTextRange() {
+      final PsiElement resolved = retrieve();
+      if (resolved == null) throw new PsiInvalidElementAccessException(null, "Element type: " + myElementType + "; " + myVirtualFile);
+      return resolved.getTextRange();
+    }
+
+    @NotNull
     public VirtualFile getVirtualFile() {
       return myVirtualFile;
     }

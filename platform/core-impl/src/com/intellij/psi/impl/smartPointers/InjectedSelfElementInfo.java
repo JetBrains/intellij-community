@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 class InjectedSelfElementInfo extends SmartPointerElementInfo {
+  @NotNull
   private final SmartPsiFileRange myInjectedFileRangeInHostFile;
   @Nullable private final AffixOffsets myAffixOffsets;
   private final Identikit myType;
@@ -52,7 +53,8 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     assert containingFile.getViewProvider() instanceof FreeThreadedFileViewProvider : "element parameter must be an injected element: "+injectedElement+"; "+containingFile;
     assert containingFile.getTextRange().contains(injectedRange) : "Injected range outside the file: "+injectedRange +"; file: "+containingFile.getTextRange();
 
-    TextRange hostRange = InjectedLanguageManager.getInstance(project).injectedToHost(injectedElement, injectedRange);
+    InjectedLanguageManager ilm = InjectedLanguageManager.getInstance(project);
+    TextRange hostRange = ilm.injectedToHost(injectedElement, injectedRange);
     PsiFile hostFile = hostContext.getContainingFile();
     assert !(hostFile.getViewProvider() instanceof FreeThreadedFileViewProvider) : "hostContext parameter must not be and injected element: "+hostContext;
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
@@ -63,7 +65,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     int startAffixOffset = -1;
     int endAffixIndex = -1;
     int endAffixOffset = -1;
-    List<TextRange> fragments = InjectedLanguageManager.getInstance(project).getNonEditableFragments((DocumentWindow)containingFile.getViewProvider().getDocument());
+    List<TextRange> fragments = ilm.getNonEditableFragments((DocumentWindow)containingFile.getViewProvider().getDocument());
     for (int i = 0; i < fragments.size(); i++) {
       TextRange range = fragments.get(i);
       if (range.containsOffset(injectedRange.getStartOffset())) {
@@ -154,8 +156,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other,
-                                   @NotNull SmartPointerManagerImpl manager) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
     if (getClass() != other.getClass()) return false;
     if (!((InjectedSelfElementInfo)other).myHostContext.equals(myHostContext)) return false;
     SmartPointerElementInfo myElementInfo = ((SmartPsiElementPointerImpl)myInjectedFileRangeInHostFile).getElementInfo();
@@ -189,7 +190,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Nullable
-  private static ProperTextRange hostToInjected(boolean psi, Segment hostRange, @Nullable PsiFile injectedFile, @Nullable AffixOffsets affixOffsets) {
+  private static ProperTextRange hostToInjected(boolean psi, @NotNull Segment hostRange, @Nullable PsiFile injectedFile, @Nullable AffixOffsets affixOffsets) {
     VirtualFile virtualFile = injectedFile == null ? null : injectedFile.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) {
       Project project = injectedFile.getProject();
@@ -248,7 +249,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     }
 
     @Nullable
-    ProperTextRange expandRangeToAffixes(int start, int end, List<TextRange> fragments) {
+    ProperTextRange expandRangeToAffixes(int start, int end, @NotNull List<TextRange> fragments) {
       if (startAffixIndex >= 0) {
         TextRange fragment = startAffixIndex < fragments.size() ? fragments.get(startAffixIndex) : null;
         if (fragment == null || startAffixOffset > fragment.getLength()) return null;

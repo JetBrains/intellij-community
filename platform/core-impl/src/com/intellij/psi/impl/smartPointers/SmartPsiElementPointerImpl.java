@@ -175,7 +175,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
           return new ClsElementInfo(stubReference);
         }
       }
-      return new HardElementInfo(project, element);
+      return new HardElementInfo(element);
     }
 
     FileViewProvider viewProvider = containingFile.getViewProvider();
@@ -205,14 +205,14 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     TextRange elementRange = element.getTextRange();
     if (elementRange == null) {
-      return new HardElementInfo(project, element);
+      return new HardElementInfo(element);
     }
     Identikit.ByType identikit = Identikit.fromPsi(element, LanguageUtil.getRootLanguage(element));
     if (elementRange.isEmpty() && 
         identikit.findPsiElement(containingFile, elementRange.getStartOffset(), elementRange.getEndOffset()) != element) {
       // PSI has empty range, no text, but complicated structure (e.g. PSI built on C-style macro expansions). It can't be reliably
       // restored by just one offset in a file, so hold it on a hard reference
-      return new HardElementInfo(project, element);
+      return new HardElementInfo(element);
     }
     ProperTextRange proper = ProperTextRange.create(elementRange);
     return new SelfElementInfo(proper, identikit, containingFile, forInjected);
