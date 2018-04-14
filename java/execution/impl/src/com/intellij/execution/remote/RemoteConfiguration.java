@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,8 +71,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<RemoteConfiguration> group = new SettingsEditorGroup<>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
-                    Registry.is("remote.debug.redesing") ? new RemoteConfigurable2(getProject()) : new RemoteConfigurable(getProject()));
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new RemoteConfigurable(getProject()));
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }

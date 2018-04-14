@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
@@ -16,7 +15,6 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
@@ -26,16 +24,12 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.util.Arrays;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
   @Override
@@ -56,7 +50,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       super(project);
       myProject = project;
       init();
-      setTitle("Component Panel Test Action");
     }
 
     @Nullable
@@ -85,8 +78,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           }
         }
       });
-
-      tabs.addTab(new TabInfo(createButtonsTab())).setText("Buttons");
 
       return tabs;
     }
@@ -127,7 +118,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withTooltip("Help tooltip description").createPanel());
 
       panel.add(UI.PanelFactory.panel(new JButton("Abracadabra")).
-        withComment("Abradabra comment").resizeX(false).createPanel());
+        withComment("Abradabra comment").createPanel());
 
       String[] items = new String[]{ "One", "Two", "Three", "Four", "Five", "Six" };
       panel.add(UI.PanelFactory.panel(new JComboBox<>(items)).
@@ -165,13 +156,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JBScrollPane pane = new JBScrollPane(new JTextArea(3, 40));
       pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
 
-      DropDownLink<String> linkLabel =
-        new DropDownLink<>("Drop down link label",
-                           Arrays.asList("Label 1",
-                                         "Label 2 long long long long long long label",
-                                         "Label 3", "Label 4", "Label 5", "Label 6"),
-                           t -> System.out.println("[" + t + "] selected"), false);
-
       JPanel p1 = UI.PanelFactory.grid().
       add(UI.PanelFactory.panel(new JTextField()).
         withLabel("&Port:").withComment("Port comment")).
@@ -192,12 +176,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       add(UI.PanelFactory.panel(new JCheckBox("Checkbox")).withComment("Checkbox comment text")).
 
       add(UI.PanelFactory.panel(pane).
-        withLabel("Text area:").
-        anchorLabelOn(UI.Anchor.Top).
-        withComment("Text area comment").
-        moveLabelOnTop().
-        withTopRightComponent(linkLabel)
-      ).createPanel();
+        withLabel("Text area:").withComment("Text area comment").moveLabelOnTop()).
+
+      createPanel();
 
       ButtonGroup bg = new ButtonGroup();
       JRadioButton rb1 = new JRadioButton("RadioButton 1");
@@ -230,16 +211,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return panel;
     }
 
-    private JComponent createButtonsTab() {
-      JSpinner spinner = new JSpinner(new SpinnerNumberModel(DarculaUIUtil.buttonArc(), 0, 20, 1));
-      spinner.addChangeListener(new RadiusListener(() -> repaint()));
-
-      return UI.PanelFactory.grid().
-        add(UI.PanelFactory.panel(spinner).withLabel("Darcula button radius").moveLabelOnTop().resizeX(false)).
-        add(UI.PanelFactory.panel(new JButton("Test button")).resizeX(false).withComment("Button comment")).
-        createPanel();
-    }
-
     private class ProgressTimerRequest implements Runnable {
       private final JProgressBar myProgressBar;
 
@@ -269,20 +240,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       }
     }
 
-    private static class RadiusListener extends DarculaUIUtil implements ChangeListener {
-      private final @NotNull Runnable repaintAction;
-
-      private RadiusListener(@NotNull Runnable repaintAction) {
-        this.repaintAction = repaintAction;
-      }
-
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        BUTTON_ARC =  Double.valueOf(((JSpinner)e.getSource()).getValue().toString()).floatValue();
-        repaintAction.run();
-      }
-    }
-
     private JComponent createProgressGridPanel() {
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -308,7 +265,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 1.2").
           withPause(()-> System.out.println("Pause action #2")).
           withResume(()-> System.out.println("Resume action #2"))).
-                                 resize().
         createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb1)).setCommentText("Long long long long long long long text");
@@ -325,7 +281,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 2.2").moveLabelLeft().
           withPause(()-> System.out.println("Pause action #4")).
           withResume(()-> System.out.println("Resume action #4"))).
-                                 resize().
         createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb3)).setCommentText("Long long long long long long text");
