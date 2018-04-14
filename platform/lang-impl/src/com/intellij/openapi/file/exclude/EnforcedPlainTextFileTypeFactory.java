@@ -42,10 +42,11 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
   private final FileTypeIdentifiableByVirtualFile myFileType;
 
   public EnforcedPlainTextFileTypeFactory() {
+    EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     myFileType = new FileTypeIdentifiableByVirtualFile() {
       @Override
       public boolean isMyFileType(@NotNull VirtualFile file) {
-        return isMarkedAsPlainText(file);
+        return typeManager != null && typeManager.isMarkedAsPlainText(file);
       }
 
       @NotNull
@@ -93,8 +94,4 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
     consumer.consume(myFileType, "");
   }
   
-  private static boolean isMarkedAsPlainText(@NotNull VirtualFile file) {
-    EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
-    return typeManager != null && typeManager.isMarkedAsPlainText(file);
-  }
 }
