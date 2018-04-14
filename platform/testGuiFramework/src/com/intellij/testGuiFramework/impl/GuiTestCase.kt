@@ -101,7 +101,8 @@ open class GuiTestCase {
   var defaultTimeout = 120L
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
-  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+//  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+  val defaultSettingsTitle: String = if (isMac()) "Preferences for New Projects" else "Settings for New Projects"
   val slash: String = File.separator
 
 
