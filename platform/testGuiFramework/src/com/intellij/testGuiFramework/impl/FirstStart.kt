@@ -97,8 +97,8 @@ abstract class FirstStart(val ideType: IdeType) {
   private fun completeFirstStart() {
       completeInstallation()
       acceptAgreement()
-      evaluateLicense(ideType.name, myRobot)
       acceptDataSharing()
+      evaluateLicense(ideType.name, myRobot)
       customizeIde()
       waitWelcomeFrameAndClose()
   }
