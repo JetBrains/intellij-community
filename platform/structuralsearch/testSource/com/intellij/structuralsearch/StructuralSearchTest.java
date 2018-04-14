@@ -2682,6 +2682,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}}";
     assertEquals("find diamond new expressions", 3, findMatchesCount(source, "new A<>()"));
     assertEquals("find parameterized new expressions", 2, findMatchesCount(source, "new A<Integer, String>()"));
+    assertEquals("find non-diamond", 1, findMatchesCount(source, "new A<'_p{1,100}>()"));
   }
 
   public void testFindSuperCall() {

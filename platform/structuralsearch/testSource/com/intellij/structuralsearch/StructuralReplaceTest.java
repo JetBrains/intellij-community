@@ -2460,4 +2460,43 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  }" +
                  "}", Replacer.testReplace(in, what, by, options, getProject(), true));
   }
+
+  public void testReplaceGenerics() {
+    options.setToShortenFQN(false);
+    String in = "import java.util.ArrayList;" +
+                "import java.util.List;" +
+                "class X {" +
+                "  List<String> list = new java.util.LinkedList<String>();" +
+                "  List<Integer> list2 = new java.util.ArrayList<Integer>();" +
+                "  List<Double> list3 = new ArrayList<>();" +
+                "}";
+
+    assertEquals("should properly replace with diamond",
+                 "import java.util.ArrayList;" +
+                 "import java.util.List;" +
+                 "class X {" +
+                 "  List<String> list = new java.util.LinkedList<>();" +
+                 "  List<Integer> list2 = new ArrayList<>();" +
+                 "  List<Double> list3 = new ArrayList<>();" +
+                 "}",
+                 Replacer.testReplace(in, "new '_X<'_p+>()", "new $X$<>()", options, getProject(), true));
+    assertEquals("should keep generics when matching without",
+                 "import java.util.ArrayList;" +
+                 "import java.util.List;" +
+                 "class X {" +
+                 "  List<String> list = new /*1*/java.util.LinkedList<String>();" +
+                 "  List<Integer> list2 = new /*1*/ArrayList<Integer>();" +
+                 "  List<Double> list3 = new /*1*/ArrayList<>();" +
+                 "}",
+                 Replacer.testReplace(in, "new '_X()", "new /*1*/$X$()", options, getProject(), true));
+    assertEquals("should not duplicate generic parameters",
+                 "import java.util.ArrayList;" +
+                 "import java.util.List;" +
+                 "class X {" +
+                 "  List<String> list = new java.util.LinkedList</*0*/String>();" +
+                 "  List<Integer> list2 = new ArrayList</*0*/Integer>();" +
+                 "  List<Double> list3 = new ArrayList<>();" +
+                 "}",
+                 Replacer.testReplace(in, "new '_X<'_p+>()", "new $X$</*0*/$p$>()", options, getProject(), true));
+  }
 }

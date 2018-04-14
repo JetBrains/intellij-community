@@ -670,18 +670,21 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return (referenceElement != null) ? referenceElement : getInnermostComponentTypeElement(typeElement);
   }
 
-  private static PsiTypeElement[] getTypeParameters(PsiJavaCodeReferenceElement referenceElement, boolean replaceDiamondWithExplicitTypes) {
+  private static PsiTypeElement[] getTypeParameters(PsiJavaCodeReferenceElement referenceElement, Boolean replaceDiamondWithExplicitTypes) {
     final PsiReferenceParameterList referenceElementParameterList = referenceElement.getParameterList();
     if (referenceElementParameterList == null) {
       return null;
     }
     final PsiTypeElement[] typeParameterElements = referenceElementParameterList.getTypeParameterElements();
-    if (typeParameterElements.length != 1 || !replaceDiamondWithExplicitTypes) {
+    if (typeParameterElements.length != 1 || replaceDiamondWithExplicitTypes == Boolean.FALSE) {
       return typeParameterElements;
     }
     final PsiType type = typeParameterElements[0].getType();
     if (!(type instanceof PsiDiamondType)) {
       return typeParameterElements;
+    }
+    if (replaceDiamondWithExplicitTypes == null) {
+      return null;
     }
     final PsiDiamondType diamondType = (PsiDiamondType)type;
     final PsiDiamondType.DiamondInferenceResult inferenceResult = diamondType.resolveInferredTypes();
@@ -704,17 +707,28 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return newParameterList == null ? null : newParameterList.getTypeParameterElements();
   }
 
-  private static boolean hasDiamondTypeParameter(PsiElement element) {
+  private Boolean shouldReplaceDiamondWithExplicitTypes(PsiElement element) {
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
-      return false;
+      return Boolean.TRUE;
     }
     final PsiJavaCodeReferenceElement javaCodeReferenceElement = (PsiJavaCodeReferenceElement)element;
     final PsiReferenceParameterList parameterList = javaCodeReferenceElement.getParameterList();
     if (parameterList == null) {
-      return false;
+      return Boolean.TRUE;
     }
     final PsiTypeElement[] elements = parameterList.getTypeParameterElements();
-    return elements.length == 1 && elements[0].getType() instanceof PsiDiamondType;
+    if (elements.length != 1) {
+      return Boolean.TRUE;
+    }
+    final PsiTypeElement typeElement = elements[0];
+    final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(typeElement);
+    if (handler instanceof SubstitutionHandler) {
+      final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
+      if (substitutionHandler.getMinOccurs() > 0) {
+        return null;
+      }
+    }
+    return Boolean.valueOf(!(typeElement.getType() instanceof PsiDiamondType));
   }
 
   private boolean matchType(final PsiElement patternType, final PsiElement matchedType) {
@@ -726,7 +740,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     PsiElement[] typeParameters = null;
     if (matchedElement instanceof PsiJavaCodeReferenceElement) {
       final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)matchedElement;
-      typeParameters = getTypeParameters(referenceElement, !hasDiamondTypeParameter(patternElement));
+      typeParameters = getTypeParameters(referenceElement, shouldReplaceDiamondWithExplicitTypes(patternElement));
     }
     else if (matchedElement instanceof PsiTypeParameter) {
       matchedElement = ((PsiTypeParameter)matchedElement).getNameIdentifier();
@@ -743,13 +757,20 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (patternElement instanceof PsiJavaCodeReferenceElement) {
       final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)patternElement;
       final PsiReferenceParameterList list = referenceElement.getParameterList();
+      boolean typeParametersMatched = false;
       if (list != null) {
         final PsiTypeElement[] elements = list.getTypeParameterElements();
-        if (elements.length > 0 && (typeParameters == null || !myMatchingVisitor.matchSequentially(elements, typeParameters))) {
-          return false;
+        if (elements.length > 0) {
+          typeParametersMatched = true;
+          if (!myMatchingVisitor.matchSequentially(elements, (typeParameters == null) ? PsiElement.EMPTY_ARRAY : typeParameters)) {
+            return false;
+          }
         }
       }
       patternElement = referenceElement.getReferenceNameElement();
+      if (typeParametersMatched && matchedElement instanceof PsiJavaCodeReferenceElement) {
+        matchedElement = ((PsiJavaCodeReferenceElement)matchedElement).getReferenceNameElement();
+      }
     }
 
     final int matchedArrayDimensions = getArrayDimensions(matchedType);
