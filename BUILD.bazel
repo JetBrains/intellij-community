@@ -92,8 +92,8 @@ iml_project(
         "//tools/adt/idea/android-plugin:intellij.android.plugin",
         "//tools/adt/idea/android-test-framework:intellij.android.testFramework",
         "//tools/adt/idea/android-uitests:intellij.android.guiTests",
-        "//tools/adt/idea/android:intellij.android",
-        "//tools/adt/idea/android:intellij.android.tests",
+        "//tools/adt/idea/android:intellij.android.core",
+        "//tools/adt/idea/android:intellij.android.core.tests",
         "//tools/adt/idea/apkanalyzer",
         "//tools/adt/idea/artwork:intellij.android.artwork",
         "//tools/adt/idea/assistant",
@@ -694,7 +694,7 @@ iml_module(
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/adt/idea/android:intellij.android[module]",
+        "//tools/adt/idea/android:intellij.android.core[module]",
         "//tools/idea/plugins/ant:intellij.ant[module]",
         "//tools/idea/platform/boot:intellij.platform.boot[module]",
         "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",

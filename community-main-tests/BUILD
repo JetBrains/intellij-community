@@ -17,7 +17,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea:intellij.idea.community.main[module, test]",
-        "//tools/adt/idea/android:intellij.android.tests[module, test]",
+        "//tools/adt/idea/android:intellij.android.core.tests[module, test]",
         "//tools/adt/idea/designer:intellij.android.designer.tests[module, test]",
     ],
 )

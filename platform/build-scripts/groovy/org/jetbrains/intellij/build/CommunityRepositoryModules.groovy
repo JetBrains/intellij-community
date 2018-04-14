@@ -249,7 +249,7 @@ class CommunityRepositoryModules {
       withModule("common")  // Android Studio
 
       /* Android Studio: exclude
-      withModule("intellij.android", "android.jar", false)
+      withModule("intellij.android.core", "android.jar", false)
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
@@ -328,7 +328,7 @@ class CommunityRepositoryModules {
       withResource("lib/androidWidgets", "lib/androidWidgets")  // Android Studio
       withResource("device-art-resources", "lib/device-art-resources")  // Android Studio
       /* Android Studio: exclude
-      withResourceFromModule("intellij.android","lib/sampleData", "lib/sampleData")
+      withResourceFromModule("intellij.android.core","lib/sampleData", "lib/sampleData")
       */
       withResourceArchive("annotations", "lib/androidAnnotations.jar") // Android Studio
 
