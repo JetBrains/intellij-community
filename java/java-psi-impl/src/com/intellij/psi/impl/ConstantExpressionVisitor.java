@@ -23,6 +23,7 @@ import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -613,10 +614,11 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
   }
 
   @Override
-  public Object computeExpression(final PsiExpression expression, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+  public Object computeExpression(@NotNull final PsiExpression expression, @NotNull final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     return JavaConstantExpressionEvaluator.computeConstantExpression(expression, myVisitedVars, myThrowExceptionOnOverflow, auxEvaluator);
   }
 
+  @NotNull
   @Override
   public ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow) {
     throw new AssertionError("should not be called");

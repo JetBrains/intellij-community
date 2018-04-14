@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -46,21 +47,21 @@ public class SubstitutedExpressionEvaluationHelper {
     myConfiguration = Configuration.getInstance();
   }
 
-  public Object computeExpression(PsiExpression e, List<PsiExpression> uncomputables) {
+  Object computeExpression(@NotNull PsiExpression e, @NotNull List<PsiExpression> uncomputables) {
     return computeExpression(
       e, myConfiguration.getAdvancedConfiguration().getDfaOption(),
       myConfiguration.getAdvancedConfiguration().isIncludeUncomputablesAsLiterals(), uncomputables);
   }
 
-  public Object computeExpression(PsiExpression e,
-                                  Configuration.DfaOption dfaOption,
+  public Object computeExpression(@NotNull PsiExpression e,
+                                  @NotNull Configuration.DfaOption dfaOption,
                                   boolean includeUncomputablesAsLiterals,
-                                  List<PsiExpression> uncomputables) {
+                                  @NotNull List<PsiExpression> uncomputables) {
     ConcurrentMap<PsiElement, Object> map = ContainerUtil.newConcurrentMap();
-    //if (true) return myHelper.computeConstantExpression(e, false);
     return myHelper.computeExpression(e, false, new PsiConstantEvaluationHelper.AuxEvaluator() {
+      @Override
       @Nullable
-      public Object computeExpression(PsiExpression o, PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+      public Object computeExpression(@NotNull PsiExpression o, @NotNull PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
         PsiType resolvedType = null;
         if (o instanceof PsiMethodCallExpression) {
           PsiMethodCallExpression c = (PsiMethodCallExpression)o;
@@ -107,7 +108,7 @@ public class SubstitutedExpressionEvaluationHelper {
             }
           }
         }
-        if (uncomputables != null) uncomputables.add(o);
+        uncomputables.add(o);
         if (includeUncomputablesAsLiterals) {
           if (resolvedType != null) {
             if (PsiType.DOUBLE.isAssignableFrom(resolvedType)) return 1; // magic number!
@@ -129,9 +130,10 @@ public class SubstitutedExpressionEvaluationHelper {
         return null;
       }
 
+      @NotNull
+      @Override
       public ConcurrentMap<PsiElement, Object> getCacheMap(boolean overflow) {
         return map;
-        //return PsiManager.getInstance(project).getCachedValuesManager().getCachedValue(project, COMPUTED_MAP_KEY, PROVIDER, false);
       }
     });
   }
