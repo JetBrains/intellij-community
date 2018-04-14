@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -80,11 +81,18 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     ListPopupStep<Object> step = myPopup.getListStep();
     boolean isSelectable = step.isSelectable(value);
     myTextLabel.setEnabled(isSelectable);
-    if (!isSelected && step instanceof BaseListPopupStep) {
+    if (step instanceof BaseListPopupStep) {
       Color bg = ((BaseListPopupStep<E>)step).getBackgroundFor(value);
       Color fg = ((BaseListPopupStep<E>)step).getForegroundFor(value);
-      if (fg != null) myTextLabel.setForeground(fg);
-      if (bg != null) UIUtil.setBackgroundRecursively(myComponent, bg);
+      if (!isSelected && fg != null) myTextLabel.setForeground(fg);
+      if (!isSelected && bg != null) UIUtil.setBackgroundRecursively(myComponent, bg);
+      if (bg != null && mySeparatorComponent.isVisible() && myCurrentIndex > 0) {
+        E prevValue = list.getModel().getElementAt(myCurrentIndex - 1);
+        // separator between 2 colored items shall get color too
+        if (Comparing.equal(bg, ((BaseListPopupStep<E>)step).getBackgroundFor(prevValue))) {
+          myRendererComponent.setBackground(bg);
+        }
+      }
     }
 
     if (step.isMnemonicsNavigationEnabled()) {
