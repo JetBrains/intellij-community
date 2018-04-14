@@ -28,7 +28,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     try {
       if (!myMatchingVisitor.setResult(isTypedVar || myMatchingVisitor.matchText(name, another.getNameElement()))) return;
       final XmlAttributeValue valueElement = attribute.getValueElement();
-      myMatchingVisitor.setResult(valueElement == null || myMatchingVisitor.matchSingle(valueElement, another.getValueElement()));
+      myMatchingVisitor.setResult(valueElement == null || myMatchingVisitor.matchOptionally(valueElement, another.getValueElement()));
     } finally {
       myMatchingVisitor.scopeMatch(name, isTypedVar, another);
     }

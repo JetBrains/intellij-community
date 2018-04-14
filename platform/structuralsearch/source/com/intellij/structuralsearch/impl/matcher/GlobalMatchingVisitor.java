@@ -73,7 +73,8 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     );
   }
 
-  public boolean matchSingle(@Nullable PsiElement patternNode, @Nullable PsiElement matchNode) {
+  @Override
+  public boolean matchOptionally(@Nullable PsiElement patternNode, @Nullable PsiElement matchNode) {
     return patternNode == null && isLeftLooseMatching() ||
            matchSequentially(newSingleNodeIterator(patternNode), newSingleNodeIterator(matchNode));
   }

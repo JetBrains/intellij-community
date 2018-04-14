@@ -608,7 +608,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
 
       if (!myMatchingVisitor.setResult(qualifier instanceof PsiThisExpression && qualifier2 == null ||
-                                       myMatchingVisitor.matchSingle(qualifier, qualifier2))) return;
+                                       myMatchingVisitor.matchOptionally(qualifier, qualifier2))) return;
       if (qualifier2 == null) myMatchingVisitor.setResult(matchImplicitQualifier(qualifier, other, context));
     }
     else {
@@ -926,7 +926,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       // Check initializer
       final PsiExpression initializer = var.getInitializer();
       final PsiExpression var2Initializer = var2.getInitializer();
-      myMatchingVisitor.setResult(myMatchingVisitor.matchSingle(initializer, var2Initializer));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(initializer, var2Initializer));
     }
     finally {
       myMatchingVisitor.scopeMatch(nameIdentifier, isTypedVar, var2.getNameIdentifier());
@@ -991,7 +991,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiExpression patternQualifier = mcallRef1.getQualifierExpression();
     final PsiExpression matchedQualifier = mcallRef2.getQualifierExpression();
     if (!myMatchingVisitor.setResult(patternQualifier instanceof PsiThisExpression && matchedQualifier == null ||
-                                     myMatchingVisitor.matchSingle(patternQualifier, matchedQualifier))) return;
+                                     myMatchingVisitor.matchOptionally(patternQualifier, matchedQualifier))) return;
     if (patternQualifier != null && matchedQualifier == null) {
       if (!myMatchingVisitor.setResult(matchImplicitQualifier(patternQualifier, mcall2, context))) return;
     }
@@ -1178,7 +1178,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitReturnStatement(final PsiReturnStatement return1) {
     final PsiReturnStatement return2 = (PsiReturnStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(myMatchingVisitor.matchSingle(return1.getReturnValue(), return2.getReturnValue()));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(return1.getReturnValue(), return2.getReturnValue()));
   }
 
   @Override
@@ -1202,21 +1202,21 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiAssertStatement assert2 = (PsiAssertStatement)myMatchingVisitor.getElement();
 
     myMatchingVisitor.setResult(myMatchingVisitor.match(assert1.getAssertCondition(), assert2.getAssertCondition()) &&
-                                myMatchingVisitor.matchSingle(assert1.getAssertDescription(), assert2.getAssertDescription()));
+                                myMatchingVisitor.matchOptionally(assert1.getAssertDescription(), assert2.getAssertDescription()));
   }
 
   @Override
   public void visitBreakStatement(final PsiBreakStatement break1) {
     final PsiBreakStatement break2 = (PsiBreakStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(myMatchingVisitor.matchSingle(break1.getLabelIdentifier(), break2.getLabelIdentifier()));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(break1.getLabelIdentifier(), break2.getLabelIdentifier()));
   }
 
   @Override
   public void visitContinueStatement(final PsiContinueStatement continue1) {
     final PsiContinueStatement continue2 = (PsiContinueStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(myMatchingVisitor.matchSingle(continue1.getLabelIdentifier(), continue2.getLabelIdentifier()));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(continue1.getLabelIdentifier(), continue2.getLabelIdentifier()));
   }
 
   @Override
@@ -1367,7 +1367,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final MatchContext matchContext = myMatchingVisitor.getMatchContext();
       final CompiledPattern pattern = matchContext.getPattern();
       final boolean isTypedVar = pattern.isTypedVar(classReference);
-      if (isTypedVar && !myMatchingVisitor.setResult(myMatchingVisitor.matchSingle(classReference, null))) {
+      if (isTypedVar && !myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, null))) {
         return;
       }
       final PsiType otherType = other.getType();
@@ -1398,7 +1398,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     if (classReference != null) {
       if (new2.getClassReference() != null) {
-        if (myMatchingVisitor.setResult(myMatchingVisitor.matchSingle(classReference, new2.getClassReference()))) {
+        if (myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, new2.getClassReference()))) {
           matchArrayOrArguments(new1, new2);
         }
         return;
@@ -1409,7 +1409,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         final PsiElement element = PsiTreeUtil.getNextSiblingOfType(newKeyword, PsiWhiteSpace.class);
 
         if (element != null && element.getNextSibling() instanceof PsiKeyword) {
-          if (myMatchingVisitor.setResult(myMatchingVisitor.matchSingle(classReference, element.getNextSibling()))) {
+          if (myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, element.getNextSibling()))) {
             matchArrayOrArguments(new1, new2);
           }
 
