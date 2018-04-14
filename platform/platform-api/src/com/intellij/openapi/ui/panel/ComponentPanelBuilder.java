@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ContextHelpLabel;
+import com.intellij.ui.Gray;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -61,14 +62,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withComment(@NotNull String comment) {
     myCommentText = comment;
-    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription) &&
-              (myLabelOnTop || myTopRightComponent == null);
-    return this;
-  }
-
-  public ComponentPanelBuilder withTopRightComponent(@NotNull JComponent topRightComponent) {
-    myTopRightComponent = topRightComponent;
-    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription) && myLabelOnTop;
+    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -90,8 +84,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withTooltip(@NotNull String description) {
     myHTDescription = description;
-    valid = StringUtil.isEmpty(myCommentText) && StringUtil.isNotEmpty(description) &&
-            (myLabelOnTop || myTopRightComponent == null);
+    valid = StringUtil.isNotEmpty(description) && StringUtil.isEmpty(myCommentText);
     return this;
   }
 
@@ -193,10 +186,8 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         label = new JLabel("");
       }
 
-      comment = new JBLabel("").setCopyable(true).setAllowAutoWrapping(true);
-      comment.setVerticalTextPosition(SwingConstants.TOP);
-      comment.setFocusable(false);
-      comment.setForeground(UIUtil.getContextHelpForeground());
+      comment = new JLabel("");
+      comment.setForeground(Gray.x78);
       comment.setBorder(getCommentBorder());
       setCommentTextImpl(myCommentText);
 
