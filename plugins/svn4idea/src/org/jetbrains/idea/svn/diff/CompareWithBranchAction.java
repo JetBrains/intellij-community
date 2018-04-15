@@ -2,67 +2,42 @@
 
 package org.jetbrains.idea.svn.diff;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 
-/**
- * @author yole
- */
-public class CompareWithBranchAction extends AnAction implements DumbAware {
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    assert project != null;
-    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+public class CompareWithBranchAction extends DumbAwareAction {
 
-    SelectBranchPopup
-      .show(project, virtualFile, new MyBranchSelectedCallback(virtualFile), SvnBundle.message("compare.with.branch.popup.title"));
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
+
+    SelectBranchPopup.show(project, file, (p, configuration, url, revision) -> {
+      ElementWithBranchComparer comparer = file.isDirectory()
+                                           ? new DirectoryWithBranchComparer(project, file, url, revision)
+                                           : new FileWithBranchComparer(project, file, url, revision);
+
+      comparer.run();
+    }, message("compare.with.branch.popup.title"));
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    e.getPresentation().setEnabled(isEnabled(project, virtualFile));
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+
+    e.getPresentation().setEnabled(project != null && file != null && isEnabled(FileStatusManager.getInstance(project).getStatus(file)));
   }
 
-  private static boolean isEnabled(final Project project, final VirtualFile virtualFile) {
-    if (project == null || virtualFile == null) {
-      return false;
-    }
-    final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
-    if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
-      return false;
-    }
-    return true;
-  }
-
-  private static class MyBranchSelectedCallback implements SelectBranchPopup.BranchSelectedCallback {
-
-    @NotNull private final VirtualFile myVirtualFile;
-
-    public MyBranchSelectedCallback(@NotNull VirtualFile virtualFile) {
-      myVirtualFile = virtualFile;
-    }
-
-    public void branchSelected(Project project, SvnBranchConfigurationNew configuration, @NotNull Url url, long revision) {
-      ElementWithBranchComparer comparer =
-        myVirtualFile.isDirectory()
-        ? new DirectoryWithBranchComparer(project, myVirtualFile, url, revision)
-        : new FileWithBranchComparer(project, myVirtualFile, url, revision);
-
-      comparer.run();
-    }
+  private static boolean isEnabled(FileStatus fileStatus) {
+    return fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.ADDED && fileStatus != FileStatus.IGNORED;
   }
 }
