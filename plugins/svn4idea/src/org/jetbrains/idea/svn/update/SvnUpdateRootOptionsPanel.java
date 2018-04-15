@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +25,6 @@ import java.util.Collection;
 
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
@@ -133,12 +132,12 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       }
       else {
         try {
-          myURLText.setText(append(createUrl(url), branchRelativeUrl, true).toDecodedString());
+          myURLText.setText(url.appendPath(branchRelativeUrl, true).toDecodedString());
         }
         catch (SvnBindException e) {
           LOG.error(e);
         }
-        myBranchField.setText(Url.tail(url));
+        myBranchField.setText(url.getTail());
       }
     }, message("select.branch.popup.general.title"), myPanel);
   }
