@@ -22,6 +22,16 @@ private fun sortBranchLocations(branchLocations: Collection<String>) = branchLoc
 
 class SvnBranchConfigurationNew {
   var trunkUrl: String = ""
+  val trunk
+    get() = try {
+      // trunkUrl could be set either to decoded or to encoded url depending on the code flow
+      createUrl(trunkUrl, trunkUrl.contains('%'))
+    }
+    catch (e: SvnBindException) {
+      LOG.info("Could not parse url $trunkUrl", e)
+      null
+    }
+
   private val myBranchMap: MutableMap<String, InfoStorage<List<SvnBranchItem>>> = mutableMapOf()
   var isUserInfoInUrl: Boolean = false
 
