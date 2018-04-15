@@ -1511,7 +1511,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
     startElement(expression);
-    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), expression));
+    PsiTypeElement operand = expression.getOperand();
+    DfaConstValue classConstant = myFactory.getConstFactory().createFromValue(operand.getType(), expression.getType(), null);
+    addInstruction(new PushInstruction(classConstant, expression));
     finishElement(expression);
   }
 
@@ -2059,6 +2061,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   static final CallInliner[] INLINERS = {new OptionalChainInliner(), new LambdaInliner(), new CollectionFactoryInliner(),
-    new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner()};
+    new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner()};
 }
 

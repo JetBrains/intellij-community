@@ -520,13 +520,13 @@ public class GuessManagerImpl extends GuessManager {
     @Override
     public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
       PsiExpression psiOperand = instruction.getLeft();
-      if (!isInteresting(psiOperand)) {
+      if (!isInteresting(psiOperand) || instruction.isClassObjectCheck()) {
         return super.visitInstanceof(instruction, runner, memState);
       }
       DfaValue type = memState.pop();
       DfaValue operand = memState.pop();
       DfaValue relation = runner.getFactory().createCondition(operand, DfaRelationValue.RelationType.IS, type);
-      memState.push(new DfaInstanceofValue(runner.getFactory(), psiOperand, instruction.getCastType(), relation, false));
+      memState.push(new DfaInstanceofValue(runner.getFactory(), psiOperand, Objects.requireNonNull(instruction.getCastType()), relation, false));
       return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
     }
 

@@ -180,6 +180,35 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to replace class value on top of stack with the corresponding object value
+   * <p>
+   * Stack before: ... class_value
+   * <p>
+   * Stack after: ... object_value
+   *
+   * @return this builder
+   */
+  public CFGBuilder objectOf() {
+    myAnalyzer.addInstruction(new ObjectOfInstruction());
+    return this;
+  }
+
+  /**
+   * Generate instructions to perform an Class.isInstance operation
+   * <p>
+   * Stack before: ... object class_object
+   * <p>
+   * Stack after: ... result
+   *
+   * @param anchor element to bind this instruction to
+   * @return this builder
+   */
+  public CFGBuilder isInstance(PsiMethodCallExpression anchor) {
+    myAnalyzer.addInstruction(new InstanceofInstruction(anchor));
+    return this;
+  }
+
+  /**
    * Generate instructions to invoke the method associated with given method call assuming that method arguments and qualifier
    * are already on stack. If vararg call is specified, vararg arguments should be placed as is, without packing into array,
    * so number of arguments may differ from number of method parameters.

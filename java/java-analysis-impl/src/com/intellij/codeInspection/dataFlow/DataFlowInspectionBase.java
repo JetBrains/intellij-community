@@ -638,7 +638,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                           BranchingInstruction instruction) {
     PsiElement psiAnchor = instruction.getPsiAnchor();
     if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
-      if (visitor.canBeNull((BinopInstruction)instruction)) {
+      if (visitor.canBeNull((InstanceofInstruction)instruction)) {
         holder.registerProblem(psiAnchor,
                                InspectionsBundle.message("dataflow.message.redundant.instanceof"),
                                new RedundantInstanceofFix());
