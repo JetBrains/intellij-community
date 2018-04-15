@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
@@ -27,8 +27,8 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
     myMergerFactory = mergerFactory;
   }
 
-  public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
-    onBranchSelected(url, null, null);
+  public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, @NotNull Url url, final long revision) {
+    onBranchSelected(url.toDecodedString(), null, null);
   }
 
   public void onBranchSelected(String url, @Nullable String selectedLocalBranchPath, @Nullable String dialogTitle) {

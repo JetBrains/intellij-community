@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
@@ -82,7 +82,7 @@ public class SvnMergeInfoRootPanelManual {
       final VirtualFile vf = SvnUtil.getVirtualFile(myInfo.getPath());
       if (vf != null) {
         SelectBranchPopup.show(myProject, vf, (project, configuration, url, revision) -> {
-          refreshSelectedBranch(new WCInfoWithBranches.Branch(url));
+          refreshSelectedBranch(new WCInfoWithBranches.Branch(url.toDecodedString()));
           calculateBranchPathByBranch(mySelectedBranch.getUrl(), null);
           myListener.run();
         }, SvnBundle.message("select.branch.popup.general.title"));
