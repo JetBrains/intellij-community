@@ -77,20 +77,6 @@ public class AnnotationUtil {
   }
 
   private static PsiAnnotation findOwnAnnotation(final PsiModifierListOwner listOwner, Collection<String> annotationNames) {
-    if (listOwner instanceof PsiLocalVariable) {
-      return findAnnotationDirectly(listOwner, annotationNames);
-    }
-    Map<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
-      listOwner,
-      () -> {
-        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(names -> findAnnotationDirectly(listOwner, names));
-        return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
-      });
-    return map.get(annotationNames);
-  }
-
-  @Nullable
-  private static PsiAnnotation findAnnotationDirectly(PsiModifierListOwner listOwner, Collection<String> annotationNames) {
     final PsiModifierList list = listOwner.getModifierList();
     if (list == null) return null;
     for (PsiAnnotation annotation : list.getAnnotations()) {
@@ -202,7 +188,10 @@ public class AnnotationUtil {
     Consumer<PsiMethod> forEachSuperMethod = method -> {
       PsiParameter[] superParameters = method.getParameterList().getParameters();
       if (index < superParameters.length) {
-        result.add(superParameters[index]);
+        PsiParameter superParameter = superParameters[index];
+        if (superParameter.getModifierList() != null) {
+          result.add(superParameter);
+        }
       }
     };
 
