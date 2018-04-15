@@ -59,8 +59,8 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
     public void branchSelected(Project project, SvnBranchConfigurationNew configuration, @NotNull Url url, long revision) {
       ElementWithBranchComparer comparer =
         myVirtualFile.isDirectory()
-        ? new DirectoryWithBranchComparer(project, myVirtualFile, url.toDecodedString(), revision)
-        : new FileWithBranchComparer(project, myVirtualFile, url.toDecodedString(), revision);
+        ? new DirectoryWithBranchComparer(project, myVirtualFile, url, revision)
+        : new FileWithBranchComparer(project, myVirtualFile, url, revision);
 
       comparer.run();
     }
