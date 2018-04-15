@@ -37,7 +37,7 @@ public class SelectBranchPopup {
   }
 
   public interface BranchSelectedCallback {
-    void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision);
+    void branchSelected(Project project, SvnBranchConfigurationNew configuration, @NotNull Url url, long revision);
   }
 
   public static void show(@NotNull Project project,
@@ -142,7 +142,7 @@ public class SelectBranchPopup {
 
       Url url = (Url)selectedValue;
       if (url.equals(myConfiguration.getTrunk())) {
-        return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, myConfiguration.getTrunkUrl(), -1));
+        return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, url, -1));
       }
       else {
         return doFinalStep(() -> showBranchPopup(url));
@@ -182,7 +182,7 @@ public class SelectBranchPopup {
           }
           SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();
           if (item != null) {
-            myCallback.branchSelected(myProject, myConfiguration, item.getUrl().toDecodedString(), item.getRevision());
+            myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
           }
         })
         .setFilteringEnabled(item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
