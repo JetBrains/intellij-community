@@ -34,7 +34,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
   protected final JavaPsiFacade myFacade;
   private final GroovyPsiManager myGroovyPsiManager;
 
-  public GrLiteralClassType(LanguageLevel languageLevel, @NotNull GlobalSearchScope scope, @NotNull JavaPsiFacade facade) {
+  public GrLiteralClassType(@NotNull LanguageLevel languageLevel, @NotNull GlobalSearchScope scope, @NotNull JavaPsiFacade facade) {
     super(languageLevel);
     myScope = scope;
     myFacade = facade;
