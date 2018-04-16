@@ -1,3 +1,4 @@
+import sys
 from typing import Any
 import tkinter
 
@@ -104,6 +105,11 @@ class Separator(Widget):
 
 class Sizegrip(Widget):
     def __init__(self, master=None, **kw): ...
+
+if sys.version_info >= (3, 7):
+    class Spinbox(Entry):
+        def __init__(self, master: Any = ..., **kw: Any) -> None: ...
+        def set(self, value: Any) -> None: ...
 
 class Treeview(Widget, tkinter.XView, tkinter.YView):
     def __init__(self, master=None, **kw): ...

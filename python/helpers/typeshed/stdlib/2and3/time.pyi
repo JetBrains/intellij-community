@@ -15,6 +15,11 @@ daylight: int
 timezone: int
 tzname: Tuple[str, str]
 
+if sys.version_info >= (3, 7) and sys.platform != 'win32':
+    CLOCK_BOOTTIME: int  # Linux
+    CLOCK_PROF: int  # FreeBSD, NetBSD, OpenBSD
+    CLOCK_UPTIME: int  # FreeBSD, OpenBSD
+
 if sys.version_info >= (3, 3) and sys.platform != 'win32':
     CLOCK_HIGHRES: int = ...  # Solaris only
     CLOCK_MONOTONIC: int = ...  # Unix only
@@ -94,3 +99,5 @@ if sys.version_info >= (3, 7):
     def perf_counter_ns() -> int: ...
     def process_time_ns() -> int: ...
     def time_ns() -> int: ...
+    def thread_time() -> float: ...
+    def thread_time_ns() -> int: ...
