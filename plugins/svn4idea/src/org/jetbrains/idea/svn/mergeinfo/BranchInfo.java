@@ -65,8 +65,7 @@ public class BranchInfo {
       return myCopyRevison.getRevision();
     }
     myCopyRevison =
-      new SvnMergeInfoCache.CopyRevison(myVcs, branchPath, myInfo.getRootInfo().getRepositoryUrl(), myBranch.getUrl().toDecodedString(),
-                                        myInfo.getUrl());
+      new SvnMergeInfoCache.CopyRevison(myVcs, branchPath, myInfo.getRootInfo().getRepositoryUrl(), myBranch.getUrl(), myInfo.getUrl());
     return -1;
   }
 
