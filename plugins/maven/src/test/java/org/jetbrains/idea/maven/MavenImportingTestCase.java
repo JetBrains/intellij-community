@@ -356,7 +356,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return ModuleRootManager.getInstance(getModule(module));
   }
 
-  protected void importProject(@NotNull @Language(value = "xml", prefix = "<project>", suffix = "</project>") String xml) {
+  protected void importProject(@NotNull @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
     createProjectPom(xml);
     importProject();
   }
@@ -385,7 +385,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(true, Arrays.asList(files), false);
   }
 
-  protected void importProjectWithMaven3(@NonNls String xml) {
+  protected void importProjectWithMaven3(@Language(value = "XML", prefix = "<project>", suffix = "</project>") @NonNls String xml) {
     createProjectPom(xml);
     importProjectWithMaven3();
   }
