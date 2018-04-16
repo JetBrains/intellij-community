@@ -69,7 +69,8 @@ import static com.intellij.ide.plugins.PluginManagerCore.getPlugins;
 /**
  * @author Alexander Lobas
  */
-public class PluginManagerConfigurableNew implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider, OptionalConfigurable {
+public class PluginManagerConfigurableNew
+  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider, OptionalConfigurable {
   public static final String ID = "preferences.pluginManager2";
 
   private static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
@@ -949,9 +950,6 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
   }
 
   private static class PluginsListLayout extends AbstractLayoutManager {
-    private final int myFirsVtOffset = JBUI.scale(6);
-    private final int myLastVOffset = JBUI.scale(18);
-
     private int myLineHeight;
 
     @Override
@@ -964,7 +962,6 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
       for (UIPluginGroup group : groups) {
         height += group.panel.getPreferredSize().height;
         height += group.plugins.size() * myLineHeight;
-        height += myFirsVtOffset + myLastVOffset;
       }
 
       return new Dimension(0, height);
@@ -982,14 +979,12 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
         Component component = group.panel;
         int height = component.getPreferredSize().height;
         component.setBounds(0, y, width, height);
-        y += height + myFirsVtOffset;
+        y += height;
 
         for (CellPluginComponent plugin : group.plugins) {
           plugin.setBounds(0, y, width, myLineHeight);
           y += myLineHeight;
         }
-
-        y += myLastVOffset;
       }
     }
 
@@ -1185,12 +1180,7 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
     }
 
     @NotNull
-    protected JPanel createPanel(int offset) {
-      return createPanel(this, offset5(), offset, 0);
-    }
-
-    @NotNull
-    protected JPanel createPanel(@NotNull JPanel parent, int hgap, int offset, int width) {
+    protected JPanel createPanel(@NotNull JPanel parent, @Nullable JPanel centerPanel, int hgap, int offset, int width) {
       parent.setLayout(new BorderLayout(hgap, 0));
 
       myIconLabel = new LinkLabel(null, AllIcons.Plugins.PluginLogo_40);
@@ -1199,7 +1189,10 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
       parent.add(myIconLabel, BorderLayout.WEST);
       myMouseComponents.add(myIconLabel);
 
-      JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset, width));
+      if (centerPanel == null) {
+        centerPanel = new NonOpaquePanel();
+      }
+      centerPanel.setLayout(new VerticalLayout(offset, width));
       parent.add(centerPanel);
 
       setOpaque(true);
@@ -1324,18 +1317,25 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
   }
 
   private static class LineFunction {
+    private final int myLines;
+    private final boolean myShowDots;
+    private Point myLastPoint;
+
+    public LineFunction(int lines, boolean showDots) {
+      myLines = lines + 1;
+      myShowDots = showDots;
+    }
+
     public void paintComponent(@NotNull JEditorPane pane, @NotNull Graphics g) {
+      if (myShowDots && myLastPoint != null) {
+        if (g instanceof Graphics2D) {
+          ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        }
+        g.setColor(pane.getForeground());
+        g.drawString("...", myLastPoint.x, myLastPoint.y + g.getFontMetrics().getAscent());
+      }
     }
 
-    public int getHeight(@NotNull JEditorPane pane) {
-      return (int)(pane.getUI().getRootView(pane).getPreferredSpan(View.Y_AXIS) + JBUI.scale(2f));
-    }
-  }
-
-  private static class ThreeLineFunction extends LineFunction {
-    protected Point myLastPoint;
-
-    @Override
     public int getHeight(@NotNull JEditorPane pane) {
       myLastPoint = null;
 
@@ -1348,7 +1348,7 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
           Rectangle r = pane.modelToView(i);
           if (r != null && r.height > 0 && startLineY < r.y) {
             startLineY = r.y;
-            if (++line == 4) {
+            if (++line == myLines) {
               int ii = i;
               while (ii > 0) {
                 Rectangle rr = pane.modelToView(--ii);
@@ -1365,7 +1365,7 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
       catch (BadLocationException ignored) {
       }
 
-      return super.getHeight(pane);
+      return (int)(pane.getUI().getRootView(pane).getPreferredSpan(View.Y_AXIS) + JBUI.scale(2f));
     }
   }
 
@@ -1387,9 +1387,17 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
       myPluginsModel = pluginsModel;
       pluginsModel.addComponent(this);
 
-      JPanel centerPanel = createPanel(0);
+      JPanel centerPanel = createPanel(this, createTopShiftPanel(), offset5(), 0, 0);
 
-      myNameButtons = new NonOpaquePanel(new BorderLayout());
+      myNameButtons = createTopShiftPanel();
+      myNameButtons.setLayout(new BorderLayout() {
+        @Override
+        public Dimension preferredLayoutSize(Container target) {
+          Dimension size = super.preferredLayoutSize(target);
+          size.height = myName == null ? size.height : myName.getPreferredSize().height + JBUI.scale(6);
+          return size;
+        }
+      });
       myNameButtons.add(createButtons(update), BorderLayout.EAST);
       centerPanel.add(myNameButtons, VerticalLayout.FILL_HORIZONTAL);
 
@@ -1397,10 +1405,10 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
       myName.setVerticalAlignment(SwingConstants.TOP);
 
       if (update) {
-        addDescriptionComponent(centerPanel, getChangeNotes(plugin), new ThreeLineFunction());
+        addDescriptionComponent(centerPanel, getChangeNotes(plugin), new LineFunction(3, false));
       }
       else {
-        addDescriptionComponent(centerPanel, getShortDescription(plugin, true), new LineFunction());
+        addDescriptionComponent(centerPanel, getShortDescription(plugin, false), new LineFunction(1, true));
       }
 
       createVersion(update);
@@ -1411,7 +1419,8 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
 
     @NotNull
     private JPanel createButtons(boolean update) {
-      JPanel buttons = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(6)));
+      JPanel buttons = createTopShiftPanel();
+      buttons.setLayout(createNameBaselineLayout(6));
       if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
         myRestartButton = new RestartButton(myPluginsModel);
         buttons.add(myRestartButton);
@@ -1452,8 +1461,26 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
 
     @NotNull
     private JPanel createNameBaselinePanel() {
-      int offset = JBUI.scale(8);
-      JPanel panel = new NonOpaquePanel(new HorizontalLayout(offset) {
+      JPanel panel = new NonOpaquePanel(createNameBaselineLayout(8));
+      panel.setBorder(JBUI.Borders.emptyLeft(8));
+      return panel;
+    }
+
+    @NotNull
+    private JPanel createTopShiftPanel() {
+      JPanel panel = new NonOpaquePanel() {
+        @Override
+        public void setBounds(int x, int y, int width, int height) {
+          super.setBounds(x, y - JBUI.scale(10), width, height + JBUI.scale(20));
+        }
+      };
+      panel.setBorder(JBUI.Borders.emptyTop(10));
+      return panel;
+    }
+
+    @NotNull
+    private LayoutManager createNameBaselineLayout(int offset) {
+      return new HorizontalLayout(JBUI.scale(offset)) {
         @Override
         public void layoutContainer(Container parent) {
           Insets insets = parent.getInsets();
@@ -1468,9 +1495,7 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
             x += size.width + myOffset;
           }
         }
-      });
-      panel.setBorder(JBUI.Borders.emptyLeft(offset));
-      return panel;
+      };
     }
 
     private void createVersion(boolean update) {
@@ -1693,22 +1718,13 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
       pluginsModel.addComponent(this);
 
       JPanel container = new NonOpaquePanel();
-      JPanel centerPanel = createPanel(container, JBUI.scale(10), offset5(), JBUI.scale(180));
+      add(container);
+
+      JPanel centerPanel = createPanel(container, null, JBUI.scale(10), offset5(), JBUI.scale(180));
 
       addNameComponent(centerPanel, null);
       addTags(centerPanel, tagBuilder);
-      addDescriptionComponent(centerPanel, getShortDescription(myPlugin, false), new ThreeLineFunction() {
-        @Override
-        public void paintComponent(@NotNull JEditorPane pane, @NotNull Graphics g) {
-          if (myLastPoint != null) {
-            if (g instanceof Graphics2D) {
-              ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            }
-            g.setColor(pane.getForeground());
-            g.drawString("...", myLastPoint.x, myLastPoint.y + g.getFontMetrics().getAscent());
-          }
-        }
-      });
+      addDescriptionComponent(centerPanel, getShortDescription(myPlugin, false), new LineFunction(3, true));
       if (myDescription != null) {
         UIUtil.setCursor(myDescription, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
@@ -1716,7 +1732,6 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
       createMetricsPanel(centerPanel);
 
       myInstallButton = new InstallButton(false);
-      add(container);
       add(myInstallButton);
       myMouseComponents.add(myInstallButton);
 
@@ -1925,7 +1940,7 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
 
         int nameBaseline = myNameComponent.getBaseline(myNameComponent.getWidth(), myNameComponent.getHeight());
         int versionBaseline = versionComponent.getBaseline(versionComponent.getWidth(), versionComponent.getHeight());
-        versionComponent.setBorder(JBUI.Borders.empty(nameBaseline - versionBaseline + JBUI.scale(6), 4, 0, 0));
+        versionComponent.setBorder(JBUI.Borders.empty(nameBaseline - versionBaseline + 6, 4, 0, 0));
       }
 
       return centerPanel;
@@ -2238,6 +2253,16 @@ public class PluginManagerConfigurableNew implements SearchableConfigurable, Con
       for (int i = 0; i < count; i++) {
         getComponent(i).setBackground(bg);
       }
+    }
+
+    @Override
+    public int getBaseline(int width, int height) {
+      if (getComponentCount() == 2) {
+        Component component = getComponent(0);
+        Dimension size = component.getPreferredSize();
+        return component.getBaseline(size.width, size.height);
+      }
+      return super.getBaseline(width, height);
     }
   }
 
