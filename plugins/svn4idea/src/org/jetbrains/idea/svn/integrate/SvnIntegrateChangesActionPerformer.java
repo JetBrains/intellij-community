@@ -50,7 +50,7 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
                                                        @Nullable String selectedLocalBranchPath,
                                                        @Nullable String dialogTitle) {
     return IntegratedSelectedOptionsDialog
-      .selectWorkingCopy(myVcs.getProject(), myCurrentBranch, url.toDecodedString(), true, selectedLocalBranchPath, dialogTitle);
+      .selectWorkingCopy(myVcs.getProject(), myCurrentBranch, url, true, selectedLocalBranchPath, dialogTitle);
   }
 
   private void runIntegrate(@NotNull Url url, @NotNull WorkingCopyInfo workingCopy, @NotNull Url workingCopyUrl) {

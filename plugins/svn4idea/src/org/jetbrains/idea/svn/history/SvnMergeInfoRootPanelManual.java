@@ -68,8 +68,7 @@ public class SvnMergeInfoRootPanelManual {
     myFixedSelectLocal.addActionListener(e -> {
       if (mySelectedBranch != null) {
         Pair<WorkingCopyInfo, Url> info =
-          IntegratedSelectedOptionsDialog
-            .selectWorkingCopy(myProject, myInfo.getUrl(), mySelectedBranch.getUrl().toDecodedString(), false, null, null);
+          IntegratedSelectedOptionsDialog.selectWorkingCopy(myProject, myInfo.getUrl(), mySelectedBranch.getUrl(), false, null, null);
         if (info != null) {
           calculateBranchPathByBranch(mySelectedBranch.getUrl(), info.getFirst().getLocalPath());
         }
@@ -176,7 +175,7 @@ public class SvnMergeInfoRootPanelManual {
   @Nullable
   private static String getLocal(@NotNull Url url, @Nullable String localPath) {
     String result = null;
-    Set<String> paths = SvnBranchMapperManager.getInstance().get(url.toDecodedString());
+    Set<String> paths = SvnBranchMapperManager.getInstance().get(url);
 
     if (!ContainerUtil.isEmpty(paths)) {
       result = localPath != null ? ContainerUtil.find(paths, localPath) : ContainerUtil.getFirstItem(ContainerUtil.sorted(paths));
