@@ -12,6 +12,7 @@ import com.intellij.util.containers.WeakList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -284,5 +285,16 @@ class UndoRedoStacksHolder {
         eachGroup.invalidateActionsFor(ref);
       }
     }
+  }
+
+  @Nullable
+  public UndoableGroup findGlobalUndoableGroup(UndoableGroup undoableGroup) {
+    for (UndoableGroup group : myGlobalStack) {
+      if (group == undoableGroup) {
+        return group;
+      }
+    }
+
+    return null;
   }
 }
