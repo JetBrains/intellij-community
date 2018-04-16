@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.application.Application;
@@ -36,6 +37,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(myErrorElement)) return;
     Context context = Context.from(myErrorElement);
     if (context == null) return;
 

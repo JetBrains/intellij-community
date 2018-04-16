@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -86,6 +87,7 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
 
   private static void createTypeParameter(@NotNull PsiElement methodOrClass, @NotNull String name) {
     Project project = methodOrClass.getProject();
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodOrClass)) return;
     WriteCommandAction.runWriteCommandAction(project, () -> {
       PsiTypeParameterListOwner typeParameterListOwner = tryCast(methodOrClass, PsiTypeParameterListOwner.class);
       if (typeParameterListOwner == null) {
