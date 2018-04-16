@@ -52,6 +52,8 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
@@ -323,6 +325,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                         }
                                       }
                                     }) == Messages.OK) {
+      ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager())
+        .rememberRemovedBreakpoint((XBreakpointBase)breakpoint);
       getInstance().removeBreakpoint(project, breakpoint);
     }
   }

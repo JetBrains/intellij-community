@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.Disposable;
@@ -49,6 +47,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   private final XDependentBreakpointManager myDependentBreakpointManager;
   private long myTime;
   private String myDefaultGroup;
+  private RemovedBreakpointData myLastRemovedBreakpoint = null;
 
   public XBreakpointManagerImpl(final Project project, final XDebuggerManagerImpl debuggerManager) {
     myProject = project;
@@ -505,5 +504,45 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     state.setTypeId(type.getId());
     state.setSuspendPolicy(type.getDefaultSuspendPolicy());
     return state;
+  }
+
+  public void rememberRemovedBreakpoint(XBreakpointBase breakpoint) {
+    myLastRemovedBreakpoint = new RemovedBreakpointData(breakpoint);
+  }
+
+  public boolean canRestoreRemovedBreakpoint() {
+    return myLastRemovedBreakpoint != null;
+  }
+
+  @Nullable
+  public XBreakpoint restoreLastRemovedBreakpoint() {
+    if (myLastRemovedBreakpoint != null) {
+      XBreakpoint res = myLastRemovedBreakpoint.restore();
+      myLastRemovedBreakpoint = null;
+      return res;
+    }
+    return null;
+  }
+
+  private class RemovedBreakpointData {
+    private final XBreakpointBase myBreakpoint;
+    private final XDependentBreakpointManager.DependenciesData myDependenciesData;
+
+    private RemovedBreakpointData(XBreakpointBase breakpoint) {
+      myBreakpoint = breakpoint;
+      myDependenciesData = myDependentBreakpointManager.new DependenciesData(breakpoint);
+    }
+
+    @Nullable
+    XBreakpoint restore() {
+      XBreakpointBase<?,?,?> breakpoint = createBreakpoint(myBreakpoint.getState());
+      myLastRemovedBreakpoint = null;
+      if (breakpoint != null) {
+        addBreakpoint(breakpoint, false, true);
+        myDependenciesData.restore(breakpoint);
+        return breakpoint;
+      }
+      return null;
+    }
   }
 }
