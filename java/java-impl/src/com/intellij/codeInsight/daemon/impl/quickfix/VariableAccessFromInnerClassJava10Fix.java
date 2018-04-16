@@ -225,7 +225,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction i
     outerCodeBlock.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (expression.resolve() == variable) {
+        if (ExpressionUtils.isReferenceTo(expression, variable)) {
           references.add(expression);
         }
       }
