@@ -24,7 +24,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
