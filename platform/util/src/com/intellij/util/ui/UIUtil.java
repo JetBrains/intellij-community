@@ -2760,19 +2760,8 @@ public class UIUtil {
       // override too large default margin "ol {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
       // Select ol margin to have the same indentation as "ul li" and "ol li" elements (seems value 22 suites well)
       style.addRule("ol { margin-left-ltr: 22; margin-right-rtl: 22; }");
-      String liImgUrl = getLiImgUrl();
-      if (liImgUrl != null) {
-        style.addRule("ul {list-style-image:url('" + liImgUrl + "');}");
-      }
 
       return style;
-    }
-
-    @Nullable
-    private static String getLiImgUrl() {
-      String liImgPath = isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
-      URL url = SystemInfo.class.getResource(liImgPath);
-      return url != null ? StringUtil.escapeCharCharacters(url.toExternalForm()) : null;
     }
 
     @Override
