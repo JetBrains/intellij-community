@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -60,6 +61,7 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.util.text.StringUtil.escapeXml;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.ArrayUtil.isEmpty;
@@ -78,6 +80,8 @@ import static com.intellij.util.ui.UIUtil.*;
 import static java.util.Collections.*;
 
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, DataProvider {
+  private static final Logger LOG = getInstance(CommitChangeListDialog.class);
+
   private static final String HELP_ID = "reference.dialogs.vcs.commit";
   private static final String TITLE = message("commit.dialog.title");
 
@@ -663,12 +667,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                  commitExecutor.getActionText(), true, getProject());
 
           if (completed) {
+            LOG.debug("Commit successful");
             myHandlers.forEach(CheckinHandler::checkinSuccessful);
             success = true;
             defaultListCleaner.clean();
             close(OK_EXIT_CODE);
           }
           else {
+            LOG.debug("Commit canceled");
             session.executionCanceled();
           }
         }
@@ -828,6 +834,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private CheckinHandler.ReturnResult runBeforeCheckinHandlers(@Nullable CommitExecutor executor) {
     for (CheckinHandler handler : myHandlers) {
       if (!handler.acceptExecutor(executor)) continue;
+      LOG.debug("CheckinHandler.beforeCheckin: " + handler);
       CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myCommitOptions.getAdditionalData());
       if (result == CheckinHandler.ReturnResult.COMMIT) continue;
       if (result == CheckinHandler.ReturnResult.CANCEL) {
@@ -850,8 +857,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private Runnable wrapIntoCheckinMetaHandlers(Runnable runnable) {
     for (CheckinHandler handler : myHandlers) {
       if (handler instanceof CheckinMetaHandler) {
+        CheckinMetaHandler metaHandler = (CheckinMetaHandler)handler;
         Runnable previousRunnable = runnable;
-        runnable = () -> ((CheckinMetaHandler)handler).runCheckinHandlers(previousRunnable);
+        runnable = () -> {
+          LOG.debug("CheckinMetaHandler.runCheckinHandlers: " + handler);
+          metaHandler.runCheckinHandlers(previousRunnable);
+        };
       }
     }
     return runnable;
@@ -932,6 +943,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void doCommit(@Nullable CommitResultHandler customResultHandler) {
+    LOG.debug("CommitHelper: Do actual commit");
     CommitHelper helper =
       new CommitHelper(myProject, myBrowser.getSelectedChangeList(), getIncludedChanges(), TITLE, getCommitMessage(), myHandlers,
                        myAllOfDefaultChangeListChangesIncluded, false, myCommitOptions.getAdditionalData(), customResultHandler, myIsAlien,
