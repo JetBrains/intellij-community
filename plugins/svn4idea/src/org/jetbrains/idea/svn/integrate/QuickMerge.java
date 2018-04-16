@@ -152,7 +152,7 @@ public class QuickMerge extends BackgroundTaskGroup {
   private void checkReintegrateIsAllowedAndMergeAll(@Nullable WrapperInvertor copyPoint, boolean supportsMergeInfo) {
     boolean reintegrate = copyPoint != null && copyPoint.isInvertedSense();
 
-    if (!reintegrate || myInteraction.shouldReintegrate(copyPoint.inverted().getTarget().toString())) {
+    if (!reintegrate || myInteraction.shouldReintegrate(copyPoint.inverted().getTarget())) {
       MergerFactory mergerFactory = createMergeAllFactory(reintegrate, copyPoint, supportsMergeInfo);
       String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
 
