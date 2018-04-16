@@ -851,7 +851,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1");
-    importProject();
+    importProjectWithErrors(true);
     assertModules("project");
     assertFalse(called[0]); // on import
 
