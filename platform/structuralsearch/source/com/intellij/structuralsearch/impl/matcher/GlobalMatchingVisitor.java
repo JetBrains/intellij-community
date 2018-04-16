@@ -7,6 +7,7 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.structuralsearch.MatchResult;
@@ -173,7 +174,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    */
   @Override
   public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes) {
-    return matchContext.getPattern().getHandler(patternNodes.current()).matchSequentially(patternNodes, matchNodes, matchContext);
+    final PsiElement current = patternNodes.current();
+    if (!patternNodes.hasNext()) {
+      while (matchNodes.current() instanceof PsiComment) matchNodes.advance();
+      return !matchNodes.hasNext();
+    }
+    return matchContext.getPattern().getHandler(current).matchSequentially(patternNodes, matchNodes, matchContext);
   }
 
   /**
