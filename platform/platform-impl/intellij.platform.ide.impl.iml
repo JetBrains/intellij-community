@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
-    <orderEntry type="library" name="Snappy-Java" level="project" />
     <orderEntry type="library" exported="" name="Netty" level="project" />
     <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
