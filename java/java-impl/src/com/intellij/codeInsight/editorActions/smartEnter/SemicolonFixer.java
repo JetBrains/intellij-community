@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
@@ -78,7 +79,7 @@ public class SemicolonFixer implements Fixer {
     }
 
     String toInsert = ";";
-    if (CodeStyleSettingsManager.getSettings(psiElement.getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_SEMICOLON) {
+    if (CodeStyle.getSettings(psiElement.getContainingFile()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_SEMICOLON) {
       toInsert += " ";
     }
     document.insertString(range.getEndOffset(), toInsert);
@@ -134,7 +135,7 @@ public class SemicolonFixer implements Fixer {
           if (((PsiForStatement)parent).getUpdate() == psiElement) {
             return false;
           }
-          if (CodeStyleSettingsManager.getSettings(psiElement.getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_SEMICOLON) {
+          if (CodeStyle.getSettings(psiElement.getContainingFile()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_SEMICOLON) {
             toInsert += " ";
           }
         }
