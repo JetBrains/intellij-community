@@ -168,7 +168,7 @@ public class SvnBranchPointsCalculator {
     WrapperInvertor result = getBestHit(repoUrl, sourceUrl, targetUrl);
 
     if (result == null) {
-      CopyData copyData = new FirstInBranch(myVcs, repoUrl, targetUrl.toString(), sourceUrl.toString()).run();
+      CopyData copyData = new FirstInBranch(myVcs, repoUrl, targetUrl, sourceUrl).run();
 
       if (copyData != null) {
         BranchCopyData branchCopyData =
