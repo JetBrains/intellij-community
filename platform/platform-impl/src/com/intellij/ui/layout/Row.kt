@@ -62,7 +62,7 @@ abstract class Row : Cell() {
   @PublishedApi
   internal abstract fun setCellMode(value: Boolean)
 
-  // override here for backward compatibility
+  // backward compatibility
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
   operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {
     invoke(constraints = *constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = null)
