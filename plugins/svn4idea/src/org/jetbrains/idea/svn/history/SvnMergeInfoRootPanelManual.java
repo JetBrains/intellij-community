@@ -82,7 +82,7 @@ public class SvnMergeInfoRootPanelManual {
       final VirtualFile vf = SvnUtil.getVirtualFile(myInfo.getPath());
       if (vf != null) {
         SelectBranchPopup.show(myProject, vf, (project, configuration, url, revision) -> {
-          refreshSelectedBranch(new WCInfoWithBranches.Branch(url.toDecodedString()));
+          refreshSelectedBranch(new WCInfoWithBranches.Branch(url));
           calculateBranchPathByBranch(mySelectedBranch.getUrl(), null);
           myListener.run();
         }, SvnBundle.message("select.branch.popup.general.title"));
