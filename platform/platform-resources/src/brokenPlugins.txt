@@ -93,3 +93,4 @@ org.nextras.orm.intellij 0.1 0.2 0.4.2 0.4.3
 org.covscript 1.8.3
 org.ice1000.julia 0.1.8
 com.javils.ThemeSwitcher 1.0 1.1 1.2
+org.ziglang 0.0.3
