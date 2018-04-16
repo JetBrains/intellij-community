@@ -2029,6 +2029,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return variable.getSource() instanceof Synthetic;
   }
 
+  /**
+   * @param expression expression to test
+   * @return true if some inliner may add constraints on the precise type of given expression
+   */
+  public static boolean inlinerMayInferPreciseType(PsiExpression expression) {
+    return Arrays.stream(INLINERS).anyMatch(inliner -> inliner.mayInferPreciseType(expression));
+  }
+
   private static final class Synthetic implements DfaVariableSource {
     private final int myLocation;
 
