@@ -44,7 +44,7 @@ public class UIUtil {
   @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
   public static final NotificationGroup SSR_NOTIFICATION_GROUP =
-    NotificationGroup.toolWindowGroup(SSRBundle.message("structural.search.title") + 2, ToolWindowId.FIND);
+    NotificationGroup.toolWindowGroup(SSRBundle.message("structural.search.title"), ToolWindowId.FIND);
 
   @NotNull
   public static Editor createEditor(Document doc, final Project project, boolean editable, @Nullable TemplateContextType contextType) {
