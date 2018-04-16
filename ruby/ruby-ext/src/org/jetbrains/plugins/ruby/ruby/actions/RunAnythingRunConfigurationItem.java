@@ -14,6 +14,8 @@ import java.awt.*;
 import java.util.Objects;
 
 public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunConfigurationPopup.ItemWrapper> {
+  static final String RUN_ANYTHING_RUN_CONFIGURATION_AD_TEXT =
+    RunAnythingAction.AD_MODULE_CONTEXT + " , " + RunAnythingAction.AD_DEBUG_TEXT;
   @NotNull private final ChooseRunConfigurationPopup.ItemWrapper myWrapper;
 
   public RunAnythingRunConfigurationItem(@NotNull ChooseRunConfigurationPopup.ItemWrapper wrapper) {
@@ -42,7 +44,7 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
   @NotNull
   @Override
   public String getAdText() {
-    return RunAnythingAction.AD_MODULE_CONTEXT + " , " + RunAnythingAction.AD_DEBUG_TEXT;
+    return RUN_ANYTHING_RUN_CONFIGURATION_AD_TEXT;
   }
 
   @Override

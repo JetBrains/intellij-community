@@ -79,7 +79,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TextUI;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -89,6 +88,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingCommandItem.UNDEFINED_COMMAND_ICON;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingIconHandler.*;
+import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingRunConfigurationItem.RUN_ANYTHING_RUN_CONFIGURATION_AD_TEXT;
 
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider {
@@ -618,25 +618,24 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     JBTextField myTextField = myPopupField.getTextEditor();
     myTextField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, UNKNOWN_CONFIGURATION);
 
-    setHandleMatchedConfiguration(myTextField);
+    setHandleMatchedConfiguration();
 
     myTextField.setMinimumSize(new Dimension(500, 50));
 
     myTextField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.isShiftDown() && e.isAltDown()) {
-          myTextFieldTitle.setText(RBundle.message("run.anything.run.in.context.debug.title"));
-          return;
-        }
-
         switch (e.getKeyCode()) {
           case KeyEvent.VK_SHIFT:
             myTextFieldTitle.setText(RBundle.message("run.anything.run.debug.title"));
             break;
           case KeyEvent.VK_ALT:
-            myTextFieldTitle.setText(RBundle.message("run.anything.run.in.context.title"));
+            updateByContextSwitch(RBundle.message("run.anything.run.in.context.title"), true);
             break;
+        }
+
+        if (e.isShiftDown() && e.isAltDown()) {
+          myTextFieldTitle.setText(RBundle.message("run.anything.run.in.context.debug.title"));
         }
       }
 
@@ -647,9 +646,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             myTextFieldTitle.setText(RBundle.message("run.anything.run.anything.title"));
             break;
           case KeyEvent.VK_ALT:
-            myTextFieldTitle.setText(RBundle.message("run.anything.run.anything.title"));
+            updateByContextSwitch(RBundle.message("run.anything.run.anything.title"), false);
             break;
         }
+      }
+
+      private void updateByContextSwitch(@NotNull String message, boolean isAltPressed) {
+        ALT_IS_PRESSED.set(isAltPressed);
+        myTextFieldTitle.setText(message);
+        updateMatchedRunConfigurationStuff();
       }
     });
 
@@ -774,31 +779,29 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     FeatureUsageTracker.getInstance().triggerFeatureUsed(RUN_ANYTHING);
   }
 
-  private void setHandleMatchedConfiguration(JBTextField textField) {
-    textField.getDocument().addDocumentListener(new DocumentAdapter() {
+  private void setHandleMatchedConfiguration() {
+    myPopupField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        String pattern;
-        try {
-          pattern = e.getDocument().getText(0, e.getDocument().getLength());
-        }
-        catch (BadLocationException e1) {
-          LOG.error(e1);
-          return;
-        }
-
-        RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule()));
-        String name = provider != null ? provider.getConfigurationFactory().getName() : null;
-
-        if (name != null) {
-          textField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, name);
-          setAdText(AD_MODULE_CONTEXT + ", " + AD_DEBUG_TEXT);
-        }
-        else {
-          textField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, UNKNOWN_CONFIGURATION);
-        }
+        updateMatchedRunConfigurationStuff();
       }
     });
+  }
+
+  private void updateMatchedRunConfigurationStuff() {
+    JBTextField textField = myPopupField.getTextEditor();
+    String pattern = textField.getText();
+
+    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule()));
+    String name = provider != null ? provider.getConfigurationFactory().getName() : null;
+
+    if (name != null) {
+      textField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, name);
+      setAdText(RUN_ANYTHING_RUN_CONFIGURATION_AD_TEXT);
+    }
+    else {
+      textField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, UNKNOWN_CONFIGURATION);
+    }
   }
 
   private void updateAdText() {
