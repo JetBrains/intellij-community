@@ -483,14 +483,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   private static void reset(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<Change> changes) throws VcsException {
-    Set<FilePath> paths = new HashSet<>();
-    paths.addAll(mapNotNull(changes, ChangesUtil::getAfterPath));
-    paths.addAll(mapNotNull(changes, ChangesUtil::getBeforePath));
+    Set<FilePath> allPaths = new HashSet<>();
+    allPaths.addAll(mapNotNull(changes, ChangesUtil::getAfterPath));
+    allPaths.addAll(mapNotNull(changes, ChangesUtil::getBeforePath));
 
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
-    handler.endOptions();
-    handler.addRelativePaths(paths);
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, allPaths)) {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
+      handler.endOptions();
+      handler.addParameters(paths);
+      Git.getInstance().runCommand(handler).getOutputOrThrow();
+    }
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
