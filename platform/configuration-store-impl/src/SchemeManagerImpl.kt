@@ -134,7 +134,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
         externalInfo.schemeKey = schemeKey
 
-        val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeKey, attributeProvider, true)
+        val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(processor, bytes, externalInfo), schemeKey, attributeProvider, true)
         val oldInfo = schemeToInfo.put(scheme, externalInfo)
         LOG.assertTrue(oldInfo == null)
         val oldScheme = schemeListManager.readOnlyExternalizableSchemes.put(schemeKey, scheme)
@@ -270,23 +270,6 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     return info != null && schemeExtension != info.fileExtension
   }
 
-  internal inner class SchemeDataHolderImpl(private val bytes: ByteArray, private val externalInfo: ExternalInfo) : SchemeDataHolder<MUTABLE_SCHEME> {
-    override fun read(): Element = loadElement(bytes.inputStream())
-
-    override fun updateDigest(scheme: MUTABLE_SCHEME) {
-      try {
-        updateDigest(processor.writeScheme(scheme) as Element)
-      }
-      catch (e: WriteExternalException) {
-        LOG.error("Cannot update digest", e)
-      }
-    }
-
-    override fun updateDigest(data: Element?) {
-      externalInfo.digest = data?.digest() ?: ArrayUtilRt.EMPTY_BYTE_ARRAY
-    }
-  }
-
   internal fun loadScheme(fileName: String, input: InputStream, schemes: MutableList<T>, filesToDelete: MutableSet<String>? = null): MUTABLE_SCHEME? {
     val extension = getFileExtension(fileName, false)
     if (filesToDelete != null && filesToDelete.contains(fileName)) {
@@ -356,7 +339,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
         }
 
         val externalInfo = createInfo(schemeName, null)
-        scheme = processor.createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeName, attributeProvider)
+        scheme = processor.createScheme(SchemeDataHolderImpl(processor, bytes, externalInfo), schemeName, attributeProvider)
         schemeToInfo.put(scheme, externalInfo)
         this.filesToDelete.remove(fileName)
       }
@@ -701,3 +684,22 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 }
 
 internal fun nameIsMissed(bytes: ByteArray) = RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+
+internal class SchemeDataHolderImpl<out T : Any, in MUTABLE_SCHEME : T>(private val processor: SchemeProcessor<T, MUTABLE_SCHEME>,
+                                                                        private val bytes: ByteArray,
+                                                                        private val externalInfo: ExternalInfo) : SchemeDataHolder<MUTABLE_SCHEME> {
+  override fun read(): Element = loadElement(bytes.inputStream())
+
+  override fun updateDigest(scheme: MUTABLE_SCHEME) {
+    try {
+      updateDigest(processor.writeScheme(scheme) as Element)
+    }
+    catch (e: WriteExternalException) {
+      LOG.error("Cannot update digest", e)
+    }
+  }
+
+  override fun updateDigest(data: Element?) {
+    externalInfo.digest = data?.digest() ?: ArrayUtilRt.EMPTY_BYTE_ARRAY
+  }
+}

@@ -7,7 +7,6 @@ import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.ThreeState
 import org.jdom.Parent
 import java.nio.file.Path
 
@@ -42,8 +41,7 @@ abstract class SchemeManagerFactory {
                                                               schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
                                                               streamProvider: StreamProvider? = null,
                                                               directoryPath: Path? = null,
-                                                              isAutoSave: Boolean = true,
-                                                              isUseVfs: ThreeState = ThreeState.UNSURE): SchemeManager<SCHEME>
+                                                              isAutoSave: Boolean = true): SchemeManager<SCHEME>
 
   open fun dispose(schemeManager: SchemeManager<*>) {
   }

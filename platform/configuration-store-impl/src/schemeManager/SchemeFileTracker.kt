@@ -120,7 +120,7 @@ internal class SchemeFileTracker<out T : Any, in MUTABLE_SCHEME : T>(private val
                          ?: schemeManager.processor.getSchemeKey(attributeProvider, FileUtilRt.getNameWithoutExtension(fileName))
                          ?: throw nameIsMissed(bytes)
 
-        val dataHolder = schemeManager.SchemeDataHolderImpl(bytes, externalInfo)
+        val dataHolder = SchemeDataHolderImpl(schemeManager.processor, bytes, externalInfo)
         @Suppress("UNCHECKED_CAST")
         (schemeManager.processor as SchemeContentChangedHandler<MUTABLE_SCHEME>).schemeContentChanged(changedScheme, schemeName, dataHolder)
       }
