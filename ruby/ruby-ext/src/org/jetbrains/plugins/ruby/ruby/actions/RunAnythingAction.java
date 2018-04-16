@@ -1321,7 +1321,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myIsItemSelected = true;
       getField().getTextEditor().setText(myLastInputText);
       clearSelection();
-    });
+    }, UISettings.getInstance().getCycleScrolling());
 
     ScrollingUtil.installActions(myList, getField().getTextEditor());
   }

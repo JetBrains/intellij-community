@@ -17,15 +17,18 @@ public class RunAnythingScrollingUtil {
   @NonNls
   protected static final String SELECT_NEXT_ROW_ACTION_ID = "selectNextRow";
 
-  public static void installActions(@NotNull JList list, @NotNull JTextField focusParent, @NotNull Runnable handleFocusParent) {
+  public static void installActions(@NotNull JList list,
+                                    @NotNull JTextField focusParent,
+                                    @NotNull Runnable handleFocusParent,
+                                    boolean isCycleScrolling) {
     ActionMap actionMap = list.getActionMap();
-    actionMap.put(SELECT_PREVIOUS_ROW_ACTION_ID, new MoveAction(SELECT_PREVIOUS_ROW_ACTION_ID, list, handleFocusParent));
-    actionMap.put(SELECT_NEXT_ROW_ACTION_ID, new MoveAction(SELECT_NEXT_ROW_ACTION_ID, list, handleFocusParent));
+    actionMap.put(SELECT_PREVIOUS_ROW_ACTION_ID, new MoveAction(SELECT_PREVIOUS_ROW_ACTION_ID, list, handleFocusParent, isCycleScrolling));
+    actionMap.put(SELECT_NEXT_ROW_ACTION_ID, new MoveAction(SELECT_NEXT_ROW_ACTION_ID, list, handleFocusParent, isCycleScrolling));
 
     maybeInstallDefaultShortcuts(list);
 
-    installMoveUpAction(list, focusParent, handleFocusParent);
-    installMoveDownAction(list, focusParent, handleFocusParent);
+    installMoveUpAction(list, focusParent, handleFocusParent, isCycleScrolling);
+    installMoveDownAction(list, focusParent, handleFocusParent, isCycleScrolling);
   }
 
   private static void maybeInstallDefaultShortcuts(@NotNull JComponent component) {
@@ -34,40 +37,51 @@ public class RunAnythingScrollingUtil {
     UIUtil.maybeInstall(map, SELECT_NEXT_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
   }
 
-  private static void installMoveDownAction(@NotNull JList list, @NotNull JComponent focusParent, @NotNull Runnable handleFocusParent) {
+  private static void installMoveDownAction(@NotNull JList list,
+                                            @NotNull JComponent focusParent,
+                                            @NotNull Runnable handleFocusParent,
+                                            final boolean isCycleScrolling) {
     new ScrollingUtil.ListScrollAction(CommonShortcuts.getMoveDown(), focusParent) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        moveDown(list, handleFocusParent);
+        moveDown(list, handleFocusParent, isCycleScrolling);
       }
     };
   }
 
-  private static void installMoveUpAction(@NotNull JList list, @NotNull JComponent focusParent, @NotNull Runnable handleFocusParent) {
+  private static void installMoveUpAction(@NotNull JList list,
+                                          @NotNull JComponent focusParent,
+                                          @NotNull Runnable handleFocusParent,
+                                          final boolean isCycleScrolling) {
     new ScrollingUtil.ListScrollAction(CommonShortcuts.getMoveUp(), focusParent) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        moveUp(list, handleFocusParent);
+        moveUp(list, handleFocusParent, isCycleScrolling);
       }
     };
   }
 
-  private static void moveDown(@NotNull JList list, @NotNull Runnable handleFocusParent) {
-    move(list, list.getSelectionModel(), list.getModel().getSize(), +1, handleFocusParent);
+  private static void moveDown(@NotNull JList list, @NotNull Runnable handleFocusParent, boolean isCycleScrolling) {
+    move(list, list.getSelectionModel(), list.getModel().getSize(), +1, handleFocusParent, isCycleScrolling);
   }
 
-  private static void moveUp(@NotNull JList list, @NotNull Runnable handleFocusParent) {
-    move(list, list.getSelectionModel(), list.getModel().getSize(), -1, handleFocusParent);
+  private static void moveUp(@NotNull JList list, @NotNull Runnable handleFocusParent, boolean isCycleScrolling) {
+    move(list, list.getSelectionModel(), list.getModel().getSize(), -1, handleFocusParent, isCycleScrolling);
   }
 
   private static void move(@NotNull JList c,
                            @NotNull ListSelectionModel selectionModel,
                            int size,
                            int direction,
-                           @NotNull Runnable handleFocusParent) {
+                           @NotNull Runnable handleFocusParent,
+                           boolean isCycleScrolling) {
     if (size == 0) return;
     int index = selectionModel.getMaxSelectionIndex();
     int indexToSelect = index + direction;
+
+    if ((indexToSelect == -2 || indexToSelect >= size) && !isCycleScrolling) {
+      return;
+    }
 
     if (indexToSelect == -2) {
       indexToSelect = size - 1;
@@ -85,19 +99,23 @@ public class RunAnythingScrollingUtil {
     @NotNull private final String myId;
     @NotNull private final JList myComponent;
     @NotNull private final Runnable myHandleFocusParent;
+    private final boolean myIsCycleScrolling;
 
-    public MoveAction(@NotNull String id, @NotNull JList component, @NotNull Runnable handleFocusParent) {
+    public MoveAction(@NotNull String id, @NotNull JList component, @NotNull Runnable handleFocusParent, boolean isCycleScrolling) {
       myId = id;
       myComponent = component;
       myHandleFocusParent = handleFocusParent;
+      myIsCycleScrolling = isCycleScrolling;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
       if (SELECT_PREVIOUS_ROW_ACTION_ID.equals(myId)) {
-        moveUp(myComponent, myHandleFocusParent);
+        moveUp(myComponent, myHandleFocusParent, myIsCycleScrolling);
       }
-      else if (SELECT_NEXT_ROW_ACTION_ID.equals(myId)) moveDown(myComponent, myHandleFocusParent);
+      else if (SELECT_NEXT_ROW_ACTION_ID.equals(myId)) {
+        moveDown(myComponent, myHandleFocusParent, myIsCycleScrolling);
+      }
     }
   }
 }
