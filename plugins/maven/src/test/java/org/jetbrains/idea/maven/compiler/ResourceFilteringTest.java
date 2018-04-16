@@ -294,7 +294,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
 
                   "<properties>" +
                   "  <foo>c:\\projects\\foo/bar</foo>" +
-                  "  <bar>a\\b\\c</foo>" +
+                  "  <bar>a\\b\\c</bar>" +
                   "</properties>" +
 
                   "<build>" +
