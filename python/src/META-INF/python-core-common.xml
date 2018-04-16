@@ -103,7 +103,7 @@
                   />
 
     <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
-
+    <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.findUsages.PyFindUsagesOptions"/>
 
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
