@@ -217,7 +217,8 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     createModulePom("../parent", "<groupId>test</groupId>" +
                                  "<artifactId>parent</artifactId>" +
-                                 "<version>1</version>");
+                                 "<version>1</version>" +
+                                 "<packaging>pom</packaging>");
 
     importProject();
     assertModules("project");

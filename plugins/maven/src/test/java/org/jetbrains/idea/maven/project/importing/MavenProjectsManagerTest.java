@@ -62,6 +62,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>parent</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<modules>" +
                   "  <module>m</module>" +
@@ -191,6 +192,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>parent</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<modules>" +
                   "  <module>m</module>" +
@@ -281,6 +283,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>parent</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<modules>" +
                   "  <module>m</module>" +
@@ -303,7 +306,9 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
-                     "<version>1</version>");
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+                     "");
     waitForReadingCompletion();
 
     assertEquals(2, myProjectsTree.getRootProjects().size());
