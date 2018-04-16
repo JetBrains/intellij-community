@@ -262,7 +262,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         if (finalStart < lineEnd) {
           // document must be unblocked by now. If not, some Save handler attempted to modify PSI
           // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
-          DocumentUtil.writeInRunUndoTransparentAction(new DocumentRunnable(DocumentImpl.this, project) {
+          DocumentUtil.writeInRunUndoTransparentAction(new DocumentRunnable(this, project) {
             @Override
             public void run() {
               deleteString(finalStart, lineEnd);
@@ -722,12 +722,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
   
   private class DelayedExceptions {
-    Throwable myException = null;
+    Throwable myException;
 
     void register(Throwable e) {
       if (myException == null) {
         myException = e;
-      } else {
+      }
+      else {
         myException.addSuppressed(e);
       }
       
