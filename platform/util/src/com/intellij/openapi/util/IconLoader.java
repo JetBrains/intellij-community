@@ -119,7 +119,6 @@ public final class IconLoader {
       return (Icon)field.get(null);
     }
     catch (Exception e) {
-      LOG.info(e);
       return null;
     }
   }
@@ -199,14 +198,11 @@ public final class IconLoader {
   @NotNull
   private static Pair<String, Class> patchPath(@NotNull String path) {
     for (IconPathPatcher patcher : ourPatchers) {
-      LOG.debug("patch paths with " + patcher);
       String newPath = patcher.patchPath(path);
       if (newPath != null) {
-        LOG.debug("replace path " + path + " with " + newPath);
         return Pair.create(newPath, patcher.getContextClass(path));
       }
     }
-    LOG.debug("use path " + path);
     return Pair.create(path, null);
   }
 
