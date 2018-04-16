@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -110,7 +110,7 @@ public class SvnMergeInfoCache {
     private final String myPath;
     private final long myRevision;
 
-    CopyRevison(final SvnVcs vcs, final String path, @NotNull Url repositoryRoot, final String branchUrl, @NotNull Url trunkUrl) {
+    CopyRevison(final SvnVcs vcs, final String path, @NotNull Url repositoryRoot, @NotNull Url branchUrl, @NotNull Url trunkUrl) {
       myPath = path;
       myRevision = -1;
 
@@ -120,7 +120,7 @@ public class SvnMergeInfoCache {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            myData = new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl.toString()).run();
+            myData = new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl).run();
           }
           catch (VcsException e) {
             logAndShow(e);
