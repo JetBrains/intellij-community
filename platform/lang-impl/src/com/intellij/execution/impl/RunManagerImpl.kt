@@ -103,14 +103,16 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   @Suppress("LeakingThis")
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace",
-                                                                                        RunConfigurationSchemeManager(this, false,
+                                                                                        RunConfigurationSchemeManager(this,
+                                                                                                                      isShared = false,
                                                                                                                       isWrapSchemeIntoComponentElement = false),
                                                                                         streamProvider = workspaceSchemeManagerProvider,
-                                                                                        autoSave = false)
+                                                                                        isAutoSave = false, isUseVfs = false)
 
   @Suppress("LeakingThis")
   private var projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations",
-                                                                                      RunConfigurationSchemeManager(this, true,
+                                                                                      RunConfigurationSchemeManager(this,
+                                                                                                                    isShared = true,
                                                                                                                     isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null),
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
                                                                                       streamProvider = schemeManagerIprProvider)

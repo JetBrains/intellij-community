@@ -26,7 +26,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open val componentManager: ComponentManager? = null
 
-  protected open val useVfs = true
+  protected open val isUseVfs = true
 
   override final fun <T : Any, MutableT : T> create(directoryName: String,
                                                     processor: SchemeProcessor<T, MutableT>,
@@ -35,8 +35,10 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                     schemeNameToFileName: SchemeNameToFileName,
                                                     streamProvider: StreamProvider?,
                                                     directoryPath: Path?,
-                                                    autoSave: Boolean): SchemeManager<T> {
+                                                    isAutoSave: Boolean,
+                                                    isUseVfs: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
+    val messageBus = componentManager?.messageBus
     val manager = SchemeManagerImpl(path,
                                     processor,
                                     streamProvider ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
@@ -44,9 +46,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     roamingType,
                                     presentableName,
                                     schemeNameToFileName,
-                                    componentManager?.messageBus,
-                                    useVfs)
-    if (autoSave) {
+                                    if (isUseVfs && messageBus != null && (streamProvider == null || !streamProvider.isApplicable(path, roamingType))) messageBus else null)
+    if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
     }
@@ -98,7 +99,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   @Suppress("unused")
   private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
-    override val useVfs = false
+    override val isUseVfs = false
 
     override val componentManager: ComponentManager
       get() = ApplicationManager.getApplication()
@@ -133,7 +134,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   @TestOnly
   class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase() {
-    override val useVfs: Boolean
+    override val isUseVfs: Boolean
       get() = false
 
     override fun pathToFile(path: String) = basePath.resolve(path)!!

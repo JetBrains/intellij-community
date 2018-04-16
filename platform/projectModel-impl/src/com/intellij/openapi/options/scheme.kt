@@ -35,13 +35,15 @@ abstract class SchemeManagerFactory {
   }
 
   abstract fun <SCHEME : Any, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
-                                                        processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
-                                                        presentableName: String? = null,
-                                                        roamingType: RoamingType = RoamingType.DEFAULT,
-                                                        schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                        streamProvider: StreamProvider? = null,
-                                                        directoryPath: Path? = null,
-                                                        autoSave: Boolean = true): SchemeManager<SCHEME>
+                                                              processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
+                                                              presentableName: String? = null,
+                                                              roamingType: RoamingType = RoamingType.DEFAULT,
+                                                              schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
+                                                              streamProvider: StreamProvider? = null,
+                                                              directoryPath: Path? = null,
+                                                              isAutoSave: Boolean = true,
+                                                              isUseVfs: Boolean = true): SchemeManager<SCHEME>
+
   open fun dispose(schemeManager: SchemeManager<*>) {
   }
 }

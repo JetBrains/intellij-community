@@ -42,14 +42,15 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
 class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
-                                                        processor: SchemeProcessor<T, MUTABLE_SCHEME>,
-                                                        private val provider: StreamProvider?,
-                                                        internal val ioDirectory: Path,
-                                                        val roamingType: RoamingType = RoamingType.DEFAULT,
-                                                        val presentableName: String? = null,
-                                                        private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                        private val messageBus: MessageBus? = null,
-                                                        private val isUseVfs: Boolean = messageBus != null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
+                                                     processor: SchemeProcessor<T, MUTABLE_SCHEME>,
+                                                     private val provider: StreamProvider?,
+                                                     internal val ioDirectory: Path,
+                                                     val roamingType: RoamingType = RoamingType.DEFAULT,
+                                                     val presentableName: String? = null,
+                                                     private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
+                                                     private val messageBusToListenVfsChanges: MessageBus? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
+  private val isUseVfs = messageBusToListenVfsChanges != null
+
   internal val isOldSchemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
 
   private val isLoadingSchemes = AtomicBoolean()
@@ -79,7 +80,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       updateExtension = false
     }
 
-    if (isUseVfs && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
+    if (isUseVfs) {
       LOG.runAndLogException { refreshVirtualDirectory() }
     }
   }
@@ -205,9 +206,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
         processPendingCurrentSchemeName(scheme)
       }
 
-      if (isUseVfs && messageBus != null) {
-        messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(this))
-      }
+      messageBusToListenVfsChanges?.connect()?.subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(this))
 
       return schemes.subList(newSchemesOffset, schemes.size)
     }
