@@ -39,12 +39,12 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
     myStateHolder = state;
   }
 
-  public void put(final String url, @NotNull File file) {
-    myStateHolder.put(url, file.getAbsolutePath());
+  public void put(@NotNull Url url, @NotNull File file) {
+    myStateHolder.put(url.toDecodedString(), file.getAbsolutePath());
   }
 
-  public void remove(final String url, final File value) {
-    final Set<String> set = myStateHolder.get(url);
+  public void remove(@NotNull Url url, @NotNull File value) {
+    Set<String> set = myStateHolder.get(url.toDecodedString());
     if (set != null) {
       set.remove(value.getAbsolutePath());
     }
@@ -52,12 +52,12 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
 
   public void notifyBranchesChanged(final Project project, final VirtualFile vcsRoot, final SvnBranchConfigurationNew configuration) {
     for (Map.Entry<Url, File> entry : configuration.getUrl2FileMappings(project, vcsRoot).entrySet()) {
-      put(entry.getKey().toDecodedString(), entry.getValue());
+      put(entry.getKey(), entry.getValue());
     }
   }
 
-  public Set<String> get(final String key) {
-    return myStateHolder.get(key);
+  public Set<String> get(@NotNull Url url) {
+    return myStateHolder.get(url.toDecodedString());
   }
 
   public static class SvnBranchMapperHolder {
