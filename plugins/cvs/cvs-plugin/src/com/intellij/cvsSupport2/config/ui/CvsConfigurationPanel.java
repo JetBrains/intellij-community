@@ -25,7 +25,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.util.Options;
+import com.intellij.cvsSupport2.Options;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
