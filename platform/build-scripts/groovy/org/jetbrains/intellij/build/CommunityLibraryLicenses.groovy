@@ -418,7 +418,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("CoverageReport"),
-    jetbrainsLibrary("intellij-markdown.jar"),
+    jetbrainsLibrary("intellij-markdown"),
     jetbrainsLibrary("JPS"),
     jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("Maven Embedder"),
