@@ -20,11 +20,14 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.java19modules.Java9RedundantRequiresStatementInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import org.intellij.lang.annotations.Language
+import java.io.IOException
 
 /**
  * @author Pavel.Dolgov
@@ -88,7 +91,7 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     mainModule("module MAIN { requires M6; }")
   }
 
-  fun _testNonexistentMethodImported() {
+  fun testNonexistentMethodImported() {
     mainClass(staticImports = listOf("org.example.m2.C2.<error descr=\"Cannot resolve symbol 'nonexistent'\">nonexistent</error>"))
     mainModule("module MAIN { requires M2; }")
   }
@@ -100,6 +103,7 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
 
   private fun mainModule(@Language("JAVA") text: String) {
     addFile("module-info.java", text, ModuleDescriptor.MAIN)
+    val mainJavaFile = addMainFileWithoutHighlighting() // need to remove error highlighting because it confuses global inspections
 
     val toolWrapper = GlobalInspectionToolWrapper(Java9RedundantRequiresStatementInspection())
     val scope = AnalysisScope(project)
@@ -107,8 +111,22 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
     InspectionTestUtil.compareToolResults(globalContext, toolWrapper, true, testDataPath + getTestName(true))
 
-    myFixture.configureFromExistingVirtualFile(myMainClassFile ?: return)
-    myFixture.checkHighlighting() // make sure the imports work
+    restoreAndCheckMainFileHighlighting(mainJavaFile) // make sure the imports work (or don't work) as expected
+  }
+
+  private fun addMainFileWithoutHighlighting(): VirtualFile? =
+    myMainClassText
+      ?.replace(Regex("</?error.*?>"), "")
+      ?.let { t -> addFile("org.example.main/Main.java", t) }
+      ?.also { f -> myFixture.configureFromExistingVirtualFile(f) }
+
+  private fun restoreAndCheckMainFileHighlighting(file: VirtualFile?) {
+    val text = myMainClassText
+    assertFalse("File and text should either both exist or both not exist", file == null && text != null || file != null && text == null)
+    if (file != null && text != null) {
+      WriteAction.runAndWait<IOException> { VfsUtil.saveText(file, text) }
+      myFixture.checkHighlighting()
+    }
   }
 
   private fun add(packageName: String, className: String, module: ModuleDescriptor, body: String = "", vararg imports: String) {
@@ -121,18 +139,18 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
         }""".trimIndent(), module = module)
   }
 
-  private var myMainClassFile: VirtualFile? = null
+  private var myMainClassText: String? = null
 
   private fun mainClass(vararg imports: String, staticImports: List<String> = emptyList()) {
     val importsText = imports.joinToString("\n") { "import ${it};" }
     val staticImportsText = staticImports.joinToString("\n") { "import static ${it};" }
-    myMainClassFile = addFile("org.example.main/Main.java", """
+    myMainClassText = """
         package org.example.main;
         ${importsText}
         ${staticImportsText}
         public class Main {
           void main() {}
-        }""".trimIndent(), module = ModuleDescriptor.MAIN)
+        }""".trimIndent()
   }
 
   override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/redundantRequiresStatement/"
