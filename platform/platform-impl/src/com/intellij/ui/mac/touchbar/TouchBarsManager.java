@@ -3,6 +3,9 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -17,9 +20,27 @@ import java.util.ArrayDeque;
 
 public class TouchBarsManager {
   private final static boolean IS_LOGGING_ENABLED = false;
-  private static final Logger LOG = Logger.getInstance(TouchBar.class);
+  private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
   private static final ArrayDeque<BarContainer> ourTouchBarStack = new ArrayDeque<>();
   private static TouchBar ourCurrentBar;
+
+  public static void attachEditorBar(EditorEx editor) {
+    if (!isTouchBarAvailable())
+      return;
+
+    final Project proj = editor.getProject();
+    if (proj == null)
+      return;
+
+    editor.addFocusListener(new FocusChangeListener() {
+      private BarContainer myEditorBar = ProjectBarsStorage.instance(proj).getBarContainer(ProjectBarsStorage.EDITOR);
+
+      @Override
+      public void focusGained(Editor editor) { showTouchBar(myEditorBar); }
+      @Override
+      public void focusLost(Editor editor) { closeTouchBar(myEditorBar); }
+    });
+  }
 
   public static void initialize() {
     if (!isTouchBarAvailable())
@@ -75,10 +96,11 @@ public class TouchBarsManager {
       e.getKeyCode() != KeyEvent.VK_CONTROL
       && e.getKeyCode() != KeyEvent.VK_ALT
       && e.getKeyCode() != KeyEvent.VK_META
+      && e.getKeyCode() != KeyEvent.VK_SHIFT
     )
       return;
 
-    long keymask = e.getModifiersEx(); // TODO: calc + ensure
+    long keymask = e.getModifiersEx();
     synchronized (TouchBarsManager.class) {
       for (BarContainer itb: ourTouchBarStack) {
         if (itb instanceof MultiBarContainer)
@@ -112,8 +134,7 @@ public class TouchBarsManager {
     }
   }
 
-
-  private static void _setTouchBar(@NotNull BarContainer barProvider) { _setTouchBar(barProvider == null ? null : barProvider.get()); }
+  private static void _setTouchBar(BarContainer barProvider) { _setTouchBar(barProvider == null ? null : barProvider.get()); }
 
   private static void _setTouchBar(TouchBar bar) {
     if (ourCurrentBar == bar)

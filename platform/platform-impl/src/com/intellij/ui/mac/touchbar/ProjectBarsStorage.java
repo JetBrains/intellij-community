@@ -36,7 +36,13 @@ public class ProjectBarsStorage {
         container.registerAltByKeyMask(mask, altDebug);
         result = container;
       } else if (type.equals(EDITOR)) {
-        result = new SingleBarContainer(()->new TouchBarGeneral(myProject));
+        final BarContainer mainEditor = getBarContainer(GENERAL);
+        MultiBarContainer container = new MultiBarContainer(mainEditor);
+        container.registerAltByKeyMask(InputEvent.ALT_DOWN_MASK, new SingleBarContainer(()->new TouchBarEditorAlt(myProject)));
+        container.registerAltByKeyMask(InputEvent.META_DOWN_MASK, new SingleBarContainer(()->new TouchBarEditorCmd(myProject)));
+        container.registerAltByKeyMask(InputEvent.ALT_DOWN_MASK | InputEvent.META_DOWN_MASK, new SingleBarContainer(()->new TouchBarEditorCmdAlt(myProject)));
+        container.registerAltByKeyMask(InputEvent.SHIFT_DOWN_MASK, new SingleBarContainer(()->new TouchBarEditorShift(myProject)));
+        result = container;
       } else
         throw new RuntimeException("unknown context of project-touchbar: " + type);
 
