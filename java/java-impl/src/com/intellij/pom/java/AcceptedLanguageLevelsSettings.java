@@ -97,7 +97,9 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   }
 
   private static void acceptAndRestore(Project project, Collection<Module> modules, LanguageLevel languageLevel) {
-    getSettings().acceptedNames.add(languageLevel.name());
+    if (!getSettings().acceptedNames.contains(languageLevel.name())) {
+      getSettings().acceptedNames.add(languageLevel.name());
+    }
 
     if (modules != null) {
       JavaProjectModelModificationService service = JavaProjectModelModificationService.getInstance(project);
