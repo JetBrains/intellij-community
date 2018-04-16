@@ -43,7 +43,7 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
     if (stringLiteral == null) return;
 
     int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicsSequence(text);
-    int tailingTicsSequence = PsiRawStringLiteralUtil.getTailingTicsSequence(text);
+    int trailingTicsSequence = PsiRawStringLiteralUtil.getTrailingTicsSequence(text);
 
     String prefix = "";
     TextRange textRange = stringLiteral.getTextRange();
@@ -53,9 +53,9 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
     }
 
     String suffix = "";
-    if (offset == textRange.getEndOffset() - 1 && tailingTicsSequence > 0) {
-      suffix = "+ \"" + StringUtil.repeat("`", tailingTicsSequence) + "\"";
-      text = text.substring(0, text.length() - tailingTicsSequence);
+    if (offset == textRange.getEndOffset() - 1 && trailingTicsSequence > 0) {
+      suffix = "+ \"" + StringUtil.repeat("`", trailingTicsSequence) + "\"";
+      text = text.substring(0, text.length() - trailingTicsSequence);
     }
 
     String literalText = stringLiteral.getText();

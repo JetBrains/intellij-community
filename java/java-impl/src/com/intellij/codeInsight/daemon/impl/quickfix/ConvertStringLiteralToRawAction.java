@@ -67,11 +67,11 @@ public class ConvertStringLiteralToRawAction implements IntentionAction, LowPrio
           prefix = "\"" + StringUtil.repeat("`", startingSeq) + "\" + ";
         }
         String suffix = "";
-        int tailingSequence = PsiRawStringLiteralUtil.getTailingTicsSequence(text);
-        if (tailingSequence > 0) {
-          suffix = "+ \"" + StringUtil.repeat("`", tailingSequence) + "\"";
+        int trailingSequence = PsiRawStringLiteralUtil.getTrailingTicsSequence(text);
+        if (trailingSequence > 0) {
+          suffix = "+ \"" + StringUtil.repeat("`", trailingSequence) + "\"";
         }
-        String textTicsTrimmed = text.substring(Math.max(startingSeq, 0), text.length() - Math.max(tailingSequence, 0));
+        String textTicsTrimmed = text.substring(Math.max(startingSeq, 0), text.length() - Math.max(trailingSequence, 0));
         String additionalQuotes = PsiRawStringLiteralUtil.getAdditionalTics(textTicsTrimmed, "`");
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         CodeStyleManager.getInstance(project).reformat(

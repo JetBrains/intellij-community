@@ -35,9 +35,9 @@ public class PsiRawStringLiteralUtil {
   }
 
   /**
-   * Return number of tailing tics in the <code>text</code>
+   * Return number of trailing tics in the <code>text</code>
    */
-  public static int getTailingTicsSequence(String text) {
+  public static int getTrailingTicsSequence(String text) {
     int length = text.length();
     while (length > 0 && text.charAt(length - 1) == '`') length--;
     return text.length() - length;
