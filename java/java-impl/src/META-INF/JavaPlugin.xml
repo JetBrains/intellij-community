@@ -104,6 +104,8 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
+    <!-- Android Studio: Added extension point for variable manipulation used by Instant Run and Profiler. Should be upstreamed. -->
+    <extensionPoint qualifiedName="com.intellij.debuggerExtension" interface="com.intellij.debugger.engine.DebuggerExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
