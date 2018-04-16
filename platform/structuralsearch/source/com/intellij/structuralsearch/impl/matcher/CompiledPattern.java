@@ -30,7 +30,6 @@ public abstract class CompiledPattern {
   private NodeIterator nodes;
   private MatchingStrategy strategy;
   private PsiElement targetNode;
-  private int optionsHashStamp;
   private int nodeCount;
   private PsiElement last;
   private MatchingHandler lastHandler;
@@ -44,14 +43,6 @@ public abstract class CompiledPattern {
 
   public PsiElement getTargetNode() {
     return targetNode;
-  }
-
-  public int getOptionsHashStamp() {
-    return optionsHashStamp;
-  }
-
-  public void setOptionsHashStamp(final int optionsHashStamp) {
-    this.optionsHashStamp = optionsHashStamp;
   }
 
   public MatchingStrategy getStrategy() {

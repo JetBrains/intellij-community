@@ -1498,7 +1498,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("char constants in pattern", 1, findMatchesCount(s99, " char 'var = '\\u1111'; "));
     assertEquals("char constants in pattern 2", 1, findMatchesCount(s99, " char 'var = '\\n'; "));
 
-    assertEquals("class predicate match (from definition)", 3, findMatchesCount(s97, "'_:[ref( \"class '_A{}\" )] '_;"));
+    assertEquals("class predicate match (from definition)", 3, findMatchesCount(s97, "'_:[ref( \"class '_A {}\" )] '_;"));
 
     String s107 = "class A {\n" +
                   "  /* */\n" +

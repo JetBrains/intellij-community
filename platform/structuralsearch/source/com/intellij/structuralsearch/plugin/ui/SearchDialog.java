@@ -9,7 +9,6 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -167,19 +166,16 @@ public class SearchDialog extends DialogWrapper {
   void initiateValidation() {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
-      final boolean valid = ReadAction.compute(() -> {
-        try {
-          return Boolean.valueOf(isValid());
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (RuntimeException e) {
-          Logger.getInstance(SearchDialog.class).error(e);
-        }
-        return Boolean.FALSE;
-      }).booleanValue();
-      ApplicationManager.getApplication().invokeLater(() -> getOKAction().setEnabled(valid));
+      try {
+        final boolean valid = isValid();
+        ApplicationManager.getApplication().invokeLater(() -> getOKAction().setEnabled(valid));
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (RuntimeException e) {
+        Logger.getInstance(SearchDialog.class).error(e);
+      }
     }, 250);
   }
 
@@ -690,9 +686,6 @@ public class SearchDialog extends DialogWrapper {
     return myConfiguration;
   }
 
-  /**
-   * Needs to be called on the event thread or while holding a read lock.
-   */
   protected boolean isValid() {
     try {
       Matcher.validate(searchContext.getProject(), getConfiguration().getMatchOptions());
