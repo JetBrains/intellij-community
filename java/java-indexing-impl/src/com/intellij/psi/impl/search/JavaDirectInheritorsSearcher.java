@@ -5,7 +5,6 @@ import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -178,20 +177,20 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                                                       @NotNull SearchScope useScope) {
     DumbService dumbService = DumbService.getInstance(project);
     GlobalSearchScope globalUseScope = dumbService.runReadActionInSmartMode(
-      () -> StubHierarchyInheritorSearcher.restrictScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project)));
+      () -> StubHierarchyInheritorSearcher.restrictScope(new JavaSourceFilterScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project))));
     Collection<PsiReferenceList> candidates =
       dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
+    RelaxedDirectInheritorChecker checker = dumbService.runReadActionInSmartMode(() -> new RelaxedDirectInheritorChecker(baseClass));
     // memory/speed optimisation: it really is a map(string -> PsiClass or List<PsiClass>)
     final Map<String, Object> classesWithFqn = new HashMap<>();
 
     processConcurrentlyIfTooMany(candidates,
        referenceList -> {
          ProgressManager.checkCanceled();
-         ApplicationManager.getApplication().runReadAction(() -> {
+         dumbService.runReadActionInSmartMode(() -> {
            final PsiClass candidate = (PsiClass)referenceList.getParent();
-           boolean isInheritor = candidate.isInheritor(baseClass, false);
-           if (isInheritor) {
+           if (checker.checkInheritance(candidate)) {
              String fqn = candidate.getQualifiedName();
              synchronized (classesWithFqn) {
                Object value = classesWithFqn.get(fqn);
@@ -231,16 +230,14 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     Collection<PsiAnonymousClass> anonymousCandidates =
       dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
-    processConcurrentlyIfTooMany(anonymousCandidates,
-       candidate-> {
-         boolean isInheritor = dumbService.runReadActionInSmartMode(() -> candidate.isInheritor(baseClass, false));
-         if (isInheritor) {
-           synchronized (result) {
-             result.add(candidate);
-           }
-         }
-         return true;
-       });
+    processConcurrentlyIfTooMany(anonymousCandidates, candidate-> {
+      if (dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate))) {
+        synchronized (result) {
+          result.add(candidate);
+        }
+      }
+      return true;
+    });
 
     boolean isEnum = ReadAction.compute(baseClass::isEnum);
     if (isEnum) {
