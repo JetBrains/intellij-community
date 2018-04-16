@@ -13,6 +13,8 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,11 +42,27 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
     PsiElement stringLiteral = findRawStringLiteralAtCaret(file, offset);
     if (stringLiteral == null) return;
 
+    int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicsSequence(text);
+    int tailingTicsSequence = PsiRawStringLiteralUtil.getTailingTicsSequence(text);
+
+    String prefix = "";
+    TextRange textRange = stringLiteral.getTextRange();
+    if (offset == textRange.getStartOffset() + 1 && leadingTicsSequence > 0) {
+      prefix = "\"" + StringUtil.repeat("`", leadingTicsSequence) + "\" + ";
+      text = text.substring(leadingTicsSequence);
+    }
+
+    String suffix = "";
+    if (offset == textRange.getEndOffset() - 1 && tailingTicsSequence > 0) {
+      suffix = "+ \"" + StringUtil.repeat("`", tailingTicsSequence) + "\"";
+      text = text.substring(0, text.length() - tailingTicsSequence);
+    }
+
     String literalText = stringLiteral.getText();
     int ticsLength = PsiRawStringLiteralUtil.getLeadingTicsSequence(literalText);
     String quotes = literalText.substring(0, ticsLength);
     String additionalQuotes = PsiRawStringLiteralUtil.getAdditionalTics(text, quotes);
-    insertAtCaret(text, additionalQuotes, stringLiteral, editor);
+    insertAtCaret(text, additionalQuotes, stringLiteral, editor, prefix, suffix);
   }
 
   @Override
@@ -82,7 +100,7 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
   private static void insertAtCaret(final String text,
                                     final String additionalQuotes,
                                     final PsiElement element,
-                                    final Editor editor) {
+                                    final Editor editor, String prefix, String suffix) {
     final Project project = editor.getProject();
     if (project == null) return;
 
@@ -98,9 +116,9 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
 
       EditorModificationUtil.insertStringAtCaret(editor, text);
 
-      if (!additionalQuotes.isEmpty()) {
-        document.insertString(range.getStartOffset(), additionalQuotes);
-        document.insertString(range.getEndOffset(), additionalQuotes);
+      if (!additionalQuotes.isEmpty() || !prefix.isEmpty() || !suffix.isEmpty()) {
+        document.insertString(range.getStartOffset(), prefix + additionalQuotes);
+        document.insertString(range.getEndOffset(), additionalQuotes + suffix);
       }
     });
   }
