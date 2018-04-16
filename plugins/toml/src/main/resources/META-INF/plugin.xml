@@ -12,7 +12,7 @@
 
     <change-notes><![CDATA[
         <ul>
-            <li>Correctly parse <b>Z</b> suffix of date values.</li>
+            <li>More completion-friendly TOML grammar.</li>
         </ul>
     ]]>
     </change-notes>
