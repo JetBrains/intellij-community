@@ -42,7 +42,7 @@ public class SvnMergeInfoRootPanelManual {
   @NotNull private final Runnable myListener;
   private boolean myOnlyOneRoot;
   @NotNull private WCInfoWithBranches myInfo;
-  @NotNull private final Map<String, String> myBranchToLocal;
+  @NotNull private final Map<Url, String> myBranchToLocal;
   private WCInfoWithBranches.Branch mySelectedBranch;
 
   public SvnMergeInfoRootPanelManual(@NotNull Project project,
@@ -68,7 +68,8 @@ public class SvnMergeInfoRootPanelManual {
     myFixedSelectLocal.addActionListener(e -> {
       if (mySelectedBranch != null) {
         Pair<WorkingCopyInfo, Url> info =
-          IntegratedSelectedOptionsDialog.selectWorkingCopy(myProject, myInfo.getUrl(), mySelectedBranch.getUrl(), false, null, null);
+          IntegratedSelectedOptionsDialog
+            .selectWorkingCopy(myProject, myInfo.getUrl(), mySelectedBranch.getUrl().toDecodedString(), false, null, null);
         if (info != null) {
           calculateBranchPathByBranch(mySelectedBranch.getUrl(), info.getFirst().getLocalPath());
         }
@@ -173,9 +174,9 @@ public class SvnMergeInfoRootPanelManual {
   }
 
   @Nullable
-  private static String getLocal(@NotNull String url, @Nullable String localPath) {
+  private static String getLocal(@NotNull Url url, @Nullable String localPath) {
     String result = null;
-    Set<String> paths = SvnBranchMapperManager.getInstance().get(url);
+    Set<String> paths = SvnBranchMapperManager.getInstance().get(url.toDecodedString());
 
     if (!ContainerUtil.isEmpty(paths)) {
       result = localPath != null ? ContainerUtil.find(paths, localPath) : ContainerUtil.getFirstItem(ContainerUtil.sorted(paths));
@@ -185,7 +186,7 @@ public class SvnMergeInfoRootPanelManual {
   }
 
   // always assign to local area here
-  private void calculateBranchPathByBranch(@Nullable String url, @Nullable String localPath) {
+  private void calculateBranchPathByBranch(@Nullable Url url, @Nullable String localPath) {
     final String local = url == null ? null : getLocal(url, localPath == null ? myBranchToLocal.get(url) : localPath);
     if (local == null) {
       myLocalArea.setForeground(JBColor.RED);
