@@ -107,7 +107,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
                                                                                                                       isShared = false,
                                                                                                                       isWrapSchemeIntoComponentElement = false),
                                                                                         streamProvider = workspaceSchemeManagerProvider,
-                                                                                        isAutoSave = false, isUseVfs = false)
+                                                                                        isAutoSave = false, isUseVfs = ThreeState.NO)
 
   @Suppress("LeakingThis")
   private var projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations",

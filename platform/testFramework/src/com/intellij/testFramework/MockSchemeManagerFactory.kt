@@ -8,6 +8,7 @@ import com.intellij.openapi.options.EmptySchemesManager
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
+import com.intellij.util.ThreeState
 import java.nio.file.Path
 
 private val EMPTY = EmptySchemesManager()
@@ -21,7 +22,7 @@ class MockSchemeManagerFactory : SchemeManagerFactory() {
                                                               streamProvider: StreamProvider?,
                                                               directoryPath: Path?,
                                                               isAutoSave: Boolean,
-                                                              isUseVfs: Boolean): SchemeManager<SCHEME> {
+                                                              isUseVfs: ThreeState): SchemeManager<SCHEME> {
     @Suppress("UNCHECKED_CAST")
     return EMPTY as SchemeManager<SCHEME>
   }

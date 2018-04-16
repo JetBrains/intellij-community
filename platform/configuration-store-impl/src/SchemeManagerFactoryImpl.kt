@@ -13,6 +13,7 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
+import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import org.jetbrains.annotations.TestOnly
@@ -36,9 +37,10 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                     streamProvider: StreamProvider?,
                                                     directoryPath: Path?,
                                                     isAutoSave: Boolean,
-                                                    isUseVfs: Boolean): SchemeManager<T> {
+                                                    isUseVfs: ThreeState): SchemeManager<T> {
     val path = checkPath(directoryName)
     val messageBus = componentManager?.messageBus
+    val isUseVfsEffective = if (isUseVfs == ThreeState.UNSURE) this.isUseVfs else isUseVfs.toBoolean()
     val manager = SchemeManagerImpl(path,
                                     processor,
                                     streamProvider ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
@@ -46,7 +48,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     roamingType,
                                     presentableName,
                                     schemeNameToFileName,
-                                    if (isUseVfs && messageBus != null && (streamProvider == null || !streamProvider.isApplicable(path, roamingType))) messageBus else null)
+                                    if (isUseVfsEffective && messageBus != null && (streamProvider == null || !streamProvider.isApplicable(path, roamingType))) messageBus else null)
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
