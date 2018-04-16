@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.AbstractIntegrateChangesAction;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.integrate.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
@@ -520,12 +521,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Nullable
-    protected String getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
-      final SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
-      if (data != null) {
-        return data.getBranch().getUrl().toDecodedString();
-      }
-      return null;
+    @Override
+    protected Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
+      SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
+
+      return data != null && data.getBranch() != null ? data.getBranch().getUrl() : null;
     }
 
     @Nullable
@@ -577,12 +577,12 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       }
     }
 
-    protected String getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
-      final SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
-      if (data != null && data.getBranch() != null) {
-        return data.getBranch().getUrl().toDecodedString();
-      }
-      return null;
+    @Nullable
+    @Override
+    protected Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
+      SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
+
+      return data != null && data.getBranch() != null ? data.getBranch().getUrl() : null;
     }
 
     protected String getSelectedBranchLocalPath(SelectedCommittedStuffChecker checker) {
