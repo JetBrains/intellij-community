@@ -1174,5 +1174,8 @@
       <className>com.intellij.codeInsight.intention.impl.SplitFilterAction</className>
       <category>Java/Streams</category>
     </intentionAction>
+    <java.error.fix errorCode="lambda.variable.must.be.final"
+                    implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"
+    />
   </extensions>
 </idea-plugin>
