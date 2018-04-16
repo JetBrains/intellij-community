@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.remote;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +26,12 @@ public class JsonFileResolver {
   public static VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile, @Nullable String schemaUrl) {
     if (schemaUrl == null) return null;
 
-    if (StringUtil.startsWithChar(schemaUrl, '.') || !isHttpPath(schemaUrl)) {
+    boolean isHttpPath = isHttpPath(schemaUrl);
+
+    // don't resolve http paths in tests
+    if (isHttpPath && ApplicationManager.getApplication().isUnitTestMode()) return null;
+
+    if (StringUtil.startsWithChar(schemaUrl, '.') || !isHttpPath) {
       // relative path
       VirtualFile parent = currentFile == null ? null : currentFile.getParent();
       schemaUrl = parent == null ? null : VfsUtilCore.pathToUrl(parent.getPath() + File.separator + schemaUrl);

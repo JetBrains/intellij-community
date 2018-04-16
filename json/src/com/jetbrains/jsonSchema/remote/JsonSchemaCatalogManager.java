@@ -37,6 +37,7 @@ public class JsonSchemaCatalogManager {
   }
 
   public void startUpdates() {
+    // ignore schema catalog in tests
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     RemoteFileManager instance = RemoteFileManager.getInstance();
     instance.addRemoteContentProvider(myRemoteContentProvider);
@@ -45,7 +46,6 @@ public class JsonSchemaCatalogManager {
 
   @Nullable
   public VirtualFile getSchemaFileForFile(@NotNull VirtualFile file) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (!myIsEnabled.get()) return null;
 
     String name = file.getName();
