@@ -180,8 +180,11 @@ public class VcsProjectLog implements Disposable {
       if (myValue != null) {
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
         myValue.dispose(callback);
+        myValue = null;
       }
-      myValue = null;
+      else if (callback != null) {
+        ApplicationManager.getApplication().executeOnPooledThread(callback);
+      }
     }
 
     @Nullable
