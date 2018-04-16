@@ -87,7 +87,7 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
       SelectBranchPopup.showForBranchRoot(project, checker.getRoot(), changesActionPerformer,
                                           SvnBundle.message("action.Subversion.integrate.changes.select.branch.text"));
     } else {
-      changesActionPerformer.onBranchSelected(selectedBranchUrl.toDecodedString(), getSelectedBranchLocalPath(checker), getDialogTitle());
+      changesActionPerformer.onBranchSelected(selectedBranchUrl, getSelectedBranchLocalPath(checker), getDialogTitle());
     }
   }
 }
