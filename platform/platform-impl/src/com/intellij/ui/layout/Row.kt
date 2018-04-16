@@ -5,7 +5,6 @@ import com.intellij.ui.components.Label
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.FontColor
 import javax.swing.JComponent
-import javax.swing.JLabel
 
 abstract class Row : Cell() {
   abstract var enabled: Boolean
@@ -18,10 +17,10 @@ abstract class Row : Cell() {
 
   protected abstract val builder: LayoutBuilderImpl
 
-  fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false): JLabel {
+  // backward compatibility - return type should be void
+  fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false) {
     val label = Label(text, style, fontColor, bold)
     label(gapLeft = gapLeft)
-    return label
   }
 
   /**
