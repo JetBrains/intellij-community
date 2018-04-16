@@ -126,7 +126,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
         taskNode = ExternalSystemApiUtil.find(
           moduleNode, ProjectKeys.TASK,
           node -> GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(node.getData().getType()) &&
-                  StringUtil.startsWith(sourceSetId, node.getData().getName()));
+                  StringUtil.startsWith(node.getData().getName(), sourceSetId));
       }
 
       if (taskNode == null) return ContainerUtil.emptyList();
