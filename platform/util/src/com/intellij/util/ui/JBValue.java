@@ -16,21 +16,15 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 /**
  * A wrapper over an unscaled numeric value, auto-scaled via {@link JBUI#scale}.
  * <p>
- * Use {@link Integer} or {@link Float} classes for on-demand value scaling.
+ * {@code JBValue} can be used separately or in a group, see {@link JBValueGroup}.
  * <p>
- * If the same JBValue object is used multiple times in a code block, then in order to save scaling ops,
- * a {@link CachedInteger} or {@link CachedFloat} classes can be used instead. Either with a separate
- * {@link UpdateTracker} (better to use for many JBValue objects), or with a dedicated one (for a single
- * JBValue object) as in the {@link SelfCachedInteger} or {@link SelfCachedFloat} classes.
- * <p>
- * Also, the {@link UIDefaultsInteger} class can be used for auto-scaling an integer value stored in
- * {@link UIDefaults}.
+ * Also, a {@link UIInteger} value can be used as a wrapper over an integer value stored in {@link UIDefaults}.
+ *
+ * @see JBUI#value(float)
+ * @see JBValueGroup#add(float)
+ * @see JBUI#uiIntValue(String, int)
  *
  * @author tav
- * @see JBUI#intValue(int)
- * @see JBUI#intValue(int,UpdateTracker)
- * @see JBUI#floatValue(float)
- * @see JBUI#floatValue(float,UpdateTracker)
  */
 public abstract class JBValue {
   protected JBValue() {}
@@ -39,8 +33,14 @@ public abstract class JBValue {
    * Returns scaled rounded to int value.
    */
   public int get() {
-    // for backward compatibility rely on the rounding mode applied in JBUI.scale(int)
-    return JBUI.scale((int)getUnscaled());
+    return ROUND.round(JBUI.scale(getUnscaled()));
+  }
+
+  /**
+   * Returns scaled float value.
+   */
+  public float getFloat() {
+    return JBUI.scale(getUnscaled());
   }
 
   /**
@@ -55,73 +55,39 @@ public abstract class JBValue {
    */
   protected abstract float getUnscaled();
 
-  public interface Cacheable {
-    /**
-     * Scales and caches the value.
-     */
-    void cache();
-  }
-
   /**
    * JBValue wrapper over an integer value in {@link UIDefaults}.
+   *
+   * @see JBUI#uiIntValue(String,int)
    */
-  public static class UIDefaultsInteger extends JBValue {
+  public static class UIInteger extends JBValue {
     private final @NotNull String key;
+    private final int defValue;
 
-    public UIDefaultsInteger(@NotNull String key) {
+    public UIInteger(@NotNull String key, int defValue) {
       this.key = key;
+      this.defValue = defValue;
     }
 
     @Override
     protected float getUnscaled() {
-      return UIManager.getInt(key);
-    }
-  }
-
-  /**
-   * JBValue wrapper over an integer.
-   */
-  public static class Integer extends JBValue {
-    private final int value;
-
-    /**
-     * @param value unscaled value
-     * @see JBUI#intValue(int)
-     */
-    public Integer(int value) {
-      this.value = value;
-    }
-
-    @Override
-    protected float getUnscaled() {
-      return value;
+      return JBUI.getInt(key, defValue);
     }
   }
 
   /**
    * JBValue wrapper over a float.
+   *
+   * @see JBUI#value(float)
    */
   public static class Float extends JBValue {
     private final float value;
 
     /**
      * @param value unscaled value
-     * @see JBUI#floatValue(float)
      */
     public Float(float value) {
       this.value = value;
-    }
-
-    @Override
-    public int get() {
-      return ROUND.round(JBUI.scale(value));
-    }
-
-    /**
-     * Scales the value and returns.
-     */
-    public float getFloat() {
-      return JBUI.scale(value);
     }
 
     @Override
@@ -130,68 +96,12 @@ public abstract class JBValue {
     }
   }
 
-  /**
-   * Integer JBValue which caches its scaled value on JBUI.scale change.
-   */
-  public static class CachedInteger extends Integer implements Cacheable {
-    private int cachedScaledValue;
-
-    protected CachedInteger(int value) {
-      super(value);
-    }
-
-    /**
-     * @param value unscaled value
-     * @param tracker updates the value
-     * @see JBUI#intValue(int, UpdateTracker)
-     */
-    public CachedInteger(int value, @NotNull UpdateTracker tracker) {
-      super(value);
-      cachedScaledValue = JBUI.scale(value);
-      tracker.track(this);
-    }
-
-    @Override
-    public int get() {
-      return cachedScaledValue;
-    }
-
-    public void cache() {
-      cachedScaledValue = JBUI.scale((int)getUnscaled());
-    }
-  }
-
-  /**
-   * CachedInteger with a dedicated UpdateTracker.
-   */
-  public static class SelfCachedInteger extends CachedInteger {
-    private final @NotNull UpdateTracker tracker = new UpdateTracker();
-
-    public SelfCachedInteger(int value) {
-      super(value);
-      this.tracker.track(this);
-    }
-  }
-
-  /**
-   * Float JBValue which caches its scaled value on JBUI.scale change.
-   */
-  public static class CachedFloat extends Float implements Cacheable {
+  private static class CachedFloat extends Float {
     private float cachedScaledValue;
 
     protected CachedFloat(float value) {
       super(value);
-    }
-
-    /**
-     * @param value unscaled value
-     * @param tracker updates the value
-     * @see JBUI#floatValue(float, UpdateTracker)
-     */
-    public CachedFloat(float value, UpdateTracker tracker) {
-      super(value);
-      cachedScaledValue = JBUI.scale(value);
-      tracker.track(this);
+      scaleAndCache();
     }
 
     @Override
@@ -204,50 +114,46 @@ public abstract class JBValue {
       return cachedScaledValue;
     }
 
-    public void cache() {
+    @Override
+    public int get(@NotNull RoundingMode rm) {
+      return rm.round(cachedScaledValue);
+    }
+
+    public void scaleAndCache() {
       cachedScaledValue = JBUI.scale(getUnscaled());
     }
   }
 
   /**
-   * CachedFloat with a dedicated UpdateTracker.
+   * A group of values, utilizing caching strategy per value. The group listens to the global user scale factor change and updates
+   * all of the values. The {@link JBValue#get()} method of a value returns a cached scaled value, saving recalculation.
+   * This can be a better choice when values are used multiple times in a code block.
    */
-  public static class SelfCachedFloat extends CachedFloat {
-    private final @NotNull UpdateTracker tracker = new UpdateTracker();
-
-    public SelfCachedFloat(float value) {
-      super(value);
-      this.tracker.track(this);
-    }
-  }
-
-  /**
-   * Tracks for a list of {@link Cacheable} values and auto-updates them on {@link JBUI#USER_SCALE_FACTOR_PROPERTY}} change.
-   */
-  public static class UpdateTracker {
-    private final List<Cacheable> list = new LinkedList<Cacheable>();
+  public static class JBValueGroup {
+    private final List<CachedFloat> group = new LinkedList<CachedFloat>();
     private final PropertyChangeListener listener = new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
-        for (Cacheable value : list) value.cache();
+        for (CachedFloat value : group) value.scaleAndCache();
       }
     };
 
-    public UpdateTracker() {
+    public JBValueGroup() {
       JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY, listener);
     }
 
-    public void track(Cacheable value) {
-      list.add(value);
-    }
-
-    public void forget(Cacheable value) {
-      list.remove(value);
+    /**
+     * Creates {@link JBValue} and adds it to this group.
+     */
+    public JBValue add(float value) {
+      CachedFloat v = new CachedFloat(value);
+      group.add(v);
+      return v;
     }
 
     public void dispose() {
       JBUI.removePropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY, listener);
-      list.clear();
+      group.clear();
     }
   }
 }

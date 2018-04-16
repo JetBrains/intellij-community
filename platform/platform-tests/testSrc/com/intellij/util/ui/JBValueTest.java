@@ -2,6 +2,8 @@
 package com.intellij.util.ui;
 
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.util.ui.JBValue.JBValueGroup;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -20,41 +22,30 @@ public class JBValueTest {
   public static final ExternalResource manageState = new RestoreScaleRule();
 
   @Test
-  public void testInt() {
+  public void testSeparateValue() {
     JBUI.setUserScaleFactor(1);
 
-    JBValue value1 = JBUI.intValue(2);
-    JBValue.SelfCachedInteger value2 = new JBValue.SelfCachedInteger(2);
+    JBValue value1 = JBUI.value(2);
+    JBValue value2 = JBUI.value(2.6f);
+    JBValue value3 = JBUI.value(2.9f);
 
     JBUI.setUserScaleFactor(2);
 
     assertEquals(JBUI.scale(2), value1.get());
-    assertEquals(JBUI.scale(2), value2.get());
-  }
-
-  @Test
-  public void testFloat() {
-    JBUI.setUserScaleFactor(1);
-
-    JBValue.Float value1 = JBUI.floatValue(2.6f);
-    JBValue.SelfCachedFloat value2 = new JBValue.SelfCachedFloat(2.6f);
-
-    JBUI.setUserScaleFactor(2);
-
-    assertEquals(Math.round(JBUI.scale(2.6f)), value1.get());
     assertEquals(Math.round(JBUI.scale(2.6f)), value2.get());
-    assertEquals(JBUI.scale(2.6f), value1.getFloat());
     assertEquals(JBUI.scale(2.6f), value2.getFloat());
+    assertEquals((int)Math.ceil(JBUI.scale(2.6f)), value2.get(RoundingMode.CEIL));
+    assertEquals((int)Math.floor(JBUI.scale(2.6f)), value3.get(RoundingMode.FLOOR));
   }
 
   @Test
-  public void testUpdateTracker() {
+  public void testGroup() {
     JBUI.setUserScaleFactor(1);
 
-    JBValue.UpdateTracker tracker = new JBValue.UpdateTracker();
-    JBValue value1 = JBUI.intValue(1, tracker);
-    JBValue value2 = JBUI.intValue(2, tracker);
-    JBValue.Float value3 = JBUI.floatValue(3.6f, tracker);
+    JBValueGroup values = new JBValueGroup();
+    JBValue value1 = values.add(1);
+    JBValue value2 = values.add(2);
+    JBValue value3 = values.add(3.6f);
 
     JBUI.setUserScaleFactor(2);
 
@@ -63,38 +54,35 @@ public class JBValueTest {
     assertEquals(Math.round(JBUI.scale(3.6f)), value3.get());
     assertEquals(JBUI.scale(3.6f), value3.getFloat());
 
-    tracker.forget((JBValue.Cacheable)value3);
+    values.dispose();
 
     int scale = JBUI.scale(1);
-    JBUI.setUserScaleFactor(3);
-
-    assertEquals(Math.round(scale * 3.6f), value3.get());
-    assertEquals(scale * 3.6f, value3.getFloat());
-
-    tracker.dispose();
-
-    scale = JBUI.scale(1);
     JBUI.setUserScaleFactor(1);
 
     assertEquals(scale, value1.get());
     assertEquals(scale * 2, value2.get());
+    assertEquals(Math.round(scale * 3.6f), value3.get());
+    assertEquals(scale * 3.6f, value3.getFloat());
   }
 
   @Test
-  public void testUIDefaultsInteger() {
+  public void testUIInteger() {
     JBUI.setUserScaleFactor(1);
     String key = "JBValue.int";
+    String absentKey = "JBValue.absent";
     UIManager.put(key, 2);
 
-    JBValue.UIDefaultsInteger value = new JBValue.UIDefaultsInteger(key);
+    JBValue value1 = JBUI.uiIntValue(key, 1);
+    JBValue value2 = JBUI.uiIntValue(absentKey, 1);
 
     JBUI.setUserScaleFactor(2);
 
-    assertEquals(JBUI.scale(2), value.get());
+    assertEquals(JBUI.scale(2), value1.get());
+    assertEquals(JBUI.scale(1), value2.get());
 
     UIManager.put(key, 3);
 
-    assertEquals(JBUI.scale(3), value.get());
+    assertEquals(JBUI.scale(3), value1.get());
 
     UIManager.put(key, null);
   }

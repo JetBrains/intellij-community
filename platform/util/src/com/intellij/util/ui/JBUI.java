@@ -483,20 +483,13 @@ public class JBUI {
   }
 
   @NotNull
-  public static JBValue.Integer intValue(int value) {
-    return new JBValue.Integer(value);
-  }
-
-  public static JBValue.Integer intValue(int value, JBValue.UpdateTracker tracker) {
-    return new JBValue.CachedInteger(value, tracker);
-  }
-
-  public static JBValue.Float floatValue(float value) {
+  public static JBValue value(float value) {
     return new JBValue.Float(value);
   }
 
-  public static JBValue.Float floatValue(float value, JBValue.UpdateTracker tracker) {
-    return new JBValue.CachedFloat(value, tracker);
+  @NotNull
+  public static JBValue uiIntValue(@NotNull String key, int defValue) {
+    return new JBValue.UIInteger(key, defValue);
   }
 
   public static JBDimension size(int width, int height) {
