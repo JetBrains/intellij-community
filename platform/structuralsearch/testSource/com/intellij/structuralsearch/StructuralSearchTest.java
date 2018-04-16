@@ -2906,11 +2906,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "    outer: for (int i = 0; i < 10; i++) {" +
                      "      if (i == 1) break outer;" +
                      "      if (i == 2) break;" +
+                     "      if (i == 3) break nowhere;" +
                      "    }" +
                      "  }" +
                      "}";
-    assertEquals("Find break statements", 2, findMatchesCount(s, "break;"));
-    assertEquals("Find labeled break statements", 1, findMatchesCount(s, "break '_label;"));
+    assertEquals("Find break statements", 3, findMatchesCount(s, "break;"));
+    assertEquals("Find labeled break statements", 2, findMatchesCount(s, "break '_label;"));
     assertEquals("Find outer break statement", 1, findMatchesCount(s, "break outer;"));
     assertEquals("Find break statements without label", 1, findMatchesCount(s, "break '_label{0,0};"));
 
@@ -2919,11 +2920,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "    outer: for (int i = 0; i < 10; i++) {" +
                      "      if (i == 3) continue outer;" +
                      "      if (i == 4) continue;" +
+                     "      if (i == 5) continue nowhere;" +
                      "    }" +
                      "  }" +
                      "}";
-    assertEquals("Find continue statements", 2, findMatchesCount(s2, "continue;"));
-    assertEquals("Find continue break statements", 1, findMatchesCount(s2, "continue '_label;"));
+    assertEquals("Find continue statements", 3, findMatchesCount(s2, "continue;"));
+    assertEquals("Find labeled continue statements", 2, findMatchesCount(s2, "continue '_label;"));
     assertEquals("Find outer continue statement", 1, findMatchesCount(s2, "continue outer;"));
     assertEquals("Find continue statements without label", 1, findMatchesCount(s2, "continue '_label{0,0};"));
   }
