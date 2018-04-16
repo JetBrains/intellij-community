@@ -216,12 +216,7 @@ public class SearchDialog extends DialogWrapper {
     dialects.setRenderer(new ListCellRendererWrapper<Language>() {
       @Override
       public void customize(JList list, Language value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) {
-          setText("None");
-        }
-        else {
-          setText(value.getDisplayName());
-        }
+        setText((value == null) ? "None" : value.getDisplayName());
       }
     });
     dialects.addItemListener(new ItemListener() {
@@ -235,20 +230,7 @@ public class SearchDialog extends DialogWrapper {
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.context.label"));
     final JLabel jLabel3 = new JLabel(SSRBundle.message("search.dialog.file.dialect.label"));
-    searchOptions.add(
-      UIUtil.createOptionLine(
-        new JComponent[]{
-          jLabel,
-          fileTypes,
-          (JComponent)Box.createHorizontalStrut(8),
-          jLabel2,
-          contexts,
-          (JComponent)Box.createHorizontalStrut(8),
-          jLabel3,
-          dialects,
-        }
-      )
-    );
+    searchOptions.add(UIUtil.createOptionLine(jLabel, fileTypes, jLabel2, contexts, jLabel3, dialects));
 
     jLabel.setLabelFor(fileTypes);
     jLabel2.setLabelFor(contexts);

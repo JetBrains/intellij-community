@@ -91,7 +91,7 @@ public class UIUtil {
     return editor;
   }
 
-  public static JComponent createOptionLine(JComponent[] options) {
+  public static JComponent createOptionLine(JComponent... options) {
     JPanel tmp = new JPanel();
 
     tmp.setLayout(new BoxLayout(tmp, BoxLayout.X_AXIS));
@@ -104,10 +104,6 @@ public class UIUtil {
     tmp.add(Box.createHorizontalGlue());
 
     return tmp;
-  }
-
-  public static JComponent createOptionLine(JComponent option) {
-    return createOptionLine(new JComponent[]{option});
   }
 
   public static void setContent(final Editor editor, String text) {
