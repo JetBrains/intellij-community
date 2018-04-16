@@ -88,7 +88,7 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     mainModule("module MAIN { requires M6; }")
   }
 
-  fun testNonexistentMethodImported() {
+  fun _testNonexistentMethodImported() {
     mainClass(staticImports = listOf("org.example.m2.C2.<error descr=\"Cannot resolve symbol 'nonexistent'\">nonexistent</error>"))
     mainModule("module MAIN { requires M2; }")
   }
