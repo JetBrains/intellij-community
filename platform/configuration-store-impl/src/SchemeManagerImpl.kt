@@ -49,7 +49,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         val presentableName: String? = null,
                                                         private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
                                                         private val messageBus: MessageBus? = null,
-                                                        private val useVfs: Boolean = messageBus != null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
+                                                        private val isUseVfs: Boolean = messageBus != null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
   internal val isOldSchemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
 
   private val isLoadingSchemes = AtomicBoolean()
@@ -79,8 +79,8 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       updateExtension = false
     }
 
-    if (useVfs && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
-      LOG.runAndLogException { refreshVirtualDirectoryAndAddListener() }
+    if (isUseVfs && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
+      LOG.runAndLogException { refreshVirtualDirectory() }
     }
   }
 
@@ -96,11 +96,10 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
   override val isEmpty: Boolean
     get() = schemes.isEmpty()
 
-  private fun refreshVirtualDirectoryAndAddListener() {
+  private fun refreshVirtualDirectory() {
     // store refreshes root directory, so, we don't need to use refreshAndFindFile
     val directory = LocalFileSystem.getInstance().findFileByPath(ioDirectory.systemIndependentPath) ?: return
-
-    this.cachedVirtualDirectory = directory
+    cachedVirtualDirectory = directory
     directory.children
     if (directory is NewVirtualFile) {
       directory.markDirty()
@@ -111,10 +110,11 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override fun loadBundledScheme(resourceName: String, requestor: Any) {
     try {
-      val url = if (requestor is AbstractExtensionPointBean)
-        requestor.loaderForClass.getResource(resourceName)
-      else
-        DecodeDefaultsUtil.getDefaults(requestor, resourceName)
+      val url = when (requestor) {
+        is AbstractExtensionPointBean -> requestor.loaderForClass.getResource(resourceName)
+        else -> DecodeDefaultsUtil.getDefaults(requestor, resourceName)
+      }
+
       if (url == null) {
         LOG.error("Cannot read scheme from $resourceName")
         return
@@ -205,7 +205,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
         processPendingCurrentSchemeName(scheme)
       }
 
-      messageBus?.connect()?.subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(this))
+      if (isUseVfs && messageBus != null) {
+        messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(this))
+      }
 
       return schemes.subList(newSchemesOffset, schemes.size)
     }
@@ -447,7 +449,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     LOG.info("Remove schemes directory ${ioDirectory.fileName}")
     cachedVirtualDirectory = null
 
-    var deleteUsingIo = !useVfs
+    var deleteUsingIo = !isUseVfs
     if (!deleteUsingIo) {
       virtualDirectory?.let {
         runUndoTransparentWriteAction {
@@ -515,7 +517,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     @Suppress("SuspiciousEqualsCombination")
     val renamed = externalInfo != null && fileNameWithoutExtension !== currentFileNameWithoutExtension && currentFileNameWithoutExtension != null && nameGenerator.isUnique(currentFileNameWithoutExtension)
     if (providerPath == null) {
-      if (useVfs) {
+      if (isUseVfs) {
         var file: VirtualFile? = null
         var dir = virtualDirectory
         if (dir == null || !dir.isValid) {
@@ -632,7 +634,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       return
     }
 
-    if (useVfs) {
+    if (isUseVfs) {
       virtualDirectory?.let {
         val childrenToDelete = it.children.filter { filesToDelete.contains(it.name) }
         if (childrenToDelete.isNotEmpty()) {
