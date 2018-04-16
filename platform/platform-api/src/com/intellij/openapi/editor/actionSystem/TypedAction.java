@@ -38,6 +38,7 @@ public class TypedAction {
   private TypedActionHandler myRawHandler;
   private TypedActionHandler myHandler;
   private boolean myHandlersLoaded;
+  private boolean myDoNotWrapWithCommand = false;
 
   public TypedAction() {
     myHandler = new Handler();
@@ -142,6 +143,16 @@ public class TypedAction {
     FreezeLogger.getInstance().runUnderPerformanceMonitor(project, () -> myRawHandler.execute(editor, charTyped, dataContext));
   }
 
+  public void doNotWrapWithCommand(Runnable runnable) {
+    myDoNotWrapWithCommand = true;
+    try{
+      runnable.run();
+    }
+    finally {
+      myDoNotWrapWithCommand = false;
+    }
+  }
+
   private class DefaultRawHandler implements TypedActionHandlerEx {
     @Override
     public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
@@ -154,32 +165,37 @@ public class TypedAction {
       }
     }
 
+    private void executeInternal(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
+      if (!EditorModificationUtil.requestWriting(editor)) {
+        HintManager.getInstance().showInformationHint(editor, "File is not writable");
+        return;
+      }
+      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(), editor.getProject()) {
+        @Override
+        public void run() {
+          Document doc = editor.getDocument();
+          doc.startGuardedBlockChecking();
+          try {
+            getHandler().execute(editor, charTyped, dataContext);
+          } catch (ReadOnlyFragmentModificationException e) {
+            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
+          } finally {
+            doc.stopGuardedBlockChecking();
+          }
+        }
+      });
+    }
+
     @Override
     public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
-      CommandProcessor.getInstance().executeCommand(
-        CommonDataKeys.PROJECT.getData(dataContext), () -> {
-          if (!EditorModificationUtil.requestWriting(editor)) {
-            HintManager.getInstance().showInformationHint(editor, "File is not writable");
-            return;
-          }
-          ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(), editor.getProject()) {
-            @Override
-            public void run() {
-              Document doc = editor.getDocument();
-              doc.startGuardedBlockChecking();
-              try {
-                getHandler().execute(editor, charTyped, dataContext);
-              }
-              catch (ReadOnlyFragmentModificationException e) {
-                EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-              }
-              finally {
-                doc.stopGuardedBlockChecking();
-              }
-            }
-          });
-        },
-        "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+      if (myDoNotWrapWithCommand) {
+        executeInternal(editor, charTyped, dataContext);
+      } else{
+        CommandProcessor.getInstance().executeCommand(
+          CommonDataKeys.PROJECT.getData(dataContext), () -> executeInternal(editor, charTyped, dataContext),
+          "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+      }
     }
+
   }
 }
