@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 
 final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor");
-  private static final Object ANY_VALUE = new Object();
+  private static final Object ANY_VALUE = ObjectUtils.sentinel("ANY_VALUE");
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
   private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
