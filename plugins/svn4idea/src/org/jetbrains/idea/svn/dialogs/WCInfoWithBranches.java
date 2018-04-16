@@ -66,8 +66,8 @@ public class WCInfoWithBranches extends WCInfo {
     }
 
     @NotNull
-    public String getUrl() {
-      return myUrl.toDecodedString();
+    public Url getUrl() {
+      return myUrl;
     }
 
     @Override
