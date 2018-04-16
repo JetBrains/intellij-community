@@ -26,8 +26,15 @@ public interface TabOutScopesTracker {
   /**
    * Checks whether given offset is at the end of tracked scope (so if caret is located at that offset, Tab key can be used to move out of
    * the scope).
-   *
-   * @param removeScope if {@code true}, corresponding scope (if any) will be removed after the call
    */
-  boolean hasScopeEndingAt(@NotNull Editor editor, int offset, boolean removeScope);
+  boolean hasScopeEndingAt(@NotNull Editor editor, int offset);
+
+  /**
+   * Removes a tracked scope (if any) ending at the given offset.
+   *
+   * @return whether there was a scope ending at given offset
+   *
+   * @see #hasScopeEndingAt(Editor, int)
+   */
+  boolean removeScopeEndingAt(@NotNull Editor editor, int offset);
 }

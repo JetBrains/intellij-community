@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
+  @Override
   public void registerEmptyScope(@NotNull Editor editor, int offset) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !editor.isDisposed() : "Disposed editor";
@@ -39,7 +40,17 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
     tracker.registerScope(offset);
   }
 
-  public boolean hasScopeEndingAt(@NotNull Editor editor, int offset, boolean removeScope) {
+  @Override
+  public boolean hasScopeEndingAt(@NotNull Editor editor, int offset) {
+    return checkOrRemoveScopeEndingAt(editor, offset, false);
+  }
+
+  @Override
+  public boolean removeScopeEndingAt(@NotNull Editor editor, int offset) {
+    return checkOrRemoveScopeEndingAt(editor, offset, true);
+  }
+
+  private static boolean checkOrRemoveScopeEndingAt(@NotNull Editor editor, int offset, boolean removeScope) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (!CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES) return false;

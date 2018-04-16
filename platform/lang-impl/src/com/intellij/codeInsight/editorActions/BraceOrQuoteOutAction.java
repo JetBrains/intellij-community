@@ -22,14 +22,14 @@ public class BraceOrQuoteOutAction extends EditorAction {
     @Override
     protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       int caretOffset = caret.getOffset();
-      return TabOutScopesTracker.getInstance().hasScopeEndingAt(editor, caretOffset, false);
+      return TabOutScopesTracker.getInstance().hasScopeEndingAt(editor, caretOffset);
     }
 
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       assert caret != null;
       int caretOffset = caret.getOffset();
-      if (TabOutScopesTracker.getInstance().hasScopeEndingAt(editor, caretOffset, true)) {
+      if (TabOutScopesTracker.getInstance().removeScopeEndingAt(editor, caretOffset)) {
         caret.moveToOffset(caretOffset + 1);
       }
     }
