@@ -78,17 +78,15 @@ public class WcInfoLoader {
       SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(rootUrlInfo.getVirtualFile());
     Ref<WCInfoWithBranches.Branch> workingCopyBranch = Ref.create();
     List<WCInfoWithBranches.Branch> branches = ContainerUtil.newArrayList();
-    String url = info.getUrl().toString();
 
-    // TODO: Probably could utilize SvnBranchConfigurationNew.UrlListener and SvnBranchConfigurationNew.iterateUrls() behavior
-    String trunkUrl = configuration.getTrunkUrl();
-    if (trunkUrl != null) {
-      add(url, trunkUrl, branches, workingCopyBranch);
+    Url trunk = configuration.getTrunk();
+    if (trunk != null) {
+      add(info.getUrl(), trunk, branches, workingCopyBranch);
     }
 
     for (String branchUrl : configuration.getBranchUrls()) {
       for (SvnBranchItem branchItem : configuration.getBranches(branchUrl)) {
-        add(url, branchItem.getUrl().toDecodedString(), branches, workingCopyBranch);
+        add(info.getUrl(), branchItem.getUrl(), branches, workingCopyBranch);
       }
     }
 
@@ -97,13 +95,13 @@ public class WcInfoLoader {
     return new WCInfoWithBranches(info, branches, rootUrlInfo.getRoot(), workingCopyBranch.get());
   }
 
-  private static void add(@NotNull String url,
-                          @NotNull String branchUrl,
+  private static void add(@NotNull Url url,
+                          @NotNull Url branchUrl,
                           @NotNull List<WCInfoWithBranches.Branch> branches,
                           @NotNull Ref<WCInfoWithBranches.Branch> workingCopyBranch) {
     WCInfoWithBranches.Branch branch = new WCInfoWithBranches.Branch(branchUrl);
 
-    if (!Url.isAncestor(branchUrl, url)) {
+    if (!SvnUtil.isAncestor(branchUrl, url)) {
       branches.add(branch);
     }
     else {
