@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.json.JsonLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -10,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
@@ -140,7 +142,34 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return myState.getFiles().contains(file);
+    return myState.getFiles().contains(file) || hasSchemaSchema(file);
+  }
+
+  @Override
+  public JsonSchemaVersion getSchemaVersion(@NotNull VirtualFile file) {
+    if (myState.getFiles().contains(file)) {
+      JsonSchemaFileProvider provider = myState.getProvider(file);
+      if (provider != null) {
+        return provider.getSchemaVersion();
+      }
+    }
+
+    return getSchemaVersionFromSchemaUrl(file);
+  }
+
+  @Nullable
+  private JsonSchemaVersion getSchemaVersionFromSchemaUrl(@NotNull VirtualFile file) {
+    Ref<String> res = Ref.create(null);
+    //noinspection CodeBlock2Expr
+    ApplicationManager.getApplication().runReadAction(() -> {
+      res.set(JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject));
+    });
+    if (res.isNull()) return null;
+    return JsonSchemaVersion.byId(res.get());
+  }
+
+  private boolean hasSchemaSchema(VirtualFile file) {
+    return getSchemaVersionFromSchemaUrl(file) != null;
   }
 
   private static boolean isProviderAvailable(@NotNull final VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
@@ -151,7 +180,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Nullable
   private VirtualFile resolveSchemaFromOtherSources(@NotNull VirtualFile file) {
-    VirtualFile virtualFile = JsonCachedValues.getSchemaProperty(file, myProject);
+    VirtualFile virtualFile = JsonCachedValues.getSchemaFileFromSchemaProperty(file, myProject);
     if (virtualFile != null) return virtualFile;
     return myCatalogManager.getSchemaFileForFile(file);
   }

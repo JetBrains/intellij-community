@@ -105,6 +105,9 @@ public class JsonSchemaReader {
   }
 
   private static void fillMap() {
+    READERS_MAP.put("$id", (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setId(StringUtil.unquoteString(element.getText()));
+    });
     READERS_MAP.put("id", (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) object.setId(StringUtil.unquoteString(element.getText()));
     });

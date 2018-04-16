@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 
 import java.util.Collections;
 
@@ -22,7 +23,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
-        addSchema(new UserDefinedJsonSchemaConfiguration("swagger", moduleDir + "/swagger.json", false, Collections.emptyList()));
+        addSchema(new UserDefinedJsonSchemaConfiguration("swagger", JsonSchemaVersion.SCHEMA_4, moduleDir + "/swagger.json", false, Collections.emptyList()));
         myDoCompletion = false;
       }
 

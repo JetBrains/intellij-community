@@ -9,6 +9,7 @@ import com.intellij.util.PairProcessor;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
 
     final Map<String, UserDefinedJsonSchemaConfiguration> map = configuration.getStateMap();
     final List<JsonSchemaFileProvider> providers = map.values().stream()
-      .map(schema -> new MyProvider(project, schema.getName(), isHttpPath(schema.getRelativePathToSchema())
+      .map(schema -> new MyProvider(project, schema.getSchemaVersion(), schema.getName(), isHttpPath(schema.getRelativePathToSchema())
                                                                ? schema.getRelativePathToSchema()
                                                                : new File(project.getBasePath(), schema.getRelativePathToSchema()).getAbsolutePath(),
                                     schema.getCalculatedPatterns())).collect(Collectors.toList());
@@ -42,19 +43,27 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
 
   static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
     @NotNull private final Project myProject;
+    @NotNull private final JsonSchemaVersion myVersion;
     @NotNull private final String myName;
     @NotNull private final String myFile;
     private VirtualFile myVirtualFile;
     @NotNull private final List<PairProcessor<Project, VirtualFile>> myPatterns;
 
     public MyProvider(@NotNull final Project project,
+                      @NotNull final JsonSchemaVersion version,
                       @NotNull final String name,
                       @NotNull final String file,
                       @NotNull final List<PairProcessor<Project, VirtualFile>> patterns) {
       myProject = project;
+      myVersion = version;
       myName = name;
       myFile = file;
       myPatterns = patterns;
+    }
+
+    @Override
+    public JsonSchemaVersion getSchemaVersion() {
+      return myVersion;
     }
 
     @Nullable

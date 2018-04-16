@@ -17,6 +17,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +82,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   private void addProjectSchema() {
     addCreatedMappings(new UserDefinedJsonSchemaConfiguration(createUniqueName("new schema"),
-                                                              "", false, null));
+                                                              JsonSchemaVersion.SCHEMA_4, "", false, null));
   }
 
   @SuppressWarnings("SameParameterValue")

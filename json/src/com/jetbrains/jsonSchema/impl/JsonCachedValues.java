@@ -42,16 +42,22 @@ public class JsonCachedValues {
 
   private static final Key<CachedValue<String>> SCHEMA_URL_KEY = Key.create("JsonSchemaUrlCache");
   @Nullable
-  public static VirtualFile getSchemaProperty(@NotNull VirtualFile file, @NotNull Project project) {
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (!(psiFile instanceof JsonFile)) return null;
-    String schemaUrl = CachedValueProviderOnPsiFile.getOrCompute(psiFile, JsonCachedValues::fetchSchemaUrl, SCHEMA_URL_KEY);
+  public static VirtualFile getSchemaFileFromSchemaProperty(@NotNull VirtualFile file, @NotNull Project project) {
+    String schemaUrl = getSchemaUrlFromSchemaProperty(file, project);
 
     if (schemaUrl != null) {
       VirtualFile virtualFile = JsonFileResolver.resolveSchemaByReference(file, schemaUrl);
       if (virtualFile != null) return virtualFile;
     }
     return null;
+  }
+
+  @Nullable
+  public static String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
+                                                       @NotNull Project project) {
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    return !(psiFile instanceof JsonFile) ? null : CachedValueProviderOnPsiFile
+      .getOrCompute(psiFile, JsonCachedValues::fetchSchemaUrl, SCHEMA_URL_KEY);
   }
 
   @Nullable

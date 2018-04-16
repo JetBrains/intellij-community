@@ -9,6 +9,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -29,6 +30,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +61,7 @@ public class JsonSchemaMappingsView implements Disposable {
   private JComponent myComponent;
   private Project myProject;
   private TextFieldWithBrowseButton mySchemaField;
+  private ComboBox<JsonSchemaVersion> mySchemaVersionComboBox;
   private JEditorPane myError;
   private String myErrorText;
   private JBLabel myErrorIcon;
@@ -114,6 +117,11 @@ public class JsonSchemaMappingsView implements Disposable {
     label.setLabelFor(mySchemaField);
     label.setBorder(JBUI.Borders.empty(0, 10));
     mySchemaField.setBorder(JBUI.Borders.emptyRight(10));
+    JBLabel versionLabel = new JBLabel("Schema version:");
+    mySchemaVersionComboBox = new ComboBox<>(new DefaultComboBoxModel<>(JsonSchemaVersion.values()));
+    versionLabel.setLabelFor(mySchemaVersionComboBox);
+    versionLabel.setBorder(JBUI.Borders.empty(0, 10));
+    builder.addLabeledComponent(versionLabel, mySchemaVersionComboBox);
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.setBorder(JBUI.Borders.empty(0, 10));
     myErrorIcon = new JBLabel(UIUtil.getBalloonWarningIcon());
@@ -155,15 +163,22 @@ public class JsonSchemaMappingsView implements Disposable {
     return myTableView.getListTableModel().getItems();
   }
 
-  public void setItems(String schemaFilePath, final List<UserDefinedJsonSchemaConfiguration.Item> data) {
+  public void setItems(String schemaFilePath,
+                       JsonSchemaVersion version,
+                       final List<UserDefinedJsonSchemaConfiguration.Item> data) {
     myInitialized = true;
     mySchemaField.setText(schemaFilePath);
+    mySchemaVersionComboBox.setSelectedItem(version);
     myTableView.setModelAndUpdateColumns(
       new ListTableModel<>(createColumns(), new ArrayList<>(data)));
   }
 
   public boolean isInitialized() {
     return myInitialized;
+  }
+
+  public JsonSchemaVersion getSchemaVersion() {
+    return (JsonSchemaVersion)mySchemaVersionComboBox.getSelectedItem();
   }
 
   public String getSchemaSubPath() {

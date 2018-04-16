@@ -95,7 +95,8 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @Override
   public boolean isModified() {
     if (myView == null) return false;
-    if (!FileUtil.toSystemDependentName(mySchema.getRelativePathToSchema()).equals(myView.getSchemaSubPath())) return false;
+    if (!FileUtil.toSystemDependentName(mySchema.getRelativePathToSchema()).equals(myView.getSchemaSubPath())) return true;
+    if (mySchema.getSchemaVersion() != myView.getSchemaVersion()) return true;
     return !Comparing.equal(myView.getData(), mySchema.getPatterns());
   }
 
@@ -104,6 +105,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     if (myView == null) return;
     doValidation();
     mySchema.setName(myDisplayName);
+    mySchema.setSchemaVersion(myView.getSchemaVersion());
     mySchema.setPatterns(myView.getData());
     mySchema.setRelativePathToSchema(myView.getSchemaSubPath());
   }
@@ -169,7 +171,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @Override
   public void reset() {
     if (myView == null) return;
-    myView.setItems(mySchemaFilePath, mySchema.getPatterns());
+    myView.setItems(mySchemaFilePath, mySchema.getSchemaVersion(), mySchema.getPatterns());
     setDisplayName(mySchema.getName());
   }
 
@@ -178,10 +180,12 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     info.setApplicationLevel(mySchema.isApplicationLevel());
     if (myView != null && myView.isInitialized()) {
       info.setName(getDisplayName());
+      info.setSchemaVersion(myView.getSchemaVersion());
       info.setPatterns(myView.getData());
       info.setRelativePathToSchema(myView.getSchemaSubPath());
     } else {
       info.setName(mySchema.getName());
+      info.setSchemaVersion(mySchema.getSchemaVersion());
       info.setPatterns(mySchema.getPatterns());
       info.setRelativePathToSchema(mySchema.getRelativePathToSchema());
     }

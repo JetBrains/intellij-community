@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,9 @@ public interface JsonSchemaService {
   }
 
   boolean isSchemaFile(@NotNull VirtualFile file);
+
+  @Nullable
+  JsonSchemaVersion getSchemaVersion(@NotNull VirtualFile file);
 
   @NotNull
   Collection<VirtualFile> getSchemaFilesForFile(@NotNull VirtualFile file);
