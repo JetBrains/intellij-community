@@ -372,12 +372,15 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       // single member processing
       for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
         if (importStaticStatement.isOnDemand()) continue;
+        
+        String referenceName = importStaticStatement.getReferenceName();
+        if (name != null && !name.equals(referenceName)) continue;
+        
         final PsiJavaCodeReferenceElement reference = importStaticStatement.getImportReference();
         if (reference != null) {
           final JavaResolveResult[] results = reference.multiResolve(false);
           if (results.length > 0) {
             staticImportProcessor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
-            final String referenceName = importStaticStatement.getReferenceName();
             for (JavaResolveResult result : results) {
               staticImportProcessor.registerSingleStaticImportHiding(result, referenceName);
               PsiElement element = result.getElement();
