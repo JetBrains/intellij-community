@@ -1536,6 +1536,10 @@ public class JBUI {
                : getColor("Popup.Header.inactiveBackground", 0xededed);
       }
 
+      public static int headerHeight() {
+        return scale(24);
+      }
+
       public static Color borderColor(boolean active) {
         return active
                ? getColor("Popup.Border.color", 0x808080)
