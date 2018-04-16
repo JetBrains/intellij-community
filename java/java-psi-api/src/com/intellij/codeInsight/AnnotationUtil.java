@@ -188,10 +188,7 @@ public class AnnotationUtil {
     Consumer<PsiMethod> forEachSuperMethod = method -> {
       PsiParameter[] superParameters = method.getParameterList().getParameters();
       if (index < superParameters.length) {
-        PsiParameter superParameter = superParameters[index];
-        if (superParameter.getModifierList() != null) {
-          result.add(superParameter);
-        }
+        result.add(superParameters[index]);
       }
     };
 
