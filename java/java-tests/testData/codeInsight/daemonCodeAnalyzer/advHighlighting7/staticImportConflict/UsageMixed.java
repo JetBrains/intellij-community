@@ -18,6 +18,6 @@ import static <error descr="'D' is already defined in a single-type import">x.Ba
 
 class UsageMixed {
   void use() {
-    <error descr="Reference to 'D' is ambiguous, both 'x.Base1.D' and 'x.Base2.D' match">D</error>.class.getName();
+    D.class.getName();
   }
 }

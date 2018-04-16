@@ -2,6 +2,7 @@
 
 package com.intellij.psi.impl.source;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.*;
 import com.intellij.navigation.ItemPresentation;
@@ -617,7 +618,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Nullable
-  private StubTree derefStub() {
+  @VisibleForTesting
+  public StubTree derefStub() {
     return myTrees.derefStub();
   }
 
