@@ -6,8 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.idea.svn.SmallMapSerializer
-import org.jetbrains.idea.svn.SvnUtil.createUrl
-import org.jetbrains.idea.svn.commandLine.SvnBindException
+import org.jetbrains.idea.svn.branchConfig.UrlDescriptor.Companion.DECODED_URL_DESCRIPTOR
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
@@ -60,7 +59,7 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
         writeUTF(branchLocation)
         writeInt(branches.size)
         for (item in branches.sortedWith(compareBy(CASE_INSENSITIVE_ORDER) { it.url.toDecodedString() })) {
-          writeUTF(item.url.toDecodedString())
+          DECODED_URL_DESCRIPTOR.save(this, item.url)
           writeLong(item.creationDateMillis)
           writeLong(item.revision)
         }
@@ -78,15 +77,9 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
         val branches = mutableListOf<SvnBranchItem>()
 
         repeat(branchesSize) {
-          val urlValue = readUTF()
+          val url = DECODED_URL_DESCRIPTOR.read(this)
           val creationDateMillis = readLong()
           val revision = readLong()
-          val url = try {
-            createUrl(urlValue, false)
-          }
-          catch (e: SvnBindException) {
-            throw IOException("Could not parse url $urlValue", e)
-          }
 
           branches.add(SvnBranchItem(url, creationDateMillis, revision))
         }
