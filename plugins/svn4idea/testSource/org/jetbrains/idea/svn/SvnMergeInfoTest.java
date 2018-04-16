@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -87,10 +87,10 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
-    final String repoUrl = createUrl(myRepoUrl, false).toString();
-    myWCInfoWithBranches = new WCInfoWithBranches(myWCInfo, Collections.emptyList(), vcsRoot,
-                                                  new WCInfoWithBranches.Branch(repoUrl + "/trunk"));
-    myMergeChecker = new BranchInfo(myVcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl + "/branch"));
+    Url repoUrl = createUrl(myRepoUrl, false);
+    myWCInfoWithBranches =
+      new WCInfoWithBranches(myWCInfo, Collections.emptyList(), vcsRoot, new WCInfoWithBranches.Branch(repoUrl.appendPath("trunk", false)));
+    myMergeChecker = new BranchInfo(myVcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl.appendPath("branch", false)));
   }
 
   @Test
