@@ -422,6 +422,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
         }
       }
     });
+    TreeUtil.expand(checkboxTree, 2);
 
     panel.add(ScrollPaneFactory.createScrollPane(checkboxTree));
     final Dimension size = checkboxTree.getPreferredSize();
