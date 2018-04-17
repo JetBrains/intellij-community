@@ -159,7 +159,7 @@ public class SelectBranchPopup {
         public void run(@NotNull ProgressIndicator indicator) {
           NewRootBunch manager = SvnBranchConfigurationManager.getInstance(myProject).getSvnBranchConfigManager();
 
-          manager.reloadBranches(myVcsRoot, branchLocation.toString(), InfoReliability.setByUser, false);
+          manager.reloadBranches(myVcsRoot, branchLocation, InfoReliability.setByUser, false);
         }
       }.queue();
     }

@@ -130,7 +130,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
               String selectedUrlValue = selectedUrl.toString();
               if (!myConfiguration.getBranchLocations().contains(selectedUrl)) {
                 myConfiguration.addBranches(selectedUrlValue, new InfoStorage<>(new ArrayList<>(), InfoReliability.empty));
-                mySvnBranchConfigManager.reloadBranchesAsync(myRoot, selectedUrlValue, InfoReliability.setByUser);
+                mySvnBranchConfigManager.reloadBranchesAsync(myRoot, selectedUrl, InfoReliability.setByUser);
                 myBranchLocationsModel.add(selectedUrl);
                 myBranchLocationsList.setSelectedIndex(myBranchLocationsModel.getSize() - 1);
               }
