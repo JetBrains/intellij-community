@@ -643,7 +643,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    */
   private boolean addCountingLoopBound(PsiForStatement statement) {
     CountingLoop loop = CountingLoop.from(statement);
-    if (loop == null) return false;
+    if (loop == null || loop.isDescending()) return false;
     PsiLocalVariable counter = loop.getCounter();
     Long start = asLong(loop.getInitializer());
     Long end = asLong(loop.getBound());

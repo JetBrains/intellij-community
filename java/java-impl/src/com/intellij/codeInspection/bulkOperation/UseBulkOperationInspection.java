@@ -124,7 +124,12 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   @Nullable
   private static PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
     CountingLoop countingLoop = CountingLoop.from(loop);
-    if (countingLoop == null || countingLoop.isIncluding() || !ExpressionUtils.isZero(countingLoop.getInitializer())) return null;
+    if (countingLoop == null ||
+        countingLoop.isIncluding() ||
+        countingLoop.isDescending() ||
+        !ExpressionUtils.isZero(countingLoop.getInitializer())) {
+      return null;
+    }
     IndexedContainer container = IndexedContainer.fromLengthExpression(countingLoop.getBound());
     if (container == null) return null;
     PsiExpression index = container.extractIndexFromGetExpression(getElementExpression);

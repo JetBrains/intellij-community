@@ -1209,7 +1209,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     @Nullable
     public static CountingLoopSource from(PsiForStatement forStatement) {
       CountingLoop loop = CountingLoop.from(forStatement);
-      if (loop == null) return null;
+      if (loop == null || loop.isDescending()) return null;
       return new CountingLoopSource(forStatement, loop.getCounter(), loop.getInitializer(), loop.getBound(), loop.isIncluding());
     }
   }

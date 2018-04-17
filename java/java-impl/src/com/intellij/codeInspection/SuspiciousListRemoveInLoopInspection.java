@@ -38,7 +38,7 @@ public class SuspiciousListRemoveInLoopInspection extends AbstractBaseJavaLocalI
 
         if (!(parent instanceof PsiForStatement)) return;
         CountingLoop loop = CountingLoop.from((PsiForStatement)parent);
-        if (loop == null) return;
+        if (loop == null || loop.isDescending()) return;
         if (!arg.isReferenceTo(loop.getCounter())) return;
         if (ControlFlowUtils.isExecutedOnceInLoop(parentStatement, (PsiLoopStatement)parent)) return;
         holder.registerProblem(Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()),
