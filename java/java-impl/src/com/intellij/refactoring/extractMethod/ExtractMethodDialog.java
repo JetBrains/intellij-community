@@ -505,15 +505,21 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
             ApplicationManager.getApplication().invokeLater(
               () -> {
                 if (count != 0) {
-                  duplicatesCount.setIcon(UIUtil.getBalloonInformationIcon());
-                  duplicatesCount.setText(RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.count", count));
+                  showCount(UIUtil.getBalloonInformationIcon(),
+                            " " + RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.count", count),
+                            JBUI.Borders.empty(18, 0));
                 }
                 else {
-                  duplicatesCount.setIcon(null);
-                  duplicatesCount.setText("");
+                  showCount(null, "", null);
                 }
               },
               ModalityState.any());
+          }
+
+          private void showCount(Icon icon, String message, Border border) {
+            duplicatesCount.setIcon(icon);
+            duplicatesCount.setText(message);
+            duplicatesCount.setBorder(border);
           }
         });
     }
