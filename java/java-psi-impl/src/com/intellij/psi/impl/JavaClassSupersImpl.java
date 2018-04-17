@@ -19,14 +19,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.JavaClassSupers;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +49,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
       bounds = ((InferenceVariable)superClass).getBounds(InferenceBound.LOWER);
     }
     else if (superClass instanceof PsiTypeParameter) {
-      final PsiType lowerBound = InferenceSession.getLowerBound(superClass);
+      final PsiType lowerBound = TypeConversionUtil.getLowerBound(superClass);
       if (lowerBound != null) {
         bounds = Collections.singletonList(lowerBound);
       }

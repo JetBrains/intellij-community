@@ -28,7 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.ElementClassHint;
@@ -998,7 +997,7 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
     }
-    PsiType upperBound = InferenceSession.getUpperBound(psiClass);
+    PsiType upperBound = TypeConversionUtil.getUpperBound(psiClass);
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
       upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
@@ -1041,7 +1040,7 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(baseClass.getQualifiedName());
     }
-    PsiType upperBound = InferenceSession.getUpperBound(psiClass);
+    PsiType upperBound = TypeConversionUtil.getUpperBound(psiClass);
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
       upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
