@@ -66,6 +66,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.ui.DebuggerColors;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -460,38 +461,26 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return null;
   }
 
+  public static StreamEx<PsiElement> getLineElements(final PsiFile file, int lineNumber) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null || lineNumber < 0 || lineNumber >= document.getLineCount()) {
+      return StreamEx.empty();
+    }
+    int lineEndOffset = document.getLineEndOffset(lineNumber);
+    return StreamEx.iterate(file.findElementAt(document.getLineStartOffset(lineNumber)),
+                            e -> e != null && e.getTextOffset() <= lineEndOffset,
+                            e -> PsiTreeUtil.nextLeaf(e, true));
+  }
+
   @Override
   public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file == null) {
-      return;
-    }
-
-    int lineStart;
-    int lineEnd;
-    try {
-      lineStart = document.getLineStartOffset(line);
-      lineEnd = document.getLineEndOffset(line);
-    }
-    catch (IndexOutOfBoundsException ignored) {
-      return;
-    }
-
-    PsiElement element;
-    int offset = lineStart;
-
-    while (offset < lineEnd) {
-      element = file.findElementAt(offset);
-      if (element != null) {
+    if (file != null) {
+      for (PsiElement element : getLineElements(file, line)) {
         if (!processor.process(element)) {
           return;
         }
-        else {
-          offset = element.getTextRange().getEndOffset();
-        }
-      }
-      else {
-        offset++;
       }
     }
   }
