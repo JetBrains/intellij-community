@@ -21,7 +21,7 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
  * Also, a {@link UIInteger} value can be used as a wrapper over an integer value stored in {@link UIDefaults}.
  *
  * @see JBUI#value(float)
- * @see JBValueGroup#add(float)
+ * @see JBValueGroup#value(float)
  * @see JBUI#uiIntValue(String, int)
  *
  * @author tav
@@ -145,7 +145,7 @@ public abstract class JBValue {
     /**
      * Creates {@link JBValue} and adds it to this group.
      */
-    public JBValue add(float value) {
+    public JBValue value(float value) {
       CachedFloat v = new CachedFloat(value);
       group.add(v);
       return v;
