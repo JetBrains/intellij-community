@@ -2,7 +2,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
-import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.VirtualFileDelegate;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
@@ -266,8 +266,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   private static boolean isFileInScope(@NotNull VirtualFile file, @NotNull SearchScope searchScope) {
-    if (file instanceof VirtualFileWindow) {
-      file = ((VirtualFileWindow)file).getDelegate();
+    if (file instanceof VirtualFileDelegate) {
+      file = ((VirtualFileDelegate)file).getDelegate();
     }
     return searchScope.contains(file);
   }

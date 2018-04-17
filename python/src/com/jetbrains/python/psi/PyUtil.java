@@ -11,7 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.VirtualFileDelegate;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -632,8 +632,8 @@ public class PyUtil {
   @NotNull
   public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project,
                                                              @NotNull VirtualFile virtualFile) {
-    if (virtualFile instanceof VirtualFileWindow) {
-      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+    if (virtualFile instanceof VirtualFileDelegate) {
+      virtualFile = ((VirtualFileDelegate)virtualFile).getDelegate();
     }
 
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only

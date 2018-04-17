@@ -12,7 +12,6 @@ intellij.xml.langInjection
 intellij.python.langInjection
 intellij.reStructuredText
 intellij.python.reStructuredText
-intellij.python.ipnb
 intellij.editorconfig
 intellij.settingsRepository
 intellij.configurationScript

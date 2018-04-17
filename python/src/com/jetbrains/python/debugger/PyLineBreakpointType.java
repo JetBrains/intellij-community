@@ -20,6 +20,7 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,12 +33,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -46,14 +49,18 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   public static final String ID = "python-line";
   private static final String NAME = "Python Line Breakpoint";
 
-  private final static Set<IElementType> UNSTOPPABLE_ELEMENT_TYPES = Sets.newHashSet(PyTokenTypes.TRIPLE_QUOTED_STRING,
+  public final static Set<IElementType> UNSTOPPABLE_ELEMENT_TYPES = Sets.newHashSet(PyTokenTypes.TRIPLE_QUOTED_STRING,
                                                                                      PyTokenTypes.SINGLE_QUOTED_STRING,
                                                                                      PyTokenTypes.SINGLE_QUOTED_UNICODE,
                                                                                      PyTokenTypes.DOCSTRING);
 
 
-  private final static Class[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
+  public final static Class[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
 
+
+  public PyLineBreakpointType(@NotNull String id, @NotNull final String title, @Nullable XDebuggerEditorsProvider editorsProvider) {
+    super(id, title, editorsProvider);
+  }
 
   public PyLineBreakpointType() {
     super(ID, NAME, new PyDebuggerEditorsProvider());
@@ -74,7 +81,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   public static void lineHasStoppablePsi(@NotNull Project project,
                                          @NotNull VirtualFile file,
                                          int line,
-                                         PythonFileType fileType,
+                                         LanguageFileType fileType,
                                          Document document,
                                          Class[] unstoppablePsiElements,
                                          Set<IElementType> unstoppableElementTypes,

@@ -70,6 +70,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     if (document == null) {
       return;
     }
+    document = myType.getDocumentForHighlighting(getProject(), document);
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);

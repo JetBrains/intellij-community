@@ -292,13 +292,13 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                     file = file.encode(file_system_encoding)
 
-                file = pydevd_file_utils.norm_file_to_server(file)
+                if pydevd_file_utils.is_real_file(file):
+                    file = pydevd_file_utils.norm_file_to_server(file)
 
-                if not pydevd_file_utils.exists(file):
-                    sys.stderr.write('pydev debugger: warning: trying to add breakpoint'\
-                        ' to file that does not exist: %s (will have no effect)\n' % (file,))
-                    sys.stderr.flush()
-
+                    if not pydevd_file_utils.exists(file):
+                        sys.stderr.write('pydev debugger: warning: trying to add breakpoint'\
+                            ' to file that does not exist: %s (will have no effect)\n' % (file,))
+                        sys.stderr.flush()
 
                 if len(condition) <= 0 or condition is None or condition == "None":
                     condition = None
@@ -324,7 +324,10 @@ def process_net_command(py_db, cmd_id, seq, text):
                         supported_type = False
 
                 if not supported_type:
-                    raise NameError(type)
+                    if type == 'jupyter-line':
+                        return
+                    else:
+                        raise NameError(type)
 
                 if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                     pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name.encode('utf-8')))
@@ -351,7 +354,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                     file = file.encode(file_system_encoding)
 
-                file = pydevd_file_utils.norm_file_to_server(file)
+                if pydevd_file_utils.is_real_file(file):
+                    file = pydevd_file_utils.norm_file_to_server(file)
 
                 try:
                     breakpoint_id = int(breakpoint_id)

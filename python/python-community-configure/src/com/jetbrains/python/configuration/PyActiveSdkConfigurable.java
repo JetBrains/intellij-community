@@ -35,6 +35,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
@@ -59,6 +60,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
+
+  public static final Topic<ActiveSdkListener> ACTIVE_PYTHON_SDK_TOPIC = new Topic<>("Active SDK changed", ActiveSdkListener.class);
+
   @NotNull private final Project myProject;
   @Nullable private final Module myModule;
   private final MySdkModelListener mySdkModelListener = new MySdkModelListener();
@@ -292,6 +296,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(myProject).setProjectSdk(item));
     if (myModule != null) {
       ModuleRootModificationUtil.setModuleSdk(myModule, item);
+      myProject.getMessageBus().syncPublisher(ACTIVE_PYTHON_SDK_TOPIC).activeSdkChanged(myModule, item);
     }
   }
 
@@ -357,6 +362,10 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
     }
+  }
+
+  public interface ActiveSdkListener {
+    void activeSdkChanged(@NotNull Module module, @Nullable Sdk sdk);
   }
 
   private class MySdkModelListener implements SdkModel.Listener {

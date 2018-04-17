@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.main" />
     <orderEntry type="module" module-name="intellij.tasks.jira" />
     <orderEntry type="module" module-name="intellij.shortcutPromoter" />
-    <orderEntry type="module" module-name="intellij.python.ipnb" />
     <orderEntry type="module" module-name="intellij.settingsRepository" />
     <orderEntry type="module" module-name="intellij.python.terminal" />
     <orderEntry type="module" module-name="intellij.properties" />
