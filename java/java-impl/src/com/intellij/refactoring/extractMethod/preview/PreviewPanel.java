@@ -13,14 +13,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.usages.impl.UsageModelTracker;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,6 +39,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   private final Project myProject;
   private final PreviewTree myTree;
   private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
+  private final ButtonsPanel myButtonsPanel;
   private Content myContent;
   private final PreviewDiffPanel myDiffPanel;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -51,7 +55,8 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
 
     BorderLayoutPanel leftPanel = new BorderLayoutPanel();
     leftPanel.addToCenter(treePane);
-    leftPanel.addToBottom(new ButtonsPanel(myProject));
+    myButtonsPanel = new ButtonsPanel(myProject);
+    leftPanel.addToBottom(myButtonsPanel);
 
     JBSplitter splitter = new OnePixelSplitter(false);
     splitter.setProportion(0.3f);
@@ -130,6 +135,11 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     }
   }
 
+  private void rerunRefactoring() {
+    close();
+    myDiffPanel.tryExtractAgain();
+  }
+
   void onTreeUpdated() {
     myTree.repaint();
   }
@@ -147,40 +157,71 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
 
-    myTree.setValid(!myDiffPanel.isModified());
+    boolean isModified = myDiffPanel.isModified();
+    if (myButtonsPanel.updateButtons(isModified)) {
+      myTree.setValid(!isModified);
+    }
   }
 
   private class ButtonsPanel extends JPanel {
     private final JButton myRefactorButton;
+    private final JButton myRerunButton;
     private final JButton myCancelButton;
+    private final Project myProject;
+    private boolean myModified; // Accessed in EDT
 
-    public ButtonsPanel(Project project) {
+    public ButtonsPanel(@NotNull Project project) {
       super(new FlowLayout(FlowLayout.LEFT, JBUI.scale(8), 0));
+      myProject = project;
 
-      myRefactorButton = new JButton("Do Refactor");
+      myRefactorButton = new JButton(RefactoringBundle.message("refactoring.extract.method.preview.button.refactor"));
+      DialogUtil.registerMnemonic(myRefactorButton);
       myRefactorButton.addActionListener(e -> doRefactor());
       add(myRefactorButton);
 
-      myCancelButton = new JButton("Cancel");
+      myRerunButton = new JButton(RefactoringBundle.message("refactoring.extract.method.preview.button.rerun"));
+      DialogUtil.registerMnemonic(myRefactorButton);
+      myRerunButton.addActionListener(e -> rerunRefactoring());
+      add(myRerunButton);
+
+      myCancelButton = new JButton(RefactoringBundle.message("refactoring.extract.method.preview.button.cancel"));
+      DialogUtil.registerMnemonic(myRefactorButton);
       myCancelButton.addActionListener(e -> close());
       add(myCancelButton);
+
+      updateButtonsImpl(false, false);
 
       project.getMessageBus().connect(PreviewPanel.this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
         public void enteredDumbMode() {
-          update(true);
+          updateButtonsLater(true);
         }
 
         @Override
         public void exitDumbMode() {
-          update(false);
+          updateButtonsLater(false);
         }
       });
     }
 
-    void update(boolean isDumb) {
-      myRefactorButton.setEnabled(!isDumb);
-      myCancelButton.setEnabled(!isDumb);
+    boolean updateButtons(boolean isModified) {
+      if (myModified == isModified) {
+        return false;
+      }
+      myModified = isModified;
+      updateButtonsImpl(DumbService.isDumb(myProject), isModified);
+      return true;
+    }
+
+    void updateButtonsLater(boolean isDumb) {
+      ApplicationManager.getApplication().invokeLater(() -> updateButtonsImpl(isDumb, myModified));
+    }
+
+    private void updateButtonsImpl(boolean isDumb, boolean isModified) {
+      myRefactorButton.setEnabled(!isDumb && !isModified);
+      myRefactorButton.setVisible(!isModified);
+      myRerunButton.setEnabled(!isDumb && isModified);
+      myRerunButton.setVisible(isModified);
     }
   }
 }
