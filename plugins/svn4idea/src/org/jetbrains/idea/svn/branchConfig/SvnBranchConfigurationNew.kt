@@ -18,115 +18,92 @@ private val LOG = logger<SvnBranchConfigurationNew>()
 /**
  * Sorts branch locations by length descending as there could be cases when one branch location is under another.
  */
-private fun sortBranchLocations(branchLocations: Collection<String>) = branchLocations.sortedByDescending { it.length }
+private fun sortBranchLocations(branchLocations: Collection<Url>) = branchLocations.sortedByDescending { it.toDecodedString().length }
 
 class SvnBranchConfigurationNew {
-  var trunkUrl: String = ""
-  val trunk
-    get() = try {
-      // trunkUrl could be set either to decoded or to encoded url depending on the code flow
-      createUrl(trunkUrl, trunkUrl.contains('%'))
-    }
-    catch (e: SvnBindException) {
-      LOG.info("Could not parse url $trunkUrl", e)
-      null
-    }
+  var trunk: Url? = null
 
-  private val myBranchMap: MutableMap<String, InfoStorage<List<SvnBranchItem>>> = mutableMapOf()
+  private val myBranchMap: MutableMap<Url, InfoStorage<List<SvnBranchItem>>> = mutableMapOf()
   var isUserInfoInUrl: Boolean = false
 
-  val branchUrls get() = myBranchMap.keys.map { it.removeSuffix("/") }.sorted()
-  val branchLocations
-    get() = branchUrls.mapNotNull {
-      try {
-        createUrl(it)
-      }
-      catch (e: SvnBindException) {
-        LOG.info("Could not parse url $it", e)
-        null
-      }
-    }
+  val branchLocations get() = myBranchMap.keys.sortedBy { it.toDecodedString() }
   val branchMap get() = myBranchMap
 
-  fun addBranches(branchParentName: String, items: InfoStorage<List<SvnBranchItem>>) {
-    val branchLocation = ensureEndSlash(branchParentName)
+  fun addBranches(branchLocation: Url, items: InfoStorage<List<SvnBranchItem>>) {
     val current = myBranchMap[branchLocation]
     if (current != null) {
-      LOG.info("Branches list not added for : '$branchLocation; this branch parent URL is already present.")
+      LOG.info("Branches list not added for : '${branchLocation.toDecodedString()}; this branch parent URL is already present.")
       return
     }
     myBranchMap[branchLocation] = items
   }
 
-  fun updateBranch(branchParentName: String, items: InfoStorage<List<SvnBranchItem>>) {
-    val branchLocation = ensureEndSlash(branchParentName)
+  fun updateBranch(branchLocation: Url, items: InfoStorage<List<SvnBranchItem>>) {
     val current = myBranchMap[branchLocation]
     if (current == null) {
-      LOG.info("Branches list not updated for : '$branchLocation; since config has changed.")
+      LOG.info("Branches list not updated for : '${branchLocation.toDecodedString()}; since config has changed.")
       return
     }
     current.accept(items)
   }
 
-  fun getBranches(url: String) = myBranchMap[ensureEndSlash(url)]?.value ?: emptyList()
+  fun getBranches(branchLocation: Url) = myBranchMap[branchLocation]?.value ?: emptyList()
 
   fun copy(): SvnBranchConfigurationNew {
     val result = SvnBranchConfigurationNew()
     result.isUserInfoInUrl = isUserInfoInUrl
-    result.trunkUrl = trunkUrl
+    result.trunk = trunk
     for ((key, infoStorage) in myBranchMap) {
       result.myBranchMap[key] = InfoStorage(infoStorage.value.toList(), infoStorage.infoReliability)
     }
     return result
   }
 
-  private fun getBaseUrl(url: String): String? {
-    if (Url.isAncestor(trunkUrl, url)) {
-      return trunkUrl.removeSuffix("/")
+  private fun getBaseUrl(url: Url): Url? {
+    val trunk = trunk
+    if (trunk != null && isAncestor(trunk, url)) {
+      return trunk
     }
     for (branchUrl in sortBranchLocations(myBranchMap.keys)) {
-      if (Url.isAncestor(branchUrl, url)) {
-        val relativePath = Url.getRelative(branchUrl, url)
-        return (branchUrl + relativePath!!.substringBefore("/")).removeSuffix("/")
+      if (isAncestor(branchUrl, url)) {
+        val relativePath = SvnUtil.getRelativeUrl(branchUrl, url)
+        return branchUrl.appendPath(relativePath.substringBefore("/"), false)
       }
     }
     return null
   }
 
-  fun getBaseName(url: String) = getBaseUrl(url)?.let { Url.tail(it) }
+  @Deprecated("use getBaseName(Url)")
+  fun getBaseName(url: String) = getBaseName(createUrl(url, false))
 
-  fun getRelativeUrl(url: String) = getBaseUrl(url)?.let { url.substring(it.length) }
+  fun getBaseName(url: Url) = getBaseUrl(url)?.tail
+
+  fun getRelativeUrl(url: Url) = getBaseUrl(url)?.let { SvnUtil.getRelativeUrl(it, url) }
 
   @Throws(SvnBindException::class)
-  fun getWorkingBranch(someUrl: Url) = getBaseUrl(someUrl.toString())?.let(::createUrl)
+  fun getWorkingBranch(url: Url) = getBaseUrl(url)
 
   // to retrieve mappings between existing in the project working copies and their URLs
   fun getUrl2FileMappings(project: Project, root: VirtualFile): Map<Url, File> {
-    try {
-      val rootUrl = SvnVcs.getInstance(project).getInfo(root)?.url ?: return emptyMap()
-      val baseDir = virtualToIoFile(root)
-      val result = mutableMapOf<Url, File>()
+    val rootUrl = SvnVcs.getInstance(project).getInfo(root)?.url ?: return emptyMap()
+    val baseDir = virtualToIoFile(root)
+    val result = mutableMapOf<Url, File>()
 
-      for (url in allBranches) {
-        val branchUrl = createUrl(url)
-
-        if (isAncestor(rootUrl, branchUrl)) {
-          result[branchUrl] = SvnUtil.fileFromUrl(baseDir, rootUrl.path, branchUrl.path)
-        }
+    for (url in allBranches) {
+      if (isAncestor(rootUrl, url)) {
+        result[url] = SvnUtil.fileFromUrl(baseDir, rootUrl.path, url.path)
       }
-      return result
     }
-    catch (e: SvnBindException) {
-      return emptyMap()
-    }
+
+    return result
   }
 
   private val allBranches
     get() = sequenceOf(
-      trunkUrl) + myBranchMap.entries.sortedByDescending { it.key.length }.asSequence().map { it.value.value }.flatten().map { it.url.toDecodedString() }
+      trunk).filterNotNull() + myBranchMap.entries.sortedByDescending { it.key.toDecodedString().length }.asSequence().map { it.value.value }.flatten().map { it.url }
 
-  fun removeBranch(url: String) {
-    myBranchMap.remove(ensureEndSlash(url))
+  fun removeBranch(url: Url) {
+    myBranchMap.remove(url)
   }
 
   companion object {

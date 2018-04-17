@@ -180,10 +180,16 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
     String relativeUrl;
     if (myWorkingCopyRadioButton.isSelected()) {
-      relativeUrl = myBranchConfiguration.getRelativeUrl(mySrcURL.toString());
+      relativeUrl = myBranchConfiguration.getRelativeUrl(mySrcURL);
     }
     else {
-      relativeUrl = myBranchConfiguration.getRelativeUrl(myRepositoryField.getText());
+      Url url = null;
+      try {
+        url = createUrl(myRepositoryField.getText());
+      }
+      catch (SvnBindException ignored) {
+      }
+      relativeUrl = url != null ? myBranchConfiguration.getRelativeUrl(url) : null;
     }
 
     Url selectedBranch = myBranchTagBaseModel.getSelected();

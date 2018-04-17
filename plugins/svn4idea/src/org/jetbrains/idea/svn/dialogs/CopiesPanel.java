@@ -335,7 +335,7 @@ public class CopiesPanel {
   private static Url getCorrespondingUrlInOtherBranch(@NotNull SvnBranchConfigurationNew configuration,
                                                       @NotNull Url url,
                                                       @NotNull Url otherBranchUrl) throws SvnBindException {
-    return otherBranchUrl.appendPath(notNullize(configuration.getRelativeUrl(url.toDecodedString())), false);
+    return otherBranchUrl.appendPath(notNullize(configuration.getRelativeUrl(url)), false);
   }
 
   @SuppressWarnings("MethodMayBeStatic")

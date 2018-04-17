@@ -39,7 +39,7 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
 
     for (configuration in branchConfigurations.values) {
       for ((branchLocation, branches) in configuration.branchMap) {
-        branchLocations[branchLocation] = branches.value
+        branchLocations[branchLocation.toString()] = branches.value
       }
     }
     synchronized(myLock) {

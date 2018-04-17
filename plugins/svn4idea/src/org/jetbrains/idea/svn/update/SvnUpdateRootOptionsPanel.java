@@ -125,7 +125,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     SelectBranchPopup.show(myVcs.getProject(), myRoot.getVirtualFile(), (project, configuration, url, revision) -> {
       // TODO: It seems that we could reuse configuration passed as parameter to this callback
       SvnBranchConfigurationNew branchConfiguration = getBranchConfiguration();
-      String branchRelativeUrl = branchConfiguration != null ? branchConfiguration.getRelativeUrl(mySourceUrl.toString()) : null;
+      String branchRelativeUrl = branchConfiguration != null ? branchConfiguration.getRelativeUrl(mySourceUrl) : null;
 
       if (mySourceUrl == null || branchRelativeUrl == null) {
         myBranchField.setText("");
