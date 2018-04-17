@@ -36,7 +36,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     }
   }
 
-  private class RemoveScheme(private val fileName: String) : SchemeChangeEvent {
+  private data class RemoveScheme(private val fileName: String) : SchemeChangeEvent {
     override fun SchemeFileTracker.execute() {
       val scheme = findExternalizableSchemeByFileName(fileName)
       if (scheme != null) {
@@ -46,13 +46,13 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     }
   }
 
-  private class AddScheme(private val file: VirtualFile) : SchemeChangeEvent {
+  private data class AddScheme(private val file: VirtualFile) : SchemeChangeEvent {
     override fun SchemeFileTracker.execute() {
       schemeCreatedExternally(file)
     }
   }
 
-  private class UpdateScheme(val file: VirtualFile) : SchemeChangeEvent {
+  private data class UpdateScheme(val file: VirtualFile) : SchemeChangeEvent {
     override fun SchemeFileTracker.execute() {
     }
   }
