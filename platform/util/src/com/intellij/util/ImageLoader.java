@@ -252,19 +252,17 @@ public class ImageLoader implements Serializable {
 
       if (retina && dark) {
         list.add(true, true);
+        list.add(true, false); // fallback to non-dark
       }
       else if (dark) {
         list.add(false, true);
+        list.add(false, false); // fallback to non-dark
       }
       else if (retina) {
         list.add(true, false);
       }
       else {
         list.add(false, false);
-      }
-
-      if (dark) {
-        list.add(false, false); // a fallback to non-dark
       }
 
       return list.build();
