@@ -2,8 +2,6 @@
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
@@ -13,21 +11,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class InstancesWindowBase extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance(InstancesWindowBase.class);
 
   protected static final int DEFAULT_WINDOW_WIDTH = 870;
   protected static final int DEFAULT_WINDOW_HEIGHT = 400;
 
-  protected final XDebugSession session;
   protected final String className;
-  protected final Project project;
 
   public InstancesWindowBase(@NotNull XDebugSession session,
                              @NotNull String className) {
     super(session.getProject(), false);
-    this.session = session;
     this.className = className;
-    project = session.getProject();
 
     addWarningMessage(null);
     session.addSessionListener(new XDebugSessionListener() {

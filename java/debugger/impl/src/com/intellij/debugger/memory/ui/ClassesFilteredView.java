@@ -7,15 +7,9 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
-import com.intellij.xdebugger.memory.component.InstancesTracker;
-import com.intellij.xdebugger.memory.event.InstancesTrackerListener;
 import com.intellij.debugger.memory.tracking.ConstructorInstancesTracker;
 import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
-import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.debugger.memory.utils.AndroidUtil;
-import com.intellij.xdebugger.memory.ui.InstancesWindowBase;
-import com.intellij.xdebugger.memory.ui.ReferenceInfo;
-import com.intellij.xdebugger.memory.utils.InstancesProvider;
 import com.intellij.debugger.memory.utils.LowestPriorityCommand;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -26,21 +20,26 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.memory.ui.ClassesFilteredViewBase;
-import com.intellij.xdebugger.memory.ui.TypeInfo;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.request.ClassPrepareRequest;
 import com.intellij.xdebugger.frame.XSuspendContext;
-import com.sun.jdi.VirtualMachine;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.event.InstancesTrackerListener;
+import com.intellij.xdebugger.memory.tracking.TrackingType;
+import com.intellij.xdebugger.memory.ui.ClassesFilteredViewBase;
+import com.intellij.xdebugger.memory.ui.ClassesTable;
+import com.intellij.xdebugger.memory.ui.InstancesWindowBase;
+import com.intellij.xdebugger.memory.ui.TypeInfo;
+import com.intellij.xdebugger.memory.utils.InstancesProvider;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.request.ClassPrepareRequest;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +75,8 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     final InstancesTrackerListener instancesTrackerListener = new InstancesTrackerListener() {
       @Override
       public void classChanged(@NotNull String name, @NotNull TrackingType type) {
-        TypeInfo typeInfo = myTable.getClassByName(name);
+        ClassesTable table = getTable();
+        TypeInfo typeInfo = table.getClassByName(name);
         if (typeInfo == null)
           return;
         ReferenceType ref = ((JavaTypeInfo) typeInfo).getReferenceType();
@@ -89,19 +89,20 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
             }
           });
         }
-        myTable.repaint();
+        table.repaint();
       }
 
       @Override
       public void classRemoved(@NotNull String name) {
-        TypeInfo ref = myTable.getClassByName(name);
+        ClassesTable table = getTable();
+        TypeInfo ref = table.getClassByName(name);
         if (ref == null)
           return;
         JavaTypeInfo javaTypeInfo = (JavaTypeInfo) ref;
         if (myConstructorTrackedClasses.containsKey(javaTypeInfo.getReferenceType())) {
           ConstructorInstancesTracker removed = myConstructorTrackedClasses.remove(javaTypeInfo.getReferenceType());
           Disposer.dispose(removed);
-          myTable.getRowSorter().allRowsChanged();
+          table.getRowSorter().allRowsChanged();
         }
       }
     };
@@ -171,9 +172,10 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         myConstructorTrackedClasses.clear();
       }
     };
-    getMyTable().addMouseMotionListener(new MyMouseMotionListener());
-    getMyTable().addMouseListener(new MyOpenNewInstancesListener());
-    new MyDoubleClickListener().installOn(getMyTable());
+    ClassesTable table = getTable();
+    table.addMouseMotionListener(new MyMouseMotionListener());
+    table.addMouseListener(new MyOpenNewInstancesListener());
+    new MyDoubleClickListener().installOn(table);
   }
   private void trackClass(@NotNull XDebugSession session,
                           @NotNull ReferenceType ref,
@@ -237,7 +239,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
   @Override
   public Object getData(String dataId) {
     if (NEW_INSTANCES_PROVIDER_KEY.is(dataId)) {
-      TypeInfo selectedClass = myTable.getSelectedClass();
+      TypeInfo selectedClass = getTable().getSelectedClass();
       if (selectedClass != null) {
         TrackerForNewInstances strategy = getStrategy(selectedClass);
         if (strategy != null && strategy.isReady()) {
@@ -280,15 +282,16 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
   }
 
   private boolean isShowNewInstancesEvent(@NotNull MouseEvent e) {
-    final int col = getMyTable().columnAtPoint(e.getPoint());
-    final int row = getMyTable().rowAtPoint(e.getPoint());
-    if (col == -1 || row == -1 || getMyTable().convertColumnIndexToModel(col) != DIFF_COLUMN_INDEX) {
+    ClassesTable table = getTable();
+    final int col = table.columnAtPoint(e.getPoint());
+    final int row = table.rowAtPoint(e.getPoint());
+    if (col == -1 || row == -1 || table.convertColumnIndexToModel(col) != DIFF_COLUMN_INDEX) {
       return false;
     }
 
-    final int modelRow = getMyTable().convertRowIndexToModel(row);
+    final int modelRow = table.convertRowIndexToModel(row);
 
-    final JavaTypeInfo ref = (JavaTypeInfo) getMyTable().getModel().getValueAt(modelRow, CLASSNAME_COLUMN_INDEX);
+    final JavaTypeInfo ref = (JavaTypeInfo) table.getModel().getValueAt(modelRow, CLASSNAME_COLUMN_INDEX);
     final ConstructorInstancesTracker tracker = myConstructorTrackedClasses.getOrDefault(ref.getReferenceType(), null);
 
     return tracker != null && tracker.isReady() && tracker.getCount() > 0;
@@ -301,7 +304,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         return;
       }
 
-      TypeInfo selectedTypeInfo = getMyTable().getSelectedClass();
+      TypeInfo selectedTypeInfo = getTable().getSelectedClass();
       final ReferenceType ref = selectedTypeInfo != null ? ((JavaTypeInfo) selectedTypeInfo).getReferenceType(): null;
       final TrackerForNewInstances strategy = ref == null ? null : getStrategy(selectedTypeInfo);
       XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
@@ -330,13 +333,14 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
 
     @Override
     public void mouseMoved(MouseEvent e) {
-      if (myTable.isInClickableMode()) return;
+      ClassesTable table = getTable();
+      if (table.isInClickableMode()) return;
 
       if (isShowNewInstancesEvent(e)) {
-        getMyTable().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        table.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
       else {
-        getMyTable().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        table.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
       }
     }
   }
@@ -345,7 +349,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     @Override
     protected boolean onDoubleClick(MouseEvent event) {
       if (!isShowNewInstancesEvent(event)) {
-        handleClassSelection(getMyTable().getSelectedClass());
+        handleClassSelection(getTable().getSelectedClass());
         return true;
       }
 
@@ -366,18 +370,20 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
       final VirtualMachineProxyImpl proxy = suspendContext.getDebugProcess().getVirtualMachineProxy();
       final List<ReferenceType> classes = proxy.allClasses();
 
+      ClassesTable table = getTable();
+
       if (!classes.isEmpty()) {
         final VirtualMachine vm = classes.get(0).virtualMachine();
         if (vm.canGetInstanceInfo()) {
           final Map<TypeInfo, Long> counts = getInstancesCounts(classes, vm);
-          ApplicationManager.getApplication().invokeLater(() -> getMyTable().updateContent(counts));
+          ApplicationManager.getApplication().invokeLater(() -> table.updateContent(counts));
         }
         else {
-          ApplicationManager.getApplication().invokeLater(() -> getMyTable().updateClassesOnly(classes.stream().map(JavaTypeInfo::new).collect(Collectors.toList())));
+          ApplicationManager.getApplication().invokeLater(() -> table.updateClassesOnly(JavaTypeInfo.wrap(classes)));
         }
       }
 
-      ApplicationManager.getApplication().invokeLater(() -> getMyTable().setBusy(false));
+      ApplicationManager.getApplication().invokeLater(() -> table.setBusy(false));
       viewUpdated();
     }
 

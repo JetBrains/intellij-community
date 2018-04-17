@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -37,20 +36,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implements Disposable {
-  private static final Logger LOG = Logger.getInstance(ClassesFilteredViewBase.class);
   protected static final double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
   protected static final double MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(2);
   protected static final int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
   private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "The application is running";
-  private static final String EMPTY_TABLE_CONTENT_WHEN_SUSPENDED = "Nothing to show";
   private static final String EMPTY_TABLE_CONTENT_WHEN_STOPPED = "Classes are not available";
-  private static final String CLICKABLE_TABLE_CONTENT = "Click to load the classes list";
 
   protected final Project myProject;
   protected final SingleAlarmWithMutableDelay mySingleAlarm;
 
   private final SearchTextField myFilterTextField = new FilterTextField();
-  protected final ClassesTable myTable;
+  private final ClassesTable myTable;
   private final MyDebuggerSessionListener myDebugSessionListener;
 
   // tick on each session paused event
@@ -77,16 +73,16 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     final MemoryViewManagerState memoryViewManagerState = MemoryViewManager.getInstance().getState();
 
     myTable = createClassesTable(memoryViewManagerState);
-    getMyTable().getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
-    Disposer.register(this, getMyTable());
+    myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
+    Disposer.register(this, myTable);
 
 
-    getMyTable().addKeyListener(new KeyAdapter() {
+    myTable.addKeyListener(new KeyAdapter() {
       @Override
       public void keyReleased(KeyEvent e) {
         final int keyCode = e.getKeyCode();
         if (KeyboardUtils.isEnterKey(keyCode)) {
-          handleClassSelection(getMyTable().getSelectedClass());
+          handleClassSelection(myTable.getSelectedClass());
         }
         else if (KeyboardUtils.isCharacter(keyCode) || KeyboardUtils.isBackSpace(keyCode)) {
           final String text = myFilterTextField.getText();
@@ -125,14 +121,14 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     myFilterTextField.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        getMyTable().setFilterPattern(myFilterTextField.getText());
+        myTable.setFilterPattern(myFilterTextField.getText());
       }
     });
 
     final MemoryViewManagerListener memoryViewManagerListener = state -> {
-      getMyTable().setFilteringByDiffNonZero(state.isShowWithDiffOnly);
-      getMyTable().setFilteringByInstanceExists(state.isShowWithInstancesOnly);
-      getMyTable().setFilteringByTrackingState(state.isShowTrackedOnly);
+      myTable.setFilteringByDiffNonZero(state.isShowWithDiffOnly);
+      myTable.setFilteringByInstanceExists(state.isShowWithInstancesOnly);
+      myTable.setFilteringByTrackingState(state.isShowTrackedOnly);
       if (state.isAutoUpdateModeOn && myTable.isInClickableMode()) {
         updateClassesAndCounts(true);
       }
@@ -144,13 +140,13 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     debugSession.addSessionListener(myDebugSessionListener, this);
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(suspendContext -> {
-      ApplicationManager.getApplication().invokeLater(() -> getMyTable().setBusy(true));
+      ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(true));
       scheduleUpdateClassesCommand(suspendContext);
     }, this);
 
     mySingleAlarm.setDelay((int)TimeUnit.MILLISECONDS.toMillis(500));
 
-    getMyTable().addMouseListener(new PopupHandler() {
+    myTable.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu menu = createContextMenu();
@@ -158,7 +154,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
       }
     });
 
-    final JScrollPane scroll = ScrollPaneFactory.createScrollPane(getMyTable(), SideBorder.TOP);
+    final JScrollPane scroll = ScrollPaneFactory.createScrollPane(myTable, SideBorder.TOP);
     final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("MemoryView.SettingsPopupActionGroup");
     group.setPopup(true);
     final Presentation actionsPresentation = new Presentation("Memory View Settings");
@@ -259,7 +255,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     myLastUpdatingTime.set(myTime.get());
   }
 
-  public ClassesTable getMyTable() {
+  public ClassesTable getTable() {
     return myTable;
   }
 

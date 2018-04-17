@@ -14,4 +14,17 @@ public class JavaReferenceInfo implements ReferenceInfo {
   public ObjectReference getObjectReference() {
     return objectReference;
   }
+
+  @Override
+  public int hashCode() {
+    return objectReference.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof JavaReferenceInfo)) {
+      return false;
+    }
+    return ((JavaReferenceInfo)obj).objectReference.equals(objectReference);
+  }
 }

@@ -15,11 +15,11 @@
  */
 package com.intellij.debugger.memory.action;
 
-import com.intellij.xdebugger.memory.ui.ClassesTable;
-import com.intellij.xdebugger.memory.ui.TypeInfo;
+import com.intellij.debugger.memory.ui.JavaTypeInfo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.memory.ui.TypeInfo;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ClassesActionBase extends AnAction {
@@ -42,6 +42,6 @@ public abstract class ClassesActionBase extends AnAction {
 
   @Nullable
   protected TypeInfo getSelectedClass(AnActionEvent e) {
-    return e.getData(ClassesTable.SELECTED_CLASS_KEY);
+    return new JavaTypeInfo(ActionUtil.getSelectedClass(e));
   }
 }

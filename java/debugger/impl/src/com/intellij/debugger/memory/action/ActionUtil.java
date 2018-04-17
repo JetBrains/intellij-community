@@ -16,11 +16,11 @@ public class ActionUtil {
   @Nullable
   public static ReferenceType getSelectedClass(AnActionEvent e) {
     TypeInfo typeInfo = getSelectedTypeInfo(e);
-    return getSelectedClass(typeInfo);
+    return extractReferenceType(typeInfo);
   }
 
   @Nullable
-  public static ReferenceType getSelectedClass(@Nullable TypeInfo typeInfo) {
+  private static ReferenceType extractReferenceType(@Nullable TypeInfo typeInfo) {
     return typeInfo != null ? ((JavaTypeInfo) typeInfo).getReferenceType() : null;
   }
 }

@@ -13,10 +13,15 @@ import java.util.stream.Collectors;
 public class JavaTypeInfo implements TypeInfo {
   private final ReferenceType referenceType;
 
+  public static List<TypeInfo> wrap(List<ReferenceType> types) {
+    return types.stream().map(JavaTypeInfo::new).collect(Collectors.toList());
+  }
+
   public JavaTypeInfo(ReferenceType referenceType) {
     this.referenceType = referenceType;
   }
 
+  @NotNull
   @Override
   public String name() {
     return getReferenceType().name();
@@ -35,5 +40,18 @@ public class JavaTypeInfo implements TypeInfo {
   @Override
   public boolean canGetInstanceInfo() {
     return referenceType.virtualMachine().canGetInstanceInfo();
+  }
+
+  @Override
+  public int hashCode() {
+    return referenceType.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof JavaTypeInfo)) {
+      return false;
+    }
+    return ((JavaTypeInfo)obj).referenceType.equals(referenceType);
   }
 }
