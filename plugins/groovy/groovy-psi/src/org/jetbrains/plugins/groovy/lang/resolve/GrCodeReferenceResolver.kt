@@ -234,11 +234,18 @@ private fun GrCodeReferenceElement.getActualParent(): PsiElement? = containingFi
  * @see org.codehaus.groovy.control.ResolveVisitor.currentClass
  */
 private fun PsiElement.getCurrentClass(): GrTypeDefinition? {
-  var contexts = contexts().filterIsInstance<GrTypeDefinition>()
-  if (context is GrAnonymousClassDefinition) {
-    contexts = contexts.drop(1)
+  for (context in contexts()) {
+    if (context !is GrTypeDefinition) {
+      continue
+    }
+    else if (context is GrAnonymousClassDefinition && this === context.baseClassReferenceGroovy) {
+      continue
+    }
+    else {
+      return context
+    }
   }
-  return contexts.firstOrNull()
+  return null
 }
 
 private fun PsiFile?.skipDummies(): PsiFile? {

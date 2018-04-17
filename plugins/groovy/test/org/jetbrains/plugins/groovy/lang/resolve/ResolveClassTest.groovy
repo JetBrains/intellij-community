@@ -631,5 +631,20 @@ class Foo {
 }''', PsiClass
   }
 
+  void 'test resolve to inner class of outer class of anonymous class'() {
+    resolveByText '''\
+class Foobar {
+  private static class Quuz {}
+  void foo() {
+    new Runnable() {
+      void run() {
+        new <caret>Quuz()
+      }
+    }
+  }
+}
+''', PsiClass
+  }
+
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }
