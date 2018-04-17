@@ -249,14 +249,12 @@ public class CodeCompletionHandlerBase {
     if (indicator.blockingWaitForFinish(ourAutoInsertItemTimeout)) {
       try {
         indicator.getLookup().refreshUi(true, false);
+        completionFinished(indicator, hasModifiers);
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
         LOG.error(e);
-        return;
       }
-
-      completionFinished(indicator, hasModifiers);
       return;
     }
 
