@@ -20,4 +20,17 @@ class Test {
       // toUnmodifiableSet will not preserve order; not suggested here
     return Collections.unmodifiableSet(result);
   }
+
+  Map<String, Integer> map(List<String> input) {
+      return input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toUnmodifiableMap(s -> s, s -> s.length(), (a, b) -> b));
+  }
+
+  Map<String, Integer> map1(List<String> input) {
+      Map<String, Integer> result = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toMap(s -> s, String::length, (a, b) -> b, TreeMap::new));
+      return Collections.unmodifiableMap(result);
+  }
+
+  Map<String, Integer> map2(int[] input) {
+      return Arrays.stream(input).filter(s -> s > 0).boxed().collect(Collectors.toUnmodifiableMap(s -> String.valueOf(s), s -> s, (a, b) -> b));
+  }
 }
