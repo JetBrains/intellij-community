@@ -2,6 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
@@ -30,11 +31,16 @@ class DropAnErrorWithAttachmentsAction : DumbAwareAction("Drop an error with att
   }
 }
 
-class DropPluginErrorAction : DumbAwareAction("Drop an error in a random plugin") {
+class DropPluginErrorAction : DumbAwareAction("Drop an error in a random plugin", "Hold down SHIFT for 3rd-party plugins only", null) {
   override fun actionPerformed(e: AnActionEvent) {
-    val plugins = PluginManager.getPlugins()
-    val victim = plugins[Random().nextInt(plugins.size)]
-    Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, PluginException(TEST_MESSAGE, victim.pluginId))
+    var plugins = PluginManager.getPlugins()
+    if (e.modifiers and InputEvent.SHIFT_MASK != 0) {
+      plugins = plugins.filterNot { PluginManagerMain.isDevelopedByJetBrains(it) }.toTypedArray()
+    }
+    if (plugins.isNotEmpty()) {
+      val victim = plugins[Random().nextInt(plugins.size)]
+      Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, PluginException(TEST_MESSAGE, victim.pluginId))
+    }
   }
 }
 
