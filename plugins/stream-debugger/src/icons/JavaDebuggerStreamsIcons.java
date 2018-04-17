@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -13,6 +14,6 @@ public class JavaDebuggerStreamsIcons {
     return IconLoader.getIcon(path, JavaDebuggerStreamsIcons.class);
   }
 
-  public static final Icon Stream_debugger = load("/icons/stream_debugger.png"); // 16x16
+  public static final Icon Stream_debugger = load("/icons/stream_debugger.svg"); // 16x16
   public static final Icon Tab = load("/icons/tab.png"); // 16x16
 }
