@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
+import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
+
 /**
  * @author peter
  */
@@ -52,7 +54,8 @@ public abstract class GrLiteralClassType extends PsiClassType {
       @Override
       @NotNull
       public PsiSubstitutor getSubstitutor() {
-        return mySubstitutor.getValue();
+        PsiSubstitutor substitutor = doPreventingRecursion(GrLiteralClassType.this, false, () -> mySubstitutor.getValue());
+        return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
       }
 
       @Override
