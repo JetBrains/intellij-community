@@ -248,7 +248,9 @@ class TestingTasksImpl extends TestingTasks {
       if (options.debugPort != -1) {
         debuggerParameter += ",address=$options.debugPort"
       }
+      /* Android Studio: don't open remote debugger port during tests; sometimes ports get scanned!
       jvmArgs.add(debuggerParameter)
+      */
     }
 
     context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
