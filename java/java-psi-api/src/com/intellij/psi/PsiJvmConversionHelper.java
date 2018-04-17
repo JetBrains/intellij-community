@@ -5,13 +5,10 @@ import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.psi.PsiType.getJavaLangObject;
 import static com.intellij.psi.PsiType.getTypeByName;
@@ -19,21 +16,25 @@ import static com.intellij.psi.PsiType.getTypeByName;
 class PsiJvmConversionHelper {
 
   private static final Logger LOG = Logger.getInstance(PsiJvmConversionHelper.class);
-  private static final Map<String, JvmModifier> MODIFIERS = ContainerUtil.<String, JvmModifier>immutableMapBuilder()
-    .put(PsiModifier.PUBLIC, JvmModifier.PUBLIC)
-    .put(PsiModifier.PROTECTED, JvmModifier.PROTECTED)
-    .put(PsiModifier.PRIVATE, JvmModifier.PRIVATE)
-    .put(PsiModifier.PACKAGE_LOCAL, JvmModifier.PACKAGE_LOCAL)
-    .put(PsiModifier.STATIC, JvmModifier.STATIC)
-    .put(PsiModifier.ABSTRACT, JvmModifier.ABSTRACT)
-    .put(PsiModifier.FINAL, JvmModifier.FINAL)
-    .put(PsiModifier.NATIVE, JvmModifier.NATIVE)
-    .put(PsiModifier.SYNCHRONIZED, JvmModifier.SYNCHRONIZED)
-    .put(PsiModifier.STRICTFP, JvmModifier.STRICTFP)
-    .put(PsiModifier.TRANSIENT, JvmModifier.TRANSIENT)
-    .put(PsiModifier.VOLATILE, JvmModifier.VOLATILE)
-    .put(PsiModifier.TRANSITIVE, JvmModifier.TRANSITIVE)
-    .build();
+  private static final Map<JvmModifier, String> MODIFIERS;
+
+  static {
+    Map<JvmModifier, String> modifiers = new EnumMap<>(JvmModifier.class);
+    modifiers.put(JvmModifier.PUBLIC, PsiModifier.PUBLIC);
+    modifiers.put(JvmModifier.PROTECTED, PsiModifier.PROTECTED);
+    modifiers.put(JvmModifier.PRIVATE, PsiModifier.PRIVATE);
+    modifiers.put(JvmModifier.PACKAGE_LOCAL, PsiModifier.PACKAGE_LOCAL);
+    modifiers.put(JvmModifier.STATIC, PsiModifier.STATIC);
+    modifiers.put(JvmModifier.ABSTRACT, PsiModifier.ABSTRACT);
+    modifiers.put(JvmModifier.FINAL, PsiModifier.FINAL);
+    modifiers.put(JvmModifier.NATIVE, PsiModifier.NATIVE);
+    modifiers.put(JvmModifier.SYNCHRONIZED, PsiModifier.SYNCHRONIZED);
+    modifiers.put(JvmModifier.STRICTFP, PsiModifier.STRICTFP);
+    modifiers.put(JvmModifier.TRANSIENT, PsiModifier.TRANSIENT);
+    modifiers.put(JvmModifier.VOLATILE, PsiModifier.VOLATILE);
+    modifiers.put(JvmModifier.TRANSITIVE, PsiModifier.TRANSITIVE);
+    MODIFIERS = Collections.unmodifiableMap(modifiers);
+  }
 
   @NotNull
   static PsiAnnotation[] getListAnnotations(@NotNull PsiModifierListOwner modifierListOwner) {
@@ -55,12 +56,16 @@ class PsiJvmConversionHelper {
   @NotNull
   static JvmModifier[] getListModifiers(@NotNull PsiModifierListOwner modifierListOwner) {
     final Set<JvmModifier> result = EnumSet.noneOf(JvmModifier.class);
-    MODIFIERS.forEach((psi, jvm) -> {
+    MODIFIERS.forEach((jvm, psi) -> {
       if (modifierListOwner.hasModifierProperty(psi)) {
         result.add(jvm);
       }
     });
     return result.toArray(JvmModifier.EMPTY_ARRAY);
+  }
+
+  static boolean hasListModifier(@NotNull PsiModifierListOwner modifierListOwner, @NotNull JvmModifier modifier) {
+    return modifierListOwner.hasModifierProperty(MODIFIERS.get(modifier));
   }
 
   @NotNull
