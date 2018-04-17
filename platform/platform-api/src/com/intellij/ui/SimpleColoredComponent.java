@@ -830,7 +830,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       if (!secondPass) {
         if (shouldDrawMacShadow()) {
-          g.setColor(SHADOW_COLOR);
+          g.setColor(ColorUtil.srcOver(SHADOW_COLOR, getBackground()));
           doDrawString(g, i, offset, textBaseline + 1);
         }
 

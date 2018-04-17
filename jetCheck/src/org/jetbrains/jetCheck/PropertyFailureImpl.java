@@ -67,7 +67,7 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
 
   @Override
   public long getGlobalSeed() {
-    return iteration.session.globalSeed;
+    return iteration.session.parameters.globalSeed;
   }
 
   @Override

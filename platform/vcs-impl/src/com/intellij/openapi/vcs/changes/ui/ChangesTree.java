@@ -19,12 +19,17 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SmartExpander;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -63,7 +68,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull private final ChangesGroupingSupport myGroupingSupport;
   private boolean myIsModelFlat;
 
-  @NotNull private Set<Object> myIncludedChanges = new THashSet<>();
+  @NotNull private TObjectHashingStrategy<Object> myInclusionHashingStrategy = ContainerUtil.canonicalStrategy();
+  @NotNull private Set<Object> myIncludedChanges = new THashSet<>(myInclusionHashingStrategy);
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myKeepTreeState = false;
 
@@ -76,7 +82,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
-  private TreeState myDirectoryTreeState;
 
   public ChangesTree(@NotNull Project project,
                      boolean showCheckboxes,
@@ -165,8 +170,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     migrateShowFlattenSetting();
     myGroupingSupport
       .setGroupingKeysOrSkip(set(notNull(PropertiesComponent.getInstance(myProject).getValues(GROUPING_KEYS), DEFAULT_GROUPING_KEYS)));
-    //noinspection unchecked
-    myGroupingSupport.addPropertyChangeListener(e -> changeGrouping((Set<String>)e.getOldValue(), (Set<String>)e.getNewValue()));
+    myGroupingSupport.addPropertyChangeListener(e -> changeGrouping());
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     setEmptyText(emptyText);
@@ -230,19 +234,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return myShowCheckboxes;
   }
 
-  private void changeGrouping(@NotNull Set<String> oldGrouping, @NotNull Set<String> newGrouping) {
-    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, toStringArray(newGrouping));
+  private void changeGrouping() {
+    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, toStringArray(getGroupingSupport().getGroupingKeys()));
 
-    final List<Object> oldSelection = getSelectedUserObjects();
-    if (myKeepTreeState && oldGrouping.contains(DIRECTORY_GROUPING)) {
-      myDirectoryTreeState = TreeState.createOn(this, getRoot());
-    }
-
+    List<Object> oldSelection = getSelectedUserObjects();
     rebuildTree();
-
-    if (myKeepTreeState && newGrouping.contains(DIRECTORY_GROUPING) && myDirectoryTreeState != null) {
-      myDirectoryTreeState.applyTo(this, getRoot());
-    }
     setSelectedChanges(oldSelection);
   }
 
@@ -293,7 +289,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     int selectedTreeRow = -1;
 
     if (myShowCheckboxes) {
-      if (myIncludedChanges.size() > 0) {
+      if (!getIncludedSet().isEmpty()) {
         ChangesBrowserNode root = getRoot();
         Enumeration enumeration = root.depthFirstEnumeration();
 
@@ -391,6 +387,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
 
   public void setInclusionHashingStrategy(@NotNull TObjectHashingStrategy<Object> strategy) {
+    myInclusionHashingStrategy = strategy;
     Set<Object> oldInclusion = myIncludedChanges;
     myIncludedChanges = new THashSet<>(strategy);
     myIncludedChanges.addAll(oldInclusion);
@@ -452,7 +449,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull
   public Set<Object> getIncludedSet() {
-    return Collections.unmodifiableSet(myIncludedChanges);
+    return new THashSet<>(myIncludedChanges, myInclusionHashingStrategy);
   }
 
   public void expandAll() {
@@ -625,7 +622,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
 
     if (file != null) {
-      return FileColorManager.getInstance(myProject).getFileColor(file);
+      return VfsPresentationUtil.getFileBackgroundColor(myProject, file);
     }
     return super.getFileColorFor(object);
   }

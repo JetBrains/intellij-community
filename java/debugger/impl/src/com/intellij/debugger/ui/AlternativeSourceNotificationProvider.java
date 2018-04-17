@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -172,7 +170,7 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
           if (session != null && vFile != null) {
             session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
               @Override
-              protected void action() throws Exception {
+              protected void action() {
                 if (!StringUtil.isEmpty(locationDeclName)) {
                   DebuggerUtilsEx.setAlternativeSourceUrl(locationDeclName, vFile.getUrl(), project);
                 }

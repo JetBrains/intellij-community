@@ -13,13 +13,13 @@ class MiscIntermediateOperationsTest : StreamExTestCase() {
 
   fun testSkipOrdered() = doStreamExWithResultTest()
 
-  fun testParallel() = doStreamExWithResultTest()
+  fun testParallel() = doStreamExVoidTest()
 
-  fun testZipWithSameSizes() = doStreamExWithResultTest()
-  fun testZipWithLesser() = doStreamExWithResultTest()
-  fun testZipWithGreater() = doStreamExWithResultTest()
+  fun testZipWithSameSizes() = doStreamExVoidTest()
+  fun testZipWithLesser() = doStreamExVoidTest()
+  fun testZipWithGreater() = doStreamExVoidTest()
 
   fun testPrefix() = doStreamExVoidTest()
-  fun testPrefixKeys() = doStreamExWithResultTest()
-  fun testPrefixValues() = doStreamExWithResultTest()
+  fun testPrefixKeys() = doStreamExVoidTest()
+  fun testPrefixValues() = doStreamExVoidTest()
 }

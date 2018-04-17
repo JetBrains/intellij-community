@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
@@ -67,7 +53,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       }
       names.add(name);
     }
-
+    if (fromUpdate) return elements.length > 0;
     PsiElement[] filteredElements = PsiTreeUtil.filterAncestors(elements);
     return filteredElements.length == elements.length;
   }
@@ -291,12 +277,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       PsiFile file = (PsiFile)elementToCopy;
       String name = newName == null ? file.getName() : newName;
       if (checkFileExist(targetDirectory, choice, file, name, "Copy")) return null;
-      return new WriteCommandAction<PsiFile>(targetDirectory.getProject(), title) {
-        @Override
-        protected void run(@NotNull Result<PsiFile> result) throws Throwable {
-          result.setResult(targetDirectory.copyFileFrom(name, file));
-        }
-      }.execute().getResultObject();
+      return WriteCommandAction.writeCommandAction(targetDirectory.getProject()).withName(title)
+                               .compute(() -> targetDirectory.copyFileFrom(name, file));
     }
     else if (elementToCopy instanceof PsiDirectory) {
       PsiDirectory directory = (PsiDirectory)elementToCopy;
@@ -308,12 +290,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       final PsiDirectory subdirectory;
       if (existing == null) {
         String finalNewName = newName;
-        subdirectory = new WriteCommandAction<PsiDirectory>(targetDirectory.getProject(), title) {
-          @Override
-          protected void run(@NotNull Result<PsiDirectory> result) throws Throwable {
-            result.setResult(targetDirectory.createSubdirectory(finalNewName));
-          }
-        }.execute().getResultObject();
+        subdirectory = WriteCommandAction.writeCommandAction(targetDirectory.getProject()).withName(title)
+                                         .compute(() -> targetDirectory.createSubdirectory(finalNewName));
       }
       else {
         subdirectory = existing;

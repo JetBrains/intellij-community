@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.concurrency.JobScheduler;
@@ -86,7 +84,7 @@ public class ThreadBlockedMonitor {
           notification.expire();
           process.getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
-            protected void action() throws Exception {
+            protected void action() {
               ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
               SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
               process.getManagerThread()
@@ -105,7 +103,7 @@ public class ThreadBlockedMonitor {
   private void checkBlockingThread() {
     myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
-      protected void action() throws Exception {
+      protected void action() {
         if (myWatchedThreads.isEmpty()) return;
         VirtualMachineProxyImpl vmProxy = myProcess.getVirtualMachineProxy();
         //TODO: can we do fast check without suspending all

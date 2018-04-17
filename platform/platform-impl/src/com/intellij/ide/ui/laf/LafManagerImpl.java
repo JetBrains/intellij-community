@@ -30,6 +30,7 @@ import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -797,8 +798,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
       Window window = UIUtil.getWindow(contents);
       String cleanupKey = "LafManagerImpl.rootPaneCleanup";
-      if (window instanceof RootPaneContainer && window != UIUtil.getWindow(owner) &&
-          ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
+      boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != UIUtil.getWindow(owner);
+      if (isHeavyWeightPopup) {
+        UIUtil.markAsTypeAheadAware(window);
+      }
+      if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
           @Override
@@ -917,9 +921,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static class Win10MenuArrowIcon extends MenuArrowIcon {
     private static final String NAME = "menuTriangle";
     private Win10MenuArrowIcon() {
-      super(IconCache.getIcon(NAME, false, false, true),
-            IconCache.getIcon(NAME, true, false, true),
-            IconCache.getIcon(NAME, false, false, false));
+      super(IconCache.getIcon(NAME),
+            IconCache.getSelectedIcon(NAME),
+            IconCache.getDisabledIcon(NAME));
     }
   }
 }

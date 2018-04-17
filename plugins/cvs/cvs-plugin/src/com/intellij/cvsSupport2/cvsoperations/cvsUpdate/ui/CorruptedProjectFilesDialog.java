@@ -27,7 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Options;
+import com.intellij.cvsSupport2.Options;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

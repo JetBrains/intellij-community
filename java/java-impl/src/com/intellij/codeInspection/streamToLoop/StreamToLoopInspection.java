@@ -50,7 +50,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   // To quickly filter out most of the non-interesting method calls
   private static final Set<String> SUPPORTED_TERMINALS = ContainerUtil.set(
     "count", "sum", "summaryStatistics", "reduce", "collect", "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch", "toArray",
-    "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet");
+    "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet", "toImmutableList", "toImmutableSet");
 
   @SuppressWarnings("PublicField")
   public boolean SUPPORT_UNKNOWN_SOURCES = false;
@@ -500,6 +500,22 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       }
       setFinisher(name);
       return name;
+    }
+
+    public boolean tryUnwrapOrElse(@NotNull Number wantedValue) {
+      if (!(myStreamExpression instanceof PsiExpression)) return false;
+      PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myStreamExpression);
+      if (call == null ||
+          call.getParent() instanceof PsiExpressionStatement ||
+          !"orElse".equals(call.getMethodExpression().getReferenceName())) {
+        return false;
+      }
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length == 1 && wantedValue.equals(ExpressionUtils.computeConstantExpression(args[0]))) {
+        myStreamExpression = call;
+        return true;
+      }
+      return false;
     }
 
     private static boolean isCompatibleType(@NotNull PsiVariable var, @NotNull PsiType type, @Nullable String mostAbstractAllowedType) {

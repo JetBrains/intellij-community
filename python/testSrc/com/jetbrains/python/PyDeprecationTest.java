@@ -98,6 +98,13 @@ public class PyDeprecationTest extends PyTestCase {
 
     assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());
     assertNotParsed(file);
-    
+  }
+
+  // PY-28053
+  public void testHashlibMd5() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.copyDirectoryToProject("deprecation/hashlibMd5", "");
+    myFixture.configureByFile("a.py");
+    myFixture.checkHighlighting(true, false, false);
   }
 }

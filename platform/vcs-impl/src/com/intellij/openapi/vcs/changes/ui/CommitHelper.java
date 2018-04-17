@@ -37,7 +37,6 @@ import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
@@ -129,6 +128,7 @@ public class CommitHelper {
       notNull(resultHandler, new DefaultCommitResultHandler(myProject, myIncludedChanges, myCommitMessage, myCommitProcessor, myFeedback));
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   public boolean doCommit() {
     Task.Backgroundable task = new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
       public void run(@NotNull ProgressIndicator indicator) {
@@ -138,7 +138,6 @@ public class CommitHelper {
           delegateCommitToVcsThread();
         }
         finally {
-          LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
           vcsManager.stopBackgroundVcsOperation();
         }
       }
@@ -154,7 +153,7 @@ public class CommitHelper {
       }
     };
     ProgressManager.getInstance().run(task);
-    return hasOnlyWarnings(myCommitProcessor.getVcsExceptions());
+    return true;
   }
 
   private void delegateCommitToVcsThread() {

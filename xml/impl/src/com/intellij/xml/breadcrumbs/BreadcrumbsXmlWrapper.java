@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
@@ -36,6 +22,8 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -47,6 +35,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.availability.PsiAvailabilityService;
 import com.intellij.ui.Gray;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
@@ -93,6 +82,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true, breadcrumbs);
   private final BreadcrumbsProvider myInfoProvider;
   private final Update myUpdate = new MyUpdate(this);
+  private ProgressIndicator myPsiAvaiableProgress = null;
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
 
@@ -130,13 +120,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       }
     };
 
-    editor.getCaretModel().addCaretListener(caretListener);
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        editor.getCaretModel().removeCaretListener(caretListener);
-      }
-    });
+    editor.getCaretModel().addCaretListener(caretListener, this);
 
     PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
@@ -221,10 +205,21 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   private void updateCrumbs() {
-    if (breadcrumbs != null && myEditor != null && !myEditor.isDisposed()) {
-      breadcrumbs.setFont(getNewFont(myEditor));
-      updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
+    if (myEditor == null || myEditor.isDisposed()) return;
+
+    if (myPsiAvaiableProgress != null) {
+      myPsiAvaiableProgress.cancel();
     }
+
+    ProgressIndicator progress = new ProgressIndicatorBase();
+    myPsiAvaiableProgress = progress;
+
+    PsiAvailabilityService.getInstance(myProject).performWhenPsiAvailable(myEditor.getDocument(), () -> {
+      if (!progress.isCanceled() && myFile != null && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
+        breadcrumbs.setFont(getNewFont(myEditor));
+        updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
+      }
+    }, progress);
   }
 
   public void queueUpdate() {
@@ -399,16 +394,11 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   private void updateCrumbs(final LogicalPosition position) {
-    if (myFile != null && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
-      if (!breadcrumbs.isShowing()) {
-        breadcrumbs.setCrumbs(null);
-        return;
-      }
-      if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
-        return;
-      }
-      breadcrumbs.setCrumbs(getPresentableLineElements(position, myFile, myEditor, myProject, myInfoProvider));
+    if (!breadcrumbs.isShowing()) {
+      breadcrumbs.setCrumbs(null);
+      return;
     }
+    breadcrumbs.setCrumbs(getPresentableLineElements(position, myFile, myEditor, myProject, myInfoProvider));
   }
 
   @Nullable

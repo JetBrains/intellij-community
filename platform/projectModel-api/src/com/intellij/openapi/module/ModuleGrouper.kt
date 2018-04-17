@@ -42,7 +42,22 @@ abstract class ModuleGrouper {
    */
   abstract fun getShortenedName(module: Module): String
 
+  /**
+   * Returns name which should be used for a module when it's shown under its ancestor group which qualified name is [parentGroupName].
+   * If [parentGroupName] is `null` returns the full module name.
+   */
+  abstract fun getShortenedName(module: Module, parentGroupName: String?): String
+
+  /**
+   * Returns name which should be used for a module with name [name] when it's shown under its group
+   */
   abstract fun getShortenedNameByFullModuleName(name: String): String
+
+  /**
+   * Returns name which should be used for a module with name [name] when it's shown under its ancestor group which qualified name is [parentGroupName].
+   * If [parentGroupName] is `null` returns the full module name.
+   */
+  abstract fun getShortenedNameByFullModuleName(name: String, parentGroupName: String?): String
 
   abstract fun getGroupPathByModuleName(name: String): List<String>
 
@@ -57,6 +72,24 @@ abstract class ModuleGrouper {
   abstract fun getModuleAsGroupPath(description: ModuleDescription): List<String>?
 
   abstract fun getAllModules(): Array<Module>
+
+  /**
+   * Determines whether module group nodes containing single child should be joined with the child nodes. E.g. the modules `foo.bar.baz`
+   * and `foo.bar.baz2` will form the following tree if [compactGroupNodes] is `false`
+   * ```
+   * foo
+   *  bar
+   *   baz
+   *   baz2
+   * ```
+   * and the following tree if [compactGroupNodes] is `true`:
+   * ```
+   * foo.bar
+   *  baz
+   *  baz2
+   * ```
+   */
+  abstract val compactGroupNodes: Boolean
 
   companion object {
     @JvmStatic

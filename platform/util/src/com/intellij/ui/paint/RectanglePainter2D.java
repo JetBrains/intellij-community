@@ -29,6 +29,11 @@ import static com.intellij.ui.paint.PaintUtil.alignToInt;
  */
 public enum RectanglePainter2D implements RegionPainter2D<Double> {
   DRAW {
+    @Override
+    public void paint(Graphics2D g, double x, double y, double width, double height, @Nullable Double arc) {
+      paint(g, x, y, width, height, arc, StrokeType.INSIDE, 1, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+    }
+
     /**
      * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
      */
@@ -132,6 +137,11 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
   },
 
   FILL {
+    @Override
+    public void paint(Graphics2D g, double x, double y, double width, double height, @Nullable Double arc) {
+      paint(g, x, y, width, height, arc, StrokeType.INSIDE, 1, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+    }
+
     /**
      * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
      */
@@ -261,4 +271,43 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
     }
     return new Rectangle2D.Double(x, y, prefWidth, prefHeight);
   }
+
+  /**
+   * Paints on the given {@link Graphics2D} object.
+   * Renders to the given {@link Graphics2D} object.
+   *
+   * @param g the {@code Graphics2D} object to render to
+   * @param x X position of the area to paint
+   * @param y Y position of the area to paint
+   * @param width width of the area to paint
+   * @param g      the {@code Graphics2D} object to render to
+   * @param x      X position of the area to paint
+   * @param y      Y position of the area to paint
+   * @param width  width of the area to paint
+   * @param height height of the area to paint
+   * @param object an optional configuration parameter
+   * @param strokeType the stroke type
+   * @param strokeWidth the stroke width
+   * @param valueAA overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
+   */
+  public abstract void paint(@NotNull Graphics2D g,
+                             double x, double y, double width, double height,
+                             @Nullable Double arc,
+                             @NotNull StrokeType strokeType,
+                             double strokeWidth,
+                             @NotNull Object valueAA);
+
+  public abstract void paint(@NotNull Graphics2D g,
+                             double x, double y, double width, double height,
+                             @NotNull StrokeType strokeType,
+                             double strokeWidth);
+
+  public abstract void paint(@NotNull Graphics2D g, double x, double y, double width, double height);
+
+  public abstract void paint(@NotNull final Graphics2D g,
+                             Rectangle2D rect,
+                             @Nullable Double arc,
+                             @NotNull StrokeType strokeType,
+                             double strokeWidth,
+                             @NotNull Object valueAA);
 }

@@ -167,7 +167,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
     return false;
   }
 
-  private static void autoIndent(@NotNull Editor editor) {
+  public static void autoIndent(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project != null) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);

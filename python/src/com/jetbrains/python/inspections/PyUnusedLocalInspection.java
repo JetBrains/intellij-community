@@ -35,22 +35,24 @@ public class PyUnusedLocalInspection extends PyInspection {
   public boolean ignoreTupleUnpacking = true;
   public boolean ignoreLambdaParameters = true;
   public boolean ignoreLoopIterationVariables = true;
+  public boolean ignoreVariablesStartingWithUnderscore = true;
 
+  @Override
   @NotNull
   @Nls
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.unused");
   }
 
+  @Override
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     final PyUnusedLocalInspectionVisitor visitor = new PyUnusedLocalInspectionVisitor(holder,
                                                                                       session,
                                                                                       ignoreTupleUnpacking,
                                                                                       ignoreLambdaParameters,
-                                                                                      ignoreLoopIterationVariables);
+                                                                                      ignoreLoopIterationVariables,
+                                                                                      ignoreVariablesStartingWithUnderscore);
     // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
     final PyUnusedLocalInspectionVisitor existingVisitor = session.getUserData(KEY);
     if (existingVisitor == null) {
@@ -70,10 +72,11 @@ public class PyUnusedLocalInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Ignore variables used in tuple unpacking", "ignoreTupleUnpacking");
     panel.addCheckbox("Ignore lambda parameters", "ignoreLambdaParameters");
     panel.addCheckbox("Ignore range iteration variables", "ignoreLoopIterationVariables");
+    panel.addCheckbox("Ignore variables starting with '_'", "ignoreVariablesStartingWithUnderscore");
     return panel;
   }
 }

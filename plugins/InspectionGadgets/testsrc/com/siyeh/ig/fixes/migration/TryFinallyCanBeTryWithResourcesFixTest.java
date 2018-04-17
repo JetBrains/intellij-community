@@ -25,6 +25,7 @@ public class TryFinallyCanBeTryWithResourcesFixTest extends IGQuickFixesTestCase
 
   public void testComments() { doTest(); }
   public void testMultiple() { doTest(); }
+  public void testMultipleNoReorder() { doTest(); }
   public void testDependents() { doTest(); }
   public void testKeepResourceCallInBlock() { doTest(); }
   public void testTryInCatchBlock() { doTest(); }

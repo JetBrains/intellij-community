@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.VisualPaddingsProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
@@ -26,6 +14,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sun.swing.DefaultLookup;
 
 import javax.swing.*;
@@ -33,6 +22,8 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
@@ -47,12 +38,13 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("GtkPreferredJComboBoxRenderer")
-public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
+public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable, VisualPaddingsProvider {
 
   public DarculaComboBoxUI() {}
 
+  @SuppressWarnings("unused")
   @Deprecated
-  public DarculaComboBoxUI(JComboBox unused) {}
+  public DarculaComboBoxUI(JComboBox c) {}
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(final JComponent c) {
@@ -83,6 +75,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       comboBox.removePropertyChangeListener(propertyListener);
       propertyListener = null;
     }
+  }
+
+  @Override
+  protected ComboPopup createPopup() {
+    return new CustomComboPopup(comboBox);
   }
 
   protected PropertyChangeListener createPropertyListener() {
@@ -142,8 +139,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
       @Override
       public Dimension getPreferredSize() {
-        Insets i = comboBox.getInsets();
-        return new Dimension(JBUI.scale(16) + i.left, JBUI.scale(22) + i.top + i.bottom);
+        return getArrowButtonPreferredSize(comboBox);
       }
     };
     button.setBorder(JBUI.Borders.empty());
@@ -153,6 +149,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   protected Color getArrowButtonFillColor(Color defaultColor) {
     return DarculaUIUtil.getArrowButtonFillColor(comboBox.hasFocus(), comboBox.isEnabled(), defaultColor);
+  }
+
+  @NotNull
+  static Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
+    Insets i = comboBox != null ? comboBox.getInsets() : getDefaultComboBoxInsets();
+    return new Dimension(JBUI.scale(16) + i.left, JBUI.scale(22) + i.top + i.bottom);
   }
 
   static Shape getArrowShape(Component button) {
@@ -173,9 +175,14 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return path;
   }
 
+  @NotNull
+  private static JBInsets getDefaultComboBoxInsets() {
+    return JBUI.insets(4, 8, 4, 4);
+  }
+
   @Override
   protected Insets getInsets() {
-    return JBUI.insets(4, 8, 4, 4).asUIResource();
+    return getDefaultComboBoxInsets().asUIResource();
   }
 
   @Override
@@ -220,7 +227,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
     ListCellRenderer renderer = comboBox.getRenderer();
-    Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
+    @SuppressWarnings("unchecked") Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
 
     if (!hasFocus || isPopupVisible(comboBox)) {
       c.setBackground(UIManager.getColor("ComboBox.background"));
@@ -496,5 +503,37 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       }
       editor.setBounds(er);
     }
+  }
+
+  // Wide popup that uses preferred size
+  protected static class CustomComboPopup extends BasicComboPopup {
+    public CustomComboPopup(JComboBox combo) {
+      super(combo);
+    }
+
+    @Override
+    public void show(Component invoker, int x, int y) {
+      if (comboBox instanceof ComboBoxWithWidePopup) {
+        Dimension popupSize = comboBox.getSize();
+        int minPopupWidth = ((ComboBoxWithWidePopup)comboBox).getMinimumPopupWidth();
+        Insets insets = getInsets();
+
+        popupSize.width = Math.max(popupSize.width, minPopupWidth);
+        popupSize.setSize(popupSize.width - (insets.right + insets.left), getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
+
+        scroller.setMaximumSize(popupSize);
+        scroller.setPreferredSize(popupSize);
+        scroller.setMinimumSize(popupSize);
+
+        list.revalidate();
+      }
+      super.show(invoker, x, y);
+    }
+  }
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(3);
   }
 }

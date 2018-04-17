@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.laf.IntelliJLaf;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -33,6 +19,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
@@ -53,6 +40,8 @@ import static javax.swing.SwingConstants.WEST;
  * @author Konstantin Bulenkov
  */
 public class DarculaUIUtil {
+  public static final int DARCULA_INPUT_HEIGHT = 24;
+
   @SuppressWarnings("UseJBColor")
   private static final Color MAC_ACTIVE_ERROR_COLOR = new Color(0x80f53b3b, true);
   private static final Color DEFAULT_ACTIVE_ERROR_COLOR = new JBColor(0xe53e4d, 0x8b3c3c);
@@ -75,10 +64,11 @@ public class DarculaUIUtil {
   public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
   public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
 
-  private static final Color MAC_REGULAR_COLOR = new JBColor(new Color(0x80479cfc, true), new Color(0x395d82));
-  private static final Color DEFAULT_REGULAR_COLOR = new JBColor(new Color(0x8ab2eb), new Color(0x395d82));
+  private static final Color REGULAR_COLOR = new JBColor(() -> {
+    Color c = UIManager.getColor("Focus.Color");
+    return c != null ? c : new JBColor(0x8ab2eb, 0x395d82); // TODO: move to JBUI. This is a temporary fix.
+  });
 
-  private static final Color REGULAR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_REGULAR_COLOR : DEFAULT_REGULAR_COLOR);
   private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
   public enum Outline {
@@ -112,7 +102,7 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
-    g.setPaint(IntelliJLaf.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
+    g.setPaint(UIUtil.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
 
     float blw = bw() + lw(g);
     Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
@@ -136,14 +126,14 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    g.setPaint(IntelliJLaf.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
+    g.setPaint(UIUtil.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
     doPaint(g, width, height, arc, symmetric);
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
   private static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
     float bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : bw();
-    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : JBUI.scale(0.5f);
+    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : lw(g);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -391,8 +381,9 @@ public class DarculaUIUtil {
     }
   }
 
+  @SuppressWarnings("unused")
   public static float lw(Graphics2D g2) {
-    return UIUtil.isJreHiDPI(g2) ? JBUI.scale(0.5f) : 1.0f;
+    return JBUI.scale(1.0f);
   }
 
   public static float bw() {
@@ -401,6 +392,10 @@ public class DarculaUIUtil {
 
   public static float arc() {
     return JBUI.scale(5.0f);
+  }
+
+  public static float buttonArc() {
+    return JBUI.scale(JBUI.getInt("Button.arc", 0));
   }
 
   public static Color getOutlineColor(boolean enabled) {
@@ -417,5 +412,16 @@ public class DarculaUIUtil {
 
   public static boolean isEmpty(Dimension d) {
     return d == null || d.width == 0 && d.height == 0;
+  }
+
+  public static Color getButtonTextColor(@NotNull AbstractButton button) {
+    Color fg = button.getForeground();
+    if (fg instanceof UIResource && DarculaButtonUI.isDefaultButton(button)) {
+      Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
+      if (selectedFg != null) {
+        return selectedFg;
+      }
+    }
+    return fg;
   }
 }

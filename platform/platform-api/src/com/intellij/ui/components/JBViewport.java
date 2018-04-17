@@ -317,8 +317,16 @@ public class JBViewport extends JViewport implements ZoomableViewport {
            (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && ScrollSettings.isGapNeededForAnyComponent()));
   }
 
-  static Insets getViewInsets(JComponent view) {
+  private static Insets getInnerInsets(JComponent view) {
+    Border border = view.getBorder();
+    if (border instanceof ViewBorder) {
+      ViewBorder vb = (ViewBorder)border;
+      border = vb.myBorder;
+    }
+    return border == null ? null : border.getBorderInsets(view);
+  }
 
+  static Insets getViewInsets(JComponent view) {
     Border border = view.getBorder();
     if (border instanceof ViewBorder) {
       ViewBorder vb = (ViewBorder)border;
@@ -515,7 +523,15 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     if (view instanceof JList) return getPreferredScrollableViewportSize((JList)view);
     if (view instanceof JTree) return getPreferredScrollableViewportSize((JTree)view);
     if (view instanceof Scrollable) return ((Scrollable)view).getPreferredScrollableViewportSize();
+    if (view instanceof JComponent) return getPreferredSizeWithoutScrollBars((JComponent)view);
     return view == null ? null : view.getPreferredSize();
+  }
+
+  private static Dimension getPreferredSizeWithoutScrollBars(@NotNull JComponent view) {
+    Dimension size = view.getPreferredSize();
+    if (size == null) return new Dimension();
+    JBInsets.removeFrom(size, getViewInsets(view));
+    return size;
   }
 
   private static Class<?> getPreferredScrollableViewportSizeDeclaringClass(@NotNull Scrollable scrollable) {
@@ -531,7 +547,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     if (JList.class != getPreferredScrollableViewportSizeDeclaringClass(list)) {
       return list.getPreferredScrollableViewportSize(); // may be null
     }
-    Dimension size = list.getPreferredSize();
+    Dimension size = getPreferredSizeWithoutScrollBars(list);
     if (size == null) return new Dimension();
     if (JList.VERTICAL != list.getLayoutOrientation()) return size;
 
@@ -550,7 +566,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
 
     boolean addExtraSpace = 0 < visibleRows && visibleRows < modelRows && Registry.is("ide.preferred.scrollable.viewport.extra.space");
-    Insets insets = list.getInsets();
+    Insets insets = getInnerInsets(list);
     size.height = insets != null ? insets.top + insets.bottom : 0;
     if (0 < fixedWidth && 0 < fixedHeight) {
       size.width = insets != null ? insets.left + insets.right + fixedWidth : fixedWidth;
@@ -576,7 +592,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     if (JTree.class != getPreferredScrollableViewportSizeDeclaringClass(tree)) {
       return tree.getPreferredScrollableViewportSize(); // may be null
     }
-    Dimension size = tree.getPreferredSize();
+    Dimension size = getPreferredSizeWithoutScrollBars(tree);
     if (size == null) return new Dimension();
 
     int fixedHeight = tree.getRowHeight();
@@ -590,7 +606,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
 
     boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
-    Insets insets = tree.getInsets();
+    Insets insets = getInnerInsets(tree);
     size.height = insets != null ? insets.top + insets.bottom : 0;
     if (0 < fixedHeight) {
       size.height += fixedHeight * visibleRows;

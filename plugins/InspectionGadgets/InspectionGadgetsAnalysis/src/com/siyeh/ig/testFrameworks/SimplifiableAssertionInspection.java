@@ -26,8 +26,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.EqualityCheck;
 import com.siyeh.ig.psiutils.ImportUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,15 +102,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       final PsiType type = lhs.getType();
       return type != null && TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(type);
     }
-    else if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      if (!MethodCallUtils.isEqualsCall(call)) {
-        return false;
-      }
-      final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      return methodExpression.getQualifierExpression() != null;
-    }
-    return false;
+    return EqualityCheck.from(expression) != null;
   }
 
   private static boolean isIdentityComparison(PsiExpression expression) {
@@ -235,13 +227,12 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         lhs = binaryExpression.getLOperand();
         rhs = binaryExpression.getROperand();
       }
-      else if (position instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression call = (PsiMethodCallExpression)position;
-        final PsiReferenceExpression equalityMethodExpression = call.getMethodExpression();
-        final PsiExpressionList equalityArgumentList = call.getArgumentList();
-        final PsiExpression[] equalityArgs = equalityArgumentList.getExpressions();
-        rhs = equalityArgs[0];
-        lhs = equalityMethodExpression.getQualifierExpression();
+      else {
+        EqualityCheck check = EqualityCheck.from(position);
+        if (check != null) {
+          lhs = check.getLeft();
+          rhs = check.getRight();
+        }
       }
       if (!(lhs instanceof PsiLiteralExpression) && rhs instanceof PsiLiteralExpression) {
         final PsiExpression temp = lhs;
@@ -256,18 +247,18 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       final PsiType lhsType = lhs.getType();
       final PsiType rhsType = rhs.getType();
       if (lhsType != null && rhsType != null && PsiUtil.isLanguageLevel5OrHigher(lhs)) {
-        if (isPrimitiveAndBoxedWithOverloads(lhsType, rhsType)) {
-          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(rhsType);
-          assert unboxedType != null;
-          buf.append(lhs.getText()).append(",(").append(unboxedType.getCanonicalText()).append(')').append(rhs.getText());
-        }
-        else if (isPrimitiveAndBoxedWithOverloads(rhsType, lhsType)) {
-          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(lhsType);
-          assert unboxedType != null;
-          buf.append('(').append(unboxedType.getCanonicalText()).append(')').append(lhs.getText()).append(',').append(rhs.getText());
+        final PsiPrimitiveType rhsUnboxedType = PsiPrimitiveType.getUnboxedType(rhsType);
+        if (isPrimitiveAndBoxedWithOverloads(lhsType, rhsType) && rhsUnboxedType != null) {
+          buf.append(lhs.getText()).append(",(").append(rhsUnboxedType.getCanonicalText()).append(')').append(rhs.getText());
         }
         else {
-          buf.append(lhs.getText()).append(',').append(rhs.getText());
+          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(lhsType);
+          if (isPrimitiveAndBoxedWithOverloads(rhsType, lhsType) && unboxedType != null) {
+            buf.append('(').append(unboxedType.getCanonicalText()).append(')').append(lhs.getText()).append(',').append(rhs.getText());
+          }
+          else {
+            buf.append(lhs.getText()).append(',').append(rhs.getText());
+          }
         }
       }
       else {

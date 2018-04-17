@@ -1,12 +1,12 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>xml</title>
   <g>
-    <rect x="1" y="9" width="15" height="7" fill="#f4af3d" opacity="0.6"/>
-    <path d="M3,12.99082V12.00918L6,10v1.04531L3.75332,12.49112,6,13.94581V15Z" fill="#231f20" opacity="0.6"/>
-    <path d="M8,13.95469l2.24067-1.44581L8,11.05419V10l3,2.00918v0.98164L8,15V13.95469Z" fill="#231f20" opacity="0.6"/>
+    <rect x="1" y="9" width="15" height="7" fill="#f26522" opacity="0.7"/>
+    <path d="M3,12.99082v-.98164L6,10v1.04531L3.75332,12.49112,6,13.94581V15Z" fill="#231f20" opacity="0.7"/>
+    <path d="M8,13.95469l2.24067-1.44581L8,11.05419V10l3,2.00918v.98164L8,15Z" fill="#231f20" opacity="0.7"/>
     <g>
-      <polygon points="6 0 2 4 6 4 6 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-      <polygon points="7 0 7 4 7 5 6 5 2 5 2 8 13 8 13 0 7 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+      <polygon points="7 1 3 5 7 5 7 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+      <polygon points="8 1 8 5 8 6 7 6 3 6 3 8 13 8 13 1 8 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
     </g>
   </g>
 </svg>

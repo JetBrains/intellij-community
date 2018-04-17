@@ -524,22 +524,17 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     };
     final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(psiElementsToRemove, o -> o instanceof PsiCompiledElement ? null : o.getContainingFile());
-    new WriteCommandAction.Simple(project, "Language Injection Configuration Update", PsiUtilCore.toPsiFileArray(psiFiles)) {
-      @Override
-      public void run() {
-        for (PsiElement annotation : psiElementsToRemove) {
-          if (!annotation.isValid()) continue;
-          annotation.delete();
-        }
-        actualProcessor.process(add, remove);
-        UndoManager.getInstance(project).undoableActionPerformed(action);
-      }
-
-      @Override
-      protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
-        return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, PsiUtilCore.toPsiFileArray(psiFiles))
+                      .withName("Language Injection Configuration Update")
+                      .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
+                      .run(() -> {
+                        for (PsiElement annotation : psiElementsToRemove) {
+                          if (!annotation.isValid()) continue;
+                          annotation.delete();
+                        }
+                        actualProcessor.process(add, remove);
+                        UndoManager.getInstance(project).undoableActionPerformed(action);
+                      });
   }
 
   public boolean replaceInjections(List<? extends BaseInjection> newInjections,

@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -35,6 +36,11 @@ class TestingTasksImpl extends TestingTasks {
 
   @Override
   void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
+    if (options.testDiscoveryEnabled && isPerformanceRun()) {
+      context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
+      return
+    }
+
     checkOptions()
 
     def compilationTasks = CompilationTasks.create(context)
@@ -58,12 +64,22 @@ class TestingTasksImpl extends TestingTasks {
     if (remoteDebugJvmOptions != null) {
       debugTests(remoteDebugJvmOptions, additionalJvmOptions, defaultMainModule, rootExcludeCondition)
     }
-    else if (runConfigurations != null) {
-      runTestsFromRunConfigurations(additionalJvmOptions, runConfigurations)
-    }
     else {
-      runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition)
+      Map<String, String> additionalSystemProperties = [:]
+      loadTestDiscovery(additionalJvmOptions, additionalSystemProperties)
+
+      if (runConfigurations != null) {
+        runTestsFromRunConfigurations(additionalJvmOptions, runConfigurations, additionalSystemProperties)
+      }
+      else {
+        runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties)
+      }
+      publishTestDiscovery()
     }
+  }
+
+  private static boolean isPerformanceRun() {
+    System.getProperty("idea.performance.tests") == "true"
   }
 
   private void checkOptions() {
@@ -83,19 +99,23 @@ class TestingTasksImpl extends TestingTasks {
     }
   }
 
-  private void runTestsFromRunConfigurations(List<String> additionalJvmOptions, List<JUnitRunConfigurationProperties> runConfigurations) {
+  private void runTestsFromRunConfigurations(List<String> additionalJvmOptions,
+                                             List<JUnitRunConfigurationProperties> runConfigurations,
+                                             Map<String, String> additionalSystemProperties) {
     runConfigurations.each { configuration ->
       context.messages.block("Run '${configuration.name}' run configuration") {
-        runTestsFromRunConfiguration(configuration, additionalJvmOptions)
+        runTestsFromRunConfiguration(configuration, additionalJvmOptions, additionalSystemProperties)
       }
     }
   }
 
-  private void runTestsFromRunConfiguration(JUnitRunConfigurationProperties runConfigurationProperties, List<String> additionalJvmOptions) {
+  private void runTestsFromRunConfiguration(JUnitRunConfigurationProperties runConfigurationProperties,
+                                            List<String> additionalJvmOptions,
+                                            Map<String, String> additionalSystemProperties) {
     context.messages.progress("Running '${runConfigurationProperties.name}' run configuration")
     List<String> filteredVmOptions = removeStandardJvmOptions(runConfigurationProperties.vmParameters)
     runTestsProcess(runConfigurationProperties.moduleName, null, runConfigurationProperties.testClassPatterns.join(";"),
-                    filteredVmOptions + additionalJvmOptions, [:], runConfigurationProperties.envVariables, false)
+                    filteredVmOptions + additionalJvmOptions, additionalSystemProperties, runConfigurationProperties.envVariables, false)
   }
 
   private static List<String> removeStandardJvmOptions(List<String> vmOptions) {
@@ -108,8 +128,10 @@ class TestingTasksImpl extends TestingTasks {
     vmOptions.findAll { option -> ignoredPrefixes.every { !option.startsWith(it) } }
   }
 
-  private void runTestsFromGroupsAndPatterns(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
-    Map<String, String> additionalSystemProperties = [:]
+  private void runTestsFromGroupsAndPatterns(List<String> additionalJvmOptions,
+                                             String defaultMainModule,
+                                             Predicate<File> rootExcludeCondition,
+                                             Map<String, String> additionalSystemProperties) {
     def mainModule = options.mainModule ?: defaultMainModule
     if (rootExcludeCondition != null) {
       List<JpsModule> excludedModules = context.project.modules.findAll {
@@ -125,8 +147,6 @@ class TestingTasksImpl extends TestingTasks {
       additionalSystemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
     }
 
-    loadTestDiscovery(additionalJvmOptions, additionalSystemProperties)
-
     runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, [:], false)
   }
 
@@ -141,12 +161,51 @@ class TestingTasksImpl extends TestingTasks {
       additionalJvmOptions.add("-javaagent:${agentJar.absolutePath}" as String)
       additionalSystemProperties.putAll(
         [
-          "test.discovery.listener"                 : "com.intellij.InternalTestDiscoveryListenerBase",
+          "test.discovery.listener"                 : "com.intellij.TestDiscoveryBasicListener",
           "test.discovery.data.listener"            : "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener",
-          "org.jetbrains.instrumentation.trace.file": options.testDiscoveryTraceFilePath ?: "${context.paths.projectHome}/intellij-tracing/td.tr",
+          "org.jetbrains.instrumentation.trace.file": getTestDiscoveryTraceFilePath(),
           "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
           "test.discovery.exclude.class.patterns"   : options.testDiscoveryExcludePatterns,
         ] as Map<String, String>)
+    }
+  }
+
+  private String getTestDiscoveryTraceFilePath() {
+    options.testDiscoveryTraceFilePath ?: "${context.paths.projectHome}/intellij-tracing/td.tr"
+  }
+
+  private publishTestDiscovery() {
+    if (options.testDiscoveryEnabled) {
+      def file = getTestDiscoveryTraceFilePath()
+      def serverUrl = System.getProperty("intellij.test.discovery.url")
+      context.messages.info("Trying to upload $file into $serverUrl.")
+      if (file != null && new File(file).exists()) {
+        if (serverUrl == null) {
+          context.messages.warning("Test discovery server url is not defined, but test discovery capturing enabled. \n" +
+                                   "Will not upload to remote server. Please set 'intellij.test.discovery.url' system property.")
+          return
+        }
+        def uploader = new TraceFileUploader(serverUrl) {
+          @Override
+          protected void log(String message) {
+            context.messages.info(message)
+          }
+        }
+        try {
+          uploader.upload(new File(file), [
+            'teamcity-build-number'            : System.getProperty('build.number'),
+            'teamcity-build-type-id'           : System.getProperty('teamcity.buildType.id'),
+            'teamcity-build-configuration-name': System.getenv('TEAMCITY_BUILDCONF_NAME'),
+            'teamcity-build-project-name'      : System.getenv('TEAMCITY_PROJECT_NAME'),
+            'branch'                           : System.getProperty('intellij.platform.vcs.branch') ?: 'master',
+            'project'                          : 'intellij',
+          ])
+        }
+        catch (Exception e) {
+          context.messages.error(e.message, e)
+        }
+      }
+      context.messages.buildStatus("Run with Test Discovery, {build.status.text}")
     }
   }
 
@@ -171,7 +230,7 @@ class TestingTasksImpl extends TestingTasks {
       context.messages.warning("'intellij.build.test.configurations' option is ignored while debugging via TeamCity plugin")
     }
     def mainModule = options.mainModule ?: defaultMainModule
-    def filteredOptions = removeStandardJvmOptions(remoteDebugJvmOptions.split(";").toList())
+    def filteredOptions = removeStandardJvmOptions(StringUtil.splitHonorQuotes(remoteDebugJvmOptions, ' ' as char))
     runTestsProcess(mainModule, null, junitClass, filteredOptions + additionalJvmOptions, [:], [:], true)
   }
 
@@ -237,7 +296,7 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     boolean suspendDebugProcess = options.suspendDebugProcess
-    if (systemProperties["idea.performance.tests"] == "true") {
+    if (isPerformanceRun()) {
       context.messages.info("Debugging disabled for performance tests")
       suspendDebugProcess = false
     }

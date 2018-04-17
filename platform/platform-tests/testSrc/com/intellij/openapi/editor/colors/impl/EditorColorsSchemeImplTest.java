@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Properties;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
 import static com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.INHERITED_ATTRS_MARKER;
@@ -252,6 +251,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       "<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\">\n" +
       "  <option name=\"CONSOLE_FONT_NAME\" value=\"Test\" />\n" +
       "  <option name=\"CONSOLE_FONT_SIZE\" value=\"10\" />\n" +
+      "  <option name=\"CONSOLE_LINE_SPACING\" value=\"1.0\" />\n" +
       "</scheme>",
       serialize(editorColorsScheme));
   }
@@ -606,5 +606,40 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     // the explicitly defined colors from the base (default) scheme will be used which is not what we want here.
     //
     assertSame(INHERITED_ATTRS_MARKER, editorColorsScheme.getDirectlyDefinedAttributes(staticFieldKey));
+  }
+
+  public void testIdea188308() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme initialScheme = (EditorColorsScheme)defaultScheme.clone();
+    initialScheme.setLineSpacing(1.2f);
+    initialScheme.setConsoleLineSpacing(1.0f);
+    assertFalse(initialScheme.getLineSpacing() == initialScheme.getConsoleLineSpacing());
+    Element root = serialize(initialScheme);
+    EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
+    targetScheme.readExternal(root);
+    assertEquals(1.0f, targetScheme.getConsoleLineSpacing());
+  }
+
+  public void testNonDefaultConsoleLineSpacing() {
+    ModifiableFontPreferences appPrefs = (ModifiableFontPreferences)AppEditorFontOptions.getInstance().getFontPreferences();
+    float currSpacing = appPrefs.getLineSpacing();
+    try {
+      appPrefs.setLineSpacing(1.2f);
+      EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+      EditorColorsScheme initialScheme = (EditorColorsScheme)defaultScheme.clone();
+      initialScheme.setConsoleLineSpacing(1.0f);
+      assertFalse(appPrefs.getLineSpacing() == initialScheme.getConsoleLineSpacing());
+      Element root = serialize(initialScheme);
+
+      EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
+      targetScheme.readExternal(root);
+      appPrefs.setLineSpacing(1.3f);
+
+      assertEquals(1.3f, targetScheme.getLineSpacing()); // we expect that editor still listens to app font preferences
+      assertEquals(1.0f, targetScheme.getConsoleLineSpacing());
+    }
+    finally {
+      appPrefs.setLineSpacing(currSpacing);
+    }
   }
 }

@@ -48,7 +48,7 @@ public class PyTypeHierachyProvider implements HierarchyProvider {
   }
 
   @NotNull
-  public HierarchyBrowser createHierarchyBrowser(PsiElement target) {
+  public HierarchyBrowser createHierarchyBrowser(@NotNull PsiElement target) {
     return new PyTypeHierarchyBrowser((PyClass)target);
   }
 

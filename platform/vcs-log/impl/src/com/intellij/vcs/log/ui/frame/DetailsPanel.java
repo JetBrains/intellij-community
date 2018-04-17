@@ -16,8 +16,10 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -33,6 +35,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.ProfileChangeAdapter;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -41,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import com.intellij.vcs.commit.CommitMessageInspectionProfile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -57,7 +62,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
@@ -118,12 +122,26 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     setLayout(new BorderLayout());
     add(myLoadingPanel, BorderLayout.CENTER);
 
+    ProjectInspectionProfileManager.getInstance(logData.getProject()).addProfileChangeListener(new ProfileChangeAdapter() {
+      @Override
+      public void profileChanged(@Nullable InspectionProfile profile) {
+        if (CommitMessageInspectionProfile.getInstance(myLogData.getProject()).equals(profile)) {
+          // only update after settings dialog is closed and settings are actually applied
+          ApplicationManager.getApplication().invokeLater(DetailsPanel.this::update, ModalityState.NON_MODAL);
+        }
+      }
+    }, this);
+
     myEmptyText.setText("Commit details");
     Disposer.register(parent, this);
   }
 
   @Override
   public void globalSchemeChange(EditorColorsScheme scheme) {
+    update();
+  }
+
+  private void update() {
     for (int i = 0; i < mySelection.size(); i++) {
       CommitPanel commitPanel = getCommitPanel(i);
       commitPanel.update();
@@ -274,11 +292,11 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
                                                                                              unResolvedHashes));
       setPresentations(ids, presentations);
 
-      TIntHashSet newCommitDetails = TroveUtil.map2IntSet(detailsList, c -> myLogData.getStorage().getCommitIndex(c.getId(), c.getRoot()));
-      if (!TroveUtil.intersects(myCommitIds, newCommitDetails)) {
+      TIntHashSet newCommitIds = TroveUtil.map2IntSet(detailsList, c -> myLogData.getStorage().getCommitIndex(c.getId(), c.getRoot()));
+      if (!TroveUtil.intersects(myCommitIds, newCommitIds)) {
         myScrollPane.getVerticalScrollBar().setValue(0);
       }
-      myCommitIds = newCommitDetails;
+      myCommitIds = newCommitIds;
 
       List<Integer> currentSelection = mySelection;
       resolveHashes(ids, presentations, unResolvedHashes, o -> currentSelection != mySelection);
@@ -288,7 +306,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     protected void onSelection(@NotNull int[] selection) {
       cancelResolve();
       rebuildCommitPanels(selection);
-      final List<Integer> currentSelection = mySelection;
+      List<Integer> currentSelection = mySelection;
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<Collection<VcsRef>> result = ContainerUtil.newArrayList();
         for (Integer row : currentSelection) {

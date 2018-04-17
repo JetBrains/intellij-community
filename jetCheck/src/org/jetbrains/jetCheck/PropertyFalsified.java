@@ -27,13 +27,17 @@ public class PropertyFalsified extends RuntimeException {
   private String calcMessage() {
     StringBuilder traceBuilder = new StringBuilder();
 
+    String exampleString = valueToString(failure.getMinimalCounterexample(), traceBuilder);
+
     Throwable failureReason = failure.getMinimalCounterexample().getExceptionCause();
-    String msg = "Falsified on " + valueToString(failure.getMinimalCounterexample(), traceBuilder) + "\n" +
-                 getMinimizationStats() +
-                 failure.iteration.printToReproduce(failureReason);
+    Throwable rootCause = failureReason == null ? null : getRootCause(failureReason);
+    String msg = rootCause != null ? "Failed with " + rootCause + "\nOn " + exampleString : "Falsified on " + exampleString;
+
+    msg += "\n" + 
+           getMinimizationStats() +
+           "\n" + failure.iteration.printToReproduce(failureReason, failure.getMinimalCounterexample()) + "\n";
 
     if (failureReason != null) {
-      Throwable rootCause = getRootCause(failureReason);
       appendTrace(traceBuilder, 
                   rootCause == failureReason ? "Property failure reason: " : "Property failure reason, innermost exception (see full trace below): ", 
                   rootCause);
@@ -122,16 +126,4 @@ public class PropertyFalsified extends RuntimeException {
     return failure.getMinimalCounterexample().getExampleValue();
   }
 
-  public DataStructure getData() {
-    return failure.getMinimalCounterexample().createReplayData();
-  }
-
-  /**
-   * Re-invoke the generator and the property check on the minimal counter-example found after testing and shrinking. Useful for debugging.<p/>
-   * 
-   * The same as {@code getFailure().getMinimalCounterexample().replay()}.
-   */
-  public PropertyFailure.CounterExample<?> replayMinimalExample() {
-    return failure.getMinimalCounterexample().replay();
-  }
 }

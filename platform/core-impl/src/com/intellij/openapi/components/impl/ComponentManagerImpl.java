@@ -2,6 +2,7 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.StartupProgress;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
@@ -244,7 +245,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private void throwAlreadyDisposed() {
     ReadAction.run(() -> {
       ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed: "+toString());
+      throw new AssertionError("Already disposed: " + this);
     });
   }
 
@@ -286,7 +287,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     ArrayList<ComponentConfig> componentConfigs = new ArrayList<>();
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins((message, progress) -> indicator.setFraction(progress))) {
+    StartupProgress startupProgress = null;
+    if (indicator != null) {
+      startupProgress = (message, progress) -> indicator.setFraction(progress);
+    }
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins(startupProgress)) {
       if (PluginManagerCore.shouldSkipPlugin(plugin)) {
         continue;
       }

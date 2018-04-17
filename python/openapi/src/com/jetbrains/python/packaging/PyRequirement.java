@@ -651,7 +651,7 @@ public class PyRequirement {
 
     for (String line : StringUtil.splitByLines(text)) {
       if (line.endsWith("\\") && !line.endsWith("\\\\")) {
-        sb.append(line.substring(0, line.length() - 1));
+        sb.append(line, 0, line.length() - 1);
       }
       else {
         if (sb.length() == 0) {

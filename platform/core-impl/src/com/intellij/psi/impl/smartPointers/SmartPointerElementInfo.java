@@ -17,7 +17,6 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -31,27 +30,25 @@ abstract class SmartPointerElementInfo {
     return null;
   }
 
-  void fastenBelt() {
+  void fastenBelt(@NotNull SmartPointerManagerImpl manager) {
   }
 
   @Nullable
-  abstract PsiElement restoreElement();
+  abstract PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager);
 
-  abstract PsiFile restoreFile();
+  abstract PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager);
 
   abstract int elementHashCode(); // must be immutable
-  abstract boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other);
+  abstract boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager);
 
   abstract VirtualFile getVirtualFile();
 
   @Nullable
-  abstract Segment getRange();
-  @NotNull
-  abstract Project getProject();
+  abstract Segment getRange(@NotNull SmartPointerManagerImpl manager);
 
   void cleanup() {
   }
 
   @Nullable
-  abstract Segment getPsiRange();
+  abstract Segment getPsiRange(@NotNull SmartPointerManagerImpl manager);
 }

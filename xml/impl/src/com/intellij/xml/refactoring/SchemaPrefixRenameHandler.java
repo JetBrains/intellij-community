@@ -48,13 +48,13 @@ public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
   }
 
   @Override
-  protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
+  protected boolean isAvailable(@Nullable PsiElement element, @NotNull Editor editor, @NotNull PsiFile file) {
     PossiblePrefixReference ref = getReference(file, editor);
     return ref != null && ref.resolve() instanceof SchemaPrefix;
   }
 
   @Override
-  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, Editor editor) {
+  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, @NotNull Editor editor) {
     PossiblePrefixReference reference = getReference(elementToRename.getContainingFile(), editor);
     if (reference != null) {
       PsiElement prefix = reference.resolve();

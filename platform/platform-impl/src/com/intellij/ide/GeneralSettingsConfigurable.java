@@ -16,16 +16,23 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.List;
 
@@ -67,6 +74,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     }
     catch (NumberFormatException ignored) { }
     settings.setUseSafeWrite(myComponent.myChkUseSafeWrite.isSelected());
+    settings.setDefaultProjectDirectory(myComponent.myProjectDirectoryTextField.getText());
   }
 
   private GeneralSettings.ProcessCloseConfirmation getProcessCloseConfirmation() {
@@ -110,6 +118,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     isModified |= isModified(myComponent.myTfInactiveTimeout, settings.getInactiveTimeout(), GeneralSettings.SAVE_FILES_AFTER_IDLE_SEC);
 
     isModified |= settings.isUseSafeWrite() != myComponent.myChkUseSafeWrite.isSelected();
+    isModified |= !settings.getDefaultProjectDirectory().equals(myComponent.myProjectDirectoryTextField.getText());
 
     return isModified;
   }
@@ -119,7 +128,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     if (myComponent == null) {
       myComponent = new MyComponent();
     }
-    myComponent.myShowWelcomeScreen.setVisible(PlatformUtils.isDatabaseIDE());
+    myComponent.myShowWelcomeScreen.setVisible(PlatformUtils.isDataGrip());
 
     myComponent.myChkAutoSaveIfInactive.addChangeListener(
       e -> myComponent.myTfInactiveTimeout.setEditable(myComponent.myChkAutoSaveIfInactive.isSelected()));
@@ -146,6 +155,11 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     GeneralSettings settings = GeneralSettings.getInstance();
     myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
     myComponent.myChkSupportScreenReaders.setSelected(settings.isSupportScreenReaders());
+    if (GeneralSettings.isSupportScreenReadersOverriden()) {
+      myComponent.myChkSupportScreenReaders.setEnabled(false);
+      myComponent.myChkSupportScreenReaders.setToolTipText(
+        "The option is overriden by the JVM property: \"" + GeneralSettings.SUPPORT_SCREEN_READERS + "\"");
+    }
     myComponent.myChkSyncOnFrameActivation.setSelected(settings.isSyncOnFrameActivation());
     myComponent.myChkSaveOnFrameDeactivation.setSelected(settings.isSaveOnFrameDeactivation());
     myComponent.myChkAutoSaveIfInactive.setSelected(settings.isAutoSaveIfInactive());
@@ -176,6 +190,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
         myComponent.myAskJBRadioButton.setSelected(true);
         break;
     }
+    myComponent.myProjectDirectoryTextField.setText(settings.getDefaultProjectDirectory());
   }
 
   @Override
@@ -208,8 +223,25 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     private JBRadioButton myTerminateProcessJBRadioButton;
     private JBRadioButton myDisconnectJBRadioButton;
     private JBRadioButton myAskJBRadioButton;
+    private TextFieldWithBrowseButton myProjectDirectoryTextField;
+    private JPanel myProjectOpeningPanel;
 
-    public MyComponent() { }
+    public MyComponent() {
+      String conceptName = IdeUICustomization.getInstance().getProjectConceptName();
+      myChkReopenLastProject.setText(IdeBundle.message("checkbox.reopen.last.project.on.startup", conceptName));
+      ((TitledBorder) myProjectOpeningPanel.getBorder()).setTitle(IdeBundle.message("border.title.project.opening",
+                                                                                    StringUtil.capitalize(conceptName)));
+      myOpenProjectInNewWindow.setText(IdeBundle.message("radio.button.open.project.in.the.new.window", conceptName));
+      myOpenProjectInSameWindow.setText(IdeBundle.message("radio.button.open.project.in.the.same.window", conceptName));
+      myConfirmWindowToOpenProject.setText(IdeBundle.message("radio.button.confirm.window.to.open.project.in", conceptName));
+    }
+
+    private void createUIComponents() {
+      myProjectDirectoryTextField = new TextFieldWithBrowseButton();
+      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+      descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false);
+      myProjectDirectoryTextField.addBrowseFolderListener(null, null, null, descriptor);
+    }
   }
 
   @Override

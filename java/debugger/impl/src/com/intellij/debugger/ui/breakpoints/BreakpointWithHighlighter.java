@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.*;
@@ -26,7 +24,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -179,36 +176,31 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
   public String getDescription() {
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(getDisplayName());
+    final StringBuilder buf = new StringBuilder();
+    buf.append(getDisplayName());
 
-      if (isCountFilterEnabled()) {
-        buf.append("&nbsp;<br>&nbsp;");
-        buf.append(DebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
-        buf.append(getCountFilter());
-      }
-      if (isClassFiltersEnabled()) {
-        buf.append("&nbsp;<br>&nbsp;");
-        buf.append(DebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
-        ClassFilter[] classFilters = getClassFilters();
-        for (ClassFilter classFilter : classFilters) {
-          buf.append(classFilter.getPattern()).append(" ");
-        }
-      }
-      if (isInstanceFiltersEnabled()) {
-        buf.append("&nbsp;<br>&nbsp;");
-        buf.append(DebuggerBundle.message("breakpoint.property.name.instance.filters"));
-        InstanceFilter[] instanceFilters = getInstanceFilters();
-        for (InstanceFilter instanceFilter : instanceFilters) {
-          buf.append(Long.toString(instanceFilter.getId())).append(" ");
-        }
-      }
-      return buf.toString();
+    if (isCountFilterEnabled()) {
+      buf.append("&nbsp;<br>&nbsp;");
+      buf.append(DebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
+      buf.append(getCountFilter());
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
+    if (isClassFiltersEnabled()) {
+      buf.append("&nbsp;<br>&nbsp;");
+      buf.append(DebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
+      ClassFilter[] classFilters = getClassFilters();
+      for (ClassFilter classFilter : classFilters) {
+        buf.append(classFilter.getPattern()).append(" ");
+      }
     }
+    if (isInstanceFiltersEnabled()) {
+      buf.append("&nbsp;<br>&nbsp;");
+      buf.append(DebuggerBundle.message("breakpoint.property.name.instance.filters"));
+      InstanceFilter[] instanceFilters = getInstanceFilters();
+      for (InstanceFilter instanceFilter : instanceFilters) {
+        buf.append(Long.toString(instanceFilter.getId())).append(" ");
+      }
+    }
+    return buf.toString();
   }
 
   @Override
@@ -290,7 +282,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       else {
         debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
           @Override
-          protected void action() throws Exception {
+          protected void action() {
             ApplicationManager.getApplication().runReadAction(() -> {
               if (!myProject.isDisposed()) {
                 updateCaches(debugProcess);

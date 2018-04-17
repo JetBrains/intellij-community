@@ -37,6 +37,6 @@ public class ShowLongEdgesAction extends BooleanPropertyToggleAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui != null && !ui.areGraphActionsEnabled()) e.getPresentation().setEnabled(false);
+    if (ui != null && ui.getDataPack().isEmpty()) e.getPresentation().setEnabled(false);
   }
 }

@@ -55,7 +55,9 @@ class SheetMessage implements Disposable {
     myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
-    myParent = owner;
+    //Sometimes we cannot find the owner from the project. For instance, WelcomeScreen could be showing without a
+    // project being loaded. Let's employ the focus manager then.
+    myParent = (owner == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() : owner;
 
     myWindow.setUndecorated(true);
     myWindow.setBackground(Gray.TRANSPARENT);

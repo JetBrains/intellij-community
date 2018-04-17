@@ -260,10 +260,7 @@ public abstract class PythonSdkFlavor {
   }
 
   public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
-    if (passParentEnvs) {
-      path = appendSystemPythonPath(path);
-    }
-    addToEnv(PythonEnvUtil.PYTHONPATH, StringUtil.join(path, File.pathSeparator), env);
+    initPythonPath(env, passParentEnvs, path);
   }
 
   public VirtualFile getSdkPath(VirtualFile path) {

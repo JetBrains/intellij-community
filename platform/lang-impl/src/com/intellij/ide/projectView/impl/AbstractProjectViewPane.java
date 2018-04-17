@@ -21,6 +21,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -37,6 +38,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -65,8 +67,10 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
+  private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
   public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
 
   @NotNull
@@ -173,6 +177,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @NotNull public String getPresentableSubIdName(@NotNull final String subId) {
     throw new IllegalStateException("should not call");
   }
+
+  public Icon getPresentableSubIdIcon(@NotNull String subId) {
+    return getIcon();
+  }
+
   public abstract JComponent createComponent();
   public JComponent getComponentToFocus() {
     return myTree;
@@ -288,6 +297,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Override
   public Object getData(String dataId) {
+    Object data =
+      myTreeStructure instanceof AbstractTreeStructureBase ?
+      ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(getSelectedNodes(AbstractTreeNode.class), dataId) : null;
+    if (data != null) {
+      return data;
+    }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
@@ -309,9 +324,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         return navigatables.toArray(new Navigatable[0]);
       }
     }
-    if (myTreeStructure instanceof AbstractTreeStructureBase) {
-      return ((AbstractTreeStructureBase) myTreeStructure).getDataFromProviders(getSelectedNodes(AbstractTreeNode.class), dataId);
-    }
     return null;
   }
 
@@ -330,6 +342,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return userObject instanceof NodeDescriptor ? (NodeDescriptor)userObject : null;
   }
 
+  /**
+   * @see TreeUtil#getUserObject(Object)
+   * @deprecated AbstractProjectViewPane#getSelectedPath
+   */
+  @Deprecated
   public final DefaultMutableTreeNode getSelectedNode() {
     TreePath path = getSelectedPath();
     return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
@@ -569,17 +586,28 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
     else {
-      final DefaultMutableTreeNode selectedNode = getSelectedNode();
-      if (selectedNode != null) {
-        return getSelectedDirectoriesInAmbiguousCase(selectedNode);
+      TreePath path = getSelectedPath();
+      if (path != null) {
+        Object component = path.getLastPathComponent();
+        if (component instanceof DefaultMutableTreeNode) {
+          //noinspection deprecation
+          return getSelectedDirectoriesInAmbiguousCase((DefaultMutableTreeNode)component);
+        }
+        return getSelectedDirectoriesInAmbiguousCase(component);
       }
     }
     return PsiDirectory.EMPTY_ARRAY;
   }
 
   @NotNull
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(@NotNull final DefaultMutableTreeNode node) {
-    final Object userObject = node.getUserObject();
+    return getSelectedDirectoriesInAmbiguousCase(node.getUserObject());
+  }
+
+  @NotNull
+  protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(Object userObject) {
     if (userObject instanceof AbstractModuleNode) {
       final Module module = ((AbstractModuleNode)userObject).getValue();
       if (module != null) {
@@ -640,17 +668,19 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected void enableDnD() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myDropTarget = new ProjectViewDropTarget(myTree, new Retriever() {
+      myDropTarget = new ProjectViewDropTarget(myTree, myProject) {
+        @Nullable
         @Override
-        public PsiElement getPsiElement(@Nullable TreeNode node) {
-          return getPSIElementFromNode(node);
+        protected PsiElement getPsiElement(@NotNull TreePath path) {
+          return getPSIElement(getElementFromTreeNode(path.getLastPathComponent()));
         }
 
+        @Nullable
         @Override
-        public Module getModule(TreeNode treeNode) {
-          return getNodeModule(getElementFromTreeNode(treeNode));
+        protected Module getModule(@NotNull PsiElement element) {
+          return getNodeModule(element);
         }
-      }, myProject) {
+
         @Override
         public void cleanUpOnLeave() {
           beforeDnDLeave();
@@ -704,7 +734,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Override
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
       final PsiElement[] psiElements = getSelectedPSIElements();
-      final TreeNode[] nodes = getSelectedTreeNodes();
+      TreePath[] paths = getSelectionPaths();
       return new DnDDragStartBean(new TransferableWrapper(){
 
         @Override
@@ -712,9 +742,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
           return PsiCopyPasteManager.asFileList(psiElements);
         }
 
+        @Nullable
+        @Override
+        public TreePath[] getTreePaths() {
+          return paths;
+        }
+
         @Override
         public TreeNode[] getTreeNodes() {
-          return nodes;
+          return TreePathUtil.toTreeNodes(getTreePaths());
         }
 
         @Override
@@ -782,12 +818,43 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       if (node == null) return Promises.rejectedPromise();
       return Promises.resolvedPromise(new TreePath(node.getPath()));
     }
-    TreeVisitor visitor = AsyncProjectViewSupport.createVisitor(element);
+    TreeVisitor visitor = createVisitor(element);
     if (visitor == null || myTree == null) return Promises.rejectedPromise();
     return TreeUtil.promiseVisit(myTree, visitor);
   }
 
   AsyncProjectViewSupport getAsyncSupport() {
+    return null;
+  }
+
+  @Nullable
+  public static TreeVisitor createVisitor(Object object) {
+    if (object instanceof VirtualFile) return createVisitor((VirtualFile)object);
+    if (object instanceof PsiElement) return createVisitor((PsiElement)object);
+    if (object != null) LOG.warn("unsupported object: " + object);
+    return null;
+  }
+
+  @Nullable
+  public static TreeVisitor createVisitor(VirtualFile file) {
+    return createVisitor(null, file);
+  }
+
+  @Nullable
+  public static TreeVisitor createVisitor(PsiElement element) {
+    return createVisitor(element, null);
+  }
+
+  @Nullable
+  public static TreeVisitor createVisitor(PsiElement element, VirtualFile file) {
+    return createVisitor(element, file, null);
+  }
+
+  @Nullable
+  static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
+    if (element != null && element.isValid()) return new ProjectViewNodeVisitor(element, file, predicate);
+    if (file != null) return new ProjectViewFileVisitor(file, predicate);
+    LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");
     return null;
   }
 }

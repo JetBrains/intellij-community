@@ -4,6 +4,7 @@ import unittest
 from io import StringIO
 
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
+from opcode import EXTENDED_ARG
 
 TRACE_MESSAGE = "Trace called"
 
@@ -12,7 +13,7 @@ def tracing():
 
 
 def call_tracing():
-    tracing()
+    return tracing()
 
 
 def bar(a, b):
@@ -44,15 +45,36 @@ class TestInsertCode(unittest.TestCase):
         code_orig = func_to_modify.__code__
         code_to_insert = func_to_insert.__code__
         success, result = insert_code(code_orig, code_to_insert, line_number)
-        self.compare_bytes_sequence(list(result.co_code), list(code_for_check.co_code))
+        self.compare_bytes_sequence(list(result.co_code), list(code_for_check.co_code), len(code_to_insert.co_code))
 
-    def compare_bytes_sequence(self, code1, code2):
+    def compare_bytes_sequence(self, code1, code2, inserted_code_size):
+        """
+        Compare code after modification and the real code
+        Since we add POP_JUMP_IF_TRUE instruction, we can't compare modified code and the real code. That's why we
+        allow some inaccuracies while code comparison
+        :param code1: result code after modification
+        :param code2: a real code for checking
+        :param inserted_code_size: size of inserted code
+        """
         seq1 = [(offset, op, arg) for offset, op, arg in dis._unpack_opargs(code1)]
         seq2 = [(offset, op, arg) for offset, op, arg in dis._unpack_opargs(code2)]
         self.assertTrue(len(seq1) == len(seq2), "Bytes sequences have different lengths")
         for i in range(len(seq1)):
             of, op1, arg1 = seq1[i]
             _, op2, arg2 = seq2[i]
+            if op1 != op2:
+                if op1 == 115 and op2 == 1:
+                    # it's ok, because we added POP_JUMP_IF_TRUE manually, but it's POP_TOP in the real code
+                    # inserted code - 2 (removed return instruction) - real code inserted
+                    # Jump should be done to the beginning of inserted fragment
+                    self.assertEqual(arg1, of - (inserted_code_size - 2))
+                    continue
+                elif op1 == EXTENDED_ARG and op2 == 12:
+                    # we added a real UNARY_NOT to balance EXTENDED_ARG added by new jump instruction
+                    # i.e. inserted code size was increased as well
+                    inserted_code_size += 2
+                    continue
+
             self.assertEqual(op1, op2, "Different operators at offset {}".format(of))
             if arg1 != arg2:
                 if op1 in (100, 101, 106, 116):
@@ -488,11 +510,43 @@ class TestInsertCode(unittest.TestCase):
                 a = a + 1
                 return a
 
+            def foo_check_2():
+                a = 1
+                b = 2
+                if b > 0:
+                    d = a + b
+                    d += 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    not tracing() #  add 'not' to balance EXTENDED_ARG when jumping
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                a = a + 1
+                return a
+
             self.check_insert_to_line_with_exec(foo, tracing, foo.__code__.co_firstlineno + 2)
             sys.stdout = self.original_stdout
 
             self.check_insert_to_line_by_symbols(foo, call_tracing, foo.__code__.co_firstlineno + 3,
                                                  foo_check.__code__)
+
+            self.check_insert_to_line_by_symbols(foo, call_tracing, foo.__code__.co_firstlineno + 21,
+                                                 foo_check_2.__code__)
 
 
         finally:

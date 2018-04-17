@@ -41,6 +41,6 @@ fi
 
 if [ -n "$JEDITERM_SOURCE" ]
 then
-  source "$(echo $JEDITERM_SOURCE)"
+  source $(echo $JEDITERM_SOURCE)
   unset JEDITERM_SOURCE
 fi

@@ -62,6 +62,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     new MergingUpdateQueue("MultipleLocalChangeListsBrowser", 300, true, ANY_COMPONENT, this);
 
   private final boolean myEnableUnversioned;
+  private final boolean myEnablePartialCommit;
   @Nullable private JComponent myBottomDiffComponent;
 
   @NotNull private final ChangeListChooser myChangeListChooser;
@@ -78,9 +79,11 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   public MultipleLocalChangeListsBrowser(@NotNull Project project,
                                          boolean showCheckboxes,
                                          boolean highlightProblems,
-                                         boolean enableUnversioned) {
+                                         boolean enableUnversioned,
+                                         boolean enablePartialCommit) {
     super(project, showCheckboxes, highlightProblems);
     myEnableUnversioned = enableUnversioned;
+    myEnablePartialCommit = enablePartialCommit;
 
     myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
@@ -151,7 +154,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   protected void updateDiffContext(@NotNull DiffRequestChain chain) {
     super.updateDiffContext(chain);
     chain.putUserData(DiffUserDataKeysEx.BOTTOM_PANEL, myBottomDiffComponent);
-    chain.putUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, true);
+    chain.putUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, myEnablePartialCommit);
   }
 
 
@@ -532,11 +535,13 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
               myTrackerExclusionStates.remove(change);
 
               ExclusionState exclusionState = ((PartialLocalLineStatusTracker)tracker).getExcludedFromCommitState(myChangeList.getId());
-              if (exclusionState != ExclusionState.ALL_EXCLUDED) {
-                myIncludedChanges.add(change);
-              }
-              else {
-                myIncludedChanges.remove(change);
+              if (exclusionState != ExclusionState.NO_CHANGES) {
+                if (exclusionState != ExclusionState.ALL_EXCLUDED) {
+                  myIncludedChanges.add(change);
+                }
+                else {
+                  myIncludedChanges.remove(change);
+                }
               }
 
               scheduleExclusionStatesUpdate();

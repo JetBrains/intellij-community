@@ -57,14 +57,14 @@ class X {
       "}",
 
       "/**\n" +
-      " * Some of the usl contained \n" +
+      " * Some of the usl contained\n" +
       " * {@link sdfsdf.test.ttttttt.ssss.stttt.tttttttcom}\n" +
       " */\n" +
       "public class X {\n" +
       "}")
   }
 
-  fun testDoNot() {
+  fun testNoWrapInALink() {
     getSettings().WRAP_LONG_LINES = true
     getSettings().RIGHT_MARGIN = 70
 
@@ -515,7 +515,8 @@ public int method(int parameter) {
     getSettings().WRAP_LONG_LINES = true
 
     doClassTest(
-      """    /**
+      """
+    /**
      * @return <pre>this is a return value documentation with a very long description
      * that is longer than the right margin.</pre>
      */
@@ -523,8 +524,9 @@ public int method(int parameter) {
         return 0;
     }""",
 
-      """/**
- * @return <pre>this is a return value documentation with a very long
+"\n/**\n" +
+" * @return <pre>this is a return value documentation with a very long " +
+"""
  * description
  * that is longer than the right margin.</pre>
  */
@@ -1094,6 +1096,9 @@ package com.company;
 
 public class Test {
     /**
+     * Do not remove existing
+     * <p>
+     * <b>Some text</b>
      * Before title
      *
      * <h1>Title</h1>
@@ -1111,6 +1116,9 @@ package com.company;
 
 public class Test {
     /**
+     * Do not remove existing
+     * <p>
+     * <b>Some text</b>
      * Before title
      *
      * <h1>Title</h1>
@@ -1144,6 +1152,7 @@ interface Test {
      *     class Foo {
      *         private int x;
      *         private int y;
+     *         // The comment inside pre tag which shouldn't be wrapped despite being long
      *     }
      * </pre>
      * @return Some value
@@ -1163,6 +1172,7 @@ interface Test {
      *     class Foo {
      *         private int x;
      *         private int y;
+     *         // The comment inside pre tag which shouldn't be wrapped despite being long
      *     }
      * </pre>
      *

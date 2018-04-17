@@ -201,10 +201,10 @@ public class DiffDividerDrawUtil {
         return process(startLine1, endLine1, startLine2, endLine2, resolved ? null : color, resolved ? color : null, resolved);
       }
 
-      public boolean processSkippable(int startLine1, int endLine1, int startLine2, int endLine2,
-                                      @NotNull Editor editor, @NotNull TextDiffType type, boolean skipped) {
-        Color borderColor = skipped ? type.getColor(editor) : null;
-        Color fillColor = skipped ? type.getIgnoredColor(editor) : type.getColor(editor);
+      public boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
+                                       @NotNull Editor editor, @NotNull TextDiffType type, boolean excluded) {
+        Color borderColor = excluded ? type.getColor(editor) : null;
+        Color fillColor = excluded ? type.getIgnoredColor(editor) : type.getColor(editor);
         return process(startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, false);
       }
 

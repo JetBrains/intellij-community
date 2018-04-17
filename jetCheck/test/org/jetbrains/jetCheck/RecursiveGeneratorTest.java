@@ -13,7 +13,7 @@ public class RecursiveGeneratorTest extends PropertyCheckerTestCase {
   private static final Generator<Leaf> leaves = Generator.asciiLetters().map(Leaf::new);
 
   private void checkShrinksToLeaf(Generator<Node> nodes) {
-    PropertyFailure<?> failure = checkFails(forAllStable(nodes), tree -> !tree.toString().contains("a")).getFailure();
+    PropertyFailure<?> failure = checkFails(STABLE, nodes, tree -> !tree.toString().contains("a")).getFailure();
     assertTrue(failure.getMinimalCounterexample().getExampleValue() instanceof Leaf);
   }
 

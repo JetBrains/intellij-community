@@ -17,7 +17,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A external changes provider to update a parameter info state.
@@ -31,8 +31,8 @@ public interface ExternalParameterInfoChangesProvider {
   /**
    * Sends update request to {@link ParameterInfoController}.
    * @see ParameterInfoController
-   * @param editor editor that parameter info belongs
+   * @param editor editor that parameter info belongs, or null to update controller unconditionally
    * @param offset start of argument list on which parameter info was called
    */
-  void fireChangeAtOffset(@NotNull Editor editor, int offset);
+  void fireChangeAtOffset(@Nullable Editor editor, int offset);
 }

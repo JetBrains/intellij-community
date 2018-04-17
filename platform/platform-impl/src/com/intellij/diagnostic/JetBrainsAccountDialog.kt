@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
@@ -28,8 +26,8 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
   val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"), selected = credentials?.userName == null || !credentials.password.isNullOrEmpty())
 
   val panel = panel {
-    noteRow("Login to JetBrains Account to get notified when the submitted\nexceptions are fixed.")
-    row("Username:") { userField() }
+    noteRow("Login to JetBrains Account to get notified\nwhen the submitted exceptions are fixed.")
+    row("Username:") { userField(growPolicy = GrowPolicy.SHORT_TEXT) }
     row("Password:") { passwordField() }
     row {
       rememberCheckBox()
@@ -50,6 +48,6 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
     if (!userName.isNullOrBlank()) {
       PasswordSafe.getInstance().set(CredentialAttributes(ErrorReportConfigurable.SERVICE_NAME, userName), Credentials(userName, if (rememberCheckBox.isSelected) passwordField.password else null))
     }
-    return@dialog true
+    return@dialog null
   }
 }

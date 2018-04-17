@@ -21,14 +21,14 @@ package org.intellij.images.vfs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.IconUtil;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
+import com.intellij.util.SVGLoader;
+import com.intellij.util.ui.UIUtil;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
 import org.apache.commons.imaging.formats.ico.IcoImageParser;
@@ -40,13 +40,10 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.util.Iterator;
 
 /**
@@ -88,16 +85,19 @@ public final class IfsUtil {
         }
 
         if (isScalableImage(file)) {
-          try {
-            Icon icon = IconLoader.findIcon(new File(file.getPath()).toURI().toURL(), false);
-            file.putUserData(FORMAT_KEY, SVG_FORMAT);
-            file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> {
-              Icon scaledIcon = IconUtil.scale(icon, null, zoom.floatValue());
-              return (BufferedImage)IconLoader.toImage(scaledIcon);
-            }));
-            return true;
-          }
-          catch (MalformedURLException ignore) {}
+          // ensure that image can be displayed (or throw exception otherwise)
+          SVGLoader.load(null, new ByteArrayInputStream(content), 1.0f);
+
+          file.putUserData(FORMAT_KEY, SVG_FORMAT);
+          file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> {
+            try {
+              return (BufferedImage)SVGLoader.load(null, new ByteArrayInputStream(content), zoom.floatValue());
+            }
+            catch (IOException e) {
+              return UIUtil.createImage(0, 0, BufferedImage.TYPE_INT_ARGB);
+            }
+          }));
+          return true;
         }
 
         InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);

@@ -19,10 +19,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATE
  * Created by Nikita.Skvortsov
  * date: 28.09.2017.
  */
-class GradleIdeaSettingsContributor: GradleMethodContextContributor {
+class GradleIdeaSettingsContributor : GradleMethodContextContributor {
   companion object {
-    val PROJECT_SETTINGS_FQN = "org.jetbrains.gradle.ext.ProjectSettings"
-    val MODULE_SETTINGS_FQN = "org.jetbrains.gradle.ext.ModuleSettings"
+    const val PROJECT_SETTINGS_FQN = "org.jetbrains.gradle.ext.ProjectSettings"
+    const val MODULE_SETTINGS_FQN = "org.jetbrains.gradle.ext.ModuleSettings"
   }
 
   override fun process(methodCallInfo: MutableList<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
@@ -36,7 +36,8 @@ class GradleIdeaSettingsContributor: GradleMethodContextContributor {
     if (psiElement().inside(GradleIdeaPluginScriptContributor.ideaClosure).accepts(place)) {
       when {
         methodCallInfo.contains("project") -> {
-          val ideaProjectClass = JavaPsiFacade.getInstance(place.project).findClass(GradleIdeaPluginScriptContributor.IDEA_PROJECT_FQN, resolveScope) ?: return true
+          val ideaProjectClass = JavaPsiFacade.getInstance(place.project).findClass(GradleIdeaPluginScriptContributor.IDEA_PROJECT_FQN,
+                                                                                    resolveScope) ?: return true
           val projectSettingsType = groovyPsiManager.createTypeByFQClassName(PROJECT_SETTINGS_FQN, resolveScope) ?: return true
 
           val projectSettingsMethodBuilder = GrLightMethodBuilder(place.manager, "settings").apply {
@@ -51,8 +52,9 @@ class GradleIdeaSettingsContributor: GradleMethodContextContributor {
           if (!processor.execute(projectSettingsMethodBuilder, state)) return false
         }
 
-        methodCallInfo.contains("module")  -> {
-          val ideaModuleClass = JavaPsiFacade.getInstance(place.project).findClass(GradleIdeaPluginScriptContributor.IDEA_MODULE_FQN, resolveScope) ?: return true
+        methodCallInfo.contains("module") -> {
+          val ideaModuleClass = JavaPsiFacade.getInstance(place.project).findClass(GradleIdeaPluginScriptContributor.IDEA_MODULE_FQN,
+                                                                                   resolveScope) ?: return true
           val moduleSettingsType = groovyPsiManager.createTypeByFQClassName(MODULE_SETTINGS_FQN, resolveScope) ?: return true
 
           val moduleSettingsMethodBuilder = GrLightMethodBuilder(place.manager, "settings").apply {

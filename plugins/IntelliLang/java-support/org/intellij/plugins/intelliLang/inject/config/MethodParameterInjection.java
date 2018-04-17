@@ -184,7 +184,7 @@ public class MethodParameterInjection extends BaseInjection {
           sb.append(token);
         }
         else {
-          sb.append(token.substring(0, idx));
+          sb.append(token, 0, idx);
         }
       }
       else {
@@ -247,7 +247,7 @@ public class MethodParameterInjection extends BaseInjection {
       else {
         sb.append('\"');
         if ((idx = token.indexOf(' ')) > -1) {
-          sb.append(token.substring(0, idx));
+          sb.append(token, 0, idx);
         }
         else {
           sb.append(token);

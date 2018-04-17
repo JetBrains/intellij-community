@@ -8,8 +8,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, TestDiscoveryProtocolReader.NameEnumeratorReader {
   private static final Logger LOG = Logger.getInstance(IdeaTestDiscoveryProtocolReader.class);
 
@@ -18,14 +16,14 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
   @NotNull
   private final TestDiscoveryIndex myIndex;
   private final String myModuleName;
-  private final String myFrameworkPrefix;
+  private final byte myFrameworkId;
 
   IdeaTestDiscoveryProtocolReader(@NotNull TestDiscoveryIndex index,
                                   @Nullable String moduleName,
-                                  @NotNull String frameworkPrefix) {
+                                  byte frameworkId) {
     myIndex = index;
     myModuleName = moduleName;
-    myFrameworkPrefix = frameworkPrefix;
+    myFrameworkId = frameworkId;
   }
 
   @Override
@@ -42,8 +40,38 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
   public MetadataReader createMetadataReader() {
     return new MetadataReader() {
       @Override
-      public void processMetadataEntry(String s, String s1) {
+      public void processMetadataEntry(String k, String v) {
         // do nothing
+      }
+    };
+  }
+
+  @Override
+  public ClassMetadataReader createClassMetadataReader() {
+    return new ClassMetadataReader() {
+      @Override
+      public void classStarted(int i) {
+
+      }
+
+      @Override
+      public void file(int i) {
+
+      }
+
+      @Override
+      public void method(int i, byte[] bytes) {
+
+      }
+
+      @Override
+      public void classFinished(int i) {
+
+      }
+
+      @Override
+      public void finished() {
+
       }
     };
   }
@@ -56,7 +84,8 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
   @Override
   public TestDataReader createTestDataReader(int testClassId, int testMethodId) {
     return new TestDataReader() {
-      private final String myTestName = myTestExecutionNameEnumerator.get(testClassId) + "-" + myTestExecutionNameEnumerator.get(testMethodId);
+      private final String myTestClassName = myTestExecutionNameEnumerator.get(testClassId);
+      private final String myTestMethodName = myTestExecutionNameEnumerator.get(testMethodId);
       private final MultiMap<String, String> myUsedMethods = new MultiMap<>();
       private int myCurrentClassId;
 
@@ -84,12 +113,7 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
 
       @Override
       public void testDataProcessed() {
-        try {
-          myIndex.updateFromData(myTestName, myUsedMethods, myModuleName, myFrameworkPrefix);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+        myIndex.updateTestData(myTestClassName, myTestMethodName, myUsedMethods, myModuleName, myFrameworkId);
       }
     };
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -7,24 +7,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.management.ManagementFactory;
-
 /**
  * Provides access to the {@code Application}.
  */
 public class ApplicationManager {
   protected static Application ourApplication;
-  private static String ourPid;
-
-  private static String getCurrentProcessId() {
-    try {
-      String name = ManagementFactory.getRuntimeMXBean().getName();
-      return name.split("@")[0];
-    }
-    catch (Exception e) {
-      return "-1";
-    }
-  }
 
   /**
    * Gets Application.
@@ -70,13 +57,5 @@ public class ApplicationManager {
     });
     setApplication(instance);
     FileTypeRegistry.ourInstanceGetter = fileTypeRegistryGetter;
-  }
-
-  public static String getApplicationPid() {
-    if (ourPid == null) {
-      ourPid = getCurrentProcessId();
-    }
-
-    return String.valueOf(ourPid);
   }
 }

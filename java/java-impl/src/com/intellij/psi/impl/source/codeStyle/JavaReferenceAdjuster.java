@@ -15,12 +15,12 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -58,8 +58,8 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         boolean rightKind = true;
         if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
           PsiJavaCodeReferenceElementImpl impl = (PsiJavaCodeReferenceElementImpl)element;
-          int kind = impl.getKind(impl.getContainingFile());
-          rightKind = kind == PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND || kind == PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND;
+          PsiJavaCodeReferenceElementImpl.Kind kind = impl.getKindEnum(impl.getContainingFile());
+          rightKind = kind == PsiJavaCodeReferenceElementImpl.Kind.CLASS_NAME_KIND || kind == PsiJavaCodeReferenceElementImpl.Kind.CLASS_OR_PACKAGE_NAME_KIND;
         }
 
         if (rightKind) {
@@ -134,7 +134,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
 
   @Override
   public ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, Project project) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final CodeStyleSettings settings = CodeStyle.getSettings(element.getPsi().getContainingFile());
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     return process(element, addImports, incompleteCode, javaSettings.useFqNamesInJavadocAlways(), javaSettings.USE_FQ_CLASS_NAMES);
   }
@@ -177,7 +177,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
 
   @Override
   public void processRange(@NotNull ASTNode element, int startOffset, int endOffset, Project project) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final CodeStyleSettings settings = CodeStyle.getSettings(element.getPsi().getContainingFile());
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     processRange(element, startOffset, endOffset, javaSettings.useFqNamesInJavadocAlways(), javaSettings.USE_FQ_CLASS_NAMES);
   }
@@ -239,7 +239,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         return reference;
       }
 
-      if (!CodeStyleSettingsManager.getSettings(reference.getProject()).getCustomSettings(JavaCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS) {
+      if (!JavaCodeStyleSettings.getInstance(reference.getContainingFile()).INSERT_INNER_CLASS_IMPORTS) {
         final PsiElement qualifier = reference.getQualifier();
         if (qualifier instanceof PsiQualifiedReferenceElement) {
           return getClassReferenceToShorten(parentClass, addImports, (PsiQualifiedReferenceElement)qualifier);

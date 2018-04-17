@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,10 +56,10 @@ public class StringToConstraintsTransformer {
           while (endIndex < length && Character.isJavaIdentifierPart(criteria.charAt(endIndex))) endIndex++;
           if (endIndex == index) throw new MalformedPatternException(SSRBundle.message("error.expected.character"));
 
-          boolean anonymous = false;
+          boolean target = true;
           final String typedVar;
           if (criteria.charAt(index)=='_')  {
-            anonymous = true;
+            target = false;
 
             if(endIndex == index + 1) {
               // anonymous var, make it unique for the case of constraints
@@ -143,11 +143,11 @@ public class StringToConstraintsTransformer {
             constraint.setMinCount(minOccurs);
             constraint.setMaxCount(maxOccurs);
             constraint.setGreedy(greedy);
-            constraint.setPartOfSearchResults(!anonymous);
-            if (targetFound && !anonymous) {
+            constraint.setPartOfSearchResults(target);
+            if (targetFound && target) {
               throw new MalformedPatternException(SSRBundle.message("error.only.one.target.allowed"));
             }
-            targetFound = !anonymous;
+            targetFound |= target;
           }
           else if (savedIndex != index) {
             throw new MalformedPatternException(SSRBundle.message("error.condition.only.on.first.variable.reference"));

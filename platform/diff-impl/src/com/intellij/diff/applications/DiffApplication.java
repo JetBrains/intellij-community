@@ -18,7 +18,10 @@ package com.intellij.diff.applications;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.util.DiffPlaces;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
@@ -62,7 +65,10 @@ public class DiffApplication extends DiffApplicationBase {
       request = DiffRequestFactory.getInstance().createFromFiles(project, files.get(0), files.get(1));
     }
 
+    SimpleDiffRequestChain chain = new SimpleDiffRequestChain(request);
+    chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.EXTERNAL);
+
     DiffDialogHints dialogHints = project != null ? DiffDialogHints.DEFAULT : DiffDialogHints.MODAL;
-    DiffManagerEx.getInstance().showDiffBuiltin(project, request, dialogHints);
+    DiffManagerEx.getInstance().showDiffBuiltin(project, chain, dialogHints);
   }
 }

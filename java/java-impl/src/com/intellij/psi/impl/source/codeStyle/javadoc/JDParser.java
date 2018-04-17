@@ -287,7 +287,7 @@ public class JDParser {
         first = true;
         if (p2nl) {
           if (isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
-            list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : "");
+            list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
             markers.add(Boolean.valueOf(preCount > 0));
             continue;
           }
@@ -362,7 +362,7 @@ public class JDParser {
         continue;
       }
       while (true) {
-        if (seq.length() < width) {
+        if (seq.length() < width || isMarked) {
           // keep remaining line and proceed with next paragraph
           seq = isMarked ? seq : seq.trim();
           list.add(seq);

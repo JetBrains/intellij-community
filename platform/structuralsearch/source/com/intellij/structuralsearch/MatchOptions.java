@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
@@ -21,7 +21,6 @@ public class MatchOptions implements JDOMExternalizable {
   private boolean looseMatching;
   private boolean recursiveSearch;
   private boolean caseSensitiveMatch;
-  private boolean resultIsContextMatch;
   private FileType myFileType;
   private Language myDialect;
 
@@ -43,7 +42,6 @@ public class MatchOptions implements JDOMExternalizable {
   public MatchOptions() {
     variableConstraints = new LinkedHashMap<>();
     looseMatching = true;
-    resultIsContextMatch = false;
     myFileType = null;
     myDialect = null;
     pattern = "";
@@ -55,7 +53,6 @@ public class MatchOptions implements JDOMExternalizable {
     looseMatching = options.looseMatching;
     recursiveSearch = options.recursiveSearch;
     caseSensitiveMatch = options.caseSensitiveMatch;
-    resultIsContextMatch = options.resultIsContextMatch;
     myFileType = options.myFileType;
     myDialect = options.myDialect;
     scope = options.scope;
@@ -144,14 +141,6 @@ public class MatchOptions implements JDOMExternalizable {
 
   public void fillSearchCriteria(String criteria) {
     StringToConstraintsTransformer.transformCriteria(criteria, this);
-  }
-
-  public boolean isResultIsContextMatch() {
-    return resultIsContextMatch;
-  }
-
-  public void setResultIsContextMatch(boolean resultIsContextMatch) {
-    this.resultIsContextMatch = resultIsContextMatch;
   }
 
   public SearchScope getScope() {

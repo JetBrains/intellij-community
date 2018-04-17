@@ -18,9 +18,10 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,8 @@ public class HardcodedContracts {
     MethodContract.singleConditionContract(ContractValue.argument(1), RelationType.GT,
                                            ContractValue.argument(2), THROW_EXCEPTION)
   );
+
+  private static final CallMatcher QUEUE_POLL = instanceCall("java.util.Queue", "poll").parameterCount(0);
 
   private static StandardMethodContract standardContract(MethodContract.ValueConstraint returnValue,
                                                          MethodContract.ValueConstraint... args) {
@@ -120,7 +123,11 @@ public class HardcodedContracts {
     .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
               (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
     .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
-              ContractProvider.single(() -> new StandardMethodContract(new MethodContract.ValueConstraint[] {ANY_VALUE}, ANY_VALUE)));
+              ContractProvider.single(() -> new StandardMethodContract(new MethodContract.ValueConstraint[]{ANY_VALUE}, ANY_VALUE)))
+    .register(instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
+              (call, paramCount) -> Arrays.asList(MethodContract.singleConditionContract(
+                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
+                ContractValue.zero(), NULL_VALUE), MethodContract.trivialContract(ANY_VALUE)));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -158,7 +165,8 @@ public class HardcodedContracts {
     }
     else if (isJunit(className) || isTestng(className) ||
              className.startsWith("com.google.common.truth.") ||
-             className.startsWith("org.assertj.core.api.")) {
+             className.startsWith("org.assertj.core.api.") ||
+             className.equals("org.hamcrest.MatcherAssert")) {
       return handleTestFrameworks(paramCount, className, methodName, call);
     }
     else if (TypeUtils.isOptional(owner)) {
@@ -220,31 +228,6 @@ public class HardcodedContracts {
     return className.startsWith("org.testng.") && !className.equals("org.testng.AssertJUnit");
   }
 
-  private static boolean isNotNullMatcher(PsiExpression expr) {
-    if (expr instanceof PsiMethodCallExpression) {
-      String calledName = ((PsiMethodCallExpression)expr).getMethodExpression().getReferenceName();
-      if ("notNullValue".equals(calledName)) {
-        return true;
-      }
-      if ("not".equals(calledName)) {
-        PsiExpression[] notArgs = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
-        if (notArgs.length == 1 &&
-            notArgs[0] instanceof PsiMethodCallExpression &&
-            "equalTo".equals(((PsiMethodCallExpression)notArgs[0]).getMethodExpression().getReferenceName())) {
-          PsiExpression[] equalArgs = ((PsiMethodCallExpression)notArgs[0]).getArgumentList().getExpressions();
-          if (equalArgs.length == 1 && ExpressionUtils.isNullLiteral(equalArgs[0])) {
-            return true;
-          }
-        }
-      }
-      if ("is".equals(calledName)) {
-        PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
-        if (args.length == 1) return isNotNullMatcher(args[0]);
-      }
-    }
-    return false;
-  }
-
   private static List<MethodContract> handleTestFrameworks(int paramCount, String className, String methodName,
                                                            @Nullable PsiMethodCallExpression call) {
     if (("assertThat".equals(methodName) || "assumeThat".equals(methodName) || "that".equals(methodName)) && call != null) {
@@ -276,10 +259,56 @@ public class HardcodedContracts {
       constraints[checkedParam] = NOT_NULL_VALUE;
       return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
     }
-    if ("assertNotNull".equals(methodName) || "assumeNotNull".equals(methodName)) {
+    if ("assertNotNull".equals(methodName)) {
       return failIfNull(checkedParam, paramCount);
     }
     return Collections.emptyList();
+  }
+
+  @Nullable
+  private static MethodContract.ValueConstraint constraintFromMatcher(PsiExpression expr) {
+    if (expr instanceof PsiMethodCallExpression) {
+      String calledName = ((PsiMethodCallExpression)expr).getMethodExpression().getReferenceName();
+      PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
+      if (calledName == null) return null;
+      switch (calledName) {
+        case "notNullValue":
+          return NULL_VALUE;
+        case "nullValue":
+          return NOT_NULL_VALUE;
+        case "equalTo":
+          if (args.length == 1) {
+            return constraintFromLiteral(args[0]);
+          }
+          return null;
+        case "not":
+          if (args.length == 1) {
+            MethodContract.ValueConstraint constraint = constraintFromMatcher(args[0]);
+            if (constraint != null) {
+              return constraint.negate();
+            }
+          }
+          return null;
+        case "is":
+          if (args.length == 1) {
+            MethodContract.ValueConstraint fromMatcher = constraintFromMatcher(args[0]);
+            return fromMatcher == null ? constraintFromLiteral(args[0]) : fromMatcher;
+          }
+          return null;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static MethodContract.ValueConstraint constraintFromLiteral(PsiExpression arg) {
+    arg = PsiUtil.skipParenthesizedExprDown(arg);
+    if (!(arg instanceof PsiLiteralExpression)) return null;
+    Object value = ((PsiLiteralExpression)arg).getValue();
+    if (value == null) return NOT_NULL_VALUE;
+    if (Boolean.TRUE.equals(value)) return FALSE_VALUE;
+    if (Boolean.FALSE.equals(value)) return TRUE_VALUE;
+    return null;
   }
 
   @NotNull
@@ -287,8 +316,11 @@ public class HardcodedContracts {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     if (args.length == paramCount) {
       for (int i = 1; i < args.length; i++) {
-        if (isNotNullMatcher(args[i])) {
-          return failIfNull(i - 1, paramCount);
+        MethodContract.ValueConstraint constraint = constraintFromMatcher(args[i]);
+        if (constraint != null) {
+          MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+          constraints[i - 1] = constraint;
+          return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
         }
       }
       if (args.length == 1 && hasNotNullChainCall(call)) {
@@ -336,6 +368,9 @@ public class HardcodedContracts {
     }
     if (JAVA_UTIL_ARRAYS.equals(className)) {
       return name.equals("binarySearch") || name.equals("spliterator") || name.equals("stream");
+    }
+    if (QUEUE_POLL.methodMatches(method)) {
+      return false;
     }
     return true;
   }

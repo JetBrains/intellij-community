@@ -38,6 +38,7 @@ import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.graph.*
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
@@ -243,7 +244,7 @@ private class ModuleDescriptionsTree(project: Project) {
   fun installDoubleClickListener(action: () -> Unit) {
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
-        if (tree.selectionPaths.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true }) {
+        if (tree.selectionPaths?.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true } ?: false) {
           action()
           return true
         }
@@ -266,6 +267,10 @@ private class ModuleDescriptionsTree(project: Project) {
   fun fillTree(modules: Collection<ModuleDescription>) {
     removeAllNodes()
     helper.createModuleNodes(modules, root, model)
+    expandRoot()
+  }
+
+  private fun expandRoot() {
     tree.expandPath(TreePath(root))
   }
 
@@ -279,6 +284,7 @@ private class ModuleDescriptionsTree(project: Project) {
     for (node in toRemove) {
       helper.removeNode(node, root, model)
     }
+    expandRoot()
   }
 
   private fun findNodes(condition: (ModuleDescriptionNode) -> Boolean): List<ModuleDescriptionNode> {
@@ -323,6 +329,9 @@ private fun createModuleDescriptionHelper(project: Project): ModuleGroupingTreeH
 }
 
 private class ModuleDescriptionGrouping(private val moduleGrouper: ModuleGrouper) : ModuleGroupingImplementation<ModuleDescription> {
+  override val compactGroupNodes: Boolean
+    get() = moduleGrouper.compactGroupNodes
+
   override fun getGroupPath(m: ModuleDescription): List<String> {
     return moduleGrouper.getGroupPath(m)
   }
@@ -336,19 +345,29 @@ private val nodeComparator = compareBy(NaturalComparator.INSTANCE) { node: Modul
 private interface ModuleDescriptionTreeNode : MutableTreeNode {
   val text: String
   val icon: Icon
+  val group: ModuleGroup?
 }
 
 private class ModuleDescriptionNode(val moduleDescription: ModuleDescription, val moduleGrouper: ModuleGrouper) : DefaultMutableTreeNode(), ModuleDescriptionTreeNode {
   override val text: String
-    get() = moduleGrouper.getShortenedNameByFullModuleName(moduleDescription.name)
+    get() = moduleGrouper.getShortenedNameByFullModuleName(moduleDescription.name, (parent as? ModuleDescriptionTreeNode)?.group?.qualifiedName)
 
   override val icon: Icon
     get() = AllIcons.Nodes.Module
+
+  override val group: ModuleGroup?
+    get() = moduleGrouper.getModuleAsGroupPath(moduleDescription)?.let {ModuleGroup(it)}
 }
 
-private class ModuleGroupNode(val group: ModuleGroup) : DefaultMutableTreeNode(), ModuleDescriptionTreeNode {
+private class ModuleGroupNode(override val group: ModuleGroup) : DefaultMutableTreeNode(), ModuleDescriptionTreeNode {
   override val text: String
-    get() = group.presentableText()
+    get() {
+      val parentGroupPath = (parent as? ModuleDescriptionTreeNode)?.group?.groupPathList
+      if (parentGroupPath != null && ContainerUtil.startsWith(group.groupPathList, parentGroupPath)) {
+        return group.groupPathList.drop(parentGroupPath.size).joinToString(".")
+      }
+      return group.groupPathList.last()
+    }
 
   override val icon: Icon
     get() = AllIcons.Nodes.ModuleGroup
@@ -360,4 +379,7 @@ private class RootNode: DefaultMutableTreeNode(), ModuleDescriptionTreeNode {
 
   override val icon: Icon
     get() = AllIcons.Nodes.ModuleGroup
+
+  override val group: ModuleGroup?
+    get() = null
 }

@@ -18,35 +18,26 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public abstract class FilePsiMutation implements MadTestingAction {
-  private final SmartPsiElementPointer<PsiFile> myFile;
+public abstract class FilePsiMutation extends ActionOnFile {
 
   public FilePsiMutation(PsiFile file) {
-    myFile = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(file);
+    super(file);
   }
 
   @Override
-  public String toString() {
-    return getClass().getSimpleName() + "[" + myFile.getVirtualFile().getPath() + "]";
-  }
-
-  @Override
-  public void performAction() {
-    PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(getFile().getViewProvider().getDocument());
-    WriteCommandAction.runWriteCommandAction(myFile.getProject(), this::performMutation);
+  public void performCommand(@NotNull Environment env) {
+    env.logMessage(toString());
+    PsiDocumentManager.getInstance(getProject()).commitDocument(getFile().getViewProvider().getDocument());
+    WriteCommandAction.runWriteCommandAction(getProject(), this::performMutation);
     PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
   }
 
   protected abstract void performMutation();
 
-  public PsiFile getFile() {
-    return myFile.getElement();
-  }
 }

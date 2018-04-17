@@ -38,7 +38,7 @@ public class GrRangeType extends GrLiteralClassType {
 
   private final PsiType[] myParameters;
 
-  public GrRangeType(LanguageLevel languageLevel,
+  public GrRangeType(@NotNull LanguageLevel languageLevel,
                      GlobalSearchScope scope,
                      JavaPsiFacade facade,
                      @Nullable PsiType left,

@@ -21,7 +21,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.hosting.RepositoryHostingService;
 import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,11 +29,8 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -52,9 +48,10 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.progress.ComponentVisibilityProgressManager;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -536,7 +533,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myRepositoryUrlCombobox;
+    return myRepositoryUrlField;
   }
 
   @NotNull
@@ -547,14 +544,16 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @NotNull
   protected JComponent createCenterPanel() {
-    return PanelFactory.grid()
-                       .add(PanelFactory.panel(JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
-                                                          .addToCenter(myRepositoryUrlCombobox)
-                                                          .addToRight(myTestButton))
-                                        .withLabel(DvcsBundle.getString("clone.repository.url.label")))
-                       .add(PanelFactory.panel(myDirectoryField)
-                                        .withLabel(DvcsBundle.getString("clone.destination.directory.label")))
-                       .createPanel();
+    JPanel panel = PanelFactory.grid()
+                               .add(PanelFactory.panel(JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
+                                                                  .addToCenter(myRepositoryUrlCombobox)
+                                                                  .addToRight(myTestButton))
+                                                .withLabel(DvcsBundle.getString("clone.repository.url.label")))
+                               .add(PanelFactory.panel(myDirectoryField)
+                                                .withLabel(DvcsBundle.getString("clone.destination.directory.label")))
+                               .createPanel();
+    panel.setPreferredSize(new JBDimension(500, 50, true));
+    return panel;
   }
 
   protected static class TestResult {
@@ -592,38 +591,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
     public void trySetChildPath(@NotNull String child) {
       if (!myModifiedByUser) {
-        setText(myDefaultParentPath.resolve(child).toString());
-        myModifiedByUser = false;
-      }
-    }
-  }
-
-  private static class ComponentVisibilityProgressManager implements Disposable {
-    @NotNull private final JComponent myProgressDisplayComponent;
-    @NotNull private final List<ProgressIndicator> myIndicators;
-
-    public ComponentVisibilityProgressManager(@NotNull JComponent progressDisplayComponent) {
-      myProgressDisplayComponent = progressDisplayComponent;
-      myIndicators = new ArrayList<>();
-    }
-
-    @CalledInAwt
-    public ProgressIndicator run(@NotNull Task.Backgroundable task) {
-      ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.stateForComponent(myProgressDisplayComponent));
-      myIndicators.add(indicator);
-      myProgressDisplayComponent.setVisible(true);
-      ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, () ->
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myIndicators.remove(indicator);
-          myProgressDisplayComponent.setVisible(!myIndicators.isEmpty());
-        }, indicator.getModalityState()));
-      return indicator;
-    }
-
-    @Override
-    public void dispose() {
-      for (ProgressIndicator indicator : myIndicators) {
-        indicator.cancel();
+        try {
+          setText(myDefaultParentPath.resolve(child).toString());
+        }
+        catch (InvalidPathException ignored) {
+        }
+        finally {
+          myModifiedByUser = false;
+        }
       }
     }
   }

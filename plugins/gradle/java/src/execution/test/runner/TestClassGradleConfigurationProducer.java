@@ -3,6 +3,7 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
@@ -10,7 +11,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -18,6 +18,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.util.Iterator;
 import java.util.List;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
@@ -85,9 +87,20 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
   @Nullable
   protected PsiClass getPsiClassForLocation(Location contextLocation) {
-    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    final Location<?> location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) return null;
-    return JUnitUtil.getTestClass(location);
+
+    TestFrameworks testFrameworks = TestFrameworks.getInstance();
+    for (Iterator<Location<PsiClass>> iterator = location.getAncestors(PsiClass.class, false); iterator.hasNext(); ) {
+      final Location<PsiClass> classLocation = iterator.next();
+      if (testFrameworks.isTestClass(classLocation.getPsiElement())) return classLocation.getPsiElement();
+    }
+    PsiElement element = location.getPsiElement();
+    if (element instanceof PsiClassOwner) {
+      PsiClass[] classes = ((PsiClassOwner)element).getClasses();
+      if (classes.length == 1 && testFrameworks.isTestClass(classes[0])) return classes[0];
+    }
+    return null;
   }
 
   @Override

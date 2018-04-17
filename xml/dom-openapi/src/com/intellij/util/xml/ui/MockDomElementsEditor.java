@@ -104,28 +104,25 @@ public class MockDomElementsEditor {
         final Set<PsiFile> changedFiles = new HashSet<>();
         for (final Map.Entry<EditedElementDescription<? extends DomElement>, DomElement> entry : myDomElements.entrySet()) {
           final EditedElementDescription description = entry.getKey();
-            final DomElement editedElement = entry.getValue();
-            if (description.find() == null && editedElement.getXmlTag() != null) {
-              descriptions.add(description);
-              final XmlFile xmlFile = description.getEditedFile();
-              if (xmlFile != null) {
-                changedFiles.add(xmlFile);
-              }
-            }
-        }
-        new WriteCommandAction(project, PsiUtilCore.toPsiFileArray(changedFiles)) {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            for (EditedElementDescription description : descriptions) {
-              final DomElement editedElement = myDomElements.get(description);
-              DomElement element = description.addElement();
-              element.copyFrom(editedElement);
-              description.initialize(element);
-              removeWatchedElement(editedElement);
-              ((StableElement)editedElement).invalidate();
+          final DomElement editedElement = entry.getValue();
+          if (description.find() == null && editedElement.getXmlTag() != null) {
+            descriptions.add(description);
+            final XmlFile xmlFile = description.getEditedFile();
+            if (xmlFile != null) {
+              changedFiles.add(xmlFile);
             }
           }
-        }.execute();
+        }
+        WriteCommandAction.writeCommandAction(project, PsiUtilCore.toPsiFileArray(changedFiles)).run(() -> {
+          for (EditedElementDescription description : descriptions) {
+            final DomElement editedElement = myDomElements.get(description);
+            DomElement element = description.addElement();
+            element.copyFrom(editedElement);
+            description.initialize(element);
+            removeWatchedElement(editedElement);
+            ((StableElement)editedElement).invalidate();
+          }
+        });
       }
     };
     final DomManager domManager = DomManager.getDomManager(project);

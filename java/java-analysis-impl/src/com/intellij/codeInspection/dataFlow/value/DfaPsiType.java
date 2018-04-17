@@ -16,25 +16,24 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWildcardType;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * @author peter
  */
 public class DfaPsiType {
   private final PsiType myPsiType;
-  private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache;
-  private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache;
+  private final DfaValueFactory myFactory;
   private final int myID;
 
-  DfaPsiType(int id, @NotNull PsiType psiType, Map<Pair<DfaPsiType, DfaPsiType>, Boolean> assignableCache, Map<Pair<DfaPsiType, DfaPsiType>, Boolean> convertibleCache) {
+  DfaPsiType(int id, @NotNull PsiType psiType, DfaValueFactory factory) {
     myID = id;
     myPsiType = psiType;
-    myAssignableCache = assignableCache;
-    myConvertibleCache = convertibleCache;
+    myFactory = factory;
   }
 
   @NotNull
@@ -45,21 +44,17 @@ public class DfaPsiType {
   public boolean isAssignableFrom(DfaPsiType other) {
     if (other == this) return true;
     Pair<DfaPsiType, DfaPsiType> key = Pair.create(this, other);
-    Boolean result = myAssignableCache.get(key);
-    if (result == null) {
-      myAssignableCache.put(key, result = myPsiType.isAssignableFrom(other.myPsiType));
-    }
-    return result;
+    return myFactory.myAssignableCache.computeIfAbsent(key, k -> myPsiType.isAssignableFrom(other.myPsiType));
   }
 
   public boolean isConvertibleFrom(DfaPsiType other) {
     if (other == this) return true;
     Pair<DfaPsiType, DfaPsiType> key = Pair.create(this, other);
-    Boolean result = myConvertibleCache.get(key);
-    if (result == null) {
-      myConvertibleCache.put(key, result = myPsiType.isConvertibleFrom(other.myPsiType));
-    }
-    return result;
+    return myFactory.myConvertibleCache.computeIfAbsent(key, k -> myPsiType.isConvertibleFrom(other.myPsiType));
+  }
+
+  public DfaValueFactory getFactory() {
+    return myFactory;
   }
 
   @Override
@@ -69,5 +64,24 @@ public class DfaPsiType {
 
   public int getID() {
     return myID;
+  }
+
+  @NotNull
+  public static PsiType normalizeType(@NotNull PsiType psiType) {
+    int dimensions = psiType.getArrayDimensions();
+    psiType = psiType.getDeepComponentType();
+    if (psiType instanceof PsiCapturedWildcardType) {
+      psiType = ((PsiCapturedWildcardType)psiType).getUpperBound();
+    }
+    if (psiType instanceof PsiWildcardType) {
+      psiType = ((PsiWildcardType)psiType).getExtendsBound();
+    }
+    if (psiType instanceof PsiClassType) {
+      psiType = ((PsiClassType)psiType).rawType();
+    }
+    while (dimensions-- > 0) {
+      psiType = psiType.createArrayType();
+    }
+    return psiType;
   }
 }

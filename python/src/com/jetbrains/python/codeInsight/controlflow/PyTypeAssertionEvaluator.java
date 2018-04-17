@@ -8,7 +8,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
+import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,8 +120,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       }
     }
 
-    final Object leftValue = PyConstantExpressionEvaluator.evaluate(lhs);
-    final Object rightValue = PyConstantExpressionEvaluator.evaluate(rhs);
+    final Object leftValue = PyEvaluator.evaluateNoResolve(lhs, Object.class);
+    final Object rightValue = PyEvaluator.evaluateNoResolve(rhs, Object.class);
 
     if (leftValue instanceof Boolean && rightValue instanceof Boolean) {
       return;
@@ -157,7 +157,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     else if (initial instanceof PyUnionType) {
       return Ref.create(((PyUnionType)initial).exclude(transformedType, context));
     }
-    else if (initial != null && PyTypeChecker.match(transformedType, initial, context)) {
+    else if (!(initial instanceof PyStructuralType) &&
+             !PyTypeChecker.isUnknown(initial, context) &&
+             PyTypeChecker.match(transformedType, initial, context)) {
       return null;
     }
     return Ref.create(initial);

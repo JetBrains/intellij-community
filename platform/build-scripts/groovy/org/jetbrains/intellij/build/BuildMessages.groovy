@@ -15,6 +15,11 @@ interface BuildMessages {
   void warning(String message)
 
   /**
+   * Print {@code message} to <output-root>/log/debug.log file. This log file will also include 'info' and 'warning' messages.
+   */
+  void debug(String message)
+
+  /**
    * Report an error and stop the build process
    */
   void error(String message)

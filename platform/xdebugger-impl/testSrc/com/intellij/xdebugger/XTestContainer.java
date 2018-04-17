@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.function.BiFunction;
 
 public class XTestContainer<T> {
   private final List<T> myChildren = new SmartList<>();
@@ -41,7 +42,11 @@ public class XTestContainer<T> {
   }
 
   public Pair<List<T>, String> waitFor(long timeoutMs) {
-    if (!XDebuggerTestUtil.waitFor(myFinished, timeoutMs)) {
+    return waitFor(timeoutMs, (semaphore, timeout) -> XDebuggerTestUtil.waitFor(myFinished, timeout));
+  }
+
+  public Pair<List<T>, String> waitFor(long timeoutMs, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    if (!waitFunction.apply(myFinished, timeoutMs)) {
       throw new AssertionError("Waiting timed out");
     }
 

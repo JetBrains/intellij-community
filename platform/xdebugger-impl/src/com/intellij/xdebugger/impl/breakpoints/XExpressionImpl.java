@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.lang.Language;
@@ -28,7 +26,7 @@ public class XExpressionImpl implements XExpression {
     this(expression, language, customInfo, EvaluationMode.EXPRESSION);
   }
 
-  public XExpressionImpl(@NotNull String expression, Language language, String customInfo, EvaluationMode mode) {
+  public XExpressionImpl(@NotNull String expression, Language language, String customInfo, @NotNull EvaluationMode mode) {
     myExpression = expression;
     myLanguage = language;
     myCustomInfo = customInfo;
@@ -51,6 +49,7 @@ public class XExpressionImpl implements XExpression {
     return myCustomInfo;
   }
 
+  @NotNull
   @Override
   public EvaluationMode getMode() {
     return myMode;
@@ -62,11 +61,11 @@ public class XExpressionImpl implements XExpression {
   }
 
   @Contract("null, _ -> null; !null, _ -> !null")
-  public static XExpressionImpl fromText(@Nullable String text, EvaluationMode mode) {
+  public static XExpressionImpl fromText(@Nullable String text, @NotNull EvaluationMode mode) {
     return text != null ? new XExpressionImpl(text, null, null, mode) : null;
   }
 
-  public static XExpressionImpl changeMode(XExpression expression, EvaluationMode mode) {
+  public static XExpressionImpl changeMode(@NotNull XExpression expression, @NotNull EvaluationMode mode) {
     return new XExpressionImpl(expression.getExpression(), expression.getLanguage(), expression.getCustomInfo(), mode);
   }
 

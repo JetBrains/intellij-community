@@ -16,20 +16,27 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.local.ChangeListCommand;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class DelayedNotificator implements ChangeListListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.DelayedNotificator");
 
-  private final EventDispatcher<ChangeListListener> myDispatcher;
-  private final ChangeListManagerImpl.Scheduler myScheduler;
+  @NotNull private final ChangeListManagerImpl myManager;
+  @NotNull private final EventDispatcher<ChangeListListener> myDispatcher;
+  @NotNull private final ChangeListManagerImpl.Scheduler myScheduler;
 
-  public DelayedNotificator(@NotNull EventDispatcher<ChangeListListener> dispatcher,
+  public DelayedNotificator(@NotNull ChangeListManagerImpl manager,
+                            @NotNull EventDispatcher<ChangeListListener> dispatcher,
                             @NotNull ChangeListManagerImpl.Scheduler scheduler) {
+    myManager = manager;
     myDispatcher = dispatcher;
     myScheduler = scheduler;
   }
@@ -78,8 +85,8 @@ public class DelayedNotificator implements ChangeListListener {
     myScheduler.submit(() -> myDispatcher.getMulticaster().changesMoved(changes, fromList, toList));
   }
 
-  public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList));
+  public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList, boolean automatic) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList, automatic));
   }
 
 
@@ -91,7 +98,31 @@ public class DelayedNotificator implements ChangeListListener {
     myScheduler.submit(() -> myDispatcher.getMulticaster().changeListUpdateDone());
   }
 
-  public void changeListsChanged() {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListsChanged());
+  public void allChangeListsMappingsChanged() {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().allChangeListsMappingsChanged());
+  }
+
+  public void changeListsForFileChanged(@NotNull FilePath path,
+                                        @NotNull Set<String> removedChangeListsIds,
+                                        @NotNull Set<String> addedChangeListsIds) {
+    myScheduler.submit(() -> {
+      Change change = myManager.getChange(path);
+      if (change == null) return;
+      List<Change> changes = Collections.singletonList(change);
+
+      for (String listId : removedChangeListsIds) {
+        LocalChangeList changeList = myManager.getChangeList(listId);
+        if (changeList != null) {
+          myDispatcher.getMulticaster().changesRemoved(changes, changeList);
+        }
+      }
+
+      for (String listId : addedChangeListsIds) {
+        LocalChangeList changeList = myManager.getChangeList(listId);
+        if (changeList != null) {
+          myDispatcher.getMulticaster().changesAdded(changes, changeList);
+        }
+      }
+    });
   }
 }

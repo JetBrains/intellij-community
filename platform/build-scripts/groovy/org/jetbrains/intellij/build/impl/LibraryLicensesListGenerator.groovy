@@ -49,8 +49,8 @@ class LibraryLicensesListGenerator {
   }
 
   void generateLicensesTable(String filePath, Set<String> usedModulesNames) {
-    messages.info("Generating licenses table")
-    messages.info("Used modules: $usedModulesNames")
+    messages.debug("Generating licenses table")
+    messages.debug("Used modules: $usedModulesNames")
     Set<JpsModule> usedModules = project.modules.findAll { usedModulesNames.contains(it.name) } as Set<JpsModule>
     Map<String, String> usedLibraries = [:]
     usedModules.each { JpsModule module ->
@@ -74,15 +74,19 @@ class LibraryLicensesListGenerator {
       }
     }
 
-    messages.info("Used libraries:")
+    messages.debug("Used libraries:")
     List<String> lines = []
     licenses.entrySet().each {
       LibraryLicense lib = it.key
       String moduleName = it.value
-      def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
-      def license = lib.libraryLicenseUrl != null ? "[$lib.license|$lib.libraryLicenseUrl]" : lib.license
-      messages.info(" $lib.name (in module $moduleName)")
-      lines << "|$name| ${lib.version ?: ""}|$license|".toString()
+
+      String libKey = (lib.name + "_" + lib.version ?: "").replace(" ", "_")
+      // id here is needed because of a bug IDEA-188262
+      String name = lib.url != null ? "<a id=\"${libKey}_lib_url\" href=\"$lib.url\">$lib.name</a>" : lib.name
+      String license = lib.libraryLicenseUrl != null ? "<a id=\"${libKey}_license_url\" href=\"$lib.libraryLicenseUrl\">$lib.license</a>" : lib.license
+
+      messages.debug(" $lib.name (in module $moduleName)")
+      lines << "<tr><td>$name</td><td>${lib.version ?: ""}</td><td>$license</td></tr>".toString()
     }
     //projectBuilder.info("Unused libraries:")
     //licensesList.findAll {!licenses.containsKey(it)}.each {LibraryLicense lib ->
@@ -94,10 +98,12 @@ class LibraryLicensesListGenerator {
     file.parentFile.mkdirs()
     FileWriter out = new FileWriter(file)
     try {
-      out.println("|| Software || Version || License ||")
+      out.println("<table>")
+      out.println("<tr><th>Software</th><th>Version</th><th>License</th></tr>")
       lines.each {
         out.println(it)
       }
+      out.println("</table>")
     }
     finally {
       out.close()

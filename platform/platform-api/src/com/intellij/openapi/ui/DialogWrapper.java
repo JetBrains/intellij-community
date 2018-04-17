@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -21,6 +22,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -370,7 +372,7 @@ public abstract class DialogWrapper {
         if (myDisposed) return;
         setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(info.isEmpty());
+        getOKAction().setEnabled(info.isEmpty() || info.stream().noneMatch(info1 -> info1.disableOk));
       });
     }
   }
@@ -426,6 +428,7 @@ public abstract class DialogWrapper {
   }
 
   public final void close(int exitCode) {
+    logCloseDialogEvent(exitCode);
     close(exitCode, exitCode != CANCEL_EXIT_CODE);
   }
 
@@ -671,11 +674,17 @@ public abstract class DialogWrapper {
 
   @NotNull
   protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
-    int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
-    JPanel buttonsPanel = new NonOpaquePanel(new DialogWrapperButtonLayout(buttons.size(), hgap));
-    for (final JButton button : buttons) {
-      buttonsPanel.add(button);
+    int hgap = JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 10 : 6);
+    JPanel buttonsPanel = new NonOpaquePanel();
+    buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+
+    for (int i = 0; i < buttons.size(); i++) {
+      buttonsPanel.add(buttons.get(i));
+      if (i < buttons.size() - 1) {
+        buttonsPanel.add(Box.createRigidArea(JBUI.size(hgap, 0)));
+      }
     }
+
     return buttonsPanel;
   }
 
@@ -1291,16 +1300,20 @@ public abstract class DialogWrapper {
     JComponent centerSection = new JPanel(new BorderLayout());
     root.add(centerSection, BorderLayout.CENTER);
 
-    root.setBorder(createContentPaneBorder());
-
     final JComponent n = createNorthPanel();
     if (n != null) {
       centerSection.add(n, BorderLayout.NORTH);
     }
 
-    final JComponent c = createCenterPanel();
-    if (c != null) {
-      centerSection.add(c, BorderLayout.CENTER);
+    final JComponent centerPanel = createCenterPanel();
+    if (centerPanel != null) {
+      centerSection.add(centerPanel, BorderLayout.CENTER);
+    }
+
+    boolean isVisualPaddingCompensatedOnComponentLevel = JBUI.isCompensateVisualPaddingOnComponentLevel(centerPanel);
+    if (isVisualPaddingCompensatedOnComponentLevel) {
+      // see comment about visual paddings in the MigLayoutBuilder.build
+      root.setBorder(createContentPaneBorder());
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
@@ -1309,6 +1322,9 @@ public abstract class DialogWrapper {
     southSection.add(myErrorText, BorderLayout.CENTER);
     final JComponent south = createSouthPanel();
     if (south != null) {
+      if (!isVisualPaddingCompensatedOnComponentLevel) {
+        south.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
+      }
       southSection.add(south, BorderLayout.SOUTH);
     }
 
@@ -1621,6 +1637,7 @@ public abstract class DialogWrapper {
    * @see #showAndGetOk()
    */
   public void show() {
+    logShowDialogEvent();
     invokeShow();
   }
 
@@ -1775,6 +1792,20 @@ public abstract class DialogWrapper {
     return false;
   }
 
+  private void logCloseDialogEvent(int exitCode) {
+    final String title = getTitle();
+    if (StringUtil.isNotEmpty(title)) {
+      FeatureUsageUiEvents.INSTANCE.logCloseDialog(title, exitCode);
+    }
+  }
+
+  private void logShowDialogEvent() {
+    final String title = getTitle();
+    if (StringUtil.isNotEmpty(title)) {
+      FeatureUsageUiEvents.INSTANCE.logShowDialog(title);
+    }
+  }
+
   /**
    * Base class for dialog wrapper actions that need to ensure that only
    * one action for the dialog is running.
@@ -1836,7 +1867,7 @@ public abstract class DialogWrapper {
         }
 
         startTrackingValidation();
-        return;
+        if(infoList.stream().anyMatch(info1 -> info1.disableOk)) return;
       }
       doOKAction();
     }
@@ -1847,7 +1878,7 @@ public abstract class DialogWrapper {
   }
 
   private void recordAction(String name, AWTEvent event) {
-    if (event instanceof KeyEvent) {
+    if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
       String shortcut = getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event));
       ActionsCollector.getInstance().record(name + " " + shortcut);
     }

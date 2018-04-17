@@ -23,6 +23,7 @@ class AsyncPromiseTest {
     assertThat(promise.isCancelled).isTrue()
     assertThat(promise.cancel(true)).isFalse()
     assertThat(promise.isCancelled).isTrue()
+    assertThat(promise.blockingGet(1)).isNull()
   }
 
   @Test
@@ -36,7 +37,8 @@ class AsyncPromiseTest {
     val count = AtomicInteger()
 
     val r = {
-      promise.done { count.incrementAndGet() }
+      promise
+        .onSuccess { count.incrementAndGet() }
     }
 
     val s = {
@@ -78,7 +80,7 @@ class AsyncPromiseTest {
   }
 
   @Test
-  fun `ignoreErrors`() {
+  fun `ignore errors`() {
     val a = resolvedPromise("foo")
     val b = rejectedPromise<String>()
     assertThat(collectResults(listOf(a, b), ignoreErrors = true).blockingGet(100, TimeUnit.MILLISECONDS)).containsExactly("foo")
@@ -101,10 +103,10 @@ class AsyncPromiseTest {
 
     val r = {
       if (reject) {
-        promise.rejected { count.incrementAndGet() }
+        promise.onError { count.incrementAndGet() }
       }
       else {
-        promise.done { count.incrementAndGet() }
+        promise.onSuccess { count.incrementAndGet() }
       }
     }
 

@@ -27,7 +27,10 @@ if sys.version_info >= (3, 4):
 def calcsize(fmt: _FmtType) -> int: ...
 
 class Struct:
-    format = ...  # type: bytes
+    if sys.version_info >= (3, 7):
+        format: str
+    else:
+        format: bytes
     size = ...  # type: int
 
     def __init__(self, format: _FmtType) -> None: ...

@@ -336,7 +336,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
         syntaxInfo.processOutputInfo(new MarkupHandler() {
           @Override
           public void handleText(int startOffset, int endOffset) {
-            builder.append("text=").append(text.substring(startOffset, endOffset)).append('\n');
+            builder.append("text=").append(text, startOffset, endOffset).append('\n');
           }
 
           @Override

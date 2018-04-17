@@ -74,7 +74,7 @@ public class MapUpdateInliner implements CallInliner {
         .push(builder.getFactory().createTypeValue(type, Nullness.NOT_NULL))
         .swap()
         .invokeFunction(2, function)
-        .endIf()
+        .end()
         .flushFields();
       return true;
     }
@@ -92,7 +92,7 @@ public class MapUpdateInliner implements CallInliner {
       .elseBranch()
       .pop()
       .push(builder.getFactory().createTypeValue(type, Nullness.NOT_NULL))
-      .endIf();
+      .end();
   }
 
   private static void inlineComputeIfPresent(@NotNull CFGBuilder builder,
@@ -110,7 +110,7 @@ public class MapUpdateInliner implements CallInliner {
       .elseBranch()
       .pop()
       .pushNull()
-      .endIf();
+      .end();
   }
 
   private static void inlineCompute(@NotNull CFGBuilder builder,

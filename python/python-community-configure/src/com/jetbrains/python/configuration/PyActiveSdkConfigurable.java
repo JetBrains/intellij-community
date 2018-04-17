@@ -361,9 +361,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   private class MySdkModelListener implements SdkModel.Listener {
 
-    public MySdkModelListener() {
-    }
-
     @Override
     public void sdkAdded(Sdk sdk) {
       updateSdkList(true);
@@ -377,10 +374,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     @Override
     public void sdkChanged(Sdk sdk, String previousName) {
       updateSdkList(true);
-    }
-
-    @Override
-    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
     }
   }
 

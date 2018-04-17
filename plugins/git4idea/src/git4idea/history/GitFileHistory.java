@@ -30,9 +30,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.GitVcs;
-import git4idea.commands.*;
-import git4idea.config.GitVersion;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,14 +77,12 @@ public class GitFileHistory {
   @NotNull private final VirtualFile myRoot;
   @NotNull private final FilePath myPath;
   @NotNull private final VcsRevisionNumber myStartingRevision;
-  @NotNull private final GitVersion myVersion;
 
   private GitFileHistory(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath path, @NotNull VcsRevisionNumber revision) {
     myProject = project;
     myRoot = root;
     myPath = GitHistoryUtils.getLastCommitName(myProject, path);
     myStartingRevision = revision;
-    myVersion = GitVcs.getInstance(myProject).getVersion();
   }
 
   private void load(@NotNull Consumer<GitFileRevision> consumer,
@@ -141,7 +139,7 @@ public class GitFileHistory {
     GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
-    if (!GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(myVersion)) {
+    if (!GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(myProject)) {
       h.addParameters("--follow");
       h.endOptions();
       h.addRelativePaths(filePath);
@@ -174,7 +172,7 @@ public class GitFileHistory {
     GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.LOG);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", lastCommit);
-    if (GitVersionSpecialty.FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY.existsIn(myVersion) && Registry.is("git.file.history.full")) {
+    if (GitVersionSpecialty.FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY.existsIn(myProject) && Registry.is("git.file.history.full")) {
       h.addParameters("--full-history", "--simplify-merges");
     }
     if (parameters != null && parameters.length > 0) {

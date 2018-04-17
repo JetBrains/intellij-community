@@ -23,6 +23,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +37,16 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
                                  @NotNull TemplateImpl liveTemplate,
                                  @NotNull String example,
                                  @NotNull PostfixTemplateProvider provider) {
-    super(templateId, templateName, example, provider);
+    this(templateId, templateName, "." + templateName, liveTemplate, example, provider);
+  }
+
+  public EditablePostfixTemplate(@NotNull String templateId,
+                                 @NotNull String templateName,
+                                 @NotNull String templateKey,
+                                 @NotNull TemplateImpl liveTemplate,
+                                 @NotNull String example,
+                                 @Nullable PostfixTemplateProvider provider) {
+    super(templateId, templateName, templateKey, example, provider);
     assert StringUtil.isNotEmpty(liveTemplate.getKey());
     myLiveTemplate = liveTemplate;
   }

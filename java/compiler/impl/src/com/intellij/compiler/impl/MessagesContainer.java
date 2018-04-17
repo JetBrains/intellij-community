@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -45,7 +45,7 @@ public class MessagesContainer {
 
   public MessagesContainer(Project project) {
     myProject = project;
-    myTabSize = CodeStyleFacade.getInstance().getTabSize(StdFileTypes.JAVA);
+    myTabSize = CodeStyle.getDefaultSettings().getTabSize(StdFileTypes.JAVA);
   }
 
   @NotNull

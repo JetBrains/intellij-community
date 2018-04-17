@@ -172,7 +172,12 @@ class FilePointerPartNode {
   }
 
   private void doCheckConsistency(boolean dotDotOccurred) {
-    dotDotOccurred |= part.contains(".."); // part must not contain ".." (except when the file pointer was created from URL with ".." inside)
+    int ddi = part.indexOf("..");
+    if (ddi != -1) {
+      // part must not contain "/.." nor "../" nor be just ".."
+      // (except when the pointer was created from URL of non-existing file with ".." inside)
+      dotDotOccurred |= part.equals("..") || ddi != 0 && part.charAt(ddi-1) == '/' || ddi < part.length() - 2 && part.charAt(ddi+2) == '/';
+    }
     int childSum = 0;
     for (FilePointerPartNode child : children) {
       childSum += child.pointersUnder;

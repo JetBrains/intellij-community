@@ -26,14 +26,12 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyMemberType;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -96,17 +94,9 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
     final PsiFile file = myClass.getContainingFile();
     final Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, myClass.getContainingFile(), myClass);
     if (editor != null) {
-      new WriteCommandAction(project, file) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          generateMembers(project, editor, file);
-        }
-
-        @Override
-        protected boolean isGlobalUndoAction() {
-          return true; // todo check
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project, file)
+                        .withGlobalUndo()
+                        .run(() -> generateMembers(project, editor, file));
     }
   }
 

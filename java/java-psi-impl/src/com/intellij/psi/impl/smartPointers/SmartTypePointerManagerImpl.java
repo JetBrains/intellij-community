@@ -23,24 +23,17 @@ import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
  * @author max
  */
 public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
-  private static final SmartTypePointer NULL_POINTER = new SmartTypePointer() {
-    @Override
-    public PsiType getType() { return null; }
-  };
+  private static final SmartTypePointer NULL_POINTER = () -> null;
 
   private final SmartPointerManager myPsiPointerManager;
   private final Project myProject;
@@ -73,7 +66,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   private static class ArrayTypePointer extends TypePointerBase<PsiArrayType> {
     private final SmartTypePointer myComponentTypePointer;
 
-    public ArrayTypePointer(@NotNull PsiArrayType type, @NotNull SmartTypePointer componentTypePointer) {
+    ArrayTypePointer(@NotNull PsiArrayType type, @NotNull SmartTypePointer componentTypePointer) {
       super(type);
       myComponentTypePointer = componentTypePointer;
     }
@@ -91,7 +84,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
     private final SmartTypePointer myBoundPointer;
     private final boolean myIsExtending;
 
-    public WildcardTypePointer(@NotNull PsiWildcardType type, @Nullable SmartTypePointer boundPointer) {
+    WildcardTypePointer(@NotNull PsiWildcardType type, @Nullable SmartTypePointer boundPointer) {
       super(type);
       myManager = type.getManager();
       myBoundPointer = boundPointer;
@@ -120,11 +113,11 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
     private final Map<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> myMap;
     private final SmartPsiElementPointer[] myAnnotations;
 
-    public ClassTypePointer(@NotNull PsiClassType type,
-                            @NotNull SmartPsiElementPointer aClass,
-                            @NotNull LanguageLevel languageLevel,
-                            @NotNull Map<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> map,
-                            @NotNull SmartPsiElementPointer[] annotations) {
+    ClassTypePointer(@NotNull PsiClassType type,
+                     @NotNull SmartPsiElementPointer aClass,
+                     @NotNull LanguageLevel languageLevel,
+                     @NotNull Map<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> map,
+                     @NotNull SmartPsiElementPointer[] annotations) {
       super(type);
       myClass = aClass;
       myLevel = languageLevel;

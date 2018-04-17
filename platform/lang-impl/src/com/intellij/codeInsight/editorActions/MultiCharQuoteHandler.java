@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,4 +29,13 @@ public interface MultiCharQuoteHandler extends QuoteHandler {
    */
   @Nullable
   CharSequence getClosingQuote(HighlighterIterator iterator, int offset);
+
+  /**
+   * Should insert <code>closingQuote</code> in the document. 
+   * 
+   * May select the inserted quote
+   */
+  default void insertString(Editor editor, int offset, CharSequence closingQuote) {
+    editor.getDocument().insertString(offset, closingQuote);
+  }
 }

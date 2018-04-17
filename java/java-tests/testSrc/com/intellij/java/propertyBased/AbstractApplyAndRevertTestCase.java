@@ -4,7 +4,6 @@ package com.intellij.java.propertyBased;
 import com.intellij.application.UtilKt;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.WriteAction;
@@ -69,13 +68,10 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
     PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", getDefaultMavenRepositoryPath());
-    WriteAction.run(() -> {
-      ProjectJdkTable.getInstance().addJdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), getTestRootDisposable());
-      Application application = ApplicationManager.getApplication();
-      UtilKt.runInAllowSaveMode(() -> {
-        application.saveAll();
-        return Unit.INSTANCE;
-      });
+    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), getTestRootDisposable()));
+    UtilKt.runInAllowSaveMode(() -> {
+      ApplicationManager.getApplication().saveAll();
+      return Unit.INSTANCE;
     });
 
     myProject = ProjectUtil.openOrImport(getTestDataPath(), null, false);

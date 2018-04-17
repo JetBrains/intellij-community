@@ -510,8 +510,13 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     }
 
     // Try hard for documentation of incomplete new Class instantiation
-    PsiElement elt = originalElement != null && !(originalElement instanceof PsiPackage) ? PsiTreeUtil.prevLeaf(originalElement): element;
-    if (elt instanceof PsiErrorElement) elt = elt.getPrevSibling();
+    PsiElement elt = element;
+    if (originalElement != null && !(originalElement instanceof PsiPackage || originalElement instanceof PsiFileSystemItem)) {
+      elt = PsiTreeUtil.prevLeaf(originalElement);
+    }
+    if (elt instanceof PsiErrorElement) {
+      elt = elt.getPrevSibling();
+    }
     else if (elt != null && !(elt instanceof PsiNewExpression)) {
       elt = elt.getParent();
     }

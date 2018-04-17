@@ -60,6 +60,11 @@ public abstract class ApplicationInfo {
    */
   public abstract String getShortCompanyName();
   public abstract String getCompanyURL();
+
+  /**
+   * @deprecated Now file containing information about third-party libraries is bundled and shown inside IDE.
+   */
+  @Deprecated
   @Nullable
   public abstract String getThirdPartySoftwareURL();
   public abstract String getJetbrainsTvUrl();

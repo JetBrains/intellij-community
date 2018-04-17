@@ -23,6 +23,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
@@ -31,6 +32,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -213,7 +215,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
 
   private static void insertVariableAnnotation(@NotNull PyTargetExpression target) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
-    final PyType inferredType = context.getType(target);
+    final PyType inferredType = getInferredTypeOrObject(target, context);
     PyTypeHintGenerationUtil.checkPep484Compatibility(inferredType, context);
     final String annotationText = PythonDocumentationProvider.getTypeHint(inferredType, context);
     final AnnotationInfo info = new AnnotationInfo(annotationText, inferredType);
@@ -284,13 +286,19 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
       builder.append(")");
     }
     else if (target instanceof PyTypedElement) {
-      final PyType singleTargetType = context.getType((PyTypedElement)target);
+      final PyType singleTargetType = getInferredTypeOrObject((PyTypedElement)target, context);
       PyTypeHintGenerationUtil.checkPep484Compatibility(singleTargetType, context);
       final String singleTargetAnnotation = PythonDocumentationProvider.getTypeHint(singleTargetType, context);
       types.add(singleTargetType);
       typeRanges.add(TextRange.from(builder.length(), singleTargetAnnotation.length()));
       builder.append(singleTargetAnnotation);
     }
+  }
+
+  @Nullable
+  private static PyType getInferredTypeOrObject(@NotNull PyTypedElement target, @NotNull TypeEvalContext context) {
+    final PyType inferred = context.getType(target);
+    return inferred != null ? inferred : PyBuiltinCache.getInstance(target).getObjectType();
   }
 
   @Override

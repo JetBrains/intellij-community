@@ -40,6 +40,7 @@ public abstract class ReferenceInForm implements PsiReference {
     myRangeMarker = document.createRangeMarker(range);
   }
 
+  @NotNull
   public PsiElement getElement() {
     return myFile;
   }
@@ -53,6 +54,7 @@ public abstract class ReferenceInForm implements PsiReference {
     return myFile;
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     return TextRange.create(myRangeMarker);
   }

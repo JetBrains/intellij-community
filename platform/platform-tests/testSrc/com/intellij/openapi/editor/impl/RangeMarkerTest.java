@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.FileASTNode;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -891,68 +890,66 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', N));
 
       final DocumentEx finalDocument = document;
-      new WriteCommandAction(getProject()) {
-        @Override
-        protected void run(@NotNull Result result) {
-          List<Pair<RangeMarker, TextRange>> adds = new ArrayList<>();
-          List<Pair<RangeMarker, TextRange>> dels = new ArrayList<>();
-          List<Trinity<Integer, Integer, Integer>> edits = new ArrayList<>();
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        List<Pair<RangeMarker, TextRange>> adds = new ArrayList<>();
+        List<Pair<RangeMarker, TextRange>> dels = new ArrayList<>();
+        List<Trinity<Integer, Integer, Integer>> edits = new ArrayList<>();
 
-          try {
-            for (int i = 0; i < 30; i++) {
-              int x = gen.nextInt(N);
-              int y = x + gen.nextInt(N - x);
-              RangeMarkerEx r = (RangeMarkerEx)finalDocument.createRangeMarker(x, y);
-              adds.add(Pair.create(r, TextRange.create(r)));
-            }
+        try {
+          for (int i = 0; i < 30; i++) {
+            int x = gen.nextInt(N);
+            int y = x + gen.nextInt(N - x);
+            RangeMarkerEx r = (RangeMarkerEx)finalDocument.createRangeMarker(x, y);
+            adds.add(Pair.create(r, TextRange.create(r)));
+          }
 
-            for (int i = 0; i < 10; i++) {
-              int offset = gen.nextInt(finalDocument.getTextLength());
-              if (gen.nextBoolean()) {
-                int length = gen.nextInt(5);
-                edits.add(Trinity.create(offset, 0, length));
-                finalDocument.insertString(offset, StringUtil.repeatSymbol(' ', length));
-              }
-              else {
-                int length = gen.nextInt(finalDocument.getTextLength() - offset);
-                edits.add(Trinity.create(offset, length, 0));
-                finalDocument.deleteString(offset, offset + length);
-              }
+          for (int i = 0; i < 10; i++) {
+            int offset = gen.nextInt(finalDocument.getTextLength());
+            if (gen.nextBoolean()) {
+              int length = gen.nextInt(5);
+              edits.add(Trinity.create(offset, 0, length));
+              finalDocument.insertString(offset, StringUtil.repeatSymbol(' ', length));
             }
-            List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<>(adds);
-            while (!candidates.isEmpty()) {
-              int size = candidates.size();
-              int x = gen.nextInt(size);
-              Pair<RangeMarker, TextRange> c = candidates.remove(x);
-              RangeMarkerEx r = (RangeMarkerEx)c.first;
-              assertEquals(size - 1, candidates.size());
-              dels.add(c);
-              r.dispose();
+            else {
+              int length = gen.nextInt(finalDocument.getTextLength() - offset);
+              edits.add(Trinity.create(offset, length, 0));
+              finalDocument.deleteString(offset, offset + length);
             }
           }
-          catch (AssertionError e) {
-            String s = "adds: ";
-            for (Pair<RangeMarker, TextRange> c : adds) {
-              TextRange t = c.second;
-              s += t.getStartOffset() + "," + t.getEndOffset() + ", ";
-            }
-
-            s += "\nedits: ";
-            for (Trinity<Integer, Integer, Integer> edit : edits) {
-              s += edit.first + "," + edit.second + "," + edit.third + ",  ";
-            }
-            s += "\ndels: ";
-
-            for (Pair<RangeMarker, TextRange> c : dels) {
-              int index = adds.indexOf(c);
-              assertSame(c, adds.get(index));
-              s += index + ", ";
-            }
-            System.err.println(s);
-            throw e;
+          List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<>(adds);
+          while (!candidates.isEmpty()) {
+            int size = candidates.size();
+            int x = gen.nextInt(size);
+            Pair<RangeMarker, TextRange> c = candidates.remove(x);
+            RangeMarkerEx r = (RangeMarkerEx)c.first;
+            assertEquals(size - 1, candidates.size());
+            dels.add(c);
+            r.dispose();
           }
         }
-      }.execute();
+        catch (AssertionError e) {
+          String s = "adds: ";
+          for (Pair<RangeMarker, TextRange> c : adds) {
+            TextRange t = c.second;
+            s += t.getStartOffset() + "," + t.getEndOffset() + ", ";
+          }
+
+          s += "\nedits: ";
+          for (Trinity<Integer, Integer, Integer> edit : edits) {
+            s += edit.first + "," + edit.second + "," + edit.third + ",  ";
+          }
+          s += "\ndels: ";
+
+          for (Pair<RangeMarker, TextRange> c : dels) {
+            int index = adds.indexOf(c);
+            assertSame(c, adds.get(index));
+            s += index + ", ";
+          }
+          System.err.println(s);
+          throw e;
+        }
+        ;
+      });
     }
   }
 
@@ -1197,7 +1194,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertValidMarker(marker, 0, 9);
   }
 
-  public void testMoveTextCrashesStress() {
+  public void testMoveTextDoesntCrashStress() {
     AtomicReference<List<Integer>> minOffsets = new AtomicReference<>();
     AtomicInteger failPrinted = new AtomicInteger();
     String text = StringUtil.repeat("blah", 1000);

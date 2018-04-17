@@ -45,6 +45,8 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       CommunityRepositoryModules.groovyPlugin([])
     ]
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
+
+    mavenArtifacts.forIdeModules = true
   }
 
   @Override

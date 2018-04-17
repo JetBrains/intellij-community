@@ -26,13 +26,14 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * This is a light version of DirectoryIndexImpl
@@ -40,7 +41,8 @@ import java.util.List;
  * @author gregsh
  */
 public final class LightDirectoryIndex<T> {
-  private final IntObjectMap<T> myInfoCache = ContainerUtil.createConcurrentIntObjectMap();
+  private final Map<VirtualFile, T> myRootInfos = ContainerUtil.newConcurrentMap();
+  private final ConcurrentBitSet myNonInterestingIds = new ConcurrentBitSet();
   private final T myDefValue;
   private final Consumer<LightDirectoryIndex<T>> myInitializer;
 
@@ -71,66 +73,31 @@ public final class LightDirectoryIndex<T> {
   }
 
   public void resetIndex() {
-    myInfoCache.clear();
+    myRootInfos.clear();
+    myNonInterestingIds.clear();
     myInitializer.consume(this);
   }
 
   public void putInfo(@Nullable VirtualFile file, @NotNull T value) {
     if (!(file instanceof VirtualFileWithId)) return;
-    cacheInfo(file, value);
+    myRootInfos.put(file, value);
   }
 
   @NotNull
   public T getInfoForFile(@Nullable VirtualFile file) {
-    if (!(file instanceof VirtualFileWithId)) return myDefValue;
-
-    VirtualFile dir;
-    if (!file.isDirectory()) {
-      T info = getCachedInfo(file);
-      if (info != null) {
-        return info;
-      }
-      dir = file.getParent();
-    }
-    else {
-      dir = file;
-    }
-
-    int count = 0;
-    for (VirtualFile root = dir; root != null; root = root.getParent()) {
-      if (++count > 1000) {
-        throw new IllegalStateException("Possible loop in tree, started at " + dir.getName());
-      }
-      T info = getCachedInfo(root);
-      if (info != null) {
-        if (!dir.equals(root)) {
-          cacheInfos(dir, root, info);
+    if (!(file instanceof VirtualFileWithId) || !file.isValid()) return myDefValue;
+    
+    for (VirtualFile each = file; each != null; each = each.getParent()) {
+      int id = ((VirtualFileWithId)each).getId();
+      if (!myNonInterestingIds.get(id)) {
+        T info = myRootInfos.get(each);
+        if (info != null) {
+          return info;
         }
-        return info;
+        myNonInterestingIds.set(id);
       }
     }
-
-    return cacheInfos(dir, null, myDefValue);
-  }
-
-  @NotNull
-  private T cacheInfos(VirtualFile dir, @Nullable VirtualFile stopAt, @NotNull T info) {
-    while (dir != null) {
-      cacheInfo(dir, info);
-      if (dir.equals(stopAt)) {
-        break;
-      }
-      dir = dir.getParent();
-    }
-    return info;
-  }
-
-  private void cacheInfo(VirtualFile file, T info) {
-    myInfoCache.put(((VirtualFileWithId)file).getId(), info);
-  }
-
-  private T getCachedInfo(VirtualFile file) {
-    return myInfoCache.get(((VirtualFileWithId)file).getId());
+    return myDefValue;
   }
 
 }

@@ -66,11 +66,13 @@ final public class LogMessageParser extends AbstractMessageParser {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initDateFormats() {
-    EXPECTED_DATE_FORMATS[0] = new SyncDateFormat(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US));
-    EXPECTED_DATE_FORMATS[0].setTimeZone(TimeZone.getTimeZone("GMT"));
+    SimpleDateFormat delegate = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
+    delegate.setTimeZone(TimeZone.getTimeZone("GMT"));
+    EXPECTED_DATE_FORMATS[0] = new SyncDateFormat(delegate);
 
-    EXPECTED_DATE_FORMATS[1] = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US));
-    EXPECTED_DATE_FORMATS[1].setTimeZone(TimeZone.getTimeZone("GMT"));
+    delegate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+    delegate.setTimeZone(TimeZone.getTimeZone("GMT"));
+    EXPECTED_DATE_FORMATS[1] = new SyncDateFormat(delegate);
   }
 
   // Fields =================================================================
@@ -277,7 +279,7 @@ final public class LogMessageParser extends AbstractMessageParser {
     }
 
     final String symName = line.substring(0, index).trim();
-    final String revName = line.substring(index + 1, line.length()).trim();
+    final String revName = line.substring(index + 1).trim();
     logInfo.addSymbolicName(symName, revName);
   }
 

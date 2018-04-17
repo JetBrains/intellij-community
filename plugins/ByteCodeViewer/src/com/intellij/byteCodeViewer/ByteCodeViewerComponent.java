@@ -108,6 +108,10 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
   public String getText() {
     return myEditor.getDocument().getText();
   }
+  
+  public JComponent getEditorComponent() {
+    return myEditor.getContentComponent();
+  }
 
   @Override
   public void dispose() {

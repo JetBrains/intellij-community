@@ -68,6 +68,10 @@ public class ChangesUtil {
     }
   };
 
+  public static final Comparator<LocalChangeList> CHANGELIST_COMPARATOR =
+    Comparator.<LocalChangeList>comparingInt(list -> list.isDefault() ? -1 : 0)
+      .thenComparing(list -> list.getName(), String::compareToIgnoreCase);
+
   private ChangesUtil() {}
 
   @NotNull
@@ -187,7 +191,7 @@ public class ChangesUtil {
   }
 
   @Nullable
-  public static ChangeList getChangeListIfOnlyOne(@NotNull Project project, @Nullable Change[] changes) {
+  public static LocalChangeList getChangeListIfOnlyOne(@NotNull Project project, @Nullable Change[] changes) {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     String changeListName = manager.getChangeListNameIfOnlyOne(changes);
 

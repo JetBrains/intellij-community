@@ -389,7 +389,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
     public MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
-      super(project, EmptyConsumer.getInstance(), false, parent);
+      super(project, "index", EmptyConsumer.getInstance(), false, parent);
       myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
 

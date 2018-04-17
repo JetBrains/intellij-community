@@ -8,7 +8,7 @@ class Test {
             System.out.println();
         };
         stringConsumer.accept(s);
-      
+
         System.out.println();
     }
   }

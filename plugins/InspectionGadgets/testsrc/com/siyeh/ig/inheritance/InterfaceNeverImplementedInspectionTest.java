@@ -1,21 +1,37 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class InterfaceNeverImplementedInspectionTest extends IGInspectionTestCase {
-  public void test() {
-    final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel level = levelProjectExtension.getLanguageLevel();
-    try {
-      levelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_8);
-      doTest("com/siyeh/igtest/inheritance/interface_never_implemented",
-             new LocalInspectionToolWrapper(new InterfaceNeverImplementedInspection()), "java 1.8");
-    }
-    finally {
-      levelProjectExtension.setLanguageLevel(level);
-    }
+public class InterfaceNeverImplementedInspectionTest extends LightInspectionTestCase {
+
+  public void testInterfaceNeverImplemented() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final InterfaceNeverImplementedInspection inspection = new InterfaceNeverImplementedInspection();
+    inspection.ignorableAnnotations.add("com.intellij.test.Ignore");
+    return inspection;
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package com.intellij.test;" +
+      "public @interface Ignore {}"
+    };
   }
 }

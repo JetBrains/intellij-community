@@ -17,6 +17,7 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.testing.ConfigurationTarget;
@@ -335,6 +336,47 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   public void testMultipleCases() {
     runPythonTest(
       new CreateConfigurationMultipleCasesTask<>(myFrameworkName, PyTestConfiguration.class));
+  }
+
+  /**
+   * Create configuration by right click and check that same configuration is chosen when clicked on same element.
+   * New one created in other case.
+   */
+  @Test
+  public void testConfigurationByContext() {
+    runPythonTest(
+      new CreateConfigurationTestTask<PyTestConfiguration>(myFrameworkName, PyTestConfiguration.class) {
+
+        @NotNull
+        private PyFunction getFunction(@NotNull final String folder) {
+          final PyFile file = (PyFile)myFixture.configureByFile(String.format("configurationByContext/%s/test_test.py", folder));
+          assert file != null;
+          final PyFunction function = file.findTopLevelFunction("test_test");
+          assert function != null;
+          return function;
+        }
+
+        @Override
+        protected void checkConfiguration(@NotNull final PyTestConfiguration configuration,
+                                          @NotNull final PsiElement elementToRightClickOn) {
+
+
+          final PyTestConfiguration sameConfig = createConfigurationByElement(getFunction("bar"), PyTestConfiguration.class);
+          Assert.assertEquals("Same element must provide same config", sameConfig, configuration);
+
+          final PyTestConfiguration differentConfig = createConfigurationByElement(getFunction("foo"), PyTestConfiguration.class);
+          //Although targets are same, working dirs are different
+          assert differentConfig.getTarget().equals(configuration.getTarget());
+
+          Assert.assertNotEquals("Function from different folder must provide different config", differentConfig, configuration);
+        }
+
+        @NotNull
+        @Override
+        protected List<PsiElement> getPsiElementsToRightClickOn() {
+          return Collections.singletonList(getFunction("bar"));
+        }
+      });
   }
 
   /**

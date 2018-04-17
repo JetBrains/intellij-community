@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -14,6 +15,8 @@ import java.util.List;
  * @author Pavel.Dolgov
  */
 public class ExtractMethodSnapshot {
+  public static final Key<ExtractMethodSnapshot> SNAPSHOT_KEY = Key.create("ExtractMethodSnapshot");
+
   public final Project myProject;
   public final String myMethodName;
   public final boolean myStatic;
@@ -25,6 +28,7 @@ public class ExtractMethodSnapshot {
   public final SmartPsiElementPointer<PsiVariable> myOutputVariable;
   public final SmartPsiElementPointer<PsiVariable> myArtificialOutputVariable;
   public final List<VariableDataSnapshot> myVariableDatum;
+  public final SmartPsiElementPointer<PsiClass> myTargetClass;
 
   public ExtractMethodSnapshot(@NotNull ExtractMethodProcessor from) {
     myProject = from.getProject();
@@ -44,12 +48,6 @@ public class ExtractMethodSnapshot {
                                  ? smartPointerManager.createSmartPsiElementPointer(from.myArtificialOutputVariable) : null;
 
     myVariableDatum = StreamEx.of(from.myVariableDatum).map(data -> new VariableDataSnapshot(data, myProject)).toList();
-  }
-
-  public void disposeSmartPointers() {
-    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
-    myOutputVariables.forEach(smartPointerManager::removePointer);
-    if (myArtificialOutputVariable != null) smartPointerManager.removePointer(myArtificialOutputVariable);
-    myVariableDatum.stream().map(data -> data.myVariable).forEach(smartPointerManager::removePointer);
+    myTargetClass = from.myTargetClass != null ? smartPointerManager.createSmartPsiElementPointer(from.myTargetClass) : null;
   }
 }

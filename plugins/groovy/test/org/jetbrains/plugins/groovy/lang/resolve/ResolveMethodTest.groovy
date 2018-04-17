@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve
 
@@ -8,6 +6,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
@@ -2161,7 +2160,7 @@ v.ba<caret>r()
   }
 
   void testMethodReferenceWithDefaultParameters() {
-    resolveByText('''
+    def ref = configureByText '_.groovy', '''
 class X {
   def foo(def it = null) {print it}
 
@@ -2169,7 +2168,13 @@ class X {
     print this.&f<caret>oo
   }
 }
-''', PsiMethod)
+''', GroovyReference
+    def results = ref.multiResolve(false)
+    assert results.length == 2
+    for (result in results) {
+      assert result.element instanceof GrReflectedMethod
+      assert result.validResult
+    }
   }
 
   void 'test static trait method generic return type'() {

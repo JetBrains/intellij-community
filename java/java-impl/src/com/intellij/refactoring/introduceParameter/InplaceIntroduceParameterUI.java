@@ -17,11 +17,7 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
@@ -45,6 +41,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
   private final Project myProject;
   private final TypeSelectorManager myTypeSelectorManager;
   private final PsiExpression[] myOccurrences;
+  private final PsiFile myFile;
 
   public InplaceIntroduceParameterUI(Project project,
                                      PsiLocalVariable onLocalVariable,
@@ -57,6 +54,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     myProject = project;
     myTypeSelectorManager = typeSelectorManager;
     myOccurrences = occurrences;
+    myFile = methodToReplaceIn.getContainingFile();
 
     for (PsiExpression occurrence : myOccurrences) {
       if (PsiUtil.isAccessedForWriting(occurrence)) {
@@ -138,7 +136,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     if (myHasWriteAccess) return false;
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_CREATE_FINALS;
     return createFinals == null ?
-           CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS :
+           JavaCodeStyleSettings.getInstance(myFile).GENERATE_FINAL_PARAMETERS :
            createFinals.booleanValue();
   }
 }

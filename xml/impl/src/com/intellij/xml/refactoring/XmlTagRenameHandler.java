@@ -44,7 +44,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
 
 
   @Override
-  public boolean isAvailableOnDataContext(final DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
     if (element == null || PsiElementRenameHandler.isVetoed(element)) return false;
     PsiElement parent = element.getParent();
@@ -66,7 +66,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public boolean isRenaming(final DataContext dataContext) {
+  public boolean isRenaming(@NotNull final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 

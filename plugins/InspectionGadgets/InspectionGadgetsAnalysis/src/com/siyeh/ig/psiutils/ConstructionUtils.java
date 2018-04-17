@@ -233,4 +233,32 @@ public class ConstructionUtils {
     }
     return false;
   }
+
+  /**
+   * Checks whether given class represents a Collection or a Map and known to have a copy constructor
+   *
+   * @param aClass class to check
+   * @return true if given class represents a Collection or a Map and known to have a copy constructor
+   */
+  @Contract("null -> false")
+  public static boolean isCollectionWithCopyConstructor(PsiClass aClass) {
+    if (aClass == null) return false;
+    String name = aClass.getQualifiedName();
+    return name != null && name.startsWith("java.util.") &&
+           Stream.of(aClass.getConstructors()).anyMatch(ConstructionUtils::isCollectionConstructor);
+  }
+
+  @Contract("null -> false")
+  private static boolean isCollectionConstructor(PsiMethod ctor) {
+    if (ctor == null || !ctor.getModifierList().hasExplicitModifier(PsiModifier.PUBLIC)) return false;
+    PsiParameterList list = ctor.getParameterList();
+    if (list.getParametersCount() != 1) return false;
+    PsiTypeElement typeElement = list.getParameters()[0].getTypeElement();
+    if (typeElement == null) return false;
+    PsiType type = typeElement.getType();
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return aClass != null &&
+           (CommonClassNames.JAVA_UTIL_COLLECTION.equals(aClass.getQualifiedName()) ||
+            CommonClassNames.JAVA_UTIL_MAP.equals(aClass.getQualifiedName()));
+  }
 }

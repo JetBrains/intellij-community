@@ -126,7 +126,8 @@ public class StreamInlining {
   boolean flatMap(List<String> list, List<List<String>> ll) {
     System.out.println(ll.stream().flatMap(l -> l.stream()).count());
     return list.stream().map(s -> s.isEmpty() ? null : s)
-      .flatMap(s -> Stream.of(s, s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>()).filter(r -> r != null))
+               .flatMap(s -> Stream.of(s, s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>())
+                    .filter(r -> <warning descr="Condition 'r != null' is always 'true'">r != null</warning>))
       .anyMatch(x -> <warning descr="Condition 'x == null' is always 'false'">x == null</warning>);
   }
 

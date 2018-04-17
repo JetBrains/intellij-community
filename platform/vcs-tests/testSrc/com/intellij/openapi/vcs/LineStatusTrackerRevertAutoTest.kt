@@ -63,13 +63,13 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
       if (i % 1000 == 0) LOG.debug(i.toString())
       try {
         val initial = generateText(textLength)
-        test(initial, initial, smart) {
+        lightTest(initial, initial, smart) {
           // println("Initial: " + initial.replace("\n", "\\n"));
 
           val count = myRng.nextInt(modifications)
           for (j in 0 until count) {
             val writeChanges = myRng.nextInt(4) + 1
-            runCommand {
+            runCommandVerify {
               for (k in 0 until writeChanges) {
                 applyRandomChange(changeLength)
               }
@@ -110,7 +110,7 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
       try {
         val initial = generateText(textLength)
         val initialVcs = generateText(textLength)
-        test(initial, initialVcs, smart) {
+        lightTest(initial, initialVcs, smart) {
           checkRevert(tracker.getRanges()!!.size * 2)
         }
 

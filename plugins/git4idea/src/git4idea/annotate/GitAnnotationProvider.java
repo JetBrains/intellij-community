@@ -296,7 +296,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
               int index = value.indexOf(' ');
               if (index != -1) {
                 previousRevision = value.substring(0, index);
-                previousFilePath = VcsUtil.getFilePath(root, value.substring(index + 1, value.length()));
+                previousFilePath = VcsUtil.getFilePath(root, value.substring(index + 1));
               }
             }
           }
@@ -332,7 +332,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
       throw e;
     }
     catch (Exception e) {
-      LOG.error("Couldn't parse annotation: " + e, new Attachment("output.txt", output));
+      LOG.error("Couldn't parse annotation: " + e.getMessage(), e, new Attachment("output.txt", output));
       throw new VcsException(e);
     }
   }

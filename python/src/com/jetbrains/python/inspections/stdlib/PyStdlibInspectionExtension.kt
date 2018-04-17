@@ -38,7 +38,7 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
       val qualifier = node.qualifier
       if (qualifier is PyReferenceExpression) {
         return PyStdlibClassMembersProvider.referenceToMockPatch(qualifier, context) &&
-               PyStdlibClassMembersProvider.MOCK_PATCH_MEMBERS.find { it.name == node.name } != null
+               PyStdlibClassMembersProvider.calcMockPatchMembers(qualifier).any { it.name == node.name }
       }
     }
 

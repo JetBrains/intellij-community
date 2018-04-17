@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -380,7 +381,7 @@ public class GitRebaser {
 
     /**
      * The constructor from fields that is expected to be
-     * accessed only from {@link git4idea.rebase.GitRebaseEditorService}.
+     * accessed only from {@link GitRebaseEditorService}.
      *
      * @param rebaseEditorService
      * @param root      the git repository root
@@ -413,8 +414,7 @@ public class GitRebaser {
             String commit = s.spaceToken();
             pickLines.put(commit, "pick " + commit + " " + s.line());
           }
-          PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path), CharsetToolkit.UTF8));
-          try {
+          try (PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path), StandardCharsets.UTF_8))) {
             for (String commit : myCommits) {
               String key = pickLines.headMap(commit + "\u0000").lastKey();
               if (key == null || !commit.startsWith(key)) {
@@ -422,9 +422,6 @@ public class GitRebaser {
               }
               w.print(pickLines.get(key) + "\n");
             }
-          }
-          finally {
-            w.close();
           }
           return 0;
         }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import org.apache.log4j.FileAppender;
@@ -105,6 +91,7 @@ public class Runner {
       checkCaseSensitivity(destFolder);
 
       initLogger();
+      logger().info("args: " + Arrays.toString(args));
       logger().info("destFolder: " + destFolder + ", case-sensitive: " + ourCaseSensitiveFs);
 
       UpdaterUI ui;
@@ -330,8 +317,9 @@ public class Runner {
       }
       catch (IOException | RuntimeException | Error t) {
         logger().error("prepare failed", t);
-        String message = "An unexpected error occurred when preparing the patch\n" + t.getMessage() + "\n\n" +
-                         "No files were changed; retry applying the patch.\n\n" +
+        String message = "An error occurred when preparing the patch:\n" +
+                         t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
+                         ui.bold("No files were changed. Please retry applying the patch.") + "\n\n" +
                          "More details in the log: " + logPath;
         ui.showError(message);
         return false;
@@ -342,17 +330,18 @@ public class Runner {
         Throwable error = applicationResult.error;
 
         if (error != null) {
-          String message = "An unexpected error occurred when applying the patch:\n" + error.getMessage() + "\n\n";
+          String message = "An error occurred when applying the patch:\n" +
+                           error.getClass().getSimpleName() + ": " + error.getMessage() + "\n\n";
           if (appliedActions.isEmpty()) {
-            message += "No files were changed; retry applying the patch.\n\n";
+            message += ui.bold("No files were changed. Please retry applying the patch.");
           }
           else if (backupDir == null) {
-            message += "IDE files may be corrupted, no backup was requested, please reinstall.\n\n";
+            message += ui.bold("Files may be corrupted. Please reinstall the IDE.");
           }
           else {
-            message += "IDE files may be corrupted, the patch will attempt to revert the changes.\n\n";
+            message += ui.bold("Files may be corrupted. The patch will attempt to revert the changes.");
           }
-          message += "More details in the log: " + logPath;
+          message += "\n\nMore details in the log: " + logPath;
           ui.showError(message);
         }
 
@@ -362,8 +351,9 @@ public class Runner {
           }
           catch (Throwable t) {
             logger().error("revert failed", t);
-            String message = "An unexpected error occurred when reverting the patch:\n" + t.getMessage() + "\n\n" +
-                             "IDE files may be corrupted, please reinstall.\n\n" +
+            String message = "An error occurred when reverting the patch:\n" +
+                             t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
+                             ui.bold("Files may be corrupted. Please reinstall the IDE.") + "\n\n" +
                              "More details in the log: " + logPath;
             ui.showError(message);
           }

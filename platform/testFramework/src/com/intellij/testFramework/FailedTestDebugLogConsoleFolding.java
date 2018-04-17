@@ -16,18 +16,19 @@
 package com.intellij.testFramework;
 
 import com.intellij.execution.ConsoleFolding;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class FailedTestDebugLogConsoleFolding extends ConsoleFolding {
   @Override
-  public boolean shouldFoldLine(@NotNull String line) {
+  public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
     return line.indexOf(TestLoggerFactory.FAILED_TEST_DEBUG_OUTPUT_MARKER) != -1;
   }
 
   @Override
-  public String getPlaceholderText(@NotNull List<String> lines) {
+  public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
     return " <DEBUG log>";
   }
 }

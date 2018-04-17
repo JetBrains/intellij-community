@@ -26,6 +26,7 @@ import org.jetbrains.intellij.build.ProductProperties
 class VmOptionsGenerator {
   private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
                                           "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                          "-Djdk.http.auth.tunneling.disabledSchemes=\"\" " +
                                           "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow"
 
   static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties, String yourkitSessionName = null) {

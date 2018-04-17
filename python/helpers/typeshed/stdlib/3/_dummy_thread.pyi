@@ -1,5 +1,4 @@
-from mypy_extensions import NoReturn
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, NoReturn, Optional, Tuple
 
 TIMEOUT_MAX: int
 error = RuntimeError

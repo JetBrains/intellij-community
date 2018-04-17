@@ -18,20 +18,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.*;
 
 public class TestDiscoverySearchHelper {
   public static Set<String> search(final Project project,
                                    final Pair<String, String> position,
                                    final String changeList,
-                                   final String frameworkPrefix) {
+                                   byte frameworkId) {
     final Set<String> patterns = new LinkedHashSet<>();
     if (position != null) {
-      collectPatterns(project, patterns, position.first, position.second, frameworkPrefix);
+      collectPatterns(project, patterns, position.first, position.second, frameworkId);
     }
     final List<VirtualFile> files = getAffectedFiles(changeList, project);
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -44,39 +42,32 @@ public class TestDiscoverySearchHelper {
             final PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
             if (classes.length == 0 || TestFrameworks.detectFramework(classes[0]) == null) return;
           }
-          try {
-            final List<TextRange> changedTextRanges = FormatChangedTextUtil.getInstance().getChangedTextRanges(project, psiFile);
-            for (TextRange textRange : changedTextRanges) {
-              final PsiElement start = psiFile.findElementAt(textRange.getStartOffset());
-              final PsiElement end = psiFile.findElementAt(textRange.getEndOffset());
-              final PsiElement parent = PsiTreeUtil.findCommonParent(new PsiElement[]{start, end});
-              final Collection<PsiMethod> methods = new ArrayList<>(PsiTreeUtil.findChildrenOfType(parent, PsiMethod.class));
-              final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-              if (containingMethod != null) {
-                methods.add(containingMethod);
+          final List<TextRange> changedTextRanges = FormatChangedTextUtil.getInstance().getChangedTextRanges(project, psiFile);
+          for (TextRange textRange : changedTextRanges) {
+            final PsiElement start = psiFile.findElementAt(textRange.getStartOffset());
+            final PsiElement end = psiFile.findElementAt(textRange.getEndOffset());
+            final PsiElement parent = PsiTreeUtil.findCommonParent(new PsiElement[]{start, end});
+            final Collection<PsiMethod> methods = new ArrayList<>(PsiTreeUtil.findChildrenOfType(parent, PsiMethod.class));
+            final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+            if (containingMethod != null) {
+              methods.add(containingMethod);
+            }
+            for (PsiMethod changedMethod : methods) {
+              final LinkedHashSet<String> detectedPatterns = position == null ? collectPatterns(changedMethod, frameworkId) : null;
+              if (detectedPatterns != null) {
+                patterns.addAll(detectedPatterns);
               }
-              for (PsiMethod changedMethod : methods) {
-                final LinkedHashSet<String> detectedPatterns = position == null ? collectPatterns(changedMethod, frameworkPrefix) : null;
-                if (detectedPatterns != null) {
-                  patterns.addAll(detectedPatterns);
-                }
-                final PsiClass containingClass = changedMethod.getContainingClass();
-                if (containingClass != null && containingClass.getParent() == psiFile) {
-                  final String classQualifiedName = containingClass.getQualifiedName();
-                  final String changedMethodName = changedMethod.getName();
-                  try {
-                    if (classQualifiedName != null &&
-                        (position == null && TestFrameworks.detectFramework(containingClass) != null ||
-                         position != null && !discoveryIndex.hasTestTrace(classQualifiedName + "-" + changedMethodName))) {
-                      patterns.add(classQualifiedName + "," + changedMethodName);
-                    }
-                  }
-                  catch (IOException ignore) {}
+              final PsiClass containingClass = changedMethod.getContainingClass();
+              if (containingClass != null && containingClass.getParent() == psiFile) {
+                final String classQualifiedName = containingClass.getQualifiedName();
+                final String changedMethodName = changedMethod.getName();
+                if (classQualifiedName != null &&
+                    (position == null && TestFrameworks.detectFramework(containingClass) != null ||
+                     position != null && !discoveryIndex.hasTestTrace(classQualifiedName, changedMethodName, frameworkId))) {
+                  patterns.add(classQualifiedName + "," + changedMethodName);
                 }
               }
             }
-          }
-          catch (FilesTooBigForDiffException ignore) {
           }
         }
       });
@@ -91,8 +82,8 @@ public class TestDiscoverySearchHelper {
                                       @NotNull Set<String> patterns,
                                       @NotNull String classFQName,
                                       @NotNull String methodName,
-                                      @NotNull String frameworkId) {
-    TestDiscoveryProducer.consumeTestClassesAndMethods(project, classFQName, methodName, frameworkId, (c, m) -> patterns.add(c + "," + m));
+                                      byte frameworkId) {
+    TestDiscoveryProducer.consumeDiscoveredTests(project, classFQName, methodName, frameworkId, (c, m) -> patterns.add(c + "," + m));
   }
 
   @NotNull
@@ -120,7 +111,7 @@ public class TestDiscoverySearchHelper {
   }
 
   @NotNull
-  private static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod, String frameworkId) {
+  private static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod, byte frameworkId) {
     LinkedHashSet<String> patterns = new LinkedHashSet<>();
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass != null) {

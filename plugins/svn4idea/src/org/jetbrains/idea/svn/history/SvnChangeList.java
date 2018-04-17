@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -406,7 +406,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
         // TODO: Logic with detecting "isDirectory" status is not clear enough. Why we can't just collect this info from logEntry and
         // TODO: if loading from disk - use cached values? Not to invoke separate call here.
         Revision beforeRevision = Revision.of(getRevision(idxData.second.booleanValue()));
-        Info info = myVcs.getInfo(createUrl(revision.getFullPath()), beforeRevision, beforeRevision);
+        Info info = myVcs.getInfo(revision.getUrl(), beforeRevision, beforeRevision);
         boolean isDirectory = info != null && info.isDirectory();
         Change replacingChange = new Change(createRevision((SvnRepositoryContentRevision)sourceChange.getBeforeRevision(), isDirectory),
                                             createRevision((SvnRepositoryContentRevision)sourceChange.getAfterRevision(), isDirectory));
@@ -486,7 +486,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       final List<Change> result = new ArrayList<>();
 
       final String path = getRelativePath(contentRevision);
-      Url fullPath = createUrl(((SvnRepositoryContentRevision)contentRevision).getFullPath());
+      Url fullPath = ((SvnRepositoryContentRevision)contentRevision).getUrl();
       Revision revisionNumber = Revision.of(getRevision(isBefore));
       Target target = Target.on(fullPath, revisionNumber);
 
@@ -527,7 +527,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     final Url becameUrl;
     Url wasUrl;
     try {
-      becameUrl = createUrl(Url.append(myRepositoryRoot, path));
+      becameUrl = createUrl(Url.append(myRepositoryRoot, path), false);
       wasUrl = becameUrl;
 
       if (change instanceof ExternallyRenamedChange && change.getBeforeRevision() != null) {
@@ -535,7 +535,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
         if (originUrl != null) {
           // use another url for origin
-          wasUrl = createUrl(Url.append(myRepositoryRoot, originUrl));
+          wasUrl = createUrl(Url.append(myRepositoryRoot, originUrl), false);
         }
       }
     }

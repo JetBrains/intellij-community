@@ -21,8 +21,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,5 +39,6 @@ public class ProjectViewToolWindowFactory implements ToolWindowFactory, DumbAwar
   @Override
   public void init(ToolWindow window) {
     window.setIcon(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl()));
+    window.setStripeTitle(StringUtil.capitalize(IdeUICustomization.getInstance().getProjectConceptName()));
   }
 }

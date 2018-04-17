@@ -34,7 +34,6 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
-import com.intellij.util.io.StringRef;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,7 +209,7 @@ public class TypeInfo {
     boolean hasEllipsis = isSet(flags, HAS_ELLIPSIS);
 
     int frequentIndex = FREQUENT_INDEX_MASK & flags;
-    String text = frequentIndex == 0 ? StringRef.toString(record.readName()) : ourIndexFrequentType[frequentIndex];
+    String text = frequentIndex == 0 ? record.readNameString() : ourIndexFrequentType[frequentIndex];
 
     return new TypeInfo(text, arrayCount, hasEllipsis, PsiAnnotationStub.EMPTY_ARRAY);
   }

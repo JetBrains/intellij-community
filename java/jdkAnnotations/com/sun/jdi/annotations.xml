@@ -18,4 +18,10 @@
       name='com.sun.jdi.StackFrame java.util.Map&lt;com.sun.jdi.LocalVariable,com.sun.jdi.Value&gt; getValues(java.util.List&lt;? extends com.sun.jdi.LocalVariable&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+
+  <item name='com.sun.jdi.ThreadReference int status()'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="com.sun.jdi.ThreadReference.class" />
+    </annotation>
+  </item>
 </root>

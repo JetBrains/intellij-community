@@ -347,7 +347,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   private static void showError(final JTextField field, final String message) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(message, MessageType.ERROR.getDefaultIcon(), MessageType.ERROR.getPopupBackground(), null);
+      .createHtmlTextBalloonBuilder(message, MessageType.ERROR, null);
     balloonBuilder.setFadeoutTime(1500);
     final Balloon balloon = balloonBuilder.createBalloon();
     final Rectangle rect = field.getBounds();

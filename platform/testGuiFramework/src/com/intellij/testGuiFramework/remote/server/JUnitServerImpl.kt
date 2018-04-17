@@ -45,13 +45,13 @@ class JUnitServerImpl : JUnitServer {
   private val LOG = Logger.getLogger("#com.intellij.testGuiFramework.remote.server.JUnitServerImpl")
 
   private val serverSocket = ServerSocket(0)
-  lateinit private var serverSendThread: ServerSendThread
-  lateinit private var serverReceiveThread: ServerReceiveThread
-  lateinit private var connection: Socket
+  private lateinit var serverSendThread: ServerSendThread
+  private lateinit var serverReceiveThread: ServerReceiveThread
+  private lateinit var connection: Socket
   private var isStarted = false
 
-  lateinit private var objectInputStream: ObjectInputStream
-  lateinit private var objectOutputStream: ObjectOutputStream
+  private lateinit var objectInputStream: ObjectInputStream
+  private lateinit var objectOutputStream: ObjectOutputStream
 
   private val IDE_STARTUP_TIMEOUT = 180000
 

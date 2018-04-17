@@ -21,11 +21,13 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.*;
@@ -455,13 +457,15 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myVcs = new MockAbstractVcs(getProject());
     myChangeProvider = new MyMockChangeProvider();
     myVcs.setChangeProvider(myChangeProvider);
-    AllVcses.getInstance(getProject()).registerManually(myVcs);
     myChangeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(getProject());
 
-    myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
+    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(getProject());
+    vcsManager.registerVcs(myVcs);
+    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", myVcs.getName())));
+    vcsManager.waitForInitialized();
+    assertTrue(vcsManager.hasActiveVcss());
 
-    ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMapping("", myVcs.getName());
-    ProjectLevelVcsManager.getInstance(getProject()).hasActiveVcss();
+    myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
     myRepository = new TestRepository();
     myRepository.setTasks(new MyTask());
     myTaskManager.setRepositories(Collections.singletonList(myRepository));

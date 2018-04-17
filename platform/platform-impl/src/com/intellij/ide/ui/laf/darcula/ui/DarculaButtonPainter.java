@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.VisualPaddingsProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -36,7 +24,7 @@ import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.HELP_BUTTON_DIA
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaButtonPainter implements Border, UIResource {
+public class DarculaButtonPainter implements Border, UIResource, VisualPaddingsProvider {
   private static final int myOffset = 4;
 
   @Override
@@ -54,17 +42,17 @@ public class DarculaButtonPainter implements Border, UIResource {
       g2.translate(r.x, r.y);
 
       int diam = JBUI.scale(HELP_BUTTON_DIAMETER);
-      float arc = JBUI.scale(2.0f);
+      float arc = DarculaUIUtil.buttonArc();
       float lw = DarculaUIUtil.lw(g2);
       float bw = DarculaUIUtil.bw();
 
       if (c.hasFocus()) {
         if (UIUtil.isHelpButton(c)) {
-          DarculaUIUtil.paintFocusOval(g2, (r.width - diam) / 2 + lw, (r.height - diam) / 2 + lw, diam - lw, diam - lw);
+          DarculaUIUtil.paintFocusOval(g2, (r.width - diam) / 2, (r.height - diam) / 2, diam, diam);
         } else {
           DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
         }
-      } else {
+      } else if (!UIUtil.isHelpButton(c)){
         paintShadow(g2, r);
       }
 
@@ -86,11 +74,14 @@ public class DarculaButtonPainter implements Border, UIResource {
   }
 
   public Color getBorderColor(Component button) {
-    return button.hasFocus() ?
-           UIManager.getColor(DarculaButtonUI.isDefaultButton((JComponent)button) ?
-             "Button.darcula.defaultFocusedBorderColor" : "Button.darcula.focusedBorderColor") :
-           UIManager.getColor(button.isEnabled() && DarculaButtonUI.isDefaultButton((JComponent)button) ?
-             "Button.darcula.defaultBorderColor" : "Button.darcula.borderColor");
+    AbstractButton b = (AbstractButton)button;
+    Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
+    return button.isEnabled() ? borderColor != null ? borderColor :
+     button.hasFocus() ?
+        UIManager.getColor(DarculaButtonUI.isDefaultButton(b) ? "Button.darcula.defaultFocusedBorderColor" : "Button.darcula.focusedBorderColor") :
+        UIManager.getColor(button.isEnabled() && DarculaButtonUI.isDefaultButton(b) ? "Button.darcula.defaultBorderColor" : "Button.darcula.borderColor")
+
+     : UIManager.getColor("Button.darcula.disabledBorderColor");
   }
 
   protected void paintShadow(Graphics2D g2, Rectangle r) {
@@ -108,17 +99,7 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    if (c.getParent() instanceof ActionToolbar) {
-      return JBUI.insets(5, 14);
-    } else if (DarculaButtonUI.isSquare(c)) {
-      return JBUI.insets(4).asUIResource();
-    } else if (UIUtil.isHelpButton(c)) {
-      return JBUI.insets(3).asUIResource();
-    } if (DarculaButtonUI.isComboButton((JComponent)c)) {
-      return JBUI.insets(5, 10, 5, 5).asUIResource();
-    } else {
-      return JBUI.insets(5, 14).asUIResource();
-    }
+    return JBUI.insets(3).asUIResource();
   }
 
   protected int getOffset() {
@@ -128,5 +109,11 @@ public class DarculaButtonPainter implements Border, UIResource {
   @Override
   public boolean isBorderOpaque() {
     return false;
+  }
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(3);
   }
 }

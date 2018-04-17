@@ -58,10 +58,13 @@ def try_activate_instance(args):
     if not (os.path.exists(port_path) and os.path.exists(token_path)):
         return False
 
-    with open(port_path) as pf:
-        port = int(pf.read())
-    with open(token_path) as tf:
-        token = tf.read()
+    try:
+        with open(port_path) as pf:
+            port = int(pf.read())
+        with open(token_path) as tf:
+            token = tf.read()
+    except (ValueError):
+        return False
 
     s = socket.socket()
     s.settimeout(0.3)

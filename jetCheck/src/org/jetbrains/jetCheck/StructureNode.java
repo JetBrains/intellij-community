@@ -3,6 +3,8 @@ package org.jetbrains.jetCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -25,6 +27,8 @@ abstract class StructureElement {
 
   @Nullable
   abstract StructureElement findChildById(NodeId id);
+  
+  abstract void serialize(DataOutputStream out) throws IOException;
 }
 
 class StructureNode extends StructureElement {
@@ -195,6 +199,13 @@ class StructureNode extends StructureElement {
     return index < 0 ? null : children.get(index).findChildById(id);
   }
 
+  @Override
+  void serialize(DataOutputStream out) throws IOException {
+    for (StructureElement child : children) {
+      child.serialize(out);
+    }
+  }
+
   private int indexOfChildContaining(NodeId id) {
     int i = 0;
     while (i < children.size() && children.get(i).id.number <= id.number) i++;
@@ -268,6 +279,11 @@ class IntData extends StructureElement {
   @Override
   StructureElement findChildById(NodeId id) {
     return id == this.id ? this : null;
+  }
+
+  @Override
+  void serialize(DataOutputStream out) throws IOException {
+    DataSerializer.writeINT(out, value);
   }
 
   @Override

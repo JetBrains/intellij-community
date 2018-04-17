@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +95,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       ImportUtils.addImportIfNeeded(aClass, element);
       final String shortName = aClass.getName();
       if (isReferenceToTarget(shortName, aClass, parent)) {
-        element.delete();
+        new CommentTracker().deleteAndRestoreComments(element);
       }
     }
   }

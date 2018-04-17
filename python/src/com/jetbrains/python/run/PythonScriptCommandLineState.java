@@ -128,12 +128,16 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                           settingsProvider,
                                           setupFragment);
       runner.setEnableAfterConnection(false);
-      runner.runSync();
+      runner.runSync(true);
       // runner.getProcessHandler() would be null if execution error occurred
       if (runner.getProcessHandler() == null) {
         return null;
       }
       runner.getPydevConsoleCommunication().setConsoleView(runner.getConsoleView());
+
+      runner.getConsoleView().addConsoleFolding(false);
+      runner.getConsoleView().applySoftWrapping();
+
       List<AnAction> actions = Lists.newArrayList(createActions(runner.getConsoleView(), runner.getProcessHandler()));
       actions.add(new ShowVarsAction(runner.getConsoleView(), runner.getPydevConsoleCommunication()));
 
@@ -226,7 +230,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       ParamsGroup moduleParameters = parametersList.getParamsGroup(GROUP_MODULE);
       assert moduleParameters != null;
 
-      moduleParameters.addParameter("-m");
+      moduleParameters.addParameter(MODULE_PARAMETER);
       moduleParameters.addParameters(myConfig.getScriptName());
     }
     else {

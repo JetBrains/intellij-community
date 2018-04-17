@@ -287,7 +287,10 @@ public class DiffUtil {
     if (convertor1 == null && convertor2 == null) return null;
     if (convertor1 == null) return convertor2;
     if (convertor2 == null) return convertor1;
-    return value -> convertor1.execute(convertor2.execute(value));
+    return value -> {
+      int value2 = convertor2.execute(value);
+      return value2 >= 0 ? convertor1.execute(value2) : value2;
+    };
   }
 
   //
@@ -668,11 +671,23 @@ public class DiffUtil {
     IdeFocusManager.getInstance(project).requestFocus(component, true);
   }
 
+  public static boolean isFocusedComponentInWindow(@Nullable Component component) {
+    if (component == null) return false;
+    Window window = UIUtil.getWindow(component);
+    if (window == null) return false;
+    Component windowFocusOwner = window.getMostRecentFocusOwner();
+    return windowFocusOwner != null && SwingUtilities.isDescendingFrom(windowFocusOwner, component);
+  }
+
+  public static void requestFocusInWindow(@Nullable Component component) {
+    if (component != null) component.requestFocusInWindow();
+  }
+
   public static void runPreservingFocus(@NotNull FocusableContext context, @NotNull Runnable task) {
-    boolean hadFocus = context.isFocused();
+    boolean hadFocus = context.isFocusedInWindow();
     if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
     task.run();
-    if (hadFocus) context.requestFocus();
+    if (hadFocus) context.requestFocusInWindow();
   }
 
   //

@@ -1,5 +1,5 @@
 /*
-* Copyright 2000-2017 JetBrains s.r.o.
+* Copyright 2000-2018 JetBrains s.r.o.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
 volatile bool terminating = false;
-bool nativesplash = false;
+
+//tools.jar doesn't exist in jdk 9 and later. So check it for jdk 1.8 only.
+bool toolsArchiveExists = true;
 
 HANDLE hFileMapping;
 HANDLE hEvent;
@@ -81,8 +83,10 @@ bool IsValidJRE(const char* path)
 bool Is64BitJRE(const char* path)
 {
   std::string cfgPath(path);
+  std::string cfgJava9Path(path);
   cfgPath += "\\lib\\amd64\\jvm.cfg";
-  return FileExists(cfgPath);
+  cfgJava9Path += "\\lib\\jvm.cfg";
+  return FileExists(cfgPath) || FileExists(cfgJava9Path);
 }
 
 bool FindValidJVM(const char* path)
@@ -193,12 +197,20 @@ bool FindJVMInRegistryKey(const char* key, bool wow64_32)
 bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
 {
   char* keyName = "Java Runtime Environment";
+  // starting from java 9 key name has been changed
+  char* jreKeyName = "JRE";
+  char* jdkKeyName = "JDK";
+
   bool foundJava = false;
   char buf[_MAX_PATH];
   //search jre in registry if the product doesn't require tools.jar
   if (LoadStdString(IDS_JDK_ONLY) != std::string("true")) {
     sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
     foundJava = FindJVMInRegistryKey(buf, wow64_32);
+    if (!foundJava) {
+      sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", jreKeyName, version);
+      foundJava = FindJVMInRegistryKey(buf, wow64_32);
+    }
   }
 
   //search jdk in registry if the product requires tools.jar or jre isn't installed.
@@ -206,6 +218,10 @@ bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
     keyName = "Java Development Kit";
     sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
     foundJava = FindJVMInRegistryKey(buf, wow64_32);
+    if (!foundJava) {
+      sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", jdkKeyName, version);
+      foundJava = FindJVMInRegistryKey(buf, wow64_32);
+    }
   }
   return foundJava;
 }
@@ -215,6 +231,14 @@ bool FindJVMInRegistry()
 #ifndef _M_X64
   if (FindJVMInRegistryWithVersion("1.8", true))
     return true;
+  if (FindJVMInRegistryWithVersion("9", true))
+    toolsArchiveExists = false;
+    return true;
+  if (FindJVMInRegistryWithVersion("10", true))
+    toolsArchiveExists = false;
+    return true;
+
+  //obsolete java versions
   if (FindJVMInRegistryWithVersion("1.7", true))
     return true;
   if (FindJVMInRegistryWithVersion("1.6", true))
@@ -223,6 +247,14 @@ bool FindJVMInRegistry()
 
   if (FindJVMInRegistryWithVersion("1.8", false))
     return true;
+  if (FindJVMInRegistryWithVersion("9", false))
+    toolsArchiveExists = false;
+    return true;
+  if (FindJVMInRegistryWithVersion("10", false))
+    toolsArchiveExists = false;
+    return true;
+
+  //obsolete java versions
   if (FindJVMInRegistryWithVersion("1.7", false))
     return true;
   if (FindJVMInRegistryWithVersion("1.6", false))
@@ -404,11 +436,14 @@ std::string BuildClassPath()
   std::string classpathLibs = LoadStdString(IDS_CLASSPATH_LIBS);
   std::string result = CollectLibJars(classpathLibs);
 
-  std::string toolsJar = FindToolsJar();
-  if (toolsJar.size() > 0)
+  if (toolsArchiveExists)
   {
-    result += ";";
-    result += toolsJar;
+    std::string toolsJar = FindToolsJar();
+    if (toolsJar.size() > 0)
+    {
+      result += ";";
+      result += toolsJar;
+    }
   }
 
   return result;
@@ -616,6 +651,16 @@ void SetProcessDPIAwareProperty()
     }
 }
 
+std::string getErrorMessage(int errorCode)
+{
+  std::string errorMessage = "";
+  if (errorCode == -6)
+  {
+      errorMessage = "MaxJavaStackTraceDepth=-1 is outside the allowed range [ 0 ... 1073741823 ].\nImproperly specified VM option 'MaxJavaStackTraceDepth=-1'\n";
+  }
+  return errorMessage;
+}
+
 bool CreateJVM()
 {
   JavaVMInitArgs initArgs;
@@ -636,11 +681,15 @@ bool CreateJVM()
   if (result != JNI_OK)
   {
     std::stringstream buf;
+    std::string jvmError = getErrorMessage(result);
+    if (jvmError == "") {
+        jvmError = "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in \n";
+        jvmError += "Computer > System Properties > System Settings > Environment Variables.\n";
+    }
 
-    buf << "Failed to create JVM: error code " << result << ".\n";
-    buf << "JVM Path: " << jvmPath << "\n";
-    buf << "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in \n";
-    buf << "Computer > System Properties > System Settings > Environment Variables.";
+    buf << jvmError;
+    buf << "\nFailed to create JVM. ";
+    buf << "JVM Path: " << jvmPath;
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
     MessageBoxA(NULL, buf.str().c_str(), error.c_str(), MB_OK);
   }
@@ -651,22 +700,43 @@ bool CreateJVM()
   return result == JNI_OK;
 }
 
-jobjectArray PrepareCommandLine()
+jobjectArray ArgsToJavaArray(std::vector<LPWSTR> args)
 {
-  int numArgs;
-  LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &numArgs);
   jclass stringClass = env->FindClass("java/lang/String");
-  jobjectArray args = env->NewObjectArray(numArgs - (nativesplash ? 2 : 1), stringClass, NULL);
-  for (int i = 1, k = 0; i < numArgs; i++)
+  jobjectArray result = env->NewObjectArray(args.size(), stringClass, NULL);
+  for (int i = 0; i < args.size(); i++)
   {
-    const wchar_t* arg = argv[i];
-    if (_wcsicmp(arg, _T("/nativesplash")) == 0) continue;
-    env->SetObjectArrayElement(args, k++, env->NewString((const jchar *)arg, wcslen(argv[i])));
+     env->SetObjectArrayElement(result, i, env->NewString((const jchar *)args[i], wcslen(args[i])));
   }
-  return args;
+  return result;
 }
 
-bool RunMainClass()
+std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
+{
+  int numArgs;
+  LPWSTR* argv = CommandLineToArgvW(commandLine, &numArgs);
+
+  // skip process name
+  std::vector<LPWSTR> result;
+  for (int i = 1; i < numArgs; i++)
+  {
+    result.push_back(argv[i]);
+  }
+  return result;
+}
+
+std::vector<LPWSTR> RemovePredefinedArgs(std::vector<LPWSTR> args)
+{
+  std::vector<LPWSTR> result;
+  for (int i = 0; i < args.size(); i++)
+  {
+    if (_wcsicmp(args[i], _T("/nativesplash")) == 0) continue;
+    result.push_back(args[i]);
+  }
+  return result;
+}
+
+bool RunMainClass(std::vector<LPWSTR> args)
 {
   std::string mainClassName = LoadStdString(IDS_MAIN_CLASS);
   jclass mainClass = env->FindClass(mainClassName.c_str());
@@ -687,8 +757,7 @@ bool RunMainClass()
     return false;
   }
 
-  jobjectArray args = PrepareCommandLine();
-  env->CallStaticVoidMethod(mainClass, mainMethod, args);
+  env->CallStaticVoidMethod(mainClass, mainMethod, ArgsToJavaArray(args));
   jthrowable exc = env->ExceptionOccurred();
   if (exc)
   {
@@ -712,11 +781,11 @@ void CallCommandLineProcessor(const std::wstring& curDir, const std::wstring& ar
   jclass processorClass = env->FindClass(processorClassName.c_str());
   if (processorClass)
   {
-    jmethodID processMethodID = env->GetStaticMethodID(processorClass, "processWindowsLauncherCommandLine", "(Ljava/lang/String;Ljava/lang/String;)V");
+    jmethodID processMethodID = env->GetStaticMethodID(processorClass, "processWindowsLauncherCommandLine", "(Ljava/lang/String;[Ljava/lang/String;)V");
     if (processMethodID)
     {
       jstring jCurDir = env->NewString((const jchar *)curDir.c_str(), curDir.size());
-      jstring jArgs = env->NewString((const jchar *)args.c_str(), args.size());
+      jobjectArray jArgs = ArgsToJavaArray(RemovePredefinedArgs(ParseCommandLine(args.c_str())));
       env->CallStaticVoidMethod(processorClass, processMethodID, jCurDir, jArgs);
       jthrowable exc = env->ExceptionOccurred();
       if (exc)
@@ -967,7 +1036,16 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   //it's OK to return 0 here, because the control is transferred to the first instance
   if (!CheckSingleInstance()) return 0;
 
-  if (nativesplash = wcsstr(lpCmdLine, _T("/nativesplash")) != NULL) StartSplashProcess();
+  std::vector<LPWSTR> args = ParseCommandLine(GetCommandLineW());
+
+  bool nativesplash = false;
+  for (int i = 0; i < args.size(); i++)
+  {
+    if (_wcsicmp(args[i], _T("/nativesplash")) == 0) nativesplash = true;
+  }
+  args = RemovePredefinedArgs(args);
+
+  if (nativesplash) StartSplashProcess();
 
   if (!LocateJVM()) return 1;
   if (!LoadVMOptions()) return 1;
@@ -976,7 +1054,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   hSingleInstanceWatcherThread = CreateThread(NULL, 0, SingleInstanceThread, NULL, 0, NULL);
 
-  if (!RunMainClass()) return 1;
+  if (!RunMainClass(args)) return 1;
 
   jvm->DestroyJavaVM();
 

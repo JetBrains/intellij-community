@@ -15,7 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.PathUtilRt
+
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -29,13 +29,13 @@ import java.time.LocalDate
 class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
   private final File ideaProperties
-  private final String icnsPath
+  private final String targetIcnsFileName
 
   MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, File ideaProperties) {
     super(BuildOptions.OS_MAC, "macOS", buildContext)
     this.ideaProperties = ideaProperties
     this.customizer = customizer
-    icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
+    targetIcnsFileName = "${buildContext.productProperties.baseFileName}.icns"
   }
 
   @Override
@@ -49,7 +49,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           <string>ipr</string>
         </array>
         <key>CFBundleTypeIconFile</key>
-        <string>${PathUtilRt.getFileName(icnsPath)}</string>
+        <string>$targetIcnsFileName</string>
         <key>CFBundleTypeName</key>
         <string>${buildContext.applicationInfo.productName} Project File</string>
         <key>CFBundleTypeRole</key>
@@ -130,7 +130,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String executable = buildContext.productProperties.baseFileName
     buildContext.ant.move(file: "$target/MacOS/executable", tofile: "$target/MacOS/$executable")
 
-    buildContext.ant.copy(file: icnsPath, todir: "$target/Resources")
+    String icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
+    buildContext.ant.copy(file: icnsPath, tofile: "$target/Resources/$targetIcnsFileName")
     String helpId = macCustomizer.helpId
     if (helpId != null) {
       String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
@@ -217,7 +218,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@build@@", value: buildContext.fullBuildNumber)
       replacefilter(token: "@@doc_types@@", value: docTypes ?: "")
       replacefilter(token: "@@executable@@", value: executable)
-      replacefilter(token: "@@icns@@", value: PathUtilRt.getFileName(icnsPath))
+      replacefilter(token: "@@icns@@", value: targetIcnsFileName)
       replacefilter(token: "@@bundle_name@@", value: fullName)
       replacefilter(token: "@@product_state@@", value: EAP)
       replacefilter(token: "@@bundle_identifier@@", value: macCustomizer.bundleIdentifier)

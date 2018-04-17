@@ -281,7 +281,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   void resetSchemeToOriginal(@NotNull String name) {
     MyColorScheme schemeToReset = mySchemes.get(name);
     schemeToReset.resetToOriginal();
-    resetImpl();
     selectScheme(name);
     resetSchemesCombo(null);
     ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
@@ -1131,6 +1130,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         AbstractColorsScheme originalScheme = ((AbstractColorsScheme)myParentScheme).getOriginal();
         if (originalScheme != null) {
           copyPreservingFileStatusColors(originalScheme, (AbstractColorsScheme)myParentScheme);
+          copyPreservingFileStatusColors(originalScheme, this);
+          initScheme(this);
         }
       }
     }

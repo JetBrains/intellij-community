@@ -21,9 +21,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
@@ -169,11 +167,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     // behavior
     defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1;
     return defaultSettings;
-  }
-
-  @Override
-  public DisplayPriority getDisplayPriority() {
-    return PlatformUtils.isPyCharm() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   @SuppressWarnings("FieldCanBeLocal")

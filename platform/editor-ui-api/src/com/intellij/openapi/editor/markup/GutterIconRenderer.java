@@ -135,9 +135,4 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   public abstract boolean equals(Object obj);
   @Override
   public abstract int hashCode();
-
-  @Override
-  public boolean isDumbAware() {
-    return this instanceof DumbAware;
-  }
 }

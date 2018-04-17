@@ -19,6 +19,8 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
@@ -51,7 +53,8 @@ abstract class LineStatusTrackerBase<R : Range> {
   var isReleased: Boolean = false
     private set
 
-  private var isInitialized: Boolean = false
+  protected var isInitialized: Boolean = false
+    private set
 
   protected val blocks: List<Block> get() = documentTracker.blocks
   internal val LOCK: DocumentTracker.Lock get() = documentTracker.LOCK
@@ -93,7 +96,12 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
   @CalledInAwt
-  fun setBaseRevision(vcsContent: CharSequence) {
+  open fun setBaseRevision(vcsContent: CharSequence) {
+    setBaseRevision(vcsContent, null)
+  }
+
+  @CalledInAwt
+  protected fun setBaseRevision(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
     application.assertIsDispatchThread()
     if (isReleased) return
 
@@ -101,6 +109,8 @@ abstract class LineStatusTrackerBase<R : Range> {
       updateDocument(Side.LEFT) {
         vcsDocument.setText(vcsContent)
       }
+
+      beforeUnfreeze?.invoke()
     }
 
     if (!isInitialized) {
@@ -125,14 +135,22 @@ abstract class LineStatusTrackerBase<R : Range> {
 
   @CalledInAwt
   protected fun updateDocument(side: Side, commandName: String?, task: (Document) -> Unit): Boolean {
-    val doc = side[vcsDocument, document]
-
-    if (side.isLeft) doc.setReadOnly(false)
-    try {
-      return DiffUtil.executeWriteCommand(doc, project, commandName, { task(doc) })
+    if (side.isLeft) {
+      vcsDocument.setReadOnly(false)
+      try {
+        runWriteAction {
+          CommandProcessor.getInstance().runUndoTransparentAction {
+            task(vcsDocument)
+          }
+        }
+        return true
+      }
+      finally {
+        vcsDocument.setReadOnly(true)
+      }
     }
-    finally {
-      if (side.isLeft) doc.setReadOnly(true)
+    else {
+      return DiffUtil.executeWriteCommand(document, project, commandName, { task(document) })
     }
   }
 

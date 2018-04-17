@@ -74,7 +74,7 @@ public class ControlFlow {
 
   public void removeVariable(@Nullable PsiVariable variable) {
     if (variable == null) return;
-    addInstruction(new FlushVariableInstruction(myFactory.getVarFactory().createVariableValue(variable, false)));
+    addInstruction(new FlushVariableInstruction(myFactory.getVarFactory().createVariableValue(variable)));
   }
 
   /**
@@ -111,7 +111,7 @@ public class ControlFlow {
 
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);
-      result.append(Integer.toString(i)).append(": ").append(instruction.toString());
+      result.append(i).append(": ").append(instruction.toString());
       result.append("\n");
     }
     return result.toString();

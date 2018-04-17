@@ -982,16 +982,13 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
 
     final Module user = createModule("user");
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        ModuleRootModificationUtil.addDependency(user, getModule("m1"));
-        VirtualFile out = user.getModuleFile().getParent().createChildDirectory(this, "output");
-        VirtualFile testOut = user.getModuleFile().getParent().createChildDirectory(this, "test-output");
-        PsiTestUtil.setCompilerOutputPath(user, out.getUrl(), false);
-        PsiTestUtil.setCompilerOutputPath(user, testOut.getUrl(), true);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      ModuleRootModificationUtil.addDependency(user, getModule("m1"));
+      VirtualFile out = user.getModuleFile().getParent().createChildDirectory(this, "output");
+      VirtualFile testOut = user.getModuleFile().getParent().createChildDirectory(this, "test-output");
+      PsiTestUtil.setCompilerOutputPath(user, out.getUrl(), false);
+      PsiTestUtil.setCompilerOutputPath(user, testOut.getUrl(), true);
+    });
 
 
     assertModuleModuleDeps("m1", "m2");
@@ -1125,16 +1122,11 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                                            "</dependencies>");
     // The default setupInWriteAction only creates directories up to m4.
     // Create directories for m5 and m6 which we will use for this test.
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() {
-        createProjectSubDirs("m5/src/main/java",
-                             "m5/src/test/java",
+    WriteCommandAction.writeCommandAction(myProject).run(() -> createProjectSubDirs("m5/src/main/java",
+                                                                                    "m5/src/test/java",
 
-                             "m6/src/main/java",
-                             "m6/src/test/java");
-      }
-    }.execute();
+                                                                                    "m6/src/main/java",
+                                                                                    "m6/src/test/java"));
     VirtualFile m5 = createModulePom("m5", "<groupId>test</groupId>" +
                                            "<artifactId>m5</artifactId>" +
                                            "<version>1</version>" +
@@ -1266,21 +1258,18 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     final Module nonMavenM1 = createModule("nonMavenM1");
     final Module nonMavenM2 = createModule("nonMavenM2");
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() {
-        ModuleRootModificationUtil.addDependency(nonMavenM1, nonMavenM2, DependencyScope.COMPILE, true);
-        ModuleRootModificationUtil.addDependency(nonMavenM2, modules.get(0), DependencyScope.COMPILE, true);
-        createProjectSubDirs("nonMavenM1/src/main/java", "nonMavenM1/src/test/java",
-                             "nonMavenM2/src/main/java", "nonMavenM2/src/test/java");
-        VirtualFile nonMavenM1JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "nonMavenM1/src/main/java"), true);
-        assertNotNull(nonMavenM1JavaDir);
-        PsiTestUtil.addSourceContentToRoots(nonMavenM1, nonMavenM1JavaDir);
-        VirtualFile nonMavenM2JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "nonMavenM2/src/main/java"), true);
-        assertNotNull(nonMavenM2JavaDir);
-        PsiTestUtil.addSourceContentToRoots(nonMavenM2, nonMavenM2JavaDir);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      ModuleRootModificationUtil.addDependency(nonMavenM1, nonMavenM2, DependencyScope.COMPILE, true);
+      ModuleRootModificationUtil.addDependency(nonMavenM2, modules.get(0), DependencyScope.COMPILE, true);
+      createProjectSubDirs("nonMavenM1/src/main/java", "nonMavenM1/src/test/java",
+                           "nonMavenM2/src/main/java", "nonMavenM2/src/test/java");
+      VirtualFile nonMavenM1JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "nonMavenM1/src/main/java"), true);
+      assertNotNull(nonMavenM1JavaDir);
+      PsiTestUtil.addSourceContentToRoots(nonMavenM1, nonMavenM1JavaDir);
+      VirtualFile nonMavenM2JavaDir = VfsUtil.findFileByIoFile(new File(getProjectPath(), "nonMavenM2/src/main/java"), true);
+      assertNotNull(nonMavenM2JavaDir);
+      PsiTestUtil.addSourceContentToRoots(nonMavenM2, nonMavenM2JavaDir);
+    });
 
     assertModuleModuleDeps("nonMavenM1", "nonMavenM2");
     assertModuleModuleDeps("nonMavenM2", "m1");

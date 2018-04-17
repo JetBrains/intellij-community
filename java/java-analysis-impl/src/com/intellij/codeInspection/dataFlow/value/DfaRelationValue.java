@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -112,6 +113,13 @@ public class DfaRelationValue extends DfaValue {
       }
     }
 
+    /**
+     * @return true if this relation is >, >=, <, != or <=
+     */
+    public boolean isInequality() {
+      return this == LE || this == GE || this == LT || this == GT || this == NE;
+    }
+
     @Override
     public String toString() {
       return myName;
@@ -189,12 +197,20 @@ public class DfaRelationValue extends DfaValue {
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
       if (dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaConstValue) {
-        return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
+        return createConstBasedRelation((DfaFactMapValue)dfaLeft, relationType, (DfaConstValue)dfaRight);
       }
       else if (dfaRight instanceof DfaFactMapValue && dfaLeft instanceof DfaConstValue) {
-        return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaLeft);
+        return createConstBasedRelation((DfaFactMapValue)dfaRight, relationType, (DfaConstValue)dfaLeft);
       }
       return null;
+    }
+
+    @NotNull
+    private DfaRelationValue createConstBasedRelation(DfaFactMapValue dfaLeft, RelationType relationType, DfaConstValue dfaRight) {
+      if (dfaRight.getValue() == null && Boolean.TRUE.equals(dfaLeft.get(DfaFactType.CAN_BE_NULL))) {
+        return createCanonicalRelation(myFactory.getFactValue(DfaFactType.CAN_BE_NULL, Boolean.TRUE), relationType, dfaRight);
+      }
+      return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
     }
 
     @NotNull

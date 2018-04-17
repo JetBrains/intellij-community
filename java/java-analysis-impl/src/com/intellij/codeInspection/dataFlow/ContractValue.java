@@ -15,12 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Tagir Valeev
@@ -52,7 +50,7 @@ public abstract class ContractValue {
     return new Spec(this, field);
   }
 
-  public static ContractValue constant(Object value, PsiType type) {
+  public static ContractValue constant(Object value, @NotNull PsiType type) {
     return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type, null), String.valueOf(value));
   }
 
@@ -99,7 +97,13 @@ public abstract class ContractValue {
 
     @Override
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
-      return arguments.myArguments.length <= myIndex ? DfaUnknownValue.getInstance() : arguments.myArguments[myIndex];
+      if (arguments.myArguments.length <= myIndex) {
+        return DfaUnknownValue.getInstance();
+      }
+      else {
+        DfaValue arg = arguments.myArguments[myIndex];
+        return arg instanceof DfaBoxedValue ? ((DfaBoxedValue)arg).getWrappedValue() : arg;
+      }
     }
 
     @Override

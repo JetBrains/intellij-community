@@ -30,9 +30,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -209,18 +208,7 @@ public class AutoPopupController implements Disposable {
   }
 
   public static void runTransactionWithEverythingCommitted(@NotNull final Project project, @NotNull final Runnable runnable) {
-    TransactionGuard guard = TransactionGuard.getInstance();
-    TransactionId id = guard.getContextTransaction();
-    final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
-    pdm.performLaterWhenAllCommitted(() -> guard.submitTransaction(project, id, () -> {
-      if (pdm.hasUncommitedDocuments()) {
-        // no luck, will try later
-        runTransactionWithEverythingCommitted(project, runnable);
-      }
-      else {
-        runnable.run();
-      }
-    }));
+    AppUIExecutor.onUiThread().later().withDocumentsCommitted(project).inTransaction(project).execute(runnable);
   }
 
   @TestOnly

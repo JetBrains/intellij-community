@@ -27,6 +27,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +37,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnchor;
@@ -46,9 +47,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNamespaceHelper;
@@ -60,7 +61,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -309,34 +309,30 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
                                                                                            final Editor editor) throws IncorrectOperationException {
 
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      final JList list = new JBList(namespacesToChooseFrom);
-      list.setCellRenderer(XmlNSRenderer.INSTANCE);
-      Runnable runnable = () -> {
-        final int index = list.getSelectedIndex();
-        if (index < 0) return;
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-        CommandProcessor.getInstance().executeCommand(
-          project,
-          () -> ApplicationManager.getApplication().runWriteAction(
-            () -> {
-              try {
-                onSelection.doSomethingWithGivenStringToProduceXmlAttributeNowPlease(namespacesToChooseFrom[index]);
-              } catch (IncorrectOperationException ex) {
-                throw new RuntimeException(ex);
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(ContainerUtil.newArrayList(namespacesToChooseFrom))
+        .setRenderer(XmlNSRenderer.INSTANCE)
+        .setTitle(title)
+        .setItemChosenCallback((selectedValue) -> {
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+          CommandProcessor.getInstance().executeCommand(
+            project,
+            () -> ApplicationManager.getApplication().runWriteAction(
+              () -> {
+                try {
+                  onSelection.doSomethingWithGivenStringToProduceXmlAttributeNowPlease(selectedValue);
+                }
+                catch (IncorrectOperationException ex) {
+                  throw new RuntimeException(ex);
+                }
               }
-            }
-          ),
-          requestor.getText(),
-          requestor.getFamilyName()
-        );
-      };
-
-      new PopupChooserBuilder(list).
-        setTitle(title).
-        setItemChoosenCallback(runnable).
-        createPopup().
-        showInBestPositionFor(editor);
+            ),
+            requestor.getText(),
+            requestor.getFamilyName()
+          );
+        })
+        .createPopup()
+        .showInBestPositionFor(editor);
     } else {
       WriteAction.run(() -> {
         String attrName = namespacesToChooseFrom.length == 0 ? "" : namespacesToChooseFrom[0];
@@ -347,19 +343,13 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   public static void processExternalUris(final MetaHandler metaHandler,
                                          final PsiFile file,
-                                         final ExternalUriProcessor processor,
-                                         final boolean showProgress) {
-    if (!showProgress || ApplicationManager.getApplication().isUnitTestMode()) {
-      processExternalUrisImpl(metaHandler, file, processor);
-    }
-    else {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> processExternalUrisImpl(metaHandler, file, processor),
-        XmlErrorMessages.message("finding.acceptable.uri"),
-        false,
-        file.getProject()
-      );
-    }
+                                         final ExternalUriProcessor processor) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.run(() -> processExternalUrisImpl(metaHandler, file, processor)),
+      XmlErrorMessages.message("finding.acceptable.uri"),
+      false,
+      file.getProject()
+    );
   }
 
   public interface MetaHandler {

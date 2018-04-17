@@ -246,10 +246,10 @@ public class ChainCompletionContext {
           (!(element instanceof PsiMember) || myResolveHelper.isAccessible((PsiMember)element, myPlace, null))) {
         PsiType type = getType(element);
         if (type == null) {
-          return false;
+          return true;
         }
         if (isWidelyUsed(type)) {
-          return false;
+          return true;
         }
         myContextElements.add((PsiNamedElement)element);
       }

@@ -103,7 +103,7 @@ public class BasicJarHandler extends ZipHandlerBase {
   }
 
   private static final ScheduledExecutorService
-    ourScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("Zip handle janitor", 1);
+    ourScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("Zip Handle Janitor", 1);
   
   private final class ZipResourceHandle extends ResourceHandle<ZipFile> {
     private ZipFile myFile;

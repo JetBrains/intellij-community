@@ -227,7 +227,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     Object lock = new Object();
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, true, computable -> {
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, computable -> {
       List<LineMarkerInfo> infos = computable.compute();
       synchronized (lock) {
         result.addAll(infos);

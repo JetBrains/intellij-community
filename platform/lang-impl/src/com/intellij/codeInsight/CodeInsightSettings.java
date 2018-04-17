@@ -63,6 +63,9 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SHOW_EXTERNAL_ANNOTATIONS_INLINE = true;
   public boolean SHOW_INFERRED_ANNOTATIONS_INLINE = false;
 
+
+  public boolean SHOW_METHOD_CHAIN_TYPES_INLINE = true;
+
   public boolean SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
   public int PARAMETER_INFO_DELAY = 1000;
@@ -145,6 +148,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   public boolean ADD_MEMBER_IMPORTS_ON_THE_FLY = true;
   public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+
+  public boolean TAB_EXITS_BRACKETS_AND_QUOTES;
 
   /**
    * Names of classes and packages excluded from (Java) auto-import and completion. These are only IDE-specific settings

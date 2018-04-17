@@ -44,6 +44,8 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
         for (module in modules) {
           moduleAppears(module)
         }
+        val renamedOldToNew = modules.associateBy({ oldNameProvider.`fun`(it) }, { it.name })
+        oldToNewName.transformValues { newName -> renamedOldToNew[newName] ?: newName }
       }
     })
   }

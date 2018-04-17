@@ -4,6 +4,9 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.diff.util.Side
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.vcs.ex.Range
 
 class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
@@ -11,8 +14,8 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
     }
   }
 
@@ -20,19 +23,19 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangelist("Default")
+      range().assertChangeList("Default")
 
-      setDefaultChangelist("Test")
+      createChangeList_SetDefault("Test")
       "12".insertBefore("X_Y_Z")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
 
       "3456".replace("X_Y_Z")
 
-      range(0).assertChangelist("Default")
-      range(1).assertChangelist("Test")
-      assertAffectedChangelists("Default", "Test")
+      range(0).assertChangeList("Default")
+      range(1).assertChangeList("Test")
+      assertAffectedChangeLists("Default", "Test")
     }
   }
 
@@ -40,24 +43,24 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
 
-      setDefaultChangelist("Test")
+      createChangeList_SetDefault("Test")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
 
       "56".insertAfter("b")
 
-      range(0).assertChangelist("Default")
-      range(1).assertChangelist("Test")
-      assertAffectedChangelists("Default", "Test")
+      range(0).assertChangeList("Default")
+      range(1).assertChangeList("Test")
+      assertAffectedChangeLists("Default", "Test")
 
       "2345".insertAfter("c")
 
-      range().assertChangelist("Test")
-      assertAffectedChangelists("Test")
+      range().assertChangeList("Test")
+      assertAffectedChangeLists("Test")
     }
   }
 
@@ -65,24 +68,24 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
 
-      setDefaultChangelist("Test")
+      createChangeList_SetDefault("Test")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
 
       "56".insertAfter("b")
 
-      range(0).assertChangelist("Default")
-      range(1).assertChangelist("Test")
-      assertAffectedChangelists("Default", "Test")
+      range(0).assertChangeList("Default")
+      range(1).assertChangeList("Test")
+      assertAffectedChangeLists("Default", "Test")
 
       "2345_".delete()
 
-      range().assertChangelist("Test")
-      assertAffectedChangelists("Test")
+      range().assertChangeList("Test")
+      assertAffectedChangeLists("Test")
     }
   }
 
@@ -90,14 +93,14 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
 
       createChangelist("Test")
       range().moveTo("Test")
 
-      range().assertChangelist("Test")
-      assertAffectedChangelists("Test")
+      range().assertChangeList("Test")
+      assertAffectedChangeLists("Test")
     }
   }
 
@@ -105,31 +108,31 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
 
-      setDefaultChangelist("Test")
+      createChangeList_SetDefault("Test")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
 
       "56".insertAfter("b")
 
-      range(0).assertChangelist("Default")
-      range(1).assertChangelist("Test")
-      assertAffectedChangelists("Default", "Test")
+      range(0).assertChangeList("Default")
+      range(1).assertChangeList("Test")
+      assertAffectedChangeLists("Default", "Test")
 
       range(0).moveTo("Test")
 
-      range(0).assertChangelist("Test")
-      range(1).assertChangelist("Test")
-      assertAffectedChangelists("Test")
+      range(0).assertChangeList("Test")
+      range(1).assertChangeList("Test")
+      assertAffectedChangeLists("Test")
 
       range(1).moveTo("Default")
 
-      range(0).assertChangelist("Test")
-      range(1).assertChangelist("Default")
-      assertAffectedChangelists("Default", "Test")
+      range(0).assertChangeList("Test")
+      range(1).assertChangeList("Default")
+      assertAffectedChangeLists("Default", "Test")
     }
   }
 
@@ -137,25 +140,25 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("1234_2345_3456") {
       "12".insertAfter("a")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
 
-      setDefaultChangelist("Test")
+      createChangeList_SetDefault("Test")
 
-      range().assertChangelist("Default")
-      assertAffectedChangelists("Default")
+      range().assertChangeList("Default")
+      assertAffectedChangeLists("Default")
 
       "56".insertAfter("b")
 
-      range(0).assertChangelist("Default")
-      range(1).assertChangelist("Test")
-      assertAffectedChangelists("Default", "Test")
+      range(0).assertChangeList("Default")
+      range(1).assertChangeList("Test")
+      assertAffectedChangeLists("Default", "Test")
 
-      removeChangelist("Default")
+      removeChangeList("Default")
 
-      range(0).assertChangelist("Test")
-      range(1).assertChangelist("Test")
-      assertAffectedChangelists("Test")
+      range(0).assertChangeList("Test")
+      range(1).assertChangeList("Test")
+      assertAffectedChangeLists("Test")
     }
   }
 
@@ -184,7 +187,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     testPartial("A_ _C_D_E_") {
       "A".replace("C_D_E")
 
-      setDefaultChangelist("Test")
+      createChangeList_SetDefault("Test")
 
       (2 th "C_D_E_").delete()
       assertTextContentIs("C_D_E_ _")
@@ -203,7 +206,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangelists("Default", "Test")
+      assertAffectedChangeLists("Default", "Test")
 
       val helper = handlePartialCommit(Side.LEFT, "Test")
       helper.applyChanges()
@@ -211,7 +214,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
       assertHelperContentIs("A_B_C_E_F_G_N_H_", helper)
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_E_F_G_N_H_")
-      assertAffectedChangelists("Default")
+      assertAffectedChangeLists("Default")
     }
   }
 
@@ -226,7 +229,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangelists("Default", "Test")
+      assertAffectedChangeLists("Default", "Test")
 
       val helper = handlePartialCommit(Side.LEFT, "Default")
       helper.applyChanges()
@@ -234,7 +237,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
       assertHelperContentIs("A_B1_C_D_E_F_M_G_H_", helper)
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B1_C_D_E_F_M_G_H_")
-      assertAffectedChangelists("Test")
+      assertAffectedChangeLists("Test")
     }
   }
 
@@ -249,7 +252,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangelists("Default", "Test")
+      assertAffectedChangeLists("Default", "Test")
 
       val helper = handlePartialCommit(Side.RIGHT, "Test")
       helper.applyChanges()
@@ -257,7 +260,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
       assertHelperContentIs("A_B1_C_D_E_F_M_G_H_", helper)
       assertTextContentIs("A_B1_C_D_E_F_M_G_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangelists("Default")
+      assertAffectedChangeLists("Default")
     }
   }
 
@@ -272,10 +275,10 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangelists("Default", "Test")
+      assertAffectedChangeLists("Default", "Test")
 
       tracker.doFrozen(Runnable {
-        runCommand {
+        runCommandVerify {
           "B1_".replace("X_Y_Z_")
 
           val helper = handlePartialCommit(Side.LEFT, "Default")
@@ -284,7 +287,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
           assertHelperContentIs("A_X_Y_Z_C_D_E_F_M_G_H_", helper)
           assertTextContentIs("A_X_Y_Z_C_E_F_M_G_N_H_")
           assertBaseTextContentIs("A_X_Y_Z_C_D_E_F_M_G_H_")
-          assertAffectedChangelists("Test")
+          assertAffectedChangeLists("Test")
         }
       })
     }
@@ -301,10 +304,10 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
       assertTextContentIs("A_B1_C_E_F_M_G_N_H_")
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
-      assertAffectedChangelists("Default", "Test")
+      assertAffectedChangeLists("Default", "Test")
 
       tracker.doFrozen(Runnable {
-        runCommand {
+        runCommandVerify {
           "B1_".replace("X_Y_Z_")
 
           val helper = handlePartialCommit(Side.LEFT, "Default")
@@ -321,9 +324,236 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
           assertHelperContentIs("A_X_Y_Z_C_D_E_F_M_G_H_", helper)
           assertTextContentIs("A_X_Y_Z_C_E_F_M2_G_N2_H_")
           assertBaseTextContentIs("A_X_Y_Z_C_D_E_F_M_G_H_")
-          assertAffectedChangelists("Test")
+          assertAffectedChangeLists("Test")
         }
       })
+    }
+  }
+
+  fun testUndo() {
+    testPartial("A_B_C_D_E") {
+      "B".replace("B1")
+      "D_".delete()
+      range(0).moveTo("Test 1")
+      range(1).moveTo("Test 2")
+      range(0).assertChangeList("Test 1")
+      range(1).assertChangeList("Test 2")
+
+      assertTextContentIs("A_B1_C_E")
+      assertBaseTextContentIs("A_B_C_D_E")
+      assertAffectedChangeLists("Test 1", "Test 2")
+
+      "C".replace("C2")
+      assertRanges(Range(1, 3, 1, 4))
+      assertAffectedChangeLists("Default")
+
+      undo()
+
+      assertTextContentIs("A_B1_C_E")
+      range(0).assertChangeList("Test 1")
+      range(1).assertChangeList("Test 2")
+      assertAffectedChangeLists("Test 1", "Test 2")
+
+      redo()
+
+      assertRanges(Range(1, 3, 1, 4))
+      assertAffectedChangeLists("Default")
+
+      undo()
+
+      range(0).assertChangeList("Test 1")
+      range(1).assertChangeList("Test 2")
+      assertAffectedChangeLists("Test 1", "Test 2")
+    }
+  }
+
+  fun testUndoAfterExplicitMove() {
+    testPartial("A_B_C_D_E") {
+      "B".replace("B1")
+      "D_".delete()
+      range(0).moveTo("Test 1")
+      range(1).moveTo("Test 2")
+      range(0).assertChangeList("Test 1")
+      range(1).assertChangeList("Test 2")
+
+      assertTextContentIs("A_B1_C_E")
+      assertBaseTextContentIs("A_B_C_D_E")
+      assertAffectedChangeLists("Test 1", "Test 2")
+
+      "C".replace("C2")
+      assertRanges(Range(1, 3, 1, 4))
+      assertAffectedChangeLists("Default")
+
+      range(0).moveTo("Test 1")
+      assertAffectedChangeLists("Test 1")
+
+      undo()
+
+      assertTextContentIs("A_B1_C_E")
+      range(0).assertChangeList("Test 1")
+      range(1).assertChangeList("Test 1")
+      assertAffectedChangeLists("Test 1")
+
+      redo()
+
+      assertRanges(Range(1, 3, 1, 4))
+      assertAffectedChangeLists("Test 1")
+
+      undo()
+
+      range(0).assertChangeList("Test 1")
+      range(1).assertChangeList("Test 1")
+      assertAffectedChangeLists("Test 1")
+    }
+
+    testPartial("A_B_C_D_E") {
+      "B".replace("B1")
+      "D_".delete()
+      range(0).moveTo("Test 1")
+      range(1).moveTo("Test 2")
+      range(0).assertChangeList("Test 1")
+      range(1).assertChangeList("Test 2")
+
+      assertTextContentIs("A_B1_C_E")
+      assertBaseTextContentIs("A_B_C_D_E")
+      assertAffectedChangeLists("Test 1", "Test 2")
+
+      "C".replace("C2")
+      assertRanges(Range(1, 3, 1, 4))
+      assertAffectedChangeLists("Default")
+
+      tracker.virtualFile.moveChanges("Default", "Test 1")
+      assertAffectedChangeLists("Test 1")
+
+      undo()
+
+      assertTextContentIs("A_B1_C_E")
+      range(0).assertChangeList("Test 1")
+      range(1).assertChangeList("Test 1")
+      assertAffectedChangeLists("Test 1")
+
+      redo()
+
+      assertRanges(Range(1, 3, 1, 4))
+      assertAffectedChangeLists("Test 1")
+
+      undo()
+
+      range(0).assertChangeList("Test 1")
+      range(1).assertChangeList("Test 1")
+      assertAffectedChangeLists("Test 1")
+    }
+  }
+
+  fun testUndoTransparentAction1() {
+    testPartial("A_B_C_D_E") {
+      val anotherFile = addLocalFile("Another.txt", parseInput("X_Y_Z"))
+      val anotherDocument = anotherFile.document
+
+      "C".replace("C1")
+      range(0).moveTo("Test 1")
+
+      "E".delete()
+
+      runWriteAction {
+        CommandProcessor.getInstance().executeCommand(getProject(), Runnable {
+          anotherDocument.deleteString(0, 1)
+        }, null, null)
+      }
+
+      runWriteAction {
+        CommandProcessor.getInstance().runUndoTransparentAction {
+          document.replaceString(0, 1, "A2")
+        }
+      }
+
+      runWriteAction {
+        CommandProcessor.getInstance().executeCommand(getProject(), Runnable {
+          anotherDocument.insertString(0, "B22")
+        }, null, null)
+      }
+
+      undo()
+
+      assertTextContentIs("A_B_C1_D_E")
+      range().assertChangeList("Test 1")
+    }
+  }
+
+  fun testUndoTransparentAction2() {
+    testPartial("A_B_C_D_E") {
+      val anotherFile = addLocalFile("Another.txt", parseInput("X_Y_Z"))
+      val anotherDocument = anotherFile.document
+
+      "C".replace("C1")
+      range(0).moveTo("Test 1")
+
+      "E".delete()
+
+      runWriteAction {
+        CommandProcessor.getInstance().executeCommand(getProject(), Runnable {
+          anotherDocument.deleteString(0, 1)
+        }, null, null)
+      }
+
+      runWriteAction {
+        CommandProcessor.getInstance().runUndoTransparentAction {
+          document.replaceString(0, 1, "A2")
+        }
+      }
+
+      runWriteAction {
+        CommandProcessor.getInstance().executeCommand(getProject(), Runnable {
+          anotherDocument.insertString(0, "B22")
+        }, null, null)
+      }
+
+      runWriteAction {
+        CommandProcessor.getInstance().executeCommand(getProject(), Runnable {
+          anotherDocument.insertString(0, "B22")
+        }, null, null)
+      }
+
+      undo()
+
+      assertTextContentIs("A_B_C1_D_E")
+      range().assertChangeList("Test 1")
+    }
+  }
+
+
+  fun testUndoTransparentAction3() {
+    testPartial("A_B_C_D_E") {
+      val anotherFile = addLocalFile("Another.txt", parseInput("X_Y_Z"))
+      val anotherDocument = anotherFile.document
+
+      "C".replace("C1")
+      range(0).moveTo("Test 1")
+
+      "E".delete()
+
+      runWriteAction {
+        CommandProcessor.getInstance().executeCommand(getProject(), Runnable {
+          anotherDocument.deleteString(0, 1)
+        }, null, null)
+      }
+
+      runWriteAction {
+        CommandProcessor.getInstance().runUndoTransparentAction {
+          document.replaceString(0, 1, "A2")
+        }
+      }
+
+      runWriteAction {
+        CommandProcessor.getInstance().executeCommand(getProject(), Runnable {
+          undoManager.nonundoableActionPerformed(DocumentReferenceManager.getInstance().create(anotherDocument), false)
+        }, null, null)
+      }
+
+      undo()
+
+      assertTextContentIs("A_B_C1_D_E")
+      range().assertChangeList("Test 1")
     }
   }
 

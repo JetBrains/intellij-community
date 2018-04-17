@@ -35,6 +35,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -82,6 +83,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
@@ -164,24 +166,22 @@ public class PlatformTestUtil {
     return print(tree, path,  withSelection, printInfo, null);
   }
 
-  public static String print(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
+  public static String print(JTree tree, boolean withSelection, @Nullable Predicate<String> nodePrintCondition) {
     return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
   }
 
   private static String print(JTree tree, TreePath path,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
-                             @Nullable Condition<String> nodePrintCondition) {
-    StringBuilder buffer = new StringBuilder();
-    final Collection<String> strings = printAsList(tree, path, withSelection, printInfo, nodePrintCondition);
-    for (String string : strings) {
-      buffer.append(string).append("\n");
-    }
-    return buffer.toString();
+                             @Nullable Predicate<String> nodePrintCondition) {
+    return StringUtil.join(printAsList(tree, path, withSelection, printInfo, nodePrintCondition), "\n");
   }
 
-  private static Collection<String> printAsList(JTree tree, TreePath path, boolean withSelection, @Nullable Queryable.PrintInfo printInfo,
-                                                Condition<String> nodePrintCondition) {
+  private static Collection<String> printAsList(JTree tree,
+                                                TreePath path,
+                                                boolean withSelection,
+                                                @Nullable Queryable.PrintInfo printInfo,
+                                                @Nullable Predicate<String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
     printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
@@ -193,20 +193,21 @@ public class PlatformTestUtil {
                                 int level,
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
-                                @Nullable Condition<String> nodePrintCondition) {
-
+                                @Nullable Predicate<String> nodePrintCondition) {
     Object pathComponent = path.getLastPathComponent();
     Object userObject = TreeUtil.getUserObject(pathComponent);
     String nodeText = toString(userObject, printInfo);
 
-    if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
+    if (nodePrintCondition != null && !nodePrintCondition.test(nodeText)) {
+      return;
+    }
 
     StringBuilder buff = new StringBuilder();
     StringUtil.repeatSymbol(buff, ' ', level);
 
     boolean expanded = tree.isExpanded(path);
     int childCount = tree.getModel().getChildCount(pathComponent);
-    if (childCount != 0 && (tree.isRootVisible() || pathComponent != tree.getModel().getRoot() || childCount > 0)) {
+    if (childCount > 0) {
       buff.append(expanded ? "-" : "+");
     }
 
@@ -243,7 +244,7 @@ public class PlatformTestUtil {
 
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
-    assertEquals(expected, treeStringPresentation);
+    assertEquals(expected.trim(), treeStringPresentation.trim());
   }
 
   public static void expand(JTree tree, int... rows) {
@@ -314,7 +315,7 @@ public class PlatformTestUtil {
   public static <T> T waitForPromise(@NotNull Promise<T> promise) {
     assertDispatchThreadWithoutWriteAccess();
     AtomicBoolean complete = new AtomicBoolean(false);
-    promise.processed(ignore -> complete.set(true));
+    promise.onProcessed(ignore -> complete.set(true));
     T result = null;
     long start = System.currentTimeMillis();
     do {
@@ -670,24 +671,24 @@ public class PlatformTestUtil {
     return map;
   }
 
-  public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore) throws IOException {
-    assertDirectoriesEqual(dirAfter, dirBefore, null);
+  public static void assertDirectoriesEqual(VirtualFile dirExpected, VirtualFile dirActual) throws IOException {
+    assertDirectoriesEqual(dirExpected, dirActual, null);
   }
 
   @SuppressWarnings("UnsafeVfsRecursion")
-  public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, @Nullable VirtualFileFilter fileFilter) throws IOException {
+  public static void assertDirectoriesEqual(VirtualFile dirExpected, VirtualFile dirActual, @Nullable VirtualFileFilter fileFilter) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    VirtualFile[] childrenAfter = dirAfter.getChildren();
+    VirtualFile[] childrenAfter = dirExpected.getChildren();
 
-    if (dirAfter.isInLocalFileSystem() && dirAfter.getFileSystem() != TempFileSystem.getInstance()) {
-      File[] ioAfter = new File(dirAfter.getPath()).listFiles();
+    if (dirExpected.isInLocalFileSystem() && dirExpected.getFileSystem() != TempFileSystem.getInstance()) {
+      File[] ioAfter = new File(dirExpected.getPath()).listFiles();
       shallowCompare(childrenAfter, ioAfter);
     }
 
-    VirtualFile[] childrenBefore = dirBefore.getChildren();
-    if (dirBefore.isInLocalFileSystem() && dirBefore.getFileSystem() != TempFileSystem.getInstance()) {
-      File[] ioBefore = new File(dirBefore.getPath()).listFiles();
+    VirtualFile[] childrenBefore = dirActual.getChildren();
+    if (dirActual.isInLocalFileSystem() && dirActual.getFileSystem() != TempFileSystem.getInstance()) {
+      File[] ioBefore = new File(dirActual.getPath()).listFiles();
       shallowCompare(childrenBefore, ioBefore);
     }
 
@@ -696,7 +697,7 @@ public class PlatformTestUtil {
 
     Set<String> keySetAfter = mapAfter.keySet();
     Set<String> keySetBefore = mapBefore.keySet();
-    assertEquals(dirAfter.getPath(), keySetAfter, keySetBefore);
+    assertEquals(dirExpected.getPath(), keySetAfter, keySetBefore);
 
     for (String name : keySetAfter) {
       VirtualFile fileAfter = mapAfter.get(name);
@@ -736,62 +737,68 @@ public class PlatformTestUtil {
     return buf.toString();
   }
 
-  public static void assertFilesEqual(VirtualFile fileAfter, VirtualFile fileBefore) throws IOException {
+  public static void assertFilesEqual(VirtualFile fileExpected, VirtualFile fileActual) throws IOException {
     try {
-      assertJarFilesEqual(VfsUtilCore.virtualToIoFile(fileAfter), VfsUtilCore.virtualToIoFile(fileBefore));
+      assertJarFilesEqual(VfsUtilCore.virtualToIoFile(fileExpected), VfsUtilCore.virtualToIoFile(fileActual));
     }
     catch (IOException e) {
       FileDocumentManager manager = FileDocumentManager.getInstance();
 
-      Document docBefore = manager.getDocument(fileBefore);
-      boolean canLoadBeforeText = !fileBefore.getFileType().isBinary() || fileBefore.getFileType() == FileTypes.UNKNOWN;
+      Document docBefore = manager.getDocument(fileActual);
+      boolean canLoadBeforeText = !fileActual.getFileType().isBinary() || fileActual.getFileType() == FileTypes.UNKNOWN;
       String textB = docBefore != null
                      ? docBefore.getText()
                      : !canLoadBeforeText
                        ? null
-                       : LoadTextUtil.getTextByBinaryPresentation(fileBefore.contentsToByteArray(false), fileBefore).toString();
+                       : LoadTextUtil.getTextByBinaryPresentation(fileActual.contentsToByteArray(false), fileActual).toString();
 
-      Document docAfter = manager.getDocument(fileAfter);
-      boolean canLoadAfterText = !fileBefore.getFileType().isBinary() || fileBefore.getFileType() == FileTypes.UNKNOWN;
+      Document docAfter = manager.getDocument(fileExpected);
+      boolean canLoadAfterText = !fileActual.getFileType().isBinary() || fileActual.getFileType() == FileTypes.UNKNOWN;
       String textA = docAfter != null
                      ? docAfter.getText()
                      : !canLoadAfterText
                        ? null
-                       : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString();
+                       : LoadTextUtil.getTextByBinaryPresentation(fileExpected.contentsToByteArray(false), fileExpected).toString();
 
       if (textA != null && textB != null) {
         if (!StringUtil.equals(textA, textB)) {
-          throw new FileComparisonFailure("Text mismatch in file " + fileBefore.getName(), textA, textB, fileAfter.getPath());
+          throw new FileComparisonFailure("Text mismatch in file " + fileExpected.getName(), textA, textB, fileExpected.getPath());
         }
       }
       else {
-        Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
+        Assert.assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
       }
     }
   }
 
   public static void assertJarFilesEqual(File file1, File file2) throws IOException {
-    final File tempDirectory1;
-    final File tempDirectory2;
+    final File tempDir = FileUtilRt.createTempDirectory("assert_jar_tmp", null, false);
+    try {
+      final File tempDirectory1 = new File(tempDir, "tmp1");
+      final File tempDirectory2 = new File(tempDir, "tmp2");
+      FileUtilRt.createDirectory(tempDirectory1);
+      FileUtilRt.createDirectory(tempDirectory2);
 
-    try (JarFile jarFile1 = new JarFile(file1)) {
-      try (JarFile jarFile2 = new JarFile(file2)) {
-        tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
-        tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
-        ZipUtil.extract(jarFile1, tempDirectory1, null);
-        ZipUtil.extract(jarFile2, tempDirectory2, null);
+      try (JarFile jarFile1 = new JarFile(file1)) {
+        try (JarFile jarFile2 = new JarFile(file2)) {
+          ZipUtil.extract(jarFile1, tempDirectory1, null);
+          ZipUtil.extract(jarFile2, tempDirectory2, null);
+        }
       }
-    }
 
-    final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
-    Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
-    final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
-    Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
-    getApplication().runWriteAction(() -> {
-      dirAfter.refresh(false, true);
-      dirBefore.refresh(false, true);
-    });
-    assertDirectoriesEqual(dirAfter, dirBefore);
+      final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
+      Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
+      final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
+      Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
+      getApplication().runWriteAction(() -> {
+        dirAfter.refresh(false, true);
+        dirBefore.refresh(false, true);
+      });
+      assertDirectoriesEqual(dirAfter, dirBefore);
+    }
+    finally {
+      FileUtilRt.delete(tempDir);
+    }
   }
 
   /**
@@ -961,7 +968,7 @@ public class PlatformTestUtil {
       }
       catch (AssertionError | Exception e) {
         captureMemorySnapshot();
-        ExceptionUtil.rethrowAllAsUnchecked(e);
+        ExceptionUtil.rethrow(e);
       }
       finally {
         application.setDisposeInProgress(true);
@@ -969,7 +976,6 @@ public class PlatformTestUtil {
         UIUtil.dispatchAllInvocationEvents();
       }
     });
-
   }
 
   public static void captureMemorySnapshot() {

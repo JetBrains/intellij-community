@@ -13,15 +13,17 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.Set;
 
 public class PsiElementModuleRenderer extends DefaultListCellRenderer{
   private String myText;
@@ -112,14 +114,13 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     }
 
     if (StringUtil.isEmpty(myText) && Registry.is("index.run.configuration.jre")) {
-      VirtualFile rootJar = JarFileSystem.getInstance().getRootByEntry(vFile);
-      if (rootJar != null) {
-        for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-          if (ArrayUtil.contains(rootJar, sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) ||
-              ArrayUtil.contains(rootJar, sdk.getRootProvider().getFiles(OrderRootType.SOURCES))) {
-            myText = "< " + sdk.getName() + " >";
-            break;
-          }
+      for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+        Set<VirtualFile> roots = StreamEx.of(sdk.getRootProvider().getFiles(OrderRootType.CLASSES))
+                                         .append(sdk.getRootProvider().getFiles(OrderRootType.SOURCES))
+                                         .toSet();
+        if (VfsUtilCore.isUnder(vFile, roots)) {
+          myText = "< " + sdk.getName() + " >";
+          break;
         }
       }
     }

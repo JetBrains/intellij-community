@@ -55,9 +55,6 @@ public class PyCodeFragmentUtil {
     final int start = startInScope.getTextOffset();
     final int end = endInScope.getTextOffset() + endInScope.getTextLength();
     final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
-    if (flow == null) {
-      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.undetermined.execution.flow"));
-    }
     final List<Instruction> graph = Arrays.asList(flow.getInstructions());
     final List<Instruction> subGraph = getFragmentSubGraph(graph, start, end);
     final AnalysisResult subGraphAnalysis = analyseSubGraph(subGraph, start, end);
@@ -246,7 +243,7 @@ public class PyCodeFragmentUtil {
         }
       }
       if (element instanceof PyContinueStatement || element instanceof PyBreakStatement) {
-        final PyLoopStatement loopStatement = PsiTreeUtil.getParentOfType(element, PyLoopStatement.class);
+        final PyLoopStatement loopStatement = PyUtil.getCorrespondingLoop(element);
         if (loopStatement != null && !subGraphElements.contains(loopStatement)) {
           outerLoopBreaks++;
         }

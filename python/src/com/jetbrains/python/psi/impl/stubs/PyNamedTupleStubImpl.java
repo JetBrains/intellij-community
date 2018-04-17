@@ -22,7 +22,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.StringRef;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
@@ -98,19 +98,15 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
   @Nullable
   public static PyNamedTupleStub deserialize(@NotNull StubInputStream stream) throws IOException {
-    final StringRef calleeName = stream.readName();
-    final StringRef name = stream.readName();
+    final String calleeName = stream.readNameString();
+    final String name = stream.readNameString();
     final LinkedHashMap<String, Optional<String>> fields = deserializeFields(stream, stream.readVarInt());
 
     if (calleeName == null || name == null) {
       return null;
     }
 
-    return new PyNamedTupleStubImpl(
-      QualifiedName.fromDottedString(calleeName.getString()),
-      name.getString(),
-      fields
-    );
+    return new PyNamedTupleStubImpl(QualifiedName.fromDottedString(calleeName), name, fields);
   }
 
   @NotNull
@@ -151,13 +147,19 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
   @Nullable
   private static Pair<QualifiedName, NamedTupleModule> getCalleeNameAndNTModule(@NotNull PyReferenceExpression referenceExpression) {
-    final Pair<QualifiedName, NamedTupleModule> name = getFullyQCalleeNameAndNTModule(referenceExpression);
+    final QualifiedName calleeName = PyPsiUtils.asQualifiedName(referenceExpression);
+    if (calleeName == null) return null;
 
-    if (name != null) {
-      return name;
+    for (String name : ContainerUtil.map(PyResolveUtil.resolveImportedElementQNameLocally(referenceExpression), QualifiedName::toString)) {
+      if (name.equals(PyNames.COLLECTIONS_NAMEDTUPLE_PY2)) {
+        return Pair.createNonNull(calleeName, NamedTupleModule.COLLECTIONS);
+      }
+      else if (name.equals(PyTypingTypeProvider.NAMEDTUPLE)) {
+        return Pair.createNonNull(calleeName, NamedTupleModule.TYPING);
+      }
     }
 
-    return getImportedCalleeNameAndNTModule(referenceExpression);
+    return null;
   }
 
   @Nullable
@@ -177,8 +179,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     final LinkedHashMap<String, Optional<String>> fields = new LinkedHashMap<>(fieldsSize);
 
     for (int i = 0; i < fieldsSize; i++) {
-      final String name = StringRef.toString(stream.readName());
-      final String type = StringRef.toString(stream.readName());
+      final String name = stream.readNameString();
+      final String type = stream.readNameString();
 
       if (name != null) {
         fields.put(name, Optional.ofNullable(type));
@@ -186,106 +188,6 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     }
 
     return fields;
-  }
-
-  @Nullable
-  private static Pair<QualifiedName, NamedTupleModule> getFullyQCalleeNameAndNTModule(@NotNull PyReferenceExpression referenceExpression) {
-    // SUPPORTED CASES:
-
-    // import collections
-    // Point = collections.namedtuple(...)
-
-    // import collections as c
-    // Point = c.namedtuple(...)
-
-    // import typing
-    // ... = typing.NamedTuple(...)
-
-    // import typing as t
-    // ... = t.NamedTuple(...)
-
-    final String referenceName = referenceExpression.getName();
-    final NamedTupleModule module = PyNames.NAMEDTUPLE.equals(referenceName)
-                                    ? NamedTupleModule.COLLECTIONS
-                                    : PyTypingTypeProvider.NAMEDTUPLE_SIMPLE.equals(referenceName)
-                                      ? NamedTupleModule.TYPING
-                                      : null;
-
-    if (module != null) {
-      final PyExpression qualifier = referenceExpression.getQualifier();
-
-      if (qualifier instanceof PyReferenceExpression) {
-        final PyReferenceExpression qualifierReference = (PyReferenceExpression)qualifier;
-
-        if (!qualifierReference.isQualified() && resolvesToModule(qualifierReference, module)) {
-          return Pair.createNonNull(QualifiedName.fromComponents(qualifierReference.getName(), referenceName), module);
-        }
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private static Pair<QualifiedName, NamedTupleModule> getImportedCalleeNameAndNTModule(@NotNull PyReferenceExpression referenceExpression) {
-    // SUPPORTED CASES:
-
-    // from collections import namedtuple
-    // Point = namedtuple(...)
-
-    // from collections import namedtuple as NT
-    // Point = NT(...)
-
-    // from typing import NamedTuple
-    // Point = NamedTuple(...)
-
-    // from typing import NamedTuple as NT
-    // Point = NT(...)
-
-    for (PsiElement element : PyResolveUtil.resolveLocally(referenceExpression)) {
-      if (element instanceof PyImportElement) {
-        final PyImportElement importElement = (PyImportElement)element;
-        final QualifiedName importedQName = importElement.getImportedQName();
-
-        final NamedTupleModule module = equals(importedQName, PyNames.NAMEDTUPLE)
-                                        ? NamedTupleModule.COLLECTIONS
-                                        : equals(importedQName, PyTypingTypeProvider.NAMEDTUPLE_SIMPLE)
-                                          ? NamedTupleModule.TYPING
-                                          : null;
-
-        if (module != null) {
-          final PyStatement importStatement = importElement.getContainingImportStatement();
-
-          if (importStatement instanceof PyFromImportStatement) {
-            final PyFromImportStatement fromImportStatement = (PyFromImportStatement)importStatement;
-
-            if (equals(fromImportStatement.getImportSourceQName(), module.getModuleName())) {
-              return Pair.createNonNull(QualifiedName.fromComponents(referenceExpression.getName()), module);
-            }
-          }
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private static boolean resolvesToModule(@NotNull PyReferenceExpression referenceExpression, @NotNull NamedTupleModule module) {
-    for (PsiElement element : PyResolveUtil.resolveLocally(referenceExpression)) {
-      if (element instanceof PyImportElement) {
-        final PyImportElement importElement = (PyImportElement)element;
-
-        if (equals(importElement.getImportedQName(), module.getModuleName())) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private static boolean equals(@Nullable QualifiedName qualifiedName, @NotNull String name) {
-    return qualifiedName != null && name.equals(qualifiedName.toString());
   }
 
   @Nullable

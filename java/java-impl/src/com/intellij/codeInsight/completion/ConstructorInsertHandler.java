@@ -366,27 +366,24 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
   private static void startTemplate(final PsiAnonymousClass aClass, final Editor editor, final Runnable runnable, @NotNull final PsiTypeElement[] parameters) {
     final Project project = aClass.getProject();
-    new WriteCommandAction(project, getCommandName(), getCommandName()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-        editor.getCaretModel().moveToOffset(aClass.getTextOffset());
-        final TemplateBuilderImpl templateBuilder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(aClass);
-        for (int i = 0; i < parameters.length; i++) {
-          PsiTypeElement parameter = parameters[i];
-          templateBuilder.replaceElement(parameter, "param" + i, new TypeExpression(project, new PsiType[]{parameter.getType()}), true);
-        }
-        Template template = templateBuilder.buildInlineTemplate();
-        TemplateManager.getInstance(project).startTemplate(editor, template, false, null, new TemplateEditingAdapter() {
-          @Override
-          public void templateFinished(Template template, boolean brokenOff) {
-            if (!brokenOff) {
-              runnable.run();
-            }
-          }
-        });
+    WriteCommandAction.writeCommandAction(project).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+      editor.getCaretModel().moveToOffset(aClass.getTextOffset());
+      final TemplateBuilderImpl templateBuilder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(aClass);
+      for (int i = 0; i < parameters.length; i++) {
+        PsiTypeElement parameter = parameters[i];
+        templateBuilder.replaceElement(parameter, "param" + i, new TypeExpression(project, new PsiType[]{parameter.getType()}), true);
       }
-    }.execute();
+      Template template = templateBuilder.buildInlineTemplate();
+      TemplateManager.getInstance(project).startTemplate(editor, template, false, null, new TemplateEditingAdapter() {
+        @Override
+        public void templateFinished(Template template, boolean brokenOff) {
+          if (!brokenOff) {
+            runnable.run();
+          }
+        }
+      });
+    });
   }
 
   private static String getCommandName() {

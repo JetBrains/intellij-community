@@ -18,17 +18,17 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -106,26 +106,17 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
   }
 
   private void chooseTargetClass(PsiClass[] classes, final Editor editor, final String superClassName) {
-    final Project project = classes[0].getProject();
-
-    final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(renderer);
-    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
+    final IPopupChooserBuilder<PsiClass> builder = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(ContainerUtil.newArrayList(classes))
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setRenderer(renderer)
+      .setTitle(QuickFixBundle.message("target.class.chooser.title"))
+      .setItemChosenCallback((aClass) -> {
+        doInvoke(aClass, superClassName);
+      });
     renderer.installSpeedSearch(builder);
-
-    Runnable runnable = () -> {
-      int index = list.getSelectedIndex();
-      if (index < 0) return;
-      doInvoke((PsiClass)list.getSelectedValue(), superClassName);
-    };
-
-    builder.
-      setTitle(QuickFixBundle.message("target.class.chooser.title")).
-      setItemChoosenCallback(runnable).
-      createPopup().
-      showInBestPositionFor(editor);
+    builder.createPopup().showInBestPositionFor(editor);
   }
 
   private void doInvoke(final PsiClass aClass, final String superClassName) throws IncorrectOperationException {

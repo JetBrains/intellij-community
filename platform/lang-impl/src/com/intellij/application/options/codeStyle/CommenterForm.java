@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -39,8 +40,14 @@ public class CommenterForm implements CodeStyleSettingsCustomizable {
   private final Language myLanguage;
 
   public CommenterForm(Language language) {
+    this(language, ApplicationBundle.message("title.naming.comment.code"));
+  }
+
+  public CommenterForm(Language language, @Nullable String title) {
     myLanguage = language;
-    myCommenterPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.naming.comment.code")));
+    if (title != null) {
+      myCommenterPanel.setBorder(IdeBorderFactory.createTitledBorder(title));
+    }
     myLineCommentAtFirstColumnCb.addActionListener(e -> {
       if (myLineCommentAtFirstColumnCb.isSelected()) {
         myLineCommentAddSpaceCb.setSelected(false);

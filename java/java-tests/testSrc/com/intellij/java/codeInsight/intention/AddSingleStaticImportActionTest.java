@@ -26,12 +26,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
 
   public void testInaccessible() {
     myFixture.addClass("package foo; class Foo {public static void foo(){}}");
-    myFixture.configureByFile(getTestName(false) + ".java");
-
-    final IntentionAction intentionAction = myFixture.findSingleIntention("Add static import for 'impl.FooImpl.foo'");
-    assertNotNull(intentionAction);
-    myFixture.launchAction(intentionAction);
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTest("Add static import for 'impl.FooImpl.foo'");
   }
 
   public void testInsideParameterizedReference() {
@@ -40,22 +35,12 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
                        "  public static class Inner1 {}\n" +
                        "  public static class Inner2<T> {}" +
                        "}");
-    myFixture.configureByFile(getTestName(false) + ".java");
-
-    final IntentionAction intentionAction = myFixture.findSingleIntention("Add import for 'foo.Class1.Inner2'");
-    assertNotNull(intentionAction);
-    myFixture.launchAction(intentionAction);
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTest("Add import for 'foo.Class1.Inner2'");
   }
 
   public void testWrongCandidateAfterImport() {
     myFixture.addClass("package foo; class Empty {}"); //to ensure package is in the project
-    myFixture.configureByFile(getTestName(false) + ".java");
-
-    final IntentionAction intentionAction = myFixture.findSingleIntention("Add static import for 'foo.Test.X.test'");
-    assertNotNull(intentionAction);
-    myFixture.launchAction(intentionAction);
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTest("Add static import for 'foo.Test.X.test'");
   }
 
   public void testAllowStaticImportWhenAlreadyImported() {
@@ -65,12 +50,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
                        "        Const_1, Const_2\n" +
                        "    }\n" +
                        "}");
-    myFixture.configureByFile(getTestName(false) + ".java");
-
-    final IntentionAction intentionAction = myFixture.findSingleIntention("Add import for 'foo.Clazz.Foo'");
-    assertNotNull(intentionAction);
-    myFixture.launchAction(intentionAction);
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTest("Add import for 'foo.Clazz.Foo'");
   }
 
   public void testInsideParameterizedReferenceInsideParameterizedReference() {
@@ -79,12 +59,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
                        "  public static class Inner1 {}\n" +
                        "  public static class Inner2<T> {}" +
                        "}");
-    myFixture.configureByFile(getTestName(false) + ".java");
-
-    final IntentionAction intentionAction = myFixture.findSingleIntention("Add import for 'foo.Class1.Inner1'");
-    assertNotNull(intentionAction);
-    myFixture.launchAction(intentionAction);
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTest("Add import for 'foo.Class1.Inner1'");
   }
 
  public void testDisabledInsideParameterizedReference() {
@@ -105,22 +80,13 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
                        "   public static void print() {}" +
                        "   public static void print(int i) {}" +
                        "}");
-    myFixture.configureByFile(getTestName(false) + ".java");
-    IntentionAction intention = myFixture.findSingleIntention("Add static import for 'foo.Clazz.print'");
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTest("Add static import for 'foo.Clazz.print'");
   }
 
   public void testAllowSingleStaticImportWhenOnDemandImportOverloadedMethod() {
     myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
     myFixture.addClass("package foo; class Bar {public static void foo(String s){}}");
-    myFixture.configureByFile(getTestName(false) + ".java");
-
-    IntentionAction intention = myFixture.findSingleIntention("Add static import for 'foo.Bar.foo'");
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTest("Add static import for 'foo.Bar.foo'");
   }
 
   public void testInvalidInput() {
@@ -132,16 +98,12 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
   public void testSingleImportWhenConflictingWithOnDemand() {
     myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
     myFixture.addClass("package foo; class Bar {public static void foo(String s){}}");
-    myFixture.configureByFile(getTestName(false) + ".java");
 
     JavaCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class);
     int old = settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
     try {
-      IntentionAction intention = myFixture.findSingleIntention("Add static import for 'foo.Foo.foo'");
-      assertNotNull(intention);
-      myFixture.launchAction(intention);
-      myFixture.checkResultByFile(getTestName(false) + "_after.java");
+      doTest("Add static import for 'foo.Foo.foo'");
     }
     finally {
       settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = old;
@@ -157,11 +119,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
 
   public void testNonStaticInnerClassImport() {
     myFixture.addClass("package foo; public class Foo {public class Bar {}}");
-    myFixture.configureByFile(getTestName(false) + ".java");
-    IntentionAction intention = myFixture.getAvailableIntention("Add import for 'foo.Foo.Bar'");
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTest("Add import for 'foo.Foo.Bar'");
   }
 
   public void testProhibitWhenMethodWithIdenticalSignatureAlreadyImportedFromAnotherClass() {
@@ -174,8 +132,16 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
   }
 
   public void testComment() {
+    doTest("Add static import for 'java.util.Arrays.asList'");
+  }
+
+  public void testLineComment() {
+    doTest("Add static import for 'java.lang.System.currentTimeMillis'");
+  }
+
+  private void doTest(String intentionName) {
     myFixture.configureByFile(getTestName(false) + ".java");
-    IntentionAction intention = myFixture.getAvailableIntention("Add static import for 'java.util.Arrays.asList'");
+    IntentionAction intention = myFixture.findSingleIntention(intentionName);
     assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResultByFile(getTestName(false) + "_after.java");

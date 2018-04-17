@@ -1,5 +1,6 @@
 from typing import Any, Callable, Generator, Iterable, List, NamedTuple, Optional, Union, Sequence, TextIO, Tuple
 from builtins import open as _builtin_open
+import sys
 from token import *  # noqa: F403
 
 COMMENT = ...  # type: int
@@ -41,7 +42,11 @@ def detect_encoding(readline: Callable[[], bytes]) -> Tuple[str, Sequence[bytes]
 def tokenize(readline: Callable[[], bytes]) -> Generator[TokenInfo, None, None]: ...
 def generate_tokens(readline: Callable[[], str]) -> Generator[TokenInfo, None, None]: ...
 
-def open(filename: Union[str, bytes, int]) -> TextIO: ...
+if sys.version_info >= (3, 6):
+    from os import PathLike
+    def open(filename: Union[str, bytes, int, PathLike]) -> TextIO: ...
+else:
+    def open(filename: Union[str, bytes, int]) -> TextIO: ...
 
 # Names in __all__ with no definition:
 #   AMPER

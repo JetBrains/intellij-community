@@ -145,12 +145,12 @@ private class ControlTransferHandler(val state: DfaMemoryState, val runner: Data
 
   private fun stateForCatchClause(param: PsiParameter, varState: DfaVariableState): DfaMemoryState {
     val catchingCopy = state.createCopy() as DfaMemoryStateImpl
-    catchingCopy.setVariableState(catchingCopy.factory.varFactory.createVariableValue(param, false), varState)
+    catchingCopy.setVariableState(catchingCopy.factory.varFactory.createVariableValue(param), varState)
     return catchingCopy
   }
 
   private fun initVariableState(param: PsiParameter, throwable: DfaPsiType?): DfaVariableState {
-    val sampleVar = (state as DfaMemoryStateImpl).factory.varFactory.createVariableValue(param, false)
+    val sampleVar = (state as DfaMemoryStateImpl).factory.varFactory.createVariableValue(param)
     val varState = state.createVariableState(sampleVar).withFact(DfaFactType.CAN_BE_NULL, false)
     return if (throwable != null) varState.withInstanceofValue(throwable)!! else varState
   }

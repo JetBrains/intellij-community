@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.TestDiscoveryListener;
@@ -25,7 +26,6 @@ import com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener;
 import com.intellij.rt.coverage.data.SocketTestDiscoveryProtocolDataListener;
 import com.intellij.rt.coverage.data.TestDiscoveryProjectData;
 import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolUtil;
-import com.intellij.rt.coverage.main.CoveragePremain;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
@@ -40,9 +40,10 @@ import java.nio.file.Path;
 
 public class TestDiscoveryExtension extends RunConfigurationExtension {
   public static final String TEST_DISCOVERY_REGISTRY_KEY = "testDiscovery.enabled";
+  private static final String TEST_DISCOVERY_AGENT_PATH = "test.discovery.agent.path";
 
-  private static final boolean USE_SOCKET = SystemProperties.getBooleanProperty("test.discovery.use.socket", false);
-  private static final Key<TestDiscoveryDataSocketListener> SOCKET_LISTENER_KEY = Key.create("test.discovery.socket.data.listener");
+  private static final boolean USE_SOCKET = SystemProperties.getBooleanProperty("test.discovery.use.socket", true);
+  public static final Key<TestDiscoveryDataSocketListener> SOCKET_LISTENER_KEY = Key.create("test.discovery.socket.data.listener");
 
   private static final Logger LOG = Logger.getInstance(TestDiscoveryExtension.class);
 
@@ -58,26 +59,23 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
                                  @Nullable RunnerSettings runnerSettings) {
     if (runnerSettings == null && isApplicableFor(configuration)) {
       Disposable disposable = Disposer.newDisposable();
-      final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
       final MessageBusConnection connection = configuration.getProject().getMessageBus().connect();
-
       TestDiscoveryDataSocketListener listener = SOCKET_LISTENER_KEY.get(configuration);
-      connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
-        @Override
-        public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
-          if (testsRoot.getHandler() != handler) return;
-          if (listener == null) {
+      if (listener == null) {
+        final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
+        connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
+          @Override
+          public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
+            if (testsRoot.getHandler() != handler) return;
             processTracesAlarm.cancelAllRequests();
-            processTracesAlarm.addRequest(() -> {
-              processTracesFile((JavaTestConfigurationBase)configuration);
-              Disposer.dispose(disposable);
-            }, 0);
+            processTracesAlarm.addRequest(() -> processTracesFile((JavaTestConfigurationBase)configuration), 0);
             connection.disconnect();
-          } else {
-            listener.closeForcibly();
+            Disposer.dispose(disposable);
           }
-        }
-      });
+        });
+      } else {
+        listener.attach(handler);
+      }
     }
   }
 
@@ -86,12 +84,9 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (runnerSettings != null || !isApplicableFor(configuration)) {
       return;
     }
-    StringBuilder argument = new StringBuilder("-javaagent:");
-    final String agentPath = PathUtil.getJarPathForClass(TestDiscoveryProjectData.class);//todo spaces
-    argument.append(agentPath);
-    params.getVMParametersList().add(argument.toString());
-    params.getClassPath().add(agentPath);
-    params.getClassPath().add(PathUtil.getJarPathForClass(CoveragePremain.class));
+    String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(PathUtil.getJarPathForClass(TestDiscoveryProjectData.class), "testDiscovery", TEST_DISCOVERY_AGENT_PATH);
+    if (agentPath == null) return;
+    params.getVMParametersList().add("-javaagent:" + agentPath);
     TestDiscoveryDataSocketListener listener = tryInstallSocketListener(configuration);
     if (listener != null) {
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.PORT_PROP, Integer.toString(listener.getPort()));
@@ -133,11 +128,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   @Override
   public void cleanUserData(RunConfigurationBase runConfigurationBase) {
-    TestDiscoveryDataSocketListener listener = runConfigurationBase.getUserData(SOCKET_LISTENER_KEY);
-    if (listener != null) {
-      listener.closeForcibly();
-      runConfigurationBase.putUserData(SOCKET_LISTENER_KEY, null);
-    }
+    runConfigurationBase.putUserData(SOCKET_LISTENER_KEY, null);
   }
 
   private static final Object ourTracesLock = new Object();
@@ -146,19 +137,19 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     final String tracesFilePath = getTraceFilePath(configuration);
     final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
     String moduleName = getConfigurationModuleName(configuration);
-    String frameworkPrefix = configuration.getFrameworkPrefix();
-    processTracesFile(tracesFilePath, moduleName, frameworkPrefix, testDiscoveryIndex);
+    byte frameworkId = configuration.getTestFrameworkId();
+    processTracesFile(tracesFilePath, moduleName, frameworkId, testDiscoveryIndex);
   }
 
   @SuppressWarnings("WeakerAccess")  // called via reflection from com.intellij.InternalTestDiscoveryListener.flushCurrentTraces()
   public static void processTracesFile(String tracesFilePath,
                                        String moduleName,
-                                       String frameworkPrefix,
+                                       byte frameworkId,
                                        TestDiscoveryIndex discoveryIndex) {
     final File tracesFile = new File(tracesFilePath);
     synchronized (ourTracesLock) {
       try {
-        TestDiscoveryProtocolUtil.readFile(tracesFile, new IdeaTestDiscoveryProtocolReader(discoveryIndex, moduleName, frameworkPrefix));
+        TestDiscoveryProtocolUtil.readFile(tracesFile, new IdeaTestDiscoveryProtocolReader(discoveryIndex, moduleName, frameworkId));
       }
       catch (IOException e) {
         LOG.error("Can not load " + tracesFilePath, e);
@@ -179,7 +170,9 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (USE_SOCKET) {
       try {
         JavaTestConfigurationBase javaTestConfigurationBase = (JavaTestConfigurationBase)configuration;
-        listener = new TestDiscoveryDataSocketListener(configuration.getProject(), getConfigurationModuleName(javaTestConfigurationBase), javaTestConfigurationBase.getFrameworkPrefix());
+        listener = new TestDiscoveryDataSocketListener(configuration.getProject(),
+                                                       getConfigurationModuleName(javaTestConfigurationBase),
+                                                       javaTestConfigurationBase.getTestFrameworkId());
         configuration.putUserData(SOCKET_LISTENER_KEY, listener);
       } catch (IOException e) {
         LOG.error(e);

@@ -222,27 +222,24 @@ public class DomChildrenTest extends DomTestCase {
   }
 
   public void testUndefineFixedChild() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        final MyElement child = createElement("<a><child/></a>").getChild();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final MyElement child = createElement("<a><child/></a>").getChild();
 
-        incModCount();
-        child.ensureTagExists();
-        assertTrue(child.isValid());
-        assertNotNull(child.getXmlElement());
+      incModCount();
+      child.ensureTagExists();
+      assertTrue(child.isValid());
+      assertNotNull(child.getXmlElement());
 
-        incModCount();
-        child.undefine();
-        assertTrue(child.isValid());
-        assertNull(child.getXmlElement());
+      incModCount();
+      child.undefine();
+      assertTrue(child.isValid());
+      assertNull(child.getXmlElement());
 
-        child.ensureTagExists();
-        incModCount();
-        assertTrue(child.isValid());
-        assertNotNull(child.getXmlElement());
-      }
-    }.execute().throwException();
+      child.ensureTagExists();
+      incModCount();
+      assertTrue(child.isValid());
+      assertNotNull(child.getXmlElement());
+    });
   }
 
   public void testAttributes() {
@@ -269,108 +266,96 @@ public class DomChildrenTest extends DomTestCase {
   }
 
   public void testUndefineLastFixedChildWithNotEmptyCollection() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        final MyElement element = createElement("<a>" + "<child>1</child>" + "<child attr=\"\">2</child>" + "<child/></a>");
-        final MyElement child = element.getChild();
-        final MyElement child2 = element.getChild2();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final MyElement element = createElement("<a>" + "<child>1</child>" + "<child attr=\"\">2</child>" + "<child/></a>");
+      final MyElement child = element.getChild();
+      final MyElement child2 = element.getChild2();
 
-        assertEquals("", child2.getAttr().getValue());
-        assertTrue(child.isValid());
-        assertTrue(child2.isValid());
-        child.undefine();
+      assertEquals("", child2.getAttr().getValue());
+      assertTrue(child.isValid());
+      assertTrue(child2.isValid());
+      child.undefine();
 
-        assertTrue(child.isValid());
-        assertTrue(child2.isValid());
-        assertTrue(child2.equals(element.getChild2()));
-        assertNotNull(child.getXmlTag());
+      assertTrue(child.isValid());
+      assertTrue(child2.isValid());
+      assertTrue(child2.equals(element.getChild2()));
+      assertNotNull(child.getXmlTag());
 
-        child2.undefine();
+      child2.undefine();
 
-        assertTrue(child.isValid());
-        assertTrue(child2.isValid());
-        assertTrue(child2.equals(element.getChild2()));
-        assertEquals(child, element.getChild());
-        assertEquals("", child.getValue());
-        assertNull(element.getChild2().getValue());
+      assertTrue(child.isValid());
+      assertTrue(child2.isValid());
+      assertTrue(child2.equals(element.getChild2()));
+      assertEquals(child, element.getChild());
+      assertEquals("", child.getValue());
+      assertNull(element.getChild2().getValue());
 
-        myCallRegistry.putExpected(new DomEvent(child, false));
-        myCallRegistry.putExpected(new DomEvent(child2, false));
-        myCallRegistry.assertResultsAndClear();
-      }
-    }.execute().throwException();
+      myCallRegistry.putExpected(new DomEvent(child, false));
+      myCallRegistry.putExpected(new DomEvent(child2, false));
+      myCallRegistry.assertResultsAndClear();
+    });
   }
 
   public void testUndefineNotLastFixedChild() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        final MyElement element = createElement("<a>" + "<child>1</child>" + "<child attr=\"\">2</child>" + "</a>");
-        final MyElement child = element.getChild();
-        final MyElement child2 = element.getChild2();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final MyElement element = createElement("<a>" + "<child>1</child>" + "<child attr=\"\">2</child>" + "</a>");
+      final MyElement child = element.getChild();
+      final MyElement child2 = element.getChild2();
 
-        assertTrue(child.isValid());
-        assertTrue(child2.isValid());
-        child.undefine();
-        assertTrue(child.isValid());
-        assertTrue(child2.isValid());
-        assertEquals(element, child.getParent());
-        assertEquals(element, child2.getParent());
-        assertEquals(child, element.getChild());
-        assertEquals(child2, element.getChild2());
+      assertTrue(child.isValid());
+      assertTrue(child2.isValid());
+      child.undefine();
+      assertTrue(child.isValid());
+      assertTrue(child2.isValid());
+      assertEquals(element, child.getParent());
+      assertEquals(element, child2.getParent());
+      assertEquals(child, element.getChild());
+      assertEquals(child2, element.getChild2());
 
-        myCallRegistry.putExpected(new DomEvent(child, false));
-        myCallRegistry.assertResultsAndClear();
+      myCallRegistry.putExpected(new DomEvent(child, false));
+      myCallRegistry.assertResultsAndClear();
 
-        XmlTag[] subTags = element.getXmlTag().getSubTags();
-        assertEquals(2, subTags.length);
-        assertCached(child, subTags[0]);
-        assertCached(child2, subTags[1]);
-      }
-    }.execute().throwException();
+      XmlTag[] subTags = element.getXmlTag().getSubTags();
+      assertEquals(2, subTags.length);
+      assertCached(child, subTags[0]);
+      assertCached(child2, subTags[1]);
+    });
   }
 
   public void testUndefineLastFixedChild() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        final MyElement element =
-          createElement("<a>" + "<child>1</child>" + "<child attr=\"\">2</child>" + "<child attr=\"\">2</child>" + "</a>");
-        final MyElement child = element.getChild();
-        final MyElement child2 = element.getChild2();
-        child2.undefine();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final MyElement element =
+        createElement("<a>" + "<child>1</child>" + "<child attr=\"\">2</child>" + "<child attr=\"\">2</child>" + "</a>");
+      final MyElement child = element.getChild();
+      final MyElement child2 = element.getChild2();
+      child2.undefine();
 
-        myCallRegistry.putExpected(new DomEvent(child2, false));
-        myCallRegistry.assertResultsAndClear();
+      myCallRegistry.putExpected(new DomEvent(child2, false));
+      myCallRegistry.assertResultsAndClear();
 
-        XmlTag[] subTags = element.getXmlTag().getSubTags();
-        assertTrue(child.isValid());
-        assertTrue(child2.isValid());
-        assertEquals(1, subTags.length);
-        assertNull(child2.getXmlTag());
+      XmlTag[] subTags = element.getXmlTag().getSubTags();
+      assertTrue(child.isValid());
+      assertTrue(child2.isValid());
+      assertEquals(1, subTags.length);
+      assertNull(child2.getXmlTag());
 
-        assertEquals(element, child.getParent());
-        assertEquals(element, child2.getParent());
-      }
-    }.execute().throwException();
+      assertEquals(element, child.getParent());
+      assertEquals(element, child2.getParent());
+    });
   }
 
   public void testUndefineFixedChildWithNoTag() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        final MyElement element = createElement("<a/>");
-        final MyElement child = element.getChild();
-        child.undefine();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final MyElement element = createElement("<a/>");
+      final MyElement child = element.getChild();
+      child.undefine();
 
-        myCallRegistry.assertResultsAndClear();
-        assertTrue(child.isValid());
-        assertEquals(0, element.getXmlTag().getSubTags().length);
+      myCallRegistry.assertResultsAndClear();
+      assertTrue(child.isValid());
+      assertEquals(0, element.getXmlTag().getSubTags().length);
 
-        assertSame(element, child.getParent());
-      }
-    }.execute().throwException();
+      assertSame(element, child.getParent());
+    });
   }
 
   public void testGenericValuesCollection() {

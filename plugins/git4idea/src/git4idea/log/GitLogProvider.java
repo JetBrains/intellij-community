@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -86,7 +85,7 @@ public class GitLogProvider implements VcsLogProvider {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myUserRegistry = userRegistry;
-    myRefSorter = new GitRefManager(myRepositoryManager);
+    myRefSorter = new GitRefManager(myProject, myRepositoryManager);
     myVcsObjectsFactory = factory;
     myVcs = GitVcs.getInstance(project);
   }
@@ -330,7 +329,8 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetails(myProject, root, commitConsumer, ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
+    GitLogUtil
+      .readFullDetails(myProject, root, commitConsumer, shouldIncludeRootChanges(root), ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
   }
 
   @Override
@@ -342,7 +342,8 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, GitLogUtil.DiffRenameLimit.GIT_CONFIG);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root),
+                                        GitLogUtil.DiffRenameLimit.GIT_CONFIG);
   }
 
   @Override
@@ -354,23 +355,21 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes,
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root),
                                         fast ? GitLogUtil.DiffRenameLimit.REGISTRY : GitLogUtil.DiffRenameLimit.INFINITY);
+  }
+
+  private boolean shouldIncludeRootChanges(@NotNull VirtualFile root) {
+    GitRepository repository = getRepository(root);
+    if (repository == null) return true;
+    return !repository.getInfo().isShallow();
   }
 
   @NotNull
   @Override
   public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    //noinspection Convert2Lambda
-    return VcsFileUtil.foreachChunk(hashes,
-                                    new ThrowableNotNullFunction<List<String>, List<? extends VcsShortCommitDetails>, VcsException>() {
-                                      @NotNull
-                                      @Override
-                                      public List<? extends VcsShortCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
-                                        return GitLogUtil.collectShortDetails(myProject, root, hashes);
-                                      }
-                                    });
+    return GitLogUtil.collectShortDetails(myProject, myVcs, root, hashes);
   }
 
   @NotNull

@@ -1,0 +1,14 @@
+PsiJavaFile:LambdaExpression24.java
+  PsiLambdaExpression
+    PsiParameterList:var
+      PsiParameter:var
+        PsiModifierList:
+          <empty list>
+        PsiIdentifier:var('var')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:ARROW('->')
+    PsiWhiteSpace(' ')
+    PsiReferenceExpression:var
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:var('var')

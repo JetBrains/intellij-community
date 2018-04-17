@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiField;
@@ -48,6 +49,14 @@ public class ConstantWithMutableFieldTypeNamingConvention extends NamingConventi
 
   @Override
   public boolean isApplicable(PsiField field) {
-    return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL) && !ClassUtils.isImmutable(field.getType());
+    if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
+      if (Mutability.getMutability(field).isUnmodifiable()) {
+        return false;
+      }
+      if (!ClassUtils.isImmutable(field.getType())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

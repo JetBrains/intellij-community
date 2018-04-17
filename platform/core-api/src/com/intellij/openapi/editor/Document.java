@@ -32,7 +32,7 @@ import java.beans.PropertyChangeListener;
  * text editor. Line breaks in the document text are always normalized as single \n characters,
  * and are converted to proper format when the document is saved.
  * <p/>
- * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Architectural+Overview">IntelliJ IDEA Architectural Overview </a>
+ * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
  * for high-level overview.
  *
  * @see Editor#getDocument()

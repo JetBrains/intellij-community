@@ -8,10 +8,10 @@ public class Main {
   private static long test() {
       long count = 0L;
       Set<Integer> uniqueValues = new HashSet<>();
-      long toSkip = 1;
+      boolean first = true;
       for (Integer integer : new Integer[]{1, 2, 3, 2, 3}) {
-          if (toSkip > 0) {
-              toSkip--;
+          if (first) {
+              first = false;
               continue;
           }
           if (uniqueValues.add(integer)) {

@@ -21,6 +21,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,10 @@ import java.util.List;
 public interface RunContentManager {
   Topic<RunContentWithExecutorListener> TOPIC =
     Topic.create("Run Content", RunContentWithExecutorListener.class);
+
+  static RunContentManager getInstance(Project project) {
+    return ServiceManager.getService(project, RunContentManager.class);
+  }
 
   /** @deprecated Use {@link LangDataKeys#RUN_CONTENT_DESCRIPTOR} instead (to be removed in IDEA 16) */
   @SuppressWarnings("UnusedDeclaration")

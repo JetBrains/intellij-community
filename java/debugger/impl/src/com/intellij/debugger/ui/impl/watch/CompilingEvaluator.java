@@ -63,7 +63,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
     JavaSdkVersion version = JavaSdkVersion.fromVersionString(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version());
     Collection<ClassObject> classes = compile(version);
-    defineClasses(version, classes, autoLoadContext, process, classLoader);
+    defineClasses(classes, autoLoadContext, process, classLoader);
 
     try {
       // invoke base evaluator on call code
@@ -86,12 +86,11 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     }
   }
 
-  private void defineClasses(JavaSdkVersion version,
-                             Collection<ClassObject> classes,
+  private void defineClasses(Collection<ClassObject> classes,
                              EvaluationContext context,
                              DebugProcess process,
                              ClassLoaderReference classLoader) throws EvaluateException {
-    boolean useMagicAccessorImpl = version != null && !version.isAtLeast(JavaSdkVersion.JDK_1_9);
+    boolean useMagicAccessorImpl = myData.useMagicAccessor();
 
     for (ClassObject cls : classes) {
       if (cls.getPath().contains(GEN_CLASS_NAME)) {

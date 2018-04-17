@@ -16,11 +16,13 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
@@ -72,6 +74,7 @@ class CompilationContextImpl implements CompilationContext {
     }
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
+    logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, SystemProperties.getJavaHome())
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle)
@@ -90,6 +93,7 @@ class CompilationContextImpl implements CompilationContext {
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
+    messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
     return context
   }
 
@@ -366,6 +370,11 @@ class CompilationContextImpl implements CompilationContext {
 
   private static String toCanonicalPath(String path) {
     FileUtil.toSystemIndependentName(new File(path).canonicalPath)
+  }
+
+  static void logFreeDiskSpace(BuildMessages buildMessages, String directoryPath, String phase) {
+    def dir = new File(directoryPath)
+    buildMessages.debug("Free disk space $phase: ${StringUtil.formatFileSize(dir.freeSpace)} (on disk containing $dir)")
   }
 }
 

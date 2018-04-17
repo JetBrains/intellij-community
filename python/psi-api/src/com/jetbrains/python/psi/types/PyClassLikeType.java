@@ -65,9 +65,4 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInst
 
   @Nullable
   PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited);
-
-  @Override
-  default void accept(@NotNull PyTypeVisitor visitor) {
-    visitor.visitClassLikeType(this);
-  }
 }

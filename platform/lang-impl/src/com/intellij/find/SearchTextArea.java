@@ -21,7 +21,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
@@ -47,10 +46,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,13 +96,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myTextArea = textArea;
     mySearchMode = searchMode;
     myInfoMode = infoMode;
-
-    if (UIUtil.isUnderWindowsLookAndFeel()) {
-      myTextArea.setFont(UIManager.getFont("TextField.font"));
-    } else {
-      Utils.setSmallerFont(myTextArea);
-    }
-
+    updateFont();
+    
     myTextArea.addPropertyChangeListener("background", this);
     myTextArea.addPropertyChangeListener("font", this);
     myTextArea.addFocusListener(this);
@@ -219,6 +210,22 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myIconsPanel = new NonOpaquePanel();
 
     updateLayout();
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    updateFont();
+  }
+
+  private void updateFont() {
+    if (myTextArea != null) {
+      if (UIUtil.isUnderWindowsLookAndFeel()) {
+        myTextArea.setFont(UIManager.getFont("TextField.font"));
+      } else {
+        Utils.setSmallerFont(myTextArea);
+      }
+    }
   }
 
   protected void updateLayout() {

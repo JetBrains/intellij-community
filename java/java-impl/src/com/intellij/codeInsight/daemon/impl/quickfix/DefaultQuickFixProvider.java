@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
@@ -22,9 +23,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
-
-import static com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper.highPriority;
-import static com.intellij.openapi.util.text.StringUtil.isUpperCase;
 
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
@@ -63,6 +61,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
+      registrar.register(new CreateTypeParameterFromUsageFix(ref));
     }
 
     PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
@@ -90,9 +89,9 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       result.addAll(CreateFieldFromUsage.generateActions(refExpr));
       if (!refExpr.isQualified()) {
         IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
-        result.add(kind == VariableKind.LOCAL_VARIABLE ? highPriority(createLocalFix) : createLocalFix);
+        result.add(kind == VariableKind.LOCAL_VARIABLE ? PriorityIntentionActionWrapper.highPriority(createLocalFix) : createLocalFix);
         IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
-        result.add(kind == VariableKind.PARAMETER ? highPriority(createParameterFix) : createParameterFix);
+        result.add(kind == VariableKind.PARAMETER ? PriorityIntentionActionWrapper.highPriority(createParameterFix) : createParameterFix);
       }
       return result;
     }
@@ -106,7 +105,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     }
 
     if (map.containsKey(kind)) {
-      map.put(kind, highPriority(map.get(kind)));
+      map.put(kind, PriorityIntentionActionWrapper.highPriority(map.get(kind)));
     }
 
     result.add(new CreateEnumConstantFromUsageFix(refExpr));
@@ -118,7 +117,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   private static VariableKind getKind(@NotNull JavaCodeStyleManager styleManager, @NotNull PsiReferenceExpression refExpr) {
     final String reference = refExpr.getText();
 
-    if (isUpperCase(reference)) {
+    if (StringUtil.isUpperCase(reference)) {
       return VariableKind.STATIC_FINAL_FIELD;
     }
 

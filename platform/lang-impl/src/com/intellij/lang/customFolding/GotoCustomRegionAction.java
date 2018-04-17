@@ -61,8 +61,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
         () -> {
           Collection<FoldingDescriptor> foldingDescriptors = getCustomFoldingDescriptors(editor, project);
           if (foldingDescriptors.size() > 0) {
-            CustomFoldingRegionsPopup regionsPopup = new CustomFoldingRegionsPopup(foldingDescriptors, editor, project);
-            regionsPopup.show();
+            CustomFoldingRegionsPopup.show(foldingDescriptors, editor, project);
           }
           else {
             notifyCustomRegionsUnavailable(editor, project);

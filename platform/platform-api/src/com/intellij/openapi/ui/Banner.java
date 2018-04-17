@@ -18,11 +18,11 @@ package com.intellij.openapi.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -122,9 +123,9 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
   public void forProject(Project project) {
     if (project != null) {
       myProjectIcon.setVisible(true);
-      myProjectIcon.setText(OptionsBundle.message(project.isDefault()
-                                                  ? "configurable.default.project.tooltip"
-                                                  : "configurable.current.project.tooltip"));
+      myProjectIcon.setText(project.isDefault()
+                            ? OptionsBundle.message("configurable.default.project.tooltip", IdeUICustomization.getInstance().getProjectConceptName())
+                            : OptionsBundle.message("configurable.current.project.tooltip"));
     } else {
       myProjectIcon.setVisible(false);
     }

@@ -1,5 +1,5 @@
 public class Foo {
     void m(Object o) {
-        <spot>call(o)</spot>$key
+        <spot>call(o)</spot>
     }
 }

@@ -56,6 +56,7 @@ bootstrapper
 boxable
 breakpoint
 breakpoints
+bson
 btree
 buffered
 buffering
@@ -230,6 +231,7 @@ github
 gitlab
 globals
 google
+goto
 grapheme
 gruntfile
 gruntfiles
@@ -394,6 +396,7 @@ minimizable
 minvalue
 miny
 mixin
+mkdir
 mlslabel
 mockito
 mojo
@@ -401,6 +404,8 @@ monad
 monoidal
 mongodb
 monospaced
+msql
+mssql
 msvc
 multi
 multilinestring
@@ -474,6 +479,7 @@ nvarchar
 oauth
 objc
 objenesis
+odbc
 oidindex
 onchange
 onclick
@@ -596,6 +602,7 @@ rethrowing
 rethrown
 rethrows
 rlike
+rmdir
 rollup
 rowdependencies
 rtree
@@ -664,6 +671,8 @@ sizeof
 slru
 smallfile
 smallint
+snmp
+solr
 soname
 sourcecode
 sourceforge
@@ -720,6 +729,7 @@ sybase
 symlink
 symlinks
 sysdate
+syslog
 sysroot
 systimestamp
 tablespace
@@ -810,6 +820,7 @@ vtlvariable
 wakeup
 watchlist
 wchar
+wddx
 webapp
 webjar
 webjars
@@ -828,6 +839,7 @@ wordwrap
 workflow
 writeln
 wsdl
+yaml
 xcode
 xcodeproj
 xctest

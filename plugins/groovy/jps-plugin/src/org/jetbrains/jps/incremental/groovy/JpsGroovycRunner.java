@@ -187,7 +187,9 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   private static boolean shouldRunGroovycInProcess(int jdkVersion) {
     String explicitProperty = System.getProperty("groovyc.in.process");
-    return explicitProperty != null ? "true".equals(explicitProperty) : jdkVersion == JavaVersion.current().feature;
+    return explicitProperty != null ? "true".equals(explicitProperty) 
+                                    : jdkVersion == JavaVersion.current().feature 
+                                      || jdkVersion < 5; // our own jars require at least JDK 5 
   }
 
   static void clearContinuation(CompileContext context, ModuleChunk chunk) {

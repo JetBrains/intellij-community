@@ -56,9 +56,10 @@ public class FoldersImportingTest extends MavenImportingTestCase {
   }
 
   public void testInvalidProjectHasContentRoot() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1");
+    importProjectWithErrors(true);
 
     assertModules("project");
     assertContentRoots("project", getProjectPath());

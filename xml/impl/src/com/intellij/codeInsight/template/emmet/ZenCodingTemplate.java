@@ -227,10 +227,6 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                              CustomTemplateCallback callback, boolean expandPrimitiveAbbreviations, int segmentsLimit) throws EmmetException {
     
     checkTemplateOutputLength(node, callback);
-    
-    if (surroundedText != null) {
-      surroundedText = surroundedText.trim();
-    }
 
     GenerationNode fakeParentNode = new GenerationNode(TemplateToken.EMPTY_TEMPLATE_TOKEN, -1, 1, surroundedText, true, null);
     node.expand(-1, 1, surroundedText, callback, true, fakeParentNode);
@@ -326,8 +322,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       public void perform(Caret caret) {
         String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
         if (selectedText != null) {
-          String selection = selectedText.trim();
-          ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selection);
+          ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selectedText);
           assert node != null;
           PsiElement context = callback.getContext();
           ZenCodingGenerator generator = findApplicableGenerator(node, callback, true);
@@ -337,7 +332,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
 
           try {
-            expand(node, generator, filters, selection, callback, true, Registry.intValue("emmet.segments.limit"));
+            expand(node, generator, filters, selectedText, callback, true, Registry.intValue("emmet.segments.limit"));
           }
           catch (EmmetException e) {
             CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.AppTopics;
@@ -21,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -58,7 +44,7 @@ public class EncodingUtil {
   }
 
   // the result of wild guess
-  enum Magic8 {
+  public enum Magic8 {
     ABSOLUTELY,
     WELL_IF_YOU_INSIST,
     NO_WAY
@@ -92,7 +78,8 @@ public class EncodingUtil {
     try {
       bytesToSave = toSave.getBytes(charset);
     }
-    catch (UnsupportedOperationException e) {
+    // turned out some crazy charsets have incorrectly implemented .newEncoder() returning null
+    catch (UnsupportedOperationException | NullPointerException e) {
       return Magic8.NO_WAY;
     }
     if (bom != null && !ArrayUtil.startsWith(bytesToSave, bom)) {
@@ -160,7 +147,7 @@ public class EncodingUtil {
 
     final Disposable disposable = Disposer.newDisposable();
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(disposable);
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void beforeFileContentReload(VirtualFile file, @NotNull Document document) {
         if (!file.equals(virtualFile)) return;

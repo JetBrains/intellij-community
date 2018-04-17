@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,14 +84,11 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   public void run(boolean isRefresh, boolean canUseLastRevision) {
     myIsRefresh = isRefresh;
     mySessionPartner.beforeRefresh();
-    VcsHistoryProviderBackgroundableProxy proxy = new VcsHistoryProviderBackgroundableProxy(myVcs, myVcsHistoryProvider,
-                                                                                            myVcs.getDiffProvider());
-    VcsKey key = myVcs.getKeyInstanceMethod();
     if (myVcsHistoryProvider instanceof VcsHistoryProviderEx && myStartingRevisionNumber != null) {
-      proxy.executeAppendableSession(key, myPath, myStartingRevisionNumber, mySessionPartner, null);
+      VcsCachingHistory.collectInBackground(myVcs, myPath, myStartingRevisionNumber, mySessionPartner);
     }
     else {
-      proxy.executeAppendableSession(key, myPath, mySessionPartner, null, myCanUseCache, canUseLastRevision);
+      VcsCachingHistory.collectInBackground(myVcs, myPath, mySessionPartner, myCanUseCache, canUseLastRevision);
     }
     myCanUseCache = false;
   }

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.local;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -194,12 +193,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     assertTrue("link=" + linkFile + ", vLink=" + linkVFile,
                linkVFile != null && !linkVFile.isDirectory() && linkVFile.is(VFileProperty.SYMLINK));
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        linkVFile.delete(SymlinkHandlingTest.this);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> linkVFile.delete(SymlinkHandlingTest.this));
     assertFalse(linkVFile.toString(), linkVFile.isValid());
     assertFalse(linkFile.exists());
     assertTrue(targetFile.exists());
@@ -212,12 +206,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     assertTrue("link=" + linkDir + ", vLink=" + linkVDir,
                linkVDir != null && linkVDir.isDirectory() && linkVDir.is(VFileProperty.SYMLINK) && linkVDir.getChildren().length == 1);
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        linkVDir.delete(SymlinkHandlingTest.this);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> linkVDir.delete(SymlinkHandlingTest.this));
     assertFalse(linkVDir.toString(), linkVDir.isValid());
     assertFalse(linkDir.exists());
     assertTrue(targetDir.exists());

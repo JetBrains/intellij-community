@@ -133,15 +133,6 @@ public class JobLauncherImpl extends JobLauncher {
 
   @NotNull
   @Override
-  public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
-                                                                       ProgressIndicator progress,
-                                                                       boolean failFastOnAcquireReadAction,
-                                                                       @NotNull Processor<? super T> thingProcessor) {
-    return AsyncUtil.wrapBoolean(invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor));
-  }
-
-  @NotNull
-  @Override
   public Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<Future> onDoneCallback) {
     VoidForkJoinTask task = new VoidForkJoinTask(action, onDoneCallback);
     task.submit();

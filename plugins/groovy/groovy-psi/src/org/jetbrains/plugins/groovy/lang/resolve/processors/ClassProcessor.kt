@@ -5,16 +5,17 @@ import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.AnnotationHint
 import org.jetbrains.plugins.groovy.lang.resolve.ClassResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
-class ClassProcessor(
-  name: String,
+internal open class ClassProcessor(
+  private val name: String,
   private val place: PsiElement?,
   private val typeArguments: Array<out PsiType> = PsiType.EMPTY_ARRAY,
   annotationResolve: Boolean = false
-) : FindFirstProcessor<ClassResolveResult>(name) {
+) : FindFirstProcessor<ClassResolveResult>() {
 
   init {
-    hint(ElementClassHint.KEY, ClassHint.CLASSES)
+    elementClassHint(ElementClassHint.DeclarationKind.CLASS)
     if (annotationResolve) {
       hint(AnnotationHint.HINT_KEY, AnnotationHint.ANNOTATION_RESOLVE)
     }
@@ -23,6 +24,9 @@ class ClassProcessor(
   override fun result(element: PsiElement, state: ResolveState): ClassResolveResult? {
     val clazz = element as? PsiClass ?: return null
     if (clazz is PsiTypeParameter) return null
+
+    val elementName = state[importedNameKey] ?: element.name
+    if (elementName != name) return null
 
     val substitutor = state.get(PsiSubstitutor.KEY) ?: PsiSubstitutor.EMPTY
     return ClassResolveResult(
@@ -33,4 +37,3 @@ class ClassProcessor(
     )
   }
 }
-

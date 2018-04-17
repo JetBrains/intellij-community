@@ -42,6 +42,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 public class HeavyAwareExecutor implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private final ExecutingHeavyOrPowerSaveListener myListener;
@@ -73,14 +75,14 @@ public class HeavyAwareExecutor implements Disposable {
    */
   public Future<?> executeOutOfHeavyOrPowerSave(@NotNull Consumer<ProgressIndicator> task, @NotNull String title,
                                                 @NotNull ProgressIndicator indicator) {
-    return Futures.dereference(myListener.addTask(() -> {
-                                 Disposable disposable = Disposer.newDisposable();
-                                 ListenableFuture<?> future = runAsync(myProject, task, title, indicator, () -> Disposer.dispose(disposable));
+    return Futures.transformAsync(
+      myListener.addTask(() -> {
+        Disposable disposable = Disposer.newDisposable();
+        ListenableFuture<?> future = runAsync(myProject, task, title, indicator, () -> Disposer.dispose(disposable));
 
-                                 new CancellingOnHeavyOrPowerSaveListener(myProject, indicator, myLongActivityDurationMs, disposable);
-                                 return future;
-                               })
-    );
+        new CancellingOnHeavyOrPowerSaveListener(myProject, indicator, myLongActivityDurationMs, disposable);
+        return future;
+      }), input -> input, directExecutor());
   }
 
   @Override

@@ -1,13 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -140,8 +140,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       }
       final boolean useVariable = expressionText.contains("\n") && !isVariableInitializer(lastExpression);
       if (useVariable) {
-        final String modifier =
-          CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS ? "final " : "";
+        final String modifier = JavaCodeStyleSettings.getInstance(element.getContainingFile()).GENERATE_FINAL_LOCALS ? "final " : "";
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         final StringBuilder statementText =
           new StringBuilder(modifier).append(CommonClassNames.JAVA_LANG_STRING).append(' ').append(variableName).append("=");
@@ -300,15 +299,16 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
     }
 
     private void addCommentsBefore(PsiElement anchor, boolean insertPlus, StringBuilder out) {
-      final boolean operationSignOnNextLine = CodeStyleSettingsManager.getSettings(anchor.getProject())
-        .getCommonSettings(JavaLanguage.INSTANCE).BINARY_OPERATION_SIGN_ON_NEXT_LINE;
+      final boolean operationSignOnNextLine =
+        CodeStyle.getLanguageSettings(anchor.getContainingFile(), JavaLanguage.INSTANCE).BINARY_OPERATION_SIGN_ON_NEXT_LINE;
       final int lineNumber = getLineNumber(anchor);
-      final boolean insertNewLine = currentLine != lineNumber;
+      boolean insertNewLine = currentLine != lineNumber;
       currentLine = lineNumber;
       final int offset = anchor.getTextOffset();
       if (insertPlus && !operationSignOnNextLine) {
         out.append('+');
       }
+      List<PsiComment> commentsToInsert = new SmartList<>();
       for (final Iterator<PsiComment> iterator = comments.iterator(); iterator.hasNext(); ) {
         final PsiElement element = iterator.next();
         if (element.getTextOffset() >= offset) {
@@ -319,20 +319,24 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
           leadingComments.add(comment);
         }
         else {
-          final PsiElement prev = comment.getPrevSibling();
-          if (prev instanceof PsiWhiteSpace) {
-            out.append(prev.getText());
-          }
-          out.append(comment.getText());
-          final PsiElement next = comment.getNextSibling();
-          if (next instanceof PsiWhiteSpace) {
-            final String text = next.getText();
-            if (!text.contains("\n")) {
-              out.append(text);
-            }
-          }
+          commentsToInsert.add(comment);
         }
         iterator.remove();
+      }
+      for (int i = 0; i < commentsToInsert.size(); i++) {
+        PsiComment comment = commentsToInsert.get(i);
+        final PsiElement prev = comment.getPrevSibling();
+        if (prev instanceof PsiWhiteSpace) {
+          out.append(prev.getText());
+        }
+        out.append(comment.getText());
+        final PsiElement next = comment.getNextSibling();
+        if (next instanceof PsiWhiteSpace) {
+          final String text = next.getText();
+          if (!text.contains("\n") || i < commentsToInsert.size() - 1) {
+            out.append(text);
+          }
+        }
       }
       if (insertNewLine && out.length() > 0) {
         out.append('\n');

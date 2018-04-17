@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
@@ -30,6 +29,8 @@ import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   private static class Parameters {
@@ -119,7 +120,12 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
         !ApplicationManager.getApplication().isUnitTestMode()) {
       Promise<List<Module>> promise = manager.scheduleImportAndResolve();
       manager.waitForResolvingCompletion();
-      return promise.blockingGet(0);
+      try {
+        return promise.blockingGet(0);
+      }
+      catch (TimeoutException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     boolean isFromUI = model != null;

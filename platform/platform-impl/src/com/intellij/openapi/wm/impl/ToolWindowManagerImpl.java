@@ -7,6 +7,7 @@ import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -23,6 +24,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
@@ -465,7 +467,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
         @Override
         public void run() {
-          initToolWindow(bean);
+          try {
+            initToolWindow(bean);
+          }
+          catch (ProcessCanceledException e) { throw e; }
+          catch (Throwable t) {
+            LOG.error("failed to init toolwindow " + bean.factoryClass, t);
+          }
         }
       });
     }
@@ -662,6 +670,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                       @NotNull List<FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
+    ToolWindowCollector.getInstance().recordActivation(id);
     autoFocusContents &= forced;
 
     if (LOG.isDebugEnabled()) {
@@ -1128,21 +1137,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     final WindowInfoImpl info = getInfo(id);
     final ToolWindowEx toolWindow = (ToolWindowEx)getToolWindow(id);
-    // Save recent appearance of tool window
-    myLayout.unregister(id);
+
     // Remove decorator and tool button from the screen
     List<FinalizableCommand> commandsList = new ArrayList<>();
     if (info.isVisible()) {
       applyInfo(id, info, commandsList);
     }
+
+    // Save recent appearance of tool window
+    myLayout.unregister(id);
+    myActiveStack.remove(id, true);
+    mySideStack.remove(id);
     appendRemoveButtonCmd(id, commandsList);
     appendApplyWindowInfoCmd(info, commandsList);
     execute(commandsList);
     // Remove all references on tool window and save its last properties
     assert toolWindow != null;
     toolWindow.removePropertyChangeListener(myToolWindowPropertyChangeListener);
-    myActiveStack.remove(id, true);
-    mySideStack.remove(id);
+
     // Destroy stripe button
     final StripeButton button = getStripeButton(id);
     Disposer.dispose(button);
@@ -1191,14 +1203,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public void setLayout(@NotNull final DesktopLayout layout) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<FinalizableCommand> commandList = new ArrayList<>();
-    // hide tool window that are invisible in new layout
+    // hide tool window that are invisible or its info is not presented in new layout
     final WindowInfoImpl[] currentInfos = myLayout.getInfos();
     for (final WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(currentInfo.getId(), false);
-      if (info == null) {
-        continue;
-      }
-      if (currentInfo.isVisible() && !info.isVisible()) {
+      if (currentInfo.isVisible() && (info == null || !info.isVisible())) {
         deactivateToolWindowImpl(currentInfo.getId(), true, commandList);
       }
     }
@@ -1389,7 +1398,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                   }
                   return new RelativePoint(myToolWindowsPane, target);
                 }
-              }; 
+              };
             }
             if (!balloon.isDisposed()) {
               balloon.show(tracker, position.get());

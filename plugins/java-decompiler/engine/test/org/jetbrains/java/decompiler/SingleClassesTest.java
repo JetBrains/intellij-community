@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -125,14 +123,14 @@ public class SingleClassesTest {
     File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
     assertTrue(classFile.isFile());
     for (File file : collectClasses(classFile)) {
-      decompiler.addSpace(file, true);
+      decompiler.addSource(file);
     }
 
     for (String companionFile : companionFiles) {
       File companionClassFile = new File(fixture.getTestDataDir(), "/classes/" + companionFile + ".class");
       assertTrue(companionClassFile.isFile());
       for (File file : collectClasses(companionClassFile)) {
-        decompiler.addSpace(file, true);
+        decompiler.addSource(file);
       }
     }
 

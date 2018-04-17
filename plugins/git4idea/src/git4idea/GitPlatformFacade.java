@@ -23,8 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated To remove in IDEA 2017. Use direct instance or ServiceManager methods to access platform structures.
+ * @deprecated Use direct instance or ServiceManager methods to access platform structures.
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 public interface GitPlatformFacade {
 

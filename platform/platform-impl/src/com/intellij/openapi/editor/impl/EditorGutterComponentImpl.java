@@ -7,12 +7,14 @@ import com.intellij.codeInsight.daemon.NonHideableIconGutterMark;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.TooltipRenderer;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -26,6 +28,11 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -67,6 +74,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Gutter content (left to right):
@@ -1403,10 +1411,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (isMirrored()) {
       AffineTransform old = g.getTransform();
       AffineTransform transform = new AffineTransform(old);
-      //transform.translate(getWidth(), 0); // revert mirroring transform
-      //transform.scale(-1, 1); // revert mirroring transform
-      //transform.translate(getWidth() - offset - width, 0); // move range start to the X==0
-      //transform.translate(-offset, 0);
 
       transform.scale(-1, 1);
       transform.translate(-offset * 2 - width, 0);
@@ -1455,35 +1459,64 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public void mouseMoved(final MouseEvent e) {
     String toolTip = null;
     final GutterIconRenderer renderer = getGutterRenderer(e);
-    TooltipController controller = TooltipController.getInstance();
-    if (renderer != null) {
-      toolTip = renderer.getTooltipText();
-    }
-    else {
+    if (renderer == null) {
       TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
-      if (provider != null) {
-        final int line = getLineNumAtPoint(e.getPoint());
-        toolTip = provider.getToolTip(line, myEditor);
-        if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
-          controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
-          myLastGutterToolTip = toolTip;
-        }
-      }
-      else {
+      if (provider == null) {
         ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
         if (lineRenderer != null) {
           toolTip = lineRenderer.getTooltipText();
         }
       }
+      else {
+        final int line = getLineNumAtPoint(e.getPoint());
+        toolTip = provider.getToolTip(line, myEditor);
+        if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
+          TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
+          myLastGutterToolTip = toolTip;
+        }
+      }
+      tooltipAvailable(toolTip, e, null);
     }
+    else {
+      computeTooltipInBackground(renderer, e);
+    }
+  }
 
-    if (toolTip != null && !toolTip.isEmpty()) {
+  private GutterIconRenderer myCalculatingInBackground;
+  private ProgressIndicator myBackgroundIndicator = new EmptyProgressIndicator();
+  private void computeTooltipInBackground(@NotNull GutterIconRenderer renderer, @NotNull MouseEvent e) {
+    if (myCalculatingInBackground == renderer && !myBackgroundIndicator.isCanceled()) return; // not yet calculated
+    myCalculatingInBackground = renderer;
+    myBackgroundIndicator.cancel();
+    myBackgroundIndicator = new ProgressIndicatorBase();
+    AtomicReference<String> tooltip = new AtomicReference<>();
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(),
+                                                                                               "Constructing Tooltip") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        tooltip.set(ReadAction.compute(() -> renderer.getTooltipText()));
+      }
+
+      @Override
+      public void onSuccess() {
+        tooltipAvailable(tooltip.get(), e, renderer);
+      }
+    }, myBackgroundIndicator);
+  }
+
+  private void tooltipAvailable(@Nullable String toolTip, @NotNull MouseEvent e, @Nullable GutterIconRenderer renderer) {
+    myCalculatingInBackground = null;
+    TooltipController controller = TooltipController.getInstance();
+    if (toolTip == null || toolTip.isEmpty()) {
+      controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
+    }
+    else {
       final Ref<Point> t = new Ref<>(e.getPoint());
       int line = EditorUtil.yPositionToLogicalLine(myEditor, e);
       List<GutterMark> row = getGutterRenderers(line);
       Balloon.Position ballPosition = Balloon.Position.atRight;
       if (row != null) {
-        final TreeMap<Integer, GutterMark> xPos = new TreeMap<>();
+        Map<Integer, GutterMark> xPos = new TreeMap<>();
         final int[] currentPos = {0};
         processIconsRow(line, row, (x, y, r) -> {
           xPos.put(x, r);
@@ -1503,11 +1536,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       RelativePoint showPoint = new RelativePoint(this, t.get());
 
-      controller.showTooltipByMouseMove(myEditor, showPoint, ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip), false, GUTTER_TOOLTIP_GROUP,
-                                        new HintHint(this, t.get()).setAwtTooltip(true).setPreferredPosition(ballPosition));
-    }
-    else {
-      controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
+      TooltipRenderer tr = ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip);
+      HintHint hint = new HintHint(this, t.get()).setAwtTooltip(true).setPreferredPosition(ballPosition);
+      controller.showTooltipByMouseMove(myEditor, showPoint, tr, false, GUTTER_TOOLTIP_GROUP, hint);
     }
   }
 
@@ -1883,7 +1914,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Nullable
-  private GutterMark getGutterRenderer(final Point p) {
+  public GutterMark getGutterRenderer(final Point p) {
     int line = convertPointToLineNumber(p);
     if (line == -1) return null;
     List<GutterMark> renderers = getGutterRenderers(line);

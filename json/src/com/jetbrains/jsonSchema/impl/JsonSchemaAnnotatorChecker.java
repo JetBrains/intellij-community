@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.google.common.base.Predicates;
@@ -117,36 +103,78 @@ class JsonSchemaAnnotatorChecker {
     myErrors.put(holder, error);
   }
 
-  private void typeError(final @NotNull PsiElement value) {
-    error("Type is not allowed", value);
+  private void typeError(final @NotNull PsiElement value, final @NotNull JsonSchemaType... allowedTypes) {
+    if (allowedTypes.length > 0) {
+      if (allowedTypes.length == 1) {
+        error(String.format("Type is not allowed. Expected: %s.", allowedTypes[0].getName()), value);
+      } else {
+        final String typesText = Arrays.stream(allowedTypes)
+                                       .map(JsonSchemaType::getName)
+                                       .distinct()
+                                       .sorted(Comparator.naturalOrder())
+                                       .collect(Collectors.joining(", "));
+        error(String.format("Type is not allowed. Expected one of: %s.", typesText), value);
+      }
+    } else {
+      error("Type is not allowed", value);
+    }
     myHadTypeError = true;
   }
 
   public void checkByScheme(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
     final JsonSchemaType type = JsonSchemaType.getType(value);
+    boolean matchingType = false;
     if (type != null) {
       JsonSchemaType schemaType = getMatchingSchemaType(schema, type);
       if (schemaType != null && !schemaType.equals(type)) {
-        typeError(value.getDelegate());
+        typeError(value.getDelegate(), schemaType);
       }
-      else if (JsonSchemaType._boolean.equals(type)) {
-        checkForEnum(value.getDelegate(), schema);
+      else {
+        matchingType = schema.getType() != null || schema.getTypeVariants() != null;
+        if (JsonSchemaType._boolean.equals(type)) {
+          checkForEnum(value.getDelegate(), schema);
+        }
+        else if (JsonSchemaType._number.equals(type) || JsonSchemaType._integer.equals(type)) {
+          checkNumber(value.getDelegate(), schema, type);
+          checkForEnum(value.getDelegate(), schema);
+        }
+        else if (JsonSchemaType._string.equals(type)) {
+          checkString(value.getDelegate(), schema);
+          checkForEnum(value.getDelegate(), schema);
+        }
+        else if (JsonSchemaType._array.equals(type)) {
+          checkArray(value, schema);
+          checkForEnum(value.getDelegate(), schema);
+        }
+        else if (JsonSchemaType._object.equals(type)) {
+          checkObject(value, schema);
+          checkForEnum(value.getDelegate(), schema);
+        }
       }
-      else if (JsonSchemaType._number.equals(type) || JsonSchemaType._integer.equals(type)) {
-        checkNumber(value.getDelegate(), schema, type);
-        checkForEnum(value.getDelegate(), schema);
+    }
+
+    if ((!myHadTypeError || myErrors.isEmpty()) && !value.isShouldBeIgnored()) {
+      PsiElement delegate = value.getDelegate();
+      checkForEnum(delegate, schema);
+      if (hasNumberChecks(schema) && value.isNumberLiteral()) {
+        checkNumber(delegate, schema, JsonSchemaType._number);
       }
-      else if (JsonSchemaType._string.equals(type)) {
-        checkString(value.getDelegate(), schema);
-        checkForEnum(value.getDelegate(), schema);
+      if (hasStringChecks(schema) && value.isStringLiteral()) {
+        checkString(delegate, schema);
       }
-      else if (JsonSchemaType._array.equals(type)) {
+      if (hasArrayChecks(schema) && value.isArray()) {
         checkArray(value, schema);
-        checkForEnum(value.getDelegate(), schema);
       }
-      else if (JsonSchemaType._object.equals(type)) {
+      if (hasMinMaxLengthChecks(schema)) {
+        if (value.isStringLiteral()) {
+          checkString(delegate, schema);
+        }
+        else if (value.isArray()) {
+          checkArray(value, schema);
+        }
+      }
+      if (hasObjectChecks(schema) && value.isObject()) {
         checkObject(value, schema);
-        checkForEnum(value.getDelegate(), schema);
       }
     }
 
@@ -162,6 +190,33 @@ class JsonSchemaAnnotatorChecker {
       final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result);
       if (checker == null || checker.isCorrect()) error("Validates against 'not' schema", value.getDelegate());
     }
+
+    if (schema.getIf() != null) {
+      MatchResult result = new JsonSchemaResolver(schema.getIf()).detailedResolve();
+      if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return;
+
+      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result);
+      if (checker != null) {
+        if (checker.isCorrect()) {
+          JsonSchemaObject then = schema.getThen();
+          if (then == null) {
+            error("Validates against 'if' branch but no 'then' branch is present", value.getDelegate());
+          }
+          else {
+            checkObjectBySchemaRecordErrors(then, value);
+          }
+        }
+        else {
+          JsonSchemaObject schemaElse = schema.getElse();
+          if (schemaElse == null) {
+            error("Validates counter 'if' branch but no 'else' branch is present", value.getDelegate());
+          }
+          else {
+            checkObjectBySchemaRecordErrors(schemaElse, value);
+          }
+        }
+      }
+    }
   }
 
   private void checkObjectBySchemaRecordErrors(@NotNull JsonSchemaObject schema, @NotNull JsonValueAdapter object) {
@@ -170,6 +225,16 @@ class JsonSchemaAnnotatorChecker {
       myHadTypeError = checker.isHadTypeError();
       myErrors.putAll(checker.getErrors());
     }
+  }
+
+  private static boolean hasObjectChecks(JsonSchemaObject schema) {
+    return !schema.getProperties().isEmpty()
+           || schema.getPropertyNamesSchema() != null
+           || schema.getPropertyDependencies() != null
+           || schema.hasPatternProperties()
+           || schema.getRequired() != null
+           || schema.getMinProperties() != null
+           || schema.getMaxProperties() != null;
   }
 
   private void checkObject(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
@@ -181,6 +246,13 @@ class JsonSchemaAnnotatorChecker {
     final Set<String> set = new HashSet<>();
     for (JsonPropertyAdapter property : propertyList) {
       final String name = StringUtil.notNullize(property.getName());
+      JsonSchemaObject propertyNamesSchema = schema.getPropertyNamesSchema();
+      if (propertyNamesSchema != null) {
+        JsonValueAdapter nameValueAdapter = property.getNameValueAdapter();
+        if (nameValueAdapter != null) {
+          checkByScheme(nameValueAdapter, propertyNamesSchema);
+        }
+      }
 
       final JsonSchemaVariantsTreeBuilder.Step step = JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(name);
       final Pair<ThreeState, JsonSchemaObject> pair = step.step(schema, true);
@@ -246,8 +318,9 @@ class JsonSchemaAnnotatorChecker {
       final JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(object.getProject()).getSchemaObjectForSchemaFile(schemaFile);
       if (schemaObject == null) return;
 
-      final List<JsonSchemaVariantsTreeBuilder.Step> steps =
-        skipProperties(JsonOriginalPsiWalker.INSTANCE.findPosition(object, false, true));
+      final List<JsonSchemaVariantsTreeBuilder.Step> position = JsonOriginalPsiWalker.INSTANCE.findPosition(object, true);
+      if (position == null) return;
+      final List<JsonSchemaVariantsTreeBuilder.Step> steps = skipProperties(position);
       // !! not root schema, because we validate the schema written in the file itself
       final MatchResult result = new JsonSchemaResolver(schemaObject, false, steps).detailedResolve();
       final List<JsonSchemaObject> schemas = new ArrayList<>(result.mySchemas);
@@ -301,10 +374,12 @@ class JsonSchemaAnnotatorChecker {
   private void checkForEnum(PsiElement value, JsonSchemaObject schema) {
     //enum values + pattern -> don't check enum values
     if (schema.getEnum() == null || schema.getPattern() != null) return;
+    final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(value, schema);
+    if (walker == null) return;
     final String text = StringUtil.notNullize(value.getText());
     final List<Object> objects = schema.getEnum();
     for (Object object : objects) {
-      if (JsonLikePsiWalker.getWalker(value, schema).onlyDoubleQuotesForStringLiterals()) {
+      if (walker.onlyDoubleQuotesForStringLiterals()) {
         if (object.toString().equalsIgnoreCase(text)) return;
       }
       else {
@@ -342,13 +417,17 @@ class JsonSchemaAnnotatorChecker {
     final JsonSchemaType type = JsonSchemaType.getType(value);
     JsonSchemaObject selected = null;
     if (type == null) {
-      if (!value.isShouldBeIgnored()) checker.typeError(value.getDelegate());
+      if (!value.isShouldBeIgnored()) checker.typeError(value.getDelegate(), getExpectedTypes(collection));
     }
     else {
       final List<JsonSchemaObject> filtered = collection.stream()
         .filter(schema -> areSchemaTypesCompatible(schema, type))
         .collect(Collectors.toList());
-      if (filtered.isEmpty()) checker.typeError(value.getDelegate());
+      if (filtered.isEmpty()) checker.typeError(value.getDelegate(), getExpectedTypes(collection));
+      else if (filtered.size() == 1) {
+        selected = filtered.get(0);
+        checker.checkByScheme(value, selected);
+      }
       else {
         if (isOneOf) {
           selected = checker.processOneOf(value, filtered);
@@ -359,6 +438,23 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     return Pair.create(selected, checker);
+  }
+
+  private final static JsonSchemaType[] NO_TYPES = new JsonSchemaType[0];
+  private static JsonSchemaType[] getExpectedTypes(final Collection<JsonSchemaObject> schemas) {
+    final List<JsonSchemaType> list = new ArrayList<>();
+    for (JsonSchemaObject schema : schemas) {
+      final JsonSchemaType type = schema.getType();
+      if (type != null) {
+        list.add(type);
+      } else {
+        final List<JsonSchemaType> variants = schema.getTypeVariants();
+        if (variants != null) {
+          list.addAll(variants);
+        }
+      }
+    }
+    return list.isEmpty() ? NO_TYPES : list.toArray(NO_TYPES);
   }
 
   public static boolean areSchemaTypesCompatible(@NotNull final JsonSchemaObject schema, @NotNull final JsonSchemaType type) {
@@ -396,6 +492,15 @@ class JsonSchemaAnnotatorChecker {
     return null;
   }
 
+  private static boolean hasArrayChecks(JsonSchemaObject schema) {
+    return schema.isUniqueItems()
+           || schema.getContainsSchema() != null
+           || schema.getItemsSchema() != null
+           || schema.getItemsSchemaList() != null
+           || schema.getMinItems() != null
+           || schema.getMaxItems() != null;
+  }
+
   private void checkArrayItems(@NotNull JsonValueAdapter array, @NotNull final List<JsonValueAdapter> list, final JsonSchemaObject schema) {
     if (schema.isUniqueItems()) {
       final MultiMap<String, JsonValueAdapter> valueTexts = new MultiMap<>();
@@ -405,6 +510,19 @@ class JsonSchemaAnnotatorChecker {
         .map(key -> valueTexts.get(key))
         .flatMap(Collection::stream)
         .forEach(item -> error("Item is not unique", item.getDelegate()));
+    }
+    if (schema.getContainsSchema() != null) {
+      boolean match = false;
+      for (JsonValueAdapter item: list) {
+        final JsonSchemaAnnotatorChecker checker = checkByMatchResult(item, new JsonSchemaResolver(schema.getContainsSchema()).detailedResolve());
+        if (checker == null || checker.myErrors.size() == 0 && !checker.myHadTypeError) {
+          match = true;
+          break;
+        }
+      }
+      if (!match) {
+        error("No match for 'contains' rule", array.getDelegate());
+      }
     }
     if (schema.getItemsSchema() != null) {
       list.forEach(item -> checkObjectBySchemaRecordErrors(schema.getItemsSchema(), item));
@@ -419,6 +537,9 @@ class JsonSchemaAnnotatorChecker {
           if (!Boolean.TRUE.equals(schema.getAdditionalItemsAllowed())) {
             error("Additional items are not allowed", arrayValue.getDelegate());
           }
+          else if (schema.getAdditionalItemsSchema() != null) {
+            checkObjectBySchemaRecordErrors(schema.getAdditionalItemsSchema(), arrayValue);
+          }
         }
       }
     }
@@ -428,6 +549,14 @@ class JsonSchemaAnnotatorChecker {
     if (schema.getMaxItems() != null && list.size() > schema.getMaxItems()) {
       error("Array is longer than " + schema.getMaxItems(), array.getDelegate());
     }
+  }
+
+  private static boolean hasStringChecks(JsonSchemaObject schema) {
+    return schema.getPattern() != null || schema.getFormat() != null;
+  }
+
+  private static boolean hasMinMaxLengthChecks(JsonSchemaObject schema) {
+    return schema.getMinLength() != null || schema.getMaxLength() != null;
   }
 
   private void checkString(PsiElement propValue, JsonSchemaObject schema) {
@@ -460,6 +589,14 @@ class JsonSchemaAnnotatorChecker {
     }*/
   }
 
+  private static boolean hasNumberChecks(JsonSchemaObject schema) {
+    return schema.getMultipleOf() != null
+           || schema.getExclusiveMinimumNumber() != null
+           || schema.getExclusiveMaximumNumber() != null
+           || schema.getMaximum() != null
+           || schema.getMinimum() != null;
+  }
+
   private void checkNumber(PsiElement propValue, JsonSchemaObject schema, JsonSchemaType schemaType) {
     Number value;
     if (JsonSchemaType._integer.equals(schemaType)) {
@@ -490,19 +627,35 @@ class JsonSchemaAnnotatorChecker {
         return;
       }
     }
-    if (schema.getMinimum() != null) {
-      checkMinimum(schema, value, propValue, schemaType);
-    }
-    if (schema.getMaximum() != null) {
-      checkMaximum(schema, value, propValue, schemaType);
-    }
+
+    checkMinimum(schema, value, propValue, schemaType);
+    checkMaximum(schema, value, propValue, schemaType);
   }
 
   private void checkMaximum(JsonSchemaObject schema, Number value, PsiElement propertyValue,
                             @NotNull JsonSchemaType propValueType) {
+
+    Number exclusiveMaximumNumber = schema.getExclusiveMaximumNumber();
+    if (exclusiveMaximumNumber != null) {
+      if (JsonSchemaType._integer.equals(propValueType)) {
+        final int intValue = exclusiveMaximumNumber.intValue();
+        if (value.intValue() >= intValue) {
+          error("Greater than an exclusive maximum " + intValue, propertyValue);
+        }
+      }
+      else {
+        final double doubleValue = exclusiveMaximumNumber.doubleValue();
+        if (value.doubleValue() >= doubleValue) {
+          error("Greater than an exclusive maximum " + exclusiveMaximumNumber, propertyValue);
+        }
+      }
+    }
+    Number maximum = schema.getMaximum();
+    if (maximum == null) return;
+    boolean isExclusive = Boolean.TRUE.equals(schema.isExclusiveMaximum());
     if (JsonSchemaType._integer.equals(propValueType)) {
-      final int intValue = schema.getMaximum().intValue();
-      if (Boolean.TRUE.equals(schema.isExclusiveMaximum())) {
+      final int intValue = maximum.intValue();
+      if (isExclusive) {
         if (value.intValue() >= intValue) {
           error("Greater than an exclusive maximum " + intValue, propertyValue);
         }
@@ -514,15 +667,15 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     else {
-      final double doubleValue = schema.getMaximum().doubleValue();
-      if (Boolean.TRUE.equals(schema.isExclusiveMaximum())) {
+      final double doubleValue = maximum.doubleValue();
+      if (isExclusive) {
         if (value.doubleValue() >= doubleValue) {
-          error("Greater than an exclusive maximum " + schema.getMinimum(), propertyValue);
+          error("Greater than an exclusive maximum " + maximum, propertyValue);
         }
       }
       else {
         if (value.doubleValue() > doubleValue) {
-          error("Greater than a maximum " + schema.getMaximum(), propertyValue);
+          error("Greater than a maximum " + maximum, propertyValue);
         }
       }
     }
@@ -530,9 +683,29 @@ class JsonSchemaAnnotatorChecker {
 
   private void checkMinimum(JsonSchemaObject schema, Number value, PsiElement propertyValue,
                             @NotNull JsonSchemaType schemaType) {
+    // schema v6 - exclusiveMinimum is numeric now
+    Number exclusiveMinimumNumber = schema.getExclusiveMinimumNumber();
+    if (exclusiveMinimumNumber != null) {
+      if (JsonSchemaType._integer.equals(schemaType)) {
+        final int intValue = exclusiveMinimumNumber.intValue();
+        if (value.intValue() <= intValue) {
+          error("Less than an exclusive minimum" + intValue, propertyValue);
+        }
+      }
+      else {
+        final double doubleValue = exclusiveMinimumNumber.doubleValue();
+        if (value.doubleValue() <= doubleValue) {
+          error("Less than an exclusive minimum " + exclusiveMinimumNumber, propertyValue);
+        }
+      }
+    }
+
+    Number minimum = schema.getMinimum();
+    if (minimum == null) return;
+    boolean isExclusive = Boolean.TRUE.equals(schema.isExclusiveMinimum());
     if (JsonSchemaType._integer.equals(schemaType)) {
-      final int intValue = schema.getMinimum().intValue();
-      if (Boolean.TRUE.equals(schema.isExclusiveMinimum())) {
+      final int intValue = minimum.intValue();
+      if (isExclusive) {
         if (value.intValue() <= intValue) {
           error("Less than an exclusive minimum " + intValue, propertyValue);
         }
@@ -544,15 +717,15 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     else {
-      final double doubleValue = schema.getMinimum().doubleValue();
-      if (Boolean.TRUE.equals(schema.isExclusiveMinimum())) {
+      final double doubleValue = minimum.doubleValue();
+      if (isExclusive) {
         if (value.doubleValue() <= doubleValue) {
-          error("Less than an exclusive minimum " + schema.getMinimum(), propertyValue);
+          error("Less than an exclusive minimum " + minimum, propertyValue);
         }
       }
       else {
         if (value.doubleValue() < doubleValue) {
-          error("Less than a minimum " + schema.getMinimum(), propertyValue);
+          error("Less than a minimum " + minimum, propertyValue);
         }
       }
     }

@@ -86,4 +86,20 @@ public interface VcsLogRefManager {
    */
   @NotNull
   VcsRefType deserialize(@NotNull DataInput in) throws IOException;
+
+  /**
+   * Checks whether a reference is a favorite.
+   *
+   * @param reference reference to check
+   * @return true if provided reference is a favorite, false otherwise
+   */
+  boolean isFavorite(@NotNull VcsRef reference);
+
+  /**
+   * Marks or unmarks a reference as favorite.
+   *
+   * @param reference a reference to mark or unmark as favorite
+   * @param favorite  true means to mark as favorite, false to unmark
+   */
+  void setFavorite(@NotNull VcsRef reference, boolean favorite);
 }

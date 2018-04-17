@@ -88,7 +88,7 @@
 
       <separator/>
       <action class="org.zmlx.hg4idea.action.mq.HgShowUnAppliedPatchesAction" id="hg4idea.mq.ShowUnAppliedPatches"
-              text="Show Mq Unapplied Patches..." icon="AllIcons.Debugger.Watches"/>
+              text="Show Mq Unapplied Patches..." icon="AllIcons.Debugger.Watch"/>
       <reference id="ChangesView.Browse"/>
       <separator/>
 

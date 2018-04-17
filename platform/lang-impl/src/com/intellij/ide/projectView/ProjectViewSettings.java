@@ -87,6 +87,12 @@ public interface ProjectViewSettings extends ViewSettings {
     }
 
     @Override
+    public boolean isFoldersAlwaysOnTop() {
+      ProjectView view = getProjectView();
+      return view != null && view.isFoldersAlwaysOnTop(getPaneID(view));
+    }
+
+    @Override
     public boolean isShowMembers() {
       ProjectView view = getProjectView();
       return view != null && view.isShowMembers(getPaneID(view));

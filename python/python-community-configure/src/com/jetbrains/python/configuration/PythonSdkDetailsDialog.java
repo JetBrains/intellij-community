@@ -162,20 +162,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void addListeners() {
     myListener = new SdkModel.Listener() {
       @Override
-      public void sdkAdded(Sdk sdk) {
-      }
-
-      @Override
-      public void beforeSdkRemove(Sdk sdk) {
-      }
-
-      @Override
       public void sdkChanged(Sdk sdk, String previousName) {
         refreshSdkList();
-      }
-
-      @Override
-      public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
       }
     };
     myProjectSdksModel.addListener(myListener);

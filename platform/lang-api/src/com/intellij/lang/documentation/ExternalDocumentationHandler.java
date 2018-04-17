@@ -27,4 +27,17 @@ public interface ExternalDocumentationHandler {
   
   @NotNull
   String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element);
+
+  /**
+   * Defines whether we will show external documentation
+   * link at the bottom of the documentation pane or not.
+   *
+   *
+   * @return true if external documentation link should be
+   * shown, false otherwise
+   */
+  default boolean canHandleExternal(@Nullable PsiElement element,
+                                    @Nullable PsiElement originalElement) {
+    return true;
+  }
 }

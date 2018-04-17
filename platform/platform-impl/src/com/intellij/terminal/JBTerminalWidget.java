@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.List;
@@ -156,6 +157,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       }
 
       @Override
+      public boolean ignoreCase() {
+        return false;
+      }
+
+      @Override
       public JComponent getComponent() {
         myTextField.setOpaque(false);
         return myTextField;
@@ -169,6 +175,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       @Override
       public void addKeyListener(KeyListener listener) {
         myTextField.addKeyboardListener(listener);
+      }
+
+      @Override
+      public void addIgnoreCaseListener(ItemListener listener) {
+
       }
 
       @Override

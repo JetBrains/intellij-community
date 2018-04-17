@@ -284,7 +284,7 @@ class Test implements A {
   }
 
   void testCustomOverrideImplementsHandler() throws Exception {
-    myFixture.addClass """package a; public @interface A { }"""
+    myFixture.addClass """package a; public @interface A { String value();}"""
 
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), OverrideImplementsAnnotationsHandler.EP_NAME, new OverrideImplementsAnnotationsHandler() {
       @Override
@@ -297,7 +297,7 @@ class Test implements A {
       import a.*;
 
       interface I {
-          @A List<String> i(@A String p);
+          @A("") List<String> i(@A("a") String p);
       }
 
       class C implements I {
@@ -311,13 +311,13 @@ class Test implements A {
       import a.*;
 
       interface I {
-          @A List<String> i(@A String p);
+          @A("") List<String> i(@A("a") String p);
       }
 
       class C implements I {
-          @A
+          @A("")
           @Override
-          public List<String> i(@A String p) {
+          public List<String> i(@A("a") String p) {
               return null;
           }
       }""".stripIndent()

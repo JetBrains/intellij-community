@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
@@ -39,8 +39,8 @@ private fun getSaxBuilder(): SAXBuilder {
     }
     saxBuilder.ignoringBoundaryWhitespace = true
     saxBuilder.ignoringElementContentWhitespace = true
-    saxBuilder.entityResolver = EntityResolver { publicId, systemId -> InputSource(CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY)) }
-    cachedSaxBuilder.set(SoftReference<SAXBuilder>(saxBuilder))
+    saxBuilder.entityResolver = EntityResolver { _, _ -> InputSource(CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY)) }
+    cachedSaxBuilder.set(SoftReference(saxBuilder))
   }
   return saxBuilder
 }

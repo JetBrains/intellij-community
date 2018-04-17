@@ -1,8 +1,11 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public final class LocalFileUrl implements Url {
   private final String path;
@@ -17,6 +20,12 @@ public final class LocalFileUrl implements Url {
   @Override
   public Url resolve(@NotNull String subPath) {
     return new LocalFileUrl(path.isEmpty() ? subPath : (path + "/" + subPath));
+  }
+
+  @NotNull
+  @Override
+  public Url addParameters(@NotNull Map<String, String> parameters) {
+    throw new UnsupportedOperationException("File URL doesn't support parameters");
   }
 
   @NotNull

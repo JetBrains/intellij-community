@@ -6,7 +6,7 @@ import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.util.Options;
+import com.intellij.cvsSupport2.Options;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.Watch;

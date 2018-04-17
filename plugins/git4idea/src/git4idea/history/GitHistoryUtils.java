@@ -254,11 +254,13 @@ public class GitHistoryUtils {
     return ArrayUtil.toStringArray(parameters);
   }
 
+  // used externally
+  @SuppressWarnings("unused")
   public static void loadDetails(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                  @NotNull String... parameters) throws VcsException {
-    GitLogUtil.readFullDetails(project, root, commitConsumer, parameters);
+    GitLogUtil.readFullDetails(project, root, commitConsumer, true, parameters);
   }
 
   public static long getAuthorTime(@NotNull Project project, @NotNull FilePath path, @NotNull String commitsId) throws VcsException {

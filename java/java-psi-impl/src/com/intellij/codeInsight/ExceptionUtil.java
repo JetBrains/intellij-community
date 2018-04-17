@@ -612,11 +612,19 @@ public class ExceptionUtil {
     for (PsiType type : getPreciseThrowTypes(throwStatement.getException())) {
       List<PsiType> types = type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);
       for (PsiType subType : types) {
+        PsiClassType classType = null;
         if (subType instanceof PsiClassType) {
-          PsiClassType classType = (PsiClassType)subType;
-          if (!isUncheckedException(classType) && !isHandled(throwStatement, classType, topElement)) {
-            unhandled.add(classType);
+          classType = (PsiClassType)subType;
+        }
+        else if (subType instanceof PsiCapturedWildcardType) {
+          PsiType upperBound = ((PsiCapturedWildcardType)subType).getUpperBound();
+          if (upperBound instanceof PsiClassType) {
+            classType = (PsiClassType)upperBound;
           }
+        }
+
+        if (classType != null && !isUncheckedException(classType) && !isHandled(throwStatement, classType, topElement)) {
+          unhandled.add(classType);
         }
       }
     }

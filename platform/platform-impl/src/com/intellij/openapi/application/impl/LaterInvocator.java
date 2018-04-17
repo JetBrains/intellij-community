@@ -455,10 +455,10 @@ public class LaterInvocator {
 
   @TestOnly
   public static Collection<RunnableInfo> getLaterInvocatorQueue() {
-    // used by leak hunter as root, so we must not copy it here to another list 
-    // to avoid walking over obsolete queue 
     synchronized (LOCK) {
-      return ourQueue;
+      // used by leak hunter as root, so we must not copy it here to another list
+      // to avoid walking over obsolete queue
+      return Collections.unmodifiableCollection(ourQueue);
     }
   }
 
@@ -479,6 +479,18 @@ public class LaterInvocator {
         ourQueue.clear();
         ourQueue.addAll(alive);
       }
+    }
+  }
+
+  @TestOnly
+  public static void dispatchPendingFlushes() {
+    if (!isDispatchThread()) throw new IllegalStateException("Must call from EDT");
+
+    Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    invokeLaterWithCallback(semaphore::up, ModalityState.any(), Conditions.FALSE, null);
+    while (!semaphore.isUp()) {
+      UIUtil.dispatchAllInvocationEvents();
     }
   }
 }

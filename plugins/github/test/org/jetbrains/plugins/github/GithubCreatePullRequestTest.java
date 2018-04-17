@@ -16,15 +16,16 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.notification.NotificationType;
+import org.jetbrains.plugins.github.util.GithubGitHelper;
 
 /**
  * @author Aleksey Pivovarov
  */
 public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase {
   public void testSimple() {
-    registerDefaultCreatePullRequestDialogHandler("master", myLogin1);
-
-    GithubCreatePullRequestAction.createPullRequest(myProject, projectRoot);
+    registerDefaultCreatePullRequestDialogHandler("master", myUsername);
+    myAuthenticationManager.setDefaultAccount(myProject, myAccount);
+    GithubCreatePullRequestAction.createPullRequest(myProject, myRepository, myAccount);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
     checkRemoteConfigured();
@@ -32,10 +33,10 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
   }
 
   public void testParent() {
-    registerDefaultCreatePullRequestDialogHandler("file2", myLogin2);
-    addRemote(myLogin2);
-
-    GithubCreatePullRequestAction.createPullRequest(myProject, projectRoot);
+    registerDefaultCreatePullRequestDialogHandler("file2", myUsername2);
+    git("remote add somename " + GithubGitHelper.getInstance().getRemoteUrl(myAccount2.getServer(), myUsername2, PROJECT_NAME));
+    myAuthenticationManager.setDefaultAccount(myProject, myAccount);
+    GithubCreatePullRequestAction.createPullRequest(myProject, myRepository, myAccount);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
     checkRemoteConfigured();

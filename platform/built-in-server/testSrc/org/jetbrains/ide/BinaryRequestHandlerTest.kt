@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.testFramework.ProjectRule
@@ -36,7 +37,7 @@ internal class BinaryRequestHandlerTest {
       it.pipeline().addLast(object : Decoder() {
         override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
           val requiredLength = 4 + text.length
-          val response = readContent(input, context, requiredLength) { buffer, context, isCumulateBuffer -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
+          val response = readContent(input, context, requiredLength) { buffer, _, _ -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
           if (response != null) {
             result.setResult(response)
           }

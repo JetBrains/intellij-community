@@ -124,11 +124,4 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   public PyType getIteratedItemType() {
     return PyUnionType.union(myElementTypes);
   }
-
-  @Override
-  public void accept(@NotNull PyTypeVisitor visitor) {
-    if (visitor instanceof PyTypeVisitorExt) {
-      ((PyTypeVisitorExt)visitor).visitTupleType(this);
-    }
-  }
 }

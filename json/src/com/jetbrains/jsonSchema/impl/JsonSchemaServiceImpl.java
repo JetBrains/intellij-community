@@ -1,13 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.psi.JsonFile;
-import com.intellij.json.psi.JsonObject;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -15,45 +11,40 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class JsonSchemaServiceImpl implements JsonSchemaService {
-  @NotNull
-  private final Project myProject;
-  private final MyState myState;
-  private final AtomicLong myModificationCount = new AtomicLong(0);
+  @NotNull private final Project myProject;
+  @NotNull private final MyState myState;
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
-  private final ModificationTracker myModificationTracker;
   private final ModificationTracker myAnySchemaChangeTracker;
+
+  @NotNull private final JsonSchemaCatalogManager myCatalogManager;
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
     myProject = project;
     myState = new MyState(() -> getProvidersFromFactories());
-    myModificationTracker = () -> myModificationCount.get();
     myAnySchemaChangeTracker = () -> myAnyChangeCount.get();
+    myCatalogManager = new JsonSchemaCatalogManager(myProject);
+
     project.getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
     JsonSchemaVfsListener.startListening(project, this);
+    myCatalogManager.startUpdates();
   }
 
   @Override
@@ -87,8 +78,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public void reset() {
-    myAnyChangeCount.incrementAndGet();
     myState.reset();
+    myAnyChangeCount.incrementAndGet();
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
@@ -96,24 +87,35 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   public VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
     final Optional<VirtualFile> optional = myState.getFiles().stream()
-      .filter(file -> reference.equals(JsonSchemaReader.readSchemaId(myProject, file)))
+      .filter(file -> reference.equals(JsonCachedValues.getSchemaId(file, myProject)))
       .findFirst();
-    return optional.orElseGet(() -> getSchemaFileByRefAsLocalFile(reference, referent));
+    return optional.orElseGet(() -> JsonFileResolver.resolveSchemaByReference(referent, JsonSchemaService.normalizeId(reference)));
   }
 
   @Override
   @NotNull
   public Collection<VirtualFile> getSchemaFilesForFile(@NotNull final VirtualFile file) {
-    return myState.getProviders().stream().filter(provider -> isProviderAvailable(file, provider))
-      .map(processor -> processor.getSchemaFile()).collect(Collectors.toList());
+    List<VirtualFile> files = myState.getProviders().stream().filter(provider -> isProviderAvailable(file, provider))
+                                       .map(processor -> processor.getSchemaFile()).collect(Collectors.toList());
+    if (files.size() > 0) {
+      return files;
+    }
+
+    return ContainerUtil.createMaybeSingletonList(resolveSchemaFromOtherSources(file));
   }
 
   @Nullable
   @Override
   public JsonSchemaObject getSchemaObject(@NotNull final VirtualFile file) {
-    final List<JsonSchemaFileProvider> providers =
+    List<JsonSchemaFileProvider> providers =
       myState.getProviders().stream().filter(provider -> isProviderAvailable(file, provider)).collect(Collectors.toList());
-    if (providers.isEmpty() || providers.size() > 2) return null;
+
+    if (providers.isEmpty()) {
+      VirtualFile virtualFile = resolveSchemaFromOtherSources(file);
+      return virtualFile == null ? null : JsonCachedValues.getSchemaObject(virtualFile, myProject);
+    }
+
+    if (providers.size() > 2) return null;
 
     final JsonSchemaFileProvider selected;
     if (providers.size() > 1) {
@@ -124,31 +126,50 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     } else selected = providers.get(0);
     if (selected.getSchemaFile() == null) return null;
 
-    return readCachedObject(selected.getSchemaFile());
+    return JsonCachedValues.getSchemaObject(selected.getSchemaFile(), myProject);
   }
 
   @Nullable
   @Override
   public JsonSchemaObject getSchemaObjectForSchemaFile(@NotNull VirtualFile schemaFile) {
-    return readCachedObject(schemaFile);
+    return JsonCachedValues.getSchemaObject(schemaFile, myProject);
+  }
+
+  @NotNull
+  public JsonSchemaCatalogManager getCatalogManager() {
+    return myCatalogManager;
   }
 
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return myState.getFiles().contains(file);
+    return myState.getFiles().contains(file) || hasSchemaSchema(file);
+  }
+
+  @Override
+  public JsonSchemaVersion getSchemaVersion(@NotNull VirtualFile file) {
+    if (myState.getFiles().contains(file)) {
+      JsonSchemaFileProvider provider = myState.getProvider(file);
+      if (provider != null) {
+        return provider.getSchemaVersion();
+      }
+    }
+
+    return getSchemaVersionFromSchemaUrl(file);
   }
 
   @Nullable
-  private JsonSchemaObject readCachedObject(@NotNull VirtualFile schemaFile) {
-    final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(schemaFile);
-    if (!(psiFile instanceof JsonFile)) return null;
+  private JsonSchemaVersion getSchemaVersionFromSchemaUrl(@NotNull VirtualFile file) {
+    Ref<String> res = Ref.create(null);
+    //noinspection CodeBlock2Expr
+    ApplicationManager.getApplication().runReadAction(() -> {
+      res.set(JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject));
+    });
+    if (res.isNull()) return null;
+    return JsonSchemaVersion.byId(res.get());
+  }
 
-    final CachedValueProvider<JsonSchemaObject> provider = () -> {
-      final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
-      final JsonSchemaObject object = topLevelValue == null ? null : new JsonSchemaReader().read(topLevelValue);
-      return CachedValueProvider.Result.create(object, psiFile, myModificationTracker);
-    };
-    return ReadAction.compute(() -> CachedValuesManager.getCachedValue(psiFile, provider));
+  private boolean hasSchemaSchema(VirtualFile file) {
+    return getSchemaVersionFromSchemaUrl(file) != null;
   }
 
   private static boolean isProviderAvailable(@NotNull final VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
@@ -158,15 +179,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   @Nullable
-  private static VirtualFile getSchemaFileByRefAsLocalFile(@NotNull String id, @Nullable VirtualFile referent) {
-    final String normalizedId = JsonSchemaService.normalizeId(id);
-    if (FileUtil.isAbsolute(normalizedId) || referent == null) return VfsUtil.findFileByIoFile(new File(normalizedId), false);
-    VirtualFile dir = referent.isDirectory() ? referent : referent.getParent();
-    if (dir != null && dir.isValid()) {
-      final List<String> parts = StringUtil.split(normalizedId.replace("\\", "/"), "/");
-      return VfsUtil.findRelativeFile(dir, ArrayUtil.toStringArray(parts));
-    }
-    return null;
+  private VirtualFile resolveSchemaFromOtherSources(@NotNull VirtualFile file) {
+    VirtualFile virtualFile = JsonCachedValues.getSchemaFileFromSchemaProperty(file, myProject);
+    if (virtualFile != null) return virtualFile;
+    return myCatalogManager.getSchemaFileForFile(file);
   }
 
   private static class MyState {

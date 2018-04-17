@@ -66,8 +66,16 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
   }
 
   override fun log(recorderId: String, action: String) {
+    log(recorderId, action, Collections.emptyMap())
+  }
+
+  override fun log(recorderId: String, action: String, data: Map<String, Any>) {
     myLogExecutor.execute(Runnable {
-      log(eventLogger, LogEvent(sessionId, bucket, recorderId, recorderVersion, action))
+      val event = LogEvent(sessionId, bucket, recorderId, recorderVersion, action)
+      for (datum in data) {
+        event.action.addData(datum.key, datum.value)
+      }
+      log(eventLogger, event)
     })
   }
 

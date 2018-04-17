@@ -160,17 +160,14 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       }
 
       final String replaceWith = PREFIX + propertyName + SUFFIX;
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull Result result) {
-          editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), replaceWith);
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
+      WriteCommandAction.runWriteCommandAction(project, () -> {
+        editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), replaceWith);
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-          createMavenProperty(selectedProject, propertyName, selectedString);
+        createMavenProperty(selectedProject, propertyName, selectedString);
 
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-        }
-      }.execute();
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+      });
 
       showFindUsages(project, propertyName, selectedString, replaceWith, selectedProject);
     }

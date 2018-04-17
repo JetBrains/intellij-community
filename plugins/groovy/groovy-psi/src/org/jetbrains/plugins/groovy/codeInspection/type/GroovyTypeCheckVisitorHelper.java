@@ -1,25 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.CallInfo;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.ParameterCastFix;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.ext.spock.SpockUtils;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -37,13 +34,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -70,36 +64,7 @@ public class GroovyTypeCheckVisitorHelper {
 
   @NotNull
   public static PsiElement getExpressionPartToHighlight(@NotNull GrExpression expr) {
-    if (expr instanceof GrClosableBlock) {
-      final PsiElement highlightElement = ((GrClosableBlock)expr).getLBrace();
-      assert highlightElement != null;
-      return highlightElement;
-    }
-    return expr;
-  }
-
-  public static boolean checkSimpleArrayAccess(@NotNull CallInfo<? extends GrIndexProperty> info, @Nullable PsiType type, @NotNull PsiType[] types) {
-    if (!(type instanceof PsiArrayType)) return false;
-
-    if (PsiUtil.isLValue(info.getCall())) {
-      if (types.length == 2 &&
-          TypesUtil.isAssignable(PsiType.INT, types[0], info.getCall()) &&
-          TypesUtil.isAssignable(((PsiArrayType)type).getComponentType(), types[1], info.getCall())) {
-        return true;
-      }
-    }
-    else {
-      if (types.length == 1 && TypesUtil.isAssignable(PsiType.INT, types[0], info.getCall())) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  public static boolean typesAreEqual(@NotNull PsiType expected, @NotNull PsiType actual, @NotNull PsiElement context) {
-    return TypesUtil.isAssignableByMethodCallConversion(expected, actual, context) &&
-           TypesUtil.isAssignableByMethodCallConversion(actual, expected, context);
+    return expr instanceof GrClosableBlock ? ((GrClosableBlock)expr).getLBrace() : expr;
   }
 
   /**
@@ -149,12 +114,12 @@ public class GroovyTypeCheckVisitorHelper {
     if (argumentList == null) return LocalQuickFix.EMPTY_ARRAY;
     final List<GrExpression> args = getExpressionArgumentsOfCall(argumentList);
     if (args == null) return LocalQuickFix.EMPTY_ARRAY;
-    
+
     final List<Pair<Integer, PsiType>> allErrors = new ArrayList<>();
     final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(signature);
     for (GrClosureSignature closureSignature : signatures) {
       final GrClosureSignatureUtil.MapResultWithError<PsiType> map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
-        closureSignature, argumentTypes, id, argumentList, 1
+        closureSignature, argumentTypes, id, argumentList, 255
       );
       if (map != null) {
         final List<Pair<Integer, PsiType>> errors = map.getErrors();
@@ -189,40 +154,6 @@ public class GroovyTypeCheckVisitorHelper {
     }
     builder.append(")");
     return builder.toString();
-  }
-
-  public static boolean checkCategoryQualifier(@NotNull GrReferenceExpression place,
-                                               @Nullable GrExpression qualifier,
-                                               @NotNull PsiMethod gdkMethod,
-                                               @Nullable PsiSubstitutor substitutor) {
-    PsiClass categoryAnnotationOwner = inferCategoryAnnotationOwner(place, qualifier);
-
-    if (categoryAnnotationOwner != null) {
-      PsiClassType categoryType = GdkMethodUtil.getCategoryType(categoryAnnotationOwner);
-      if (categoryType != null) {
-        return GdkMethodUtil.isCategoryMethod(gdkMethod, categoryType, qualifier, substitutor);
-      }
-    }
-
-    return false;
-  }
-
-  @Nullable
-  public static PsiClass inferCategoryAnnotationOwner(@NotNull GrReferenceExpression place, @Nullable GrExpression qualifier) {
-    if (qualifier == null) {
-      GrMethod container = PsiTreeUtil.getParentOfType(place, GrMethod.class, true, GrMember.class);
-      if (container != null &&
-          !container.hasModifierProperty(PsiModifier.STATIC)) { //only instance methods can be qualified by category class
-        return container.getContainingClass();
-      }
-    }
-    else if (PsiUtil.isThisReference(qualifier)) {
-      PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-      if (resolved instanceof PsiClass) {
-        return (PsiClass)resolved;
-      }
-    }
-    return null;
   }
 
   @Nullable
@@ -273,13 +204,5 @@ public class GroovyTypeCheckVisitorHelper {
       ContainerUtil.addAll(args, ((GrMethodCallExpression)parent).getClosureArguments());
     }
     return args;
-  }
-
-  static boolean isImplicitReturnStatement(@NotNull GrExpression expression) {
-    GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(expression);
-    return flowOwner != null &&
-        PsiUtil.isExpressionStatement(expression) &&
-        ControlFlowUtils.isReturnValue(expression, flowOwner) &&
-        !PsiUtil.isVoidMethodCall(expression);
   }
 }

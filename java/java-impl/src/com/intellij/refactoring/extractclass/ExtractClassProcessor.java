@@ -19,7 +19,6 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -29,7 +28,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -139,12 +137,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
       typeParams.addAll(typeParamSet);
     }
-    myClass = new WriteCommandAction<PsiClass>(myProject, getCommandName()){
-      @Override
-      protected void run(@NotNull Result<PsiClass> result) throws Throwable {
-        result.setResult(buildClass(false));
-      }
-    }.execute().getResultObject();
+    myClass = WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).compute(() -> buildClass(false));
     myExtractEnumProcessor = new ExtractEnumProcessor(myProject, this.enumConstants, myClass);
   }
 
@@ -230,8 +223,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   private String calculateDelegateFieldName() {
     final Project project = sourceClass.getProject();
-    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    final JavaCodeStyleSettings settings = settingsManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class);
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(sourceClass.getContainingFile());
 
     final String baseName = settings.FIELD_NAME_PREFIX.length() == 0 ? StringUtil.decapitalize(newClassName) : newClassName;
     String name = settings.FIELD_NAME_PREFIX + baseName + settings.FIELD_NAME_SUFFIX;

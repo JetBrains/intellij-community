@@ -4,6 +4,7 @@ class A {
     public void foo() {
         String value ="not-null";
 
+        // Another comment
         if (value == null) {
             return;
         }

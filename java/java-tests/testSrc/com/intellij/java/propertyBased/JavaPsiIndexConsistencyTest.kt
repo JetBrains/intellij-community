@@ -43,15 +43,17 @@ import org.jetbrains.jetCheck.PropertyChecker
 class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
 
   fun testFuzzActions() {
-    val genAction: Generator<Action> = Generator.anyOf(
-      PsiIndexConsistencyTester.commonActions(PsiIndexConsistencyTester.commonRefs + listOf(ClassRef)),
-      Generator.sampledFrom(AddImport, AddEnum, InvisiblePsiChange),
-      Generator.booleans().map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) },
-      Generator.from { data -> TextChange(data.generateConditional(Generator.asciiIdentifiers()) { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) },
-                                          data.generate(Generator.booleans()),
-                                          data.generate(Generator.booleans())) }
-    )
-    PropertyChecker.forAll(Generator.listsOf(genAction)).withIterationCount(20).shouldHold { actions ->
+    val genAction: Generator<Action> = Generator.frequency(
+      10, Generator.sampledFrom(
+      PsiIndexConsistencyTester.commonActions +
+      PsiIndexConsistencyTester.refActions(PsiIndexConsistencyTester.commonRefs + listOf(ClassRef)) + 
+      listOf(AddImport, AddEnum, InvisiblePsiChange) + 
+      listOf(true, false).map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) }
+    ),
+      1, Generator.from { data -> TextChange(data.generateConditional(Generator.asciiIdentifiers()) { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) },
+                                                   data.generate(Generator.booleans()),
+                                                   data.generate(Generator.booleans())) })
+    PropertyChecker.customized().forAll(Generator.listsOf(genAction)) { actions ->
       val prevLevel = LanguageLevelModuleExtensionImpl.getInstance(myFixture.module).languageLevel
       try {
         PsiIndexConsistencyTester.runActions(JavaModel(myFixture), *actions.toTypedArray())

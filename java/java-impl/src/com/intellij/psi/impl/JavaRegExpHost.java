@@ -183,7 +183,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
-  public boolean isValidGroupName(String name, @NotNull PsiElement context) {
+  public boolean isValidGroupName(String name, @NotNull RegExpGroup group) {
     for (int i = 0, length = name.length(); i < length; i++) {
       final char c = name.charAt(i);
       if (!AsciiUtil.isLetterOrDigit(c)) {

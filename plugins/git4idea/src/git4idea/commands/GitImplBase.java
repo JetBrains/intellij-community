@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
@@ -87,8 +86,8 @@ abstract class GitImplBase implements Git {
    * Run handler with retry on authentication failure
    */
   @NotNull
-  private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
-                                      @NotNull Computable<OutputCollector> outputCollectorConstructor) {
+  private GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
+                               @NotNull Computable<OutputCollector> outputCollectorConstructor) {
     @NotNull GitCommandResult result;
 
     int authAttempt = 0;
@@ -106,10 +105,10 @@ abstract class GitImplBase implements Git {
    * Run handler with per-project locking, logging and authentication
    */
   @NotNull
-  private static GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
+  private GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
     Project project = handler.project();
     if (project != null && handler.isRemote()) {
-      try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler)) {
+      try (GitHandlerAuthenticationManager authenticationManager = prepareAuthentication(project, handler)) {
         return GitCommandResult.withAuthentication(doRun(handler, outputCollector), authenticationManager.isHttpAuthFailed());
       }
       catch (IOException e) {
@@ -118,6 +117,12 @@ abstract class GitImplBase implements Git {
     }
 
     return doRun(handler, outputCollector);
+  }
+
+  @NotNull
+  protected GitHandlerAuthenticationManager prepareAuthentication(@NotNull Project project, @NotNull GitLineHandler handler)
+    throws IOException {
+    return GitHandlerAuthenticationManager.prepare(project, handler);
   }
 
   /**
@@ -132,7 +137,7 @@ abstract class GitImplBase implements Git {
         version = GitExecutableManager.getInstance().identifyVersion(executablePath);
       }
       catch (Exception e) {
-        return handlePreValidationException(handler.project(), executablePath, e);
+        return handlePreValidationException(handler.project(), e);
       }
     }
 
@@ -222,21 +227,18 @@ abstract class GitImplBase implements Git {
   }
 
   @NotNull
-  private static GitCommandResult handlePreValidationException(@Nullable Project project,
-                                                               @NotNull String executablePath,
-                                                               @NotNull Exception e) {
+  private static GitCommandResult handlePreValidationException(@Nullable Project project, @NotNull Exception e) {
     // Show notification if it's a project non-modal task and cancel the task
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (project != null
         && progressIndicator != null
         && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
-      GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(executablePath, e);
+      GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
       throw new ProcessCanceledException(e);
     }
     else {
       return GitCommandResult.startError(
-        GitBundle.getString("git.executable.validation.error.title") + " \n" +
-        GitBundle.message("git.executable.validation.error.start.subtitle", executablePath) + ": " +
+        GitBundle.getString("git.executable.validation.error.start.title") + ": \n" +
         GitExecutableProblemsNotifier.getPrettyErrorMessage(e)
       );
     }
@@ -254,7 +256,7 @@ abstract class GitImplBase implements Git {
               vcsConsoleWriter.showMessage(line);
             }
             else if (outputType == ProcessOutputTypes.STDERR && !handler.isStderrSuppressed()) {
-              vcsConsoleWriter.showErrorMessage(line);
+              if (!looksLikeProgress(line)) vcsConsoleWriter.showErrorMessage(line);
             }
           }
         }
@@ -281,6 +283,21 @@ abstract class GitImplBase implements Git {
     }
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
+
+  private static boolean looksLikeProgress(@NotNull String line) {
+    String trimmed = StringUtil.trimStart(line, REMOTE_PROGRESS_PREFIX);
+    return ContainerUtil.exists(PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(trimmed, indicator));
+  }
+
+  public static final String REMOTE_PROGRESS_PREFIX = "remote: ";
+
+  public static final String[] PROGRESS_INDICATORS = {
+    "Counting objects:",
+    "Compressing objects:",
+    "Writing objects:",
+    "Receiving objects:",
+    "Resolving deltas:"
+  };
 
   private static boolean looksLikeError(@NotNull final String text) {
     return ContainerUtil.exists(ERROR_INDICATORS, indicator -> StringUtil.startsWithIgnoreCase(text.trim(), indicator));

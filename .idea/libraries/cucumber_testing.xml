@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="cucumber-testing" type="repository">
-    <properties maven-id="info.cukes:cucumber-jvm-deps:1.0.3" />
+    <properties maven-id="info.cukes:cucumber-jvm-deps:1.0.5" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/info/cukes/cucumber-jvm-deps/1.0.3/cucumber-jvm-deps-1.0.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/info/cukes/cucumber-jvm-deps/1.0.5/cucumber-jvm-deps-1.0.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/info/cukes/cucumber-jvm-deps/1.0.3/cucumber-jvm-deps-1.0.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/info/cukes/cucumber-jvm-deps/1.0.5/cucumber-jvm-deps-1.0.5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

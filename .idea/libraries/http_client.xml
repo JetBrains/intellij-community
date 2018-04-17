@@ -1,23 +1,20 @@
 <component name="libraryTable">
-  <library name="http-client">
-    <ANNOTATIONS>
-      <root url="file://$PROJECT_DIR$/lib/annotations/http-client"/>
-    </ANNOTATIONS>
+  <library name="http-client" type="repository">
+    <properties maven-id="org.apache.httpcomponents:httpmime:4.5.5" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/httpclient-4.5.2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/httpcore-4.4.5.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/fluent-hc-4.5.2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/httpmime-4.5.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpmime/4.5.5/httpmime-4.5.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpclient/4.5.5/httpclient-4.5.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore/4.4.9/httpcore-4.4.9.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.10/commons-codec-1.10.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-core-4.4.5-src.zip!/httpcomponents-core-4.4.5/httpcore/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-core-4.4.5-src.zip!/httpcomponents-core-4.4.5/httpcore/src/main/java-deprecated" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.5.2-src.zip!/httpcomponents-client-4.5.2/httpmime/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.5.2-src.zip!/httpcomponents-client-4.5.2/httpmime/src/main/java-deprecated" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.5.2-src.zip!/httpcomponents-client-4.5.2/fluent-hc/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.5.2-src.zip!/httpcomponents-client-4.5.2/httpclient/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.5.2-src.zip!/httpcomponents-client-4.5.2/httpclient/src/main/java-deprecated" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpmime/4.5.5/httpmime-4.5.5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpclient/4.5.5/httpclient-4.5.5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore/4.4.9/httpcore-4.4.9-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.10/commons-codec-1.10-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

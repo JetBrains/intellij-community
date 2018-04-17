@@ -26,7 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class DirElementInfo extends SmartPointerElementInfo {
+  @NotNull
   private final VirtualFile myVirtualFile;
+  @NotNull
   private final Project myProject;
 
 
@@ -36,12 +38,12 @@ class DirElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  PsiElement restoreElement() {
+  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
     return SelfElementInfo.restoreDirectoryFromVirtual(myVirtualFile, myProject);
   }
 
   @Override
-  PsiFile restoreFile() {
+  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
     return null;
   }
 
@@ -51,29 +53,25 @@ class DirElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other,
+                                   @NotNull SmartPointerManagerImpl manager) {
     return other instanceof DirElementInfo && Comparing.equal(myVirtualFile, ((DirElementInfo)other).myVirtualFile);
   }
 
+  @NotNull
   @Override
   VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
   @Override
-  Segment getRange() {
+  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
     return null;
-  }
-
-  @NotNull
-  @Override
-  Project getProject() {
-    return myProject;
   }
 
   @Nullable
   @Override
-  Segment getPsiRange() {
+  Segment getPsiRange(@NotNull SmartPointerManagerImpl manager) {
     return null;
   }
 

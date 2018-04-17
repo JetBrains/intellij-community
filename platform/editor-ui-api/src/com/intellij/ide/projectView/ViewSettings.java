@@ -14,6 +14,13 @@ public interface ViewSettings extends NodeOptions {
   ViewSettings DEFAULT = Immutable.DEFAULT;
 
   /**
+   * @return {@code true} if directories (folders or packages) should be separated from files, {@code false} otherwise.
+   */
+  default boolean isFoldersAlwaysOnTop() {
+    return true;
+  }
+
+  /**
    * Checks if the project view displays members of classes.
    *
    * @return true if class members are displayed, false otherwise.
@@ -53,6 +60,7 @@ public interface ViewSettings extends NodeOptions {
   class Immutable extends NodeOptions.Immutable implements ViewSettings {
     public static final ViewSettings DEFAULT = new ViewSettings.Immutable(null);
 
+    private final boolean myFoldersAlwaysOnTop;
     private final boolean myShowMembers;
     private final boolean myStructureView;
     private final boolean myShowModules;
@@ -61,11 +69,17 @@ public interface ViewSettings extends NodeOptions {
 
     public Immutable(ViewSettings settings) {
       super(settings);
+      myFoldersAlwaysOnTop = settings == null || settings.isFoldersAlwaysOnTop();
       myShowMembers = settings != null && settings.isShowMembers();
       myStructureView = settings != null && settings.isStructureView();
       myShowModules = settings == null || settings.isShowModules();
       myFlattenModules = settings != null && settings.isFlattenModules();
       myShowURL = settings == null || settings.isShowURL();
+    }
+
+    @Override
+    public boolean isFoldersAlwaysOnTop() {
+      return myFoldersAlwaysOnTop;
     }
 
     @Override

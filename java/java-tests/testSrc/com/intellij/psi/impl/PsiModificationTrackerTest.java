@@ -432,12 +432,12 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
       VirtualFile ws = myProject.getWorkspaceFile();
       assertNotNull(ws);
-      new WriteCommandAction.Simple(myProject){
-        @Override
-        protected void run() throws Throwable {
-          VfsUtil.saveText(ws, VfsUtilCore.loadText(ws) + " ");
-        }
-      }.execute();
+      try {
+        WriteCommandAction.writeCommandAction(myProject).run(() -> VfsUtil.saveText(ws, VfsUtilCore.loadText(ws) + " "));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
       assertEquals(mc, tracker.getModificationCount());
 
       return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ import com.intellij.util.containers.OrderedSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
+import java.util.Collections;
 
 /**
  * Always assign instances of this class to a final field to prevent an InstantiationException
  * from DefaultJDOMExternalizer.
- * <p/>
+ * <p>
  * The constructor of this class takes parameters. This means an instance of this class
  * cannot be constructed by {@link com.intellij.openapi.util.DefaultJDOMExternalizer}.
  * If instances of this class are assigned to a final field, DefaultJDOMExternalizer will
@@ -46,20 +46,12 @@ public class ExternalizableStringSet extends OrderedSet<String>
 
   /**
    * note: declare ExternalizableStringSet fields as <b>final</b>!<br>
-   * note: reference to defaultValues is retained by this set!
+   * note: when it's not empty, a reference to the defaultValues array is retained by this set!
    */
   public ExternalizableStringSet(@NonNls String... defaultValues) {
     this.defaultValues = defaultValues.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : defaultValues;
-    for (String defaultValue : defaultValues) {
-      add(defaultValue);
-    }
+    Collections.addAll(this, defaultValues);
   }
-
-  /*
-  private ExternalizableStringSet() {
-      throw new AssertionError("ExternalizableStringSet fields should be declared final");
-    }
-    */
 
   public boolean hasDefaultValues() {
     if (size() != defaultValues.length) {
@@ -76,9 +68,9 @@ public class ExternalizableStringSet extends OrderedSet<String>
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     boolean dataFound = false;
-    for (Element item : (List<Element>)element.getChildren(ITEM)) {
+    for (Element item : element.getChildren(ITEM)) {
       if (!dataFound) {
-        clear();
+        clear(); // remove default values
         dataFound = true;
       }
       add(StringUtil.unescapeXml(item.getAttributeValue(VALUE)));
@@ -97,5 +89,21 @@ public class ExternalizableStringSet extends OrderedSet<String>
         element.addContent(item);
       }
     }
+  }
+
+  /**
+   * Write this ExternalizableStringSet to the specified element, with the specified name, if it has non-default values.
+   * @param element  the element to write to.
+   * @param name  the name of the option.
+   * @throws WriteExternalException
+   */
+  public void writeSettings(Element element, String name) throws WriteExternalException {
+    if (hasDefaultValues()) {
+      return;
+    }
+    final Element optionElement = new Element("option").setAttribute("name", name);
+    final Element valueElement = new Element("value");
+    writeExternal(valueElement);
+    element.addContent(optionElement.addContent(valueElement));
   }
 }

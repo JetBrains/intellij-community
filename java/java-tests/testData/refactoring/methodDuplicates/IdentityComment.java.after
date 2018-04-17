@@ -11,6 +11,6 @@ class IdentityComplete {
   public void context(boolean bp) {
     /* before fragment */
       method(bp);
-    // after fragment
+      // after fragment
   }
 }

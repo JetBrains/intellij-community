@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -254,7 +252,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return pos == null ? 0 : pos.column;
   }
 
-  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state){
+  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState){
     TextEditorState.CaretState[] carets = state.CARETS;
     if (carets != null && carets.length > 0) {
       if (!editor.getCaretModel().supportsMultipleCarets()) carets = Arrays.copyOf(carets, 1);
@@ -276,7 +274,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
         if (relativeCaretPosition != Integer.MAX_VALUE) {
           EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
         }
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        if (!exactState) editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         editor.getScrollingModel().enableAnimation();
       }
     };
@@ -332,7 +330,12 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
     @Override
     public void setState(@NotNull FileEditorState state) {
-      setStateImpl(null, myEditor, (TextEditorState)state);
+      setState(state, false);
+    }
+
+    @Override
+    public void setState(@NotNull FileEditorState state, boolean exactState) {
+      setStateImpl(null, myEditor, (TextEditorState)state, exactState);
     }
 
     @Override

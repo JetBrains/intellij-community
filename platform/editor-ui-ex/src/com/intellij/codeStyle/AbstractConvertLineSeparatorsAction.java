@@ -16,7 +16,6 @@
 package com.intellij.codeStyle;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -122,8 +121,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
 
   public static void changeLineSeparators(@NotNull final Project project,
                                           @NotNull final VirtualFile virtualFile,
-                                          @NotNull final String newSeparator)
-  {
+                                          @NotNull final String newSeparator) {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Document document = fileDocumentManager.getCachedDocument(virtualFile);
     if (document != null) {
@@ -140,16 +138,13 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
                                   LineSeparator.fromString(currentSeparator), LineSeparator.fromString(newSeparator));
     }
 
-    new WriteCommandAction(project, commandText) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        try {
-          LoadTextUtil.changeLineSeparators(project, virtualFile, newSeparator, this);
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
+    WriteCommandAction.writeCommandAction(project).withName(commandText).run(() -> {
+      try {
+        LoadTextUtil.changeLineSeparators(project, virtualFile, newSeparator, virtualFile);
       }
-    }.execute();
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    });
   }
 }

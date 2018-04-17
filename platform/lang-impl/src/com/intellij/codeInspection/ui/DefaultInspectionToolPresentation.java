@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -26,15 +24,18 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import java.util.HashSet;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NonNls;
@@ -236,8 +237,8 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public void addProblemElement(@Nullable RefEntity refElement, boolean filterSuppressed, @NotNull final CommonProblemDescriptor... descriptors) {
-    if (refElement == null) return;
-    if (descriptors.length == 0) return;
+    if (refElement == null || descriptors.length == 0) return;
+    checkFromSameFile(refElement, descriptors);
     if (filterSuppressed) {
       if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
         myProblemElements.put(refElement, descriptors);
@@ -533,5 +534,19 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
         return CommonProblemDescriptor[]::new;
       }
     };
+  }
+
+  private static void checkFromSameFile(RefEntity element, CommonProblemDescriptor[] descriptors) {
+    if (!(element instanceof RefElement)) return;
+    SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
+    if (pointer == null) return;
+    VirtualFile entityFile = pointer.getVirtualFile();
+    if (entityFile == null) return;
+    StreamEx.of(descriptors).select(ProblemDescriptorBase.class).forEach(d -> {
+      VirtualFile file = d.getContainingFile();
+      if (file != null) {
+        LOG.assertTrue(file.equals(entityFile), "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
+      }
+    });
   }
 }

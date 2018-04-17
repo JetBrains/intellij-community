@@ -65,7 +65,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myUi = ui;
     myFilePath = filePath;
     myRoot = notNull(VcsUtil.getVcsRootFor(logData.getProject(), myFilePath));
-    myGraphTable = new VcsLogGraphTable(myUi, logData, visiblePack) {
+    myGraphTable = new VcsLogGraphTable(myUi, logData, visiblePack, myUi::requestMore) {
       @Override
       protected boolean isSpeedSearchEnabled() {
         return true;

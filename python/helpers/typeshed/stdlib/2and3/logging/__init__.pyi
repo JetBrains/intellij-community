@@ -373,6 +373,10 @@ class StreamHandler(Handler):
 
 
 class FileHandler(Handler):
+    baseFilename = ...  # type: str
+    mode = ...  # type: str
+    encoding = ...  # type: Optional[str]
+    delay = ...  # type: bool
     def __init__(self, filename: str, mode: str = ...,
                  encoding: Optional[str] = ..., delay: bool = ...) -> None: ...
 

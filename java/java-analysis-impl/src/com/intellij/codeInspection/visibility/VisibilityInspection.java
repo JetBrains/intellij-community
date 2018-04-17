@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.visibility;
 
@@ -46,8 +32,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.visibility.VisibilityInspection");
@@ -170,15 +157,29 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (refElement instanceof RefParameter) return null;
     if (refElement.isSyntheticJSP()) return null;
 
-    //if (!SUGGEST_FOR_CONSTANTS && refEntity instanceof RefField && PsiUtil.isConstantField(refElement.getElement())) {
-    //  return null;
-    //}
+    if (!SUGGEST_FOR_CONSTANTS && refEntity instanceof RefField) {
+      RefField refField = (RefField)refEntity;
+      if (refField.isFinal() && refField.isStatic() && refField.isOnlyAssignedInInitializer()) {
+        return null;
+      }
+    }
 
     int minLevel = -1;
     //ignore entry points.
     if (refElement.isEntry()) {
       minLevel = getMinVisibilityLevel(refElement);
       if (minLevel <= 0) return null;
+    }
+
+    if (refElement instanceof RefField) {
+      Boolean implicitlyWritten = refElement.getUserData(RefField.IMPLICITLY_WRITTEN);
+      if (implicitlyWritten != null && implicitlyWritten) {
+        return null;
+      }
+      Boolean implicitlyRead = refElement.getUserData(RefField.IMPLICITLY_READ);
+      if (implicitlyRead != null && implicitlyRead) {
+        return null;
+      }
     }
 
     //ignore implicit constructors. User should not be able to see them.
@@ -495,7 +496,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                                                 @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     final EntryPointsManager entryPointsManager = globalContext.getEntryPointsManager(manager);
-    for (RefElement entryPoint : entryPointsManager.getEntryPoints()) {
+    for (RefElement entryPoint : entryPointsManager.getEntryPoints(manager)) {
       //don't ignore entry points with explicit visibility requirements
       if (entryPoint instanceof RefJavaElement && getMinVisibilityLevel((RefJavaElement)entryPoint) > 0) {
         continue;
@@ -554,7 +555,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                 String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
                 if (qualifiedName != null) {
                   final Project project = manager.getProject();
-                  PsiSearchHelper.SERVICE.getInstance(project)
+                  PsiSearchHelper.getInstance(project)
                     .processUsagesInNonJavaFiles(qualifiedName, (file, startOffset, endOffset) -> {
                       entryPointsManager.addEntryPoint(defaultConstructor, false);
                       ignoreElement(processor, defaultConstructor);

@@ -153,7 +153,6 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
       PsiExpression rExpression = RefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType());
 
       commentTracker.replace(assignment.getRExpression(), rExpression);
-      commentTracker.deleteAndRestoreComments(initializer);
 
       PsiElement block = decl.getParent();
       if (block instanceof PsiForStatement) {
@@ -185,7 +184,12 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         return (PsiAssignmentExpression)replaced.getExpression();
       }
       else {
-        return (PsiAssignmentExpression)((PsiExpressionStatement)block.addAfter(statement, decl)).getExpression();
+        try {
+          return (PsiAssignmentExpression)((PsiExpressionStatement)block.addAfter(statement, decl)).getExpression();
+        }
+        finally {
+          commentTracker.deleteAndRestoreComments(initializer);
+        }
       }
     }
     else {

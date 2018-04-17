@@ -122,7 +122,7 @@ private class JavaMethodRenderer(
     val builder = TemplateBuilderImpl(method)
     createTemplateContext(builder).run {
       setupTypeElement(method.returnTypeElement, request.returnType)
-      setupParameters(method, request.parameters)
+      setupParameters(method, request.expectedParameters)
     }
     builder.setEndVariableAfter(method.body ?: method)
     return builder

@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -132,7 +133,7 @@ public class PyPackageUtil {
     return Stream
       .of(REQUIRES, INSTALL_REQUIRES)
       .map(setupCall::getKeywordArgument)
-      .map(requires -> resolveRequiresValue(module, requires))
+      .map(requires -> resolveValue(module, requires, PyListLiteralExpression.class))
       .filter(requires -> requires != null)
       .findFirst()
       .orElse(null);
@@ -152,6 +153,52 @@ public class PyPackageUtil {
     return mergeSetupPyRequirements(requirementsFromRequires, requirementsFromLinks);
   }
 
+  @Nullable
+  public static Map<String, List<PyRequirement>> findSetupPyExtrasRequire(@NotNull Module module) {
+    final PyCallExpression setupCall = findSetupCall(module);
+    if (setupCall == null) return null;
+
+    final PyDictLiteralExpression extrasRequire =
+      resolveValue(module, setupCall.getKeywordArgument("extras_require"), PyDictLiteralExpression.class);
+    if (extrasRequire == null) return null;
+
+    final Map<String, List<PyRequirement>> result = new HashMap<>();
+
+    for (PyKeyValueExpression extraRequires : extrasRequire.getElements()) {
+      final Pair<String, List<PyRequirement>> extraResult = getExtraRequires(extraRequires.getKey(), extraRequires.getValue());
+      if (extraResult != null) {
+        result.put(extraResult.first, extraResult.second);
+      }
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private static Pair<String, List<PyRequirement>> getExtraRequires(@NotNull PyExpression extra, @Nullable PyExpression requires) {
+    if (extra instanceof PyStringLiteralExpression) {
+      final String requiresValue;
+
+      if (requires instanceof PyStringLiteralExpression) {
+        requiresValue = ((PyStringLiteralExpression)requires).getStringValue();
+      }
+      else if (requires instanceof PyListLiteralExpression) {
+        final List<String> requiresListValue = PyUtil.strListValue(requires);
+        requiresValue = requiresListValue != null ? StringUtil.join(requiresListValue, "\n") : null;
+      }
+      else {
+        requiresValue = null;
+      }
+
+      if (requiresValue != null) {
+        return Pair.createNonNull(((PyStringLiteralExpression)extra).getStringValue(),
+                                  fix(PyRequirement.fromText((requiresValue))));
+      }
+    }
+
+    return null;
+  }
+
   @NotNull
   private static List<PyRequirement> getSetupPyRequiresFromArguments(@NotNull Module module,
                                                                      @NotNull PyCallExpression setupCall,
@@ -161,7 +208,7 @@ public class PyPackageUtil {
         Stream
           .of(argumentNames)
           .map(setupCall::getKeywordArgument)
-          .map(requires -> resolveRequiresValue(module, requires))
+          .map(requires -> resolveValue(module, requires, PyListLiteralExpression.class))
           .filter(requires -> requires != null)
           .flatMap(requires -> Stream.of(requires.getElements()))
           .filter(PyStringLiteralExpression.class::isInstance)
@@ -207,17 +254,17 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  private static PyListLiteralExpression resolveRequiresValue(@NotNull Module module, @Nullable PyExpression requires) {
-    if (requires instanceof PyListLiteralExpression) {
-      return (PyListLiteralExpression)requires;
+  private static <T extends PyExpression> T resolveValue(@NotNull Module module, @Nullable PyExpression expression, @NotNull Class<T> cls) {
+    if (cls.isInstance(expression)) {
+      return cls.cast(expression);
     }
-    if (requires instanceof PyReferenceExpression) {
+    if (expression instanceof PyReferenceExpression) {
       final TypeEvalContext context = TypeEvalContext.deepCodeInsight(module.getProject());
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final QualifiedResolveResult result = ((PyReferenceExpression)requires).followAssignmentsChain(resolveContext);
+      final QualifiedResolveResult result = ((PyReferenceExpression)expression).followAssignmentsChain(resolveContext);
       final PsiElement element = result.getElement();
-      if (element instanceof PyListLiteralExpression) {
-        return (PyListLiteralExpression)element;
+      if (cls.isInstance(element)) {
+        return cls.cast(element);
       }
     }
     return null;

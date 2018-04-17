@@ -59,6 +59,11 @@ class JUnitRunConfigurationProperties {
       testClassPatterns = []
     }
 
+    String forkMode = first(configuration.fork_mode)?.@value
+    if (forkMode != null && forkMode != "none") {
+      messages.error("Cannot run $file.name configuration: fork mode '$forkMode' is not supported")
+    }
+
     List<String> requiredArtifacts =
       first(configuration.method)?.option?.
             find { it.@name == "BuildArtifacts" && it.@enabled == "true" }?.

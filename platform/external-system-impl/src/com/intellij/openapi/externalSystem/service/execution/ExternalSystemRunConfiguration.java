@@ -80,6 +80,8 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.util.List;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
@@ -93,9 +95,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                                                                                           SMRunnerConsolePropertiesProvider {
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
+  public static final String DEBUG_SETUP_PREFIX = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=";
 
   private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
+  private static final boolean DISABLE_FORK_DEBUGGER = Boolean.getBoolean("external.system.disable.fork.debugger");
 
   public ExternalSystemRunConfiguration(@NotNull ProjectSystemId externalSystemId,
                                         Project project,
@@ -229,6 +233,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     @Nullable private RunContentDescriptor myContentDescriptor;
 
     private final int myDebugPort;
+    private ServerSocket myForkSocket = null;
 
     public MyRunnableState(@NotNull ExternalSystemTaskExecutionSettings settings,
                            @NotNull Project project,
@@ -257,6 +262,19 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
     public int getDebugPort() {
       return myDebugPort;
+    }
+
+    @Nullable
+    public ServerSocket getForkSocket() {
+      if (myForkSocket == null && !DISABLE_FORK_DEBUGGER) {
+        try {
+          myForkSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      return myForkSocket;
     }
 
     @Nullable
@@ -324,13 +342,12 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
         final String greeting;
+        final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings.toString());
         if (mySettings.getTaskNames().size() > 1) {
-          greeting = ExternalSystemBundle
-                       .message("run.text.starting.multiple.task", startDateTime, mySettings.toString()) + "\n";
+          greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", startDateTime, settingsDescription) + "\n";
         }
         else {
-          greeting =
-            ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, mySettings.toString()) + "\n";
+          greeting = ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, settingsDescription) + "\n";
         }
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
 
@@ -405,12 +422,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
             final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
             final String farewell;
             if (mySettings.getTaskNames().size() > 1) {
-              farewell = ExternalSystemBundle
-                .message("run.text.ended.multiple.task", endDateTime, mySettings.toString());
+              farewell = ExternalSystemBundle.message("run.text.ended.multiple.task", endDateTime, settingsDescription);
             }
             else {
-              farewell =
-                ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, mySettings.toString());
+              farewell = ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, settingsDescription);
             }
             processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
             foldGreetingOrFarewell(consoleView, farewell, false);
@@ -444,8 +459,12 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       }
 
       String jvmAgentSetup;
+
       if (myDebugPort > 0) {
-        jvmAgentSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
+        jvmAgentSetup = DEBUG_SETUP_PREFIX + myDebugPort;
+        if (getForkSocket() != null) {
+          jvmAgentSetup += " -forkSocket" + getForkSocket().getLocalPort();
+        }
       }
       else {
         ParametersList parametersList = extensionsJP.getVMParametersList();

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NotNullLazyKey
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy.Companion.DIRECTORY_POLICY
 import com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy.Companion.GRAND_PARENT_CANDIDATE
+import com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy.Companion.HIERARCHY_UPPER_BOUND
 import com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy.Companion.getCachingRoot
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.DIRECTORY_CACHE
 import javax.swing.tree.DefaultTreeModel
@@ -38,7 +39,7 @@ open class ChangesModuleGroupingPolicy(val myProject: Project, val myModel: Defa
     val policy = DIRECTORY_POLICY.get(subtreeRoot)
     val parent = GRAND_PARENT_CANDIDATE.get(subtreeRoot) ?: if (policy != null && !isTopLevel(nodePath)) policy.getParentNodeInternal(
       nodePath, subtreeRoot)
-    else subtreeRoot
+    else HIERARCHY_UPPER_BOUND.getRequired(subtreeRoot)
     val node = if (module == null) ChangesBrowserNode.create(myProject, PROJECT_ROOT_TAG) else ChangesBrowserModuleNode(module)
 
     myModel.insertNodeInto(node, parent, parent.childCount)

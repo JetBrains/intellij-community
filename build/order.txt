@@ -4148,7 +4148,6 @@ com/intellij/debugger/engine/StackFrameContext.class:/lib/openapi.jar
 com/intellij/debugger/engine/SuspendContext.class:/lib/openapi.jar
 com/intellij/debugger/engine/jdi/StackFrameProxy.class:/lib/openapi.jar
 com/intellij/debugger/engine/jdi/ObjectReferenceProxy.class:/lib/openapi.jar
-com/sun/jdi/Value.class:C:/Program%20Files/Java/jdk1.6.0_02/lib/tools.jar
 com/intellij/debugger/impl/DebuggerManagerImpl$1.class:/lib/idea.jar
 com/intellij/debugger/ui/breakpoints/BreakpointManager.class:/lib/idea.jar
 com/intellij/debugger/ui/breakpoints/Breakpoint.class:/lib/idea.jar

@@ -17,12 +17,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
@@ -82,14 +82,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   @Nullable
   protected String resolveProjectPath(@NotNull Module module) {
-    final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-    String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
-
-    if (rootProjectPath == null || projectPath == null) return null;
-    if (!FileUtil.isAncestor(rootProjectPath, projectPath, false)) {
-      projectPath = rootProjectPath;
-    }
-    return projectPath;
+    return GradleRunnerUtil.resolveProjectPath(module);
   }
 
   @NotNull
@@ -133,7 +126,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
         taskNode = ExternalSystemApiUtil.find(
           moduleNode, ProjectKeys.TASK,
           node -> GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(node.getData().getType()) &&
-                  StringUtil.startsWith(sourceSetId, node.getData().getName()));
+                  StringUtil.startsWith(node.getData().getName(), sourceSetId));
       }
 
       if (taskNode == null) return ContainerUtil.emptyList();
@@ -141,15 +134,11 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       result = ContainerUtil.list("clean" + StringUtil.capitalize(taskName), taskName);
     }
 
-    final String path;
-    if(!externalProjectId.startsWith(":")) {
-      path = ":";
-    } else {
-      final List<String> pathParts = StringUtil.split(externalProjectId, ":");
-      if (trimSourceSet && !pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
-      final String join = StringUtil.join(pathParts, ":");
-      path = ":" + join + (!join.isEmpty() ? ":" : "");
-    }
+    final List<String> pathParts = StringUtil.split(externalProjectId, ":");
+    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) pathParts.remove(0);
+    if (trimSourceSet && !pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
+    String join = StringUtil.join(pathParts, ":");
+    String path = ":" + join + (!join.isEmpty() ? ":" : "");
     return ContainerUtil.map(result, s -> path + s);
   }
 }

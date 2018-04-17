@@ -86,12 +86,8 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final PyMemberInfo<PyElement> member = findMemberInfo(sourceClass, memberToMove);
     member.setToAbstract(toAbstract);
     final String destUrl = myFixture.getFile().getVirtualFile().getParent().findChild("dest_module.py").getUrl();
-    new WriteCommandAction.Simple(myFixture.getProject()) {
-      @Override
-      protected void run() {
-        PyExtractSuperclassHelper.extractSuperclass(findClass(sourceClass), Collections.singleton(member), "NewParent", destUrl);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myFixture.getProject()).run(
+      () -> PyExtractSuperclassHelper.extractSuperclass(findClass(sourceClass), Collections.singleton(member), "NewParent", destUrl));
     checkMultiFile(modules);
   }
 
@@ -158,15 +154,12 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
         members.add(memberInfo);
       }
 
-      new WriteCommandAction.Simple(myFixture.getProject()) {
-        @Override
-        protected void run() {
-          //noinspection ConstantConditions
-          final String url = sameFile ? myFixture.getFile().getVirtualFile().getUrl() :
-                             myFixture.getFile().getVirtualFile().getParent().getUrl();
-          PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, url);
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
+        //noinspection ConstantConditions
+        final String url = sameFile ? myFixture.getFile().getVirtualFile().getUrl() :
+                           myFixture.getFile().getVirtualFile().getParent().getUrl();
+        PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, url);
+      });
       myFixture.checkResultByFile(baseName + ".after.py");
     }
     catch (Exception e) {
@@ -187,14 +180,11 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     members.add(MembersManager.findMember(clazz, member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
 
-    new WriteCommandAction.Simple(myFixture.getProject()) {
-      @Override
-      protected void run() {
-        //noinspection ConstantConditions
-        final String path = base_dir.getPath() + "/a/b";
-        PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
+      //noinspection ConstantConditions
+      final String path = base_dir.getPath() + "/a/b";
+      PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path);
+    });
     final PsiManager psi_mgr = PsiManager.getInstance(myFixture.getProject());
     VirtualFile vfile = base_dir.findChild("a");
     assertTrue(vfile.isDirectory());
@@ -230,15 +220,12 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     members.add(MembersManager.findMember(clazz, member));
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
 
-    new WriteCommandAction.Simple(myFixture.getProject()) {
-      @Override
-      protected void run() {
-        //TODO: Test via presenter
-        //noinspection ConstantConditions
-        final String path = base_dir.getPath() + "/a/b";
-        PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path + "/foo.py");
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
+      //TODO: Test via presenter
+      //noinspection ConstantConditions
+      final String path = base_dir.getPath() + "/a/b";
+      PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path + "/foo.py");
+    });
     final PsiManager psi_mgr = PsiManager.getInstance(myFixture.getProject());
     VirtualFile vfile = base_dir.findChild("a");
     assertTrue(vfile.isDirectory());

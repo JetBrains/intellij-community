@@ -6,6 +6,24 @@ import com.intellij.lang.java.beans.PropertyKind.*
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType.getUnboxedType
 import com.intellij.psi.PsiType
+import java.beans.Introspector
+
+fun getPropertyNameAndKind(accessorName: String): Pair<String, PropertyKind>? {
+  val propertyKind = getKindByPrefix(accessorName) ?: return null
+  val prefixLength = propertyKind.prefix.length
+  if (!checkBaseName(accessorName, prefixLength)) return null
+  val propertyName = Introspector.decapitalize(accessorName.substring(prefixLength))
+  return propertyName to propertyKind
+}
+
+private fun getKindByPrefix(accessorName: String): PropertyKind? = PropertyKind.values().find { accessorName.startsWith(it.prefix) }
+
+private fun checkBaseName(accessorName: String, prefixLength: Int): Boolean {
+  if (accessorName.length <= prefixLength) return false
+  if (accessorName[prefixLength].isUpperCase()) return true // getX.*
+  if (accessorName.length <= prefixLength + 1) return false
+  return accessorName[prefixLength + 1].isUpperCase()       // getxX.*
+}
 
 /**
  * This method doesn't check if method name is an accessor name

@@ -28,7 +28,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -45,7 +44,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
@@ -235,9 +233,9 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
                                                                               if (configuration != null) {
                                                                                 addConfiguration(configuration);
                                                                               }
-                                                                            }, ModalityState.any(), project.getDisposed());
+                                                                            }, project.getDisposed());
                                                                           }
-                                                                        }, ModalityState.any(), project.getDisposed()), null, EmptyRunnable.getInstance(), false);
+                                                                        }, project.getDisposed()), null, EmptyRunnable.getInstance(), false);
         showPopup(button, popup);
       }
 
@@ -286,22 +284,17 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
         }
       }
     }
-    final JBList list = new JBList(wrappers);
-    list.setCellRenderer(new ColoredListCellRenderer() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof ChooseRunConfigurationPopup.ItemWrapper) {
-          setIcon(((ChooseRunConfigurationPopup.ItemWrapper)value).getIcon());
-          append(((ChooseRunConfigurationPopup.ItemWrapper)value).getText());
-        }
-      }
-    });
     final JBPopup popup = JBPopupFactory.getInstance()
-      .createListPopupBuilder(list)
-      .setItemChoosenCallback(() -> {
-        final int index = list.getSelectedIndex();
-        if (index < 0) return;
-        final ChooseRunConfigurationPopup.ItemWrapper at = (ChooseRunConfigurationPopup.ItemWrapper)list.getModel().getElementAt(index);
+      .createPopupChooserBuilder(wrappers)
+      .setRenderer(new ColoredListCellRenderer<ChooseRunConfigurationPopup.ItemWrapper>() {
+        @Override
+        protected void customizeCellRenderer(@NotNull JList<? extends ChooseRunConfigurationPopup.ItemWrapper> list,
+                                             ChooseRunConfigurationPopup.ItemWrapper value, int index, boolean selected, boolean hasFocus) {
+          setIcon(value.getIcon());
+          append(value.getText());
+        }
+      })
+      .setItemChosenCallback((at) -> {
         if (at.getValue() instanceof RunnerAndConfigurationSettings) {
           final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
           addConfiguration(added);

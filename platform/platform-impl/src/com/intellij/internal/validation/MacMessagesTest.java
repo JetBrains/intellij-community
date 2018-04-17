@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.openapi.wm.impl.IdeFocusManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +82,7 @@ public class MacMessagesTest extends AnAction {
     JButton showDialogWrapperButton = new JButton("Show a dialog wrapper");
     showDialogWrapperButton.setFocusable(false);
 
-    FocusManagerImpl fmi = FocusManagerImpl.getInstance();
+    FocusManagerImpl fmi = (FocusManagerImpl)FocusManagerImpl.getInstance();
     final Project p = fmi.getLastFocusedFrame().getProject();
 
     showDialogWrapperButton.addActionListener(new ActionListener() {
@@ -112,7 +113,7 @@ public class MacMessagesTest extends AnAction {
         final Task task = new Task.Modal(null, "Test task", true) {
           public void run(@NotNull final ProgressIndicator indicator) {
             ApplicationManager.getApplication().invokeAndWait(() -> {
-              FocusManagerImpl fmi1 = FocusManagerImpl.getInstance();
+              FocusManagerImpl fmi1 = (FocusManagerImpl)FocusManagerImpl.getInstance();
               final Project p1 = fmi1.getLastFocusedFrame().getProject();
               showTestMessage(p1);
             }, ModalityState.any());

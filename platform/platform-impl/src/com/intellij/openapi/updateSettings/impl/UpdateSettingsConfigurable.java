@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,7 @@ import java.util.List;
 /**
  * @author pti
  */
-public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class UpdateSettingsConfigurable implements SearchableConfigurable {
   private final UpdateSettings mySettings;
   private final boolean myCheckNowEnabled;
   private UpdatesSettingsPanel myPanel;
@@ -143,7 +142,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       String packageManager = mySettings.getPackageManagerName();
       if (packageManager != null) {
-        myUpdateChannels.setEnabled(false);
+        myCheckForUpdates.setText(IdeBundle.message("updates.settings.checkbox.external"));
+        myUpdateChannels.setVisible(false);
         myChannelWarning.setText(IdeBundle.message("updates.settings.external", packageManager));
         myChannelWarning.setForeground(JBColor.GRAY);
         myChannelWarning.setVisible(true);

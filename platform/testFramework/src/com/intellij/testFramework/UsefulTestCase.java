@@ -490,7 +490,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertOrderedEquals(@NotNull byte[] actual, @NotNull byte[] expected) {
-    assertEquals(actual.length, expected.length);
+    assertEquals(expected.length, actual.length);
     for (int i = 0; i < actual.length; i++) {
       byte a = actual[i];
       byte e = expected[i];
@@ -554,24 +554,35 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedCollection(Arrays.asList(collection), checkers);
   }
 
+  /**
+   * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+   */
   @SafeVarargs
-  public static <T> void assertSameElements(@NotNull T[] collection, @NotNull T... expected) {
-    assertSameElements(Arrays.asList(collection), expected);
+  public static <T> void assertSameElements(@NotNull T[] actual, @NotNull T... expected) {
+    assertSameElements(Arrays.asList(actual), expected);
   }
 
+  /**
+   * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+   */
   @SafeVarargs
-  public static <T> void assertSameElements(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
-    assertSameElements(collection, Arrays.asList(expected));
+  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull T... expected) {
+    assertSameElements(actual, Arrays.asList(expected));
   }
 
-  public static <T> void assertSameElements(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
-    assertSameElements(null, collection, expected);
+  /**
+   * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+   */
+  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull Collection<T> expected) {
+    assertSameElements(null, actual, expected);
   }
 
-  public static <T> void assertSameElements(String message, @NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
-    if (collection.size() != expected.size() || !new HashSet<>(expected).equals(new HashSet<T>(collection))) {
-      Assert.assertEquals(message, toString(expected, "\n"), toString(collection, "\n"));
-      Assert.assertEquals(message, new HashSet<>(expected), new HashSet<T>(collection));
+  /**
+   * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+   */
+  public static <T> void assertSameElements(String message, @NotNull Collection<? extends T> actual, @NotNull Collection<T> expected) {
+    if (actual.size() != expected.size() || !new HashSet<>(expected).equals(new HashSet<T>(actual))) {
+      Assert.assertEquals(message, new HashSet<>(expected), new HashSet<T>(actual));
     }
   }
 
@@ -992,7 +1003,7 @@ public abstract class UsefulTestCase extends TestCase {
         wasThrown = true;
 
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("");
+        System.out.println();
         //noinspection UseOfSystemOutOrSystemErr
         e.printStackTrace(System.out);
 

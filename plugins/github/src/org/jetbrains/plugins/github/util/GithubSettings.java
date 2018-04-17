@@ -1,27 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util;
 
-import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 
 import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 
-/**
- * @author oleg
- */
 @SuppressWarnings("MethodMayBeStatic")
 @State(name = "GithubSettings", storages = @Storage("github_settings.xml"))
 public class GithubSettings implements PersistentStateComponent<GithubSettings.State> {
-  private static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
-
   private State myState = new State();
 
   public State getState() {
@@ -34,15 +27,13 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   public static class State {
     @Nullable public String LOGIN = null;
-    @NotNull public String HOST = GithubApiUtil.DEFAULT_GITHUB_HOST;
-    @NotNull public AuthType AUTH_TYPE = AuthType.ANONYMOUS;
-    public boolean ANONYMOUS_GIST = false;
+    @Nullable public String HOST = null;
+    @Nullable public AuthType AUTH_TYPE = null;
+
     public boolean OPEN_IN_BROWSER_GIST = true;
     // "Secret" in UI, "Public" in API. "Private" here to preserve user settings after refactoring
     public boolean PRIVATE_GIST = true;
-    public boolean SAVE_PASSWORD = true;
     public int CONNECTION_TIMEOUT = 5000;
-    public boolean VALID_GIT_AUTH = true;
     public ThreeState CREATE_PULL_REQUEST_CREATE_REMOTE = ThreeState.UNSURE;
     public boolean CLONE_GIT_USING_SSH = false;
   }
@@ -59,59 +50,12 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     myState.CONNECTION_TIMEOUT = timeout;
   }
 
-  @NotNull
-  public String getHost() {
-    return myState.HOST;
-  }
-
-  @Nullable
-  public String getLogin() {
-    return myState.LOGIN;
-  }
-
-  @NotNull
-  public AuthType getAuthType() {
-    return myState.AUTH_TYPE;
-  }
-
-  public boolean isAuthConfigured() {
-    return !myState.AUTH_TYPE.equals(AuthType.ANONYMOUS);
-  }
-
-  private void setHost(@NotNull String host) {
-    myState.HOST = StringUtil.notNullize(host, GithubApiUtil.DEFAULT_GITHUB_HOST);
-  }
-
-  private void setLogin(@Nullable String login) {
-    myState.LOGIN = login;
-  }
-
-  private void setAuthType(@NotNull AuthType authType) {
-    myState.AUTH_TYPE = authType;
-  }
-
-  public boolean isAnonymousGist() {
-    return myState.ANONYMOUS_GIST;
-  }
-
   public boolean isOpenInBrowserGist() {
     return myState.OPEN_IN_BROWSER_GIST;
   }
 
   public boolean isPrivateGist() {
     return myState.PRIVATE_GIST;
-  }
-
-  public boolean isSavePassword() {
-    return myState.SAVE_PASSWORD;
-  }
-
-  public boolean isValidGitAuth() {
-    return myState.VALID_GIT_AUTH;
-  }
-
-  public boolean isSavePasswordMakesSense() {
-    return !PasswordSafe.getInstance().isMemoryOnly();
   }
 
   public boolean isCloneGitUsingSsh() {
@@ -127,20 +71,8 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     myState.CREATE_PULL_REQUEST_CREATE_REMOTE = value;
   }
 
-  public void setAnonymousGist(final boolean anonymousGist) {
-    myState.ANONYMOUS_GIST = anonymousGist;
-  }
-
   public void setPrivateGist(final boolean secretGist) {
     myState.PRIVATE_GIST = secretGist;
-  }
-
-  public void setSavePassword(final boolean savePassword) {
-    myState.SAVE_PASSWORD = savePassword;
-  }
-
-  public void setValidGitAuth(final boolean validGitAuth) {
-    myState.VALID_GIT_AUTH = validGitAuth;
   }
 
   public void setOpenInBrowserGist(final boolean openInBrowserGist) {
@@ -151,68 +83,56 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     myState.CLONE_GIT_USING_SSH = value;
   }
 
-  @NotNull
-  private String getPassword() {
-    return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY));
+  //region Deprecated auth
+
+  /**
+   * @deprecated {@link GithubAuthenticationManager}
+   */
+  @Deprecated
+  @Nullable
+  public String getHost() {
+    return myState.HOST;
   }
 
-  private void setPassword(@NotNull String password, boolean rememberPassword) {
-    if (!rememberPassword) return;
-    PasswordSafe.getInstance().setPassword(GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
+  /**
+   * @deprecated {@link GithubAuthenticationManager}
+   */
+  @Deprecated
+  @Nullable
+  public String getLogin() {
+    return myState.LOGIN;
   }
 
-  private static boolean isValidGitAuth(@NotNull GithubAuthData auth) {
-    switch (auth.getAuthType()) {
-      case BASIC:
-        assert auth.getBasicAuth() != null;
-        return auth.getBasicAuth().getCode() == null;
-      case TOKEN:
-        return true;
-      case ANONYMOUS:
-        return false;
-      default:
-        throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + auth.getAuthType());
-    }
+  /**
+   * @deprecated {@link GithubAuthenticationManager}
+   */
+  @Deprecated
+  @Nullable
+  public AuthType getAuthType() {
+    return myState.AUTH_TYPE;
   }
 
+  /**
+   * @deprecated {@link GithubAuthenticationManager}
+   */
+  @Deprecated
+  public boolean isAuthConfigured() {
+    return GithubAuthenticationManager.getInstance().hasAccounts();
+  }
+
+  /**
+   * @deprecated {@link GithubAuthenticationManager}
+   */
+  @Deprecated
   @NotNull
   public GithubAuthData getAuthData() {
-    switch (getAuthType()) {
-      case BASIC:
-        //noinspection ConstantConditions
-        return GithubAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
-      case TOKEN:
-        return GithubAuthData.createTokenAuth(getHost(), getPassword());
-      case ANONYMOUS:
-        return GithubAuthData.createAnonymous(getHost());
-      default:
-        throw new IllegalStateException("GithubSettings: getAuthData - wrong AuthType: " + getAuthType());
-    }
+    throw new IllegalStateException("Single account auth is deprecated");
   }
 
-  public void setAuthData(@NotNull GithubAuthData auth, boolean rememberPassword) {
-    setValidGitAuth(isValidGitAuth(auth));
-
-    setAuthType(auth.getAuthType());
-    setHost(auth.getHost());
-
-    switch (auth.getAuthType()) {
-      case BASIC:
-        assert auth.getBasicAuth() != null;
-        setLogin(auth.getBasicAuth().getLogin());
-        setPassword(auth.getBasicAuth().getPassword(), rememberPassword);
-        break;
-      case TOKEN:
-        assert auth.getTokenAuth() != null;
-        setLogin(null);
-        setPassword(auth.getTokenAuth().getToken(), rememberPassword);
-        break;
-      case ANONYMOUS:
-        setLogin(null);
-        setPassword("", rememberPassword);
-        break;
-      default:
-        throw new IllegalStateException("GithubSettings: setAuthData - wrong AuthType: " + auth.getAuthType());
-    }
+  public void clearAuth() {
+    myState.HOST = null;
+    myState.LOGIN = null;
+    myState.AUTH_TYPE = null;
   }
+  //endregion
 }

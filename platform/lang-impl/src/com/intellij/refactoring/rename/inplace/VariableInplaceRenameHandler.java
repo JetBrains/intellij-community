@@ -17,6 +17,7 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -105,6 +106,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     LOG.assertTrue(element != null);
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (checkAvailable(element, editor, dataContext)) {
+      assert editor != null;
       doRename(element, editor, dataContext);
     }
   }
@@ -112,13 +114,17 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   protected boolean checkAvailable(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
     if (!isAvailableOnDataContext(dataContext)) {
       LOG.error("Recursive invocation");
-      RenameHandlerRegistry.getInstance().getRenameHandler(dataContext).invoke(
+      RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
+      if (handler == null) return false;
+
+      handler.invoke(
         elementToRename.getProject(),
         editor,
         elementToRename.getContainingFile(), dataContext
       );
       return false;
     }
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
     return true;
   }
 
@@ -127,16 +133,12 @@ public class VariableInplaceRenameHandler implements RenameHandler {
                                      @NotNull Editor editor,
                                      @Nullable DataContext dataContext) {
     VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
-    boolean startedRename = renamer == null ? false : renamer.performInplaceRename();
+    boolean startedRename = renamer != null && renamer.performInplaceRename();
 
     if (!startedRename) {
       performDialogRename(elementToRename, editor, dataContext, renamer != null ? renamer.myInitialName : null);
     }
     return renamer;
-  }
-
-  protected static void performDialogRename(PsiElement elementToRename, Editor editor, DataContext dataContext) {
-    performDialogRename(elementToRename, editor, dataContext, null);
   }
 
   protected static void performDialogRename(PsiElement elementToRename, Editor editor, DataContext dataContext, String initialName) {
@@ -161,7 +163,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Nullable
-  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, Editor editor) {
+  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, @NotNull Editor editor) {
     return new VariableInplaceRenamer((PsiNamedElement)elementToRename, editor);
   }
 }

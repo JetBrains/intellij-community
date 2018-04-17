@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -792,7 +793,8 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   private HtmlCodeStyleSettings getHtmlSettings() {
-    return getCurrentCodeStyleSettings().getCustomSettings(HtmlCodeStyleSettings.class);
+    return CodeStyle.getSettings(myFixture.getProject())
+                    .getCustomSettings(HtmlCodeStyleSettings.class);
   }
 
 }

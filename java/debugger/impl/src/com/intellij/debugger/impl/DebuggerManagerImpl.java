@@ -11,6 +11,7 @@ import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RemoteConnection;
@@ -52,7 +53,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
 import javax.swing.*;
 import java.io.File;
@@ -543,7 +543,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
               }
             }
             if (agentFile.exists()) {
-              String agentPath = handleSpacesInPath(agentFile.getAbsolutePath());
+              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "captureAgent", null, f -> {
+                String name = f.getName();
+                return STORAGE_FILE_NAME.equals(name) || AGENT_FILE_NAME.equals(name);
+              });
               if (agentPath != null) {
                 parametersList.add(prefix + agentPath + "=" + generateAgentSettings());
               }
@@ -560,44 +563,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     }
   }
 
-  @Nullable
-  private static String handleSpacesInPath(String agentPath) {
-    if (agentPath.contains(" ")) {
-      File targetDir = new File(PathManager.getSystemPath(), "captureAgent");
-      if (targetDir.getAbsolutePath().contains(" ")) {
-        try {
-          targetDir = FileUtil.createTempDirectory("capture", "jars");
-          if (targetDir.getAbsolutePath().contains(" ")) {
-            LOG.info("Capture agent was not used since the agent path contained spaces: " + agentPath);
-            return null;
-          }
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          return null;
-        }
-      }
-
-      try {
-        targetDir.mkdirs();
-        Path source = Paths.get(agentPath);
-        Path target = targetDir.toPath().resolve(AGENT_FILE_NAME);
-        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(source.getParent().resolve(STORAGE_FILE_NAME), targetDir.toPath().resolve(STORAGE_FILE_NAME),
-                   StandardCopyOption.REPLACE_EXISTING);
-        return target.toString();
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        return null;
-      }
-    }
-    return agentPath;
-  }
-
   private static String generateAgentSettings() {
     Properties properties = new Properties();
-    properties.setProperty("asm-lib", PathUtil.getJarPathForClass(MethodVisitor.class));
     if (Registry.is("debugger.capture.points.agent.debug")) {
       properties.setProperty("debug", "true");
     }
@@ -606,13 +573,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       properties.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
                              point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
                              point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                             point.myMethodDesc + CaptureSettingsProvider.AgentPoint.SEPARATOR +
                              point.myKey.asString());
     }
     try {
       File file = FileUtil.createTempFile("capture", ".props");
       try (FileOutputStream out = new FileOutputStream(file)) {
         properties.store(out, null);
-        return file.getAbsolutePath();
+        return file.toURI().toASCIIString();
       }
     }
     catch (IOException e) {

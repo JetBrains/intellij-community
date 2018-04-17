@@ -40,6 +40,7 @@ public class ExternalSystemStartupActivity implements StartupActivity, DumbAware
 
   @Override
   public void runActivity(@NotNull final Project project) {
+    ExternalProjectsManagerImpl.getInstance(project).init();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -63,7 +64,6 @@ public class ExternalSystemStartupActivity implements StartupActivity, DumbAware
       ProjectRenameAware.beAware(project);
     };
 
-    ExternalProjectsManagerImpl.getInstance(project).init();
     DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(task, project));
   }
 }

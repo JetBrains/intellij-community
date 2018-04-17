@@ -56,7 +56,7 @@ public class BuildIcons {
         System.out.println(path);
         total ++;
       }
-      System.out.println("");
+      System.out.println();
     }
 
     System.out.println("Total icons: " + total);

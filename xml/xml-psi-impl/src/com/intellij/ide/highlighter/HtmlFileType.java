@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class HtmlFileType extends XmlLikeFileType {
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".html";
@@ -78,13 +78,7 @@ public class HtmlFileType extends XmlLikeFileType {
       : XmlCharsetDetector.extractXmlEncodingFromProlog(content);
 
     if (charset != null) return charset;
-    @NonNls String strContent;
-    try {
-      strContent = new String(content, "ISO-8859-1");
-    }
-    catch (UnsupportedEncodingException e) {
-      return null;
-    }
+    @NonNls String strContent = new String(content, StandardCharsets.ISO_8859_1);
     Charset c = HtmlUtil.detectCharsetFromMetaTag(strContent);
     return c == null ? null : c.name();
   }

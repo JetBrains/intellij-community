@@ -40,6 +40,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -65,6 +66,15 @@ public class ImportHelper{
   private final JavaCodeStyleSettings mySettings;
   @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
 
+  public ImportHelper(@NotNull JavaCodeStyleSettings settings) {
+    mySettings = settings;
+  }
+
+  /**
+   * @deprecated Use {@link #ImportHelper(JavaCodeStyleSettings)} instead. The instance of JavaCodeStyleSettings
+   *             can be obtained using {@link JavaCodeStyleSettings#getInstance(PsiFile)} method.
+   */
+  @Deprecated
   public ImportHelper(@NotNull CodeStyleSettings settings){
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
   }
@@ -339,6 +349,7 @@ public class ImportHelper{
       }
     }
     if (!conflicts.isEmpty() && !(file instanceof PsiCompiledElement)) {
+      String packageName = file.getPackageName();
       file.accept(new JavaRecursiveElementVisitor() {
         @Override
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -346,7 +357,11 @@ public class ImportHelper{
           PsiElement element = reference.resolve();
           if (element instanceof PsiClass && conflicts.contains(((PsiClass)element).getName())) {
             String fqn = ((PsiClass)element).getQualifiedName();
-            outNamesToUseSingle.add(fqn);
+            if (fqn != null && 
+                !PsiTreeUtil.isAncestor(file, element, true) && 
+                !packageName.equals(StringUtil.getPackageName(fqn))) {
+              outNamesToUseSingle.add(fqn);
+            }
           }
         }
       });
@@ -879,7 +894,7 @@ public class ImportHelper{
             continue;
           }
           if (reference instanceof PsiJavaCodeReferenceElementImpl
-              && ((PsiJavaCodeReferenceElementImpl)reference).getKind(((PsiJavaCodeReferenceElementImpl)reference).getContainingFile()) == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
+              && ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(((PsiJavaCodeReferenceElementImpl)reference).getContainingFile()) == PsiJavaCodeReferenceElementImpl.Kind.CLASS_IN_QUALIFIED_NEW_KIND) {
             continue;
           }
         }

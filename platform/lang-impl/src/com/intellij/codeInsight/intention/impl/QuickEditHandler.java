@@ -372,7 +372,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
         ProperTextRange localInsideFile = new ProperTextRange(Math.max(localInsideFileCursor, rangeMarker.getStartOffset()), rangeMarker.getEndOffset());
         if (insideHost != null) {
           //append unchanged inter-markers fragment
-          sb.append(hostText.substring(insideHost.getEndOffset(), localInsideHost.getStartOffset()));
+          sb.append(hostText, insideHost.getEndOffset(), localInsideHost.getStartOffset());
         }
         sb.append(localInsideFile.getEndOffset() <= text.length() && !localInsideFile.isEmpty()? localInsideFile.substring(text) : "");
         localInsideFileCursor = localInsideFile.getEndOffset();

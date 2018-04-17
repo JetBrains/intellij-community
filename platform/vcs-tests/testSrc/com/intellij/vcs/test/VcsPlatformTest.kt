@@ -35,7 +35,6 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 abstract class VcsPlatformTest : PlatformTestCase() {
-
   protected lateinit var testRoot: File
   protected lateinit var testRootFile: VirtualFile
   protected lateinit var projectRoot: VirtualFile
@@ -50,8 +49,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    testRoot = File(FileUtil.getTempDirectory(), "root-${Integer.toHexString(Random().nextInt())}")
-    PlatformTestCase.myFilesToDelete.add(testRoot)
+    testRoot = createTempDir("root-${Integer.toHexString(Random().nextInt())}", false)
     checkTestRootIsEmpty(testRoot)
 
     runInEdtAndWait { super@VcsPlatformTest.setUp() }

@@ -577,7 +577,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public Indent getIndent(String text, FileType fileType) {
-    int indent = IndentHelperImpl.getIndent(myProject, fileType, text, true);
+    int indent = IndentHelperImpl.getIndent(CodeStyle.getSettings(myProject).getIndentOptions(fileType), text, true);
     int indentLevel = indent / IndentHelperImpl.INDENT_FACTOR;
     int spaceCount = indent - indentLevel * IndentHelperImpl.INDENT_FACTOR;
     return new IndentImpl(getSettings(), indentLevel, spaceCount, fileType);

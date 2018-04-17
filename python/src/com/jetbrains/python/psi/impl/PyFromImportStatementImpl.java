@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -91,15 +92,22 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
   @NotNull
   public PyImportElement[] getImportElements() {
+    return getImportElements(PyElementTypes.IMPORT_ELEMENT, PyTokenTypes.IMPORT_KEYWORD);
+  }
+
+  @NotNull
+  final protected PyImportElement[] getImportElements(
+    @NotNull IElementType importElementType,
+    @NotNull PyElementType importKeywordToken) {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
-      return stub.getChildrenByType(PyElementTypes.IMPORT_ELEMENT, count -> new PyImportElement[count]);
+      return stub.getChildrenByType(importElementType, count -> new PyImportElement[count]);
     }
     List<PyImportElement> result = new ArrayList<>();
-    final ASTNode importKeyword = getNode().findChildByType(PyTokenTypes.IMPORT_KEYWORD);
+    final ASTNode importKeyword = getNode().findChildByType(importKeywordToken);
     if (importKeyword != null) {
       for (ASTNode node = importKeyword.getTreeNext(); node != null; node = node.getTreeNext()) {
-        if (node.getElementType() == PyElementTypes.IMPORT_ELEMENT) {
+        if (node.getElementType() == importElementType) {
           result.add((PyImportElement)node.getPsi());
         }
       }

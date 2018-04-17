@@ -130,7 +130,7 @@ public class ShowByteCodeAction extends AnAction {
             return false;
           };
 
-          final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, editor.getComponent())
+          final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getEditorComponent())
             .setProject(project)
             .setDimensionServiceKey(project, ShowByteCodeAction.class.getName(), false)
             .setResizable(true)

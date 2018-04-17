@@ -189,7 +189,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
     final String path = file.getPath();
     final int extensionIndex = path.lastIndexOf(".");
-    final String extension = path.substring(extensionIndex, path.length());
+    final String extension = path.substring(extensionIndex);
     //noinspection HardCodedStringLiteral
     final String backupPath = path.substring(0, extensionIndex) +
                               "_" +

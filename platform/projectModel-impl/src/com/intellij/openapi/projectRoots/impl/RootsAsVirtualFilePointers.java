@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.projectRoots.impl;
 
@@ -56,13 +56,21 @@ public class RootsAsVirtualFilePointers implements RootProvider {
     myRoots.get(type).add(virtualFile);
   }
 
+  public void addRoot(@NotNull String url, @NotNull OrderRootType type) {
+    myRoots.get(type).add(url);
+  }
+
   public void removeAllRoots(@NotNull OrderRootType type) {
     myRoots.get(type).clear();
   }
 
   public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType type) {
+    removeRoot(root.getUrl(), type);
+  }
+
+  public void removeRoot(@NotNull String url, @NotNull OrderRootType type) {
     VirtualFilePointerContainer container = myRoots.get(type);
-    VirtualFilePointer pointer = container.findByUrl(root.getUrl());
+    VirtualFilePointer pointer = container.findByUrl(url);
     if (pointer != null) {
       container.remove(pointer);
     }
@@ -104,8 +112,8 @@ public class RootsAsVirtualFilePointers implements RootProvider {
   void copyRootsFrom(@NotNull RootProvider rootContainer) {
     removeAllRoots();
     for (OrderRootType rootType : OrderRootType.getAllTypes()) {
-      final VirtualFile[] newRoots = rootContainer.getFiles(rootType);
-      for (VirtualFile newRoot : newRoots) {
+      final String[] newRoots = rootContainer.getUrls(rootType);
+      for (String newRoot : newRoots) {
         addRoot(newRoot, rootType);
       }
     }
@@ -133,7 +141,7 @@ public class RootsAsVirtualFilePointers implements RootProvider {
    */
   private void read(@NotNull Element roots, @NotNull PersistentOrderRootType type)  {
     String sdkRootName = type.getSdkRootName();
-    Element child = sdkRootName != null ? roots.getChild(sdkRootName) : null;
+    Element child = sdkRootName == null ? null : roots.getChild(sdkRootName);
     if (child == null) {
       return;
     }
@@ -143,8 +151,10 @@ public class RootsAsVirtualFilePointers implements RootProvider {
       LOG.error(composites);
     }
     Element composite = composites.get(0);
-    
-    myRoots.get(type).readExternal(composite, "root", false);
+
+    VirtualFilePointerContainer container = myRoots.get(type);
+    assert container != null : "unknown root type: " + type;
+    container.readExternal(composite, "root", false);
   }
 
   /**

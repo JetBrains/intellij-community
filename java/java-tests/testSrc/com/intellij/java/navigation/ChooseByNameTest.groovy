@@ -7,11 +7,7 @@ import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ModalityState
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.testFramework.PlatformTestUtil
@@ -443,6 +439,12 @@ class Intf {
     def file = addEmptyFile("foo/index/index")
     assert gotoFile('in') == [file, file.parent]
     assert gotoFile('foin') == [file, file.parent]
+  }
+
+  void "test prefer fully matching module name"() {
+    def module = myFixture.addFileToProject('module-info.java', 'module foo.bar {}')
+    def clazz = myFixture.addClass('package foo; class B { void bar() {}; void barX() {} }')
+    assert gotoSymbol('foo.bar') == [(module as PsiJavaFile).moduleDeclaration, clazz.methods[0], clazz.methods[1]]
   }
 
   private List<Object> gotoClass(String text, boolean checkboxState = false) {

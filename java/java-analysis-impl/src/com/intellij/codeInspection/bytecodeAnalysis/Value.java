@@ -21,7 +21,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 
 import java.util.stream.Stream;
 
-enum Value {
+enum Value implements Result {
   Bot, NotNull, Null, True, False, Fail, Pure, Top;
 
   static Stream<Value> typeValues(Type type) {

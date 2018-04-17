@@ -11,7 +11,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -20,6 +19,7 @@ import com.intellij.xdebugger.*;
 import com.jetbrains.env.python.PythonDebuggerTest;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.debugger.PyDebugValueExecutionService;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
@@ -80,15 +80,12 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     myRunConfiguration.setWorkingDirectory(myFixture.getTempDirPath());
     myRunConfiguration.setScriptParameters(getScriptParameters());
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) {
-        RunManager runManager = RunManager.getInstance(project);
-        runManager.addConfiguration(settings);
-        runManager.setSelectedConfiguration(settings);
-        Assert.assertSame(settings, runManager.getSelectedConfiguration());
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> {
+      RunManager runManager = RunManager.getInstance(project);
+      runManager.addConfiguration(settings);
+      runManager.setSelectedConfiguration(settings);
+      Assert.assertSame(settings, runManager.getSelectedConfiguration());
+    });
 
     final PyDebugRunner runner = (PyDebugRunner)ProgramRunnerUtil.getRunner(getExecutorId(), settings);
     Assert.assertTrue(runner.canRun(getExecutorId(), myRunConfiguration));
@@ -122,47 +119,45 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
     myTerminateSemaphore = new Semaphore(0);
 
-    new WriteAction<ExecutionResult>() {
-      @Override
-      protected void run(@NotNull Result<ExecutionResult> result) throws Throwable {
-        myExecutionResult =
-          pyState.execute(executor, runner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort));
+    WriteAction.computeAndWait(() -> {
+      myExecutionResult =
+        pyState.execute(executor, runner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort));
 
-        mySession = XDebuggerManager.getInstance(getProject()).
-          startSession(env, new XDebugProcessStarter() {
-            @NotNull
-            public XDebugProcess start(@NotNull final XDebugSession session) {
-              myDebugProcess =
-                new PyDebugProcess(session, serverSocket, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(), isMultiprocessDebug());
+      mySession = XDebuggerManager.getInstance(getProject()).
+        startSession(env, new XDebugProcessStarter() {
+          @NotNull
+          public XDebugProcess start(@NotNull final XDebugSession session) {
+            myDebugProcess =
+              new PyDebugProcess(session, serverSocket, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(),
+                                 isMultiprocessDebug());
 
 
-              StringBuilder output = new StringBuilder();
+            StringBuilder output = new StringBuilder();
 
-              myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
+            myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
 
-                @Override
-                public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-                  output.append(event.getText());
+              @Override
+              public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                output.append(event.getText());
+              }
+
+              @Override
+              public void processTerminated(@NotNull ProcessEvent event) {
+                myTerminateSemaphore.release();
+                if (event.getExitCode() != 0 && !myProcessCanTerminate) {
+                  Assert.fail("Process terminated unexpectedly\n" + output.toString());
                 }
-
-                @Override
-                public void processTerminated(@NotNull ProcessEvent event) {
-                  myTerminateSemaphore.release();
-                  if (event.getExitCode() != 0 && !myProcessCanTerminate) {
-                    Assert.fail("Process terminated unexpectedly\n" + output.toString());
-                  }
-                }
-              });
+              }
+            });
 
 
-              myDebugProcess.getProcessHandler().startNotify();
+            myDebugProcess.getProcessHandler().startNotify();
 
-              return myDebugProcess;
-            }
-          });
-        result.setResult(myExecutionResult);
-      }
-    }.execute().getResultObject();
+            return myDebugProcess;
+          }
+        });
+      return myExecutionResult;
+    });
 
     OutputPrinter myOutputPrinter = null;
     if (shouldPrintOutput) {
@@ -231,6 +226,13 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
       if (myWaitForTermination) {
         // for some tests (with infinite loops, for example, it has no sense)
         waitFor(processHandler);
+      }
+
+      try {
+        PyDebugValueExecutionService.getInstance(getProject()).shutDownNow(NORMAL_TIMEOUT);
+      }
+      catch (InterruptedException e) {
+        //pass
       }
 
       if (!processHandler.isProcessTerminated()) {

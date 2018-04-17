@@ -17,8 +17,8 @@ package com.intellij.java.codeInspection
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.DfaUtil
-import com.intellij.codeInspection.dataFlow.NullityInference
 import com.intellij.codeInspection.dataFlow.Nullness
+import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
@@ -160,7 +160,7 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
       assert method.node
-      assert result == NullityInference.inferNullity(method as PsiMethodImpl)
+      assert result == JavaSourceInference.inferNullity(method as PsiMethodImpl)
       return result
     }
 

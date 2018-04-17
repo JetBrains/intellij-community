@@ -140,20 +140,17 @@ public class GenerateByPatternDialog extends DialogWrapper {
   }
 
   private void updateDetails(final PatternDescriptor descriptor) {
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() {
-        final Template template = descriptor.getTemplate();
-        if (template instanceof TemplateImpl) {
-          String text = template.getString();
-          myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), text);
-          TemplateEditorUtil.setHighlighter(myEditor, ((TemplateImpl)template).getTemplateContext());
-        }
-        else {
-          myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
-        }
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      final Template template = descriptor.getTemplate();
+      if (template instanceof TemplateImpl) {
+        String text = template.getString();
+        myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), text);
+        TemplateEditorUtil.setHighlighter(myEditor, ((TemplateImpl)template).getTemplateContext());
       }
-    }.execute();
+      else {
+        myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
+      }
+    });
   }
 
   private DefaultMutableTreeNode createNode(@Nullable PatternDescriptor descriptor) {

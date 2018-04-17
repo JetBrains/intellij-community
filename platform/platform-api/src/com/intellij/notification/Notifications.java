@@ -62,6 +62,7 @@ public interface Notifications {
     }
 
     public static void notify(@NotNull final Notification notification, @Nullable final Project project) {
+      notification.assertHasTitleOrContent();
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         doNotify(notification, project);
       }

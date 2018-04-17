@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AppUIUtil;
 
 import java.util.Collection;
+import java.util.List;
 
 public class DataSharingOptionsAction extends DumbAwareAction {
   public DataSharingOptionsAction() {
@@ -20,7 +21,7 @@ public class DataSharingOptionsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Pair<Collection<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
     try {
       final Collection<Consent> result = AppUIUtil.confirmConsentOptions(consentsToShow.first);
       if (result != null) {

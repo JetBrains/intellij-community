@@ -15,6 +15,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
@@ -30,6 +31,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.util.Arrays;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
   @Override
@@ -50,6 +52,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       super(project);
       myProject = project;
       init();
+      setTitle("Component Panel Test Action");
     }
 
     @Nullable
@@ -118,7 +121,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withTooltip("Help tooltip description").createPanel());
 
       panel.add(UI.PanelFactory.panel(new JButton("Abracadabra")).
-        withComment("Abradabra comment").createPanel());
+        withComment("Abradabra comment").resizeX(false).createPanel());
 
       String[] items = new String[]{ "One", "Two", "Three", "Four", "Five", "Six" };
       panel.add(UI.PanelFactory.panel(new JComboBox<>(items)).
@@ -156,6 +159,13 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JBScrollPane pane = new JBScrollPane(new JTextArea(3, 40));
       pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
 
+      DropDownLink<String> linkLabel =
+        new DropDownLink<>("Drop down link label",
+                           Arrays.asList("Label 1",
+                                         "Label 2 long long long long long long label",
+                                         "Label 3", "Label 4", "Label 5", "Label 6"),
+                           t -> System.out.println("[" + t + "] selected"), false);
+
       JPanel p1 = UI.PanelFactory.grid().
       add(UI.PanelFactory.panel(new JTextField()).
         withLabel("&Port:").withComment("Port comment")).
@@ -176,9 +186,12 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       add(UI.PanelFactory.panel(new JCheckBox("Checkbox")).withComment("Checkbox comment text")).
 
       add(UI.PanelFactory.panel(pane).
-        withLabel("Text area:").withComment("Text area comment").moveLabelOnTop()).
-
-      createPanel();
+        withLabel("Text area:").
+        anchorLabelOn(UI.Anchor.Top).
+        withComment("Text area comment").
+        moveLabelOnTop().
+        withTopRightComponent(linkLabel)
+      ).createPanel();
 
       ButtonGroup bg = new ButtonGroup();
       JRadioButton rb1 = new JRadioButton("RadioButton 1");
@@ -265,7 +278,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 1.2").
           withPause(()-> System.out.println("Pause action #2")).
           withResume(()-> System.out.println("Resume action #2"))).
-        expandVertically().
+                                 resize().
         createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb1)).setCommentText("Long long long long long long long text");
@@ -282,7 +295,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 2.2").moveLabelLeft().
           withPause(()-> System.out.println("Pause action #4")).
           withResume(()-> System.out.println("Resume action #4"))).
-        expandVertically().
+                                 resize().
         createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb3)).setCommentText("Long long long long long long text");

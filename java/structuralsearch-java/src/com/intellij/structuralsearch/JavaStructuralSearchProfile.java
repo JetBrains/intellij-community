@@ -58,27 +58,24 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   public String getText(PsiElement match, int start, int end) {
     if (match instanceof PsiIdentifier) {
-      PsiElement parent = match.getParent();
+      final PsiElement parent = match.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement && !(parent instanceof PsiExpression)) {
-        match = parent; // care about generic
+        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
+        final String text = referenceElement.getText();
+        if (end != -1) {
+          return text.substring(start, end);
+        }
+        final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        if (parameterList != null) {
+          // get text without type parameters
+          return text.substring(start, parameterList.getStartOffsetInParent());
+        }
+        return text;
       }
     }
     final String matchText = match.getText();
-    if (start==0 && end==-1) return matchText;
-    return matchText.substring(start,end == -1? matchText.length():end);
-  }
-
-  @Override
-  public Class getElementContextByPsi(PsiElement element) {
-    if (element instanceof PsiIdentifier) {
-      element = element.getParent();
-    }
-
-    if (element instanceof PsiMember) {
-      return PsiMember.class;
-    } else {
-      return PsiExpression.class;
-    }
+    if (start == 0 && end == -1) return matchText;
+    return matchText.substring(start, (end == -1) ? matchText.length() : end);
   }
 
   @Override
@@ -585,13 +582,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         handleMethodParameter(buf, info, replacementInfo);
         replacementString = buf.toString();
       }
-      else if (match.hasSons() && !match.isScopeMatch()) {
+      else if (match.hasChildren() && !match.isScopeMatch()) {
         // compound matches
         final StringBuilder buf = new StringBuilder();
 
         MatchResult previous = null;
         boolean stripSemicolon = false;
-        for (final MatchResult matchResult : match.getAllSons()) {
+        for (final MatchResult matchResult : match.getChildren()) {
           final PsiElement currentElement = matchResult.getMatch();
           stripSemicolon = !(currentElement instanceof PsiField);
 
@@ -760,7 +757,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (matchResult == null) return;
 
     if (matchResult.isMultipleMatch()) {
-      for (MatchResult result : matchResult.getAllSons()) {
+      for (MatchResult result : matchResult.getChildren()) {
         if (buf.length() > 0) {
           buf.append(',');
         }
@@ -773,7 +770,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static void appendParameter(final StringBuilder buf, final MatchResult matchResult) {
-    final List<MatchResult> sons = matchResult.getAllSons();
+    final List<MatchResult> sons = matchResult.getChildren();
     assert sons.size() == 1;
     buf.append(sons.get(0).getMatchImage()).append(' ').append(matchResult.getMatchImage());
   }
@@ -791,7 +788,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
               match.getMatch() instanceof PsiComment
             ) ||
             ( match.isMultipleMatch() &&                                                 // ; in comment
-              match.getAllSons().get( match.getAllSons().size() - 1 ).getMatch() instanceof PsiComment
+              match.getChildren().get( match.getChildren().size() - 1 ).getMatch() instanceof PsiComment
             )
           )
         ) {

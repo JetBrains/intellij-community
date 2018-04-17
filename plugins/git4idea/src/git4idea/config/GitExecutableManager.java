@@ -9,8 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -172,10 +170,10 @@ public class GitExecutableManager {
       if (project != null
           && progressIndicator != null
           && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
-        GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(pathToGit, e);
+        GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
       }
       else {
-        GitExecutableProblemsNotifier.showExecutionErrorDialog(e, pathToGit, project);
+        GitExecutableProblemsNotifier.showExecutionErrorDialog(e, project);
       }
       return null;
     }

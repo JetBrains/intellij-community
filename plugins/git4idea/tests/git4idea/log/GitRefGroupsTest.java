@@ -30,7 +30,6 @@ import java.util.List;
 public class GitRefGroupsTest extends GitRefManagerTest {
   public void test_single_tracked_branch() {
     check(given("HEAD", "master", "origin/master"), ContainerUtil.list("HEAD"), Pair.create("Local", ContainerUtil.list("master")),
-          Pair.create("Tracked", ContainerUtil.list("origin/master")),
           Pair.create("origin/...", ContainerUtil.list("origin/master")));
   }
 
@@ -40,7 +39,7 @@ public class GitRefGroupsTest extends GitRefManagerTest {
 
   public void test_local_tracked_and_remote_branch() {
     check(given("HEAD", "master", "origin/master", "origin/remote_branch", "local_branch"), ContainerUtil.list("HEAD"),
-          Pair.create("Local", ContainerUtil.list("master", "local_branch")), Pair.create("Tracked", ContainerUtil.list("origin/master")),
+          Pair.create("Local", ContainerUtil.list("master", "local_branch")),
           Pair.create("origin/...", ContainerUtil.list("origin/master", "origin/remote_branch")));
   }
 
@@ -48,7 +47,7 @@ public class GitRefGroupsTest extends GitRefManagerTest {
                      @NotNull List<String> expectedSingleGroups,
                      Pair<String, List<String>>... expectedOtherGroups) {
 
-    List<RefGroup> actualGroups = new GitRefManager(repositoryManager).groupForBranchFilter(actual);
+    List<RefGroup> actualGroups = new GitRefManager(getProject(), repositoryManager).groupForBranchFilter(actual);
 
     List<SingletonRefGroup> singleGroups = ContainerUtil.findAll(actualGroups, SingletonRefGroup.class);
     assertEquals(expectedSingleGroups, ContainerUtil.map(singleGroups,

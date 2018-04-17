@@ -588,6 +588,7 @@ public abstract class PluginManagerMain implements Disposable {
       return myComponent.getSelectedRow();
     }
 
+    @NotNull
     @Override
     public Object[] getAllElements() {
       return myComponent.getElements();

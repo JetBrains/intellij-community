@@ -18,9 +18,9 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
@@ -60,7 +60,7 @@ public class ChangeListsIndexes {
   }
 
 
-  private void add(@NotNull FilePath file, @NotNull FileStatus status, @Nullable VcsKey key, @NotNull VcsRevisionNumber number) {
+  private void add(@NotNull FilePath file, @NotNull FileStatus status, @Nullable AbstractVcs key, @NotNull VcsRevisionNumber number) {
     myMap.put(file, new Data(status, key, number));
     myAffectedPaths.add(file);
     if (LOG.isDebugEnabled()) {
@@ -84,7 +84,7 @@ public class ChangeListsIndexes {
     return data != null ? data.status : null;
   }
 
-  public void changeAdded(@NotNull Change change, VcsKey key) {
+  public void changeAdded(@NotNull Change change, AbstractVcs key) {
     myChanges.add(change);
 
     ContentRevision afterRevision = change.getAfterRevision();
@@ -125,17 +125,17 @@ public class ChangeListsIndexes {
   }
 
   @Nullable
-  public VcsKey getVcsFor(@NotNull Change change) {
-    VcsKey key = getVcsForRevision(change.getAfterRevision());
-    if (key != null) return key;
+  public AbstractVcs getVcsFor(@NotNull Change change) {
+    AbstractVcs vcs = getVcsForRevision(change.getAfterRevision());
+    if (vcs != null) return vcs;
     return getVcsForRevision(change.getBeforeRevision());
   }
 
   @Nullable
-  private VcsKey getVcsForRevision(@Nullable ContentRevision revision) {
+  private AbstractVcs getVcsForRevision(@Nullable ContentRevision revision) {
     if (revision != null) {
       Data data = myMap.get(revision.getFile());
-      return data != null ? data.vcsKey : null;
+      return data != null ? data.vcs : null;
     }
     return null;
   }
@@ -187,7 +187,7 @@ public class ChangeListsIndexes {
   }
 
   private static BaseRevision createBaseRevision(@NotNull FilePath path, @NotNull Data data) {
-    return new BaseRevision(data.vcsKey, data.revision, path);
+    return new BaseRevision(data.vcs, data.revision, path);
   }
 
   public void clear() {
@@ -203,17 +203,17 @@ public class ChangeListsIndexes {
 
   private static class Data {
     @NotNull public final FileStatus status;
-    public final VcsKey vcsKey;
+    public final AbstractVcs vcs;
     @NotNull public final VcsRevisionNumber revision;
 
-    public Data(@NotNull FileStatus status, VcsKey vcsKey, @NotNull VcsRevisionNumber revision) {
+    public Data(@NotNull FileStatus status, AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
       this.status = status;
-      this.vcsKey = vcsKey;
+      this.vcs = vcs;
       this.revision = revision;
     }
 
     public boolean sameRevisions(@NotNull Data data) {
-      return Comparing.equal(vcsKey, data.vcsKey) && Comparing.equal(revision, data.revision);
+      return Comparing.equal(vcs, data.vcs) && Comparing.equal(revision, data.revision);
     }
   }
 }

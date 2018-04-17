@@ -5,7 +5,7 @@ class Test {
         if (inner.is()) continue;
         boolean a = inner.isA();
 
-      System.out.println(aArg + a);
+        System.out.println(aArg + a);
     }
   }
 

@@ -82,6 +82,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       .add("java.lang.Short",".*")
       .add("java.lang.StrictMath",".*")
       .add("java.lang.String",".*")
+      .add("java.lang.Thread", "interrupted")
       .add("java.math.BigInteger",".*")
       .add("java.math.BigDecimal",".*")
       .add("java.net.InetAddress",".*")

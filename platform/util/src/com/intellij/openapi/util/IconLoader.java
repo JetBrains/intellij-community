@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,18 +7,22 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
-import com.intellij.util.*;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ImageLoader;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.JBUI.RasterJBIcon;
 import com.intellij.util.ui.JBUI.BaseScaleContext.UpdateListener;
+import com.intellij.util.ui.JBUI.RasterJBIcon;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,6 +74,7 @@ public final class IconLoader {
   }
 
   @Deprecated
+  @NotNull
   public static Icon getIcon(@NotNull final Image image) {
     return new JBImageIcon(image);
   }
@@ -334,10 +337,12 @@ public final class IconLoader {
     return disabledIcon;
   }
 
+  @NotNull
   public static Icon getTransparentIcon(@NotNull final Icon icon) {
     return getTransparentIcon(icon, 0.5f);
   }
 
+  @NotNull 
   public static Icon getTransparentIcon(@NotNull final Icon icon, final float alpha) {
     return new RetrievableIcon() {
       @Override
@@ -368,7 +373,7 @@ public final class IconLoader {
 
   /**
    * Gets a snapshot of the icon, immune to changes made by these calls:
-   * {@link IconLoader#setFilter(ImageFilter)}, {@link IconLoader#setUseDarkIcons(boolean)}
+   * {@link #setFilter(ImageFilter)}, {@link #setUseDarkIcons(boolean)}
    *
    * @param icon the source icon
    * @return the icon snapshot
@@ -406,7 +411,7 @@ public final class IconLoader {
     private volatile boolean dark;
     private volatile int numberOfPatchers = ourPatchers.size();
     private final boolean svg;
-    private boolean useCacheOnLoad = true;
+    private final boolean useCacheOnLoad;
 
     private ImageFilter[] myFilters;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
@@ -458,8 +463,18 @@ public final class IconLoader {
       return getRealIcon(null);
     }
 
+    @Nullable
+    @TestOnly
+    public ImageIcon doGetRealIcon() {
+      Object icon = myRealIcon;
+      if (icon instanceof Reference) {
+        icon = ((Reference<ImageIcon>)icon).get();
+      }
+      return icon instanceof ImageIcon ? (ImageIcon)icon : null;
+    }
+
     @NotNull
-    private synchronized ImageIcon getRealIcon(ScaleContext ctx) {
+    private synchronized ImageIcon getRealIcon(@Nullable ScaleContext ctx) {
       if (!isValid()) {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myRealIcon = null;
@@ -503,10 +518,8 @@ public final class IconLoader {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      // Component is preferable to Graphics as a scale provider, as it lets the context stick
-      // to the comp's actual scale via the update method.
-      ScaleContext ctx = c != null ? ScaleContext.create(c) : ScaleContext.create((Graphics2D)g);
-      getRealIcon(ctx).paintIcon(c, g, x, y);
+      Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
+      getRealIcon(ScaleContext.create(c, g2d)).paintIcon(c, g, x, y);
     }
 
     @Override
@@ -529,6 +542,7 @@ public final class IconLoader {
       return 1f;
     }
 
+    @NotNull
     @Override
     public Icon scale(float scale) {
       if (scale == 1f) return this;
@@ -542,13 +556,14 @@ public final class IconLoader {
       return this;
     }
 
+    @NotNull
     private Icon asDisabledIcon() {
       CachedImageIcon icon = new CachedImageIcon(this);
       icon.myFilters = new ImageFilter[] {getGlobalFilter(), UIUtil.getGrayFilter()};
       return icon;
     }
 
-    private Image loadFromUrl(ScaleContext ctx) {
+    private Image loadFromUrl(@NotNull ScaleContext ctx) {
       return ImageLoader.loadFromUrl(myUrl, true, useCacheOnLoad, myFilters, ctx);
     }
 
@@ -567,9 +582,10 @@ public final class IconLoader {
        * Retrieves the orig icon scaled by the provided scale.
        */
       ImageIcon getOrScaleIcon(final float scale) {
-        updateScale(OBJ_SCALE.of(scale));
+        final ScaleContext ctx = scale == 1 ? getScaleContext() : (ScaleContext)getScaleContext().copy(); // not modifying this scale context
+        if (scale != 1) ctx.update(OBJ_SCALE.of(scale));
 
-        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(getScale(PIX_SCALE)));
+        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(ctx.getScale(PIX_SCALE)));
         if (icon != null) {
           return icon;
         }
@@ -578,17 +594,17 @@ public final class IconLoader {
           image = doWithTmpRegValue("ide.svg.icon", true, new Callable<Image>() {
             @Override
             public Image call() {
-              return loadFromUrl(getScaleContext());
+              return loadFromUrl(ctx);
             }
           });
         }
         else {
-          image = loadFromUrl(getScaleContext());
+          image = loadFromUrl(ctx);
         }
         icon = checkIcon(image, myUrl);
 
         if (icon != null && icon.getIconWidth() * icon.getIconHeight() * 4 < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
-          scaledIconsCache.put(getScale(PIX_SCALE), new SoftReference<ImageIcon>(icon));
+          scaledIconsCache.put(ctx.getScale(PIX_SCALE), new SoftReference<ImageIcon>(icon));
         }
         return icon;
       }
@@ -662,7 +678,7 @@ public final class IconLoader {
   /**
    * Do something with the temporarily registry value.
    */
-  private static <T> T doWithTmpRegValue(String key, Boolean tempValue, Callable<T> action) {
+  private static <T> T doWithTmpRegValue(@NotNull String key, @NotNull Boolean tempValue, @NotNull Callable<T> action) {
     RegistryValue regVal = Registry.get(key);
     boolean regValOrig = regVal.asBoolean();
     regVal.setValue(tempValue);

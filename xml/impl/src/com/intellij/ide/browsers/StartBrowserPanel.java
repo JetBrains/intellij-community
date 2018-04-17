@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.AncestorListenerAdapter;
-import com.intellij.util.Consumer;
 import com.intellij.util.Url;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
@@ -65,14 +49,16 @@ public class StartBrowserPanel {
 
         Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myRoot));
         if (project == null) {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
-            Project project1 = CommonDataKeys.PROJECT.getData(context);
-            if (project1 == null) {
-              // IDEA-118202
-              project1 = ProjectManager.getInstance().getDefaultProject();
-            }
-            setupUrlField(myUrlField, project1);
-          });
+          DataManager.getInstance()
+                     .getDataContextFromFocusAsync()
+                     .onSuccess(context -> {
+                       Project project1 = CommonDataKeys.PROJECT.getData(context);
+                       if (project1 == null) {
+                         // IDEA-118202
+                         project1 = ProjectManager.getInstance().getDefaultProject();
+                       }
+                       setupUrlField(myUrlField, project1);
+                     });
         }
         else {
           setupUrlField(myUrlField, project);

@@ -55,66 +55,24 @@ def do_list():
     sys.stdout.flush()
 
 
-def do_get_versions(urls, req):
-    if req is not None:
-        for version in VersionsFinder(urls).get_versions(req):
-            if len(version) > 2:
-                sys.stdout.write(version[2] + chr(10))
-        sys.stdout.flush()
-
-
-
-def do_get_latest_version(urls, req):
-    try:
-        from pip.index import PackageFinder, Link
-    except ImportError:
-        error_no_pip()
-
-    class VersionsFinder(PackageFinder):
-        def __init__(self, index_urls, *args, **kwargs):
-            super(VersionsFinder, self).__init__([], index_urls, *args, **kwargs)
-
-        def get_versions(self, req):
-            class Req:
-                def __init__(self, name):
-                    self.name = name
-
-            def mkurl_pypi_url(url):
-                loc = os.path.join(url, req)
-                if not loc.endswith('/'):
-                    loc += '/'
-                return loc
-
-            locations = [mkurl_pypi_url(url) for url in self.index_urls] + self.find_links
-            locations = [Link(url, trusted=True) for url in locations]
-
-            versions = []
-            for page in self._get_pages(locations, Req(req)):
-                versions.extend(self._package_versions(page.links, req.lower()))
-
-            return sorted(list(versions), reverse=True)
-    if req is not None:
-        for version in VersionsFinder(urls).get_versions(req):
-            if len(version) > 2:
-                sys.stdout.write(version[2] + chr(10))
-                sys.stdout.flush()
-                return
-    return ""
-
 def do_install(pkgs):
-    try:
-        import pip
-    except ImportError:
-        error_no_pip()
-    return pip.main(['install'] + pkgs)
+    return run_pip(['install'] + pkgs)
 
 
 def do_uninstall(pkgs):
+    return run_pip(['uninstall', '-y'] + pkgs)
+
+
+def run_pip(args):
+    import runpy
+    sys.argv[1:] = args
+    # pip.__main__ has been around since 2010 but support for executing it automatically
+    # was added in runpy.run_module only in Python 2.7/3.1
+    module_name = 'pip.__main__' if sys.version_info < (2, 7) else 'pip'
     try:
-        import pip
+        runpy.run_module(module_name, run_name='__main__', alter_sys=True)
     except ImportError:
         error_no_pip()
-    return pip.main(['uninstall', '-y'] + pkgs)
 
 
 def do_pyvenv(path, system_site_packages):
@@ -178,10 +136,6 @@ def main():
             if len(sys.argv) != 2:
                 usage()
             do_list()
-        elif cmd == 'latestVersion':
-            if len(sys.argv) < 4:
-                usage()
-            do_get_latest_version(sys.argv[3:], sys.argv[2])
         elif cmd == 'install':
             if len(sys.argv) < 2:
                 usage()

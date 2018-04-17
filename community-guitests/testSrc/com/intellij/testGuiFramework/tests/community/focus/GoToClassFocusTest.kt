@@ -7,7 +7,7 @@ import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
-import com.intellij.testGuiFramework.util.Key
+import com.intellij.testGuiFramework.util.Key.ESCAPE
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Pause
@@ -26,7 +26,7 @@ class GoToClassFocusTest : GuiTestCase() {
 
   @Test
   fun testGoToClassFocus() {
-    CommunityProjectCreator.createCommandLineProject()
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)
     ideFrame {
       focusOnEditor()
@@ -73,22 +73,30 @@ class GoToClassFocusTest : GuiTestCase() {
     smartRobot.shortcutAndTypeString(actionKeyStroke, typedString, 100)
     Pause.pause(500)
     checkSearchWindow(guiTestCase)
-    shortcut(Key.ESCAPE)
+    shortcut(ESCAPE)
   }
 
   private fun checkSearchWindow(guiTestCase: GuiTestCase) {
-    val searchWindow = findSearchWindow()
+    val searchWindow = try {
+      findSearchWindow()
+    }
+    catch (cle: ComponentLookupException) {
+      guiTestCase.robot().waitForIdle()
+      findSearchWindow()
+    }
     with(guiTestCase) {
       val textfield = textfield("", searchWindow, guiTestCase.defaultTimeout)
-      Assert.assertEquals(textfield.target().text, typedString)
+      Assert.assertEquals(typedString, textfield.target().text)
     }
   }
 
   private fun findSearchWindow(): Container {
-    fun checkWindowContainsEnterClassName(it: Window) = GuiTestUtilKt.findAllWithBFS(it, JLabel::class.java).firstOrNull { it.text == "Enter class name:" } != null
+    fun checkWindowContainsEnterClassName(it: Window) = GuiTestUtilKt.findAllWithBFS(it,
+                                                                                     JLabel::class.java).firstOrNull { it.text == "Enter class name:" } != null
     return Window.getWindows()
              .filterNotNull()
-             .firstOrNull { checkWindowContainsEnterClassName(it) } ?: throw ComponentLookupException("Unable to find GoToClass search window")
+             .firstOrNull { checkWindowContainsEnterClassName(it) } ?: throw ComponentLookupException(
+      "Unable to find GoToClass search window")
   }
 
 }

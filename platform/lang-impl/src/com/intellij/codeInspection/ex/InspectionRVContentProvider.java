@@ -3,9 +3,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.ActionClassHolder;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -19,12 +17,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,19 +175,27 @@ public abstract class InspectionRVContentProvider {
     if (!class1.equals(class2)) {
       String message = MessageFormat.format(
         "QuickFix-es with the same family name ({0}) should be the same class instances but actually are {1} and {2} instances. " +
-        "Please assign reported exception for the inspection \"{3}\" (\"{4}\") developer",
+        "Please assign reported exception for the inspection \"{3}\" (\"{4}\") developer.",
         fix.getFamilyName(), class1.getName(), class2.getName(), presentation.getToolWrapper().getTool().getClass(),
         presentation.getToolWrapper().getShortName());
       AssertionError error = new AssertionError(message);
-      // Hand-craft a stack-trace to make it easier to find the responsible person
-      StackTraceElement[] trace = error.getStackTrace();
-      StackTraceElement crafted = new StackTraceElement(class1.getName(), "getFamilyName", null, -1);
-      trace = ArrayUtil.prepend(crafted, trace);
-      error.setStackTrace(trace);
+      StreamEx.of(presentation.getProblemDescriptors()).select(ProblemDescriptorBase.class)
+              .map(ProblemDescriptorBase::getCreationTrace).nonNull()
+              .map(InspectionRVContentProvider::extractStackTrace).findFirst()
+              .ifPresent(error::setStackTrace);
       LOG.error(message, error);
     }
   }
 
+  private static StackTraceElement[] extractStackTrace(Throwable throwable) {
+    // Remove top-of-stack frames which are common for different inspections,
+    // leaving only inspection-specific frames
+    Set<String> classes = StreamEx.of(ProblemDescriptorBase.class, InspectionManagerBase.class, ProblemsHolder.class)
+      .map(Class::getName).toSet();
+    return StreamEx.of(throwable.getStackTrace())
+            .dropWhile(ste -> classes.contains(ste.getClassName()))
+            .toArray(StackTraceElement.class);
+  }
 
   public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
                                               @NotNull InspectionNode toolNode,

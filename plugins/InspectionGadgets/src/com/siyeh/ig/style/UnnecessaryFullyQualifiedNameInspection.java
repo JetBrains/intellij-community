@@ -259,6 +259,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         collectInnerClassNames(reference, references);
       }
       Collections.reverse(references);
+      PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(containingFile.getProject()).getResolveHelper();
       for (final PsiJavaCodeReferenceElement aReference : references) {
         final PsiElement referenceTarget = aReference.resolve();
         if (!(referenceTarget instanceof PsiClass)) {
@@ -267,6 +268,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         final PsiClass aClass = (PsiClass)referenceTarget;
         final String qualifiedName = aClass.getQualifiedName();
         if (qualifiedName == null) {
+          continue;
+        }
+        if (!resolveHelper.isAccessible(aClass, containingFile, null)) {
           continue;
         }
         if (!ImportUtils.nameCanBeImported(qualifiedName, reference)) {

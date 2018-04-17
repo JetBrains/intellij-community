@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaOptionButtonUI
@@ -15,12 +13,6 @@ class MacIntelliJOptionButtonUI : DarculaOptionButtonUI() {
   override val arrowButtonPreferredSize get() = Dimension(scale(21), optionButton.preferredSize.height)
 
   override val showPopupXOffset = scale(3)
-
-  override fun paintSeparatorArea(g: Graphics2D, c: JComponent) = super.paintSeparatorArea(g, c).also {
-    // clipXOffset is rather big for mac and cuts arrow - so we also paint arrow part here
-    g.translate(mainButton.width, 0)
-    paintArrow(g, arrowButton)
-  }
 
   override fun paintSeparator(g: Graphics2D, c: JComponent) {
     val insets = mainButton.insets

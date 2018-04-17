@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,7 +30,9 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   public static final JsonOriginalPsiWalker INSTANCE = new JsonOriginalPsiWalker();
 
   public boolean handles(@NotNull PsiElement element) {
-    return element instanceof JsonElement || element instanceof LeafPsiElement && element.getParent() instanceof JsonElement;
+    PsiElement parent = element.getParent();
+    return parent != null && (element instanceof JsonElement || element instanceof LeafPsiElement && parent instanceof JsonElement)
+           && JsonDialectUtil.isStandardJson(CompletionUtil.getOriginalOrSelf(parent));
   }
 
   @Override
@@ -75,7 +65,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
 
   @Nullable
   @Override
-  public List<JsonSchemaVariantsTreeBuilder.Step> findPosition(@NotNull PsiElement element, boolean isName, boolean forceLastTransition) {
+  public List<JsonSchemaVariantsTreeBuilder.Step> findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
     final List<JsonSchemaVariantsTreeBuilder.Step> steps = new ArrayList<>();
     PsiElement current = element;
     while (! (current instanceof PsiFile)) {
@@ -152,7 +142,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
     if (object != null) {
       return object.getPropertyList().stream()
-        .filter(p -> p.getNameElement() instanceof JsonStringLiteral)
+        .filter(p -> !isNameQuoted() || p.getNameElement() instanceof JsonStringLiteral)
         .map(p -> StringUtil.unquoteString(p.getName())).collect(Collectors.toSet());
     }
     return Collections.emptySet();

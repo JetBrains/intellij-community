@@ -66,10 +66,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull protected VisiblePack myVisiblePack;
 
   public AbstractVcsLogUi(@NotNull VcsLogData logData,
-                          @NotNull Project project,
                           @NotNull VcsLogColorManager manager,
                           @NotNull VisiblePackRefresher refresher) {
-    myProject = project;
+    myProject = logData.getProject();
     myLogData = logData;
     myRefresher = refresher;
     myColorManager = manager;
@@ -116,17 +115,8 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public abstract Component getMainComponent();
 
-  protected abstract VcsLogFilterCollection getFilters();
-
   @NotNull
   public abstract VcsLogUiProperties getProperties();
-
-  public abstract boolean isShowRootNames();
-
-  @Override
-  public boolean areGraphActionsEnabled() {
-    return getTable().getRowCount() > 0;
-  }
 
   @NotNull
   public VisiblePackRefresher getRefresher() {
@@ -137,12 +127,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   public VcsLogColorManager getColorManager() {
     return myColorManager;
   }
-
-  @NotNull
-  public Project getProject() {
-    return myProject;
-  }
-
+  
   @NotNull
   public VcsLog getVcsLog() {
     return myLog;
@@ -151,6 +136,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public VcsLogData getLogData() {
     return myLogData;
+  }
+
+  public void requestMore(@NotNull Runnable onLoaded) {
+    myRefresher.moreCommitsNeeded(onLoaded);
+    getTable().setPaintBusy(true);
   }
 
   @Override

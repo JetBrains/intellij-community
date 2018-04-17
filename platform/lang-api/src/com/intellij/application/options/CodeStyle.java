@@ -56,6 +56,17 @@ public class CodeStyle {
   }
 
   /**
+   * Returns either project settings if the project is not null or default application-wide settings otherwise.
+   *
+   * @param project The project to return the settings for or {@code null} for default settings.
+   * @return Project or default code style settings.
+   */
+  @NotNull
+  public static CodeStyleSettings getProjectOrDefaultSettings(@Nullable Project project) {
+    return project != null ? getSettings(project) : getDefaultSettings();
+  }
+
+  /**
    * Returns root code style settings for the given PSI file. For configurable language settings use {@link #getLanguageSettings(PsiFile)} or
    * {@link #getLanguageSettings(PsiFile, Language)}.
    * @param file The file to get code style settings for.

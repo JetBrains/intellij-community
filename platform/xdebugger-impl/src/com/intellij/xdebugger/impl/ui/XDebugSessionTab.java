@@ -100,6 +100,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     setSession(session, environment, icon);
 
     myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
+
+    if (Registry.is("debugger.new.threads.view")) {
+      myUi.addContent(createThreadsContent(), 0, PlaceInGrid.right, true);
+    }
+
     addVariablesAndWatches(session);
 
     attachToSession(session);
@@ -198,7 +203,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
-                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watches, null);
+                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watch, null);
     watchesContent.setCloseable(false);
     return watchesContent;
   }
@@ -209,6 +214,17 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), AllIcons.Debugger.Frame, null);
+    framesContent.setCloseable(false);
+    return framesContent;
+  }
+
+  @NotNull
+  private Content createThreadsContent() {
+    XThreadsView stacksView = new XThreadsView(myProject, mySession);
+    registerView(DebuggerContentInfo.THREADS_CONTENT, stacksView);
+    Content framesContent = myUi.createContent(DebuggerContentInfo.THREADS_CONTENT, stacksView.getPanel(),
+                                               XDebuggerBundle.message("debugger.session.tab.threads.title"), AllIcons.Debugger.Threads,
+                                               null);
     framesContent.setCloseable(false);
     return framesContent;
   }

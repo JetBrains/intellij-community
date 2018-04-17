@@ -126,12 +126,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     configureSoftWraps(7);
     Inlay inlay = addInlay(1);
     assertNotNull(myEditor.getSoftWrapModel().getSoftWrap(5));
-    new WriteCommandAction.Simple<Void>(ourProject) {
-      @Override
-      protected void run() {
-        myEditor.getDocument().setText(" ");
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(ourProject).run(() -> myEditor.getDocument().setText(" "));
     assertFalse(inlay.isValid());
   }
 

@@ -95,7 +95,7 @@ public class SvnTestDirtyScopeStateTest extends Svn17TestCase {
   public void testOkToAddScopeUnderWriteAction() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
-    final VcsDirtyScopeManagerImpl vcsDirtyScopeManager = (VcsDirtyScopeManagerImpl) VcsDirtyScopeManager.getInstance(myProject);
+    final VcsDirtyScopeManagerImpl vcsDirtyScopeManager = (VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject);
 
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final VirtualFile fileB = createFileInCommand("b.txt", "old content");
@@ -108,13 +108,10 @@ public class SvnTestDirtyScopeStateTest extends Svn17TestCase {
     vcsDirtyScopeManager.retrieveScopes();
     vcsDirtyScopeManager.changesProcessed();
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() {
-        vcsDirtyScopeManager.fileDirty(file);
-        vcsDirtyScopeManager.fileDirty(fileB);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      vcsDirtyScopeManager.fileDirty(file);
+      vcsDirtyScopeManager.fileDirty(fileB);
+    });
 
 
     final FilePath fp = VcsUtil.getFilePath(file);

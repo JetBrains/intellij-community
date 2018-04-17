@@ -48,6 +48,7 @@ public class IdeConsoleRootType extends ConsoleRootType {
   @Nullable
   @Override
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
+    if (file.isDirectory()) return null;
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
     if (fileType == UnknownFileType.INSTANCE || fileType == PlainTextFileType.INSTANCE) {
       return AllIcons.Debugger.ToolConsole;

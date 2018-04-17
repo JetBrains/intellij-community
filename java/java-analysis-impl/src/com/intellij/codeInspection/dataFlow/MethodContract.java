@@ -17,6 +17,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,6 +188,21 @@ public abstract class MethodContract {
     @Override
     public String toString() {
       return myPresentableName;
+    }
+
+    public boolean isReturnTypeCompatible(@Nullable PsiType returnType) {
+      if (this == ANY_VALUE || this == THROW_EXCEPTION) {
+        return true;
+      }
+      if (PsiType.VOID.equals(returnType)) return false;
+
+      if (PsiType.BOOLEAN.equals(returnType)) {
+        return this == TRUE_VALUE || this == FALSE_VALUE;
+      }
+
+      if (returnType instanceof PsiPrimitiveType) return false;
+
+      return this == NULL_VALUE || this == NOT_NULL_VALUE;
     }
   }
 }

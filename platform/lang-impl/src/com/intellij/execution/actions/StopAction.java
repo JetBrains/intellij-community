@@ -24,6 +24,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,9 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.components.JBList;
+import com.intellij.ui.mac.touchbar.NSAutoreleaseLock;
+import com.intellij.ui.mac.touchbar.TBItemScrubber;
+import com.intellij.ui.mac.touchbar.TouchBar;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +54,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   private static boolean isPlaceGlobal(AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
-           || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace());
+           || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
+           || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
   }
   @Override
   public void update(final AnActionEvent e) {
@@ -113,61 +117,65 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         return;
       }
 
+      if (e.getPlace().equals(ActionPlaces.TOUCHBAR_GENERAL)) {
+        createStopSelectTouchBar(stoppableDescriptors).show();
+        return;
+      }
+
       Pair<List<HandlerItem>, HandlerItem>
         handlerItems = getItemsList(stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
       if (handlerItems == null || handlerItems.first.isEmpty()) {
         return;
       }
 
-      final JBList<HandlerItem> list = new JBList<>(handlerItems.first);
-      if (handlerItems.second != null) list.setSelectedValue(handlerItems.second, true);
       HandlerItem stopAllItem =
         new HandlerItem(ExecutionBundle.message("stop.all", KeymapUtil.getFirstKeyboardShortcutText("Stop")), AllIcons.Actions.Suspend,
                         true) {
           @Override
           void stop() {
             for (HandlerItem item : handlerItems.first) {
+              if(item == this) continue;
               item.stop();
             }
           }
         };
-      if (stopCount > 1) {
-        ((DefaultListModel<HandlerItem>)list.getModel()).addElement(stopAllItem);
-      }
       JBPopup activePopup = SoftReference.dereference(myActivePopupRef);
       if (activePopup != null) {
-          stopAllItem.stop();
-          activePopup.cancel();
-          return;
+        stopAllItem.stop();
+        activePopup.cancel();
+        return;
       }
 
-      list.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<HandlerItem>() {
-        @Nullable
-        @Override
-        public String getTextFor(HandlerItem item) {
-          return item.displayName;
-        }
+      List<HandlerItem> items = handlerItems.first;
+      if (stopCount > 1) {
+        items.add(stopAllItem);
+      }
 
-        @Nullable
-        @Override
-        public Icon getIconFor(HandlerItem item) {
-          return item.icon;
-        }
+      IPopupChooserBuilder<HandlerItem> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(items)
+        .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<HandlerItem>() {
+          @Nullable
+          @Override
+          public String getTextFor(HandlerItem item) {
+            return item.displayName;
+          }
 
-        @Override
-        public boolean hasSeparatorAboveOf(HandlerItem item) {
-          return item.hasSeparator;
-        }
-      }));
+          @Nullable
+          @Override
+          public Icon getIconFor(HandlerItem item) {
+            return item.icon;
+          }
 
-      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+          @Override
+          public boolean hasSeparatorAboveOf(HandlerItem item) {
+            return item.hasSeparator;
+          }
+        }))
         .setMovable(true)
-        .setTitle(handlerItems.first.size() == 1 ? "Confirm process stop" : "Stop process")
-        .setFilteringEnabled(o -> ((HandlerItem)o).displayName)
-        .setItemChoosenCallback(() -> {
-          List valuesList = list.getSelectedValuesList();
-          for (Object o : valuesList) {
-            if (o instanceof HandlerItem) ((HandlerItem)o).stop();
+        .setTitle(items.size() == 1 ? "Confirm process stop" : "Stop process")
+        .setNamerForFiltering(o -> o.displayName)
+        .setItemsChosenCallback((valuesList) -> {
+          for (HandlerItem item : valuesList) {
+            item.stop();
           }
         })
         .addListener(new JBPopupAdapter() {
@@ -176,8 +184,13 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
             myActivePopupRef = null;
           }
         })
-        .setRequestFocus(true)
+        .setRequestFocus(true);
+      if (handlerItems.second != null) {
+        builder.setSelectedValue(handlerItems.second, true);
+      }
+      JBPopup popup = builder
         .createPopup();
+
       myActivePopupRef = new WeakReference<>(popup);
       InputEvent inputEvent = e.getInputEvent();
       Component component = inputEvent != null ? inputEvent.getComponent() : null;
@@ -262,6 +275,27 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     return processHandler != null && !processHandler.isProcessTerminated()
            && (!processHandler.isProcessTerminating()
                || processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess());
+  }
+
+  private static TouchBar createStopSelectTouchBar(List<RunContentDescriptor> stoppableDescriptors) {
+    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+      TouchBar result = new TouchBar("select_running_to_stop");
+      result.addButton(null, "Stop all", () -> {
+        for (RunContentDescriptor sd : stoppableDescriptors)
+          ExecutionManagerImpl.stopProcess(sd);
+        ApplicationManager.getApplication().invokeLater(()->result.closeAndRelease());
+      });
+      final TBItemScrubber stopScrubber = result.addScrubber();
+      List<TBItemScrubber.ItemData> scrubItems = new ArrayList<>();
+      for (RunContentDescriptor sd : stoppableDescriptors) {
+        scrubItems.add(new TBItemScrubber.ItemData(sd.getIcon(), sd.getDisplayName(), () -> {
+          ExecutionManagerImpl.stopProcess(sd);
+          ApplicationManager.getApplication().invokeLater(()->result.closeAndRelease());
+        }));
+      }
+      stopScrubber.setItems(scrubItems);
+      return result;
+    }
   }
 
   abstract static class HandlerItem {

@@ -24,9 +24,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.GitVcs;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.push.GitPushParams;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
@@ -38,8 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.OutputStreamWriter;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static git4idea.GitUtil.COMMENT_CHAR;
@@ -399,14 +397,10 @@ public class GitImpl extends GitImplBase {
   @Override
   @NotNull
   public GitCommandResult push(@NotNull GitRepository repository,
-                               @NotNull GitRemote remote,
-                               @NotNull String spec,
-                               boolean force,
-                               boolean updateTracking,
-                               boolean skipHook,
-                               @Nullable String tagMode,
+                               @NotNull GitPushParams pushParams,
                                GitLineHandlerListener... listeners) {
-    return doPush(repository, remote.getName(), remote.getPushUrls(), spec, force, updateTracking, skipHook, tagMode, listeners);
+    return doPush(repository, pushParams.getRemote().getName(), pushParams.getRemote().getPushUrls(), pushParams.getSpec(),
+                  pushParams.isForce(), pushParams.shouldSetupTracking(), pushParams.shouldSkipHooks(), pushParams.getTagMode(), listeners);
   }
 
   @NotNull
@@ -425,7 +419,7 @@ public class GitImpl extends GitImplBase {
       h.setSilent(false);
       h.setStdoutSuppressed(false);
       addListeners(h, listeners);
-      if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(GitVcs.getInstance(repository.getProject()).getVersion())) {
+      if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(repository)) {
         h.addParameters("--progress");
       }
       h.addParameters("--porcelain");
@@ -497,11 +491,10 @@ public class GitImpl extends GitImplBase {
       h.setUrls(remote.getUrls());
       h.addParameters(remote.getName());
       h.addParameters(params);
-      GitVcs gitVcs = GitVcs.getInstance(repository.getProject());
-      if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(gitVcs.getVersion())) {
+      if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(repository)) {
         h.addParameters("--progress");
       }
-      if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(gitVcs.getVersion())) {
+      if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(repository)) {
         h.addParameters("--prune");
       }
       addListeners(h, listeners);

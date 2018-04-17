@@ -17,9 +17,10 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
 
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
     val file = resolveVirtualFile(nodePath)
+    val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
 
     file?.let { repositoryManager.getRepositoryForFile(it, true) }?.let { repository ->
-      val grandParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot) ?: subtreeRoot
+      val grandParent = nextPolicyParent ?: subtreeRoot
       val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
 
       REPOSITORY_CACHE.getValue(cachingRoot)[repository]?.let { return it }
@@ -36,7 +37,7 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
       }
     }
 
-    return null
+    return nextPolicyParent
   }
 
   class Factory(val project: Project) : ChangesGroupingPolicyFactory() {

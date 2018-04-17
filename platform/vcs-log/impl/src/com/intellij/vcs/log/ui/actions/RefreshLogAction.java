@@ -52,7 +52,7 @@ public class RefreshLogAction extends RefreshAction {
         else {
           LOG.warn(message);
         }
-        refresher.setValid(true);
+        refresher.setValid(true, false);
       }
     }
 

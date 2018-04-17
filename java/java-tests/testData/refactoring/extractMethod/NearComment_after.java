@@ -2,7 +2,6 @@ public class ExtractMethods {
   public void processLine(String line) {
       newMethod(line);
 
-
   }
 
     private void newMethod(String line) {

@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="Xerces" type="repository">
-    <properties maven-id="xerces:xercesImpl:2.11.0" />
+    <properties include-transitive-deps="false" maven-id="xerces:xercesImpl:2.11.0" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/xerces/xercesImpl/2.11.0/xercesImpl-2.11.0.jar!/" />
     </CLASSES>

@@ -652,9 +652,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       projectIcon.setIcon(selected
         ? AllIcons.General.ProjectConfigurableSelected
         : AllIcons.General.ProjectConfigurable);
-      projectIcon.setToolTipText(OptionsBundle.message(project.isDefault()
-        ? "configurable.default.project.tooltip"
-        : "configurable.current.project.tooltip"));
+      projectIcon.setToolTipText(project.isDefault()
+                                 ? OptionsBundle.message("configurable.default.project.tooltip", IdeUICustomization.getInstance().getProjectConceptName())
+                                 : OptionsBundle.message("configurable.current.project.tooltip"));
       projectIcon.setVisible(true);
     }
     else {

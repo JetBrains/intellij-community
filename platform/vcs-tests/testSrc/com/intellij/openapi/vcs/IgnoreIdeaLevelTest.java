@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -18,7 +17,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -119,31 +117,28 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     private VirtualFile myF4Outside;
 
     private FileStructure(final VirtualFile baseDir, final VirtualFile outsideDir) {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          try {
-            myABase = baseDir.createChildDirectory(this, "a");
-            myBBase = myABase.createChildDirectory(this, "b");
-            myCBase = myABase.createChildDirectory(this, "c");
-            myF1Base = myBBase.createChildData(this, "f1.txt");
-            myF2Base = myBBase.createChildData(this, "f2.txt");
-            myF3Base = myCBase.createChildData(this, "f3.txt");
-            myF4Base = myCBase.createChildData(this, "f4.txt");
+      WriteAction.runAndWait(() -> {
+        try {
+          myABase = baseDir.createChildDirectory(this, "a");
+          myBBase = myABase.createChildDirectory(this, "b");
+          myCBase = myABase.createChildDirectory(this, "c");
+          myF1Base = myBBase.createChildData(this, "f1.txt");
+          myF2Base = myBBase.createChildData(this, "f2.txt");
+          myF3Base = myCBase.createChildData(this, "f3.txt");
+          myF4Base = myCBase.createChildData(this, "f4.txt");
 
-            myAOutside = outsideDir.createChildDirectory(this, "a");
-            myBOutside = myAOutside.createChildDirectory(this, "b");
-            myCOutside = myAOutside.createChildDirectory(this, "c");
-            myF1Outside = myBOutside.createChildData(this, "f1.txt");
-            myF2Outside = myBOutside.createChildData(this, "f2.txt");
-            myF3Outside = myCOutside.createChildData(this, "f3.txt");
-            myF4Outside = myCOutside.createChildData(this, "f4.txt");
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
+          myAOutside = outsideDir.createChildDirectory(this, "a");
+          myBOutside = myAOutside.createChildDirectory(this, "b");
+          myCOutside = myAOutside.createChildDirectory(this, "c");
+          myF1Outside = myBOutside.createChildData(this, "f1.txt");
+          myF2Outside = myBOutside.createChildData(this, "f2.txt");
+          myF3Outside = myCOutside.createChildData(this, "f3.txt");
+          myF4Outside = myCOutside.createChildData(this, "f4.txt");
         }
-      }.execute().throwException();
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      });
     }
   }
 

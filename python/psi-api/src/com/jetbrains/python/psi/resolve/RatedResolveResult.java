@@ -19,7 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.util.containers.SortedList;
 
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -41,6 +40,7 @@ public class RatedResolveResult implements ResolveResult {
     return myWhat;
   }
 
+  @Override
   public boolean isValidResult() {
     return myWhat != null;
   }

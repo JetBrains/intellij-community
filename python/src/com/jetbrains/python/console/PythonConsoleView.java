@@ -34,9 +34,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -128,6 +130,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
+  public void applySoftWrapping() {
+    // apply soft wrapping settings when console initialized
+    myInitialized.doWhenDone(() -> {
+      final boolean useSoftWraps = EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE);
+      getEditor().getSettings().setUseSoftWraps(useSoftWraps);
+      getConsoleEditor().getSettings().setUseSoftWraps(useSoftWraps);
+    });
+  }
+
   @Nullable
   private PyConsoleStartFolding createConsoleFolding() {
     PyConsoleStartFolding startFolding = new PyConsoleStartFolding(this);
@@ -195,7 +206,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void requestFocus() {
-    IdeFocusManager.findInstance().requestFocus(getConsoleEditor().getContentComponent(), true);
+    myInitialized.doWhenDone(() ->
+                               IdeFocusManager.getGlobalInstance().requestFocus(getConsoleEditor().getContentComponent(), true));
   }
 
   @Override
@@ -251,15 +263,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
                                                                                                       new TextRange(0, psiFile
                                                                                                         .getTextLength())));
         }
-      });
-      int oldOffset = getConsoleEditor().getCaretModel().getOffset();
-      getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
-      myExecuteActionHandler.runExecuteAction(this);
+        int oldOffset = getConsoleEditor().getCaretModel().getOffset();
+        getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
+        myExecuteActionHandler.runExecuteAction(this);
 
-      if (!StringUtil.isEmpty(oldText)) {
-        ApplicationManager.getApplication().runWriteAction(() -> setInputText(oldText));
-        getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
-      }
+        if (!StringUtil.isEmpty(oldText)) {
+          ApplicationManager.getApplication().runWriteAction(() -> setInputText(oldText));
+          getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
+        }
+      });
     });
   }
 

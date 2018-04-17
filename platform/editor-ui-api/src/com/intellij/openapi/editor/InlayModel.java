@@ -44,6 +44,20 @@ public interface InlayModel {
   List<Inlay> getInlineElementsInRange(int startOffset, int endOffset);
 
   /**
+   * Tells whether given range of offsets (both sides inclusive) contains at least one inline element.
+   */
+  default boolean hasInlineElementsInRange(int startOffset, int endOffset) {
+    return !getInlineElementsInRange(startOffset, endOffset).isEmpty();
+  }
+
+  /**
+   * Tells whether there exists at least one inline element currently.
+   */
+  default boolean hasInlineElements() {
+    return hasInlineElementsInRange(0, Integer.MAX_VALUE);
+  }
+
+  /**
    * Tells whether there exists an inline visual element at a given offset.
    */
   boolean hasInlineElementAt(int offset);
@@ -52,7 +66,15 @@ public interface InlayModel {
    * Tells whether there exists an inline visual element at a given visual position.
    * Only visual position to the left of the element is recognized.
    */
-  boolean hasInlineElementAt(@NotNull VisualPosition visualPosition);
+  default boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
+    return getInlineElementAt(visualPosition) != null;
+  }
+
+  /**
+   * Return a custom visual element at at a given visual position. Only visual position to the left of the element is recognized.
+   */
+  @Nullable
+  Inlay getInlineElementAt(@NotNull VisualPosition visualPosition);
 
   /**
    * Return a custom visual element at given coordinates in editor's coordinate space,

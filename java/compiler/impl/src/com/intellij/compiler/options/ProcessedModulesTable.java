@@ -31,6 +31,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -87,6 +88,8 @@ public class ProcessedModulesTable extends JPanel {
         return myTable.convertRowIndexToModel(viewIndex);
       }
 
+      @NotNull
+      @Override
       public Object[] getAllElements() {
         final int count = myTableModel.getRowCount();
         Object[] elements = new Object[count];
@@ -100,6 +103,7 @@ public class ProcessedModulesTable extends JPanel {
         return ((Module)element).getName() + " (" + FileUtil.toSystemDependentName(((Module)element).getModuleFilePath()) + ")";
       }
 
+      @Override
       public void selectElement(Object element, String selectedText) {
         final int count = myTableModel.getRowCount();
         for (int row = 0; row < count; row++) {

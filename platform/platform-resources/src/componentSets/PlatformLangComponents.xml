@@ -15,9 +15,6 @@
       <interface-class>com.intellij.openapi.project.impl.ProjectStoreClassProvider</interface-class>
       <implementation-class>com.intellij.configurationStore.PlatformLangProjectStoreClassProvider</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.projectRoots.SimpleJavaSdkType</implementation-class>
-    </component>
   </application-components>
   <project-components>
     <component>

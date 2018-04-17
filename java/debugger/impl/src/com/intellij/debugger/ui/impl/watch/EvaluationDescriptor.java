@@ -62,10 +62,10 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
 
       EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
       SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
-      PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
 
       ExpressionEvaluator evaluator = ReadAction.compute(() -> {
         PsiCodeFragment code = getEvaluationCode(thisEvaluationContext);
+        PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
         try {
           return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().build(code, position);
         }

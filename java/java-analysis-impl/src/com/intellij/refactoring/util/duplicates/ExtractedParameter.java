@@ -77,6 +77,12 @@ public class ExtractedParameter {
     return parameter;
   }
 
+  @NotNull
+  public String getLocalVariableTypeText() {
+    PsiType type = GenericsUtil.getVariableTypeByExpressionType(myType);
+    return type.getCanonicalText();
+  }
+
   private void addUsages(ExtractableExpressionPart patternPart) {
     myPatternUsages.add(patternPart.getUsage());
   }

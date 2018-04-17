@@ -89,38 +89,35 @@ public class XmlDeclareIdInCommentAction implements LocalQuickFix {
     final PsiElement psiElement = descriptor.getPsiElement();
     final PsiFile psiFile = psiElement.getContainingFile();
 
-    new WriteCommandAction(project, psiFile) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
-        if (tag == null) return;
+    WriteCommandAction.writeCommandAction(project, psiFile).run(() -> {
+      final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
+      if (tag == null) return;
 
-        final Language language = psiFile.getViewProvider().getBaseLanguage();
-        final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
-        if (commenter == null) return;
+      final Language language = psiFile.getViewProvider().getBaseLanguage();
+      final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
+      if (commenter == null) return;
 
-        final PsiFile tempFile = PsiFileFactory.getInstance(project).createFileFromText("dummy", language.getAssociatedFileType(),
-            commenter.getBlockCommentPrefix() +
-                "@declare id=\"" +
-                myId +
-                "\"" +
-                commenter.getBlockCommentSuffix() +
-                "\n");
+      final PsiFile tempFile = PsiFileFactory.getInstance(project).createFileFromText("dummy", language.getAssociatedFileType(),
+                                                                                      commenter.getBlockCommentPrefix() +
+                                                                                      "@declare id=\"" +
+                                                                                      myId +
+                                                                                      "\"" +
+                                                                                      commenter.getBlockCommentSuffix() +
+                                                                                      "\n");
 
-        final XmlTag parent = tag.getParentTag();
-        if (parent != null && parent.isValid()) {
-          final XmlTag[] tags = parent.getSubTags();
-          if (tags.length > 0) {
-            final PsiFile psi = tempFile.getViewProvider().getPsi(language);
-            if (psi != null) {
-              final PsiElement element = psi.findElementAt(1);
-              if (element instanceof PsiComment) {
-                parent.getNode().addChild(element.getNode(), tags[0].getNode());
-              }
+      final XmlTag parent = tag.getParentTag();
+      if (parent != null && parent.isValid()) {
+        final XmlTag[] tags = parent.getSubTags();
+        if (tags.length > 0) {
+          final PsiFile psi = tempFile.getViewProvider().getPsi(language);
+          if (psi != null) {
+            final PsiElement element = psi.findElementAt(1);
+            if (element instanceof PsiComment) {
+              parent.getNode().addChild(element.getNode(), tags[0].getNode());
             }
           }
         }
       }
-    }.execute();
+    });
   }
 }

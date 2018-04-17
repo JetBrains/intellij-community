@@ -30,7 +30,7 @@ class JavaFramesListRenderer {
     else {
       component.append(label.substring(0, openingBrace - 1), attributes);
       component.append(" (" + label.substring(openingBrace + 1, closingBrace) + ")", SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-      component.append(label.substring(closingBrace + 1, label.length()), attributes);
+      component.append(label.substring(closingBrace + 1), attributes);
     }
 
     if (isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor) && descriptor.isRecursiveCall()) {

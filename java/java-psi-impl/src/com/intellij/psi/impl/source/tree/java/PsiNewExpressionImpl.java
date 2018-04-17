@@ -113,7 +113,9 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   public PsiExpression[] getArrayDimensions() {
     PsiExpression[] expressions = getChildrenAsPsiElements(ElementType.ARRAY_DIMENSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
     PsiExpression qualifier = getQualifier();
-    if (qualifier == null) {
+    if (qualifier == null ||
+        //invalid qualifier
+        !ElementType.ARRAY_DIMENSION_BIT_SET.contains(qualifier.getNode().getElementType())) {
       return expressions;
     }
     else {
@@ -165,11 +167,13 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         return JavaResolveResult.EMPTY_ARRAY;
       }
 
+      @NotNull
       @Override
       public PsiElement getElement() {
         return PsiNewExpressionImpl.this;
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         return null;

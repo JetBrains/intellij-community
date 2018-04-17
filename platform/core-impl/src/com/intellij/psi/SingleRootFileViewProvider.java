@@ -206,10 +206,10 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
-    return !Boolean.TRUE.equals(vFile.getUserData(OUR_NO_SIZE_LIMIT_KEY));
+    return !Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY));
   }
   public static void doNotCheckFileSizeLimit(@NotNull VirtualFile vFile) {
-    vFile.putUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
+    vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
   }
 
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile, final long contentSize) {

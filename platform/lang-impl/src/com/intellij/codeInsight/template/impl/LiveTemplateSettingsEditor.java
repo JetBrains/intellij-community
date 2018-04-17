@@ -25,6 +25,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
@@ -80,8 +81,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myNodeChanged = nodeChanged;
     myDefaultShortcutItem = CodeInsightBundle.message("dialog.edit.template.shortcut.default", defaultShortcut);
 
-    myKeyField=new JTextField();
-    myDescription=new JTextField();
+    myKeyField = new JTextField(20);
+    myDescription = new JTextField(100);
     myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
     myTemplate.setId(null);
 
@@ -412,7 +413,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     ((DefaultTreeModel)checkboxTree.getModel()).nodeStructureChanged(root);
 
-    TreeUtil.traverse(root, _node -> {
+    TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).consumeEach(_node -> {
       final CheckedTreeNode node = (CheckedTreeNode)_node;
       if (node.isChecked()) {
         final TreeNode[] path = node.getPath();
@@ -420,8 +421,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
           checkboxTree.expandPath(new TreePath(path).getParentPath());
         }
       }
-      return true;
     });
+    TreeUtil.expand(checkboxTree, 2);
 
     panel.add(ScrollPaneFactory.createScrollPane(checkboxTree));
     final Dimension size = checkboxTree.getPreferredSize();
@@ -438,10 +439,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     final CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
     parent.add(node);
 
-    if (children.isEmpty()) {
-      node.setChecked(context.isEnabled(type));
-    }
-    else {
+    if (!children.isEmpty()) {
       for (TemplateContextType child : children) {
         addContextNode(hierarchy, node, child, context);
       }
@@ -449,6 +447,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       other.setChecked(context.isEnabled(type));
       node.add(other);
     }
+    node.setChecked(context.isEnabled(type));
   }
 
   private boolean isExpandableFromEditor() {

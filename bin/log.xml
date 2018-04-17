@@ -38,6 +38,7 @@
     <param name="MaxFileSize" value="1Mb"/>
     <param name="MaxBackupIndex" value="12"/>
     <param name="File" value="$LOG_DIR$/idea.log"/>
+    <param name="Encoding" value="UTF-8"/>
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>
     </layout>
@@ -45,6 +46,7 @@
 
   <appender name="CONTINUOUS_FILE" class="org.apache.log4j.FileAppender">
     <param name="File" value="$LOG_DIR$/continuous.log"/>
+    <param name="Encoding" value="UTF-8"/>
     <param name="append" value="false"/>
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>

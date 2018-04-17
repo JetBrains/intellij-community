@@ -5,7 +5,6 @@ package com.intellij.facet.impl;
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.facet.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.module.Module;
@@ -40,18 +39,15 @@ public class FacetUtil {
   }
 
   public static void deleteFacet(final Facet facet) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        if (!isRegistered(facet)) {
-          return;
-        }
-
-        ModifiableFacetModel model = FacetManager.getInstance(facet.getModule()).createModifiableModel();
-        model.removeFacet(facet);
-        model.commit();
+    WriteAction.runAndWait(() -> {
+      if (!isRegistered(facet)) {
+        return;
       }
-    }.execute();
+
+      ModifiableFacetModel model = FacetManager.getInstance(facet.getModule()).createModifiableModel();
+      model.removeFacet(facet);
+      model.commit();
+    });
   }
 
   public static boolean isRegistered(Facet facet) {

@@ -50,7 +50,7 @@ public class GrNameValuePairElementType extends GrStubElementType<GrNameValuePai
   public GrNameValuePairStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrNameValuePairStub(
       parentStub,
-      StringRef.toString(dataStream.readName()),
+      dataStream.readNameString(),
       dataStream.readBoolean() ? dataStream.readUTFFast() : null
     );
   }

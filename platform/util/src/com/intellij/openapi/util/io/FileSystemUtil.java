@@ -104,7 +104,17 @@ public class FileSystemUtil {
   @Nullable
   public static FileAttributes getAttributes(@NotNull String path) {
     try {
-      return ourMediator.getAttributes(path);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("getAttributes(" + path + ")");
+        long t = System.nanoTime();
+        FileAttributes result = ourMediator.getAttributes(path);
+        t = (System.nanoTime() - t) / 1000;
+        LOG.trace("  " + t + " mks");
+        return result;
+      }
+      else {
+        return ourMediator.getAttributes(path);
+      }
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -127,7 +137,7 @@ public class FileSystemUtil {
    */
   public static boolean isSymLink(@NotNull String path) {
     if (SystemInfo.areSymLinksSupported) {
-      final FileAttributes attributes = getAttributes(path);
+      FileAttributes attributes = getAttributes(path);
       return attributes != null && attributes.isSymLink();
     }
     return false;
@@ -143,7 +153,17 @@ public class FileSystemUtil {
   @Nullable
   public static String resolveSymLink(@NotNull String path) {
     try {
-      final String realPath = ourMediator.resolveSymLink(path);
+      String realPath;
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("resolveSymLink(" + path + ")");
+        long t = System.nanoTime();
+        realPath = ourMediator.resolveSymLink(path);
+        t = (System.nanoTime() - t) / 1000;
+        LOG.trace("  " + t + " mks");
+      }
+      else {
+        realPath = ourMediator.resolveSymLink(path);
+      }
       if (realPath != null && new File(realPath).exists()) {
         return realPath;
       }

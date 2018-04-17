@@ -175,7 +175,10 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     inspectionFinished(session);
   }
 
-  @Deprecated()
+  /**
+   * @deprecated Use {@link #inspectionFinished(LocalInspectionToolSession, ProblemsHolder)} instead
+   */
+  @Deprecated
   public void inspectionFinished(@NotNull LocalInspectionToolSession session) {}
   @NotNull
   public List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {

@@ -1,4 +1,4 @@
-// "Remove explicit type arguments" "true"
+// "Remove type arguments" "true"
 import java.util.*;
 
 class Foo {

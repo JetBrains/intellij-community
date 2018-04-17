@@ -5,10 +5,12 @@ class InCodeBlock {
   public boolean test(String s) {
     {
       int i = Integer.parseInt(s);
-      i<caret>f (i > 0) {
+      i<caret>f (i > /*in condition*/ 0) {
+        //comment1
         return true;
       }
     }
+    //comment2
     return false;
   }
 }

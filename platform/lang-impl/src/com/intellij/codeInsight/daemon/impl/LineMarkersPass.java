@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -38,12 +24,14 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.PairConsumer;
@@ -56,10 +44,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class LineMarkersPass extends TextEditorHighlightingPass implements DumbAware {
+public class LineMarkersPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LineMarkersPass");
 
-  private volatile List<LineMarkerInfo> myMarkers = Collections.emptyList();
+  private volatile List<LineMarkerInfo<PsiElement>> myMarkers = Collections.emptyList();
 
   @NotNull private final PsiFile myFile;
   @NotNull private final TextRange myPriorityBounds;
@@ -94,7 +82,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements DumbA
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    final List<LineMarkerInfo> lineMarkers = new ArrayList<>();
+    final List<LineMarkerInfo<PsiElement>> lineMarkers = new ArrayList<>();
     FileViewProvider viewProvider = myFile.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile root = viewProvider.getPsi(language);
@@ -125,7 +113,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements DumbA
   }
 
   @NotNull
-  private static List<LineMarkerInfo> mergeLineMarkers(@NotNull List<LineMarkerInfo> markers, @NotNull Document document) {
+  private static List<LineMarkerInfo<PsiElement>> mergeLineMarkers(@NotNull List<LineMarkerInfo<PsiElement>> markers, @NotNull Document document) {
     List<MergeableLineMarkerInfo> forMerge = new ArrayList<>();
     TIntObjectHashMap<List<MergeableLineMarkerInfo>> sameLineMarkers = new TIntObjectHashMap<>();
 
@@ -148,7 +136,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements DumbA
 
     if (forMerge.isEmpty()) return markers;
 
-    List<LineMarkerInfo> result = new ArrayList<>(markers);
+    List<LineMarkerInfo<PsiElement>> result = new ArrayList<>(markers);
 
     for (Object v : sameLineMarkers.getValues()) {
       List<MergeableLineMarkerInfo> infos = (List<MergeableLineMarkerInfo>)v;
@@ -262,7 +250,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements DumbA
   }
 
   @NotNull
-  public static Collection<LineMarkerInfo> queryLineMarkers(@NotNull PsiFile file, @NotNull Document document) {
+  public static Collection<LineMarkerInfo<PsiElement>> queryLineMarkers(@NotNull PsiFile file, @NotNull Document document) {
     if (file.getNode() == null) {
       // binary file? see IDEADEV-2809
       return Collections.emptyList();

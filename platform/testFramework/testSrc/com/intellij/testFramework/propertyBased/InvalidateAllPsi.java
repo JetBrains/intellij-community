@@ -18,6 +18,7 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -31,7 +32,8 @@ public class InvalidateAllPsi implements MadTestingAction {
   }
 
   @Override
-  public void performAction() {
+  public void performCommand(@NotNull Environment env) {
+    env.logMessage(toString());
     DumbServiceImpl dumbService = (DumbServiceImpl)DumbService.getInstance(myProject);
     dumbService.setDumb(true);
     dumbService.setDumb(false);

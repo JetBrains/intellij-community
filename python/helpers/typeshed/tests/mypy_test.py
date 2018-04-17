@@ -90,7 +90,7 @@ def main():
         print("Cannot import mypy. Did you install it?")
         sys.exit(1)
 
-    versions = [(3, 6), (3, 5), (3, 4), (3, 3), (2, 7)]
+    versions = [(3, 7), (3, 6), (3, 5), (3, 4), (3, 3), (2, 7)]
     if args.python_version:
         versions = [v for v in versions
                     if any(('%d.%d' % v).startswith(av) for av in args.python_version)]
@@ -131,6 +131,7 @@ def main():
             runs += 1
             flags = ['--python-version', '%d.%d' % (major, minor)]
             flags.append('--strict-optional')
+            flags.append('--no-site-packages')
             if args.no_implicit_optional:
                 flags.append('--no-implicit-optional')
             if args.warn_unused_ignores:

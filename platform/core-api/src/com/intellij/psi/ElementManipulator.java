@@ -19,6 +19,7 @@ package com.intellij.psi;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @see AbstractElementManipulator
@@ -35,8 +36,10 @@ public interface ElementManipulator<T extends PsiElement> {
    * @return changed element
    * @throws IncorrectOperationException if something goes wrong
    */
+  @Nullable
   T handleContentChange(@NotNull T element, @NotNull TextRange range, String newContent) throws IncorrectOperationException;
 
+  @Nullable
   T handleContentChange(@NotNull T element, String newContent) throws IncorrectOperationException;
 
   @NotNull

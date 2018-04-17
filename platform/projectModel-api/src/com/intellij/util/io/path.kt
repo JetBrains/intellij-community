@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.diagnostic.Logger
@@ -152,6 +150,7 @@ fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
   return this
 }
 
+/** @deprecated use [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream] (to be removed in IDEA 2019) */
 fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
   val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
   tempFile.write(data, offset, size)
@@ -165,15 +164,16 @@ fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Pat
   return this
 }
 
+/** @deprecated use [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream] (to be removed in IDEA 2019) */
 fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
   val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
   tempFile.outputStream().use(outConsumer)
   try {
     Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
   }
-  catch (e: IOException) {
+  catch (e: AtomicMoveNotSupportedException) {
     LOG.warn(e)
-    FileUtil.rename(tempFile.toFile(), this.toFile())
+    Files.move(tempFile, this, StandardCopyOption.REPLACE_EXISTING)
   }
   return this
 }
@@ -277,3 +277,6 @@ fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boole
 
   return result.toString().truncateFileName()
 }
+
+val Path.isWritable: Boolean
+  get() = Files.isWritable(this)

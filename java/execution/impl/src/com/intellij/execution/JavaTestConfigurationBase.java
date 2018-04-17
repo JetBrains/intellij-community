@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.openapi.util.InvalidDataException;
@@ -35,8 +36,7 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
     super(configurationModule, factory);
   }
 
-  @NotNull
-  public abstract String getFrameworkPrefix();
+  public abstract byte getTestFrameworkId();
 
   public abstract void bePatternConfiguration(List<PsiClass> classes, PsiMethod method);
 
@@ -51,6 +51,11 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   }
 
   public abstract TestSearchScope getTestSearchScope();
+  public abstract void setSearchScope(TestSearchScope searchScope);
+
+  @Nullable
+  @Override
+  public abstract JavaTestFrameworkRunnableState<? extends JavaTestConfigurationBase> getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
   @Nullable
   @Override

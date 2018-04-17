@@ -1,0 +1,1 @@
+xs = [foo for<caret>

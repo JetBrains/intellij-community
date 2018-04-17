@@ -475,6 +475,7 @@ public final class GuiTestUtil {
       robot.type(text.charAt(i));
       Pause.pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS);
     }
+    Pause.pause(300, TimeUnit.MILLISECONDS);
   }
 
   @Nullable
@@ -675,7 +676,7 @@ public final class GuiTestUtil {
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {
-        return (button.getText() != null && button.getText().equals(text));
+        return (button.getText() != null && button.getText().equals(text)) && button.isShowing();
       }
     }, timeout);
     return new RadioButtonFixture(robot, radioButton);

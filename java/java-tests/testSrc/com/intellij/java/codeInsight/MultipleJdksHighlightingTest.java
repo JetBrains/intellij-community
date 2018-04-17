@@ -186,6 +186,15 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.checkHighlighting();
   }
 
+  public void testDependsOnNewerJdk() {
+    IdeaTestUtil.setModuleLanguageLevel(myJava7Module, LanguageLevel.JDK_1_7);
+    ModuleRootModificationUtil.addDependency(myJava3Module, myJava7Module);
+    final String name = getTestName(false);
+    myFixture.copyFileToProject("java7/p/" + name + ".java");
+    myFixture.configureByFiles("java3/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testMissedAutoCloseable() {
     IdeaTestUtil.setModuleLanguageLevel(myJava7Module, LanguageLevel.JDK_1_7);
     ModuleRootModificationUtil.addDependency(myJava3Module, myJava7Module);

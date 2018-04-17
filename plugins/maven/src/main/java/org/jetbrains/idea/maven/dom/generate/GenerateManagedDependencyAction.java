@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.dom.generate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,15 +64,14 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
         GenerateDependencyUtil.chooseDependencies(unexistManagingDeps.values(), mavenModel.getManager().getProject());
 
       if (!dependenciesToOverride.isEmpty()) {
-        return new WriteCommandAction<MavenDomDependency>(editor.getProject(), mavenModel.getXmlTag().getContainingFile()) {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            for (MavenDomDependency parentDependency : dependenciesToOverride) {
+        return WriteCommandAction.writeCommandAction(editor.getProject(), mavenModel.getXmlTag().getContainingFile()).compute(() -> {
+          MavenDomDependency dependency = null;
+          for (MavenDomDependency parentDependency : dependenciesToOverride) {
               String groupId = parentDependency.getGroupId().getStringValue();
               String artifactId = parentDependency.getArtifactId().getStringValue();
 
               if (!StringUtil.isEmptyOrSpaces(groupId) && !StringUtil.isEmptyOrSpaces(artifactId)) {
-                MavenDomDependency dependency = MavenDomUtil.createDomDependency(mavenModel, editor);
+                dependency = MavenDomUtil.createDomDependency(mavenModel, editor);
 
                 dependency.getGroupId().setStringValue(groupId);
                 dependency.getArtifactId().setStringValue(artifactId);
@@ -90,9 +88,9 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
 
                 dependency.getVersion().undefine();
               }
-            }
           }
-        }.execute().getResultObject();
+          return dependency;
+        });
       }
 
       return null;

@@ -12,7 +12,7 @@ import java.io.OutputStream;
  */
 public class ReadOnlyLightVirtualFile extends LightVirtualFile {
   public ReadOnlyLightVirtualFile(@NotNull String name,
-                                  Language language,
+                                  @NotNull Language language,
                                   @NotNull CharSequence text) {
     super(name, language, text);
     super.setWritable(false);
@@ -24,8 +24,8 @@ public class ReadOnlyLightVirtualFile extends LightVirtualFile {
   }
 
   @Override
-  public final void setWritable(boolean b) {
-    if (b) throw new UnsupportedOperationException();
+  public final void setWritable(boolean writable) {
+    if (writable) throw new UnsupportedOperationException();
   }
 
   @NotNull

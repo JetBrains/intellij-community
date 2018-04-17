@@ -16,9 +16,8 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nls;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,9 +73,4 @@ public interface ConfigurationType extends PossiblyDumbAware {
    * @return the run configuration factories.
    */
   ConfigurationFactory[] getConfigurationFactories();
-
-  @Override
-  default boolean isDumbAware() {
-    return this instanceof DumbAware;
-  }
 }

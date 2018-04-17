@@ -38,7 +38,7 @@ public class ShrinkTest extends PropertyCheckerTestCase {
     checkFalsified(gen, property, 0); // prove that it sometimes fails
     for (int i = 0; i < 1000; i++) {
       try {
-        PropertyChecker.forAll(gen).silently().shouldHold(property);
+        PropertyChecker.customized().silent().forAll(gen, property);
       }
       catch (PropertyFalsified e) {
         assertEquals("[]", e.getBreakingValue());

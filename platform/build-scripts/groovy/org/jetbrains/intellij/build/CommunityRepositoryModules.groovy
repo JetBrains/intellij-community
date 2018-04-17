@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -238,15 +238,15 @@ class CommunityRepositoryModules {
     plugin("intellij.android.plugin") {
       directoryName = "android"
       mainJarName = "android.jar"
-      withModule("intellij.android.common", "android-common.jar", false)
-      withModule("intellij.android.buildCommon", "build-common.jar", false)
-      withModule("intellij.android.rt", "android-rt.jar", false)
+      withModule("intellij.android.common", "android-common.jar", null)
+      withModule("intellij.android.buildCommon", "build-common.jar", null)
+      withModule("intellij.android.rt", "android-rt.jar", null)
 
-      withModule("intellij.android", "android.jar", false)
+      withModule("intellij.android", "android.jar", null)
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
-      withModule("intellij.android.flags", "android.jar")
+      withModule("android.sdktools.flags", "android.jar")
       withModule("intellij.android.designer", "android.jar")
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
@@ -257,35 +257,27 @@ class CommunityRepositoryModules {
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
-      withModule("android.sdktools.repository")
       withModule("intellij.android.sherpaUi", "constraint-layout.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
-      withModule("android.sdktools.sdk-common", "sdk-common.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
-      withModule("android.sdktools.manifest-merger", "manifest-merger.jar")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
       withModule("android.sdktools.binary-resources", "sdk-tools.jar")
-      withModule("intellij.android.analyzer", "sdk-tools.jar")
-      withModule("android.sdktools.ddmlib", "sdk-tools.jar")
+      withModule("android.sdktools.analyzer", "sdk-tools.jar")
       withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.draw9patch", "sdk-tools.jar")
       withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
       withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
       withModule("android.sdktools.ninepatch", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
-      withModule("android.sdktools.builder-model", "sdk-tools.jar")
-      withModule("android.sdktools.builder-test-api", "sdk-tools.jar")
-      withModule("android.sdktools.android-annotations", "sdk-tools.jar")
-      withModule("intellij.android.layoutInspector", "sdk-tools.jar")
+      withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
 
-      withModule("intellij.android.gradle.jps", "jps/android-gradle-jps.jar")
-      withModule("intellij.android.jps", "jps/android-jps-plugin.jar")
+      withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
-      withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
+      withProjectLibrary("jgraphx") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
@@ -315,6 +307,9 @@ class CommunityRepositoryModules {
       withProjectLibrary("archive-patcher")
       withProjectLibrary("com.android.tools.analytics-library:shared:26.0.0")
       withProjectLibrary("com.android.tools.analytics-library:tracker:26.0.0")
+      withProjectLibrary("com.android.tools:annotations:26.0.0")
+      withProjectLibrary("com.android.tools:sdk-common:26.0.0")
+      withProjectLibrary("com.android.tools.build:manifest-merger:26.0.0")
       withProjectLibrary("analytics-protos")
 
       additionalModulesToJars.entrySet().each {

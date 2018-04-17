@@ -122,8 +122,13 @@ public class DfaPsiUtil {
   @NotNull
   public static Nullness inferParameterNullability(@NotNull PsiParameter parameter) {
     PsiElement parent = parameter.getParent();
-    if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression) {
-      return getFunctionalParameterNullability((PsiLambdaExpression)parent.getParent(), ((PsiParameterList)parent).getParameterIndex(parameter));
+    if (parent instanceof PsiParameterList) {
+      PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiLambdaExpression) {
+        return getFunctionalParameterNullability((PsiLambdaExpression)gParent, ((PsiParameterList)parent).getParameterIndex(parameter));
+      } else if (gParent instanceof PsiMethod && DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodMatches((PsiMethod)gParent)) {
+        return Nullness.NULLABLE;
+      }
     }
     if (parent instanceof PsiForeachStatement) {
       return getTypeNullability(inferLoopParameterTypeWithNullability((PsiForeachStatement)parent));
@@ -347,7 +352,7 @@ public class DfaPsiUtil {
             if (isCallExposingNonInitializedFields(instruction) ||
                 instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
               for (PsiField field : containingClass.getFields()) {
-                if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field, false))) {
+                if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field))) {
                   map.put(field, false);
                 } else if (!map.containsKey(field)) {
                   map.put(field, true);

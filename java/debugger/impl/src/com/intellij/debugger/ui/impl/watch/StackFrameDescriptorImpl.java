@@ -159,7 +159,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
           label.append(name.substring(dotIndex + 1));
           if (settings.SHOW_PACKAGE_NAME) {
             label.append(" {");
-            label.append(name.substring(0, dotIndex));
+            label.append(name, 0, dotIndex);
             label.append("}");
           }
         }

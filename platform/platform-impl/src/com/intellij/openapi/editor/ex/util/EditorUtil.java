@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -224,13 +223,10 @@ public final class EditorUtil {
     final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
     final String filler = EditorModificationUtil.calcStringToFillVirtualSpace(editor);
     if (!filler.isEmpty()) {
-      new WriteAction(){
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          editor.getDocument().insertString(offset, filler);
-          editor.getCaretModel().moveToOffset(offset + filler.length());
-        }
-      }.execute();
+      WriteAction.run(() -> {
+        editor.getDocument().insertString(offset, filler);
+        editor.getCaretModel().moveToOffset(offset + filler.length());
+      });
     }
   }
 
@@ -715,16 +711,15 @@ public final class EditorUtil {
     return UIUtil.getFontWithFallback(scheme.getEditorFontName(), Font.PLAIN, size);
   }
 
+  public static int getDefaultCaretWidth() {
+    return Registry.intValue("editor.caret.width", 2);
+  }
+
   /**
    * Number of virtual soft wrap introduced lines on a current logical line before the visual position that corresponds
    * to the current logical position.
-   *
-   * @see LogicalPosition#softWrapLinesOnCurrentLogicalLine
    */
   public static int getSoftWrapCountAfterLineStart(@NotNull Editor editor, @NotNull LogicalPosition position) {
-    if (position.visualPositionAware) {
-      return position.softWrapLinesOnCurrentLogicalLine;
-    }
     int startOffset = editor.getDocument().getLineStartOffset(position.line);
     int endOffset = editor.logicalPositionToOffset(position);
     return editor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).size();
@@ -808,5 +803,23 @@ public final class EditorUtil {
     int style = textAttributes != null ? textAttributes.getFontType() : Font.PLAIN;
     FontInfo fallbackFont = ComplementaryFontsRegistry.getFontAbleToDisplay((int)c, style, scheme.getFontPreferences(), null);
     return fallbackFont.canDisplay(codePoint) ? String.valueOf(c) : fallback;
+  }
+
+  /**
+   * Performs inlay-aware conversion of offset to visual position in editor. If there are inlays at given position, their
+   * 'related to preceding text' property will be taken account to determine resulting position. Specifically, resulting position will
+   * match caret's visual position if it's moved to the given offset using {@link Caret#moveToOffset(int)} call.
+   *
+   * @see Inlay#isRelatedToPrecedingText()
+   */
+  @NotNull
+  public static VisualPosition inlayAwareOffsetToVisualPosition(@NotNull Editor editor, int offset) {
+    VisualPosition pos = editor.logicalToVisualPosition(editor.offsetToLogicalPosition(offset));
+    Inlay inlay;
+    while ((inlay = editor.getInlayModel().getInlineElementAt(pos)) != null) {
+      if (inlay.isRelatedToPrecedingText()) break;
+      pos = new VisualPosition(pos.line, pos.column + 1);
+    }
+    return pos;
   }
 }

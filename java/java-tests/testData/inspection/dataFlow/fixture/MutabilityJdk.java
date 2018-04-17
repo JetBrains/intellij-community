@@ -2,6 +2,11 @@ import java.util.*;
 import java.io.*;
 
 public class MutabilityJdk {
+  static final List<String> LIST = Collections.unmodifiableList(Arrays.asList("foo", "bar"));
+
+  void testField() {
+    LIST.<warning descr="Immutable object is modified">add</warning>("baz");
+  }
 
   void testEmpty() {
     List<String> list = Collections.emptyList();

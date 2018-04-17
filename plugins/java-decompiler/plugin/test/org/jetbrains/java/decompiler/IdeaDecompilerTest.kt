@@ -170,7 +170,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
       }
       else if (file.fileType === StdFileTypes.CLASS && !file.name.contains('$')) {
         val decompiled = (psiManager.findFile(file)!! as ClsFileImpl).mirror.text
-        assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name == "package-info.class")
+        assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name.endsWith("-info.class"))
 
         // check that no mapped line number is on an empty line
         val prefix = "// "

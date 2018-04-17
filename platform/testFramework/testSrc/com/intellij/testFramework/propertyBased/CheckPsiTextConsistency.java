@@ -17,19 +17,20 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class CheckPsiTextConsistency implements MadTestingAction {
-  private final PsiFile myFile;
+public class CheckPsiTextConsistency extends ActionOnFile {
 
   public CheckPsiTextConsistency(PsiFile file) {
-    myFile = file;
+    super(file);
   }
 
   @Override
-  public void performAction() {
-    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkFileStructure);
+  public void performCommand(@NotNull Environment env) {
+    env.logMessage(toString());
+    PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkFileStructure);
   }
 }

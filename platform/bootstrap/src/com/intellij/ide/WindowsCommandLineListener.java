@@ -19,5 +19,5 @@ package com.intellij.ide;
  * @author yole
  */
 public interface WindowsCommandLineListener {
-  void processWindowsLauncherCommandLine(final String currentDirectory, final String commandLine);
+  void processWindowsLauncherCommandLine(final String currentDirectory, final String[] args);
 }

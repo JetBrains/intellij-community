@@ -4,7 +4,7 @@ public class SameFieldsWithPrefix {
       int aValue = inner.getValue();
       int bValue = inner.getBValue();
 
-    System.out.println(aValue + bValue);
+      System.out.println(aValue + bValue);
   }
 
     private static class Inner {

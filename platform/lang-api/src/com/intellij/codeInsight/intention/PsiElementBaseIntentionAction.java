@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!checkFile(file)) return;
+    if (editor == null || !checkFile(file)) return;
     final PsiElement element = getElement(editor, file);
     if (element != null) {
       invoke(project, editor, element);

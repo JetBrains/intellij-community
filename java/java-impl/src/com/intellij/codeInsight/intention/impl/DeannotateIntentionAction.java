@@ -20,7 +20,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -159,17 +158,15 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
                           final PsiFile file,
                           final ExternalAnnotationsManager annotationsManager,
                           final PsiModifierListOwner listOwner) {
-    new WriteCommandAction(project, getText()) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        String qualifiedName = annotation.getQualifiedName();
-        LOG.assertTrue(qualifiedName != null);
-        if (annotationsManager.deannotate(listOwner, qualifiedName) && virtualFile != null && virtualFile.isInLocalFileSystem()) {
-          UndoUtil.markPsiFileForUndo(file);
-        }
+    WriteCommandAction.writeCommandAction(project).withName(getText()).run(() -> {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      String qualifiedName = annotation.getQualifiedName();
+      LOG.assertTrue(qualifiedName != null);
+      if (annotationsManager.deannotate(listOwner, qualifiedName) && virtualFile != null && virtualFile.isInLocalFileSystem()) {
+        UndoUtil.markPsiFileForUndo(file);
       }
-    }.execute();
+      ;
+    });
   }
 
   @Override

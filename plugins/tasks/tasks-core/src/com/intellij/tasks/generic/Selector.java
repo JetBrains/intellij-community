@@ -10,9 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 @Tag("selector")
 public final class Selector {
-  @NotNull private String myName;
-  @NotNull private String myPath;
-
+  @NotNull private String myName = "";
+  @NotNull private String myPath = "";
 
   /**
    * Serialization constructor

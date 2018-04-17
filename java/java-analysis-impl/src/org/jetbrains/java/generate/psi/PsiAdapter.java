@@ -16,8 +16,6 @@
 package org.jetbrains.java.generate.psi;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -26,7 +24,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -668,46 +665,6 @@ public class PsiAdapter {
     public static boolean isPrimitiveType(PsiType type) {
         return type instanceof PsiPrimitiveType;
     }
-
-  public static int getJavaVersion(@NotNull PsiElement element) {
-    JavaSdkVersion sdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(element);
-    if (sdkVersion == null) {
-      sdkVersion = JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(element));
-    }
-
-    int version = 0;
-    switch (sdkVersion) {
-      case JDK_1_0:
-      case JDK_1_1:
-        version = 1;
-        break;
-      case JDK_1_2:
-        version = 2;
-        break;
-      case JDK_1_3:
-        version = 3;
-        break;
-      case JDK_1_4:
-        version = 4;
-        break;
-      case JDK_1_5:
-        version = 5;
-        break;
-      case JDK_1_6:
-        version = 6;
-        break;
-      case JDK_1_7:
-        version = 7;
-        break;
-      case JDK_1_8:
-        version = 8;
-        break;
-      case JDK_1_9:
-        version = 9;
-        break;
-    }
-    return version;
-  }
 
   public static boolean isNestedArray(PsiType aType) {
     if (!(aType instanceof PsiArrayType)) return false;

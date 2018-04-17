@@ -7,6 +7,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @State(name = "JavacSettings", storages = @Storage("compiler.xml"))
 public class JavacConfiguration implements PersistentStateComponent<JpsJavaCompilerOptions> {
   private final JpsJavaCompilerOptions mySettings = new JpsJavaCompilerOptions();
@@ -19,9 +22,14 @@ public class JavacConfiguration implements PersistentStateComponent<JpsJavaCompi
   @Override
   @NotNull
   public JpsJavaCompilerOptions getState() {
-    JpsJavaCompilerOptions state = new JpsJavaCompilerOptions();
+    final JpsJavaCompilerOptions state = new JpsJavaCompilerOptions();
     XmlSerializerUtil.copyBean(mySettings, state);
-    state.ADDITIONAL_OPTIONS_STRING = PathMacroManager.getInstance(myProject).collapsePathsRecursively(state.ADDITIONAL_OPTIONS_STRING);
+    state.ADDITIONAL_OPTIONS_OVERRIDE = new HashMap<>(state.ADDITIONAL_OPTIONS_OVERRIDE); // copyBean copies by reference, we need a map clone here
+    final PathMacroManager macros = PathMacroManager.getInstance(myProject);
+    state.ADDITIONAL_OPTIONS_STRING = macros.collapsePathsRecursively(state.ADDITIONAL_OPTIONS_STRING);
+    for (Map.Entry<String, String> entry : state.ADDITIONAL_OPTIONS_OVERRIDE.entrySet()) {
+      entry.setValue(macros.collapsePathsRecursively(entry.getValue()));
+    }
     return state;
   }
 

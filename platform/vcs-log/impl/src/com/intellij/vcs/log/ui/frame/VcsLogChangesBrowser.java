@@ -51,6 +51,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
 class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
+  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
   @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<CommitId, VcsShortCommitDetails> myDataGetter;
@@ -88,6 +89,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     init();
 
     getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     myViewer.rebuildTree();
   }
 
@@ -131,7 +133,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
 
     if (detailsList.isEmpty()) {
-      myViewer.setEmptyText("No commits selected");
+      myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     }
     else if (detailsList.size() == 1) {
       VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));

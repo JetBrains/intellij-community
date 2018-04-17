@@ -1,0 +1,1 @@
+deprecated: paused.png -> /actions/pause.svg

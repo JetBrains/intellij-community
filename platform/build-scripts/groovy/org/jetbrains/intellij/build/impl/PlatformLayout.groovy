@@ -76,6 +76,7 @@ class PlatformLayout extends BaseLayout {
      * Include all project libraries from dependencies of modules already included into layout to 'lib' directory
      */
     void withProjectLibrariesFromIncludedModules(BuildContext context) {
+      context.messages.debug("Collecting project libraries used by platform modules")
       layout.moduleJars.values().each {
         def module = context.findRequiredModule(it)
         JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll {
@@ -83,6 +84,7 @@ class PlatformLayout extends BaseLayout {
           !layout.projectLibrariesToUnpack.values().contains(it.name) &&
           !layout.excludedProjectLibraries.contains(it.name)
         }.each {
+          context.messages.debug(" module '$module.name': '$it.name'")
           withProjectLibrary(it.name)
         }
       }

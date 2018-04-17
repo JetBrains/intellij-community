@@ -21,10 +21,12 @@ public class RenameJavaModuleProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void findCollisions(@NotNull PsiElement element, @NotNull String newName, @NotNull Map<? extends PsiElement, String> allRenames, @NotNull List<UsageInfo> result) {
+  public void findCollisions(@NotNull PsiElement element,
+                             @NotNull String newName,
+                             @NotNull Map<? extends PsiElement, String> allRenames,
+                             @NotNull List<UsageInfo> result) {
     Project project = element.getProject();
-    PsiJavaModule existing = ContainerUtil.getFirstItem(
-      JavaModuleNameIndex.getInstance().get(newName, project, ProjectScope.getProjectScope(project)));
+    PsiJavaModule existing = ContainerUtil.getFirstItem(JavaModuleNameIndex.getInstance().get(newName, project, ProjectScope.getProjectScope(project)));
     if (existing != null) {
       result.add(new UnresolvableCollisionUsageInfo(element, existing) {
         @Override

@@ -96,10 +96,6 @@ public class ClassUtil {
     return indices.get(psiClass);
   }
 
-  public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName, @NotNull PsiClass containingClass) {
-    return findNonQualifiedClassByIndex(indexName, containingClass, false);
-  }
-
   public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName,
                                                       @NotNull final PsiClass containingClass,
                                                       final boolean jvmCompatible) {
@@ -301,6 +297,9 @@ public class ClassUtil {
       public String visitArrayType(PsiArrayType arrayType) {
         PsiType componentType = arrayType.getComponentType();
         String typePresentation = componentType.accept(this);
+        if (arrayType.getDeepComponentType() instanceof PsiPrimitiveType) {
+          return typePresentation + "[]";
+        }
         if (componentType instanceof PsiClassType) {
           typePresentation = "L" + typePresentation + ";";
         }

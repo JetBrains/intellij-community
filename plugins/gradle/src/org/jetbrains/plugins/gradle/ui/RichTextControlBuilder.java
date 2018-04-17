@@ -72,7 +72,7 @@ public class RichTextControlBuilder {
         final int i = s.indexOf(RICH_TEXT_TOKEN_END);
         if (i >= 0) {
           // Meta-token ends within the current string.
-          metaTokenData.append(s.substring(0, i));
+          metaTokenData.append(s, 0, i);
           final JComponent component = metaDataProcessor.process(metaTokenData.toString());
           if (component != null) {
             rowComponents.add(component);

@@ -6,9 +6,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.util.LazyInitializer;
+import com.intellij.util.LazyInitializer.NotNullValue;
+import com.intellij.util.LazyInitializer.NullableValue;
+import com.intellij.util.NotNullProducer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.TDoubleObjectHashMap;
@@ -27,7 +32,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
@@ -40,10 +44,13 @@ public class JBUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
 
   public static final String USER_SCALE_FACTOR_PROPERTY = "JBUI.userScaleFactor";
+  public static final String COMPENSATE_VISUAL_PADDING_KEY = "compensate.visual.padding";
 
   private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new JBUI());
 
   private static final float DISCRETE_SCALE_RESOLUTION = 0.25f;
+
+  public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
 
   /**
    * The IDE supports two different HiDPI modes:
@@ -142,6 +149,7 @@ public class JBUI {
      */
     PIX_SCALE;
 
+    @NotNull
     public Scale of(double value) {
       return Scale.create(value, this);
     }
@@ -163,7 +171,8 @@ public class JBUI {
         }
       };
 
-    public static Scale create(double value, ScaleType type) {
+    @NotNull
+    public static Scale create(double value, @NotNull ScaleType type) {
       EnumMap<ScaleType, TDoubleObjectHashMap<Scale>> emap = cache.get();
       TDoubleObjectHashMap<Scale> map = emap.get(type);
       if (map == null) {
@@ -175,7 +184,7 @@ public class JBUI {
       return scale;
     }
 
-    private Scale(double value, ScaleType type) {
+    private Scale(double value, @NotNull ScaleType type) {
       this.value = value;
       this.type = type;
     }
@@ -184,11 +193,13 @@ public class JBUI {
       return value;
     }
 
+    @NotNull
     public ScaleType type() {
       return type;
     }
 
-    public Scale newOrThis(double value) {
+    @NotNull
+    Scale newOrThis(double value) {
       if (this.value == value) return this;
       return type.of(value);
     }
@@ -202,9 +213,13 @@ public class JBUI {
   /**
    * The system scale factor, corresponding to the default monitor device.
    */
-  private static final LazyInitializer<Float> SYSTEM_SCALE_FACTOR = new LazyInitializer<Float>(new Callable<Float>() {
+  private static final NotNullValue<Float> SYSTEM_SCALE_FACTOR = new NotNullValue<Float>() {
+    @NotNull
     @Override
-    public Float call() {
+    public Float initialize() {
+      if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+        return 1f;
+      }
       if (UIUtil.isJreHiDPIEnabled()) {
         GraphicsDevice gd = null;
         try {
@@ -215,28 +230,26 @@ public class JBUI {
         }
         return 1f;
       }
-      if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-        return 1f;
-      }
       UIUtil.initSystemFontData();
       Pair<String, Integer> fdata = UIUtil.getSystemFontData();
 
       int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
       return getFontScale(size);
-    }})
-  {
+    }
+
     @Override
-    protected void onInitialized() {
-      LOG.info("System scale factor: " + this + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
+    protected void onInitialized(@NotNull Float scale) {
+      LOG.info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     }
   };
 
   /**
    * For internal usage.
    */
-  public static final LazyInitializer<Float> DEBUG_USER_SCALE_FACTOR = new LazyInitializer<Float>(new Callable<Float>() {
+  public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<Float>() {
+    @Nullable
     @Override
-    public Float call() {
+    public Float initialize() {
       String prop = System.getProperty("ide.ui.scale");
       if (prop != null) {
         try {
@@ -250,11 +263,11 @@ public class JBUI {
         return Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
       }
       return null;
-    }})
-  {
+    }
+
     @Override
-    protected void onInitialized() {
-      if (isSet()) setUserScaleFactor(get());
+    protected void onInitialized(@Nullable Float scale) {
+      if (isNotNull()) setUserScaleFactor(ObjectUtils.notNull(scale));
     }
   };
 
@@ -267,14 +280,14 @@ public class JBUI {
    * Adds property change listener. Supported properties:
    * {@link #USER_SCALE_FACTOR_PROPERTY}
    */
-  public static void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+  public static void addPropertyChangeListener(@NotNull String propertyName, @NotNull PropertyChangeListener listener) {
     PCS.addPropertyChangeListener(propertyName, listener);
   }
 
   /**
    * Removes property change listener
    */
-  public static void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+  public static void removePropertyChangeListener(@NotNull String propertyName, @NotNull PropertyChangeListener listener) {
     PCS.removePropertyChangeListener(propertyName, listener);
   }
 
@@ -289,7 +302,7 @@ public class JBUI {
    * Returns the system scale factor, corresponding to the graphics configuration.
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
-  public static float sysScale(@Nullable GraphicsConfiguration gc) {
+    public static float sysScale(@Nullable GraphicsConfiguration gc) {
     if (UIUtil.isJreHiDPIEnabled() && gc != null) {
       if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
         if (SystemInfo.isMac && UIUtil.isJreHiDPI_earlierVersion()) {
@@ -407,17 +420,18 @@ public class JBUI {
    * ide.ui.scale.override=[boolean]
    * ide.ui.scale=[float]
    *
-   * @returns the result
+   * @return the result
    */
   public static float setUserScaleFactor(float scale) {
-    if (DEBUG_USER_SCALE_FACTOR.isSet()) {
-      if (scale == DEBUG_USER_SCALE_FACTOR.get()) {
-        setUserScaleFactorProperty(scale); // set the debug value as is, or otherwise ignore
+    if (DEBUG_USER_SCALE_FACTOR.isNotNull()) {
+      float debugScale = ObjectUtils.notNull(DEBUG_USER_SCALE_FACTOR.get());
+      if (scale == debugScale) {
+        setUserScaleFactorProperty(debugScale); // set the debug value as is, or otherwise ignore
       }
-      return DEBUG_USER_SCALE_FACTOR.get();
+      return debugScale;
     }
 
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
       setUserScaleFactorProperty(1f);
       return 1f;
     }
@@ -468,14 +482,26 @@ public class JBUI {
     return fontSize / UIUtil.DEF_SYSTEM_FONT_SIZE;
   }
 
+  @NotNull
+  public static JBValue value(float value) {
+    return new JBValue.Float(value);
+  }
+
+  @NotNull
+  public static JBValue uiIntValue(@NotNull String key, int defValue) {
+    return new JBValue.UIInteger(key, defValue);
+  }
+
   public static JBDimension size(int width, int height) {
     return new JBDimension(width, height);
   }
 
+  @NotNull
   public static JBDimension size(int widthAndHeight) {
     return new JBDimension(widthAndHeight, widthAndHeight);
   }
 
+  @NotNull
   public static JBDimension size(Dimension size) {
     if (size instanceof JBDimension) {
       JBDimension newSize = ((JBDimension)size).newSize();
@@ -484,34 +510,42 @@ public class JBUI {
     return new JBDimension(size.width, size.height);
   }
 
+  @NotNull
   public static JBInsets insets(int top, int left, int bottom, int right) {
     return new JBInsets(top, left, bottom, right);
   }
 
+  @NotNull
   public static JBInsets insets(int all) {
     return insets(all, all, all, all);
   }
 
+  @NotNull
   public static JBInsets insets(int topBottom, int leftRight) {
     return insets(topBottom, leftRight, topBottom, leftRight);
   }
 
+  @NotNull
   public static JBInsets emptyInsets() {
     return new JBInsets(0, 0, 0, 0);
   }
 
+  @NotNull
   public static JBInsets insetsTop(int t) {
     return insets(t, 0, 0, 0);
   }
 
+  @NotNull
   public static JBInsets insetsLeft(int l) {
     return insets(0, l, 0, 0);
   }
 
+  @NotNull
   public static JBInsets insetsBottom(int b) {
     return insets(0, 0, b, 0);
   }
 
+  @NotNull
   public static JBInsets insetsRight(int r) {
     return insets(0, 0, 0, r);
   }
@@ -519,11 +553,13 @@ public class JBUI {
   /**
    * @deprecated use JBUI.scale(EmptyIcon.create(size)) instead
    */
+  @NotNull
   public static EmptyIcon emptyIcon(int size) {
     return scale(EmptyIcon.create(size));
   }
 
   @NotNull
+  @SuppressWarnings("unchecked")
   public static <T extends JBIcon> T scale(@NotNull T icon) {
     return (T)icon.withIconPreScaled(false);
   }
@@ -551,7 +587,7 @@ public class JBUI {
    * An equivalent of {@code isHiDPI(scale(1f))}
    */
   public static boolean isUsrHiDPI() {
-      return isHiDPI(scale(1f));
+    return isHiDPI(scale(1f));
   }
 
   /**
@@ -610,54 +646,75 @@ public class JBUI {
     public static JBFont create(String fontFamily, int size) {
       return JBFont.create(new Font(fontFamily, Font.PLAIN, size));
     }
+
+    @NotNull
+    public static JBFont toolbarFont() {
+      return SystemInfo.isMac ? smallFont() : label();
+    }
   }
+
+  private static final JBEmptyBorder SHARED_EMPTY_INSTANCE = new JBEmptyBorder(0);
 
   @SuppressWarnings("UseDPIAwareBorders")
   public static class Borders {
     public static JBEmptyBorder empty(int top, int left, int bottom, int right) {
+      if (top == 0 && left == 0 && bottom == 0 && right == 0) {
+        return SHARED_EMPTY_INSTANCE;
+      }
       return new JBEmptyBorder(top, left, bottom, right);
     }
 
+    @NotNull
     public static JBEmptyBorder empty(int topAndBottom, int leftAndRight) {
       return empty(topAndBottom, leftAndRight, topAndBottom, leftAndRight);
     }
 
+    @NotNull
     public static JBEmptyBorder emptyTop(int offset) {
       return empty(offset, 0, 0, 0);
     }
 
+    @NotNull
     public static JBEmptyBorder emptyLeft(int offset) {
       return empty(0, offset,  0, 0);
     }
 
+    @NotNull
     public static JBEmptyBorder emptyBottom(int offset) {
       return empty(0, 0, offset, 0);
     }
 
+    @NotNull
     public static JBEmptyBorder emptyRight(int offset) {
       return empty(0, 0, 0, offset);
     }
 
+    @NotNull
     public static JBEmptyBorder empty() {
       return empty(0, 0, 0, 0);
     }
 
+    @NotNull
     public static Border empty(int offsets) {
       return empty(offsets, offsets, offsets, offsets);
     }
 
+    @NotNull
     public static Border customLine(Color color, int top, int left, int bottom, int right) {
       return new CustomLineBorder(color, insets(top, left, bottom, right));
     }
 
+    @NotNull
     public static Border customLine(Color color, int thickness) {
       return customLine(color, thickness, thickness, thickness, thickness);
     }
 
+    @NotNull
     public static Border customLine(Color color) {
       return customLine(color, 1);
     }
 
+    @NotNull
     public static Border merge(@Nullable Border source, @NotNull Border extra, boolean extraIsOutside) {
       if (source == null) return extra;
       return new CompoundBorder(extraIsOutside ? extra : source, extraIsOutside? source : extra);
@@ -665,14 +722,17 @@ public class JBUI {
   }
 
   public static class Panels {
+    @NotNull
     public static BorderLayoutPanel simplePanel() {
       return new BorderLayoutPanel();
     }
 
+    @NotNull
     public static BorderLayoutPanel simplePanel(Component comp) {
       return simplePanel().addToCenter(comp);
     }
 
+    @NotNull
     public static BorderLayoutPanel simplePanel(int hgap, int vgap) {
       return new BorderLayoutPanel(hgap, vgap);
     }
@@ -744,8 +804,16 @@ public class JBUI {
     }
 
     /**
+     * Creates a context with all scale factors set to 1.
+     */
+    public static BaseScaleContext createIdentity() {
+      return create(USR_SCALE.of(1));
+    }
+
+    /**
      * Creates a context with the provided scale factors (system scale is ignored)
      */
+    @NotNull
     public static BaseScaleContext create(@NotNull Scale... scales) {
       BaseScaleContext ctx = create();
       for (Scale s : scales) ctx.update(s);
@@ -755,6 +823,7 @@ public class JBUI {
     /**
      * Creates a default context with the current user scale
      */
+    @NotNull
     public static BaseScaleContext create() {
       return new BaseScaleContext();
     }
@@ -766,7 +835,7 @@ public class JBUI {
     /**
      * @return the context scale factor of the provided type (1d for system scale)
      */
-    public double getScale(ScaleType type) {
+    public double getScale(@NotNull ScaleType type) {
       switch (type) {
         case USR_SCALE: return usrScale.value;
         case SYS_SCALE: return 1d;
@@ -850,12 +919,12 @@ public class JBUI {
       void contextUpdated();
     }
 
-    public void addUpdateListener(UpdateListener l) {
+    public void addUpdateListener(@NotNull UpdateListener l) {
       if (listeners == null) listeners = new ArrayList<UpdateListener>(1);
       listeners.add(l);
     }
 
-    public void removeUpdateListener(UpdateListener l) {
+    public void removeUpdateListener(@NotNull UpdateListener l) {
       if (listeners != null) listeners.remove(l);
     }
 
@@ -875,6 +944,19 @@ public class JBUI {
         case PIX_SCALE: pixScale = newScale; break;
       }
       return true;
+    }
+
+    @NotNull
+    public <T extends BaseScaleContext> T copy() {
+      BaseScaleContext ctx = createIdentity();
+      ctx.updateAll(this);
+      //noinspection unchecked
+      return (T)ctx;
+    }
+
+    @Override
+    public String toString() {
+      return usrScale + ", " + objScale + ", " + pixScale;
     }
   }
 
@@ -897,7 +979,7 @@ public class JBUI {
       update(pixScale, derivePixScale());
     }
 
-    private ScaleContext(Scale scale) {
+    private ScaleContext(@NotNull Scale scale) {
       switch (scale.type) {
         case USR_SCALE: update(usrScale, scale.value); break;
         case SYS_SCALE: update(sysScale, scale.value); break;
@@ -910,6 +992,7 @@ public class JBUI {
     /**
      * Creates a context with all scale factors set to 1.
      */
+    @NotNull
     public static ScaleContext createIdentity() {
       return create(USR_SCALE.of(1), SYS_SCALE.of(1));
     }
@@ -917,6 +1000,7 @@ public class JBUI {
     /**
      * Creates a context based on the comp's system scale and sticks to it via the {@link #update()} method.
      */
+    @NotNull
     public static ScaleContext create(@NotNull Component comp) {
       final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
       ctx.compRef = new WeakReference<Component>(comp);
@@ -924,15 +1008,40 @@ public class JBUI {
     }
 
     /**
+     * Creates a context based on the component's (or graphics's) scale and sticks to it via the {@link #update()} method.
+     */
+    @NotNull
+    public static ScaleContext create(@Nullable Component component, @Nullable Graphics2D graphics) {
+      // Component is preferable to Graphics as a scale provider, as it lets the context stick
+      // to the comp's actual scale via the update method.
+      if (component != null) {
+        GraphicsConfiguration gc = component.getGraphicsConfiguration();
+        if (gc == null ||
+            gc.getDevice().getType() == GraphicsDevice.TYPE_IMAGE_BUFFER ||
+            gc.getDevice().getType() == GraphicsDevice.TYPE_PRINTER)
+        {
+          // can't rely on gc in this case as it may provide incorrect transform or scale
+          component = null;
+        }
+      }
+      if (component != null) {
+        return create(component);
+      }
+      return create(graphics);
+    }
+
+    /**
      * Creates a context based on the gc's system scale
      */
-    public static ScaleContext create(GraphicsConfiguration gc) {
+    @NotNull
+    public static ScaleContext create(@Nullable GraphicsConfiguration gc) {
       return new ScaleContext(SYS_SCALE.of(sysScale(gc)));
     }
 
     /**
      * Creates a context based on the g's system scale
      */
+    @NotNull
     public static ScaleContext create(Graphics2D g) {
       return new ScaleContext(SYS_SCALE.of(sysScale(g)));
     }
@@ -940,6 +1049,7 @@ public class JBUI {
     /**
      * Creates a context with the provided scale
      */
+    @NotNull
     public static ScaleContext create(@NotNull Scale scale) {
       return new ScaleContext(scale);
     }
@@ -947,6 +1057,7 @@ public class JBUI {
     /**
      * Creates a context with the provided scale factors
      */
+    @NotNull
     public static ScaleContext create(@NotNull Scale... scales) {
       ScaleContext ctx = create();
       for (Scale s : scales) ctx.update(s);
@@ -956,6 +1067,7 @@ public class JBUI {
     /**
      * Creates a default context with the default screen scale and the current user scale
      */
+    @NotNull
     public static ScaleContext create() {
       return new ScaleContext();
     }
@@ -969,7 +1081,7 @@ public class JBUI {
      * {@inheritDoc}
      */
     @Override
-    public double getScale(ScaleType type) {
+    public double getScale(@NotNull ScaleType type) {
       if (type == SYS_SCALE) return sysScale.value;
       return super.getScale(type);
     }
@@ -1037,6 +1149,20 @@ public class JBUI {
         compRef.clear();
       }
     }
+
+    @NotNull
+    @Override
+    public <T extends BaseScaleContext> T copy() {
+      ScaleContext ctx = createIdentity();
+      ctx.updateAll(this);
+      //noinspection unchecked
+      return (T)ctx;
+    }
+
+    @Override
+    public String toString() {
+      return usrScale + ", " + sysScale + ", " + objScale + ", " + pixScale;
+    }
   }
 
   /**
@@ -1049,7 +1175,8 @@ public class JBUI {
     /**
      * @return the scale context
      */
-    @NotNull T getScaleContext();
+    @NotNull
+    T getScaleContext();
 
     /**
      * Updates the current context with the state of the provided context.
@@ -1064,14 +1191,14 @@ public class JBUI {
     /**
      * @return the scale of the provided type from the context
      */
-    double getScale(ScaleType type);
+    double getScale(@NotNull ScaleType type);
 
     /**
      * Updates the provided scale in the context
      *
      * @return whether the provided scale has been changed
      */
-    boolean updateScale(Scale scale);
+    boolean updateScale(@NotNull Scale scale);
   }
 
   public static class ScaleContextSupport<T extends BaseScaleContext> implements ScaleContextAware<T> {
@@ -1094,12 +1221,12 @@ public class JBUI {
     }
 
     @Override
-    public double getScale(ScaleType type) {
+    public double getScale(@NotNull ScaleType type) {
       return getScaleContext().getScale(type);
     }
 
     @Override
-    public boolean updateScale(Scale scale) {
+    public boolean updateScale(@NotNull Scale scale) {
       return getScaleContext().update(scale);
     }
   }
@@ -1123,7 +1250,7 @@ public class JBUI {
       super(BaseScaleContext.create());
     }
 
-    protected JBIcon(JBIcon icon) {
+    protected JBIcon(@NotNull JBIcon icon) {
       this();
       updateScaleContext(icon.getScaleContext());
       myScaler.update(icon.myScaler);
@@ -1138,6 +1265,28 @@ public class JBUI {
       myScaler.setPreScaled(preScaled);
     }
 
+    /**
+     * The pre-scaled state of the icon indicates whether the initial size of the icon
+     * is pre-scaled (by the global user scale) or not. If the size is not pre-scaled,
+     * then there're two approaches to deal with it:
+     * 1) scale its initial size right away and store;
+     * 2) scale its initial size every time it's requested.
+     * The 2nd approach is preferable because of the the following. Scaling of the icon may
+     * involve not only USR_SCALE but OBJ_SCALE as well. In which case applying all the scale
+     * factors and then rounding (the size is integer, the scale factors are not) gives more
+     * accurate result than rounding and then scaling.
+     * <p>
+     * For example, say we have an icon of 15x15 initial size, USR_SCALE is 1.5f, OBJ_SCALE is 1,5f.
+     * Math.round(Math.round(15 * USR_SCALE) * OBJ_SCALE) = 35
+     * Math.round(15 * USR_SCALE * OBJ_SCALE) = 34
+     * <p>
+     * Thus, JBUI.scale(MyIcon.create(w, h)) is preferable to MyIcon.create(JBUI.scale(w), JBUI.scale(h)).
+     * Here [w, h] is "raw" unscaled size.
+     *
+     * @param preScaled whether the icon is pre-scaled
+     * @return the icon in the provided pre-scaled state
+     * @see JBUI#scale(JBIcon)
+     */
     @NotNull
     public JBIcon withIconPreScaled(boolean preScaled) {
       setIconPreScaled(preScaled);
@@ -1179,7 +1328,7 @@ public class JBUI {
   public abstract static class ScalableJBIcon extends JBIcon implements ScalableIcon {
     protected ScalableJBIcon() {}
 
-    protected ScalableJBIcon(ScalableJBIcon icon) {
+    protected ScalableJBIcon(@NotNull ScalableJBIcon icon) {
       super(icon);
     }
 
@@ -1189,6 +1338,7 @@ public class JBUI {
     }
 
     @Override
+    @NotNull
     public Icon scale(float scale) {
       updateScale(OBJ_SCALE.of(scale));
       return this;
@@ -1205,7 +1355,7 @@ public class JBUI {
     /**
      * Updates the context and scales the provided value according to the provided type
      */
-    protected double scaleVal(double value, ScaleType type) {
+    protected double scaleVal(double value, @NotNull ScaleType type) {
       switch (type) {
         case USR_SCALE: return super.scaleVal(value);
         case SYS_SCALE: return value * getScale(SYS_SCALE);
@@ -1227,7 +1377,7 @@ public class JBUI {
 
     protected CachingScalableJBIcon() {}
 
-    protected CachingScalableJBIcon(CachingScalableJBIcon icon) {
+    protected CachingScalableJBIcon(@NotNull CachingScalableJBIcon icon) {
       super(icon);
     }
 
@@ -1235,6 +1385,7 @@ public class JBUI {
      * @return a new scaled copy of this icon, or the cached instance of the provided scale
      */
     @Override
+    @NotNull
     public Icon scale(float scale) {
       if (scale == getScale()) return this;
 
@@ -1265,42 +1416,52 @@ public class JBUI {
 
   public static class CurrentTheme {
     public static class ToolWindow {
+      @NotNull
       public static Color tabSelectedBackground() {
         return getColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
       }
 
+      @NotNull
       public static Color tabSelectedActiveBackground() {
         return getColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
       }
 
+      @NotNull
       public static Color tabHoveredBackground() {
         return getColor("ToolWindow.header.tab.hovered.background", tabSelectedBackground());
       }
 
+      @NotNull
       public static Color tabHoveredActiveBackground() {
         return getColor("ToolWindow.header.tab.hovered.active.background", tabSelectedActiveBackground());
       }
 
+      @NotNull
       public static Color tabSelectedBackground(boolean active) {
         return active ? tabSelectedActiveBackground() : tabSelectedBackground();
       }
 
+      @NotNull
       public static Color tabHoveredBackground(boolean active) {
         return active ? tabHoveredActiveBackground() : tabHoveredBackground();
       }
 
+      @NotNull
       public static Color headerBackground(boolean active) {
         return active ? headerActiveBackground() : headerBackground();
       }
 
+      @NotNull
       public static Color headerBackground() {
         return getColor("ToolWindow.header.background", 0xECECEC);
       }
 
+      @NotNull
       public static Color headerBorderBackground() {
         return getColor("ToolWindow.header.border.background", 0xC9C9C9);
       }
 
+      @NotNull
       public static Color headerActiveBackground() {
         return getColor("ToolWindow.header.active.background", 0xE2E6EC);
       }
@@ -1309,6 +1470,7 @@ public class JBUI {
         return getInt("ToolWindow.tab.verticalPadding", scale(3));
       }
 
+      @NotNull
       public static Font headerFont() {
         JBFont font = Fonts.label();
         Object size = UIManager.get("ToolWindow.header.font.size");
@@ -1318,15 +1480,18 @@ public class JBUI {
         return font;
       }
 
+      @NotNull
       public static Color hoveredIconBackground() {
         return getColor("ToolWindow.header.closeButton.background", 0xB9B9B9);
       }
 
+      @NotNull
       public static Icon closeTabIcon(boolean hovered) {
         return hovered ? getIcon("ToolWindow.header.closeButton.hovered.icon", AllIcons.Actions.CloseNewHovered)
                        : getIcon("ToolWindow.header.closeButton.icon", AllIcons.Actions.CloseNew);
       }
 
+      @NotNull
       public static Icon comboTabIcon(boolean hovered) {
         return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ComboArrow)
                        : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ComboArrow);
@@ -1334,42 +1499,105 @@ public class JBUI {
     }
 
     public static class Label {
+      @NotNull
       public static Color foreground(boolean selected) {
         return selected ? getColor("Label.selectedForeground", 0xFFFFFF)
                         : getColor("Label.foreground", 0x000000);
       }
 
+      @NotNull
       public static Color foreground() {
         return foreground(false);
       }
 
+      @NotNull
       public static Color disabledForeground(boolean selected) {
         return selected ? getColor("Label.selectedDisabledForeground", 0x999999)
                         : getColor("Label.disabledForeground", getColor("Label.disabledText", 0x999999));
       }
 
+      @NotNull
       public static Color disabledForeground() {
-        return foreground(false);
+        return disabledForeground(false);
+      }
+    }
+
+    public static class Popup {
+      public static Color headerBackground(boolean active) {
+        return active
+               ? getColor("Popup.Header.activeBackground", 0xe6e6e6)
+               : getColor("Popup.Header.inactiveBackground", 0xededed);
+      }
+
+      public static int headerHeight() {
+        return scale(24);
+      }
+
+      public static Color borderColor(boolean active) {
+        return active
+               ? getColor("Popup.Border.color", 0x808080)
+               : getColor("Popup.Border.inactiveColor", 0xaaaaaa);
+      }
+
+      public static Color toolbarPanelColor() {
+        return getColor("Popup.Toolbar.background", 0xf7f7f7);
+      }
+
+      public static Color toolbarBorderColor() {
+        return getColor("Popup.Toolbar.Border.color", 0xf7f7f7);
+      }
+
+      public static int toolbarHeight() {
+        return scale(28);
       }
     }
   }
 
-  private static Color getColor(String propertyName, int defaultColor) {
+  @NotNull
+  private static Color getColor(@NotNull String propertyName, int defaultColor) {
     return getColor(propertyName, new Color(defaultColor));
   }
 
-  private static Color getColor(String propertyName, Color defaultColor) {
-    Color color = UIManager.getColor(propertyName);
-    return color == null ? defaultColor : color;
+  @NotNull
+  private static Color getColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
+    NotNullProducer<Color> function = new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        Color color = UIManager.getColor(propertyName);
+        return color == null ? defaultColor : color;
+      }
+    };
+
+    return new JBColor(function);
   }
 
-  private static int getInt(String propertyName, int defaultValue) {
+  public static int getInt(@NotNull String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);
     return value instanceof Integer ? (Integer)value : defaultValue;
   }
 
-  private static Icon getIcon(String propertyName, Icon defaultIcon) {
+  @NotNull
+  private static Icon getIcon(@NotNull String propertyName, @NotNull Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
+  }
+
+  /**
+   * Temp method to not break IDEA LaF until changes are not reviewed.
+   *
+   * Correct input size is used now only for UI DSL.
+   */
+  public static boolean isUseCorrectInputHeight(@NotNull Component component) {
+    if (SystemInfoRt.isLinux) {
+      return false;
+    }
+
+    Container parent = component.getParent();
+    return !isCompensateVisualPaddingOnComponentLevel(parent instanceof JComboBox ? parent.getParent() : parent);
+  }
+
+  public static boolean isCompensateVisualPaddingOnComponentLevel(@Nullable Component parent) {
+    return SystemInfoRt.isLinux || !(parent instanceof JPanel && ((JPanel)parent).getClientProperty(COMPENSATE_VISUAL_PADDING_KEY) == Boolean.FALSE);
   }
 }

@@ -69,6 +69,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -167,12 +168,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }));
 
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      WindowsCommandLineProcessor.LISTENER = (currentDirectory, commandLine) -> {
-        LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + commandLine);
+      WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
+        List<String> argsList = Arrays.asList(args);
+        LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
         invokeLater(() -> {
-          final List<String> args = StringUtil.splitHonorQuotes(commandLine, ' ');
-          args.remove(0);   // process name
-          CommandLineProcessor.processExternalCommandLine(args, currentDirectory);
+          CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory);
         });
       };
     }
@@ -210,6 +210,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    * would fail (i.e. throw {@link ApplicationUtil.CannotRunReadActionException})
    * if there is a pending write action.
    */
+  @Override
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     if (isDispatchThread()) {
       runnable.run();
@@ -217,6 +218,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     else {
       myLock.executeByImpatientReader(runnable);
     }
+  }
+
+  @Override
+  public boolean isInImpatientReader() {
+    return myLock.isInImpatientReader();
   }
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
@@ -700,7 +706,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public long getIdleTime() {
-    assertIsDispatchThread();
     return IdeEventQueue.getInstance().getIdleTime();
   }
 
@@ -725,6 +730,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   /**
+   * Restarts the IDE with optional process elevation (on Windows).
+   *
+   * @param exitConfirmed if true, the IDE does not ask for exit confirmation.
+   * @param elevate if true and the IDE is running on Windows, the IDE is restarted in elevated mode (with admin privileges)
+   */
+  public void restart(boolean exitConfirmed, boolean elevate) {
+    exit(false, exitConfirmed, true, elevate, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  /**
    * There are two ways we can get an exit notification.
    *  1. From user input i.e. ExitAction
    *  2. From the native system.
@@ -738,6 +753,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   public void exit(boolean force, boolean exitConfirmed, boolean restart, @NotNull String[] beforeRestart) {
+    exit(force, exitConfirmed, restart, false, beforeRestart);
+  }
+
+  private void exit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, @NotNull String[] beforeRestart) {
     if (!force) {
       if (myExitInProgress) return;
       if (!exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) return;
@@ -745,14 +764,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     myExitInProgress = true;
     if (isDispatchThread()) {
-      doExit(force, exitConfirmed, restart, beforeRestart);
+      doExit(force, exitConfirmed, restart, elevate, beforeRestart);
     }
     else {
-      invokeLater(() -> doExit(force, exitConfirmed, restart, beforeRestart), ModalityState.NON_MODAL);
+      invokeLater(() -> doExit(force, exitConfirmed, restart, elevate, beforeRestart), ModalityState.NON_MODAL);
     }
   }
 
-  private void doExit(boolean force, boolean exitConfirmed, boolean restart, String[] beforeRestart) {
+  private void doExit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, String[] beforeRestart) {
     try {
       if (!force && !confirmExitIfNeeded(exitConfirmed)) {
         return;
@@ -780,7 +799,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
-          Restarter.scheduleRestart(beforeRestart);
+          Restarter.scheduleRestart(elevate, beforeRestart);
         }
         catch (Throwable t) {
           LOG.error("Restart failed", t);
@@ -1481,5 +1500,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     final List<ApplicationListener> listeners = new ArrayList<>(myDispatcher.getListeners());
     myDispatcher.getListeners().removeAll(listeners);
     Disposer.register(disposable, () -> myDispatcher.getListeners().addAll(listeners));
+  }
+
+  @NotNull
+  @Override
+  public AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState) {
+    return new AppUIExecutorImpl(modalityState);
   }
 }

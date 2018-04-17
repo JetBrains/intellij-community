@@ -143,7 +143,9 @@ public class ThreadTracker {
         if (isWellKnownOffender(thread)) continue;
 
         if (!thread.isAlive()) continue;
-        if (thread.getStackTrace().length == 0) {
+        if (thread.getStackTrace().length == 0
+            // give thread a chance to run up to the completion
+            || thread.getState() == Thread.State.RUNNABLE) {
           thread.interrupt();
           if (new WaitFor(10000){
             @Override

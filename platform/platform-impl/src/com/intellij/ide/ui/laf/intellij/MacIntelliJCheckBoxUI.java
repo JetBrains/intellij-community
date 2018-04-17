@@ -18,9 +18,12 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -40,5 +43,16 @@ public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   @Override
   public Icon getDefaultIcon() {
     return DEFAULT_ICON;
+  }
+
+  @Override
+  protected int textIconGap() {
+    return JBUI.scale(4);
+  }
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(3, 4, 2, 0);
   }
 }

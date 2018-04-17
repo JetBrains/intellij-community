@@ -23,6 +23,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -34,6 +37,9 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.PackageManagementService.ErrorDescription;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PyLazySdk;
@@ -271,6 +277,9 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     return null;
   }
 
+  public void afterProjectGenerated(@NotNull final Project project) {
+  }
+
   /**
    * @deprecated This method no longer has any effect. The standard interpreter chooser UI is always shown.
    */
@@ -318,6 +327,78 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
       errorDescription = ErrorDescription.fromMessage("Choose another SDK");
     }
     return errorDescription;
+  }
+
+
+  //TODO: Support for plugin also
+  /**
+   * Installs framework and runs callback on success.
+   * Installation runs in modal dialog and callback is posted to AWT thread.
+   * <p>
+   * If "forceInstallFramework" is passed then installs framework in any case.
+   * If SDK is remote then checks if it has interpreter and installs if missing
+   *
+   * @param frameworkName         user-readable framework name (i.e. "Django")
+   * @param requirement           name of requirement to install (i.e. "django")
+   * @param forceInstallFramework pass true if you are sure required framework is missing
+   * @param callback              to be called after installation (or instead of is framework is installed) on AWT thread
+   */
+  protected static void installFrameworkIfNeeded(@NotNull final Project project,
+                                                 @NotNull final String frameworkName,
+                                                 @NotNull final String requirement,
+                                                 @Nullable final Sdk sdk,
+                                                 final boolean forceInstallFramework,
+                                                 @Nullable final Runnable callback) {
+
+    if (sdk == null) {
+      reportPackageInstallationFailure(frameworkName, null);
+      return;
+    }
+    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+    // For remote SDK we are not sure if framework exists or not, so we'll check it anyway
+    if (forceInstallFramework || PySdkUtil.isRemote(sdk)) {
+      //Modal is used because it is insane to create project when framework is not installed
+      ProgressManager.getInstance().run(new Task.Modal(project, String.format("Ensuring %s is installed", frameworkName), false) {
+        @Override
+        public void run(@NotNull final ProgressIndicator indicator) {
+
+          boolean installed = false;
+          if (!forceInstallFramework) {
+            // First check if we need to do it
+            indicator.setText(String.format("Checking if %s is installed...", frameworkName));
+            final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
+            installed = PyPackageUtil.findPackage(packages, requirement) != null;
+          }
+
+
+          if (!installed) {
+            indicator.setText(String.format("Installing %s...", frameworkName));
+            try {
+              packageManager.install(requirement);
+              packageManager.refresh();
+            }
+            catch (final ExecutionException e) {
+              reportPackageInstallationFailure(requirement, Pair.create(sdk, e));
+            }
+          }
+        }
+
+        @Override
+        public void onSuccess() {
+          // Installed / checked successfully, call callback on AWT
+          if (callback != null) {
+            callback.run();
+          }
+        }
+      });
+    }
+    else {
+      // No need to install, but still need to call callback on AWT
+      if (callback != null) {
+        assert SwingUtilities.isEventDispatchThread();
+        callback.run();
+      }
+    }
   }
 
   @Nullable

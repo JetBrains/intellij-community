@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -37,6 +38,7 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class InstalledPackagesPanel extends JPanel {
@@ -55,7 +57,7 @@ public class InstalledPackagesPanel extends JPanel {
   protected final Project myProject;
   protected final PackagesNotificationPanel myNotificationArea;
   private final Set<String> myCurrentlyInstalling = ContainerUtil.newHashSet();
-  private final Set<InstalledPackage> myWaitingToUpgrade = ContainerUtil.newHashSet();
+  private final Map<InstalledPackage, String> myWaitingToUpgrade = ContainerUtil.newHashMap();
 
   public InstalledPackagesPanel(@NotNull Project project, @NotNull PackagesNotificationPanel area) {
     super(new BorderLayout());
@@ -97,12 +99,14 @@ public class InstalledPackagesPanel extends JPanel {
         }
       }
     };
+    myInstallButton.setShortcut(CommonShortcuts.getNew());
     myUninstallButton = new AnActionButton("Uninstall", IconUtil.getRemoveIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         uninstallAction();
       }
     };
+    myUninstallButton.setShortcut(CommonShortcuts.getDelete());
     ToolbarDecorator decorator =
       ToolbarDecorator.createDecorator(myPackagesTable).disableUpDownActions().disableAddAction().disableRemoveAction()
         .addExtraAction(myInstallButton)
@@ -183,7 +187,7 @@ public class InstalledPackagesPanel extends JPanel {
           final String availableVersion = (String)myPackagesTableModel.getValueAt(row, 2);
 
           if (packagesShouldBePostponed.contains(packageName)) {
-            myWaitingToUpgrade.add((InstalledPackage)packageObj);
+            myWaitingToUpgrade.put(pkg, availableVersion);
           }
           else if (isUpdateAvailable(currentVersion, availableVersion)) {
             upgradePackage(pkg, availableVersion);
@@ -199,10 +203,10 @@ public class InstalledPackagesPanel extends JPanel {
   }
 
   private void upgradePostponedPackages() {
-    final Iterator<InstalledPackage> iterator = myWaitingToUpgrade.iterator();
-    final InstalledPackage toUpgrade = iterator.next();
+    final Iterator<Entry<InstalledPackage, String>> iterator = myWaitingToUpgrade.entrySet().iterator();
+    final Entry<InstalledPackage, String> toUpgrade = iterator.next();
     iterator.remove();
-    upgradePackage(toUpgrade, toUpgrade.getVersion());
+    upgradePackage(toUpgrade.getKey(), toUpgrade.getValue());
   }
 
   protected Set<String> getPackagesToPostpone() {

@@ -96,6 +96,10 @@ public class ExtendableTextField extends JBTextField {
       return getIconGap() + Math.max(icon1.getIconWidth(), icon2.getIconWidth());
     }
 
+    default int getBeforeIconOffset() {
+      return 0;
+    }
+
     default boolean isIconBeforeText() {
       return false;
     }

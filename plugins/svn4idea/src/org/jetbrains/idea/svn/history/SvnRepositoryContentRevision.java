@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -148,7 +148,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
       try {
         // TODO: Local path could also be used here
         Revision revision = Revision.of(myRevision);
-        byte[] contents = SvnUtil.getFileContents(myVcs, Target.on(SvnUtil.parseUrl(getFullPath())), revision, revision);
+        byte[] contents = SvnUtil.getFileContents(myVcs, Target.on(getUrl()), revision, revision);
         myDst.write(contents);
       }
       catch (VcsException | IOException e) {
@@ -167,7 +167,12 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
   }
 
   @NotNull
+  public Url getUrl() throws SvnBindException {
+    return SvnUtil.createUrl(getFullPath(), false);
+  }
+
+  @NotNull
   public Target toTarget() throws SvnBindException {
-    return Target.on(SvnUtil.createUrl(getFullPath()), getRevisionNumber().getRevision());
+    return Target.on(getUrl(), getRevisionNumber().getRevision());
   }
 }

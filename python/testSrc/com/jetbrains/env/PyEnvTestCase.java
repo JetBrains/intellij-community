@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
@@ -8,7 +9,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
@@ -16,7 +16,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.TestEnv;
-import org.hamcrest.Matchers;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.*;
@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author traff
@@ -103,9 +105,7 @@ public abstract class PyEnvTestCase {
       }
       else {
         for (StagingOn so : description.getTestClass().getMethod(description.getMethodName()).getAnnotationsByType(StagingOn.class)) {
-          if (so.os() == TestEnv.WINDOWS && SystemInfo.isWindows ||
-              so.os() == TestEnv.LINUX && SystemInfo.isLinux ||
-              so.os() == TestEnv.MAC && SystemInfo.isMac) {
+          if (so.os().isThisOs()) {
             return true;
           }
         }
@@ -136,11 +136,9 @@ public abstract class PyEnvTestCase {
   @Before
   public void setUp() {
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
-      Assume.assumeThat(
-        "Can't find some tags between all available interpreter, test (all methods) will be skipped",
-        getAvailableTags(),
-        Matchers.hasItems(myRequiredTags)
-      );
+      assertThat(getAvailableTags())
+        .describedAs("Can't find some tags between all available interpreter, test (all methods) will be skipped")
+        .contains(myRequiredTags);
     }
   }
 
@@ -251,10 +249,24 @@ public abstract class PyEnvTestCase {
     catch (final NoSuchMethodException e) {
       throw new AssertionError("No such method", e);
     }
+    final Class<? extends PythonSdkFlavor>[] skipOnFlavors;
+
+
+    final EnvTestTagsRequired firstAnnotation = (methodAnnotation != null ? methodAnnotation : classAnnotation);
+
+
+    if (firstAnnotation != null) {
+      Assume.assumeFalse("Test skipped on this os", Arrays.stream(firstAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+      skipOnFlavors = firstAnnotation.skipOnFlavors();
+    }
+    else {
+      skipOnFlavors = null;
+    }
+
     final String[] classTags = getTags(classAnnotation);
     final String[] methodTags = getTags(methodAnnotation);
 
-    taskRunner.runTask(testTask, testName, ArrayUtil.mergeArrays(methodTags, classTags));
+    taskRunner.runTask(testTask, testName, skipOnFlavors, ArrayUtil.mergeArrays(methodTags, classTags));
   }
 
   @NotNull

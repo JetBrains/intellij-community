@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -39,7 +25,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.AnnotatedPackagesSearcher");
 
   @Override
-  public boolean execute(@NotNull final AnnotatedPackagesSearch.Parameters p, @NotNull final Processor<PsiPackage> consumer) {
+  public boolean execute(@NotNull final AnnotatedPackagesSearch.Parameters p, @NotNull final Processor<? super PsiPackage> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated packages search";
 
@@ -79,7 +65,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
       if (!accepted) return false;
     }
 
-    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(psiManager.getProject());
+    PsiSearchHelper helper = PsiSearchHelper.getInstance(psiManager.getProject());
     final GlobalSearchScope infoFilesFilter = new PackageInfoFilesOnly();
 
     GlobalSearchScope infoFiles =

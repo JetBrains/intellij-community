@@ -210,8 +210,8 @@ class JavaPredefinedConfigurations {
                                "@interface 'Interface {}", METADATA_TYPE),
 
       // J2EE templates
-      createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.struts.1.1.actions"),"public class 'StrutsActionClass extends '_ParentClass*:Action {\n" +
-                                                                                                      "  public ActionForward 'AnActionMethod:*execute (ActionMapping '_action,\n" +
+      createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.struts.1.1.actions"),"public class '_StrutsActionClass extends '_ParentClass*:Action {\n" +
+                                                                                                      "  public ActionForward '_AnActionMethod:*execute (ActionMapping '_action,\n" +
                                                                                                       "                                 ActionForm '_form,\n" +
                                                                                                       "                                 HttpServletRequest '_request,\n" +
                                                                                                       "                                 HttpServletResponse '_response);\n" +

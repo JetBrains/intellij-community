@@ -204,7 +204,7 @@ public class Main {
 
   public static IntSummaryStatistics testNestedSkip(int... values) {
       IntSummaryStatistics stat = new IntSummaryStatistics();
-      long toSkipOuter = 1;
+      long toSkipOuter = 2;
       for (int x : values) {
           if (toSkipOuter > 0) {
               toSkipOuter--;
@@ -226,7 +226,7 @@ public class Main {
 
   public static IntSummaryStatistics testNestedSkip2(int... values) {
       IntSummaryStatistics stat = new IntSummaryStatistics();
-      long toSkip = 1;
+      long toSkip = 2;
       for (int x : values) {
           if (x > 0) {
               long toSkipInner = x;

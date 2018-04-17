@@ -95,7 +95,7 @@ public class RestTitle extends RestElement {
         break;
       }
     }
-    return text.substring(start, text.length());
+    return text.substring(start);
   }
 
   public Pair<Character, Character> getAdornments() {

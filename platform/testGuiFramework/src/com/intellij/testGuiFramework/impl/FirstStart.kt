@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.gdpr.EndUserAgreement
@@ -110,9 +96,9 @@ abstract class FirstStart(val ideType: IdeType) {
 
   private fun completeFirstStart() {
       completeInstallation()
-      evaluateLicense(ideType.name, myRobot)
       acceptAgreement()
       acceptDataSharing()
+      evaluateLicense(ideType.name, myRobot)
       customizeIde()
       waitWelcomeFrameAndClose()
   }
@@ -162,7 +148,7 @@ abstract class FirstStart(val ideType: IdeType) {
         }
       }
       catch (e: WaitTimedOutError) {
-        LOG.error("'$policyAgreementTitle' dialog hasn't been shown. Check registry...")
+        LOG.warn("'$policyAgreementTitle' dialog hasn't been shown. Check registry...")
       }
     }
   }
@@ -183,10 +169,10 @@ abstract class FirstStart(val ideType: IdeType) {
   private fun acceptDataSharing() {
     with(myRobot) {
       LOG.info("Accepting Data Sharing")
-      val title = "Data Sharing Options"
+      val title = "Data Sharing"
       try {
         dialog(title, timeoutSeconds = 5)
-        button("OK").click()
+        button("Send Usage Statistics").click()
         LOG.info("Data sharing accepted")
       } catch (e: WaitTimedOutError) {
         LOG.info("Data sharing dialog hasn't been shown")

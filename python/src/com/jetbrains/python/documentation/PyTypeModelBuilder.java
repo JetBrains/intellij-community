@@ -253,21 +253,12 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyCollectionType) {
       final String name = type.getName();
       final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes();
-      boolean nullOnlyTypes = true;
-      for (PyType elementType : elementTypes) {
-        if (elementType != null) {
-          nullOnlyTypes = false;
-          break;
-        }
-      }
       final List<TypeModel> elementModels = new ArrayList<>();
-      if (!nullOnlyTypes) {
-        for (PyType elementType : elementTypes) {
-          elementModels.add(build(elementType, true));
-        }
-        if (!elementModels.isEmpty()) {
-          result = new CollectionOf(name, elementModels);
-        }
+      for (PyType elementType : elementTypes) {
+        elementModels.add(build(elementType, true));
+      }
+      if (!elementModels.isEmpty()) {
+        result = new CollectionOf(name, elementModels);
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
@@ -419,6 +410,11 @@ public class PyTypeModelBuilder {
         add("Any");
       }
     }
+
+    @Override
+    public void collectionOf(CollectionOf collectionOf) {
+      typingGenericFormat(collectionOf);
+    }
   }
 
   private static class TypeToBodyWithLinksVisitor extends TypeNameVisitor {
@@ -503,13 +499,24 @@ public class PyTypeModelBuilder {
         add("...");
         return;
       }
-      final String name = collectionOf.collectionName;
-      final String typingName = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(name);
-      addType(typingName != null ? typingName : name);
-      add("[");
-      processList(collectionOf.elementTypes);
-      add("]");
+      final boolean allTypeParamsAreAny = ContainerUtil.and(collectionOf.elementTypes, t -> t == NamedType.ANY);
+      if (allTypeParamsAreAny) {
+        name(collectionOf.collectionName);
+      }
+      else {
+        typingGenericFormat(collectionOf);
+      }
       myDepth--;
+    }
+
+    protected void typingGenericFormat(CollectionOf collectionOf) {
+      final String name = collectionOf.collectionName;
+      addType(PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.getOrDefault(name, name));
+      if (!collectionOf.elementTypes.isEmpty()) {
+        add("[");
+        processList(collectionOf.elementTypes);
+        add("]");
+      }
     }
 
     protected abstract void addType(String name);
@@ -576,12 +583,15 @@ public class PyTypeModelBuilder {
 
     @Override
     public void tuple(TupleType type) {
-      add("Tuple[");
-      processList(type.members);
-      if (type.homogeneous) {
-        add(", ...");
+      add("Tuple");
+      if (!type.members.isEmpty()) {
+        add("[");
+        processList(type.members);
+        if (type.homogeneous) {
+          add(", ...");
+        }
+        add("]");
       }
-      add("]");
     }
 
     @Override

@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
@@ -29,37 +14,25 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 interface RepositoryService {
-  fun checkUrl(uriString: String, project: Project? = null): Boolean {
+  fun checkUrl(uriString: String, project: Project? = null): String? {
     val uri = URIish(uriString)
-    val isFile: Boolean
-    if (uri.scheme == URLUtil.FILE_PROTOCOL) {
-      isFile = true
-    }
-    else {
-      isFile = uri.scheme == null && uri.host == null
-    }
-
-    if (isFile && !checkFileRepo(uriString, project)) {
-      return false
-    }
-    return true
+    val isFile = uri.scheme == URLUtil.FILE_PROTOCOL || (uri.scheme == null && uri.host == null)
+    return if (isFile) checkFileRepo(uriString, project) else null
   }
 
-  private fun checkFileRepo(url: String, project: Project?): Boolean {
+  private fun checkFileRepo(url: String, project: Project?): String? {
     val suffix = "/${Constants.DOT_GIT}"
     val file = Paths.get(if (url.endsWith(suffix)) url.substring(0, url.length - suffix.length) else url)
     if (file.exists()) {
       if (!file.isDirectory()) {
-        Messages.showErrorDialog(project, "Path is not a directory", "")
-        return false
+        return "Path is not a directory"
       }
       else if (isValidRepository(file)) {
-        return true
+        return null
       }
     }
     else if (!file.isAbsolute) {
-      Messages.showErrorDialog(project, icsMessage("specify.absolute.path.dialog.message"), "")
-      return false
+      return icsMessage("specify.absolute.path.dialog.message")
     }
 
     if (MessageDialogBuilder
@@ -69,15 +42,14 @@ interface RepositoryService {
         .isYes) {
       return try {
         createBareRepository(file)
-        true
+        null
       }
       catch (e: IOException) {
-        Messages.showErrorDialog(project, icsMessage("init.failed.message", e.message), icsMessage("init.failed.title"))
-        false
+        icsMessage("init.failed.message", e.message)
       }
     }
     else {
-      return false
+      return ""
     }
   }
 

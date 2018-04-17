@@ -51,11 +51,8 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   public void testAnnotationTypeExtensionsNotSupported() {
     doTest(false, false);
   }
-
-  public void testStaticMethodAccessibleThroughStaticImportButExplicitlyQualified() {
-    doTest(true, false);
-  }
-
+  public void testStaticMethodAccessibleThroughStaticImportButExplicitlyQualified() { doTest(true, false); }
+  public void testStaticMethodOfInterfaceAccessibleThroughMethodReference() { doTest(true, false); }
   public void testInheritanceOfStaticMethodFromDefault() {
     doTest();
   }

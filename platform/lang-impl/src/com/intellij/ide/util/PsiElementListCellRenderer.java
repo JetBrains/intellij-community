@@ -23,8 +23,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.registry.Registry;
@@ -54,6 +54,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer {
   private static final String LEFT = BorderLayout.WEST;
@@ -99,7 +101,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       else if (psiElement instanceof PsiDirectory) {
         file = ((PsiDirectory)psiElement).getVirtualFile();
       }
-      Color fileBgColor = file != null ? EditorTabbedContainer.calcTabColor(project, file) : null;
+      Color fileBgColor = file != null ? getFileBackgroundColor(project, file) : null;
       if (fileBgColor != null) {
         return fileBgColor;
       }
@@ -148,7 +150,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
             FileStatus status = FileStatusManager.getInstance(project).getStatus(vFile);
             color = status.getColor();
 
-            Color fileBgColor = EditorTabbedContainer.calcTabColor(project, vFile);
+            Color fileBgColor = getFileBackgroundColor(project, vFile);
             bgColor = fileBgColor == null ? bgColor : fileBgColor;
           }
         }
@@ -312,12 +314,26 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     });
   }
 
-  public void installSpeedSearch(PopupChooserBuilder builder) {
+  /**
+   * @deprecated use {@link #installSpeedSearch(IPopupChooserBuilder)} instead
+   */
+  public void installSpeedSearch(PopupChooserBuilder<?> builder) {
+    installSpeedSearch((IPopupChooserBuilder)builder);
+  }
+
+  /**
+   * @deprecated use {@link #installSpeedSearch(IPopupChooserBuilder, boolean)} instead
+   */
+  public void installSpeedSearch(PopupChooserBuilder<?> builder, boolean includeContainerText) {
+    installSpeedSearch((IPopupChooserBuilder)builder, includeContainerText);
+  }
+
+  public void installSpeedSearch(IPopupChooserBuilder builder) {
     installSpeedSearch(builder, false);
   }
 
-  public void installSpeedSearch(PopupChooserBuilder builder, final boolean includeContainerText) {
-    builder.setFilteringEnabled(o -> {
+  public void installSpeedSearch(IPopupChooserBuilder builder, final boolean includeContainerText) {
+    builder.setNamerForFiltering(o -> {
       if (o instanceof PsiElement) {
         final String elementText = getElementText((T)o);
         if (includeContainerText) {
@@ -332,7 +348,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   /**
-   * User {@link #installSpeedSearch(PopupChooserBuilder)} instead
+   * Use {@link #installSpeedSearch(IPopupChooserBuilder)} instead
    */
   @Deprecated
   public void installSpeedSearch(JList list) {

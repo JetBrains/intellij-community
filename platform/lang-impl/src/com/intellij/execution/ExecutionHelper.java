@@ -33,7 +33,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +42,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManagerUtil;
@@ -270,31 +269,27 @@ public class ExecutionHelper {
       descriptorToFront(project, descriptor);
     }
     else if (consoles.size() > 1) {
-      final JList list = new JBList(consoles);
       final Icon icon = DefaultRunExecutor.getRunExecutorInstance().getIcon();
-      list.setCellRenderer(new ListCellRendererWrapper<RunContentDescriptor>() {
-        @Override
-        public void customize(final JList list,
-                              final RunContentDescriptor value,
-                              final int index,
-                              final boolean selected,
-                              final boolean hasFocus) {
-          setText(value.getDisplayName());
-          setIcon(icon);
-        }
-      });
-
-      final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-      builder.setTitle(selectDialogTitle);
-
-      builder.setItemChoosenCallback(() -> {
-        final Object selectedValue = list.getSelectedValue();
-        if (selectedValue instanceof RunContentDescriptor) {
-          RunContentDescriptor descriptor = (RunContentDescriptor)selectedValue;
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(ContainerUtil.newArrayList(consoles))
+        .setRenderer(new ListCellRendererWrapper<RunContentDescriptor>() {
+          @Override
+          public void customize(final JList list,
+                                final RunContentDescriptor value,
+                                final int index,
+                                final boolean selected,
+                                final boolean hasFocus) {
+            setText(value.getDisplayName());
+            setIcon(icon);
+          }
+        })
+        .setTitle(selectDialogTitle)
+        .setItemChosenCallback((descriptor) -> {
           descriptorConsumer.consume(descriptor);
           descriptorToFront(project, descriptor);
-        }
-      }).createPopup().showInBestPositionFor(dataContext);
+        })
+        .createPopup()
+        .showInBestPositionFor(dataContext);
     }
   }
 

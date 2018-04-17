@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -61,7 +61,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
 
   private static void navigateOrChoose(Editor editor, Collection<? extends NavigatablePsiElement> superElements, final String title) {
     if (!superElements.isEmpty()) {
-      NavigatablePsiElement[] superElementArray = superElements.toArray(new NavigatablePsiElement[0]);
+      NavigatablePsiElement[] superElementArray = superElements.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY);
       if (superElementArray.length == 1) {
         superElementArray[0].navigate(true);
       }

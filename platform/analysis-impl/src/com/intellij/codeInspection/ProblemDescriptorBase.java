@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.lang.annotation.ProblemGroup;
@@ -22,6 +8,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,6 +30,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
   private ProblemGroup myProblemGroup;
+  @Nullable private final Throwable myCreationTrace;
 
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
@@ -91,9 +80,13 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     myStartSmartPointer = manager.createSmartPsiElementPointer(startElement, startContainingFile);
     myEndSmartPointer = startElement == endElement ? null : manager.createSmartPsiElementPointer(endElement, endContainingFile);
+    if (myEndSmartPointer != null) {
+      LOG.assertTrue(endContainingFile == startContainingFile, "start/end elements should be from the same file");
+    }
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
+    myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
   }
 
   @Nullable
@@ -108,6 +101,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       LOG.error("Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree: " +
                 element + "; file: " + element.getContainingFile());
     }
+  }
+
+  @Nullable
+  public Throwable getCreationTrace() {
+    return myCreationTrace;
   }
 
   @Override
@@ -224,6 +222,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
 
   public Navigatable getNavigatable() {
     return myNavigatable;
+  }
+
+  @Nullable
+  public VirtualFile getContainingFile() {
+    return myStartSmartPointer.getVirtualFile();
   }
 
   public void setNavigatable(final Navigatable navigatable) {

@@ -94,7 +94,10 @@ class IntelliJCoreArtifactsBuilder {
           analysisModules.each { module it }
         }
 
-        ["ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "Snappy-Java", "jayatana", "imgscalr", "batik", "xmlgraphics-commons"].each {
+        [
+          "ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "Snappy-Java", "jayatana", "imgscalr", "batik", "xmlgraphics-commons",
+         "JDOM", "OroMatcher", "jna", "Log4J", "StreamEx"
+        ].each {
           projectLibrary(it)
         }
       }

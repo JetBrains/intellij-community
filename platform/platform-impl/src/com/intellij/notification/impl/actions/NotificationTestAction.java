@@ -16,8 +16,6 @@
 package com.intellij.notification.impl.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.connect.StatisticsNotification;
-import com.intellij.internal.statistic.updater.StatisticsNotificationManager;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -181,9 +179,6 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         Icon icon = null;
         if (!StringUtil.isEmpty(myGroupId)) {
           icon = IconLoader.findIcon(myGroupId);
-        }
-        if ("!!!St!!!".equals(myTitle)) {
-          return myNotification = new StatisticsNotification(StatisticsNotificationManager.GROUP_DISPLAY_ID, getListener()).setIcon(icon);
         }
         String displayId = mySticky ? TEST_STICKY_GROUP.getDisplayId() : TEST_GROUP_ID;
         if (myToolwindow) {

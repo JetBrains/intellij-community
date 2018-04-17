@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -24,7 +25,7 @@ import java.util.Set;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public class ExtensionsAreaImpl implements ExtensionsArea {
-  private final LogProvider myLogger;
+  private static final Logger LOG = Logger.getInstance(ExtensionsAreaImpl.class);
   public static final String ATTRIBUTE_AREA = "area";
 
   private static final Map<String,String> ourDefaultEPs = new THashMap<>();
@@ -43,18 +44,17 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final AreaInstance myAreaInstance;
   private final String myAreaClass;
 
-  public ExtensionsAreaImpl(String areaClass, AreaInstance areaInstance, PicoContainer parentPicoContainer, @NotNull LogProvider logger) {
+  public ExtensionsAreaImpl(String areaClass, AreaInstance areaInstance, PicoContainer parentPicoContainer) {
     myCreationTrace = DEBUG_REGISTRATION ? new Throwable("Area creation trace") : null;
     myAreaClass = areaClass;
     myAreaInstance = areaInstance;
     myPicoContainer = new DefaultPicoContainer(parentPicoContainer);
-    myLogger = logger;
     initialize();
   }
 
   @TestOnly
-  ExtensionsAreaImpl(MutablePicoContainer parentPicoContainer, @NotNull LogProvider logger) {
-    this(null, null, parentPicoContainer, logger);
+  ExtensionsAreaImpl(MutablePicoContainer parentPicoContainer) {
+    this(null, null, parentPicoContainer);
   }
 
   @TestOnly
@@ -66,7 +66,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
     //this code is required because we have a lot of static extensions e.g. LanguageExtension that are initialized only once
     //for the extensions AvailabilityListeners will be broken if the initialization happened in "fake" area which doesn't have required EP
-    if (myAvailabilityListeners.size() > 0) {
+    if (!myAvailabilityListeners.isEmpty()) {
       for (Map.Entry<String, Collection<ExtensionPointAvailabilityListener>> entry : myAvailabilityListeners.entrySet()) {
         String key = entry.getKey();
         if (!processedEPs.contains(key)) {
@@ -230,7 +230,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
             }
           }
         }
-        myLogger.warn("Failed to find EP availability listener: " + epListenerExtension.getListenerClass());
+        LOG.warn("Failed to find EP availability listener: " + epListenerExtension.getListenerClass());
       }
 
       @Override
@@ -294,12 +294,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
                                       @NotNull PluginDescriptor descriptor,
                                       @NotNull ExtensionPoint.Kind kind) {
     if (hasExtensionPoint(extensionPointName)) {
-      if (extensionPointName.equals("org.jetbrains.uast.uastLanguagePlugin")) return;
       final String message =
         "Duplicate registration for EP: " + extensionPointName + ": original plugin " + getExtensionPoint(extensionPointName).getDescriptor().getPluginId() +
         ", new plugin " + descriptor.getPluginId();
       if (DEBUG_REGISTRATION) {
-        myLogger.error(message, myEPTraces.get(extensionPointName));
+        LOG.error(message, myEPTraces.get(extensionPointName));
       }
       throw new PicoPluginExtensionInitializationException(message, null, descriptor.getPluginId());
     }
@@ -375,6 +374,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return myExtensionPoints.containsKey(extensionPointName);
   }
 
+  @Override
+  public boolean hasExtensionPoint(@NotNull ExtensionPointName<?> extensionPointName) {
+    return hasExtensionPoint(extensionPointName.getName());
+  }
+
   void removeAllComponents(@NotNull Set<ExtensionComponentAdapter> extensionAdapters) {
     for (final Object extensionAdapter : extensionAdapters) {
       ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)extensionAdapter;
@@ -385,12 +389,5 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public String toString() {
     return (myAreaClass == null ? "Root" : myAreaClass)+" Area";
-  }
-
-  void error(@NotNull String msg) {
-    myLogger.error(msg);
-  }
-  void error(@NotNull Throwable msg) {
-    myLogger.error(msg);
   }
 }

@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -188,6 +187,7 @@ public class DeclarationParser {
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == null || tokenType == JavaTokenType.RBRACE) break;
 
+      //noinspection Duplicates
       if (tokenType == JavaTokenType.SEMICOLON) {
         if (invalidElements != null) {
           invalidElements.error(JavaErrorMessages.message("unexpected.token"));
@@ -449,25 +449,21 @@ public class DeclarationParser {
     return declaration;
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseParameterList(PsiBuilder builder) {
-    return parseElementList(builder, ListType.METHOD);
+  public void parseParameterList(PsiBuilder builder) {
+    parseElementList(builder, ListType.METHOD);
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseResourceList(PsiBuilder builder) {
-    return parseElementList(builder, ListType.RESOURCE);
+  public void parseResourceList(PsiBuilder builder) {
+    parseElementList(builder, ListType.RESOURCE);
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseLambdaParameterList(PsiBuilder builder, boolean typed) {
-    return parseElementList(builder, typed ? ListType.LAMBDA_TYPED : ListType.LAMBDA_UNTYPED);
+  public void parseLambdaParameterList(PsiBuilder builder, boolean typed) {
+    parseElementList(builder, typed ? ListType.LAMBDA_TYPED : ListType.LAMBDA_UNTYPED);
   }
 
   private enum ListType {METHOD, RESOURCE, LAMBDA_TYPED, LAMBDA_UNTYPED}
 
-  @NotNull
-  private PsiBuilder.Marker parseElementList(PsiBuilder builder, ListType type) {
+  private void parseElementList(PsiBuilder builder, ListType type) {
     final boolean lambda = (type == ListType.LAMBDA_TYPED || type == ListType.LAMBDA_UNTYPED);
     final boolean resources = (type == ListType.RESOURCE);
     final PsiBuilder.Marker elementList = builder.mark();
@@ -564,7 +560,6 @@ public class DeclarationParser {
     }
 
     done(elementList, resources ? JavaElementType.RESOURCE_LIST : JavaElementType.PARAMETER_LIST);
-    return elementList;
   }
 
   @Nullable
@@ -593,7 +588,9 @@ public class DeclarationParser {
 
   @Nullable
   public PsiBuilder.Marker parseLambdaParameter(PsiBuilder builder, boolean typed) {
-    return parseListElement(builder, typed, ReferenceParser.ELLIPSIS, false);
+    int flags = ReferenceParser.ELLIPSIS;
+    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_11)) flags |= ReferenceParser.VAR_TYPE;
+    return parseListElement(builder, typed, flags, false);
   }
 
   @Nullable
@@ -814,18 +811,17 @@ public class DeclarationParser {
     return anno;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseAnnotationParameterList(final PsiBuilder builder) {
+  private void parseAnnotationParameterList(final PsiBuilder builder) {
     PsiBuilder.Marker list = builder.mark();
 
     if (!expect(builder, JavaTokenType.LPARENTH)) {
       done(list, JavaElementType.ANNOTATION_PARAMETER_LIST);
-      return list;
+      return;
     }
 
     if (expect(builder, JavaTokenType.RPARENTH)) {
       done(list, JavaElementType.ANNOTATION_PARAMETER_LIST);
-      return list;
+      return;
     }
 
     final boolean isFirstParamNamed = parseAnnotationParameter(builder, true);
@@ -867,7 +863,6 @@ public class DeclarationParser {
     }
 
     done(list, JavaElementType.ANNOTATION_PARAMETER_LIST);
-    return list;
   }
 
   private boolean parseAnnotationParameter(final PsiBuilder builder, final boolean mayBeSimple) {
@@ -895,16 +890,13 @@ public class DeclarationParser {
     return hasName;
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseAnnotationValue(PsiBuilder builder) {
+  public void parseAnnotationValue(PsiBuilder builder) {
     PsiBuilder.Marker result = doParseAnnotationValue(builder);
 
     if (result == null) {
       result = builder.mark();
       result.error(JavaErrorMessages.message("expected.value"));
     }
-
-    return result;
   }
 
   @Nullable

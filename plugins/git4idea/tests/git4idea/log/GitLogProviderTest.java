@@ -27,7 +27,6 @@ import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
-import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.config.GitVersion;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
@@ -235,7 +234,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   }
 
   public void test_short_details() throws Exception {
-    prepareLongHistory(VcsFileUtil.FILE_PATH_LIMIT * 2 / 40);
+    prepareLongHistory(15);
     List<VcsCommitMetadata> log = log();
 
     final List<String> hashes = ContainerUtil.newArrayList();
@@ -248,7 +247,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   }
 
   public void test_full_details() throws Exception {
-    prepareLongHistory(VcsFileUtil.FILE_PATH_LIMIT * 2 / 40);
+    prepareLongHistory(15);
     List<VcsCommitMetadata> log = log();
 
     final List<String> hashes = ContainerUtil.newArrayList();
@@ -264,7 +263,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   }
 
   @NotNull
-  private Function<VcsShortCommitDetails, String> getShortDetailsToString() {
+  private static Function<VcsShortCommitDetails, String> getShortDetailsToString() {
     return details -> {
       String result = "";
 

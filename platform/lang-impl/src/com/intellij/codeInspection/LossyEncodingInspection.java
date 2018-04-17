@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection;
 
 import com.intellij.ide.DataManager;
@@ -32,14 +31,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingUtil;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,14 +54,14 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class LossyEncodingInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.LossyEncodingInspection");
-
-  private static final LocalQuickFix CHANGE_ENCODING_FIX = new ChangeEncodingFix();
-  private static final LocalQuickFix RELOAD_ENCODING_FIX = new ReloadInAnotherEncodingFix();
 
   @Override
   @Nls
@@ -118,11 +121,60 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       return true;
     }
     if (!isGoodCharset(virtualFile, charset)) {
-      descriptors.add(manager.createProblemDescriptor(file, "File was loaded in the wrong encoding: '"+charset+"'",
-                                                      RELOAD_ENCODING_FIX, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+      LocalQuickFix[] fixes = getFixes(file, virtualFile, charset);
+      descriptors.add(manager.createProblemDescriptor(file, "File was loaded in the wrong encoding: '" + charset + "'", true,
+                                                      ProblemHighlightType.GENERIC_ERROR, isOnTheFly, fixes));
       return false;
     }
     return true;
+  }
+
+  @NotNull
+  private static LocalQuickFix[] getFixes(@NotNull PsiFile file,
+                                          @NotNull VirtualFile virtualFile,
+                                          @NotNull Charset wrongCharset) {
+    Set<Charset> suspects = ContainerUtil.newHashSet(CharsetToolkit.getDefaultSystemCharset(), CharsetToolkit.getPlatformCharset());
+    suspects.remove(wrongCharset);
+    List<Charset> goodCharsets = suspects.stream().filter(c -> isGoodCharset(virtualFile, c)).collect(Collectors.toList());
+    List<LocalQuickFix> fixes = new ArrayList<>();
+    if (!goodCharsets.isEmpty()) {
+      Charset goodCharset = goodCharsets.get(0);
+      fixes.add(new LocalQuickFix() {
+        @Nls
+        @NotNull
+        @Override
+        public String getFamilyName() {
+          return "Reload in '" + goodCharset.displayName()+"'";
+        }
+
+        @Override
+        public boolean startInWriteAction() {
+          return false;
+        }
+
+        @Override
+        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+          Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+          if (document == null) return;
+          ChangeFileEncodingAction.changeTo(project, document, null, virtualFile, goodCharset, EncodingUtil.Magic8.ABSOLUTELY, EncodingUtil.Magic8.ABSOLUTELY);
+        }
+      });
+      fixes.add(new LocalQuickFix() {
+        @Nls
+        @NotNull
+        @Override
+        public String getFamilyName() {
+          return "Set project encoding to '" + goodCharset.displayName()+"'";
+        }
+
+        @Override
+        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+          EncodingProjectManager.getInstance(project).setDefaultCharsetName(goodCharset.name());
+        }
+      });
+    }
+    fixes.add(new ReloadInAnotherEncodingFix(file));
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   // check if file was loaded in correct encoding
@@ -181,7 +233,8 @@ public class LossyEncodingInspection extends LocalInspectionTool {
           TextRange range = new TextRange(start, i);
           String message = InspectionsBundle.message("unsupported.character.for.the.charset", charset);
           ProblemDescriptor descriptor =
-            manager.createProblemDescriptor(file, range, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, CHANGE_ENCODING_FIX);
+            manager.createProblemDescriptor(file, range, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly,
+                                            new ChangeEncodingFix(file));
           descriptors.add(descriptor);
           start = -1;
           //do not report too many errors
@@ -210,20 +263,38 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   }
 
   private static class ReloadInAnotherEncodingFix extends ChangeEncodingFix {
+    ReloadInAnotherEncodingFix(@NotNull PsiFile file) {
+      super(file);
+    }
+
     @NotNull
     @Override
-    public String getName() {
+    public String getText() {
       return "Reload in another encoding";
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (FileDocumentManager.getInstance().isFileModified(descriptor.getPsiElement().getContainingFile().getVirtualFile())) return;
-      super.applyFix(project, descriptor);
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       @Nullable Editor editor,
+                       @NotNull PsiElement startElement,
+                       @NotNull PsiElement endElement) {
+      if (FileDocumentManager.getInstance().isFileModified(file.getVirtualFile())) return;
+      super.invoke(project, file, editor, startElement, endElement);
     }
   }
 
-  private static class ChangeEncodingFix implements LocalQuickFix {
+  private static class ChangeEncodingFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+    ChangeEncodingFix(@NotNull PsiFile file) {
+      super(file);
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return getFamilyName();
+    }
+
     @NotNull
     @Override
     public String getFamilyName() {
@@ -231,11 +302,13 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
-      VirtualFile virtualFile = psiFile.getVirtualFile();
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       @Nullable Editor editor,
+                       @NotNull PsiElement startElement,
+                       @NotNull PsiElement endElement) {
+      VirtualFile virtualFile = file.getVirtualFile();
 
-      Editor editor = PsiUtilBase.findEditor(psiFile);
       DataContext dataContext = createDataContext(editor, editor == null ? null : editor.getComponent(), virtualFile, project);
       ListPopup popup = new ChangeFileEncodingAction().createPopup(dataContext);
       if (popup != null) {

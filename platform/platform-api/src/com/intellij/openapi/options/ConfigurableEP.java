@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.AbstractBundle;
@@ -56,10 +54,17 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   public String bundle;
 
   public String getDisplayName() {
-    if (displayName != null) return displayName;
-    LOG.assertTrue(bundle != null, "Bundle missed for " + instanceClass);
-    final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
-    return displayName = CommonBundle.message(resourceBundle, key);
+    if (displayName == null) {
+      if (bundle != null) {
+        ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
+        displayName = CommonBundle.message(resourceBundle, key);
+      }
+      else {
+        displayName = providerClass != null ? providerClass : instanceClass != null ? instanceClass : implementationClass;
+        LOG.warn("Bundle missed for " + displayName);
+      }
+    }
+    return displayName;
   }
 
   /**

@@ -33,8 +33,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.text.BlockSupportImpl;
-import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtilCore;
@@ -60,9 +58,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   protected final Project myProject;
   private final PsiManager myPsiManager;
   private final DocumentCommitProcessor myDocumentCommitProcessor;
-  protected final Set<Document> myUncommittedDocuments = ContainerUtil.newConcurrentSet();
+  final Set<Document> myUncommittedDocuments = ContainerUtil.newConcurrentSet();
   private final Map<Document, UncommittedInfo> myUncommittedInfos = ContainerUtil.newConcurrentMap();
-  protected boolean myStopTrackingDocuments;
+  boolean myStopTrackingDocuments;
   private boolean myPerformBackgroundCommit = true;
 
   private volatile boolean myIsCommitInProgress;
@@ -237,13 +235,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private final Map<Object, Runnable> actionsWhenAllDocumentsAreCommitted = new LinkedHashMap<>(); //accessed from EDT only
-  private static final Object PERFORM_ALWAYS_KEY = new Object() {
-    @Override
-    @NonNls
-    public String toString() {
-      return "PERFORM_ALWAYS";
-    }
-  };
+  private static final Object PERFORM_ALWAYS_KEY = ObjectUtils.sentinel("PERFORM_ALWAYS");
 
   /**
    * Cancel previously registered action and schedules (new) action to be executed when all documents are committed.
@@ -303,13 +295,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return viewProvider != null && viewProvider.isEventSystemEnabled() && !AbstractFileViewProvider.isFreeThreaded(viewProvider);
   }
 
-  // public for Upsource
-  public boolean finishCommit(@NotNull final Document document,
-                              @NotNull List<BooleanRunnable> finishProcessors,
-                              @NotNull List<BooleanRunnable> reparseInjectedProcessors,
-                              @NotNull ProperTextRange changedRange,
-                              final boolean synchronously,
-                              @NotNull final Object reason) {
+  boolean finishCommit(@NotNull final Document document,
+                       @NotNull List<BooleanRunnable> finishProcessors,
+                       @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                       final boolean synchronously,
+                       @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     ApplicationManager.getApplication().assertIsDispatchThread();
     final boolean[] ok = {true};
@@ -487,12 +477,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise. "+Thread.currentThread());
+    if (application.isReadAccessAllowed()) {
+      LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock. "+Thread.currentThread());
     }
 
     while (true) {
-      boolean executed = application.runReadAction((Computable<Boolean>)() -> {
+      boolean executed = ReadAction.compute(() -> {
         if (myUncommittedDocuments.isEmpty()) {
           runnable.run();
           return true;
@@ -603,27 +593,31 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     if (!hasUncommitedDocuments() && !actionsWhenAllDocumentsAreCommitted.isEmpty()) {
-      List<Map.Entry<Object, Runnable>> entries = new ArrayList<>(
-        new LinkedHashMap<>(actionsWhenAllDocumentsAreCommitted).entrySet());
+      List<Runnable> actions = new ArrayList<>(actionsWhenAllDocumentsAreCommitted.values());
       beforeCommitHandler();
-
+      List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
       try {
-        for (Map.Entry<Object, Runnable> entry : entries) {
-          Runnable action = entry.getValue();
+        for (Runnable action : actions) {
           try {
             action.run();
           }
           catch (ProcessCanceledException e) {
-            // some actions are that crazy to use PCE for their own control flow.
+            // some actions are crazy enough to use PCE for their own control flow.
             // swallow and ignore to not disrupt completely unrelated control flow.
           }
           catch (Throwable e) {
-            LOG.error("During running " + action, e);
+            exceptions.add(Pair.create(action, e));
           }
         }
       }
       finally {
+        // unblock adding listeners
         actionsWhenAllDocumentsAreCommitted.clear();
+      }
+      for (Pair<Runnable, Throwable> pair : exceptions) {
+        Runnable action = pair.getFirst();
+        Throwable e = pair.getSecond();
+        LOG.error("During running " + action, e);
       }
     }
   }
@@ -1010,7 +1004,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       WriteAction.run(() -> {
         ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
         if (indicator == null) indicator = new EmptyProgressIndicator();
-        DiffLog log = BlockSupportImpl.makeFullParse(file, node, text, indicator, text).getFirst();
+        DiffLog log = BlockSupportImpl.makeFullParse(file, node, text, indicator, text).log;
         log.doActualPsiChange(file);
         file.getViewProvider().contentsSynchronized();
       });

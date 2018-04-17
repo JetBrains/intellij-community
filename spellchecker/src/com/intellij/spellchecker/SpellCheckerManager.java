@@ -332,7 +332,7 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public enum DictionaryLevel {
-    APP("Application-level"), PROJECT("Project-level"), NOT_SPECIFIED("Not specified");
+    APP("application-level"), PROJECT("project-level"), NOT_SPECIFIED("not specified");
     private final String myName;
     private final static Map<String, DictionaryLevel> DICTIONARY_LEVELS =
       Maps.uniqueIndex(EnumSet.allOf(DictionaryLevel.class), DictionaryLevel::getName);
@@ -345,8 +345,9 @@ public class SpellCheckerManager implements Disposable {
       return myName;
     }
 
+    @NotNull
     public static DictionaryLevel getLevelByName(@NotNull String name) {
-      return DICTIONARY_LEVELS.get(name);
+      return DICTIONARY_LEVELS.getOrDefault(name, NOT_SPECIFIED);
     }
   }
 

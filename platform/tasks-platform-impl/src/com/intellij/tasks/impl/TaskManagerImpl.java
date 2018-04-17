@@ -165,10 +165,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myRepositories.clear();
     myRepositories.addAll(repositories);
 
+    List<TaskProjectConfiguration.SharedServer> servers = getProjectConfiguration().servers;
+    servers.clear();
     reps:
     for (T repository : repositories) {
       if (repository.isShared() && repository.getUrl() != null) {
-        List<TaskProjectConfiguration.SharedServer> servers = getProjectConfiguration().servers;
         TaskRepositoryType type = repository.getRepositoryType();
         for (TaskProjectConfiguration.SharedServer server : servers) {
           if (repository.getUrl().equals(server.url) && type.getName().equals(server.type)) {

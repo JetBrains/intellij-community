@@ -64,8 +64,10 @@ public class HighlightNamesUtil {
                                            @NotNull TextAttributesScheme colorsScheme,
                                            final boolean isDeclaration) {
     boolean isInherited = false;
+    boolean isStaticallyImported = false;
 
     if (!isDeclaration) {
+      isStaticallyImported = isStaticallyImported(elementToHighlight);
       if (isCalledOnThis(elementToHighlight)) {
         final PsiClass containingClass = methodOrClass instanceof PsiMethod ? methodOrClass.getContainingClass() : null;
         PsiClass enclosingClass = containingClass == null ? null : PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
@@ -78,7 +80,7 @@ public class HighlightNamesUtil {
     }
 
     LOG.assertTrue(methodOrClass instanceof PsiMethod || !isDeclaration);
-    HighlightInfoType type = methodOrClass instanceof PsiMethod ? getMethodNameHighlightType((PsiMethod)methodOrClass, isDeclaration, isInherited)
+    HighlightInfoType type = methodOrClass instanceof PsiMethod ? getMethodNameHighlightType((PsiMethod)methodOrClass, isDeclaration, isInherited, isStaticallyImported)
                                                                 : JavaHighlightInfoTypes.CONSTRUCTOR_CALL;
     if (type != null) {
       TextAttributes attributes = mergeWithScopeAttributes(methodOrClass, type, colorsScheme);
@@ -98,6 +100,15 @@ public class HighlightNamesUtil {
       if (qualifier == null || qualifier instanceof PsiThisExpression) {
         return true;
       }
+    }
+    return false;
+  }
+
+  private static boolean isStaticallyImported(@NotNull PsiElement elementToHighlight) {
+    PsiReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(elementToHighlight, PsiReferenceExpression.class);
+    if (referenceExpression != null) {
+      JavaResolveResult result = referenceExpression.advancedResolve(false);
+      return result.getCurrentFileResolveScope() instanceof PsiImportStaticStatement;
     }
     return false;
   }
@@ -142,7 +153,7 @@ public class HighlightNamesUtil {
   static HighlightInfo highlightVariableName(@NotNull PsiVariable variable,
                                              @NotNull PsiElement elementToHighlight,
                                              @NotNull TextAttributesScheme colorsScheme) {
-    HighlightInfoType varType = getVariableNameHighlightType(variable);
+    HighlightInfoType varType = getVariableNameHighlightType(variable, elementToHighlight);
     if (varType == null) {
       return null;
     }
@@ -174,13 +185,16 @@ public class HighlightNamesUtil {
     return null;
   }
 
-  private static HighlightInfoType getMethodNameHighlightType(@NotNull PsiMethod method, boolean isDeclaration, boolean isInheritedMethod) {
+  private static HighlightInfoType getMethodNameHighlightType(@NotNull PsiMethod method,
+                                                              boolean isDeclaration,
+                                                              boolean isInheritedMethod,
+                                                              boolean isStaticallyImported) {
     if (method.isConstructor()) {
       return isDeclaration ? JavaHighlightInfoTypes.CONSTRUCTOR_DECLARATION : JavaHighlightInfoTypes.CONSTRUCTOR_CALL;
     }
     if (isDeclaration) return JavaHighlightInfoTypes.METHOD_DECLARATION;
     if (method.hasModifierProperty(PsiModifier.STATIC)) {
-      return JavaHighlightInfoTypes.STATIC_METHOD;
+      return isStaticallyImported ? JavaHighlightInfoTypes.STATIC_METHOD_CALL_IMPORTED : JavaHighlightInfoTypes.STATIC_METHOD;
     }
     if (isInheritedMethod) return JavaHighlightInfoTypes.INHERITED_METHOD;
     if(method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -190,15 +204,24 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  private static HighlightInfoType getVariableNameHighlightType(@NotNull PsiVariable var) {
+  private static HighlightInfoType getVariableNameHighlightType(@NotNull PsiVariable var, @NotNull PsiElement elementToHighlight) {
     if (var instanceof PsiLocalVariable
         || var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement) {
       return JavaHighlightInfoTypes.LOCAL_VARIABLE;
     }
     if (var instanceof PsiField) {
-      return var.hasModifierProperty(PsiModifier.STATIC) 
-             ? var.hasModifierProperty(PsiModifier.FINAL) ? JavaHighlightInfoTypes.STATIC_FINAL_FIELD : JavaHighlightInfoTypes.STATIC_FIELD
-             : var.hasModifierProperty(PsiModifier.FINAL) ? JavaHighlightInfoTypes.INSTANCE_FINAL_FIELD : JavaHighlightInfoTypes.INSTANCE_FIELD;
+      if (var.hasModifierProperty(PsiModifier.STATIC)) {
+        boolean staticallyImported = isStaticallyImported(elementToHighlight);
+        if (var.hasModifierProperty(PsiModifier.FINAL)) {
+          return staticallyImported ? JavaHighlightInfoTypes.STATIC_FINAL_FIELD_IMPORTED : JavaHighlightInfoTypes.STATIC_FINAL_FIELD;
+        }
+        else {
+          return staticallyImported ? JavaHighlightInfoTypes.STATIC_FIELD_IMPORTED : JavaHighlightInfoTypes.STATIC_FIELD;
+        }
+      }
+      else {
+        return var.hasModifierProperty(PsiModifier.FINAL) ? JavaHighlightInfoTypes.INSTANCE_FINAL_FIELD : JavaHighlightInfoTypes.INSTANCE_FIELD;
+      }
     }
     if (var instanceof PsiParameter) {
       return ((PsiParameter)var).getDeclarationScope() instanceof PsiLambdaExpression ? JavaHighlightInfoTypes.LAMBDA_PARAMETER
@@ -208,7 +231,7 @@ public class HighlightNamesUtil {
   }
 
   @NotNull
-  private static HighlightInfoType getClassNameHighlightType(@Nullable PsiClass aClass, @Nullable PsiElement element) {
+  private static HighlightInfoType getClassNameHighlightType(@Nullable PsiClass aClass, @NotNull PsiElement element) {
     if (element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnonymousClass) {
       return JavaHighlightInfoTypes.ANONYMOUS_CLASS_NAME;
     }

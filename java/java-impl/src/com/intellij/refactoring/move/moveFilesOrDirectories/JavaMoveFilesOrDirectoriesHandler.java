@@ -17,7 +17,6 @@ package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -28,7 +27,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,28 +83,25 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
     }
     MoveFilesOrDirectoriesUtil
       .doMove(project, elements, new PsiElement[]{targetContainer}, callback,
-              elements1 -> new WriteCommandAction<PsiElement[]>(project, "Regrouping ...") {
-                @Override
-                protected void run(@NotNull Result<PsiElement[]> result) throws Throwable {
-                  final List<PsiElement> adjustedElements = new ArrayList<>();
-                  for (int i = 0, length = elements1.length; i < length; i++) {
-                    PsiElement element = elements1[i];
-                    if (element instanceof PsiClass) {
-                      final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-                      if (topLevelClass != null) {
-                        elements1[i] = topLevelClass;
-                        final PsiFile containingFile = obtainContainingFile(topLevelClass, elements1);
-                        if (containingFile != null) {
-                          adjustedElements.add(containingFile);
-                          continue;
-                        }
+              elements1 -> WriteCommandAction.writeCommandAction(project).withName("Regrouping ...").compute(() -> {
+                final List<PsiElement> adjustedElements = new ArrayList<>();
+                for (int i = 0, length = elements1.length; i < length; i++) {
+                  PsiElement element = elements1[i];
+                  if (element instanceof PsiClass) {
+                    final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+                    if (topLevelClass != null) {
+                      elements1[i] = topLevelClass;
+                      final PsiFile containingFile = obtainContainingFile(topLevelClass, elements1);
+                      if (containingFile != null) {
+                        adjustedElements.add(containingFile);
+                        continue;
                       }
                     }
-                    adjustedElements.add(element);
                   }
-                  result.setResult(PsiUtilCore.toPsiElementArray(adjustedElements));
+                  adjustedElements.add(element);
                 }
-              }.execute().getResultObject());
+                return PsiUtilCore.toPsiElementArray(adjustedElements);
+              }));
   }
 
   @Nullable

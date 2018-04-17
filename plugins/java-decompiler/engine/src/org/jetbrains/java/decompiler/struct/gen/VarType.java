@@ -82,7 +82,7 @@ public class VarType {  // TODO: optimize switch
           }
 
         default:
-          value = signature.substring(i, signature.length());
+          value = signature.substring(i);
           if ((clType && i == 0) || value.length() > 1) {
             type = CodeConstants.TYPE_OBJECT;
           }

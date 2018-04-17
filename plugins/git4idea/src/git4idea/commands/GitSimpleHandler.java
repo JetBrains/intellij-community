@@ -154,7 +154,7 @@ public class GitSimpleHandler extends GitTextHandler {
         if (last != '\r' || savedPos != i) {
           String line;
           if (lineRest.length() == 0) {
-            line = lineRest.append(text.substring(start, savedPos)).toString();
+            line = lineRest.append(text, start, savedPos).toString();
             lineRest.setLength(0);
           }
           else {

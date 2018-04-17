@@ -15,15 +15,18 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 
 
+/** Use {@link WriteAction} */
+@Deprecated
 public abstract class ActionRunner {
+  /**
+   * @deprecated use {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
+   */
+  @Deprecated
   public static  void runInsideWriteAction(@NotNull final InterruptibleRunnable runnable) throws Exception {
     RunResult result = new WriteAction() {
       @Override
@@ -35,31 +38,27 @@ public abstract class ActionRunner {
     result.throwException();
   }
 
+  /**
+   * @deprecated use {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
+   */
+  @Deprecated
   public static <T> T runInsideWriteAction(@NotNull final InterruptibleRunnableWithResult<T> runnable) throws Exception {
-    RunResult<T> result = new WriteAction<T>() {
-      @Override
-      protected void run(@NotNull Result<T> result) throws Throwable {
-        result.setResult(runnable.run());
-      }
-    }.execute();
-    if (result.getThrowable() instanceof Exception) throw (Exception)result.getThrowable();
-    return result.throwException().getResultObject();
+    return WriteAction.computeAndWait(()->runnable.run());
+  }
+
+  /**
+   * @deprecated use {@link com.intellij.openapi.application.ReadAction#run(ThrowableRunnable)} or {@link com.intellij.openapi.application.ReadAction#compute(ThrowableComputable)} instead
+   */
+  @Deprecated
+  public static void runInsideReadAction(@NotNull final InterruptibleRunnable runnable) throws Exception {
+    ReadAction.run(()->runnable.run());
   }
 
   @Deprecated
-  public static void runInsideReadAction(@NotNull final InterruptibleRunnable runnable) throws Exception {
-    ApplicationManager.getApplication().runReadAction(new ThrowableComputable<Void, Exception>() {
-      @Override
-      public Void compute() throws Exception {
-        runnable.run();
-        return null;
-      }
-    });
-  }
-
   public interface InterruptibleRunnable {
     void run() throws Exception;
   }
+  @Deprecated
   public interface InterruptibleRunnableWithResult<T> {
     T run() throws Exception;
   }

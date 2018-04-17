@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.ex.util.LayerDescriptor;
 import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.options.Configurable;
@@ -82,7 +83,6 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   private JPanel myMainPanel;
   private FileTemplate myTemplate;
-  private PsiFile myFile;
   private Editor myTemplateEditor;
   private JTextField myNameField;
   private JTextField myExtensionField;
@@ -160,7 +160,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     mySplitter = new Splitter(true, myProportion);
     myAdjustBox = new JCheckBox(IdeBundle.message("checkbox.reformat.according.to.style"));
     myLiveTemplateBox = new JCheckBox(IdeBundle.message("checkbox.enable.live.templates"));
-    myTemplateEditor = createEditor();
+    myTemplateEditor = createEditor(null);
 
     myDescriptionComponent = new JEditorPane();
     myDescriptionComponent.setEditorKit(UIUtil.getHTMLEditorKit());
@@ -208,12 +208,9 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myProportion = proportion;
   }
 
-  private Editor createEditor() {
+  private Editor createEditor(@Nullable PsiFile file) {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document doc = myFile == null
-                   ? editorFactory.createDocument(myTemplate == null ? "" : myTemplate.getText())
-                   : PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
-    assert doc != null;
+    Document doc = createDocument(file, editorFactory);
     Editor editor = editorFactory.createEditor(doc, myProject);
 
     EditorSettings editorSettings = editor.getSettings();
@@ -231,7 +228,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       public void documentChanged(DocumentEvent e) {
         onTextChanged();
       }
-    });
+    }, ((EditorImpl)editor).getDisposable());
 
     ((EditorEx)editor).setHighlighter(createHighlighter());
     
@@ -244,6 +241,12 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     topPanel.add(editor.getComponent(), BorderLayout.CENTER);
     mySplitter.setFirstComponent(topPanel);
     return editor;
+  }
+
+  @NotNull
+  private Document createDocument(@Nullable PsiFile file, @NotNull EditorFactory editorFactory) {
+    Document document = file != null ? PsiDocumentManager.getInstance(file.getProject()).getDocument(file) : null;
+    return document != null ? document : editorFactory.createDocument(myTemplate == null ? "" : myTemplate.getText());
   }
 
   private void onTextChanged() {
@@ -336,8 +339,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     }
 
     EditorFactory.getInstance().releaseEditor(myTemplateEditor);
-    myFile = createFile(text, name);
-    myTemplateEditor = createEditor();
+    myTemplateEditor = createEditor(createFile(text, name));
 
     myNameField.setText(name);
     myExtensionField.setText(extension);
@@ -381,7 +383,6 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       EditorFactory.getInstance().releaseEditor(myTemplateEditor);
       myTemplateEditor = null;
     }
-    myFile = null;
   }
 
   private EditorHighlighter createHighlighter() {

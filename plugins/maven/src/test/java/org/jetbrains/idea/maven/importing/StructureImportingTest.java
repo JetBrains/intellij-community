@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.idea.Bombed;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -26,11 +25,11 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 
@@ -218,7 +217,8 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     createModulePom("../parent", "<groupId>test</groupId>" +
                                  "<artifactId>parent</artifactId>" +
-                                 "<version>1</version>");
+                                 "<version>1</version>" +
+                                 "<packaging>pom</packaging>");
 
     importProject();
     assertModules("project");
@@ -262,15 +262,16 @@ public class StructureImportingTest extends MavenImportingTestCase {
   }
 
   public void testRecursiveParent() {
-    importProject("<parent>" +
-                  "  <groupId>org.apache.maven.archetype.test</groupId>" +
-                  "  <artifactId>test-create-2</artifactId>" +
-                  "  <version>1.0-SNAPSHOT</version>" +
-                  "</parent>" +
+    createProjectPom("<parent>" +
+                     "  <groupId>org.apache.maven.archetype.test</groupId>" +
+                     "  <artifactId>test-create-2</artifactId>" +
+                     "  <version>1.0-SNAPSHOT</version>" +
+                     "</parent>" +
 
-                  "<artifactId>test-create-2</artifactId>" +
-                  "<name>Maven archetype Test create-2-subModule</name>" +
-                  "<packaging>pom</packaging>");
+                     "<artifactId>test-create-2</artifactId>" +
+                     "<name>Maven archetype Test create-2-subModule</name>" +
+                     "<packaging>pom</packaging>");
+    importProjectWithErrors(true);
   }
 
   public void testParentWithoutARelativePath() {
@@ -345,29 +346,25 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("m1", modules.get(0).getMavenId().getArtifactId());
   }
 
-  public void testParentInLocalRepository() {
+  public void testParentInLocalRepository() throws IOException {
     if (!hasMavenInstallation()) return;
 
     final VirtualFile parent = createModulePom("parent",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>parent</artifactId>" +
-                                         "<version>1</version>" +
-                                         "<packaging>pom</packaging>" +
+                                               "<groupId>test</groupId>" +
+                                               "<artifactId>parent</artifactId>" +
+                                               "<version>1</version>" +
+                                               "<packaging>pom</packaging>" +
 
-                                         "<dependencies>" +
-                                         "  <dependency>" +
-                                         "    <groupId>junit</groupId>" +
-                                         "    <artifactId>junit</artifactId>" +
-                                         "    <version>4.0</version>" +
-                                         "  </dependency>" +
-                                         "</dependencies>");
+                                               "<dependencies>" +
+                                               "  <dependency>" +
+                                               "    <groupId>junit</groupId>" +
+                                               "    <artifactId>junit</artifactId>" +
+                                               "    <version>4.0</version>" +
+                                               "  </dependency>" +
+                                               "</dependencies>");
     executeGoal("parent", "install");
 
-    new WriteAction() {
-      protected void run(@NotNull Result result) throws Throwable {
-        parent.delete(null);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> parent.delete(null));
 
 
     createProjectPom("<groupId>test</groupId>" +
@@ -709,7 +706,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertEquals(LanguageLevel.JDK_X, getLanguageLevelForModule());
+    assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule());
   }
 
   public void testLanguageLevelWhenCompilerPluginIsNotSpecified() {

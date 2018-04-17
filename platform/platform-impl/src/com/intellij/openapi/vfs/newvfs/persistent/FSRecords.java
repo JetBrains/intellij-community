@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -28,11 +27,12 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
@@ -265,7 +265,7 @@ public class FSRecords {
           @NotNull
           @Override
           protected ExecutorService createExecutor() {
-            return AppExecutorUtil.createBoundedApplicationPoolExecutor("FSRecords pool",1);
+            return SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Pool");
           }
         }; // sources usually zipped with 4x ratio
         myContentHashesEnumerator = weHaveContentHashes ? new ContentHashesUtil.HashEnumerator(contentsHashesFile, storageLockContext): null;
@@ -540,7 +540,7 @@ public class FSRecords {
 
   private static ResizeableMappedFile getRecords() {
     ResizeableMappedFile records = DbConnection.myRecords;
-    assert records != null : "Vfs should be initialized";
+    assert records != null : "Vfs must be initialized";
     return records;
   }
 
@@ -903,7 +903,7 @@ public class FSRecords {
           int id = DataInputOutputUtil.readINT(input) + prevId;
           prevId = id;
           int nameId = doGetNameId(id);
-          result[i] = new NameId(id, nameId, FileNameCache.getVFileName(nameId, ()->doGetNameByNameId(nameId)));
+          result[i] = new NameId(id, nameId, FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId));
         }
         return result;
       }
@@ -1019,29 +1019,62 @@ public class FSRecords {
     });
   }
 
-  // returns (list of id and its parent ids up to and including id of already cached parent, that already cached parent)
-  @NotNull
-  static Pair<TIntArrayList, VirtualFileSystemEntry> getParents(int id, @NotNull IntObjectMap<VirtualFileSystemEntry> idCache) {
-    return readAndHandleErrors(()->{
-      TIntArrayList ids = new TIntArrayList(10);
-      VirtualFileSystemEntry cached;
-      int parentId;
-      int currentId = id;
-      do {
-        ids.add(currentId);
-        cached = idCache.get(currentId);
-        if (cached != null) {
-          break;
+  @Nullable
+  static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idCache) {
+    class ParentFinder implements ThrowableComputable<Void, Throwable> {
+      @Nullable private TIntArrayList path;
+      private VirtualFileSystemEntry foundParent;
+      
+      @Override
+      public Void compute() {
+        int currentId = id;
+        while (true) {
+          int parentId = getRecordInt(currentId, PARENT_OFFSET);
+          if (parentId == 0) {
+            return null;
+          }
+          if (parentId == currentId || path != null && path.size() % 128 == 0 && path.contains(parentId)) {
+            LOG.error("Cyclic parent child relations in the database. id = " + parentId);
+            return null;
+          }
+          foundParent = idCache.get(parentId);
+          if (foundParent != null) {
+            return null;
+          }
+
+          currentId = parentId;
+          if (path == null) path = new TIntArrayList();
+          path.add(currentId);
         }
-        parentId = getRecordInt(currentId, PARENT_OFFSET);
-        if (parentId == currentId || ids.size() % 128 == 0 && ids.contains(parentId)) {
-          LOG.error("Cyclic parent child relations in the database. id = " + parentId);
-          break;
+      }
+
+      private VirtualFileSystemEntry findDescendantByIdPath() {
+        VirtualFileSystemEntry parent = foundParent;
+        if (path != null) {
+          for (int i = path.size() - 1; i >= 0; i--) {
+            parent = findChild(parent, path.get(i));
+          }
         }
-        currentId = parentId;
-      } while (parentId != 0);
-      return Pair.create(ids, cached);
-    });
+
+        return findChild(parent, id);
+      }
+
+      private VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent, int childId) {
+        if (!(parent instanceof VirtualDirectoryImpl)) {
+          return null;
+        }
+        VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).findChildById(childId);
+        if (child instanceof VirtualDirectoryImpl) {
+          VirtualFileSystemEntry old = idCache.putIfAbsent(childId, child);
+          if (old != null) child = old;
+        }
+        return child;
+      }
+    }
+    
+    ParentFinder finder = new ParentFinder();
+    readAndHandleErrors(finder);
+    return finder.findDescendantByIdPath();
   }
 
   static void setParent(int id, int parentId) {
@@ -1080,7 +1113,7 @@ public class FSRecords {
   @NotNull
   private static CharSequence doGetNameSequence(int id) throws IOException {
     final int nameId = getRecordInt(id, NAME_OFFSET);
-    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, ()->doGetNameByNameId(nameId));
+    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
   }
 
   public static String getNameByNameId(int nameId) {
@@ -1100,7 +1133,11 @@ public class FSRecords {
   }
 
   static int getFlags(int id) {
-    return readAndHandleErrors(() -> getRecordInt(id, FLAGS_OFFSET));
+    return readAndHandleErrors(() -> doGetFlags(id));
+  }
+
+  private static int doGetFlags(int id) {
+    return getRecordInt(id, FLAGS_OFFSET);
   }
 
   static void setFlags(int id, int flags, final boolean markAsChange) {
@@ -1239,7 +1276,7 @@ public class FSRecords {
     });
   }
 
-  // should be called under r or w lock
+  // must be called under r or w lock
   @Nullable
   private static DataInputStream readAttribute(int fileId, FileAttribute attribute) throws IOException {
     checkFileIsValid(fileId);
@@ -1360,7 +1397,7 @@ public class FSRecords {
     assert expectedFileId == fileId || expectedFileId == 0;
   }
 
-  private static void writeRecordHeader(int recordTag, int fileId, DataOutputStream appender) throws IOException {
+  private static void writeRecordHeader(int recordTag, int fileId, @NotNull DataOutputStream appender) throws IOException {
     DataInputOutputUtil.writeINT(appender, recordTag);
     DataInputOutputUtil.writeINT(appender, fileId);
   }
@@ -1369,7 +1406,7 @@ public class FSRecords {
     assert fileId > 0 : fileId;
     // TODO: This assertion is a bit timey, will remove when bug is caught.
     if (!lazyVfsDataCleaning) {
-      assert !BitUtil.isSet(getFlags(fileId), FREE_RECORD_FLAG) : "Accessing attribute of a deleted page: " + fileId + ":" + doGetNameSequence(fileId);
+      assert !BitUtil.isSet(doGetFlags(fileId), FREE_RECORD_FLAG) : "Accessing attribute of a deleted page: " + fileId + ":" + doGetNameSequence(fileId);
     }
   }
 
@@ -1536,7 +1573,7 @@ public class FSRecords {
     }
     else {
       int newRecord = getContentStorage().acquireNewRecord();
-      assert page == newRecord :"Unexpected content storage modification";
+      assert page == newRecord : "Unexpected content storage modification: page="+page+"; newRecord="+newRecord;
       
       return -page;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -90,6 +90,8 @@ public abstract class QuickFixFactory {
   @NotNull public abstract IntentionAction createAddExceptionFromFieldInitializerToConstructorThrowsFix(@NotNull PsiElement element);
 
   @NotNull public abstract IntentionAction createSurroundWithTryCatchFix(@NotNull PsiElement element);
+
+  @NotNull public abstract IntentionAction createAddExceptionToExistingCatch(@NotNull PsiElement element);
 
   @NotNull public abstract IntentionAction createGeneralizeCatchFix(@NotNull PsiElement element, @NotNull PsiClassType type);
 
@@ -192,6 +194,11 @@ public abstract class QuickFixFactory {
   @NotNull public abstract IntentionAction createCreateConstructorFromSuperFix(@NotNull PsiMethodCallExpression call);
 
   @NotNull public abstract IntentionAction createCreateConstructorFromThisFix(@NotNull PsiMethodCallExpression call);
+
+  @NotNull
+  public List<IntentionAction> createCreateConstructorFromCallExpressionFixes(@NotNull PsiMethodCallExpression call) {
+    return Collections.emptyList();
+  }
 
   @NotNull public abstract IntentionAction createCreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression call);
 

@@ -29,7 +29,7 @@ class ImageSizeOptimizer(val projectHome: File) {
   fun optimizeIcons(module: JpsModule) {
     val icons = ImageCollector(projectHome).collect(module)
     icons.forEach {
-      it.files.values.forEach {
+      it.files.forEach {
         tryToReduceSize(it)
       }
     }

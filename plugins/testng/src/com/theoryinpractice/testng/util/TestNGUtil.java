@@ -440,20 +440,7 @@ public class TestNGUtil {
   }
 
   public static boolean inheritsJUnitTestCase(PsiClass psiClass) {
-    PsiClass current = psiClass;
-    while (current != null) {
-      PsiClass[] supers = current.getSupers();
-      if (supers.length > 0) {
-        PsiClass parent = supers[0];
-        if ("junit.framework.TestCase".equals(parent.getQualifiedName())) return true;
-        current = parent;
-        //handle typo where class extends itself
-        if (current == psiClass) return false;
-      } else {
-        current = null;
-      }
-    }
-    return false;
+    return InheritanceUtil.isInheritor(psiClass, "junit.framework.TestCase");
   }
 
   public static boolean inheritsITestListener(@NotNull PsiClass psiClass) {

@@ -127,9 +127,8 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
 
         DataFlowRunner runner = new StandardDataFlowRunner(false, block);
         DfaValueFactory factory = runner.getFactory();
-        DfaVariableValue exceptionVar = factory.getVarFactory().createVariableValue(parameter, false);
-        DfaVariableValue stableExceptionVar =
-          factory.getVarFactory().createVariableValue(new LightParameter("tmp", exception, block), false);
+        DfaVariableValue exceptionVar = factory.getVarFactory().createVariableValue(parameter);
+        DfaVariableValue stableExceptionVar = factory.getVarFactory().createVariableValue(new LightParameter("tmp", exception, block));
 
         StandardInstructionVisitor visitor = new IgnoredExceptionVisitor(parameter, block, exceptionClass, stableExceptionVar);
         Consumer<DfaMemoryState> stateAdjuster = state -> {
@@ -178,7 +177,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
 
     protected boolean isModificationAllowed(DfaVariableValue variable) {
       PsiModifierListOwner owner = variable.getPsiVariable();
-      return owner == myParameter || PsiTreeUtil.isAncestor(myBlock, owner, false);
+      return owner == myParameter || owner != null && PsiTreeUtil.isAncestor(myBlock, owner, false);
     }
   }
 

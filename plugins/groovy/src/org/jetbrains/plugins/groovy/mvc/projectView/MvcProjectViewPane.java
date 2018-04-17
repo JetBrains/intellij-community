@@ -129,13 +129,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     myAutoScrollToSourceHandler.install(getTree());
     myAutoScrollToSourceHandler.onMouseClicked(getTree());
 
-    myCopyPasteDelegator = new CopyPasteDelegator(project, myComponent) {
-      @NotNull
-      @Override
-      protected PsiElement[] getSelectedElements() {
-        return MvcProjectViewPane.this.getSelectedPSIElements();
-      }
-    };
+    myCopyPasteDelegator = new CopyPasteDelegator(project, myComponent);
     myDeletePSIElementProvider = new DeleteHandler.DefaultDeleteProvider();
   }
 

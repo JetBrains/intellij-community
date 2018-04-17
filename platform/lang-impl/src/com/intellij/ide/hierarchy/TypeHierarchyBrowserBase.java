@@ -49,7 +49,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     super(project, element);
   }
 
-  protected abstract boolean isInterface(PsiElement psiElement);
+  protected abstract boolean isInterface(@NotNull PsiElement psiElement);
 
   protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, String typeHierarchyActionGroupName) {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(typeHierarchyActionGroupName);
