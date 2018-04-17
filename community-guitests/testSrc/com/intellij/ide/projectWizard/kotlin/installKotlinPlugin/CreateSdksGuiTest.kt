@@ -8,6 +8,7 @@ import com.intellij.testGuiFramework.util.logUIStep
 import org.junit.Test
 
 class CreateSdksGuiTest : KotlinGuiTestCase() {
+  val dialogName = "Project Structure for New Projects"
   @Test
   fun createJdk(){
     logTestStep("Create a JDK on the path `${KotlinTestProperties.jdk_path}`")
@@ -15,8 +16,8 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
       actionLink("Configure").click()
       popupClick("Project Defaults")
       popupClick("Project Structure")
-      logUIStep("Open `Default Project Structure` dialog")
-      dialog("Default Project Structure") {
+      logUIStep("Open `$dialogName` dialog")
+      dialog(dialogName) {
         jList("SDKs").clickItem("SDKs")
         actionButton("Add New SDK").click()
         popupClick("JDK")
@@ -41,8 +42,8 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
       actionLink("Configure").click()
       popupClick("Project Defaults")
       popupClick("Project Structure")
-      logUIStep("Open `Default Project Structure` dialog")
-      dialog("Default Project Structure") {
+      logUIStep("Open `$dialogName` dialog")
+      dialog(dialogName) {
         actionButton("Add New SDK").click()
         popupClick("Kotlin SDK")
         button("OK").click()
