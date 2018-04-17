@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.Set;
 
-public abstract class EditablePostfixTemplateWithConditions<ExpressionType extends PsiElement,
-  ConditionType extends PostfixTemplateExpressionCondition<ExpressionType>>
+public abstract class EditablePostfixTemplateWithConditions<ConditionType extends PostfixTemplateExpressionCondition>
   extends EditablePostfixTemplate {
 
   @NotNull protected final Set<ConditionType> myExpressionConditions;
@@ -65,7 +64,7 @@ public abstract class EditablePostfixTemplateWithConditions<ExpressionType exten
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
-    EditablePostfixTemplateWithConditions<?, ?> that = (EditablePostfixTemplateWithConditions<?, ?>)o;
+    EditablePostfixTemplateWithConditions<?> that = (EditablePostfixTemplateWithConditions<?>)o;
     return myUseTopmostExpression == that.myUseTopmostExpression &&
            Objects.equals(myExpressionConditions, that.myExpressionConditions);
   }
@@ -75,7 +74,7 @@ public abstract class EditablePostfixTemplateWithConditions<ExpressionType exten
     return e -> {
       for (ConditionType condition : myExpressionConditions) {
         //noinspection unchecked
-        if (condition.value((ExpressionType)e)) {
+        if (condition.value(e)) {
           return true;
         }
       }

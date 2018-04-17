@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 
-public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<PsiExpression, JavaPostfixTemplateExpressionCondition> {
+public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPostfixTemplateExpressionCondition> {
 
   @NotNull private final JPanel myPanel;
   @NotNull private final ComboBox<LanguageLevel> myLanguageLevelCombo;

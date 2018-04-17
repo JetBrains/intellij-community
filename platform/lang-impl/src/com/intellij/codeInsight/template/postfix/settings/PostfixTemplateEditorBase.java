@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListUtil;
@@ -36,8 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class PostfixTemplateEditorBase<ExpressionType extends PsiElement,
-  Condition extends PostfixTemplateExpressionCondition<ExpressionType>> implements PostfixTemplateEditor {
+public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplateExpressionCondition> implements PostfixTemplateEditor {
 
   @NotNull protected final PostfixTemplateProvider myProvider;
   @NotNull protected final Editor myTemplateEditor;
@@ -71,11 +69,11 @@ public abstract class PostfixTemplateEditorBase<ExpressionType extends PsiElemen
 
     myExpressionTypesListModel = JBList.createDefaultListModel();
     myExpressionTypesList = new JBList<>(myExpressionTypesListModel);
-    myExpressionTypesList.setCellRenderer(new ColoredListCellRenderer<PostfixTemplateExpressionCondition<?>>() {
+    myExpressionTypesList.setCellRenderer(new ColoredListCellRenderer<PostfixTemplateExpressionCondition>() {
 
       @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends PostfixTemplateExpressionCondition<?>> list,
-                                           PostfixTemplateExpressionCondition<?> value,
+      protected void customizeCellRenderer(@NotNull JList<? extends PostfixTemplateExpressionCondition> list,
+                                           PostfixTemplateExpressionCondition value,
                                            int index,
                                            boolean selected,
                                            boolean hasFocus) {
@@ -126,7 +124,7 @@ public abstract class PostfixTemplateEditorBase<ExpressionType extends PsiElemen
     if (!(rawTemplate instanceof EditablePostfixTemplateWithConditions)) return;
 
     //noinspection unchecked
-    EditablePostfixTemplateWithConditions<ExpressionType, Condition> template = (EditablePostfixTemplateWithConditions)rawTemplate;
+    EditablePostfixTemplateWithConditions<Condition> template = (EditablePostfixTemplateWithConditions)rawTemplate;
 
     myExpressionTypesListModel.clear();
     for (Condition condition : template.getExpressionConditions()) {
