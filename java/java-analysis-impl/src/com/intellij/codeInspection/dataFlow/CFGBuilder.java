@@ -235,7 +235,7 @@ public class CFGBuilder {
    * @param relation relation to use for comparison
    * @return this builder
    */
-  private CFGBuilder compare(IElementType relation) {
+  CFGBuilder compare(IElementType relation) {
     return add(new BinopInstruction(relation, null, PsiType.BOOLEAN));
   }
 
@@ -413,6 +413,49 @@ public class CFGBuilder {
    */
   public CFGBuilder assign() {
     return add(new AssignInstruction(null, null));
+  }
+
+  /**
+   * Generate instructions to assign given source value to the given target value. Stack remains unchanged.
+   * May skip generating instructions if target is not writable (e.g. not a variable)
+   *
+   * @param target target to write
+   * @param source source value
+   * @return this builder
+   */
+  public CFGBuilder assignAndPop(DfaValue target, DfaValue source) {
+    if (target instanceof DfaVariableValue) {
+      if (source == DfaUnknownValue.getInstance()) {
+        add(new FlushVariableInstruction((DfaVariableValue)target));
+      } else {
+        pushForWrite((DfaVariableValue)target).push(source).assign().pop();
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Generate instructions to assign given source value to the given target value and leave the result on stack.
+   * <p>
+   * Stack before: ...
+   * <p>
+   * Stack after: ... target
+   *
+   * @param target target to write
+   * @param source source value
+   * @return this builder
+   */
+  public CFGBuilder assign(DfaValue target, DfaValue source) {
+    if (target instanceof DfaVariableValue) {
+      if (source == DfaUnknownValue.getInstance()) {
+        add(new FlushVariableInstruction((DfaVariableValue)target)).push(target);
+      } else {
+        pushForWrite((DfaVariableValue)target).push(source).assign();
+      }
+    } else {
+      push(source);
+    }
+    return this;
   }
 
   /**
@@ -638,8 +681,7 @@ public class CFGBuilder {
       ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
       condGoto.setOffset(myAnalyzer.getInstructionCount());
       myBranches.add(() -> pushUnknown().add(condGoto));
-      DfaValue loopElement = factory.createCommonValue(expressions);
-      pushForWrite(targetVariable).push(loopElement).assign();
+      assign(targetVariable, factory.createCommonValue(expressions));
     } else {
       push(factory.getConstFactory().getSentinel());
       for (PsiExpression expression : expressions) {
