@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -41,6 +42,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -58,6 +60,7 @@ import com.intellij.ui.components.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -69,7 +72,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
-import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.actions.groups.RunAnythingGroup;
 
 import javax.accessibility.Accessible;
@@ -489,7 +491,16 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @Nullable
   private Module getModule() {
-    return RModuleUtil.getInstance().getModule(myDataContext);
+    Module module = (Module)myDataContext.getData(LangDataKeys.MODULE.getName());
+    if (module != null) {
+      return module;
+    }
+
+    if (myVirtualFile != null) {
+      return ModuleUtilCore.findModuleForFile(myVirtualFile, getProject());
+    }
+
+    return null;
   }
 
   @NotNull
@@ -508,12 +519,18 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       return projectBaseDir;
     }
 
-    VirtualFile firstContentRoot = RModuleUtil.getInstance().getFirstContentRoot(module);
+    VirtualFile firstContentRoot = getFirstContentRoot(module);
     if (firstContentRoot == null) {
       return projectBaseDir;
     }
 
     return firstContentRoot;
+  }
+
+  @Nullable
+  public VirtualFile getFirstContentRoot(@NotNull final Module module) {
+    if (module.isDisposed()) return null;
+    return ArrayUtil.getFirstElement(ModuleRootManager.getInstance(module).getContentRoots());
   }
 
   private void updateOption(BooleanOptionDescription value) {
@@ -600,10 +617,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     if (wnd == null || wnd.getParent() != null) return;
     myActionEvent = e;
 
-    Module module = RModuleUtil.getInstance().getModule(myActionEvent.getDataContext());
-
     HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
-    dataMap.put(LangDataKeys.MODULE.getName(), module);
     dataMap.put(CommonDataKeys.PROJECT.getName(), project);
     dataMap.put(RUN_ANYTHING_EVENT_KEY.getName(), myActionEvent);
     myDataContext = SimpleDataContext.getSimpleContext(dataMap, e.getDataContext());

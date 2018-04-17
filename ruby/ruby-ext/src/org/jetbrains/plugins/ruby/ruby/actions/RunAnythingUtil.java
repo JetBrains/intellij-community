@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.actions.groups.RunAnythingGroup;
 import org.jetbrains.plugins.ruby.ruby.actions.setup.RunAnythingActivityProvider;
-import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -362,8 +361,7 @@ public class RunAnythingUtil {
     RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(project, pattern, workDirectory);
     if (provider != null) {
       triggerDebuggerStatistics();
-      runMatchedConfiguration(RunAnythingAction.getExecutor(), workDirectory, project,
-                              provider.createConfiguration(project, pattern, workDirectory));
+      runMatchedConfiguration(RunAnythingAction.getExecutor(), project, provider.createConfiguration(project, pattern, workDirectory));
       return true;
     }
     return false;
@@ -371,16 +369,10 @@ public class RunAnythingUtil {
 
 
   private static void runMatchedConfiguration(@NotNull Executor executor,
-                                              @NotNull VirtualFile workDirectory,
                                               @NotNull Project project,
                                               @NotNull RunnerAndConfigurationSettings settings) {
     RunManagerEx.getInstanceEx(project).setTemporaryConfiguration(settings);
     RunManager.getInstance(project).setSelectedConfiguration(settings);
-    RunConfiguration configuration = settings.getConfiguration();
-
-    if (configuration instanceof AbstractRubyRunConfiguration) {
-      ((AbstractRubyRunConfiguration)configuration).setWorkingDirectory(workDirectory.getPath());
-    }
 
     triggerDebuggerStatistics();
     ExecutionUtil.runConfiguration(settings, executor);
