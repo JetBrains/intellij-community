@@ -14,9 +14,13 @@ import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.ProgressManagerQueue
+import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.SvnVcs
+import org.jetbrains.idea.svn.api.Url
+import org.jetbrains.idea.svn.commandLine.SvnBindException
 import java.util.*
 
 private val LOG = logger<SvnBranchConfigurationManager>()
@@ -67,13 +71,16 @@ class SvnBranchConfigurationManager(private val myProject: Project,
 
   override fun getState() = ConfigurationBean().apply {
     myVersion = myConfigurationBean.myVersion
-    val helper = UrlSerializationHelper(SvnVcs.getInstance(myProject))
 
     for (root in svnBranchConfigManager.mapCopy.keys) {
       val configuration = svnBranchConfigManager.getConfig(root)
-      val configurationToPersist = SvnBranchConfiguration(configuration.trunkUrl, configuration.branchUrls, configuration.isUserInfoInUrl)
+      val configurationToPersist = SvnBranchConfiguration().apply {
+        isUserinfoInUrl = !configuration.trunk?.userInfo.isNullOrEmpty()
+        trunkUrl = configuration.trunk?.let(::removeUserInfo)?.toDecodedString()
+        branchUrls = configuration.branchLocations.map { removeUserInfo(it) }.map(Url::toString)
+      }
 
-      myConfigurationMap[root.path] = helper.prepareForSerialization(configurationToPersist)
+      myConfigurationMap[root.path] = configurationToPersist
     }
   }
 
@@ -92,14 +99,13 @@ class SvnBranchConfigurationManager(private val myProject: Project,
 
   private fun resolveAllBranchPoints(): Set<Pair<VirtualFile, SvnBranchConfigurationNew>> {
     val lfs = LocalFileSystem.getInstance()
-    val helper = UrlSerializationHelper(SvnVcs.getInstance(myProject))
     val branchPointsToLoad = mutableSetOf<Pair<VirtualFile, SvnBranchConfigurationNew>>()
 
     for ((path, persistedConfiguration) in myConfigurationBean.myConfigurationMap) {
       val root = lfs.refreshAndFindFileByPath(path)
 
       if (root != null) {
-        val configuration = resolveConfiguration(root, persistedConfiguration, helper, branchPointsToLoad)
+        val configuration = resolveConfiguration(root, persistedConfiguration, branchPointsToLoad)
         svnBranchConfigManager.updateForRoot(root, InfoStorage(configuration, InfoReliability.setByUser), false)
       }
       else {
@@ -112,19 +118,20 @@ class SvnBranchConfigurationManager(private val myProject: Project,
 
   private fun resolveConfiguration(root: VirtualFile,
                                    persistedConfiguration: SvnBranchConfiguration,
-                                   helper: UrlSerializationHelper,
                                    branchPointsToLoad: MutableSet<Pair<VirtualFile, SvnBranchConfigurationNew>>): SvnBranchConfigurationNew {
-    val withUserInfoConfiguration =
-      if (persistedConfiguration.isUserinfoInUrl) helper.afterDeserialization(root, persistedConfiguration) else persistedConfiguration
+    val userInfo = if (persistedConfiguration.isUserinfoInUrl) SvnVcs.getInstance(myProject).svnFileUrlMapping.getUrlForFile(
+      virtualToIoFile(root))?.userInfo
+    else null
     val result = SvnBranchConfigurationNew().apply {
-      trunkUrl = withUserInfoConfiguration.trunkUrl
-      isUserInfoInUrl = withUserInfoConfiguration.isUserinfoInUrl
+      // trunk url could be either decoded or encoded depending on the code flow
+      trunkUrl = addUserInfo(persistedConfiguration.trunkUrl, true, userInfo)?.toDecodedString().orEmpty()
+      isUserInfoInUrl = persistedConfiguration.isUserinfoInUrl
     }
 
-    for (branchUrl in withUserInfoConfiguration.branchUrls) {
-      val storedBranches = myStorage[branchUrl]?.sorted() ?: mutableListOf()
+    for (branchLocation in persistedConfiguration.branchUrls.mapNotNull { addUserInfo(it, false, userInfo) }) {
+      val storedBranches = myStorage[branchLocation.toString()]?.sorted() ?: mutableListOf()
 
-      result.addBranches(branchUrl,
+      result.addBranches(branchLocation.toString(),
                          InfoStorage(storedBranches, if (!storedBranches.isEmpty()) InfoReliability.setByUser else InfoReliability.empty))
       if (storedBranches.isEmpty()) {
         branchPointsToLoad.add(root to result)
@@ -141,6 +148,35 @@ class SvnBranchConfigurationManager(private val myProject: Project,
           svnBranchConfigManager.reloadBranches(root, null, configuration)
         }
       }
+    }
+  }
+
+  private fun removeUserInfo(url: Url) = if (url.userInfo.isNullOrEmpty()) url
+  else try {
+    url.setUserInfo(null)
+  }
+  catch (e: SvnBindException) {
+    LOG.info("Could not remove user info ${url.userInfo} from url ${url.toDecodedString()}", e)
+    url
+  }
+
+  private fun addUserInfo(urlValue: String, smartParse: Boolean, userInfo: String?): Url? {
+    val result: Url
+    try {
+      result = createUrl(urlValue, !smartParse || '%' in urlValue)
+    }
+    catch (e: SvnBindException) {
+      LOG.info("Could not parse url $urlValue", e)
+      return null
+    }
+
+    return if (userInfo.isNullOrEmpty()) result
+    else try {
+      result.setUserInfo(userInfo)
+    }
+    catch (e: SvnBindException) {
+      LOG.info("Could not add user info $userInfo to url $urlValue", e)
+      result
     }
   }
 
