@@ -892,10 +892,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    final boolean containsCalls = dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls();
-
     if (dfaLeft == dfaRight) {
-      return containsCalls || !isNegated;
+      return !isNegated || (dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls());
+    }
+
+    DfaConstValue sentinel = getFactory().getConstFactory().getSentinel();
+    if (dfaLeft == sentinel || dfaRight == sentinel) {
+      return isNegated;
     }
 
     if (isNull(dfaLeft) && isNotNull(dfaRight) || isNull(dfaRight) && isNotNull(dfaLeft)) {

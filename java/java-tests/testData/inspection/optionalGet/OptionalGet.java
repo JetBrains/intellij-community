@@ -350,6 +350,14 @@ class OptionalGet {
     // Non-empty stream: get() is fine
     return Stream.of("foo", "bar", "baz").map(String::toUpperCase).max(Comparator.naturalOrder()).get();
   }
+
+  void testStreamOfUnrolling(Optional<String> optionalOne, Optional<String> optionalTwo, Optional<String> optionalThree) {
+    if (Stream.of(optionalOne, optionalTwo).allMatch(Optional::isPresent)) {
+      System.out.println(optionalOne.get());
+      System.out.println(optionalTwo.get());
+      System.out.println(optionalThree.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
+    }
+  }
 }
 
 class CtorTest {
