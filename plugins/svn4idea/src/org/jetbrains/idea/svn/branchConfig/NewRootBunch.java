@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,14 +53,15 @@ public class NewRootBunch {
     }
   }
 
-  public void updateBranches(@NotNull final VirtualFile root, @NotNull final String branchesParent,
+  public void updateBranches(@NotNull final VirtualFile root,
+                             @NotNull Url branchesParent,
                              @NotNull final InfoStorage<List<SvnBranchItem>> items) {
     synchronized (myLock) {
       final InfoStorage<SvnBranchConfigurationNew> existing = myMap.get(root);
       if (existing == null) {
         LOG.info("cannot update branches, branches parent not found: " + branchesParent);
       } else {
-        existing.getValue().updateBranch(branchesParent, items);
+        existing.getValue().updateBranch(branchesParent.toString(), items);
       }
     }
   }
@@ -83,17 +84,17 @@ public class NewRootBunch {
   }
 
   public void reloadBranchesAsync(@NotNull final VirtualFile root,
-                                  @NotNull final String branchLocation,
+                                  @NotNull Url branchLocation,
                                   @NotNull final InfoReliability reliability) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> reloadBranches(root, branchLocation, reliability, true));
   }
 
   public void reloadBranches(@NotNull VirtualFile root, @Nullable SvnBranchConfigurationNew prev, @NotNull SvnBranchConfigurationNew next) {
-    final Set<String> oldUrls = (prev == null) ? Collections.emptySet() : new HashSet<>(prev.getBranchUrls());
+    final Set<Url> oldUrls = (prev == null) ? Collections.emptySet() : new HashSet<>(prev.getBranchLocations());
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     if (!vcs.isVcsBackgroundOperationsAllowed(root)) return;
 
-    for (String newBranchUrl : next.getBranchUrls()) {
+    for (Url newBranchUrl : next.getBranchLocations()) {
       // check if cancel had been put
       if (!vcs.isVcsBackgroundOperationsAllowed(root)) return;
       if (!oldUrls.contains(newBranchUrl)) {
@@ -103,7 +104,7 @@ public class NewRootBunch {
   }
 
   public void reloadBranches(@NotNull VirtualFile root,
-                             @NotNull String branchLocation,
+                             @NotNull Url branchLocation,
                              @NotNull InfoReliability reliability,
                              boolean passive) {
     new BranchesLoader(myProject, this, branchLocation, reliability, root, passive).run();
