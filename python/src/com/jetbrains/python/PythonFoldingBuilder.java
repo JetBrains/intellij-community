@@ -65,13 +65,12 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                           @NotNull PsiElement root,
                                           @NotNull Document document,
                                           boolean quick) {
-    if (root instanceof PyFile && ((PyFile)root).getVirtualFile() instanceof LightVirtualFile) return;
     appendDescriptors(root.getNode(), descriptors);
   }
 
   private static void appendDescriptors(ASTNode node, List<FoldingDescriptor> descriptors) {
     IElementType elementType = node.getElementType();
-    if (elementType instanceof PyFileElementType) {
+    if (node.getPsi() instanceof PyFile) {
       final List<PyImportStatementBase> imports = ((PyFile)node.getPsi()).getImportBlock();
       if (imports.size() > 1) {
         final PyImportStatementBase firstImport = imports.get(0);

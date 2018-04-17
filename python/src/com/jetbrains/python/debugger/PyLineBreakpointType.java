@@ -21,6 +21,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -47,13 +48,13 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   public static final String ID = "python-line";
   private static final String NAME = "Python Line Breakpoint";
 
-  private final static Set<IElementType> UNSTOPPABLE_ELEMENT_TYPES = Sets.newHashSet(PyTokenTypes.TRIPLE_QUOTED_STRING,
+  public final static Set<IElementType> UNSTOPPABLE_ELEMENT_TYPES = Sets.newHashSet(PyTokenTypes.TRIPLE_QUOTED_STRING,
                                                                                      PyTokenTypes.SINGLE_QUOTED_STRING,
                                                                                      PyTokenTypes.SINGLE_QUOTED_UNICODE,
                                                                                      PyTokenTypes.DOCSTRING);
 
 
-  private final static Class[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
+  public final static Class[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
 
 
   public PyLineBreakpointType() {
@@ -138,7 +139,6 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     return psiFile != null && PySdkUtil.isElementInSkeletons(psiFile);
   }
-
 
   @Override
   public String getBreakpointsDialogHelpTopic() {

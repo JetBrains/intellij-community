@@ -19,7 +19,6 @@
  */
 package com.intellij.injected.editor;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public interface VirtualFileWindow extends VirtualFileDelegate {
