@@ -20,14 +20,12 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.util.*
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.catch
 import com.intellij.util.io.*
-import com.intellij.util.messages.MessageBus
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashSet
 import org.jdom.Document
@@ -48,8 +46,8 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                      val roamingType: RoamingType = RoamingType.DEFAULT,
                                                      val presentableName: String? = null,
                                                      private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                     private val messageBusToListenVfsChanges: MessageBus? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
-  private val isUseVfs = messageBusToListenVfsChanges != null
+                                                     private val fileChangeSubscriber: ((schemeManager: SchemeManagerImpl<*, *>) -> Unit)? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
+  private val isUseVfs = fileChangeSubscriber != null
 
   internal val isOldSchemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
 
@@ -206,7 +204,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
         processPendingCurrentSchemeName(scheme)
       }
 
-      messageBusToListenVfsChanges?.connect()?.subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(this))
+      fileChangeSubscriber?.invoke(this)
 
       return schemes.subList(newSchemesOffset, schemes.size)
     }
