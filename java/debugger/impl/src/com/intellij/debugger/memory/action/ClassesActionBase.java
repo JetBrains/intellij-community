@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.memory.action;
 
-import com.intellij.debugger.memory.ui.JavaTypeInfo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -42,6 +41,6 @@ public abstract class ClassesActionBase extends AnAction {
 
   @Nullable
   protected TypeInfo getSelectedClass(AnActionEvent e) {
-    return new JavaTypeInfo(ActionUtil.getSelectedClass(e));
+    return ActionUtil.getSelectedTypeInfo(e);
   }
 }

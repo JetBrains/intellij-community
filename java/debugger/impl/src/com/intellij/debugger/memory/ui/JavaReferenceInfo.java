@@ -3,14 +3,16 @@ package com.intellij.debugger.memory.ui;
 
 import com.intellij.xdebugger.memory.ui.ReferenceInfo;
 import com.sun.jdi.ObjectReference;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaReferenceInfo implements ReferenceInfo {
   private final ObjectReference objectReference;
 
-  public JavaReferenceInfo(ObjectReference objectReference) {
+  public JavaReferenceInfo(@NotNull ObjectReference objectReference) {
     this.objectReference = objectReference;
   }
 
+  @NotNull
   public ObjectReference getObjectReference() {
     return objectReference;
   }

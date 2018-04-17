@@ -17,7 +17,7 @@ public class JavaTypeInfo implements TypeInfo {
     return types.stream().map(JavaTypeInfo::new).collect(Collectors.toList());
   }
 
-  public JavaTypeInfo(ReferenceType referenceType) {
+  public JavaTypeInfo(@NotNull ReferenceType referenceType) {
     this.referenceType = referenceType;
   }
 
@@ -33,6 +33,7 @@ public class JavaTypeInfo implements TypeInfo {
     return getReferenceType().instances(limit).stream().map(JavaReferenceInfo::new).collect(Collectors.toList());
   }
 
+  @NotNull
   public ReferenceType getReferenceType() {
     return referenceType;
   }
