@@ -90,6 +90,12 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
     assertEquals("abc", ((PsiLiteralExpressionImpl)rawStringLiteral).getRawString());
   }
 
+  public void testTypingOpeningTic() {
+    myFixture.configureByFile(getTestName(false ) + ".java");
+    myFixture.type('`');
+    myFixture.checkResultByFile(getTestName(false) + ".after.java");
+  }
+
   private void doTestHighlighting() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();

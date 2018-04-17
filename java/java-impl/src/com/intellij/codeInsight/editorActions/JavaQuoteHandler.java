@@ -15,21 +15,23 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
-public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements JavaLikeQuoteHandler {
+public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements JavaLikeQuoteHandler, MultiCharQuoteHandler {
   private final TokenSet concatenatableStrings;
 
   public JavaQuoteHandler() {
-    super(JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL);
+    super(JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL, JavaTokenType.RAW_STRING_LITERAL);
     concatenatableStrings = TokenSet.create(JavaTokenType.STRING_LITERAL);
   }
 
@@ -95,6 +97,21 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
     return element.getParent() instanceof PsiLiteralExpression && element.getParent().getParent() instanceof PsiReferenceExpression;
   }
 
+  @Nullable
+  @Override
+  public CharSequence getClosingQuote(HighlighterIterator iterator, int offset) {
+    if (isOpeningQuote(iterator, offset - 1) && iterator.getTokenType() == JavaTokenType.RAW_STRING_LITERAL) {
+      return " `";
+    }
+    return null;
+  }
+
+  @Override
+  public void insertString(Editor editor, int offset, CharSequence closingQuote) {
+    MultiCharQuoteHandler.super.insertString(editor, offset, closingQuote);
+    editor.getSelectionModel().setSelection(offset, offset + closingQuote.length() - 1);
+  }
+
   public static boolean isAppropriateElementTypeForLiteralStatic(final IElementType tokenType) {
     return ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(tokenType)
               || tokenType == JavaTokenType.SEMICOLON
@@ -103,6 +120,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
               || tokenType == JavaTokenType.RBRACKET
               || tokenType == JavaTokenType.RBRACE
               || tokenType == JavaTokenType.STRING_LITERAL
-              || tokenType == JavaTokenType.CHARACTER_LITERAL;
+              || tokenType == JavaTokenType.CHARACTER_LITERAL
+              || tokenType == JavaTokenType.RAW_STRING_LITERAL;
   }
 }

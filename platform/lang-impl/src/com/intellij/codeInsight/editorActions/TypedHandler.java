@@ -496,7 +496,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       if (closingQuote != null && hasNonClosedLiterals(editor, quoteHandler, offset - 1)) {
         if (offset == document.getTextLength() ||
             !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
-          document.insertString(offset, closingQuote);
+          ((MultiCharQuoteHandler)quoteHandler).insertString(editor, offset, closingQuote);
           return true;
         }
       }
