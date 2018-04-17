@@ -66,7 +66,7 @@ public class FSRecords {
   private static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
   private static final boolean inlineAttributes = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
   private static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
-  private static final boolean useSnappyForCompression = SystemProperties.getBooleanProperty("idea.use.snappy.for.vfs", false);
+  private static final boolean useCompressionUtilForCompression = SystemProperties.getBooleanProperty("idea.use.lightweight.compression.for.vfs", false);
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
@@ -74,7 +74,7 @@ public class FSRecords {
   private static final int VERSION = 21 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
                                      31 + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
                                      (ourStoreRootsSeparately ? 0x63 : 0) +
-                                     (useSnappyForCompression ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0) +
+                                     (useCompressionUtilForCompression ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0) +
                                      (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 21:0);
 
   private static final int PARENT_OFFSET = 0;
@@ -261,7 +261,8 @@ public class FSRecords {
             return inlineAttributes && useSmallAttrTable ? new CompactRecordsTable(recordsFile, pool, false) : super.createRecordsTable(pool, recordsFile);
           }
         };
-        myContents = new RefCountingStorage(contentsFile.getPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH, useSnappyForCompression) {
+        myContents = new RefCountingStorage(contentsFile.getPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
+                                            useCompressionUtilForCompression) {
           @NotNull
           @Override
           protected ExecutorService createExecutor() {
@@ -1248,7 +1249,7 @@ public class FSRecords {
   @NotNull
   private static DataInputStream doReadContentById(int contentId) throws IOException {
     DataInputStream stream = getContentStorage().readStream(contentId);
-    if (useSnappyForCompression) {
+    if (useCompressionUtilForCompression) {
       byte[] bytes = CompressionUtil.readCompressed(stream);
       stream = new DataInputStream(new ByteArrayInputStream(bytes));
     }
@@ -1520,7 +1521,7 @@ public class FSRecords {
         }
 
         ByteArraySequence newBytes;
-        if (useSnappyForCompression) {
+        if (useCompressionUtilForCompression) {
           BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
           try (DataOutputStream outputStream = new DataOutputStream(out)) {
             CompressionUtil.writeCompressed(outputStream, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
