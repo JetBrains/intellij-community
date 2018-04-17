@@ -124,14 +124,14 @@ class SvnBranchConfigurationManager(private val myProject: Project,
     else null
     val result = SvnBranchConfigurationNew().apply {
       // trunk url could be either decoded or encoded depending on the code flow
-      trunkUrl = addUserInfo(persistedConfiguration.trunkUrl, true, userInfo)?.toDecodedString().orEmpty()
+      trunk = addUserInfo(persistedConfiguration.trunkUrl, true, userInfo)
       isUserInfoInUrl = persistedConfiguration.isUserinfoInUrl
     }
 
     for (branchLocation in persistedConfiguration.branchUrls.mapNotNull { addUserInfo(it, false, userInfo) }) {
       val storedBranches = myStorage[branchLocation.toString()]?.sorted() ?: mutableListOf()
 
-      result.addBranches(branchLocation.toString(),
+      result.addBranches(branchLocation,
                          InfoStorage(storedBranches, if (!storedBranches.isEmpty()) InfoReliability.setByUser else InfoReliability.empty))
       if (storedBranches.isEmpty()) {
         branchPointsToLoad.add(root to result)

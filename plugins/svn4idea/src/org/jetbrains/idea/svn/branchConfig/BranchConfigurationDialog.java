@@ -24,7 +24,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.lang.Math.min;
@@ -66,13 +65,13 @@ public class BranchConfigurationDialog extends DialogWrapper {
     init();
     setTitle(message("configure.branches.title"));
 
-    if (isEmptyOrSpaces(configuration.getTrunkUrl())) {
-      configuration.setTrunkUrl(url.toString());
+    if (configuration.getTrunk() == null) {
+      configuration.setTrunk(url);
     }
 
     mySvnBranchConfigManager = SvnBranchConfigurationManager.getInstance(project).getSvnBranchConfigManager();
 
-    myTrunkLocationTextField.setText(configuration.getTrunkUrl());
+    myTrunkLocationTextField.setText(configuration.getTrunk().toString());
     myTrunkLocationTextField.addActionListener(e -> {
       Pair<Url, Url> selectionData = SelectLocationDialog.selectLocationAndRoot(project, rootUrl);
 
@@ -108,7 +107,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (myTrunkUrl != null) {
-      myConfiguration.setTrunkUrl(myTrunkUrl.toDecodedString());
+      myConfiguration.setTrunk(myTrunkUrl);
     }
     super.doOKAction();
   }
@@ -126,14 +125,11 @@ public class BranchConfigurationDialog extends DialogWrapper {
           if (result != null) {
             Url selectedUrl = result.first;
             usedRootUrl = result.second;
-            if (selectedUrl != null) {
-              String selectedUrlValue = selectedUrl.toString();
-              if (!myConfiguration.getBranchLocations().contains(selectedUrl)) {
-                myConfiguration.addBranches(selectedUrlValue, new InfoStorage<>(new ArrayList<>(), InfoReliability.empty));
-                mySvnBranchConfigManager.reloadBranchesAsync(myRoot, selectedUrl, InfoReliability.setByUser);
-                myBranchLocationsModel.add(selectedUrl);
-                myBranchLocationsList.setSelectedIndex(myBranchLocationsModel.getSize() - 1);
-              }
+            if (selectedUrl != null && !myConfiguration.getBranchLocations().contains(selectedUrl)) {
+              myConfiguration.addBranches(selectedUrl, new InfoStorage<>(new ArrayList<>(), InfoReliability.empty));
+              mySvnBranchConfigManager.reloadBranchesAsync(myRoot, selectedUrl, InfoReliability.setByUser);
+              myBranchLocationsModel.add(selectedUrl);
+              myBranchLocationsList.setSelectedIndex(myBranchLocationsModel.getSize() - 1);
             }
           }
         }
@@ -142,7 +138,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
         int selectedIndex = myBranchLocationsList.getSelectedIndex();
         for (Url url : myBranchLocationsList.getSelectedValuesList()) {
           myBranchLocationsModel.remove(url);
-          myConfiguration.removeBranch(url.toString());
+          myConfiguration.removeBranch(url);
         }
         if (myBranchLocationsModel.getSize() > 0) {
           selectedIndex = min(selectedIndex, myBranchLocationsModel.getSize() - 1);

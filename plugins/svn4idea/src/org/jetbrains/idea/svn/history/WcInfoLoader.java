@@ -85,7 +85,7 @@ public class WcInfoLoader {
       add(info.getUrl(), trunk, branches, workingCopyBranch);
     }
 
-    for (String branchUrl : configuration.getBranchUrls()) {
+    for (Url branchUrl : configuration.getBranchLocations()) {
       for (SvnBranchItem branchItem : configuration.getBranches(branchUrl)) {
         add(info.getUrl(), branchItem.getUrl(), branches, workingCopyBranch);
       }

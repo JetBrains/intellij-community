@@ -44,7 +44,7 @@ class NewRootBunch(private val myProject: Project, private val myBranchesLoader:
       LOG.info("cannot update branches, branches parent not found: ${branchesParent.toDecodedString()}")
     }
     else {
-      existing.value.updateBranch(branchesParent.toString(), items)
+      existing.value.updateBranch(branchesParent, items)
     }
   }
 
