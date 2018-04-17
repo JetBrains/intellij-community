@@ -42,10 +42,10 @@ public class JBValueTest {
   public void testGroup() {
     JBUI.setUserScaleFactor(1);
 
-    JBValueGroup values = new JBValueGroup();
-    JBValue value1 = values.add(1);
-    JBValue value2 = values.add(2);
-    JBValue value3 = values.add(3.6f);
+    JBValueGroup group = new JBValueGroup();
+    JBValue value1 = group.value(1);
+    JBValue value2 = group.value(2);
+    JBValue value3 = group.value(3.6f);
 
     JBUI.setUserScaleFactor(2);
 
@@ -54,7 +54,7 @@ public class JBValueTest {
     assertEquals(Math.round(JBUI.scale(3.6f)), value3.get());
     assertEquals(JBUI.scale(3.6f), value3.getFloat());
 
-    values.dispose();
+    group.dispose();
 
     int scale = JBUI.scale(1);
     JBUI.setUserScaleFactor(1);
