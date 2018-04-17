@@ -10,6 +10,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -31,7 +32,7 @@ import java.util.Objects;
 
 public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell> {
   private static final int MAX_GRAPH_WIDTH = 6;
-  private static final int VERTICAL_PADDING = JBUI.scale(7);
+  private static final JBValue VERTICAL_PADDING = JBUI.value(7);
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogGraphTable myGraphTable;
@@ -215,7 +216,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         myReferencePainter.customizePainter(refs, getBackground(), baseForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
 
-        appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING);
+        appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING.get());
         appendText(cell, style, isSelected);
       }
       else {
@@ -245,7 +246,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private int calculateHeight() {
-      return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
+      return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING.get());
     }
 
     public int getPreferredHeight() {
