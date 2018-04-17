@@ -24,8 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface MultiCharQuoteHandler extends QuoteHandler {
   /**
-   * returns closing quote by opening quote which is placed immediately before offset. If there is no quote or the quote is equivalent
-   * to opening quote the method should return null
+   * returns closing quote by opening quote which is placed immediately before offset. If there is no quote the method should return null
    */
   @Nullable
   CharSequence getClosingQuote(HighlighterIterator iterator, int offset);
@@ -35,7 +34,7 @@ public interface MultiCharQuoteHandler extends QuoteHandler {
    * 
    * May select the inserted quote
    */
-  default void insertString(Editor editor, int offset, CharSequence closingQuote) {
+  default void insertClosingQuote(Editor editor, int offset, CharSequence closingQuote) {
     editor.getDocument().insertString(offset, closingQuote);
   }
 }
