@@ -396,7 +396,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   @Override
   @Nullable
   public String getLineIndent(@NotNull PsiFile file, int offset) {
-    return new CodeStyleManagerRunnable<String>(this, FormattingMode.ADJUST_INDENT) {
+    return getLineIndent(file, offset, FormattingMode.ADJUST_INDENT);
+  }
+
+  @Override
+  @Nullable
+  public String getLineIndent(@NotNull PsiFile file, int offset, FormattingMode mode) {
+    return new CodeStyleManagerRunnable<String>(this, mode) {
       @Override
       protected boolean useDocumentBaseFormattingModel() {
         return false;
