@@ -3,13 +3,21 @@ package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.containers.ContainerUtil.filter;
+
 /**
  * Represents an element which has modifiers and annotations.
  */
 public interface JvmModifiersOwner extends JvmAnnotatedElement {
 
+  /**
+   * @deprecated To be removed in 2018.3
+   */
+  @Deprecated
   @NotNull
-  JvmModifier[] getModifiers();
+  default JvmModifier[] getModifiers() {
+    return filter(JvmModifier.values(), this::hasModifier).toArray(new JvmModifier[0]);
+  }
 
   /**
    * Checks if the element effectively has the specified modifier.

@@ -8,7 +8,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
 
 import static com.intellij.psi.PsiType.getJavaLangObject;
 import static com.intellij.psi.PsiType.getTypeByName;
@@ -51,17 +53,6 @@ class PsiJvmConversionHelper {
   static boolean hasListAnnotation(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String fqn) {
     PsiModifierList list = modifierListOwner.getModifierList();
     return list != null && list.hasAnnotation(fqn);
-  }
-
-  @NotNull
-  static JvmModifier[] getListModifiers(@NotNull PsiModifierListOwner modifierListOwner) {
-    final Set<JvmModifier> result = EnumSet.noneOf(JvmModifier.class);
-    MODIFIERS.forEach((jvm, psi) -> {
-      if (modifierListOwner.hasModifierProperty(psi)) {
-        result.add(jvm);
-      }
-    });
-    return result.toArray(JvmModifier.EMPTY_ARRAY);
   }
 
   static boolean hasListModifier(@NotNull PsiModifierListOwner modifierListOwner, @NotNull JvmModifier modifier) {

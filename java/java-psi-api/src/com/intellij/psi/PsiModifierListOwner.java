@@ -49,12 +49,6 @@ public interface PsiModifierListOwner extends PsiElement, JvmModifiersOwner {
     return hasListAnnotation(this, fqn);
   }
 
-  @NotNull
-  @Override
-  default JvmModifier[] getModifiers() {
-    return getListModifiers(this);
-  }
-
   @Override
   default boolean hasModifier(@NotNull JvmModifier modifier) {
     return hasListModifier(this, modifier);
