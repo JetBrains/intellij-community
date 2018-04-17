@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
 public interface PostfixTemplateExpressionCondition<T extends PsiElement> extends Condition<T> {
 
   String ID_ATTR = "id";
+
   /**
-   * 
-   * @return
+   * @return presentable name for postfix editor dialog
    */
   @NotNull
   String getPresentableName();
@@ -22,12 +22,12 @@ public interface PostfixTemplateExpressionCondition<T extends PsiElement> extend
    */
   @NotNull
   String getId();
-
-  boolean equals(Object o);
-
-  int hashCode();
   
+  boolean equals(Object o);
+  
+  int hashCode();
+
   default void serializeTo(@NotNull Element element) {
-    element.setAttribute(ID_ATTR,  getId());
+    element.setAttribute(ID_ATTR, getId());
   }
 }
