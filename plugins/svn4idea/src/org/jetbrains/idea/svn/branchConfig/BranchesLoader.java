@@ -19,19 +19,17 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
-
 public class BranchesLoader implements Runnable {
   @NotNull private final Project myProject;
   @NotNull private final NewRootBunch myBunch;
   @NotNull private final VirtualFile myRoot;
-  @NotNull private final String myUrl;
+  @NotNull private final Url myUrl;
   @NotNull private final InfoReliability myInfoReliability;
   private final boolean myPassive;
 
   public BranchesLoader(@NotNull Project project,
                         @NotNull NewRootBunch bunch,
-                        @NotNull String url,
+                        @NotNull Url url,
                         @NotNull InfoReliability infoReliability,
                         @NotNull VirtualFile root,
                         boolean passive) {
@@ -56,9 +54,8 @@ public class BranchesLoader implements Runnable {
   @NotNull
   public List<SvnBranchItem> loadBranches() throws VcsException {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
-    Url branchesUrl = createUrl(myUrl);
     List<SvnBranchItem> result = new LinkedList<>();
-    Target target = Target.on(branchesUrl);
+    Target target = Target.on(myUrl);
     DirectoryEntryConsumer handler = createConsumer(result);
 
     vcs.getFactory(target).create(BrowseClient.class, !myPassive).list(target, Revision.HEAD, Depth.IMMEDIATES, handler);
