@@ -49,6 +49,7 @@ import static com.intellij.ide.actions.GotoActionAction.performAction;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
+import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingAction.SHIFT_IS_PRESSED;
 
 public class RunAnythingUtil {
   private static final Key<Collection<Pair<String, String>>> RUN_ANYTHING_WRAPPED_COMMANDS = Key.create("RUN_ANYTHING_WRAPPED_COMMANDS");
@@ -152,7 +153,7 @@ public class RunAnythingUtil {
     final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
 
-    Executor executor = !RunAnythingAction.SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
+    Executor executor = !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
     RunConfiguration runConf = settings.getConfiguration();
     if (executor == null) return null;
     ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runConf);
@@ -406,7 +407,7 @@ public class RunAnythingUtil {
   }
 
   static void triggerDebuggerStatistics() {
-    if (RunAnythingAction.getExecutor() instanceof DefaultDebugExecutor) UsageTrigger.trigger(DEBUGGER_FEATURE_USAGE);
+    if (SHIFT_IS_PRESSED.get()) UsageTrigger.trigger(DEBUGGER_FEATURE_USAGE);
   }
 
   static void triggerMoreStatistics(@NotNull RunAnythingGroup group) {
