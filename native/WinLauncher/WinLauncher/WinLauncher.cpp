@@ -30,7 +30,7 @@ JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
 volatile bool terminating = false;
 
-//tools.jar doesn't exist in jdk 9 and later. So check it only for jdk 1.8 only.
+//tools.jar doesn't exist in jdk 9 and later. So check it for jdk 1.8 only.
 bool toolsArchiveExists = true;
 
 HANDLE hFileMapping;
