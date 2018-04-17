@@ -2,25 +2,19 @@
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExpression> {
-  String getId();
-
-  String getPresentableName();
-
-  boolean equals(Object o);
-
-  int hashCode();
+public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateExpressionCondition<PsiExpression> {
 
   class JavaPostfixTemplateExpressionFqnCondition implements JavaPostfixTemplateExpressionCondition {
     public static final String ID = "fqn";
+    public static final String FQN_ATTR = "fqn";
 
     private final String myFqn;
 
@@ -38,11 +32,13 @@ public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExp
       return type != null && InheritanceUtil.isInheritor(type, myFqn);
     }
 
+    @NotNull
     @Override
     public String getId() {
       return ID;
     }
 
+    @NotNull
     @Override
     public String getPresentableName() {
       return myFqn;
@@ -60,6 +56,12 @@ public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExp
     public int hashCode() {
       return Objects.hash(myFqn);
     }
+
+    @Override
+    public void serializeTo(@NotNull Element element) {
+      JavaPostfixTemplateExpressionCondition.super.serializeTo(element);
+      element.setAttribute(FQN_ATTR, getFqn());
+    }
   }
 
   class JavaPostfixTemplateVoidExpressionCondition implements JavaPostfixTemplateExpressionCondition {
@@ -71,11 +73,13 @@ public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExp
       return type != null && PsiType.VOID.equals(type);
     }
 
+    @NotNull
     @Override
     public String getId() {
       return ID;
     }
 
+    @NotNull
     @Override
     public String getPresentableName() {
       return "void";
@@ -102,11 +106,13 @@ public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExp
       return JavaPostfixTemplatesUtils.isNonVoid(element.getType());
     }
 
+    @NotNull
     @Override
     public String getId() {
       return ID;
     }
 
+    @NotNull
     @Override
     public String getPresentableName() {
       return "non void";
@@ -132,11 +138,13 @@ public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExp
       return JavaPostfixTemplatesUtils.isBoolean(element.getType());
     }
 
+    @NotNull
     @Override
     public String getId() {
       return ID;
     }
 
+    @NotNull
     @Override
     public String getPresentableName() {
       return "boolean";
@@ -162,11 +170,13 @@ public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExp
       return JavaPostfixTemplatesUtils.isNumber(element.getType());
     }
 
+    @NotNull
     @Override
     public String getId() {
       return ID;
     }
 
+    @NotNull
     @Override
     public String getPresentableName() {
       return "number";
@@ -192,11 +202,13 @@ public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExp
       return JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(element);
     }
 
+    @NotNull
     @Override
     public String getId() {
       return ID;
     }
 
+    @NotNull
     @Override
     public String getPresentableName() {
       return "not primitive type";
@@ -222,11 +234,13 @@ public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExp
       return JavaPostfixTemplatesUtils.isArray(element.getType());
     }
 
+    @NotNull
     @Override
     public String getId() {
       return ID;
     }
 
+    @NotNull
     @Override
     public String getPresentableName() {
       return "array";
