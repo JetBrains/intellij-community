@@ -108,7 +108,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
   private static final JBDimension MAX_DEFAULT = new JBDimension(650, 500);
-  private static final JBDimension MIN_DEFAULT = new JBDimension(300, 59);
+  private static final JBDimension MIN_DEFAULT = new JBDimension(300, 20);
   private final ExternalDocAction myExternalDocAction;
 
   private DocumentationManager myManager;
