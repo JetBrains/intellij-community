@@ -20,13 +20,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
 
-  private PythonHelpersLocator() {}
+  protected PythonHelpersLocator() {}
 
   /**
    * @return the base directory under which various scripts, etc are stored.
@@ -34,15 +35,24 @@ public class PythonHelpersLocator {
   @NotNull
   public static File getHelpersRoot() {
     @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
+    final File pluginBaseDir = getPluginBaseDir(jarPath);
+    if (pluginBaseDir != null) {
+      return new File(pluginBaseDir, "helpers");
+    }
+    else {
+      return new File(new File(jarPath).getParentFile(), "intellij.python.helpers");
+    }
+  }
+
+  @Nullable
+  protected static File getPluginBaseDir(@NonNls String jarPath) {
     if (jarPath.endsWith(".jar")) {
       final File jarFile = new File(jarPath);
 
       LOG.assertTrue(jarFile.exists(), "jar file cannot be null");
-      File pluginBaseDir = jarFile.getParentFile().getParentFile();
-      return new File(pluginBaseDir, "helpers");
+      return jarFile.getParentFile().getParentFile();
     }
-
-    return new File(new File(jarPath).getParentFile(), "intellij.python.helpers");
+    return null;
   }
 
   /**
