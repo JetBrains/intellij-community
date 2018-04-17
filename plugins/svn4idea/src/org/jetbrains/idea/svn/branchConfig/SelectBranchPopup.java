@@ -165,7 +165,7 @@ public class SelectBranchPopup {
     }
 
     private void showBranchPopup(@NotNull Url branchLocation) {
-      List<SvnBranchItem> branches = myConfiguration.getBranches(branchLocation.toString());
+      List<SvnBranchItem> branches = myConfiguration.getBranches(branchLocation);
       List<Object> items = new ArrayList<>(branches);
       items.add(REFRESH_MESSAGE);
 

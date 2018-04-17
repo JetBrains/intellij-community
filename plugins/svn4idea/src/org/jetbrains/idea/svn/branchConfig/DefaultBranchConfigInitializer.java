@@ -78,7 +78,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
   @NotNull
   private static SvnBranchConfigurationNew getDefaultConfiguration(@NotNull SvnVcs vcs, @NotNull Url url) throws VcsException {
     SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
-    result.setTrunkUrl(url.toString());
+    result.setTrunk(url);
 
     Url branchLocationsParent = getBranchLocationsParent(url);
     if (branchLocationsParent != null) {
@@ -118,11 +118,10 @@ public class DefaultBranchConfigInitializer implements Runnable {
         Url childUrl = append(rootPath, entry.getName());
 
         if (StringUtil.endsWithIgnoreCase(entry.getName(), DEFAULT_TRUNK_NAME)) {
-          result.setTrunkUrl(childUrl.toString());
+          result.setTrunk(childUrl);
         }
         else {
-          result.addBranches(childUrl.toString(),
-                             new InfoStorage<>(new ArrayList<>(0), InfoReliability.defaultValues));
+          result.addBranches(childUrl, new InfoStorage<>(new ArrayList<>(0), InfoReliability.defaultValues));
         }
       }
     };
