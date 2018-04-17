@@ -80,13 +80,10 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
   }
 
   /**
-   * Returns the list of source roots for this target.
-   *
-   * @param model            the JPS project model.
-   * @param index            the index of exclude roots.
-   * @param ignoredFileIndex the index of ignore patterns.
-   * @param dataPaths        the index of paths that can be used to serialize data related to build targets.
-   * @return
+   * Returns the list of root directories which contain input files for this target. The build process will track files under these root
+   * and pass modified and deleted files to the builders via {@link DirtyFilesHolder}.
+   * @see AdditionalRootsProviderService
+   * @see org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
    */
   @NotNull
   public abstract List<R> computeRootDescriptors(JpsModel model,
