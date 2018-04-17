@@ -77,17 +77,15 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
     myStartupManager = startupManager;
 
-    //noinspection SSBasedInspection
     ApplicationManager.getApplication().getMessageBus().connect(project)
                       .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
                         @SuppressWarnings("UnnecessaryFullyQualifiedName") // synchronized, can be accessed from different threads
                         java.util.Stack<AccessToken> stack = new Stack<>(); 
 
                         @Override
-                        public void batchChangeStarted(@NotNull Project project,
-                                                       @Nullable String activityName) {
+                        public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
                           if (project == myProject) {
-                            stack.push(heavyActivityStarted(activityName != null ? activityName : "file system changes"));
+                            stack.push(heavyActivityStarted(activityName != null ? UIUtil.removeMnemonic(activityName) : "file system changes"));
                           }
                         }
 
