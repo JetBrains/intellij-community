@@ -32,7 +32,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return MultiMap.emptyInstance();
     }
     String methodFqn = classFQName + "." + methodName;
-    String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn;
+    String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method?fqn=" + methodFqn;
     LOG.debug(url);
 
     RequestBuilder r = HttpRequests.request(url)
