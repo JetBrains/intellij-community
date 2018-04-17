@@ -2,6 +2,7 @@ import types
 
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_trace_api
+from _pydevd_bundle.pydevd_constants import IS_PYCHARM
 
 try:
     from pydevd_plugins import django_debug
@@ -15,6 +16,14 @@ except:
     jinja2_debug = None
     pydev_log.debug('Unable to load jinja2_debug plugin')
 
+try:
+    import pydev_jupyter_plugin
+except:
+    pydev_jupyter_plugin = None
+    if IS_PYCHARM:
+        pydev_log.debug('Unable to load jupyter_debug plugin')
+
+
 def load_plugins():
     plugins = []
     if django_debug is not None:
@@ -22,6 +31,10 @@ def load_plugins():
 
     if jinja2_debug is not None:
         plugins.append(jinja2_debug)
+
+    if pydev_jupyter_plugin is not None:
+        plugins.append(pydev_jupyter_plugin)
+
     return plugins
 
 

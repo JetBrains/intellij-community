@@ -95,13 +95,13 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
     consoleCommunication.connectToDebugger(portToConnect, optionsMap, envs);
   }
 
-  private static Map<String, String> getDebuggerEnvs(XDebugSession session) {
+  public static Map<String, String> getDebuggerEnvs(XDebugSession session) {
     Map<String, String> env = Maps.newHashMap();
     PyDebugRunner.configureDebugEnvironment(session.getProject(), env, session.getRunProfile());
     return env;
   }
 
-  private static Map<String, Boolean> makeDebugOptionsMap(XDebugSession session) {
+  public static Map<String, Boolean> makeDebugOptionsMap(XDebugSession session) {
     Project project = session.getProject();
     PyDebuggerOptionsProvider userOpts = PyDebuggerOptionsProvider.getInstance(project);
     Map<String, Boolean> dbgOpts = Maps.newHashMap();

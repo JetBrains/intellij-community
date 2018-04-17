@@ -101,6 +101,9 @@ public class JavaFxHtmlPanel implements Disposable {
 
   @Override
   public void dispose() {
+    runInPlatformWhenAvailable(
+      () -> getWebViewGuaranteed().getEngine().load(null)
+    );
   }
 
   @NotNull

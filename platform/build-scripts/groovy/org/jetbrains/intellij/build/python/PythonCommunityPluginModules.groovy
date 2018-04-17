@@ -10,7 +10,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 class PythonCommunityPluginModules {
   static List<String> COMMUNITY_MODULES = [
     "intellij.python.langInjection",
-    "intellij.python.ipnb",
     "intellij.python.community",
     "intellij.python.community.plugin",
     "intellij.python.community.plugin.java",
@@ -22,8 +21,7 @@ class PythonCommunityPluginModules {
   ]
   public static String PYTHON_COMMUNITY_PLUGIN_MODULE = "intellij.python.community.plugin.resources"
   static final List<String> PYCHARM_ONLY_PLUGIN_MODULES = [
-    "intellij.python.langInjection",
-    "intellij.python.ipnb",
+    "intellij.python.langInjection"
   ]
 
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
