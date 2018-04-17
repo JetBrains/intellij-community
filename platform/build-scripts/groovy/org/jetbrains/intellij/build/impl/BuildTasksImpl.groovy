@@ -124,7 +124,7 @@ class BuildTasksImpl extends BuildTasks {
     String configPath = "$tempDir/config"
   
     def ideClasspath = new LinkedHashSet<String>()
-    modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findModule(it), false) }
+    modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(it), false) }
 
     String classpathFile = "$tempDir/classpath.txt"
     new File(classpathFile).text = ideClasspath.join("\n")
@@ -401,6 +401,10 @@ idea.fatal.error.notification=disabled
     checkPaths([properties.yourkitAgentBinariesDirectoryPath], "productProperties.yourkitAgentBinariesDirectoryPath")
     checkPaths(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
 
+    checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile")
+    checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests")
+    checkModules(properties.additionalModulesRequiredForScrambling, "productProperties.additionalModulesRequiredForScrambling")
+
     def winCustomizer = buildContext.windowsDistributionCustomizer
     checkPaths([winCustomizer?.icoPath], "productProperties.windowsCustomizer.icoPath")
     checkPaths([winCustomizer?.installerImagesPath], "productProperties.windowsCustomizer.installerImagesPath")
@@ -417,6 +421,7 @@ idea.fatal.error.notification=disabled
     }
 
     checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules")
+    checkModules(buildContext.proprietaryBuildTools.scrambleTool?.namesOfModulesRequiredToBeScrambled, "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled")
   }
 
   private void checkProductLayout() {
@@ -468,9 +473,11 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkModules(Collection<String> modules, String fieldName) {
-    def unknownModules = modules.findAll {buildContext.findModule(it) == null}
-    if (!unknownModules.empty) {
-      buildContext.messages.error("The following modules from $fieldName aren't found in the project: $unknownModules")
+    if (modules != null) {
+      def unknownModules = modules.findAll {buildContext.findModule(it) == null}
+      if (!unknownModules.empty) {
+        buildContext.messages.error("The following modules from $fieldName aren't found in the project: $unknownModules")
+      }
     }
   }
 
