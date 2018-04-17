@@ -17,7 +17,7 @@ public class TBItemPopover extends TBItem {
   // NOTE: make popover with 'flexible' width when widthInPix <= 0
   public TBItemPopover(@NotNull String uid, Icon icon, String text, int widthInPix, TouchBar expandTB, TouchBar tapAndHoldTB) {
     super(uid);
-    myIcon = icon;
+    myIcon = scaleForTouchBar(icon);
     myText = text;
     myWidthPix = widthInPix;
     myExpandTB = expandTB;
@@ -25,7 +25,7 @@ public class TBItemPopover extends TBItem {
   }
 
   synchronized public void update(Icon icon, String text) {
-    myIcon = icon;
+    myIcon = scaleForTouchBar(icon);
     myText = text;
     updateNativePeer();
   }

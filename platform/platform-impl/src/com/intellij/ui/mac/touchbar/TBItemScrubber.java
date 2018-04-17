@@ -71,7 +71,7 @@ public class TBItemScrubber extends TBItem {
     private Memory myTextMem;
 
     public ItemData(Icon icon, String text, NSTLibrary.Action action) {
-      this.myIcon = icon;
+      this.myIcon = scaleForTouchBar(icon);
       this.myText = text;
       this.myAction = action;
     }

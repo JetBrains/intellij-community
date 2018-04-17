@@ -22,7 +22,7 @@ public class TBItemButton extends TBItem {
   TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action, int buttWidth) {
     super(uid);
     myAction = action;
-    myIcon = icon;
+    myIcon = scaleForTouchBar(icon);
     myText = text;
     myWidth = buttWidth;
   }
@@ -35,7 +35,7 @@ public class TBItemButton extends TBItem {
   }
 
   synchronized private void update(Icon icon, String text, NSTLibrary.Action action, int buttWidth) {
-    myIcon = icon;
+    myIcon = scaleForTouchBar(icon);
     myText = text;
     myAction = action;
     myWidth = buttWidth;
