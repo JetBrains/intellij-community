@@ -284,6 +284,10 @@ public class CommentTracker {
       element = element.getParent();
     }
     grabComments(element);
+    if (element instanceof PsiAnnotatedJavaCodeReferenceElement) {
+      // PsiJavaCodeReferenceElementImpl tries to keep comment after dot which may result in duplicating comments.
+      PsiTreeUtil.getChildrenOfTypeAsList(element, PsiComment.class).forEach(PsiElement::delete);
+    }
   }
 
   private void grabComments(PsiElement element) {
