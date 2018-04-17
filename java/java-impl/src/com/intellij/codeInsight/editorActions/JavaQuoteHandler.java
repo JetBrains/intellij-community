@@ -100,16 +100,23 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   @Nullable
   @Override
   public CharSequence getClosingQuote(HighlighterIterator iterator, int offset) {
-    if (isOpeningQuote(iterator, offset - 1) && iterator.getTokenType() == JavaTokenType.RAW_STRING_LITERAL) {
-      return " `";
+    if (iterator.getTokenType() == JavaTokenType.RAW_STRING_LITERAL) {
+      CharSequence text = iterator.getDocument().getImmutableCharSequence();
+      int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicsSequence(text.subSequence(iterator.getStart(), offset));
+      if (isOpeningQuote(iterator, offset - leadingTicsSequence)) {
+        int closingSequence = PsiRawStringLiteralUtil.getLeadingTicsSequence(text.subSequence(offset, iterator.getEnd()));
+        if (closingSequence + 1 == leadingTicsSequence) {
+          return "`";
+        }
+      }
     }
     return null;
   }
 
   @Override
-  public void insertString(Editor editor, int offset, CharSequence closingQuote) {
-    MultiCharQuoteHandler.super.insertString(editor, offset, closingQuote);
-    editor.getSelectionModel().setSelection(offset, offset + closingQuote.length() - 1);
+  public void insertClosingQuote(Editor editor, int offset, CharSequence closingQuote) {
+    editor.getDocument().insertString(offset, " " + closingQuote);
+    editor.getSelectionModel().setSelection(offset, offset + 1);
   }
 
   public static boolean isAppropriateElementTypeForLiteralStatic(final IElementType tokenType) {

@@ -94,6 +94,8 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
     myFixture.configureByFile(getTestName(false ) + ".java");
     myFixture.type('`');
     myFixture.checkResultByFile(getTestName(false) + ".after.java");
+    myFixture.type('`');
+    myFixture.checkResultByFile(getTestName(false) + ".1.after.java");
   }
 
   private void doTestHighlighting() {

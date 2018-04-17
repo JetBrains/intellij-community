@@ -30,20 +30,20 @@ public class PsiRawStringLiteralUtil {
   /**
    * Return number of leading tics in the <code>text</code>
    */
-  public static int getLeadingTicsSequence(String text) {
+  public static int getLeadingTicsSequence(CharSequence text) {
     return getTicsSequence(text, text.length(), 0);
   }
 
   /**
    * Return number of trailing tics in the <code>text</code>
    */
-  public static int getTrailingTicsSequence(String text) {
+  public static int getTrailingTicsSequence(CharSequence text) {
     int length = text.length();
     while (length > 0 && text.charAt(length - 1) == '`') length--;
     return text.length() - length;
   }
 
-  private static int getTicsSequence(String literalText, int length, int startIndex) {
+  private static int getTicsSequence(CharSequence literalText, int length, int startIndex) {
     int quotesLength = startIndex;
     while (quotesLength < length && literalText.charAt(quotesLength) == '`') quotesLength++;
     return quotesLength - startIndex;
