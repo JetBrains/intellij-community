@@ -16,15 +16,17 @@ import java.util.List;
  * @author Irina.Chernushina on 2/24/2016.
  */
 public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderFactory {
-  public static final int TOTAL_PROVIDERS = 2;
-  public static final String SCHEMA_JSON_FILE_NAME = "schema.json";
-  public static final String SCHEMA06_JSON_FILE_NAME = "schema06.json";
+  public static final int TOTAL_PROVIDERS = 3;
+  private static final String SCHEMA_JSON_FILE_NAME = "schema.json";
+  private static final String SCHEMA06_JSON_FILE_NAME = "schema06.json";
+  private static final String SCHEMA07_JSON_FILE_NAME = "schema07.json";
 
   @NotNull
   @Override
   public List<JsonSchemaFileProvider> getProviders(@NotNull final Project project) {
     return ContainerUtil.list(new MyJsonSchemaFileProvider(project, SCHEMA_JSON_FILE_NAME),
-                              new MyJsonSchemaFileProvider(project, SCHEMA06_JSON_FILE_NAME));
+                              new MyJsonSchemaFileProvider(project, SCHEMA06_JSON_FILE_NAME),
+                              new MyJsonSchemaFileProvider(project, SCHEMA07_JSON_FILE_NAME));
   }
 
   public static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
@@ -37,6 +39,9 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     }
     public boolean isSchemaV6() {
       return SCHEMA06_JSON_FILE_NAME.equals(myFileName);
+    }
+    public boolean isSchemaV7() {
+      return SCHEMA07_JSON_FILE_NAME.equals(myFileName);
     }
 
     private MyJsonSchemaFileProvider(@NotNull final Project project, @NotNull String fileName) {
@@ -55,6 +60,8 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
           return isSchemaV4();
         case SCHEMA_6:
           return isSchemaV6();
+        case SCHEMA_7:
+          return isSchemaV7();
       }
 
       throw new NotImplementedError("Unknown schema version: " + schemaVersion);
@@ -62,7 +69,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
     @Override
     public JsonSchemaVersion getSchemaVersion() {
-      return isSchemaV4() ? JsonSchemaVersion.SCHEMA_4 : JsonSchemaVersion.SCHEMA_6;
+      return isSchemaV4() ? JsonSchemaVersion.SCHEMA_4 : isSchemaV7() ? JsonSchemaVersion.SCHEMA_7 : JsonSchemaVersion.SCHEMA_6;
     }
 
     @NotNull

@@ -89,6 +89,9 @@ public class JsonSchemaObject {
   @Nullable private List<JsonSchemaObject> myAnyOf;
   @Nullable private List<JsonSchemaObject> myOneOf;
   @Nullable private JsonSchemaObject myNot;
+  @Nullable private JsonSchemaObject myIf;
+  @Nullable private JsonSchemaObject myThen;
+  @Nullable private JsonSchemaObject myElse;
   private boolean myShouldValidateAgainstJSType;
 
   public JsonSchemaObject(@NotNull JsonObject object) {
@@ -152,6 +155,9 @@ public class JsonSchemaObject {
     myAnyOf = copyList(myAnyOf, other.myAnyOf);
     myOneOf = copyList(myOneOf, other.myOneOf);
     if (other.myNot != null) myNot = other.myNot;
+    if (other.myIf != null) myIf = other.myIf;
+    if (other.myThen != null) myThen = other.myThen;
+    if (other.myElse != null) myElse = other.myElse;
     myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
   }
 
@@ -498,6 +504,33 @@ public class JsonSchemaObject {
 
   public void setNot(@Nullable JsonSchemaObject not) {
     myNot = not;
+  }
+
+  @Nullable
+  public JsonSchemaObject getIf() {
+    return myIf;
+  }
+
+  public void setIf(@Nullable JsonSchemaObject anIf) {
+    myIf = anIf;
+  }
+
+  @Nullable
+  public JsonSchemaObject getThen() {
+    return myThen;
+  }
+
+  public void setThen(@Nullable JsonSchemaObject then) {
+    myThen = then;
+  }
+
+  @Nullable
+  public JsonSchemaObject getElse() {
+    return myElse;
+  }
+
+  public void setElse(@Nullable JsonSchemaObject anElse) {
+    myElse = anElse;
   }
 
   @Nullable

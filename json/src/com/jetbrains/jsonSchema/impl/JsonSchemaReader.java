@@ -190,8 +190,41 @@ public class JsonSchemaReader {
     READERS_MAP.put("anyOf", createContainer((object, members) -> object.setAnyOf(members)));
     READERS_MAP.put("oneOf", createContainer((object, members) -> object.setOneOf(members)));
     READERS_MAP.put("not", createNot());
+    READERS_MAP.put("if", createIf());
+    READERS_MAP.put("then", createThen());
+    READERS_MAP.put("else", createElse());
     READERS_MAP.put("instanceof", ((element, object, queue) -> object.shouldValidateAgainstJSType()));
     READERS_MAP.put("typeof", ((element, object, queue) -> object.shouldValidateAgainstJSType()));
+  }
+
+  private static MyReader createIf() {
+    return (element, object, queue) -> {
+      if (element instanceof JsonObject) {
+        final JsonSchemaObject ifSchema = new JsonSchemaObject((JsonObject)element);
+        queue.add(ifSchema);
+        object.setIf(ifSchema);
+      }
+    };
+  }
+
+  private static MyReader createThen() {
+    return (element, object, queue) -> {
+      if (element instanceof JsonObject) {
+        final JsonSchemaObject ifSchema = new JsonSchemaObject((JsonObject)element);
+        queue.add(ifSchema);
+        object.setThen(ifSchema);
+      }
+    };
+  }
+
+  private static MyReader createElse() {
+    return (element, object, queue) -> {
+      if (element instanceof JsonObject) {
+        final JsonSchemaObject ifSchema = new JsonSchemaObject((JsonObject)element);
+        queue.add(ifSchema);
+        object.setElse(ifSchema);
+      }
+    };
   }
 
   private static MyReader createNot() {

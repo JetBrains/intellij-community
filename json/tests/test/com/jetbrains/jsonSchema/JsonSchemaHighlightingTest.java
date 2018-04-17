@@ -704,6 +704,44 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(schema, "{\"prop\": \"foo\"}");
   }
 
+  public void testIfThenElseV7() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"if\": {\n" +
+                                      "    \"properties\": {\n" +
+                                      "      \"a\": {\n" +
+                                      "        \"type\": \"string\"\n" +
+                                      "      }\n" +
+                                      "    },\n" +
+                                      "    \"required\": [\"a\"]\n" +
+                                      "  },\n" +
+                                      "  \"then\": {\n" +
+                                      "    \"properties\": {\n" +
+                                      "      \"b\": {\n" +
+                                      "        \"type\": \"number\"\n" +
+                                      "      }\n" +
+                                      "    },\n" +
+                                      "    \"required\": [\"b\"]\n" +
+                                      "  },\n" +
+                                      "  \"else\": {\n" +
+                                      "    \"properties\": {\n" +
+                                      "      \"c\": {\n" +
+                                      "        \"type\": \"boolean\"\n" +
+                                      "      }\n" +
+                                      "    },\n" +
+                                      "    \"required\": [\"c\"]\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "<warning>{}</warning>");
+    doTest(schema, "{\"c\": <warning>5</warning>}");
+    doTest(schema, "{\"c\": true}");
+    doTest(schema, "<warning>{\"a\": 5, \"b\": 5}</warning>");
+    doTest(schema, "{\"a\": 5, \"c\": <warning>5</warning>}");
+    doTest(schema, "{\"a\": 5, \"c\": true}");
+    doTest(schema, "<warning>{\"a\": \"a\", \"c\": true}</warning>");
+    doTest(schema, "{\"a\": \"a\", \"b\": <warning>true</warning>}");
+    doTest(schema, "{\"a\": \"a\", \"b\": 5}");
+  }
+
   public void testNestedOneOf() throws Exception {
     @Language("JSON") String schema = "{\"type\":\"object\",\n" +
                                       "  \"oneOf\": [\n" +

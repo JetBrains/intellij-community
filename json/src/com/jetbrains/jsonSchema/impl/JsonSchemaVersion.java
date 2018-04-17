@@ -7,12 +7,15 @@ import org.jetbrains.annotations.Nullable;
 
 public enum JsonSchemaVersion {
   SCHEMA_4,
-  SCHEMA_6;
+  SCHEMA_6,
+  SCHEMA_7;
 
   private static final String ourSchemaV4Schema = "http://json-schema.org/draft-04/schema#";
   private static final String ourSchemaV4SchemaTrim = "http://json-schema.org/draft-04/schema";
   private static final String ourSchemaV6Schema = "http://json-schema.org/draft-06/schema#";
   private static final String ourSchemaV6SchemaTrim = "http://json-schema.org/draft-06/schema";
+  private static final String ourSchemaV7Schema = "http://json-schema.org/draft-07/schema#";
+  private static final String ourSchemaV7SchemaTrim = "http://json-schema.org/draft-07/schema";
 
   @Override
   public String toString() {
@@ -21,6 +24,8 @@ public enum JsonSchemaVersion {
         return "JSON Schema Version 4";
       case SCHEMA_6:
         return "JSON Schema Version 6";
+      case SCHEMA_7:
+        return "JSON Schema Version 7";
     }
 
     throw new NotImplementedError("Unknown version: " + this);
@@ -36,12 +41,15 @@ public enum JsonSchemaVersion {
       case ourSchemaV6Schema:
       case ourSchemaV6SchemaTrim:
         return SCHEMA_6;
+      case ourSchemaV7Schema:
+      case ourSchemaV7SchemaTrim:
+        return SCHEMA_7;
     }
 
     return null;
   }
 
   public static boolean isSchemaSchemaId(@Nullable String id) {
-    return ourSchemaV4Schema.equals(id) || ourSchemaV6Schema.equals(id);
+    return ourSchemaV4Schema.equals(id) || ourSchemaV6Schema.equals(id) || ourSchemaV7Schema.equals(id);
   }
 }

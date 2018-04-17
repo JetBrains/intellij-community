@@ -25,7 +25,7 @@ public class JsonCachedValues {
   @Nullable
   public static JsonSchemaObject getSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Project project) {
     JsonFileResolver.startFetchingHttpFileIfNeeded(schemaFile);
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(schemaFile);
+    final PsiFile psiFile = resolveFile(schemaFile, project);
     if (!(psiFile instanceof JsonFile)) return null;
 
     return CachedValueProviderOnPsiFile.getOrCompute(psiFile, JsonCachedValues::computeSchemaObject, JSON_OBJECT_CACHE_KEY);
@@ -55,9 +55,15 @@ public class JsonCachedValues {
   @Nullable
   public static String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
                                                        @NotNull Project project) {
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    PsiFile psiFile = resolveFile(file, project);
     return !(psiFile instanceof JsonFile) ? null : CachedValueProviderOnPsiFile
       .getOrCompute(psiFile, JsonCachedValues::fetchSchemaUrl, SCHEMA_URL_KEY);
+  }
+
+  private static PsiFile resolveFile(@NotNull VirtualFile file,
+                                     @NotNull Project project) {
+    if (!file.isValid()) return null;
+    return PsiManager.getInstance(project).findFile(file);
   }
 
   @Nullable
@@ -78,7 +84,7 @@ public class JsonCachedValues {
   public static String getSchemaId(@NotNull final VirtualFile schemaFile,
                                    @NotNull final Project project) {
     if (!schemaFile.isValid()) return null;
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(schemaFile);
+    final PsiFile psiFile = resolveFile(schemaFile, project);
     if (!(psiFile instanceof JsonFile)) return null;
     return CachedValueProviderOnPsiFile.getOrCompute(psiFile, JsonCachedValues::getSchemaId, SCHEMA_ID_CACHE_KEY);
   }
@@ -110,7 +116,7 @@ public class JsonCachedValues {
   public static List<Pair<Collection<String>, String>> getSchemaCatalog(@NotNull final VirtualFile catalog,
                                    @NotNull final Project project) {
     if (!catalog.isValid()) return null;
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(catalog);
+    final PsiFile psiFile = resolveFile(catalog, project);
     if (!(psiFile instanceof JsonFile)) return null;
     return CachedValueProviderOnPsiFile.getOrCompute(psiFile, JsonCachedValues::computeSchemaCatalog, SCHEMA_CATALOG_CACHE_KEY);
   }

@@ -190,6 +190,33 @@ class JsonSchemaAnnotatorChecker {
       final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result);
       if (checker == null || checker.isCorrect()) error("Validates against 'not' schema", value.getDelegate());
     }
+
+    if (schema.getIf() != null) {
+      MatchResult result = new JsonSchemaResolver(schema.getIf()).detailedResolve();
+      if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return;
+
+      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result);
+      if (checker != null) {
+        if (checker.isCorrect()) {
+          JsonSchemaObject then = schema.getThen();
+          if (then == null) {
+            error("Validates against 'if' branch but no 'then' branch is present", value.getDelegate());
+          }
+          else {
+            checkObjectBySchemaRecordErrors(then, value);
+          }
+        }
+        else {
+          JsonSchemaObject schemaElse = schema.getElse();
+          if (schemaElse == null) {
+            error("Validates counter 'if' branch but no 'else' branch is present", value.getDelegate());
+          }
+          else {
+            checkObjectBySchemaRecordErrors(schemaElse, value);
+          }
+        }
+      }
+    }
   }
 
   private void checkObjectBySchemaRecordErrors(@NotNull JsonSchemaObject schema, @NotNull JsonValueAdapter object) {

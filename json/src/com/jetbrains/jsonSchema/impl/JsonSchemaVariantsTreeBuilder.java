@@ -369,7 +369,8 @@ public class JsonSchemaVariantsTreeBuilder {
   }
 
   private static boolean interestingSchema(@NotNull JsonSchemaObject schema) {
-    return schema.getAnyOf() != null || schema.getOneOf() != null || schema.getAllOf() != null || schema.getRef() != null;
+    return schema.getAnyOf() != null || schema.getOneOf() != null || schema.getAllOf() != null || schema.getRef() != null
+           || schema.getIf() != null;
   }
 
   public static class Step {
@@ -450,8 +451,31 @@ public class JsonSchemaVariantsTreeBuilder {
       if (schema != null) {
         return Pair.create(ThreeState.UNSURE, schema);
       }
-      if (parent.getAdditionalPropertiesSchema() != null && acceptAdditionalPropertiesSchemas) {
-        return Pair.create(ThreeState.UNSURE, parent.getAdditionalPropertiesSchema());
+      if (acceptAdditionalPropertiesSchemas) {
+        if (parent.getAdditionalPropertiesSchema() != null) {
+          return Pair.create(ThreeState.UNSURE, parent.getAdditionalPropertiesSchema());
+        }
+
+        // resolve inside V7 if-then-else conditionals
+        if (parent.getIf() != null) {
+          JsonSchemaObject childObject;
+
+          // NOTE: do not resolve inside 'if' itself - it is just a condition, but not an actual validation!
+          // only 'then' and 'else' branches provide actual validation sources, but not the 'if' branch
+
+          if (parent.getThen() != null) {
+            childObject = parent.getThen().getProperties().get(myName);
+            if (childObject != null) {
+              return Pair.create(ThreeState.UNSURE, childObject);
+            }
+          }
+          if (parent.getElse() != null) {
+            childObject = parent.getElse().getProperties().get(myName);
+            if (childObject != null) {
+              return Pair.create(ThreeState.UNSURE, childObject);
+            }
+          }
+        }
       }
       if (Boolean.FALSE.equals(parent.getAdditionalPropertiesAllowed())) {
         return Pair.create(ThreeState.NO, null);
