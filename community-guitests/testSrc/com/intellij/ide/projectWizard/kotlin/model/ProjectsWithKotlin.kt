@@ -698,23 +698,24 @@ fun KotlinGuiTestCase.editBuildGradle(kotlinVersion: String,
                                       vararg projectName: String) {
 //   if project is configured to old Kotlin version, it must be released and no changes are required in the build.gradle file
   if (!KotlinTestProperties.isActualKotlinUsed()) return
-  if (KotlinTestProperties.isArtifactConfiguredManually || KotlinTestProperties.isArtifactOnlyInDevRep || isKotlinDslUsed)
+  if (KotlinTestProperties.isArtifactOnlyInDevRep || isKotlinDslUsed || KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
     openBuildGradle(isKotlinDslUsed, *projectName)
   if (isKotlinDslUsed) changePluginsInBuildGradle(kotlinKind)
   if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(isKotlinDslUsed)
-  if (KotlinTestProperties.isArtifactConfiguredManually && KotlinTestProperties.kotlin_artifact_version != KotlinTestProperties.kotlin_plugin_version_main)
+  if (KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
     changeKotlinVersionInBuildGradle(isKotlinDslUsed, kotlinVersion)
 }
 
 fun KotlinGuiTestCase.editPomXml(kotlinVersion: String,
                                  kotlinKind: KotlinKind,
                                  vararg projectName: String) {
-//   if project is configured to old Kotlin version, it must be released and no changes are required in the build.gradle file
+//   if project is configured to old Kotlin version, it must be released and no changes are required in the pom.xml file
   if (!KotlinTestProperties.isActualKotlinUsed()) return
-  if (KotlinTestProperties.isArtifactConfiguredManually || KotlinTestProperties.isArtifactOnlyInDevRep)
+  if (KotlinTestProperties.isArtifactOnlyInDevRep || KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
     openPomXml(*projectName)
   if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToPomXml()
-  if (KotlinTestProperties.isArtifactConfiguredManually) changeKotlinVersionInPomXml(kotlinVersion)
+  if (KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
+    changeKotlinVersionInPomXml(kotlinVersion)
 }
 
 fun getVersionFromString(versionString: String): LanguageVersion {
