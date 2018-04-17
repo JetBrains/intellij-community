@@ -631,19 +631,14 @@ public class CFGBuilder {
   public CFGBuilder loopOver(PsiExpression[] expressions, DfaVariableValue targetVariable) {
     DfaValueFactory factory = getFactory();
     if (expressions.length > ControlFlowAnalyzer.MAX_UNROLL_SIZE) {
-      DfaValue loopElement = null;
       for (PsiExpression expression : expressions) {
         pushExpression(expression);
-        DfaValue expressionValue = factory.createValue(expression);
-        if (expressionValue == null) {
-          expressionValue = factory.createTypeValue(expression.getType(), NullnessUtil.getExpressionNullness(expression));
-        }
-        loopElement = loopElement == null ? expressionValue : loopElement.union(expressionValue);
         pop();
       }
       ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
       condGoto.setOffset(myAnalyzer.getInstructionCount());
       myBranches.add(() -> pushUnknown().add(condGoto));
+      DfaValue loopElement = factory.createCommonValue(expressions);
       pushForWrite(targetVariable).push(loopElement).assign();
     } else {
       push(factory.getConstFactory().getSentinel());

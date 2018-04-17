@@ -258,6 +258,20 @@ public class DfaValueFactory {
   @NotNull
   public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
 
+  @NotNull
+  public DfaValue createCommonValue(@NotNull PsiExpression[] expressions) {
+    DfaValue loopElement = null;
+    for (PsiExpression expression : expressions) {
+      DfaValue expressionValue = createValue(expression);
+      if (expressionValue == null) {
+        expressionValue = createTypeValue(expression.getType(), NullnessUtil.getExpressionNullness(expression));
+      }
+      loopElement = loopElement == null ? expressionValue : loopElement.union(expressionValue);
+      if (loopElement == DfaUnknownValue.getInstance()) break;
+    }
+    return loopElement == null ? DfaUnknownValue.getInstance() : loopElement;
+  }
+
   private static class ClassInitializationInfo {
     final boolean myCanInstantiateItself;
     final boolean myCtorsCallMethods;
