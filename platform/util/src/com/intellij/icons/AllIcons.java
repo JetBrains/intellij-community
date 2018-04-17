@@ -1081,6 +1081,9 @@ public class AllIcons {
   
   public static class Plugins {
     public static final Icon Downloads = IconLoader.getIcon("/plugins/downloads.png"); // 12x12
+    public static final Icon ModifierInvalid = IconLoader.getIcon("/plugins/modifierInvalid.svg"); // 15x15
+    public static final Icon ModifierJBLogo = IconLoader.getIcon("/plugins/modifierJBLogo.svg"); // 14x14
+    public static final Icon PluginLogo = IconLoader.getIcon("/plugins/pluginLogo.svg"); // 40x40
     public static final Icon PluginLogo_40 = IconLoader.getIcon("/plugins/pluginLogo_40.png"); // 40x40
     public static final Icon PluginLogo_80 = IconLoader.getIcon("/plugins/pluginLogo_80.png"); // 80x80
     public static final Icon PluginLogoDisabled_40 = IconLoader.getIcon("/plugins/pluginLogoDisabled_40.png"); // 40x40
