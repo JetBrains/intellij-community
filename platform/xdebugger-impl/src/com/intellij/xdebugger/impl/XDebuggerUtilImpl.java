@@ -307,28 +307,39 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   public static void removeBreakpointWithConfirmation(final Project project, final XBreakpoint<?> breakpoint) {
-    if ((isEmptyExpression(breakpoint.getConditionExpression()) && isEmptyExpression(breakpoint.getLogExpressionObject())) ||
-        ApplicationManager.getApplication().isHeadlessEnvironment() ||
-        ApplicationManager.getApplication().isUnitTestMode() ||
-        !XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isConfirmBreakpointRemoval() ||
-        Messages.showOkCancelDialog(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"),
-                                    XDebuggerBundle.message("message.confirm.breakpoint.removal.title"),
-                                    CommonBundle.message("button.remove"),
-                                    Messages.CANCEL_BUTTON,
-                                    Messages.getQuestionIcon(),
-                                    new DialogWrapper.DoNotAskOption.Adapter() {
-                                      @Override
-                                      public void rememberChoice(boolean isSelected, int exitCode) {
-                                        if (isSelected) {
-                                          XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings()
-                                                                     .setConfirmBreakpointRemoval(false);
+    if ((!isEmptyExpression(breakpoint.getConditionExpression()) || !isEmptyExpression(breakpoint.getLogExpressionObject())) &&
+        !ApplicationManager.getApplication().isHeadlessEnvironment() &&
+        !ApplicationManager.getApplication().isUnitTestMode() &&
+        XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isConfirmBreakpointRemoval()) {
+      StringBuilder message = new StringBuilder(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"));
+      if (!isEmptyExpression(breakpoint.getConditionExpression())) {
+        message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.condition",
+                                               breakpoint.getConditionExpression().getExpression()));
+      }
+      if (!isEmptyExpression(breakpoint.getLogExpressionObject())) {
+        message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.log",
+                                               breakpoint.getLogExpressionObject().getExpression()));
+      }
+      if (Messages.showOkCancelDialog(message.toString(),
+                                      XDebuggerBundle.message("message.confirm.breakpoint.removal.title"),
+                                      CommonBundle.message("button.remove"),
+                                      Messages.CANCEL_BUTTON,
+                                      Messages.getQuestionIcon(),
+                                      new DialogWrapper.DoNotAskOption.Adapter() {
+                                        @Override
+                                        public void rememberChoice(boolean isSelected, int exitCode) {
+                                          if (isSelected) {
+                                            XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings()
+                                                                       .setConfirmBreakpointRemoval(false);
+                                          }
                                         }
-                                      }
-                                    }) == Messages.OK) {
-      ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager())
-        .rememberRemovedBreakpoint((XBreakpointBase)breakpoint);
-      getInstance().removeBreakpoint(project, breakpoint);
+                                      }) != Messages.OK) {
+        return;
+      }
     }
+    ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager())
+      .rememberRemovedBreakpoint((XBreakpointBase)breakpoint);
+    getInstance().removeBreakpoint(project, breakpoint);
   }
 
   @Override
