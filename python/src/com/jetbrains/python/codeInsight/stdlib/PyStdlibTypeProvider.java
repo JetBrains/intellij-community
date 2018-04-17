@@ -85,22 +85,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getEnumType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context,
                                     @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyTargetExpression) {
-      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
-      final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
-      if (owner instanceof PyClass) {
-        final PyClass cls = (PyClass)owner;
-        final List<PyClassLikeType> types = cls.getAncestorTypes(context);
-        for (PyClassLikeType type : types) {
-          if (type != null && PyNames.TYPE_ENUM.equals(type.getClassQName())) {
-            final PyType classType = context.getType(cls);
-            if (classType instanceof PyClassType) {
-              return ((PyClassType)classType).toInstance();
-            }
-          }
-        }
-      }
-    }
     if (referenceTarget instanceof PyQualifiedNameOwner) {
       final PyQualifiedNameOwner qualifiedNameOwner = (PyQualifiedNameOwner)referenceTarget;
       final String name = qualifiedNameOwner.getQualifiedName();
@@ -127,6 +111,25 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
       else if ("enum.EnumMeta.__members__".equals(name)) {
         return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]", context);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Ref<PyType> getTargetExpressionType(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
+    if (owner instanceof PyClass) {
+      final PyClass cls = (PyClass)owner;
+      final List<PyClassLikeType> types = cls.getAncestorTypes(context);
+      for (PyClassLikeType type : types) {
+        if (type != null && PyNames.TYPE_ENUM.equals(type.getClassQName())) {
+          final PyType classType = context.getType(cls);
+          if (classType instanceof PyClassType) {
+            return Ref.create(((PyClassType)classType).toInstance());
+          }
+        }
       }
     }
     return null;

@@ -177,7 +177,7 @@ class PyNamedTuplesTypeProvider : PyTypeProviderBase() {
       return null
     }
 
-    private fun getNamedTupleTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyNamedTupleType? {
+    internal fun getNamedTupleTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyNamedTupleType? {
       val stub = target.stub
 
       return if (stub != null) {

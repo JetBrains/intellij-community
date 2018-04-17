@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.codeInsight.stdlib
 
+import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyOverridingTypeProvider
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeProviderBase
@@ -26,5 +28,10 @@ class PyNamedTuplesOverridingTypeProvider : PyTypeProviderBase(), PyOverridingTy
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): PyType? {
     return PyNamedTuplesTypeProvider.getNamedTupleTypeForResolvedCallee(referenceTarget, context, anchor) ?:
            PyNamedTuplesTypeProvider.getNamedTupleReplaceType(referenceTarget, context, anchor)
+  }
+
+  override fun getTargetExpressionType(target: PyTargetExpression, context: TypeEvalContext): Ref<PyType>? {
+    val tupleType: PyType? = PyNamedTuplesTypeProvider.getNamedTupleTypeForTarget(target, context)
+    return tupleType?.let {Ref.create(it)}
   }
 }
