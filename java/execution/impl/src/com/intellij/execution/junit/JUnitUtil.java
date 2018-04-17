@@ -518,6 +518,10 @@ public class JUnitUtil {
 
   public static PsiMethod getTestMethod(final PsiElement element, boolean checkAbstract, boolean checkRunWith) {
     final PsiManager manager = element.getManager();
+    if (element instanceof PsiMethod) {
+      Location<PsiMethod> location = PsiLocation.fromPsiElement(manager.getProject(), (PsiMethod)element);
+      return isTestMethod(location, checkAbstract, checkRunWith) ? (PsiMethod)element : null;
+    }
     final Location<PsiElement> location = PsiLocation.fromPsiElement(manager.getProject(), element);
     for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
       final Location<? extends PsiMethod> methodLocation = iterator.next();
