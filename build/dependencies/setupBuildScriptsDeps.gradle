@@ -62,7 +62,7 @@ task setupTestDiscoveryDeps {
     testDiscoveryDeps.mkdirs()
     configurations.detachedConfiguration(
       (dependencies
-        .create('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.31') as ModuleDependency)
+        .create('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.46') as ModuleDependency)
         .exclude(group: 'org.codehaus.groovy', module: 'groovy-all')
     ).files.each { from ->
       def into = Paths.get("$dir/$from.name")
