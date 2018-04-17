@@ -117,31 +117,45 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     createProjectSubFile("buildSrc/src/main/groovy/org/buildsrc/BuildSrcClass.groovy", "package org.buildsrc;\n" +
                                                                                        "public class BuildSrcClass {}");
 
-    createProjectSubFile("build.gradle", "def foo = new org.buildsrc.BuildSrcClass()");
-    createProjectSubFile("app/build.gradle", "def foo1 = new org.buildsrc.BuildSrcClass()");
+    createProjectSubFile("build.gradle", "buildscript {\n" +
+                                         "    dependencies {\n" +
+                                         "        classpath 'my.included:gradle-plugin:0'\n" +
+                                         "    }\n" +
+                                         "}\n" +
+                                         "def foo1 = new org.buildsrc.BuildSrcClass()\n" +
+                                         "def foo2 = new org.included.IncludedBuildClass()");
+    createProjectSubFile("app/build.gradle", "def foo1 = new org.buildsrc.BuildSrcClass()\n" +
+                                             "def foo2 = new org.included.IncludedBuildClass()");
 
     // included build
     createProjectSubFile("gradle-plugin/settings.gradle", "");
-    createProjectSubFile("gradle-plugin/build.gradle", "def foo = new org.buildsrc.IncludedBuildSrcClass()");
+    createProjectSubFile("gradle-plugin/build.gradle", "group 'my.included'\n" +
+                                                       "apply plugin: 'java'\n" +
+                                                       "def foo = new org.included.buildsrc.IncludedBuildSrcClass()");
     createProjectSubFile("gradle-plugin/buildSrc/src/main/groovy/org/included/buildsrc/IncludedBuildSrcClass.groovy",
-                         "package org.buildsrc;\n" +
+                         "package org.included.buildsrc;\n" +
                          "public class IncludedBuildSrcClass {}");
+    createProjectSubFile("gradle-plugin/src/main/java/org/included/IncludedBuildClass.java",
+                         "package org.included;\n" +
+                         "public class IncludedBuildClass {}");
 
     importProject();
     assertModules("multiproject", "app",
                   "multiproject_buildSrc", "multiproject_buildSrc_main", "multiproject_buildSrc_test",
-                  "gradle-plugin",
-                  "gradle-plugin_buildSrc", "gradle-plugin_buildSrc_main", "gradle-plugin_buildSrc_test");
+                  "gradle-plugin", "gradle-plugin_test", "gradle-plugin_main",
+                  "my.included_buildSrc", "my.included_buildSrc_main", "my.included_buildSrc_test");
 
     assertUsages("org.buildsrc.BuildSrcClass", 2);
-    assertUsages("org.buildsrc.IncludedBuildSrcClass", 1);
+    assertUsages("org.included.buildsrc.IncludedBuildSrcClass", 1);
+    assertUsages("org.included.IncludedBuildClass", 2);
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("multiproject", "app",
                   "multiproject_buildSrc",
                   "gradle-plugin",
-                  "gradle-plugin_buildSrc");
-    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.buildsrc.IncludedBuildSrcClass", 1));
+                  "my.included_buildSrc");
+    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.included.buildsrc.IncludedBuildSrcClass", 1));
+    assertUsages("org.included.IncludedBuildClass", 2);
 
     // check for qualified module names
     getCurrentExternalProjectSettings().setUseQualifiedModuleNames(true);
@@ -149,37 +163,38 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     importProject();
     assertModules("multiproject", "multiproject.app",
                   "multiproject.buildSrc", "multiproject.buildSrc.main", "multiproject.buildSrc.test",
-                  "gradle-plugin",
-                  "gradle-plugin.buildSrc", "gradle-plugin.buildSrc.main", "gradle-plugin.buildSrc.test");
-    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.buildsrc.IncludedBuildSrcClass", 1));
+                  "my.included.gradle-plugin", "my.included.gradle-plugin.test", "my.included.gradle-plugin.main",
+                  "my.included.buildSrc", "my.included.buildSrc.main", "my.included.buildSrc.test");
+    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.included.buildsrc.IncludedBuildSrcClass", 1));
+    assertUsages("org.included.IncludedBuildClass", 2);
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("multiproject", "multiproject.app",
                   "multiproject.buildSrc",
-                  "gradle-plugin",
-                  "gradle-plugin.buildSrc");
-    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.buildsrc.IncludedBuildSrcClass", 1));
+                  "my.included.gradle-plugin",
+                  "my.included.buildSrc");
+    assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.included.buildsrc.IncludedBuildSrcClass", 1));
+    assertUsages("org.included.IncludedBuildClass", 2);
   }
 
-  private void assertUsages(String fqn, GlobalSearchScope scope, int count) {
-    edt(() -> {
-      PsiClass[] psiClasses = JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope);
-      assertEquals(1, psiClasses.length);
-      assertUsagesCount(count, psiClasses[0]);
-    });
+  private void assertUsages(String fqn, GlobalSearchScope scope, int count) throws Exception {
+    final PsiClass[][] psiClasses = new PsiClass[1][1];
+    edt(() -> psiClasses[0] = JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope));
+    assertEquals(1, psiClasses[0].length);
+    assertUsagesCount(count, psiClasses[0][0]);
   }
 
-  private void assertUsages(String fqn, int count) {
+  private void assertUsages(String fqn, int count) throws Exception {
     assertUsages(fqn, GlobalSearchScope.projectScope(myProject), count);
   }
 
-  private void assertUsages(Trinity<String, GlobalSearchScope, Integer>... classUsageCount) {
+  private void assertUsages(Trinity<String, GlobalSearchScope, Integer>... classUsageCount) throws Exception {
     for (Trinity<String, GlobalSearchScope, Integer> trinity : classUsageCount) {
       assertUsages(trinity.first, trinity.second, trinity.third);
     }
   }
 
-  private void assertUsages(Pair<String, Integer>... classUsageCount) {
+  private void assertUsages(Pair<String, Integer>... classUsageCount) throws Exception {
     for (Pair<String, Integer> pair : classUsageCount) {
       assertUsages(Trinity.create(pair.first, GlobalSearchScope.projectScope(myProject), pair.second));
     }
