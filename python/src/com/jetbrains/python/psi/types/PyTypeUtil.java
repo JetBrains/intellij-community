@@ -19,12 +19,19 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -157,5 +164,27 @@ public final class PyTypeUtil {
         return Ref.create(PyUnionType.union(accType.get(), hintType.get()));
       }
     });
+  }
+
+  @Nullable
+  public static Ref<PyType> injectTypeInMultiResolveResults(@NotNull PsiElement expression,
+                                                            @NotNull TypeEvalContext context,
+                                                            @NotNull Function<PyTypedElement, Ref<PyType>> processor) {
+    PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final List<PsiElement> resolved = PyUtil.multiResolveTopPriority(expression, resolveContext);
+    Ref<Boolean> applicable = Ref.create(false);
+    final Ref<PyType> altered = StreamEx.of(resolved)
+                                        .select(PyTypedElement.class)
+                                        .map(typed -> {
+                                          final Ref<PyType> provided = processor.apply(typed);
+                                          if (provided != null) {
+                                            applicable.set(true);
+                                            return provided;
+                                          }
+                                          return Ref.create(context.getType(typed));
+                                        })
+                                        .collect(toUnionFromRef());
+
+    return applicable.get() ? altered : null;
   }
 }

@@ -234,8 +234,7 @@ public class PyUtil {
    */
   public static void addListNode(PsiElement parent, PsiElement newItem, ASTNode beforeThis,
                                  boolean isFirst, boolean isLast, boolean addWhitespace) {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(parent)) {
-      return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(parent)) {return;
     }
     ASTNode node = parent.getNode();
     assert node != null;
