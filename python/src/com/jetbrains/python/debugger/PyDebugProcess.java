@@ -101,7 +101,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private boolean myClosing = false;
 
-  private PyPositionConverter myPositionConverter;
+  protected PyPositionConverter myPositionConverter;
   private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
   private PyStackFrame myConsoleContextFrame = null;
@@ -635,7 +635,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  protected boolean isConnected() {
+  public boolean isConnected() {
     return myDebugger.isConnected();
   }
 
@@ -935,7 +935,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
-    myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
+    myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getExceptionBreakpointId(), breakpoint);
     if (isConnected()) {
       String conditionExpression = breakpoint.getConditionExpression() == null
                                    ? null
@@ -950,7 +950,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void removeExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
-    myRegisteredExceptionBreakpoints.remove(breakpoint.getProperties().getException());
+    myRegisteredExceptionBreakpoints.remove(breakpoint.getProperties().getExceptionBreakpointId());
     if (isConnected()) {
       myDebugger.removeExceptionBreakpoint(breakpoint.getProperties());
     }

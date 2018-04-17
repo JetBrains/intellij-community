@@ -8,6 +8,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.injected.editor.VirtualFileDelegate;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -1351,7 +1352,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @NotNull
   public FileEditor[] getEditors(@NotNull VirtualFile file) {
     assertReadAccess();
-    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+    if (file instanceof VirtualFileDelegate) file = ((VirtualFileDelegate)file).getDelegate();
 
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
