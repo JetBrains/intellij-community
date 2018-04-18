@@ -225,17 +225,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       // Stage partial changes
       Pair<Runnable, List<Change>> partialAddResult = addPartialChangesToIndex(repository, rootChanges);
       Runnable callback = partialAddResult.first;
-      Set<Change> partialChanges = newHashSet(partialAddResult.second);
+      Set<Change> changedWithIndex = new HashSet<>(partialAddResult.second);
 
-      List<Change> caseOnlyRenames = filter(rootChanges, it -> !partialChanges.contains(it) && isCaseOnlyRename(it));
+      // Stage case-only renames
+      List<Change> caseOnlyRenameChanges = addCaseOnlyRenamesToIndex(repository, rootChanges, changedWithIndex, exceptions);
+      if (!exceptions.isEmpty()) return exceptions;
+      changedWithIndex.addAll(caseOnlyRenameChanges);
 
-      if (!caseOnlyRenames.isEmpty() || !partialChanges.isEmpty()) {
-        List<VcsException> exs = commitUsingIndex(myProject, root, rootChanges, caseOnlyRenames, partialChanges, messageFile);
-        exceptions.addAll(exs);
+      if (!changedWithIndex.isEmpty()) {
+        exceptions.addAll(commitUsingIndex(myProject, root, rootChanges, changedWithIndex, messageFile));
+        if (!exceptions.isEmpty()) return exceptions;
 
-        if (exceptions.isEmpty()) {
-          callback.run();
-        }
+        callback.run();
       }
       else {
         try {
@@ -270,8 +271,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private List<VcsException> commitUsingIndex(@NotNull Project project,
                                               @NotNull VirtualFile root,
                                               @NotNull Collection<Change> rootChanges,
-                                              @NotNull List<Change> caseOnlyRenames,
-                                              @NotNull Set<Change> partialChanges,
+                                              @NotNull Set<Change> changedWithIndex,
                                               @NotNull File messageFile) {
     List<VcsException> exceptions = new ArrayList<>();
     try {
@@ -280,19 +280,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       removed.removeAll(added);
 
       String rootPath = root.getPath();
-      LOG.info("Committing case only rename: " + getLogString(rootPath, caseOnlyRenames) + " in " + getShortRepositoryName(project, root));
 
-      // 1. Check what is staged besides case-only renames
-      Collection<Change> stagedChanges;
-      try {
-        stagedChanges = GitChangeUtils.getStagedChanges(project, root);
-        LOG.debug("Found staged changes: " + getLogString(rootPath, stagedChanges));
-      }
-      catch (VcsException e) {
-        return Collections.singletonList(e);
-      }
+      // Check what is staged besides our changes
+      Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(project, root);
+      LOG.debug("Found staged changes: " + getLogString(rootPath, stagedChanges));
 
-      // 2. Reset staged changes which are not selected for commit
+      // Reset staged changes which are not selected for commit
       Collection<Change> excludedStagedChanges = filter(stagedChanges, change -> !added.contains(getAfterPath(change)) &&
                                                                                  !removed.contains(getBeforePath(change)));
       if (!excludedStagedChanges.isEmpty()) {
@@ -300,31 +293,31 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         reset(project, root, excludedStagedChanges);
       }
       try {
-        // 3. Stage what else is needed to commit
-        List<FilePath> newPathsOfCaseRenames = map(caseOnlyRenames, ChangesUtil::getAfterPath);
-        LOG.debug("Updating index for added:" + added + "\n, removed: " + removed + "\n, and case-renames: " + newPathsOfCaseRenames);
+        List<FilePath> alreadyHandledPaths = ChangesUtil.getPaths(changedWithIndex);
+        // Stage what else is needed to commit
         Set<FilePath> toAdd = new HashSet<>(added);
-        toAdd.addAll(newPathsOfCaseRenames);
-        toAdd.removeAll(mapNotNull(partialChanges, ChangesUtil::getAfterPath));
+        toAdd.removeAll(alreadyHandledPaths);
 
         Set<FilePath> toRemove = new HashSet<>(removed);
-        toRemove.removeAll(mapNotNull(partialChanges, ChangesUtil::getBeforePath));
+        toRemove.removeAll(alreadyHandledPaths);
 
+        LOG.debug(String.format("Updating index: added: %s, removed: %s", toAdd, toRemove));
         updateIndex(project, root, toAdd, toRemove, exceptions);
         if (!exceptions.isEmpty()) return exceptions;
 
 
-        // 4. Commit the staging area
+        // Commit the staging area
         LOG.debug("Performing commit...");
         commitWithoutPaths(project, root, messageFile);
       }
       finally {
-        // 5. Stage back the changes unstaged before commit
+        // Stage back the changes unstaged before commit
         if (!excludedStagedChanges.isEmpty()) {
-          LOG.debug("Restoring changes which were unstaged before commit: " + getLogString(rootPath, excludedStagedChanges));
           Set<FilePath> toAdd = map2SetNotNull(excludedStagedChanges, ChangesUtil::getAfterPath);
-          Condition<Change> isMovedOrDeleted = change -> change.getType() == Change.Type.MOVED || change.getType() == Change.Type.DELETED;
-          Set<FilePath> toRemove = map2SetNotNull(filter(excludedStagedChanges, isMovedOrDeleted), ChangesUtil::getBeforePath);
+          Set<FilePath> toRemove = map2SetNotNull(excludedStagedChanges, ChangesUtil::getBeforePath);
+          toRemove.removeAll(toAdd);
+
+          LOG.debug(String.format("Restoring staged changes after commit: added: %s, removed: %s", toAdd, toRemove));
           updateIndex(project, root, toAdd, toRemove, exceptions);
         }
       }
@@ -381,9 +374,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         pathsToDelete.add(beforeRevision.getFile());
       }
     }
+    LOG.debug(String.format("Updating index for partial changes: removing: %s", pathsToDelete));
     GitFileUtils.delete(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
 
 
+    LOG.debug(String.format("Updating index for partial changes: changes: %s", partialChanges));
     for (int i = 0; i < partialChanges.size(); i++) {
       Change change = partialChanges.get(i);
       CurrentContentRevision revision = (CurrentContentRevision)change.getAfterRevision();
@@ -452,6 +447,29 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     catch (InterruptedException | ExecutionException e) {
       return null;
     }
+  }
+
+
+  @NotNull
+  private List<Change> addCaseOnlyRenamesToIndex(@NotNull GitRepository repository,
+                                                 @NotNull Collection<Change> changes,
+                                                 @NotNull Set<Change> alreadyProcessed,
+                                                 @NotNull List<VcsException> exceptions) {
+    if (SystemInfo.isFileSystemCaseSensitive) return Collections.emptyList();
+
+    List<Change> caseOnlyRenames = filter(changes, it -> !alreadyProcessed.contains(it) && isCaseOnlyRename(it));
+    if (caseOnlyRenames.isEmpty()) return caseOnlyRenames;
+
+    LOG.info("Committing case only rename: " + getLogString(repository.getRoot().getPath(), caseOnlyRenames) +
+             " in " + getShortRepositoryName(repository));
+
+    List<FilePath> pathsToAdd = map(caseOnlyRenames, ChangesUtil::getAfterPath);
+    List<FilePath> pathsToDelete = map(caseOnlyRenames, ChangesUtil::getBeforePath);
+
+    LOG.debug(String.format("Updating index for case only changes: added: %s,\n removed: %s", pathsToAdd, pathsToDelete));
+    updateIndex(myProject, repository.getRoot(), pathsToAdd, pathsToDelete, exceptions);
+
+    return caseOnlyRenames;
   }
 
   private static boolean isCaseOnlyRename(@NotNull Change change) {
