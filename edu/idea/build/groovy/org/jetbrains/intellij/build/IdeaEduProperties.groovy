@@ -23,7 +23,19 @@ class IdeaEduProperties extends IdeaCommunityProperties {
 
   IdeaEduProperties(String home) {
     super(home)
+    productCode = "IE"
     dependenciesPath = "$home/edu/dependencies"
+  }
+
+
+  WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
+    return new WindowsDistributionCustomizer() {
+      {
+        icoPath = "$projectHome/platform/icons/src/idea_CE.ico"
+        installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
+        fileAssociations = [".java", ".groovy", ".kt", ".py"]
+      }
+    }
   }
 
   @Override
