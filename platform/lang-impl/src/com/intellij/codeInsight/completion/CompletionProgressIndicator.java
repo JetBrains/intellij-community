@@ -626,7 +626,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   @NotNull
-  Caret getCaret() {
+  public Caret getCaret() {
     return myCaret;
   }
 

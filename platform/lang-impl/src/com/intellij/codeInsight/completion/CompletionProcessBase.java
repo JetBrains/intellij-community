@@ -1,8 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.patterns.ElementPattern;
 import org.jetbrains.annotations.NotNull;
@@ -19,10 +23,40 @@ public class CompletionProcessBase implements CompletionProcessEx, Disposable {
   protected final Object myLock = new String("CompletionProgressIndicator");
   protected OffsetsInFile myHostOffsets;
   private CompletionParameters myParameters;
+  private final Caret myCaret;
+  private final OffsetMap myOffsetMap;
 
   public CompletionProcessBase(CompletionInitializationContext context) {
     myInvocationCount = context.getInvocationCount();
     myHostOffsets = ((CompletionInitializationContextImpl) context).getHostOffsets();
+    myCaret = context.getCaret();
+    myOffsetMap = context.getOffsetMap();
+  }
+
+  @Override
+  public Project getProject() {
+    return myParameters.getOriginalFile().getProject();
+  }
+
+  @Override
+  public Editor getEditor() {
+    return myParameters.getEditor();
+  }
+
+  @Override
+  public Caret getCaret() {
+    return myCaret;
+  }
+
+  @Override
+  public OffsetMap getOffsetMap() {
+    return myOffsetMap;
+  }
+
+  @Nullable
+  @Override
+  public Lookup getLookup() {
+    return null;
   }
 
   @Override

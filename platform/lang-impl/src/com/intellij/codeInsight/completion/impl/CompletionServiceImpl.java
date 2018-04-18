@@ -287,6 +287,13 @@ public final class CompletionServiceImpl extends CompletionService {
     return new CompletionLookupArrangerImpl(parameters);
   }
 
+  @SuppressWarnings("unused")
+  public void handleCompletionItemSelected(CompletionParameters parameters, LookupElement lookupElement, char completionChar) {
+    CodeCompletionHandlerBase handler =
+      CodeCompletionHandlerBase.createHandler(parameters.getCompletionType(), true, parameters.isAutoPopup(), true);
+    handler.handleCompletionElementSelected(parameters, lookupElement, completionChar);
+  }
+
   public static boolean isStartMatch(LookupElement element, WeighingContext context) {
     return getItemMatcher(element, context).isStartMatch(element);
   }
