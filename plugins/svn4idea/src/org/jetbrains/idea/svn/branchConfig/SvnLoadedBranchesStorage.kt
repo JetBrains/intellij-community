@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.idea.svn.SmallMapSerializer
+import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.branchConfig.UrlDescriptor.Companion.DECODED_URL_DESCRIPTOR
+import org.jetbrains.idea.svn.branchConfig.UrlDescriptor.Companion.ENCODED_URL_DESCRIPTOR
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
@@ -15,7 +17,7 @@ import java.lang.String.CASE_INSENSITIVE_ORDER
 
 class SvnLoadedBranchesStorage(private val myProject: Project) {
   private val myLock = Any()
-  private var myState: SmallMapSerializer<String, Map<String, Collection<SvnBranchItem>>>? = null
+  private var myState: SmallMapSerializer<String, Map<Url, Collection<SvnBranchItem>>>? = null
   private val myFile: File
 
   init {
@@ -25,8 +27,8 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
     myFile = File(file, myProject.locationHash)
   }
 
-  operator fun get(url: String) = synchronized(myLock) {
-    myState?.get("")?.get(SvnBranchConfigurationNew.ensureEndSlash(url))
+  operator fun get(url: Url) = synchronized(myLock) {
+    myState?.get("")?.get(url)
   }
 
   fun activate() = synchronized(myLock) {
@@ -34,12 +36,12 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
   }
 
   fun deactivate() {
-    val branchLocations = mutableMapOf<String, Collection<SvnBranchItem>>()
-    val branchConfigurations = SvnBranchConfigurationManager.getInstance(myProject)!!.svnBranchConfigManager.mapCopy
+    val branchLocations = mutableMapOf<Url, Collection<SvnBranchItem>>()
+    val branchConfigurations = SvnBranchConfigurationManager.getInstance(myProject).svnBranchConfigManager.mapCopy
 
     for (configuration in branchConfigurations.values) {
       for ((branchLocation, branches) in configuration.branchMap) {
-        branchLocations[branchLocation.toString()] = branches.value
+        branchLocations[branchLocation] = branches.value
       }
     }
     synchronized(myLock) {
@@ -51,12 +53,12 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
     }
   }
 
-  private fun createExternalizer() = object : DataExternalizer<Map<String, Collection<SvnBranchItem>>> {
+  private fun createExternalizer() = object : DataExternalizer<Map<Url, Collection<SvnBranchItem>>> {
     @Throws(IOException::class)
-    override fun save(out: DataOutput, branchLocations: Map<String, Collection<SvnBranchItem>>) = with(out) {
+    override fun save(out: DataOutput, branchLocations: Map<Url, Collection<SvnBranchItem>>) = with(out) {
       writeInt(branchLocations.size)
-      for ((branchLocation, branches) in branchLocations.entries.sortedBy { it.key }) {
-        writeUTF(branchLocation)
+      for ((branchLocation, branches) in branchLocations.entries.sortedBy { it.key.toDecodedString() }) {
+        ENCODED_URL_DESCRIPTOR.save(this, branchLocation)
         writeInt(branches.size)
         for (item in branches.sortedWith(compareBy(CASE_INSENSITIVE_ORDER) { it.url.toDecodedString() })) {
           DECODED_URL_DESCRIPTOR.save(this, item.url)
@@ -68,11 +70,11 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
 
     @Throws(IOException::class)
     override fun read(`in`: DataInput) = with(`in`) {
-      val branchLocations = mutableMapOf<String, Collection<SvnBranchItem>>()
+      val branchLocations = mutableMapOf<Url, Collection<SvnBranchItem>>()
       val branchLocationsSize = readInt()
 
       repeat(branchLocationsSize) {
-        val branchLocation = readUTF()
+        val branchLocation = ENCODED_URL_DESCRIPTOR.read(this)
         val branchesSize = readInt()
         val branches = mutableListOf<SvnBranchItem>()
 
