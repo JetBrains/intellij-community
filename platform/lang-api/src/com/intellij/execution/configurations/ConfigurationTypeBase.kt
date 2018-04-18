@@ -19,7 +19,7 @@ abstract class ConfigurationTypeBase protected constructor(private val id: Strin
 
   override fun getDisplayName() = displayName
 
-  override fun getConfigurationTypeDescription() = description
+  override final fun getConfigurationTypeDescription() = description
 
   // open due to backward compatibility
   override fun getIcon() = icon
