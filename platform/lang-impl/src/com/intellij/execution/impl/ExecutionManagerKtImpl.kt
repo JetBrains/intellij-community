@@ -100,7 +100,7 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
               environment.contentToReuse = descriptor
             }
           }
-          .rejected(::handleError)
+          .onError(::handleError)
       }
       catch (e: Throwable) {
         handleError(e)

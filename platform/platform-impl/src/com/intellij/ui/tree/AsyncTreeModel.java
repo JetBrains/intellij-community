@@ -256,7 +256,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     };
     if (allowLoading) {
       // start visiting on the background thread to ensure that root node is already invalidated
-      processor.background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).rejected(walker::setError)));
+      processor.background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).onError(walker::setError)));
     }
     else {
       onValidThread(() -> walker.start(tree.root));

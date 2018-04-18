@@ -6,13 +6,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ActionCallback
-import com.intellij.util.Consumer
 import com.intellij.util.Function
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
+import java.util.function.Consumer
 
 val Promise<*>.isRejected: Boolean
   get() = state == Promise.State.REJECTED
@@ -62,7 +62,7 @@ abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolesce
   override fun isObsolete() = node.isObsolete
 }
 
-abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, java.util.function.Consumer<T> {
+abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, Consumer<T> {
   override fun isObsolete() = obsolescent.isObsolete
 }
 
@@ -213,12 +213,12 @@ fun <T: Any?> all(promises: Collection<Promise<*>>, totalResult: T, ignoreErrors
 
   for (promise in promises) {
     promise.onSuccess(done)
-    promise.rejected(rejected)
+    promise.onError(rejected)
   }
   return totalPromise
 }
 
-private class CountDownConsumer<T : Any?>(@Volatile private var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T) : java.util.function.Consumer<Any?> {
+private class CountDownConsumer<T : Any?>(@Volatile private var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T) : Consumer<Any?> {
   override fun accept(t: Any?) {
     if (--countDown == 0) {
       promise.setResult(totalResult)
@@ -235,8 +235,8 @@ fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
   }
 
   val totalPromise = AsyncPromise<T>()
-  val done = java.util.function.Consumer<T> { result -> totalPromise.setResult(result) }
-  val rejected = object : java.util.function.Consumer<Throwable> {
+  val done = Consumer<T> { result -> totalPromise.setResult(result) }
+  val rejected = object : Consumer<Throwable> {
     @Volatile private var toConsume = promises.size
 
     override fun accept(throwable: Throwable) {

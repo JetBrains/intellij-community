@@ -509,7 +509,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     else {
       AtomicBoolean complete = new AtomicBoolean(false);
       //noinspection TestOnlyProblems
-      Promise<Void> promise = rebuildAndUpdate().processed(ignore -> complete.set(true));
+      Promise<Void> promise = rebuildAndUpdate().onProcessed(ignore -> complete.set(true));
       while (!complete.get()) {
         //noinspection TestOnlyProblems
         UIUtil.dispatchAllInvocationEvents();
@@ -674,7 +674,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };
-    myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null));
+    myAsyncTreeModel.accept(visitor).onProcessed(ignore -> result.setResult(null));
     return result;
   }
 

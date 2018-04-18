@@ -316,7 +316,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     window.addWindowFocusListener(windowFocusListener);
     Disposer.register(myPopup, () -> window.removeWindowFocusListener(windowFocusListener));
 
-    rebuildAndSelect(false, myInitialElement).processed(path -> UIUtil.invokeLaterIfNeeded(() -> {
+    rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
       myTreeHasBuilt.setDone();
       installUpdater();
@@ -341,7 +341,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         if (!filter.equals(prefix)) {
           boolean isBackspace = prefix.length() < filter.length();
           filter = prefix;
-          rebuild(true).processed(ignore -> UIUtil.invokeLaterIfNeeded(() -> {
+          rebuild(true).onProcessed(ignore -> UIUtil.invokeLaterIfNeeded(() -> {
             if (isDisposed()) return;
             TreeUtil.promiseExpandAll(myTree);
             if (isBackspace && handleBackspace(filter)) {
@@ -453,7 +453,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };
-    rebuild(false).processed(ignore1 -> myAsyncTreeModel.accept(visitor).processed(ignore2 -> result.setResult(null)));
+    rebuild(false).onProcessed(ignore1 -> myAsyncTreeModel.accept(visitor).onProcessed(ignore2 -> result.setResult(null)));
     return result;
   }
 
@@ -735,7 +735,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       boolean actionState = TreeModelWrapper.shouldRevert(myAction) ? !state : state;
       myTreeActionsOwner.setActionIncluded(myAction, actionState);
       saveState(myAction, state);
-      rebuild(false).processed(ignore -> {
+      rebuild(false).onProcessed(ignore -> {
         if (mySpeedSearch.isPopupActive()) {
           mySpeedSearch.refreshSelection();
         }
@@ -807,7 +807,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           saveState(action, state);
         }
         myTreeActionsOwner.setActionIncluded(action, isRevertedStructureFilter != state);
-        rebuild(false).processed(ignore -> {
+        rebuild(false).onProcessed(ignore -> {
           if (mySpeedSearch.isPopupActive()) {
             mySpeedSearch.refreshSelection();
           }
@@ -843,7 +843,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         myStructureTreeModel.invalidate(
           () ->
             (selection == null ? myAsyncTreeModel.accept(o -> TreeVisitor.Action.CONTINUE) : select(selection))
-              .rejected(ignore2 -> result.setError("rejected"))
+              .onError(ignore2 -> result.setError("rejected"))
               .onSuccess(p -> UIUtil.invokeLaterIfNeeded(
                 () -> {
                   TreeUtil.expand(getTree(), myTreeModel instanceof StructureViewCompositeModel ? 3 : 2);

@@ -46,7 +46,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
       .onSuccess {
         connectionSucceeded(it, address)
       }
-      .rejected {
+      .onError {
         if (it !is ConnectException) {
           LOG.errorIfNotMessage(it)
         }

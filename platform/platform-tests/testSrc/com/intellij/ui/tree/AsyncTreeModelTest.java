@@ -478,12 +478,12 @@ public final class AsyncTreeModelTest {
 
     private void resolve(@NotNull TreePath path, @NotNull Consumer<TreePath> consumer) {
       AsyncTreeModel model = (AsyncTreeModel)tree.getModel();
-      model.resolve(path).rejected(promise::setError).onSuccess(consumer);
+      model.resolve(path).onError(promise::setError).onSuccess(consumer);
     }
 
     private void visit(@NotNull TreeVisitor visitor, boolean allowLoading, @NotNull Consumer<TreePath> consumer) {
       AsyncTreeModel model = (AsyncTreeModel)tree.getModel();
-      model.accept(visitor, allowLoading).rejected(promise::setError).onSuccess(consumer);
+      model.accept(visitor, allowLoading).onError(promise::setError).onSuccess(consumer);
     }
 
     @Override

@@ -2,11 +2,7 @@
 package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.ProjectViewNodeDecorator;
-import com.intellij.ide.projectView.TreeStructureProvider;
-import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -44,12 +40,7 @@ import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.stripe.ErrorStripe;
-import com.intellij.ui.tree.AbstractTreeWalker;
-import com.intellij.ui.tree.BaseTreeModel;
-import com.intellij.ui.tree.ProjectFileNode;
-import com.intellij.ui.tree.ProjectFileTreeModel;
-import com.intellij.ui.tree.TreePathUtil;
-import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Invoker;
@@ -58,14 +49,11 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
+import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
-import java.awt.Color;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -73,9 +61,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.projectView.impl.ProjectRootsUtil.findSourceFolder;
 import static com.intellij.openapi.roots.ui.configuration.SourceRootPresentation.getSourceRootIcon;
 import static com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome;
-import static com.intellij.openapi.vfs.VfsUtilCore.getRelativePath;
-import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
-import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
+import static com.intellij.openapi.vfs.VfsUtilCore.*;
 import static java.util.Collections.emptyList;
 
 public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> implements InvokerSupplier {
@@ -282,7 +268,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
           }
         };
         walker.start(root);
-        walker.promise().processed(path -> consumer.consume(path == null ? null : path.getLastPathComponent()));
+        walker.promise().onProcessed(path -> consumer.consume(path == null ? null : path.getLastPathComponent()));
       }
     });
   }

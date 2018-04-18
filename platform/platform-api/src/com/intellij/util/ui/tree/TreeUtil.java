@@ -806,7 +806,7 @@ public final class TreeUtil {
    * @param onDone a task to run after expanding nodes
    */
   public static void expandAll(@NotNull JTree tree, @NotNull Runnable onDone) {
-    promiseExpandAll(tree).processed(path -> onDone.run());
+    promiseExpandAll(tree).onProcessed(path -> onDone.run());
   }
 
   /**
@@ -836,7 +836,7 @@ public final class TreeUtil {
    * @param onDone a task to run after expanding nodes
    */
   public static void expand(@NotNull JTree tree, int depth, @NotNull Runnable onDone) {
-    promiseExpand(tree, depth).processed(path -> onDone.run());
+    promiseExpand(tree, depth).onProcessed(path -> onDone.run());
   }
 
   /**
@@ -1104,7 +1104,7 @@ public final class TreeUtil {
    * @param consumer a path consumer called on done
    */
   public static void expand(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
-    promiseExpand(tree, visitor).processed(path -> consumer.accept(path));
+    promiseExpand(tree, visitor).onProcessed(path -> consumer.accept(path));
   }
 
   /**
@@ -1128,7 +1128,7 @@ public final class TreeUtil {
    * @param consumer a path consumer called on done
    */
   public static void makeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
-    promiseMakeVisible(tree, visitor).processed(path -> consumer.accept(path));
+    promiseMakeVisible(tree, visitor).onProcessed(path -> consumer.accept(path));
   }
 
   /**
@@ -1158,7 +1158,7 @@ public final class TreeUtil {
    * @param consumer a path consumer called on done
    */
   public static void visit(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
-    promiseVisit(tree, visitor).processed(path -> consumer.accept(path));
+    promiseVisit(tree, visitor).onProcessed(path -> consumer.accept(path));
   }
 
   /**

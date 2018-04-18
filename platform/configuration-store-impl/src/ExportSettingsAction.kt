@@ -41,12 +41,11 @@ import java.util.zip.ZipOutputStream
 
 // for Rider purpose
 open class ExportSettingsAction : AnAction(), DumbAware {
-
   protected open fun getExportableComponents() = getExportableComponentsMap(true, true)
 
   protected open fun exportSettings(saveFile: Path, markedComponents: Set<ExportableItem>) {
-      val exportFiles = markedComponents.mapTo(THashSet()) { it.file }
-      exportSettings(exportFiles, saveFile.outputStream(), FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()))
+    val exportFiles = markedComponents.mapTo(THashSet()) { it.file }
+    exportSettings(exportFiles, saveFile.outputStream(), FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()))
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -82,7 +81,6 @@ open class ExportSettingsAction : AnAction(), DumbAware {
   }
 }
 
-// not internal only to test
 fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String) {
   ZipOutputStream(out).use {
     val writtenItemRelativePaths = THashSet<String>()
@@ -243,7 +241,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
       if (pluginDescriptor.vendor == "JetBrains") {
         resourceBundleName = OptionsBundle.PATH_TO_BUNDLE
       }
-       else {
+      else {
         return trimDefaultName()
       }
     }
