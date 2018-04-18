@@ -201,6 +201,7 @@ public class XmlCompletionContributor extends CompletionContributor {
         !(parameters.getOriginalFile() instanceof XmlFile)) {
       return;
     }
+    result.stopHere();
     final XmlTag tag = (XmlTag)parent;
     final String namespace = tag.getNamespace();
     final String prefix = result.getPrefixMatcher().getPrefix();
