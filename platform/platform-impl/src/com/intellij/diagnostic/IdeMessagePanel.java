@@ -111,17 +111,17 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   private void doOpenErrorsDialog(@Nullable LogMessage message) {
-    myDialog = new IdeErrorsDialog(myMessagePool, message) {
-      @Override
-      public void doOKAction() {
-        super.doOKAction();
-        disposeDialog(this);
-      }
+    if (isOtherModalWindowActive()) {
+      return;
+    }
 
+    Project project = myFrame != null ? myFrame.getProject() : null;
+    myDialog = new IdeErrorsDialog(myMessagePool, project, message) {
       @Override
-      public void doCancelAction() {
-        super.doCancelAction();
-        disposeDialog(this);
+      protected void dispose() {
+        super.dispose();
+        myDialog = null;
+        updateFatalErrorsIcon();
       }
 
       @Override
@@ -131,28 +131,16 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       }
     };
 
-    myMessagePool.addListener(myDialog);
-    if (!isOtherModalWindowActive()) {
-      if (myBalloon != null) {
-        myBalloon.hide();
-      }
-      myDialog.show();
+    if (myBalloon != null) {
+      myBalloon.hide();
     }
-    else {
-      myDialog.close(0);
-      disposeDialog(myDialog);
-    }
+
+    myDialog.show();
   }
 
   private void updateState(IdeErrorsIcon.State state) {
     myIdeFatal.setState(state);
     UIUtil.invokeLaterIfNeeded(() -> setVisible(state != IdeErrorsIcon.State.NoErrors));
-  }
-
-  private void disposeDialog(IdeErrorsDialog dialog) {
-    myMessagePool.removeListener(dialog);
-    updateFatalErrorsIcon();
-    myDialog = null;
   }
 
   @Override

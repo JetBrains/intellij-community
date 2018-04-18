@@ -3,7 +3,6 @@ package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.Developer;
 import com.intellij.diagnostic.DiagnosticBundle;
-import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.IdeBorderFactory;
@@ -35,7 +34,7 @@ public class DetailsTabForm {
   public DetailsTabForm(@Nullable Action analyzeAction) {
     myCommentsArea.setTitle(DiagnosticBundle.message("error.dialog.comment.prompt"));
     myDetailsPane.setBackground(UIUtil.getTextFieldBackground());
-    myDetailsHolder.setPreferredSize(JBUI.size(IdeErrorsDialog.COMPONENTS_WIDTH, 150));
+    myDetailsHolder.setPreferredSize(JBUI.size(670, 150));
     myDetailsHolder.setBorder(IdeBorderFactory.createBorder());
     if (analyzeAction != null) {
       myAnalyzeStacktraceButton.setAction(analyzeAction);
