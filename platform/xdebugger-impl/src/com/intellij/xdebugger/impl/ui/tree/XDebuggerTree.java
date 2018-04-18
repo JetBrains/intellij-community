@@ -259,18 +259,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       if (node.isEllipsis()) {
         TreeNode parent = node.getParent();
         if (parent instanceof XValueContainerNode) {
-          addTreeListener(new XDebuggerTreeListener() {
-            @Override
-            public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
-              if (((XValueContainerNode)parent).isObsolete()) {
-                removeTreeListener(this);
-              }
-              if (node.getParent() == parent) {
-                setSelectionPath(node.getPath());
-                removeTreeListener(this); // remove the listener on first match
-              }
-            }
-          });
+          selectNodeOnLoad(n -> n.getParent() == parent, n -> ((XValueContainerNode)parent).isObsolete());
           ((XValueContainerNode)parent).startComputingChildren();
           return true;
         }
@@ -413,10 +402,13 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return myLaterInvocator;
   }
 
-  public void selectNodeOnLoad(final Condition<TreeNode> nodeFilter) {
+  public void selectNodeOnLoad(Condition<TreeNode> nodeFilter, Condition<TreeNode> obsoleteChecker) {
     addTreeListener(new XDebuggerTreeListener() {
       @Override
       public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+        if (obsoleteChecker.value(node)) {
+          removeTreeListener(this);
+        }
         if (nodeFilter.value(node)) {
           setSelectionPath(node.getPath());
           removeTreeListener(this); // remove the listener on first match
