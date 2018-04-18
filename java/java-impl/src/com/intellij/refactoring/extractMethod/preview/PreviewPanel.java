@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -184,7 +185,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
       myRerunButton.addActionListener(e -> rerunRefactoring());
       add(myRerunButton);
 
-      myCancelButton = new JButton(RefactoringBundle.message("refactoring.extract.method.preview.button.cancel"));
+      myCancelButton = new JButton(IdeBundle.message("button.cancel"));
       DialogUtil.registerMnemonic(myRefactorButton);
       myCancelButton.addActionListener(e -> close());
       add(myCancelButton);
