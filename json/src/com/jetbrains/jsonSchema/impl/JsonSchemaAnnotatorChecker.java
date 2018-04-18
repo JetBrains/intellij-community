@@ -73,6 +73,7 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     if (checkers.isEmpty()) return null;
+    if (checkers.size() == 1) return checkers.get(0);
 
     return checkers.stream()
       .filter(checker -> !checker.isHadTypeError())
@@ -87,14 +88,15 @@ class JsonSchemaAnnotatorChecker {
       .flatMap(Set::stream).map(name -> JsonBundle.message("json.schema.annotation.not.allowed.property", name))
       .collect(Collectors.toSet());
     final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker();
-    list.stream().map(ch -> {
-      final Map<PsiElement, String> map = ch.myErrors;
-      final List<PsiElement> toRemove = map.keySet().stream()
-        .filter(key -> skipErrors.contains(map.get(key)))
-        .collect(Collectors.toList());
-      toRemove.forEach(map::remove);
-      return map;
-    }).forEach(map -> checker.myErrors.putAll(map));
+
+    for (JsonSchemaAnnotatorChecker ch: list) {
+      for (Map.Entry<PsiElement, String> element: ch.myErrors.entrySet()) {
+        if (skipErrors.contains(element.getValue())) {
+          continue;
+        }
+        checker.myErrors.put(element.getKey(), element.getValue());
+      }
+    }
     return checker;
   }
 
@@ -123,14 +125,12 @@ class JsonSchemaAnnotatorChecker {
 
   public void checkByScheme(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
     final JsonSchemaType type = JsonSchemaType.getType(value);
-    boolean matchingType = false;
     if (type != null) {
       JsonSchemaType schemaType = getMatchingSchemaType(schema, type);
       if (schemaType != null && !schemaType.equals(type)) {
         typeError(value.getDelegate(), schemaType);
       }
       else {
-        matchingType = schema.getType() != null || schema.getTypeVariants() != null;
         if (JsonSchemaType._boolean.equals(type)) {
           checkForEnum(value.getDelegate(), schema);
         }
@@ -311,47 +311,62 @@ class JsonSchemaAnnotatorChecker {
     final JsonObject object = ObjectUtils.tryCast(objElement, JsonObject.class);
     if (object == null) return;
 
-    if (JsonSchemaService.isSchemaFile(objElement.getContainingFile())) {
-      final VirtualFile schemaFile = object.getContainingFile().getVirtualFile();
-      if (schemaFile == null) return;
+    if (!JsonSchemaService.isSchemaFile(objElement.getContainingFile())) {
+      return;
+    }
 
-      final JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(object.getProject()).getSchemaObjectForSchemaFile(schemaFile);
-      if (schemaObject == null) return;
+    final VirtualFile schemaFile = object.getContainingFile().getVirtualFile();
+    if (schemaFile == null) return;
 
-      final List<JsonSchemaVariantsTreeBuilder.Step> position = JsonOriginalPsiWalker.INSTANCE.findPosition(object, true);
-      if (position == null) return;
-      final List<JsonSchemaVariantsTreeBuilder.Step> steps = skipProperties(position);
-      // !! not root schema, because we validate the schema written in the file itself
-      final MatchResult result = new JsonSchemaResolver(schemaObject, false, steps).detailedResolve();
-      final List<JsonSchemaObject> schemas = new ArrayList<>(result.mySchemas);
-      schemas.addAll(result.myExcludingSchemas.stream().flatMap(Set::stream).collect(Collectors.toSet()));
-      schemas.forEach(schema -> {
-        if (schemaFile.equals(schema.getSchemaFile())) {
-          final Map<JsonObject, String> invalidPatternProperties = schema.getInvalidPatternProperties();
-          if (invalidPatternProperties != null) {
-            for (Map.Entry<JsonObject, String> entry : invalidPatternProperties.entrySet()) {
-              final JsonObject element = entry.getKey();
-              if (element == null || !element.isValid()) continue;
-              final PsiElement parent = element.getParent();
-              if (parent instanceof JsonProperty) {
-                error(StringUtil.convertLineSeparators(entry.getValue()), ((JsonProperty)parent).getNameElement());
-              }
-            }
-          }
-          schema.getProperties().values().forEach(prop -> {
-            final String patternError = prop.getPatternError();
-            if (patternError != null && prop.getPattern() != null) {
-              final JsonObject element = prop.getJsonObject();
-              if (element.isValid()) {
-                final JsonProperty pattern = element.findProperty("pattern");
-                if (pattern != null) {
-                  error(StringUtil.convertLineSeparators(patternError), pattern.getValue());
-                }
-              }
-            }
-          });
-        }
+    final JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(object.getProject()).getSchemaObjectForSchemaFile(schemaFile);
+    if (schemaObject == null) return;
+
+    final List<JsonSchemaVariantsTreeBuilder.Step> position = JsonOriginalPsiWalker.INSTANCE.findPosition(object, true);
+    if (position == null) return;
+    final List<JsonSchemaVariantsTreeBuilder.Step> steps = skipProperties(position);
+    // !! not root schema, because we validate the schema written in the file itself
+    final MatchResult result = new JsonSchemaResolver(schemaObject, false, steps).detailedResolve();
+    for (JsonSchemaObject s: result.mySchemas) {
+      reportInvalidPatternProperties(s);
+      reportPatternErrors(s);
+    }
+    result.myExcludingSchemas.stream().flatMap(Set::stream).filter(s -> schemaFile.equals(s.getSchemaFile()))
+      .forEach(schema -> {
+        reportInvalidPatternProperties(schema);
+        reportPatternErrors(schema);
       });
+  }
+
+  private void reportPatternErrors(JsonSchemaObject schema) {
+    for (JsonSchemaObject prop : schema.getProperties().values()) {
+      final String patternError = prop.getPatternError();
+      if (patternError == null || prop.getPattern() == null) {
+        continue;
+      }
+
+      final JsonObject element = prop.getJsonObject();
+      if (!element.isValid()) {
+        continue;
+      }
+
+      final JsonProperty pattern = element.findProperty("pattern");
+      if (pattern != null) {
+        error(StringUtil.convertLineSeparators(patternError), pattern.getValue());
+      }
+    }
+  }
+
+  private void reportInvalidPatternProperties(JsonSchemaObject schema) {
+    final Map<JsonObject, String> invalidPatternProperties = schema.getInvalidPatternProperties();
+    if (invalidPatternProperties == null) return;
+
+    for (Map.Entry<JsonObject, String> entry : invalidPatternProperties.entrySet()) {
+      final JsonObject element = entry.getKey();
+      if (element == null || !element.isValid()) continue;
+      final PsiElement parent = element.getParent();
+      if (parent instanceof JsonProperty) {
+        error(StringUtil.convertLineSeparators(entry.getValue()), ((JsonProperty)parent).getNameElement());
+      }
     }
   }
 
@@ -420,9 +435,11 @@ class JsonSchemaAnnotatorChecker {
       if (!value.isShouldBeIgnored()) checker.typeError(value.getDelegate(), getExpectedTypes(collection));
     }
     else {
-      final List<JsonSchemaObject> filtered = collection.stream()
-        .filter(schema -> areSchemaTypesCompatible(schema, type))
-        .collect(Collectors.toList());
+      final List<JsonSchemaObject> filtered = ContainerUtil.newArrayListWithCapacity(collection.size());
+      for (JsonSchemaObject schema: collection) {
+        if (!areSchemaTypesCompatible(schema, type)) continue;
+        filtered.add(schema);
+      }
       if (filtered.isEmpty()) checker.typeError(value.getDelegate(), getExpectedTypes(collection));
       else if (filtered.size() == 1) {
         selected = filtered.get(0);
@@ -504,12 +521,17 @@ class JsonSchemaAnnotatorChecker {
   private void checkArrayItems(@NotNull JsonValueAdapter array, @NotNull final List<JsonValueAdapter> list, final JsonSchemaObject schema) {
     if (schema.isUniqueItems()) {
       final MultiMap<String, JsonValueAdapter> valueTexts = new MultiMap<>();
-      list.forEach(item -> valueTexts.putValue(item.getDelegate().getText(), item));
+      for (JsonValueAdapter adapter : list) {
+        valueTexts.putValue(adapter.getDelegate().getText(), adapter);
+      }
 
-      valueTexts.keySet().stream().filter(key -> valueTexts.get(key).size() > 1)
-        .map(key -> valueTexts.get(key))
-        .flatMap(Collection::stream)
-        .forEach(item -> error("Item is not unique", item.getDelegate()));
+      for (Map.Entry<String, Collection<JsonValueAdapter>> entry: valueTexts.entrySet()) {
+        if (entry.getValue().size() > 1) {
+          for (JsonValueAdapter item: entry.getValue()) {
+            error("Item is not unique", item.getDelegate());
+          }
+        }
+      }
     }
     if (schema.getContainsSchema() != null) {
       boolean match = false;
@@ -525,7 +547,9 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     if (schema.getItemsSchema() != null) {
-      list.forEach(item -> checkObjectBySchemaRecordErrors(schema.getItemsSchema(), item));
+      for (JsonValueAdapter item : list) {
+        checkObjectBySchemaRecordErrors(schema.getItemsSchema(), item);
+      }
     }
     else if (schema.getItemsSchemaList() != null) {
       final Iterator<JsonSchemaObject> iterator = schema.getItemsSchemaList().iterator();

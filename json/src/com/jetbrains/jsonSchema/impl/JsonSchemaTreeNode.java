@@ -16,6 +16,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +83,11 @@ public class JsonSchemaTreeNode {
   }
 
   private List<JsonSchemaTreeNode> convertToNodes(List<JsonSchemaObject> children) {
-    return children.stream().map(s -> new JsonSchemaTreeNode(this, s)).collect(Collectors.toList());
+    List<JsonSchemaTreeNode> nodes = ContainerUtil.newArrayListWithCapacity(children.size());
+    for (JsonSchemaObject child: children) {
+      nodes.add(new JsonSchemaTreeNode(this, child));
+    }
+    return nodes;
   }
 
   @NotNull
