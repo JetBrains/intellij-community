@@ -43,15 +43,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Override
-  public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
-    PyType type = getBaseStringType(referenceTarget);
-    if (type != null) {
-      return type;
-    }
-    return null;
-  }
-
   @Nullable
   @Override
   public PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
@@ -62,6 +53,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
       else if (PyNames.FALSE.equals(name) || PyNames.TRUE.equals(name)) {
         return PyBuiltinCache.getInstance(referenceExpression).getBoolType();
+      }
+      else if (PyNames.BASESTRING.equals(name)) {
+        final Ref<PyType> basestringType = getBaseStringType(referenceExpression, context);
+        if (basestringType != null) {
+          return Ref.deref(basestringType);
+        }
       }
     }
 
@@ -74,13 +71,17 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getBaseStringType(@NotNull PsiElement referenceTarget) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(referenceTarget);
-    if (referenceTarget instanceof PyElement && builtinCache.isBuiltin(referenceTarget) &&
-        PyNames.BASESTRING.equals(((PyElement)referenceTarget).getName())) {
-      return builtinCache.getStrOrUnicodeType(true);
-    }
-    return null;
+  private static Ref<PyType> getBaseStringType(@NotNull PyReferenceExpression expression, @NotNull TypeEvalContext context) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(expression);
+    return PyTypeUtil.injectTypeInMultiResolveResults(expression, context, (referenceTarget) -> {
+      if (referenceTarget != null && builtinCache.isBuiltin(referenceTarget) && PyNames.BASESTRING.equals(referenceTarget.getName())) {
+        final PyType type = builtinCache.getStrOrUnicodeType(true);
+        if (type != null) {
+          return Ref.create(type);
+        }
+      }
+      return null;
+    });
   }
 
   @Nullable
