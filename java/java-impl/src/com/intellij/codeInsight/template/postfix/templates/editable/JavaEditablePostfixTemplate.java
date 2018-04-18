@@ -26,7 +26,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class JavaEditablePostfixTemplate
-  extends EditablePostfixTemplateWithConditions<JavaPostfixTemplateExpressionCondition> {
+  extends EditablePostfixTemplateWithMultipleExpressions<JavaPostfixTemplateExpressionCondition> {
   private static final Condition<PsiElement> PSI_ERROR_FILTER = element -> !PsiTreeUtil.hasErrorElements(element);
 
   @NotNull private final LanguageLevel myMinimumLanguageLevel;

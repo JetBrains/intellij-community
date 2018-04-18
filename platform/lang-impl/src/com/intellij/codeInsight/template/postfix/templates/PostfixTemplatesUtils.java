@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage;
 import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplateWithConditions;
+import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplateWithMultipleExpressions;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateExpressionCondition;
 import com.intellij.lang.surroundWith.Surrounder;
@@ -83,13 +83,13 @@ public abstract class PostfixTemplatesUtils {
   }
 
   public static void writeExternalTemplate(@NotNull PostfixTemplate template, @NotNull Element parentElement) {
-    if (template instanceof EditablePostfixTemplateWithConditions) {
-      parentElement.setAttribute(TOPMOST_ATTR, String.valueOf(((EditablePostfixTemplateWithConditions)template).isUseTopmostExpression()));
+    if (template instanceof EditablePostfixTemplateWithMultipleExpressions) {
+      parentElement.setAttribute(TOPMOST_ATTR, String.valueOf(((EditablePostfixTemplateWithMultipleExpressions)template).isUseTopmostExpression()));
       Element conditionsTag = new Element(CONDITIONS_TAG);
 
       //noinspection unchecked
       Set<? extends PostfixTemplateExpressionCondition<? extends PsiElement>> conditions =
-        (Set<? extends PostfixTemplateExpressionCondition<? extends PsiElement>>)((EditablePostfixTemplateWithConditions)template)
+        (Set<? extends PostfixTemplateExpressionCondition<? extends PsiElement>>)((EditablePostfixTemplateWithMultipleExpressions)template)
           .getExpressionConditions();
 
       for (PostfixTemplateExpressionCondition<? extends PsiElement> condition : conditions) {

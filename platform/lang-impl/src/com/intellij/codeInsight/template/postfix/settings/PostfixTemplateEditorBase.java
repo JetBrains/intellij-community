@@ -4,16 +4,18 @@ package com.intellij.codeInsight.template.postfix.settings;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
-import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplateWithConditions;
+import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplateWithMultipleExpressions;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateExpressionCondition;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -48,6 +50,20 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
   @NotNull protected final JPanel myEditTemplateAndConditionsPanel;
   @NotNull protected final JBLabel myExpressionVariableHint;
 
+  protected class AddConditionAction extends DumbAwareAction {
+    @NotNull
+    private final Condition myCondition;
+
+    public AddConditionAction(Condition condition) {
+      super(condition.getPresentableName());
+      myCondition = condition;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myExpressionTypesListModel.addElement(myCondition);
+    }
+  }
 
   public PostfixTemplateEditorBase(@NotNull PostfixTemplateProvider provider) {
     this(provider, createSimpleEditor());
@@ -121,10 +137,10 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
   protected abstract void fillConditions(@NotNull DefaultActionGroup group);
 
   public void setTemplate(@Nullable PostfixTemplate rawTemplate) {
-    if (!(rawTemplate instanceof EditablePostfixTemplateWithConditions)) return;
+    if (!(rawTemplate instanceof EditablePostfixTemplateWithMultipleExpressions)) return;
 
     //noinspection unchecked
-    EditablePostfixTemplateWithConditions<Condition> template = (EditablePostfixTemplateWithConditions)rawTemplate;
+    EditablePostfixTemplateWithMultipleExpressions<Condition> template = (EditablePostfixTemplateWithMultipleExpressions)rawTemplate;
 
     myExpressionTypesListModel.clear();
     for (Condition condition : template.getExpressionConditions()) {

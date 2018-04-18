@@ -27,7 +27,7 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
     }
 
     @Override
-    public boolean value(PsiExpression element) {
+    public boolean value(@NotNull PsiExpression element) {
       PsiType type = element.getType();
       return type != null && InheritanceUtil.isInheritor(type, myFqn);
     }
@@ -68,7 +68,7 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
     public static final String ID = "void";
 
     @Override
-    public boolean value(PsiExpression element) {
+    public boolean value(@NotNull PsiExpression element) {
       PsiType type = element.getType();
       return type != null && PsiType.VOID.equals(type);
     }
@@ -102,7 +102,7 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
     public static final String ID = "non void";
 
     @Override
-    public boolean value(PsiExpression element) {
+    public boolean value(@NotNull PsiExpression element) {
       return JavaPostfixTemplatesUtils.isNonVoid(element.getType());
     }
 
@@ -134,7 +134,7 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
     public static final String ID = "boolean";
 
     @Override
-    public boolean value(PsiExpression element) {
+    public boolean value(@NotNull PsiExpression element) {
       return JavaPostfixTemplatesUtils.isBoolean(element.getType());
     }
 
@@ -166,7 +166,7 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
     public static final String ID = "number";
 
     @Override
-    public boolean value(PsiExpression element) {
+    public boolean value(@NotNull PsiExpression element) {
       return JavaPostfixTemplatesUtils.isNumber(element.getType());
     }
 
@@ -198,7 +198,7 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
     public static final String ID = "notPrimitive";
 
     @Override
-    public boolean value(PsiExpression element) {
+    public boolean value(@NotNull PsiExpression element) {
       return JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(element);
     }
 
@@ -230,7 +230,7 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
     public static final String ID = "array";
 
     @Override
-    public boolean value(PsiExpression element) {
+    public boolean value(@NotNull PsiExpression element) {
       return JavaPostfixTemplatesUtils.isArray(element.getType());
     }
 

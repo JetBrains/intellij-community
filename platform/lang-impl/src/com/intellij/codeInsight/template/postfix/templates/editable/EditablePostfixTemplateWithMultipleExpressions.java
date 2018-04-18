@@ -10,19 +10,19 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.Set;
 
-public abstract class EditablePostfixTemplateWithConditions<ConditionType extends PostfixTemplateExpressionCondition>
+public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionType extends PostfixTemplateExpressionCondition>
   extends EditablePostfixTemplate {
 
   @NotNull protected final Set<ConditionType> myExpressionConditions;
   protected final boolean myUseTopmostExpression;
 
-  protected EditablePostfixTemplateWithConditions(@NotNull String templateId,
-                                                  @NotNull String templateName,
-                                                  @NotNull TemplateImpl liveTemplate,
-                                                  @NotNull String example,
-                                                  @NotNull Set<ConditionType> expressionConditions,
-                                                  boolean useTopmostExpression,
-                                                  @NotNull PostfixTemplateProvider provider) {
+  protected EditablePostfixTemplateWithMultipleExpressions(@NotNull String templateId,
+                                                           @NotNull String templateName,
+                                                           @NotNull TemplateImpl liveTemplate,
+                                                           @NotNull String example,
+                                                           @NotNull Set<ConditionType> expressionConditions,
+                                                           boolean useTopmostExpression,
+                                                           @NotNull PostfixTemplateProvider provider) {
     super(templateId, templateName, liveTemplate, example, provider);
     myExpressionConditions = expressionConditions;
     myUseTopmostExpression = useTopmostExpression;
@@ -64,7 +64,7 @@ public abstract class EditablePostfixTemplateWithConditions<ConditionType extend
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
-    EditablePostfixTemplateWithConditions<?> that = (EditablePostfixTemplateWithConditions<?>)o;
+    EditablePostfixTemplateWithMultipleExpressions<?> that = (EditablePostfixTemplateWithMultipleExpressions<?>)o;
     return myUseTopmostExpression == that.myUseTopmostExpression &&
            Objects.equals(myExpressionConditions, that.myExpressionConditions);
   }

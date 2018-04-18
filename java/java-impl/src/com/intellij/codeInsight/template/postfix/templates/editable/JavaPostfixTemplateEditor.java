@@ -108,22 +108,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
       myLanguageLevelCombo.setSelectedItem(((JavaEditablePostfixTemplate)template).getMinimumLanguageLevel());
     }
   }
-
-  private class AddConditionAction extends DumbAwareAction {
-    @NotNull
-    private final JavaPostfixTemplateExpressionCondition myCondition;
-
-    public AddConditionAction(JavaPostfixTemplateExpressionCondition condition) {
-      super(condition.getPresentableName());
-      myCondition = condition;
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      myExpressionTypesListModel.addElement(myCondition);
-    }
-  }
-
+  
   private class ChooseClassAction extends DumbAwareAction {
     @Nullable
     private final Project myProject;

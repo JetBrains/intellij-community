@@ -22,12 +22,15 @@ public interface PostfixTemplateExpressionCondition<T extends PsiElement> extend
    */
   @NotNull
   String getId();
-  
+
   boolean equals(Object o);
-  
+
   int hashCode();
 
   default void serializeTo(@NotNull Element element) {
     element.setAttribute(ID_ATTR, getId());
   }
+
+  @Override
+  boolean value(@NotNull T t);
 }
