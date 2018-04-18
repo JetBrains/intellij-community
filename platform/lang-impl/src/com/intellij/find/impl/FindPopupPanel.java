@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
@@ -474,7 +474,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     });
     tabResultsContextGroup.setPopup(true);
     Presentation tabSettingsPresentation = new Presentation();
-    tabSettingsPresentation.setIcon(AllIcons.General.SecondaryGroup);
+    tabSettingsPresentation.setIcon(AllIcons.General.GearPlain);
     myTabResultsButton =
       new ActionButton(tabResultsContextGroup, tabSettingsPresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     new AnAction() {
@@ -491,21 +491,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.addActionListener(e -> {
       boolean okToReplaceAll = myResultsPreviewTable.getRowCount() < 2;
       if (!okToReplaceAll) {
-        Window window = UIUtil.getWindow(this);
-        try {
-          if (window != null) {
-            window.setVisible(false);
-          }
-          okToReplaceAll = ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
-            myUsagesCount,
-            getStringToFind(),
-            myFilesCount,
-            getStringToReplace());
-        } finally {
-          if (window != null) {
-            window.setVisible(true);
-          }
-        }
+        okToReplaceAll = ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
+          myUsagesCount,
+          getStringToFind(),
+          myFilesCount,
+          getStringToReplace());
       }
       if (okToReplaceAll) {
         doOK(false);
@@ -741,11 +731,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     bottomPanel.add(myOKHintLabel);
     String btnGapLeft = "gapleft " + Math.max(0, (JBUI.scale(12) - insets.left - insets.right));
     bottomPanel.add(myOKButton, btnGapLeft);
-
-    if (myHelper.isReplaceState()) {
-      bottomPanel.add(myReplaceAllButton, btnGapLeft);
-      bottomPanel.add(myReplaceSelectedButton, btnGapLeft);
-    }
+    bottomPanel.add(myReplaceAllButton, btnGapLeft);
+    bottomPanel.add(myReplaceSelectedButton, btnGapLeft);
 
     myCodePreviewComponent = myUsagePreviewPanel.createComponent();
     splitter.setSecondComponent(myCodePreviewComponent);
@@ -949,6 +936,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER_WITH_MODIFIERS));
     }
     myOKButton.setText(FindBundle.message("find.popup.find.button"));
+    myReplaceAllButton.setVisible(isReplaceState);
+    myReplaceSelectedButton.setVisible(isReplaceState);
   }
 
   private void updateControls() {
@@ -999,7 +988,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  void scheduleResultsUpdate() {
+  @SuppressWarnings("WeakerAccess")
+  public void scheduleResultsUpdate() {
     if (myBalloon == null || !myBalloon.isVisible()) return;
     if (mySearchRescheduleOnCancellationsAlarm == null || mySearchRescheduleOnCancellationsAlarm.isDisposed()) return;
     updateControls();
