@@ -227,16 +227,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Runnable callback = partialAddResult.first;
       Set<Change> partialChanges = newHashSet(partialAddResult.second);
 
-      Set<Change> caseOnlyRenames = new HashSet<>(filter(rootChanges, it -> !partialChanges.contains(it) && isCaseOnlyRename(it)));
+      List<Change> caseOnlyRenames = filter(rootChanges, it -> !partialChanges.contains(it) && isCaseOnlyRename(it));
 
       if (!caseOnlyRenames.isEmpty() || !partialChanges.isEmpty()) {
-        List<Change> otherChanges = filter(rootChanges, it -> !partialChanges.contains(it) && !caseOnlyRenames.contains(it));
-
-        Set<FilePath> added = map2SetNotNull(otherChanges, ChangesUtil::getAfterPath);
-        Set<FilePath> removed = map2SetNotNull(otherChanges, ChangesUtil::getBeforePath);
-        removed.removeAll(added);
-
-        List<VcsException> exs = commitUsingIndex(myProject, root, caseOnlyRenames, partialChanges, added, removed, messageFile);
+        List<VcsException> exs = commitUsingIndex(myProject, root, rootChanges, caseOnlyRenames, partialChanges, messageFile);
         exceptions.addAll(exs);
 
         if (exceptions.isEmpty()) {
@@ -244,14 +238,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       }
       else {
-        Set<FilePath> added = map2SetNotNull(rootChanges, ChangesUtil::getAfterPath);
-        Set<FilePath> removed = map2SetNotNull(rootChanges, ChangesUtil::getBeforePath);
-        removed.removeAll(added);
-
         try {
-          Set<FilePath> files = new HashSet<>();
-          files.addAll(added);
-          files.addAll(removed);
+          List<FilePath> files = ChangesUtil.getPaths(rootChanges);
           commit(myProject, root, files, messageFile);
         }
         catch (VcsException ex) {
@@ -259,7 +247,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           if (partialOperation == PartialOperation.NONE) {
             throw ex;
           }
-          if (!mergeCommit(myProject, root, added, removed, messageFile, exceptions, partialOperation)) {
+          if (!mergeCommit(myProject, root, rootChanges, messageFile, exceptions, partialOperation)) {
             throw ex;
           }
         }
@@ -281,13 +269,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @NotNull
   private List<VcsException> commitUsingIndex(@NotNull Project project,
                                               @NotNull VirtualFile root,
-                                              @NotNull Set<Change> caseOnlyRenames,
+                                              @NotNull Collection<Change> rootChanges,
+                                              @NotNull List<Change> caseOnlyRenames,
                                               @NotNull Set<Change> partialChanges,
-                                              @NotNull Set<FilePath> added,
-                                              @NotNull Set<FilePath> removed,
                                               @NotNull File messageFile) {
     List<VcsException> exceptions = new ArrayList<>();
     try {
+      Set<FilePath> added = map2SetNotNull(rootChanges, ChangesUtil::getAfterPath);
+      Set<FilePath> removed = map2SetNotNull(rootChanges, ChangesUtil::getBeforePath);
+      removed.removeAll(added);
+
       String rootPath = root.getPath();
       LOG.info("Committing case only rename: " + getLogString(rootPath, caseOnlyRenames) + " in " + getShortRepositoryName(project, root));
 
@@ -302,9 +293,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
 
       // 2. Reset staged changes which are not selected for commit
-      Collection<Change> excludedStagedChanges = filter(stagedChanges, change -> !caseOnlyRenames.contains(change) &&
-                                                                                 !partialChanges.contains(change) &&
-                                                                                 !added.contains(getAfterPath(change)) &&
+      Collection<Change> excludedStagedChanges = filter(stagedChanges, change -> !added.contains(getAfterPath(change)) &&
                                                                                  !removed.contains(getBeforePath(change)));
       if (!excludedStagedChanges.isEmpty()) {
         LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
@@ -316,7 +305,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         LOG.debug("Updating index for added:" + added + "\n, removed: " + removed + "\n, and case-renames: " + newPathsOfCaseRenames);
         Set<FilePath> toAdd = new HashSet<>(added);
         toAdd.addAll(newPathsOfCaseRenames);
-        updateIndex(project, root, toAdd, removed, exceptions);
+        toAdd.removeAll(mapNotNull(partialChanges, ChangesUtil::getAfterPath));
+
+        Set<FilePath> toRemove = new HashSet<>(removed);
+        toRemove.removeAll(mapNotNull(partialChanges, ChangesUtil::getBeforePath));
+
+        updateIndex(project, root, toAdd, toRemove, exceptions);
         if (!exceptions.isEmpty()) return exceptions;
 
 
@@ -499,13 +493,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param partialOperation
    * @return true if merge commit was successful
    */
-  private boolean mergeCommit(final Project project,
-                              final VirtualFile root,
-                              final Set<FilePath> added,
-                              final Set<FilePath> removed,
-                              final File messageFile,
-                              List<VcsException> exceptions,
-                              @NotNull final PartialOperation partialOperation) {
+  private boolean mergeCommit(@NotNull Project project,
+                              @NotNull VirtualFile root,
+                              @NotNull Collection<Change> rootChanges,
+                              @NotNull File messageFile,
+                              @NotNull List<VcsException> exceptions,
+                              @NotNull PartialOperation partialOperation) {
+    Set<FilePath> added = map2SetNotNull(rootChanges, ChangesUtil::getAfterPath);
+    Set<FilePath> removed = map2SetNotNull(rootChanges, ChangesUtil::getBeforePath);
+    removed.removeAll(added);
+
     HashSet<FilePath> realAdded = new HashSet<>();
     HashSet<FilePath> realRemoved = new HashSet<>();
     // perform diff
