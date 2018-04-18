@@ -689,7 +689,7 @@ public final class IconLoader {
   private static <T> T doWithTmpRegValue(@NotNull String key, @NotNull Boolean tempValue, @NotNull Callable<T> action) {
     RegistryValue regVal = Registry.get(key);
     boolean regValOrig = regVal.asBoolean();
-    regVal.setValue(tempValue);
+    if (regValOrig != tempValue) regVal.setValue(tempValue);
     try {
       return action.call();
     }
@@ -697,7 +697,7 @@ public final class IconLoader {
       return null;
     }
     finally {
-      regVal.setValue(regValOrig);
+      if (regValOrig != tempValue) regVal.setValue(regValOrig);
     }
   }
 }
