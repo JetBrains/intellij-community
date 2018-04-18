@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,8 @@ import java.awt.*;
 import static com.intellij.openapi.application.ModalityState.NON_MODAL;
 
 public class TouchBarActionBase extends TouchBarProjectBase implements ExecutionListener {
+  private static final Logger LOG = Logger.getInstance(TouchBarActionBase.class);
+
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
 
   TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project) {
@@ -41,16 +44,26 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
   }
 
   TBItemAnActionButton addAnActionButton(String actId) {
-    return addAnActionButton(ActionManager.getInstance().getAction(actId), true);
+    return addAnActionButton(ActionManager.getInstance().getAction(actId), true, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY);
   }
 
   TBItemAnActionButton addAnActionButton(String actId, boolean hiddenWhenDisabled) {
-    return addAnActionButton(ActionManager.getInstance().getAction(actId), hiddenWhenDisabled);
+    final AnAction act = ActionManager.getInstance().getAction(actId);
+    if (act == null) {
+      LOG.error("can't find action by id: " + actId);
+      return null;
+    }
+    return addAnActionButton(act, hiddenWhenDisabled, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY);
   }
 
-  TBItemAnActionButton addAnActionButton(AnAction act, boolean hiddenWhenDisabled) {
+  TBItemAnActionButton addAnActionButton(AnAction act, boolean hiddenWhenDisabled, int showMode) {
+    if (act == null) {
+      LOG.error("can't create action-button with null action");
+      return null;
+    }
+
     final String uid = String.format("%s.anActionButton.%d", myName, myCounter++);
-    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, act, hiddenWhenDisabled);
+    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, act, hiddenWhenDisabled, showMode);
     myItems.add(butt);
     return butt;
   }
@@ -78,7 +91,12 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
       final AnAction act = item.getAnAction();
       final Presentation presentation = myPresentationFactory.getPresentation(act);
       final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-      final Component focusOwner = focusManager.getFocusedWindow();
+
+      Component focusOwner = focusManager.getFocusOwner();
+      if (focusOwner == null) {
+        // LOG.info(String.format("WARNING: [%s:%s] _updateActionItems: null focus-owner, use focused window", myName, item.myUid));
+        focusOwner = focusManager.getFocusedWindow();
+      }
       final DataContext ctx = DataManagerImpl.getInstance().getDataContext(focusOwner);
 
       final AnActionEvent e = new AnActionEvent(

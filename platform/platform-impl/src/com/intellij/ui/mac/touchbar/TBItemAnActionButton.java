@@ -99,13 +99,16 @@ public class TBItemAnActionButton extends TBItemButton {
   }
 
   private void _performAction() {
-    // TODO: check action state (isEnabled, canBePerformed)
     final ActionManagerEx actionManagerEx = ActionManagerEx.getInstanceEx();
     final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    final Component focusOwner = focusManager.getFocusedWindow();
+    Component focusOwner = focusManager.getFocusOwner();
+    if (focusOwner == null) {
+      // LOG.info(String.format("WARNING: [%s:%s] _performAction: null focus-owner, use focused window", myUid, myActionId));
+      focusOwner = focusManager.getFocusedWindow();
+    }
 
     final InputEvent ie = new KeyEvent(focusOwner, COMPONENT_FIRST, System.currentTimeMillis(), 0, 0, '\0');
-    actionManagerEx.tryToExecute(myAnAction, ie, focusOwner, ActionPlaces.TOUCHBAR_GENERAL, false);
+    actionManagerEx.tryToExecute(myAnAction, ie, focusOwner, ActionPlaces.TOUCHBAR_GENERAL, true);
   }
 
   private static String _printPresentation(Presentation presentation) {
