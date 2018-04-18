@@ -9,26 +9,55 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Implement this class if a particular run configuration should be created for matching input string.
+ */
 public abstract class RunAnythingProvider {
   public static final ExtensionPointName<RunAnythingProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.runAnything.configurationProvider");
 
-  public abstract boolean isMatched(Project project, @NotNull String commandLine, @NotNull VirtualFile workDirectory);
+  /**
+   * If {@code commandLine} is matched than current provider associated run configuration of factory {@link #getConfigurationFactory()}
+   * will be created as {@link #createConfiguration(Project, String, VirtualFile)}.
+   * <p>
+   * E.g. for input string `ruby test.rb` a new temporary 'ruby script' run configuration will be created.
+   *
+   * @param commandLine   'Run Anything' input string
+   * @param workDirectory command execution context directory
+   * @return true if current provider associated run configuration should be created by 'commandLine'
+   */
+  public abstract boolean isMatched(@NotNull Project project, @NotNull String commandLine, @NotNull VirtualFile workDirectory);
 
+  /**
+   * Actual run configuration creation by {@code commandLine}
+   *
+   * @param commandLine      'Run Anything' input string
+   * @param workingDirectory command execution context directory
+   * @return created run configuration
+   */
   @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(@NotNull Project project,
                                                                      @NotNull String commandLine,
                                                                      @NotNull VirtualFile workingDirectory);
 
+  /**
+   * Returns current provider associated run configuration factory
+   */
   @NotNull
   public abstract ConfigurationFactory getConfigurationFactory();
 
+  /**
+   * Finds matched provider along with all {@link RunAnythingProvider} providers
+   *
+   * @param commandLine      'Run Anything' input string
+   * @param workingDirectory command execution context directory
+   */
   @Nullable
   public static RunAnythingProvider findMatchedProvider(@NotNull Project project,
-                                                        @NotNull String pattern,
-                                                        @NotNull VirtualFile workDirectory) {
+                                                        @NotNull String commandLine,
+                                                        @NotNull VirtualFile workingDirectory) {
     for (RunAnythingProvider provider : EP_NAME.getExtensions()) {
-      if (provider.isMatched(project, pattern, workDirectory)) {
+      if (provider.isMatched(project, commandLine, workingDirectory)) {
         return provider;
       }
     }
