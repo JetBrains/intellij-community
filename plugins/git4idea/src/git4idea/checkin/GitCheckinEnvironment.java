@@ -87,6 +87,7 @@ import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BORDER;
 import static com.intellij.openapi.util.text.StringUtil.escapeXml;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
@@ -226,37 +227,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Runnable callback = partialAddResult.first;
       Set<Change> partialChanges = newHashSet(partialAddResult.second);
 
-      Set<FilePath> added = new HashSet<>();
-      Set<FilePath> removed = new HashSet<>();
-      final Set<Change> caseOnlyRenames = new HashSet<>();
-      for (Change change : rootChanges) {
-        if (partialChanges.contains(change)) continue;
-
-        switch (change.getType()) {
-          case NEW:
-          case MODIFICATION:
-            added.add(change.getAfterRevision().getFile());
-            break;
-          case DELETED:
-            removed.add(change.getBeforeRevision().getFile());
-            break;
-          case MOVED:
-            FilePath afterPath = change.getAfterRevision().getFile();
-            FilePath beforePath = change.getBeforeRevision().getFile();
-            if (!SystemInfo.isFileSystemCaseSensitive && isCaseOnlyChange(beforePath.getPath(), afterPath.getPath())) {
-              caseOnlyRenames.add(change);
-            }
-            else {
-              added.add(afterPath);
-              removed.add(beforePath);
-            }
-            break;
-          default:
-            throw new IllegalStateException("Unknown change type: " + change.getType());
-        }
-      }
+      Set<Change> caseOnlyRenames = new HashSet<>(filter(rootChanges, it -> !partialChanges.contains(it) && isCaseOnlyRename(it)));
 
       if (!caseOnlyRenames.isEmpty() || !partialChanges.isEmpty()) {
+        List<Change> otherChanges = filter(rootChanges, it -> !partialChanges.contains(it) && !caseOnlyRenames.contains(it));
+
+        Set<FilePath> added = map2SetNotNull(otherChanges, ChangesUtil::getAfterPath);
+        Set<FilePath> removed = map2SetNotNull(otherChanges, ChangesUtil::getBeforePath);
+        removed.removeAll(added);
+
         List<VcsException> exs = commitUsingIndex(myProject, root, caseOnlyRenames, partialChanges, added, removed, messageFile);
         exceptions.addAll(exs);
 
@@ -265,6 +244,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       }
       else {
+        Set<FilePath> added = map2SetNotNull(rootChanges, ChangesUtil::getAfterPath);
+        Set<FilePath> removed = map2SetNotNull(rootChanges, ChangesUtil::getBeforePath);
+        removed.removeAll(added);
+
         try {
           Set<FilePath> files = new HashSet<>();
           files.addAll(added);
@@ -476,6 +459,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return null;
     }
   }
+
+  private static boolean isCaseOnlyRename(@NotNull Change change) {
+    if (SystemInfo.isFileSystemCaseSensitive) return false;
+    if (change.getType() != Change.Type.MOVED) return false;
+    FilePath afterPath = assertNotNull(getAfterPath(change));
+    FilePath beforePath = assertNotNull(getBeforePath(change));
+    return isCaseOnlyChange(beforePath.getPath(), afterPath.getPath());
+  }
+
 
   private static void reset(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<Change> changes) throws VcsException {
     Set<FilePath> allPaths = new HashSet<>();
