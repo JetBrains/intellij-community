@@ -291,6 +291,18 @@
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
 
+    <extensionPoint name="runAnythingConfigurationProvider" interface="com.intellij.ide.actions.runAnything.RunAnythingProvider"/>
+
+    <extensionPoint name="runAnythingActivityProvider"
+                    interface="com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider"/>
+
+    <extensionPoint name="runAnythingCommandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler"/>
+
+    <extensionPoint name="runAnythingGroup" interface="com.intellij.ide.actions.runAnything.groups.RunAnythingGroup"/>
+
+    <extensionPoint name="runAnythingCommandCustomizer"
+                    interface="com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer"/>
+
     <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT"/>
     <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="moduleExtension" interface="com.intellij.openapi.roots.ModuleExtension" area="IDEA_MODULE"/>
