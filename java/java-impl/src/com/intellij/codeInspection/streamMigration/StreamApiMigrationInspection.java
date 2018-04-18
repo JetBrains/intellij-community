@@ -853,7 +853,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @Override
     String createReplacement(CommentTracker ct) {
-      return ".limit(" + getLimitExpression(ct) + ")";
+      return ".limit(" + JavaPsiMathUtil.add(myExpression, myDelta, ct) + ")";
     }
 
     PsiLocalVariable getCounterVariable() {
@@ -874,19 +874,6 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     @Override
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
       return variable == myCounterVariable && PsiTreeUtil.isAncestor(myCounter, reference, false);
-    }
-
-    private String getLimitExpression(CommentTracker ct) {
-      if (myDelta == 0) {
-        return ct.text(myExpression);
-      }
-      if (myExpression instanceof PsiLiteralExpression) {
-        Object value = ((PsiLiteralExpression)myExpression).getValue();
-        if (value instanceof Integer || value instanceof Long) {
-          return String.valueOf(((Number)value).longValue() + myDelta);
-        }
-      }
-      return ct.text(myExpression, ParenthesesUtils.ADDITIVE_PRECEDENCE) + "+" + myDelta;
     }
   }
 
