@@ -144,7 +144,6 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setEditable(true);
-    myTree.setHorizontalAutoScrollingEnabled(false);
     myTree.setCellRenderer(new ShelfTreeCellRenderer(project, myMoveRenameInfo));
     DefaultTreeCellEditor treeCellEditor = new DefaultTreeCellEditor(myTree, null) {
       @Override

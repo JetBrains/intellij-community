@@ -94,7 +94,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 
-    setHorizontalAutoScrollingEnabled(false);
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);

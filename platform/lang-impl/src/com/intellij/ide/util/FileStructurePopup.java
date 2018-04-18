@@ -1034,7 +1034,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       super(treeModel);
       setRootVisible(false);
       setShowsRootHandles(true);
-      setHorizontalAutoScrollingEnabled(false);
 
       HintUpdateSupply.installHintUpdateSupply(this, o -> {
         Object value = unwrapValue(o);
