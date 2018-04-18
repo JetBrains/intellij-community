@@ -71,12 +71,12 @@ public class BranchConfigurationDialog extends DialogWrapper {
 
     mySvnBranchConfigManager = SvnBranchConfigurationManager.getInstance(project).getSvnBranchConfigManager();
 
-    myTrunkLocationTextField.setText(configuration.getTrunk().toString());
+    myTrunkLocationTextField.setText(configuration.getTrunk().toDecodedString());
     myTrunkLocationTextField.addActionListener(e -> {
       Pair<Url, Url> selectionData = SelectLocationDialog.selectLocationAndRoot(project, rootUrl);
 
       if (selectionData != null && selectionData.first != null) {
-        myTrunkLocationTextField.setText(selectionData.first.toString());
+        myTrunkLocationTextField.setText(selectionData.first.toDecodedString());
       }
     });
 
@@ -91,7 +91,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
   @Override
   protected ValidationInfo doValidate() {
     try {
-      myTrunkUrl = createUrl(myTrunkLocationTextField.getText());
+      myTrunkUrl = createUrl(myTrunkLocationTextField.getText(), false);
     }
     catch (SvnBindException e) {
       return new ValidationInfo(e.getMessage(), myTrunkLocationTextField.getTextField());
