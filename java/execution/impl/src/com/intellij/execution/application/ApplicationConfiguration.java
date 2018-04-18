@@ -54,6 +54,10 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     this(name, project, applicationConfigurationType.getConfigurationFactories()[0]);
   }
 
+  public ApplicationConfiguration(final String name, final Project project) {
+    this(name, project, ApplicationConfigurationType.getInstance().getConfigurationFactories()[0]);
+  }
+
   protected ApplicationConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(name, new JavaRunConfigurationModule(project, true), factory);
   }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -9,7 +7,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunConfigurationConfigurableAdapter;
 import com.intellij.execution.application.ApplicationConfigurable;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -360,7 +357,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   public void testCreatingApplicationConfiguration() throws ConfigurationException {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
 
-    ApplicationConfiguration configuration = new ApplicationConfiguration(null, myProject, ApplicationConfigurationType.getInstance());
+    ApplicationConfiguration configuration = new ApplicationConfiguration(null, myProject);
     ApplicationConfigurable editor = new ApplicationConfigurable(myProject);
     try {
       editor.getComponent(); // To get all the watchers installed.
@@ -419,8 +416,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   }
 
   public void testRunThirdPartyApplication() throws ExecutionException {
-    ApplicationConfiguration configuration =
-      new ApplicationConfiguration("Third party", myProject, ApplicationConfigurationType.getInstance());
+    ApplicationConfiguration configuration = new ApplicationConfiguration("Third party", myProject);
     configuration.setModule(getModule1());
     configuration.setMainClassName("third.party.Main");
     checkCanRun(configuration);
