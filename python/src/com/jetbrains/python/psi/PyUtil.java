@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -58,6 +59,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -564,6 +566,10 @@ public class PyUtil {
   @NotNull
   public static List<PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
     if (element instanceof PyReferenceOwner) {
+      final PyReferenceExpression pyRefExpr = as(element, PyReferenceExpression.class);
+      if (pyRefExpr != null && !referenceResolveIsSafe(pyRefExpr, resolveContext.getTypeEvalContext())) {
+        return Collections.emptyList();
+      }
       final PsiPolyVariantReference ref = ((PyReferenceOwner)element).getReference(resolveContext);
       return filterTopPriorityResults(ref.multiResolve(false));
     }
@@ -575,7 +581,17 @@ public class PyUtil {
 
   @NotNull
   public static List<PsiElement> multiResolveTopPriority(@NotNull PsiPolyVariantReference reference) {
+    final PyReferenceExpression pyRefExpr = as(reference.getElement(), PyReferenceExpression.class);
+    final PyReferenceImpl pyReference = as(reference, PyReferenceImpl.class);
+    if (pyRefExpr != null && pyReference != null && !referenceResolveIsSafe(pyRefExpr, pyReference.getContext().getTypeEvalContext())) {
+      return Collections.emptyList();
+    }
     return filterTopPriorityResults(reference.multiResolve(false));
+  }
+
+  private static boolean referenceResolveIsSafe(@NotNull PyReferenceExpression expression, @NotNull TypeEvalContext context) {
+    final PsiFile realFile = FileContextUtil.getContextFile(expression);
+    return !(expression.getContainingFile() instanceof PyExpressionCodeFragment) || (realFile != null && context.maySwitchToAST(realFile));
   }
 
   @NotNull

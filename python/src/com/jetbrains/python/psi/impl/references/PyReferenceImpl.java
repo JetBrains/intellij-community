@@ -821,4 +821,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     context.put(PyType.CTX_NAMES, new HashSet<>());
     return type.getCompletionVariants(pyExpression.getName(), pyExpression, context);
   }
+
+  @NotNull
+  public PyResolveContext getContext() {
+    return myContext;
+  }
 }

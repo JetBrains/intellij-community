@@ -22,7 +22,6 @@ import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
@@ -308,19 +307,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     final List<PyType> members = new ArrayList<>();
 
-    final PsiFile realFile = FileContextUtil.getContextFile(this);
-    if (!(getContainingFile() instanceof PyExpressionCodeFragment) || (realFile != null && context.maySwitchToAST(realFile))) {
-      for (PsiElement target : PyUtil.multiResolveTopPriority(this, resolveContext)) {
-        if (target == this || target == null) {
-          continue;
-        }
-
-        if (!target.isValid()) {
-          throw new PsiInvalidElementAccessException(this);
-        }
-
-        members.add(getTypeFromTarget(target, context, this));
+    for (PsiElement target : PyUtil.multiResolveTopPriority(this, resolveContext)) {
+      if (target == this || target == null) {
+        continue;
       }
+
+      if (!target.isValid()) {
+        throw new PsiInvalidElementAccessException(this);
+      }
+
+      members.add(getTypeFromTarget(target, context, this));
     }
 
     return PyUnionType.union(members);
