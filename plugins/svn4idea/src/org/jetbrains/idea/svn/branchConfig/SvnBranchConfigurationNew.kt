@@ -105,8 +105,4 @@ class SvnBranchConfigurationNew {
   fun removeBranch(url: Url) {
     myBranchMap.remove(url)
   }
-
-  companion object {
-    fun ensureEndSlash(name: String) = if (name.trim { it <= ' ' }.endsWith("/")) name else "$name/"
-  }
 }
