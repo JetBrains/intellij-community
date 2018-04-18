@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.nativeplatform.tooling.builder;
 import org.gradle.api.Project;
 import org.gradle.api.component.SoftwareComponent;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.file.FileCollectionInternal;
 import org.gradle.api.internal.file.FileCollectionVisitor;
 import org.gradle.api.internal.file.FileTreeInternal;
@@ -26,6 +27,7 @@ import org.gradle.nativeplatform.toolchain.NativeToolChain;
 import org.gradle.nativeplatform.toolchain.internal.ToolType;
 import org.gradle.nativeplatform.toolchain.internal.tools.CommandLineToolSearchResult;
 import org.gradle.nativeplatform.toolchain.internal.tools.ToolSearchPath;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.FilePatternSetImpl;
@@ -93,7 +95,7 @@ public class CppModelBuilder implements ModelBuilderService {
             if (fileProvider.isPresent()) {
               LinkExecutable linkExecutable = fileProvider.get();
               linkTaskName = linkExecutable.getPath();
-              executableFile = linkExecutable.getBinaryFile().getAsFile().getOrNull();
+              executableFile = getExecutableFile(linkExecutable);
             }
           }
 
@@ -122,6 +124,29 @@ public class CppModelBuilder implements ModelBuilderService {
     }
 
     return cppProject;
+  }
+
+  @Nullable
+  private static File getExecutableFile(LinkExecutable linkExecutable) {
+    File executableFile;
+    RegularFileProperty binaryFile = null;
+    if (GradleVersion.current().compareTo(GradleVersion.version("4.7")) < 0) {
+      binaryFile = linkExecutable.getBinaryFile();
+    }
+    else {
+      try {
+        Object linkedFile = linkExecutable.getClass().getMethod("getLinkedFile").invoke(linkExecutable);
+        if (linkedFile instanceof RegularFileProperty) {
+          binaryFile = (RegularFileProperty)linkedFile;
+        }
+      }
+      catch (Exception e) {
+        //noinspection CallToPrintStackTrace
+        e.printStackTrace();
+      }
+    }
+    executableFile = binaryFile != null ? binaryFile.getAsFile().getOrNull() : null;
+    return executableFile;
   }
 
   private static void addSourceFolders(final CppProjectImpl cppProject, CppComponent cppComponent) {
