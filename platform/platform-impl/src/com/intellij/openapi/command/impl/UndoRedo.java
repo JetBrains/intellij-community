@@ -27,6 +27,9 @@ abstract class UndoRedo {
   protected final FileEditor myEditor;
   protected final UndoableGroup myUndoableGroup;
 
+  //prevent from reentrancy when falling back to global undo stack
+  private boolean myIsDelegatingToGlobalUndo = false;
+
   //public static void execute(UndoManagerImpl manager, FileEditor editor, boolean isUndo) {
   //  do {
   //    UndoRedo undoOrRedo = isUndo ? new Undo(manager, editor) : new Redo(manager, editor);
@@ -88,16 +91,9 @@ abstract class UndoRedo {
 
     Set<DocumentReference> clashing = getStackHolder().collectClashingActions(myUndoableGroup);
     if (!clashing.isEmpty()) {
-      UndoableGroup globalUndoableGroup = getStackHolder().findGlobalUndoableGroup(myUndoableGroup);
-      if (globalUndoableGroup != null && myUndoableGroup != globalUndoableGroup) {
-        if(isRedo())
-          myManager.redo(null);
-        else
-          myManager.undo(null);
+      if (!tryFallbackToGlobalUndo())
+        reportCannotUndo(CommonBundle.message("cannot.undo.error.other.affected.files.changed.message"), clashing);
 
-        return false;
-      }
-      reportCannotUndo(CommonBundle.message("cannot.undo.error.other.affected.files.changed.message"), clashing);
       return false;
     }
 
@@ -145,6 +141,33 @@ abstract class UndoRedo {
     restore(getAfterState(), false);
 
     return true;
+  }
+
+  private boolean tryFallbackToGlobalUndo() {
+    UndoableGroup globalUndoableGroup = getStackHolder().findGlobalUndoableGroup(myUndoableGroup);
+    if (globalUndoableGroup != null) {
+      if (myIsDelegatingToGlobalUndo) {
+        return false;
+      }
+
+      try {
+        myIsDelegatingToGlobalUndo = true;
+
+        if (isRedo()) {
+          myManager.redo(null);
+        }
+        else {
+          myManager.undo(null);
+        }
+      }
+      finally {
+        myIsDelegatingToGlobalUndo = false;
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   protected abstract boolean isRedo();
