@@ -188,91 +188,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     List<GitRepository> repositories = manager.sortByDependency(getRepositoriesFromRoots(manager, sortedChanges.keySet()));
     for (GitRepository repository : repositories) {
-      VirtualFile root = repository.getRoot();
-      File messageFile;
-      try {
-        messageFile = createCommitMessageFile(myProject, root, message);
-      }
-      catch (IOException ex) {
-        //noinspection ThrowableInstanceNeverThrown
-        exceptions.add(new VcsException("Creation of commit message file failed", ex));
-        continue;
-      }
-
-      try {
-        // Stage partial changes
-        Collection<Change> rootChanges = sortedChanges.get(root);
-        Pair<Runnable, List<Change>> partialAddResult = addPartialChangesToIndex(repository, rootChanges);
-        Runnable callback = partialAddResult.first;
-        Set<Change> partialChanges = newHashSet(partialAddResult.second);
-
-        Set<FilePath> added = new HashSet<>();
-        Set<FilePath> removed = new HashSet<>();
-        final Set<Change> caseOnlyRenames = new HashSet<>();
-        for (Change change : rootChanges) {
-          if (partialChanges.contains(change)) continue;
-
-          switch (change.getType()) {
-            case NEW:
-            case MODIFICATION:
-              added.add(change.getAfterRevision().getFile());
-              break;
-            case DELETED:
-              removed.add(change.getBeforeRevision().getFile());
-              break;
-            case MOVED:
-              FilePath afterPath = change.getAfterRevision().getFile();
-              FilePath beforePath = change.getBeforeRevision().getFile();
-              if (!SystemInfo.isFileSystemCaseSensitive && isCaseOnlyChange(beforePath.getPath(), afterPath.getPath())) {
-                caseOnlyRenames.add(change);
-              }
-              else {
-                added.add(afterPath);
-                removed.add(beforePath);
-              }
-              break;
-            default:
-              throw new IllegalStateException("Unknown change type: " + change.getType());
-          }
-        }
-
-        if (!caseOnlyRenames.isEmpty() || !partialChanges.isEmpty()) {
-          List<VcsException> exs = commitUsingIndex(myProject, root, caseOnlyRenames, partialChanges, added, removed, messageFile);
-          exceptions.addAll(exs);
-
-          if (exceptions.isEmpty()) {
-            callback.run();
-          }
-        }
-        else {
-          try {
-            Set<FilePath> files = new HashSet<>();
-            files.addAll(added);
-            files.addAll(removed);
-            commit(myProject, root, files, messageFile);
-          }
-          catch (VcsException ex) {
-            PartialOperation partialOperation = isMergeCommit(ex);
-            if (partialOperation == PartialOperation.NONE) {
-              throw ex;
-            }
-            if (!mergeCommit(myProject, root, added, removed, messageFile, exceptions, partialOperation)) {
-              throw ex;
-            }
-          }
-        }
-
-        manager.updateRepository(root);
-      }
-      catch (VcsException e) {
-        exceptions.add(e);
-      }
-      finally {
-        if (!messageFile.delete()) {
-          LOG.warn("Failed to remove temporary file: " + messageFile);
-        }
-      }
+      Collection<Change> rootChanges = sortedChanges.get(repository.getRoot());
+      exceptions.addAll(commitRepository(repository, rootChanges, message));
     }
+
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
       ModalityState modality = ModalityState.defaultModalityState();
       TransactionGuard.getInstance().assertWriteSafeContext(modality);
@@ -282,6 +201,96 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         () -> new GitPushAfterCommitDialog(myProject, preselectedRepositories,
                                            GitBranchUtil.getCurrentRepository(myProject)).showOrPush(),
         modality, myProject.getDisposed());
+    }
+    return exceptions;
+  }
+
+  @NotNull
+  private List<VcsException> commitRepository(@NotNull GitRepository repository,
+                                              @NotNull Collection<Change> rootChanges,
+                                              @NotNull String message) {
+    List<VcsException> exceptions = new ArrayList<>();
+
+    VirtualFile root = repository.getRoot();
+    File messageFile;
+    try {
+      messageFile = createCommitMessageFile(myProject, root, message);
+    }
+    catch (IOException ex) {
+      return Collections.singletonList(new VcsException("Creation of commit message file failed", ex));
+    }
+
+    try {
+      // Stage partial changes
+      Pair<Runnable, List<Change>> partialAddResult = addPartialChangesToIndex(repository, rootChanges);
+      Runnable callback = partialAddResult.first;
+      Set<Change> partialChanges = newHashSet(partialAddResult.second);
+
+      Set<FilePath> added = new HashSet<>();
+      Set<FilePath> removed = new HashSet<>();
+      final Set<Change> caseOnlyRenames = new HashSet<>();
+      for (Change change : rootChanges) {
+        if (partialChanges.contains(change)) continue;
+
+        switch (change.getType()) {
+          case NEW:
+          case MODIFICATION:
+            added.add(change.getAfterRevision().getFile());
+            break;
+          case DELETED:
+            removed.add(change.getBeforeRevision().getFile());
+            break;
+          case MOVED:
+            FilePath afterPath = change.getAfterRevision().getFile();
+            FilePath beforePath = change.getBeforeRevision().getFile();
+            if (!SystemInfo.isFileSystemCaseSensitive && isCaseOnlyChange(beforePath.getPath(), afterPath.getPath())) {
+              caseOnlyRenames.add(change);
+            }
+            else {
+              added.add(afterPath);
+              removed.add(beforePath);
+            }
+            break;
+          default:
+            throw new IllegalStateException("Unknown change type: " + change.getType());
+        }
+      }
+
+      if (!caseOnlyRenames.isEmpty() || !partialChanges.isEmpty()) {
+        List<VcsException> exs = commitUsingIndex(myProject, root, caseOnlyRenames, partialChanges, added, removed, messageFile);
+        exceptions.addAll(exs);
+
+        if (exceptions.isEmpty()) {
+          callback.run();
+        }
+      }
+      else {
+        try {
+          Set<FilePath> files = new HashSet<>();
+          files.addAll(added);
+          files.addAll(removed);
+          commit(myProject, root, files, messageFile);
+        }
+        catch (VcsException ex) {
+          PartialOperation partialOperation = isMergeCommit(ex);
+          if (partialOperation == PartialOperation.NONE) {
+            throw ex;
+          }
+          if (!mergeCommit(myProject, root, added, removed, messageFile, exceptions, partialOperation)) {
+            throw ex;
+          }
+        }
+      }
+
+      getRepositoryManager(myProject).updateRepository(root);
+    }
+    catch (VcsException e) {
+      exceptions.add(e);
+    }
+    finally {
+      if (!messageFile.delete()) {
+        LOG.warn("Failed to remove temporary file: " + messageFile);
+      }
     }
     return exceptions;
   }
