@@ -37,6 +37,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 /**
  * @author nik
@@ -343,6 +344,7 @@ class CompilationContextImpl implements CompilationContext {
     return enumerator.classes().roots.collect { it.absolutePath }
   }
 
+  private static final AtomicLong totalSizeOfProducedArtifacts = new AtomicLong()
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     def file = new File(artifactPath)
@@ -352,6 +354,32 @@ class CompilationContextImpl implements CompilationContext {
       messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
       return
     }
+
+    if (file.isFile()) {
+      //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
+      def fileSize = file.size()
+      if (fileSize > 1000000) {
+        def producedSize = totalSizeOfProducedArtifacts.addAndGet(fileSize)
+        def willBePublishedWhenBuildFinishes = FileUtil.isAncestor(artifactsDir, file, true)
+
+        long oneGb = 1024L * 1024 * 1024
+        long requiredAdditionalSpace = oneGb * 6
+        long requiredSpaceForArtifacts = oneGb * 9
+        long availableSpace = file.freeSpace
+        //heuristics: a build publishes at most 9Gb of artifacts and requires some additional space for compiled classes, dependencies, temp files, etc.
+        // So we'll publish an artifact earlier only if there will be enough space for its copy.
+        def skipPublishing = willBePublishedWhenBuildFinishes && availableSpace < (requiredSpaceForArtifacts - producedSize) + requiredAdditionalSpace + fileSize
+        messages.debug("Checking free space before publishing $artifactPath (${StringUtil.formatFileSize(fileSize)}): ")
+        messages.debug(" total produced: ${StringUtil.formatFileSize(producedSize)}")
+        messages.debug(" available space: ${StringUtil.formatFileSize(availableSpace)}")
+        messages.debug(" ${skipPublishing ? "will be" : "won't be"} skipped")
+        if (skipPublishing) {
+          messages.info("Artifact $artifactPath won't be published early to avoid caching on agent (workaround for TW-54541)")
+          return
+        }
+      }
+    }
+
     def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
 
     def targetDirectoryPath = ""
