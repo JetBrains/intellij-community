@@ -137,6 +137,16 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   }
 
   @Override
+  public void addElement(LookupElement element,
+                         CompletionSorter sorter,
+                         PrefixMatcher prefixMatcher,
+                         LookupElementPresentation presentation) {
+    registerMatcher(element, prefixMatcher);
+    associateSorter(element, (CompletionSorterImpl)sorter);
+    addElement(element, presentation);
+  }
+
+  @Override
   public void addElement(LookupElement element, LookupElementPresentation presentation) {
     StatisticsWeigher.clearBaseStatisticsInfo(element);
 

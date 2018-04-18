@@ -17,7 +17,10 @@ public interface CompletionLookupArranger {
    * Adds an element to be arranged.
    * @param presentation The presentation of the element (rendered with {@link LookupElement#renderElement(LookupElementPresentation)}
    */
-  void addElement(LookupElement element, LookupElementPresentation presentation);
+  void addElement(LookupElement element,
+                  CompletionSorter sorter,
+                  PrefixMatcher prefixMatcher,
+                  LookupElementPresentation presentation);
 
   /**
    * Returns the items in the appropriate order and the initial selection.
