@@ -129,7 +129,7 @@ class SvnBranchConfigurationManager(private val myProject: Project,
     }
 
     for (branchLocation in persistedConfiguration.branchUrls.mapNotNull { addUserInfo(it, false, userInfo) }) {
-      val storedBranches = myStorage[branchLocation.toString()]?.sorted() ?: mutableListOf()
+      val storedBranches = myStorage[branchLocation]?.sorted() ?: mutableListOf()
 
       result.addBranches(branchLocation,
                          InfoStorage(storedBranches, if (!storedBranches.isEmpty()) InfoReliability.setByUser else InfoReliability.empty))
