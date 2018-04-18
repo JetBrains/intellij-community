@@ -29,7 +29,6 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -118,9 +117,6 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
       public void onBeforeBrowseStarted() {
         myModelSnapshot = myHelper.getModel();
         myFindPopupPanel.getCanClose().set(false);
-        if (!Registry.is("ide.find.as.popup.show.dialogs.above.popup")) {
-          myFindPopupPanel.setWindowVisible(false);
-        }
       }
 
       @Override
@@ -130,7 +126,6 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
           if (scope != null) {
             myModelSnapshot.setCustomScope(scope);
           }
-          myFindPopupPanel.setWindowVisible(true);
           myFindPopupPanel.getCanClose().set(true);
         }
       }

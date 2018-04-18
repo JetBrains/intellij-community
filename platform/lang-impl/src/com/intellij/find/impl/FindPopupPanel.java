@@ -306,13 +306,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     return myCanClose;
   }
 
-  public void setWindowVisible(boolean visible) {
-    Window window = UIUtil.getWindow(this);
-    if (window != null) {
-      window.setVisible(visible);
-    }
-  }
-
   private void initComponents() {
     myTitleLabel = new JBLabel(FindBundle.message("find.in.path.dialog.title"), UIUtil.ComponentStyle.REGULAR);
     myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(Font.BOLD));
@@ -498,18 +491,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.addActionListener(e -> {
       boolean okToReplaceAll = myResultsPreviewTable.getRowCount() < 2;
       if (!okToReplaceAll) {
-        try {
-          if (!Registry.is("ide.find.as.popup.show.dialogs.above.popup")) {
-            setWindowVisible(false);
-          }
-          okToReplaceAll = ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
-            myUsagesCount,
-            getStringToFind(),
-            myFilesCount,
-            getStringToReplace());
-        } finally {
-          setWindowVisible(true);
-        }
+        okToReplaceAll = ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
+          myUsagesCount,
+          getStringToFind(),
+          myFilesCount,
+          getStringToReplace());
       }
       if (okToReplaceAll) {
         doOK(false);
@@ -851,21 +837,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
     else {
       String message = validationInfo.message;
-      try {
-        Component parent = this;
-        if (!Registry.is("ide.find.as.popup.show.dialogs.above.popup")) {
-          parent = UIUtil.findUltimateParent(this);
-          setWindowVisible(false);
-        }
-        Messages.showMessageDialog(
-          parent,
-          message,
-          CommonBundle.getErrorTitle(),
-          Messages.getErrorIcon()
-        );
-      } finally {
-        setWindowVisible(true);
-      }
+      Messages.showMessageDialog(
+        this,
+        message,
+        CommonBundle.getErrorTitle(),
+        Messages.getErrorIcon()
+      );
       return;
     }
     myIsPinned.set(false);
