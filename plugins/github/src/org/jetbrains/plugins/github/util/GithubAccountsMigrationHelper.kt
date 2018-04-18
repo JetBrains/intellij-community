@@ -29,7 +29,7 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
 
     if (accountManager.accounts.isEmpty() && login != null && authType != null) {
       when (authType) {
-        GithubAuthData.AuthType.BASIC -> {
+        /*GithubAuthData.AuthType.BASIC -> {
           passwordSafe.getPassword(GithubSettings::class.java, GITHUB_SETTINGS_PASSWORD_KEY)?.let { password ->
             object : Task.Backgroundable(project, "Acquiring Github Token") {
               private lateinit var token: String
@@ -50,7 +50,7 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
               }
             }.queue()
           }
-        }
+        }*/
         GithubAuthData.AuthType.TOKEN -> {
           passwordSafe.getPassword(GithubSettings::class.java, GITHUB_SETTINGS_PASSWORD_KEY)?.let {
             addAccount(login, host, it)
