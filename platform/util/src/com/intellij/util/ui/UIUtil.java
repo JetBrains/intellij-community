@@ -22,10 +22,7 @@ import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import sun.java2d.SunGraphicsEnvironment;
 
 import javax.sound.sampled.AudioInputStream;
@@ -58,10 +55,7 @@ import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
-import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ImageObserver;
-import java.awt.image.PixelGrabber;
+import java.awt.image.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
@@ -206,11 +200,129 @@ public class UIUtil {
     drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
-  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 70);
-  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 20);
+  private static final RGBImageFilter DEFAULT_GRAY_FILTER = new MyGrayFilter(
+    Registry.get("ide.grayfilter.default.brightness").asInteger(),
+    Registry.get("ide.grayfilter.default.contrast").asInteger(),
+    Registry.get("ide.grayfilter.default.alpha").asInteger()
+  );
+  private static final RGBImageFilter DARCULA_GRAY_FILTER = new MyGrayFilter(
+    Registry.get("ide.grayfilter.darcula.brightness").asInteger(),
+    Registry.get("ide.grayfilter.darcula.contrast").asInteger(),
+    Registry.get("ide.grayfilter.darcula.alpha").asInteger()
+  );
 
-  public static GrayFilter getGrayFilter() {
+  public static RGBImageFilter getGrayFilter() {
     return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
+  }
+
+  @ApiStatus.Experimental
+  public static void setGrayFilterProperty(String prop, int value) {
+    MyGrayFilter filter = (MyGrayFilter)getGrayFilter();
+    if ("brightness".equals(prop)) {
+      filter.setBrightness(value);
+    }
+    else if ("contrast".equals(prop)) {
+      filter.setContrast(value);
+    }
+    else if ("alpha".equals(prop)) {
+      filter.setAlpha(value);
+    }
+    else {
+      return;
+    }
+    String key = "ide.grayfilter." + (isUnderDarcula() ? "darcula." : "default.") + prop;
+    Registry.get(key).setValue(value);
+  }
+
+  @ApiStatus.Experimental
+  public static int getGrayFilterProperty(String prop) {
+    MyGrayFilter filter = (MyGrayFilter)getGrayFilter();
+    if ("brightness".equals(prop)) {
+      return filter.getBrightness();
+    }
+    else if ("contrast".equals(prop)) {
+      return filter.getContrast();
+    }
+    else if ("alpha".equals(prop)) {
+      return filter.getAlpha();
+    }
+    throw new IllegalArgumentException("wrong property: " + prop);
+  }
+
+  private static class MyGrayFilter extends RGBImageFilter {
+    private float brightness;
+    private float contrast;
+    private int alpha;
+
+    private int origContrast;
+    private int origBrightness;
+
+    /**
+     * @param brightness in range [-100..100] where 0 has no effect
+     * @param contrast in range [-100..100] where 0 has no effect
+     * @param alpha in range [0..100] where 0 is transparent, 100 has no effect
+     */
+    private MyGrayFilter(int brightness, int contrast, int alpha) {
+      setBrightness(brightness);
+      setContrast(contrast);
+      setAlpha(alpha);
+    }
+
+    private void setBrightness(int brightness) {
+      origBrightness = Math.max(-100, Math.min(100, brightness));
+      this.brightness = (float)(Math.pow(origBrightness, 3) / (100f * 100f)); // cubic in [0..100]
+    }
+
+    private int getBrightness() {
+      return origBrightness;
+    }
+
+    private void setContrast(int contrast) {
+      origContrast = Math.max(-100, Math.min(100, contrast));
+      this.contrast = origContrast / 100f;
+    }
+
+    private int getContrast() {
+      return origContrast;
+    }
+
+    private void setAlpha(int alpha) {
+      this.alpha = Math.max(0, Math.min(100, alpha));
+    }
+
+    private int getAlpha() {
+      return alpha;
+    }
+
+    @Override
+    @SuppressWarnings("AssignmentReplaceableWithOperatorAssignment")
+    public int filterRGB(int x, int y, int rgb) {
+      // Use NTSC conversion formula.
+      int gray = (int)((0.30 * ((rgb >> 16) & 0xff) +
+                        0.59 * ((rgb >> 8) & 0xff) +
+                        0.11 * (rgb & 0xff)));
+
+      if (brightness >= 0) {
+        gray = (int)((gray + brightness * 255) / (1 + brightness));
+      }
+      else {
+        gray = (int)(gray / (1 - brightness));
+      }
+
+      if (contrast >= 0) {
+        if (gray >= 127)
+          gray = (int)(gray + (255 - gray) * contrast);
+        else
+          gray = (int)(gray - gray * contrast);
+      }
+      else {
+        gray = (int)(127 + (gray - 127) * (contrast + 1));
+      }
+
+      int a = ((rgb >> 24) & 0xff) * alpha / 100;
+
+      return (a << 24) | (gray << 16) | (gray << 8) | gray;
+    }
   }
 
   /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */

@@ -53,6 +53,8 @@ public final class IconLoader {
 
   private static ImageFilter IMAGE_FILTER;
 
+  private volatile static int clearCacheCounter;
+
   static {
     installPathPatcher(new DeprecatedDuplicatesIconPathPatcher());
   }
@@ -91,9 +93,10 @@ public final class IconLoader {
     }
   }
 
-  private static void clearCache() {
+  public static void clearCache() {
     ourIconsCache.clear();
     ourIcon2DisabledIcon.clear();
+    clearCacheCounter++;
   }
 
   //TODO[kb] support iconsets
@@ -412,6 +415,7 @@ public final class IconLoader {
     private volatile int numberOfPatchers = ourPatchers.size();
     private final boolean svg;
     private final boolean useCacheOnLoad;
+    private int myClearCacheCounter = clearCacheCounter;
 
     private ImageFilter[] myFilters;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
@@ -477,6 +481,7 @@ public final class IconLoader {
     private synchronized ImageIcon getRealIcon(@Nullable ScaleContext ctx) {
       if (!isValid()) {
         if (isLoaderDisabled()) return EMPTY_ICON;
+        myClearCacheCounter = clearCacheCounter;
         myRealIcon = null;
         dark = USE_DARK_ICONS;
         setGlobalFilter(IMAGE_FILTER);
@@ -513,7 +518,10 @@ public final class IconLoader {
     }
 
     private boolean isValid() {
-      return dark == USE_DARK_ICONS && getGlobalFilter() == IMAGE_FILTER && numberOfPatchers == ourPatchers.size();
+      return dark == USE_DARK_ICONS &&
+             getGlobalFilter() == IMAGE_FILTER &&
+             numberOfPatchers == ourPatchers.size() &&
+             myClearCacheCounter == clearCacheCounter;
     }
 
     @Override
