@@ -450,6 +450,7 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-ide/intellij.cidr.ide.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-ide/intellij.cidr.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/clion/intellij.clion.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/clion/intellij.clion.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cmake-psi/intellij.cmake.psi.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cmake-psi/intellij.cmake.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/intellij.commander.iml" filepath="$PROJECT_DIR$/plugins/commander/intellij.commander.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/copyright/intellij.copyright.iml" filepath="$PROJECT_DIR$/plugins/copyright/intellij.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cucumber-jvm-formatter/intellij.cucumber.jvmFormatter.iml" filepath="$PROJECT_DIR$/plugins/cucumber-jvm-formatter/intellij.cucumber.jvmFormatter.iml" />

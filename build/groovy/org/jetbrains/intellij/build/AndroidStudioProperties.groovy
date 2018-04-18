@@ -65,6 +65,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                     "intellij.cidr.util",
                                                     "intellij.clion",
                                                     "intellij.c.doxygen",
+                                                    "intellij.cmake.psi",
                                                   ] +
                                                   ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.java.structuralSearch", "intellij.java.typeMigration", "intellij.platform.main"] -
                                                   ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
