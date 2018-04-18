@@ -2045,6 +2045,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="BoxingBoxedValue" bundle="com.siyeh.InspectionGadgetsBundle" key="boxing.boxed.value.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.BoxingBoxedValueInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ListRemoveInLoop" bundle="com.siyeh.InspectionGadgetsBundle" key="inspection.list.remove.in.loop.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.siyeh.ig.performance.ListRemoveInLoopInspection"/>
 
     <!--group.names.portability.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="HardcodedFileSeparator" shortName="HardcodedFileSeparators" bundle="com.siyeh.InspectionGadgetsBundle"
