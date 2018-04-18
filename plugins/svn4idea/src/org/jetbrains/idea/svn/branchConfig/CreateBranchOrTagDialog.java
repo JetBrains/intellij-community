@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
@@ -71,6 +72,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   private SvnBranchConfigurationNew myBranchConfiguration;
   private final VirtualFile mySrcVirtualFile;
   private final Url myWcRootUrl;
+  private Target mySource;
+  private Url myDestination;
 
   public CreateBranchOrTagDialog(@NotNull SvnVcs vcs, @NotNull File file) throws VcsException {
     super(vcs.getProject(), true);
@@ -178,27 +181,17 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     if (myBranchConfiguration == null) {
       return;
     }
-    String relativeUrl;
-    if (myWorkingCopyRadioButton.isSelected()) {
-      relativeUrl = myBranchConfiguration.getRelativeUrl(mySrcURL);
-    }
-    else {
-      Url url = getRepositoryFieldUrl();
-      relativeUrl = url != null ? myBranchConfiguration.getRelativeUrl(url) : null;
-    }
-
+    Url url = myWorkingCopyRadioButton.isSelected() ? mySrcURL : getRepositoryFieldUrl();
+    String relativeUrl = url != null ? myBranchConfiguration.getRelativeUrl(url) : null;
     Url selectedBranch = myBranchTagBaseModel.getSelected();
+
     if (relativeUrl != null && selectedBranch != null) {
-      myToURLText.setText(selectedBranch.toString() + "/" + myBranchTextField.getText() + relativeUrl);
+      try {
+        myToURLText.setText(selectedBranch.appendPath(myBranchTextField.getText(), false).appendPath(relativeUrl, false).toString());
+      }
+      catch (SvnBindException ignored) {
+      }
     }
-  }
-
-  private String getToURLTextFromBranch() {
-    Url selectedBranch = myBranchTagBaseModel.getSelected();
-    if (selectedBranch != null) {
-      return selectedBranch + "/" + myBranchTextField.getText();
-    }
-    return null;
   }
 
   private void updateControls() {
@@ -258,13 +251,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
-  public String getToURL() {
-    if (myBranchOrTagRadioButton.isSelected()) {
-      return getToURLTextFromBranch();
-    }
-    return myToURLText.getText();
-  }
-
   protected JComponent createCenterPanel() {
     return myTopPanel;
   }
@@ -292,7 +278,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   @Nullable
   private ValidationInfo validateSource() {
     if (myRepositoryRadioButton.isSelected()) {
-      if (getRepositoryFieldUrl() == null) {
+      Url url = getRepositoryFieldUrl();
+      if (url == null) {
         return new ValidationInfo("Invalid repository location", myRepositoryField.getTextField());
       }
 
@@ -300,6 +287,11 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       if (!revision.isValid() || revision.isLocal()) {
         return new ValidationInfo(message("create.branch.invalid.revision.error"), myRevisionPanel.getRevisionTextField());
       }
+
+      mySource = Target.on(url, revision);
+    }
+    else {
+      mySource = Target.on(getSourceFile(), getRevision());
     }
 
     return null;
@@ -318,7 +310,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
 
       try {
-        branchLocation.appendPath(myBranchTextField.getText(), false);
+        myDestination = branchLocation.appendPath(myBranchTextField.getText(), false);
       }
       catch (SvnBindException e) {
         return new ValidationInfo("Invalid branch name", myBranchTextField);
@@ -326,7 +318,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
     else {
       try {
-        createUrl(myToURLText.getText());
+        myDestination = createUrl(myToURLText.getText());
       }
       catch (SvnBindException e) {
         return new ValidationInfo("Invalid branch url", myToURLText.getTextField());
@@ -340,15 +332,22 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return myWorkingCopyRadioButton.isSelected();
   }
 
-  public String getCopyFromPath() {
-    return myWorkingCopyField.getText();
-  }
-
-  public String getCopyFromUrl() {
-    return myRepositoryField.getText();
-  }
-
   public boolean isSwitchOnCreate() {
     return mySwitchOnCreate.isSelected();
+  }
+
+  @Nullable
+  public Target getSource() {
+    return mySource;
+  }
+
+  @NotNull
+  public File getSourceFile() {
+    return new File(myWorkingCopyField.getText());
+  }
+
+  @Nullable
+  public Url getDestination() {
+    return myDestination;
   }
 }
