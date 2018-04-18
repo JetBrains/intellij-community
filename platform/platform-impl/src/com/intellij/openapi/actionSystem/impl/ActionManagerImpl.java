@@ -506,7 +506,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Override
   public String getId(@NotNull AnAction action) {
-    LOG.assertTrue(!(action instanceof ActionStub));
+    if (action instanceof ActionStub) {
+      return ((ActionStub) action).getId();
+    }
     synchronized (myLock) {
       return myAction2Id.get(action);
     }
