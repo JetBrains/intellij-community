@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Contract
 import java.awt.Desktop
 import java.io.File
 import java.io.IOException
+import java.net.URI
 import java.util.*
 
 open class BrowserLauncherAppless : BrowserLauncher() {
@@ -99,6 +100,16 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   private fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
     val url = signUrl(_url.trim { it <= ' ' })
+
+    if (url.startsWith("mailto:") && Desktop.getDesktop().isSupported(Desktop.Action.MAIL)) {
+      try {
+        Desktop.getDesktop().mail(URI(url))
+      }
+      catch (e: Exception) {
+        LOG.warn("failed to open: $url", e)
+      }
+      return
+    }
 
     if (!BrowserUtil.isAbsoluteURL(url)) {
       val file = File(url)
