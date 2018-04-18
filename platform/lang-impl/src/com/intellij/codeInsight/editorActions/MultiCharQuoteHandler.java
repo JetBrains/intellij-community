@@ -30,9 +30,7 @@ public interface MultiCharQuoteHandler extends QuoteHandler {
   CharSequence getClosingQuote(HighlighterIterator iterator, int offset);
 
   /**
-   * Should insert <code>closingQuote</code> in the document. 
-   * 
-   * May select the inserted quote
+   * Should insert <code>closingQuote</code> returned from {@link #getClosingQuote(HighlighterIterator, int)} in the document. 
    */
   default void insertClosingQuote(Editor editor, int offset, CharSequence closingQuote) {
     editor.getDocument().insertString(offset, closingQuote);
