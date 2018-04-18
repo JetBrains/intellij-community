@@ -1,7 +1,7 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import java.nio.file.Files
 import java.nio.file.Paths
 
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 repositories {
   mavenCentral()
   if (project.ext.inJetBrainsNetwork) {
@@ -62,7 +62,7 @@ task setupTestDiscoveryDeps {
     testDiscoveryDeps.mkdirs()
     configurations.detachedConfiguration(
       (dependencies
-        .create('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.46') as ModuleDependency)
+        .create('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.31') as ModuleDependency)
         .exclude(group: 'org.codehaus.groovy', module: 'groovy-all')
     ).files.each { from ->
       def into = Paths.get("$dir/$from.name")
