@@ -200,13 +200,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                   if (value instanceof XLineBreakpointType.XLineBreakpointVariant) {
                     TextRange range = ((XLineBreakpointType.XLineBreakpointVariant)value).getHighlightRange();
                     TextRange lineRange = DocumentUtil.getLineTextRange(editor.getDocument(), line);
-                    if (range != null) {
-                      range = range.intersection(lineRange);
-                    }
-                    else {
+                    if (range == null) {
                       range = lineRange;
                     }
-                    if (range != null && !range.isEmpty()) {
+                    if (!range.isEmpty() && range.intersects(lineRange)) {
                       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
                       TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
                       myHighlighter = editor.getMarkupModel().addRangeHighlighter(
