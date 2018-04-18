@@ -15,10 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.json.psi.JsonArray;
-import com.intellij.json.psi.JsonObject;
-import com.intellij.json.psi.JsonProperty;
-import com.intellij.json.psi.JsonValue;
+import com.intellij.json.psi.*;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -135,7 +132,7 @@ public class JsonSchemaResolver {
   @Nullable
   private static JsonValue getSchemaNavigationItem(@Nullable final JsonSchemaObject schema) {
     if (schema == null) return null;
-    final JsonObject jsonObject = schema.getJsonObject();
+    final JsonContainer jsonObject = schema.getJsonObject();
     if (jsonObject.getParent() instanceof JsonProperty) {
       return ((JsonProperty)jsonObject.getParent()).getNameElement();
     }

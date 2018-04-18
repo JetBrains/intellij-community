@@ -779,4 +779,33 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(schema, "{\"type\": <warning>\"doog\"</warning>}");
     doTest(schema, "{\"type\": <warning>\"ko\"</warning>}");
   }
+
+  public void testArrayRefs() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"myDefs\": {\n" +
+                                      "    \"myArray\": [\n" +
+                                      "      {\n" +
+                                      "        \"type\": \"number\"\n" +
+                                      "      },\n" +
+                                      "      {\n" +
+                                      "        \"type\": \"string\"\n" +
+                                      "      }\n" +
+                                      "    ]\n" +
+                                      "  },\n" +
+                                      "  \"type\": \"array\",\n" +
+                                      "  \"items\": [\n" +
+                                      "    {\n" +
+                                      "      \"$ref\": \"#/myDefs/myArray/0\"\n" +
+                                      "    },\n" +
+                                      "    {\n" +
+                                      "      \"$ref\": \"#/myDefs/myArray/1\"\n" +
+                                      "    }\n" +
+                                      "  ]\n" +
+                                      "}";
+
+    doTest(schema, "[1, <warning>2</warning>]");
+    doTest(schema, "[<warning>\"1\"</warning>, <warning>2</warning>]");
+    doTest(schema, "[<warning>\"1\"</warning>, \"2\"]");
+    doTest(schema, "[1, \"2\"]");
+  }
 }

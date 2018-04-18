@@ -76,13 +76,25 @@ public class JsonSchemaReader {
     while (!myQueue.isEmpty()) {
       final JsonSchemaObject currentSchema = myQueue.removeFirst();
 
-      final JsonObject jsonObject = currentSchema.getJsonObject();
-      final List<JsonProperty> list = jsonObject.getPropertyList();
-      for (JsonProperty property : list) {
-        if (StringUtil.isEmptyOrSpaces(property.getName()) || property.getValue() == null) continue;
-        final MyReader reader = READERS_MAP.get(property.getName());
-        if (reader != null) reader.read(property.getValue(), currentSchema, myQueue);
-        else readSingleDefinition(property.getName(), property.getValue(), currentSchema);
+      final JsonContainer jsonObject = currentSchema.getJsonObject();
+      if (jsonObject instanceof JsonObject) {
+        final List<JsonProperty> list = ((JsonObject)jsonObject).getPropertyList();
+        for (JsonProperty property : list) {
+          if (StringUtil.isEmptyOrSpaces(property.getName()) || property.getValue() == null) continue;
+          final MyReader reader = READERS_MAP.get(property.getName());
+          if (reader != null) {
+            reader.read(property.getValue(), currentSchema, myQueue);
+          }
+          else {
+            readSingleDefinition(property.getName(), property.getValue(), currentSchema);
+          }
+        }
+      }
+      else if (jsonObject instanceof JsonArray) {
+        List<JsonValue> values = ((JsonArray)jsonObject).getValueList();
+        for (int i = 0; i < values.size(); i++) {
+          readSingleDefinition(String.valueOf(i), values.get(i), currentSchema);
+        }
       }
 
       if (currentSchema.getId() != null) myIds.put(currentSchema.getId(), currentSchema);
@@ -95,8 +107,8 @@ public class JsonSchemaReader {
   }
 
   private void readSingleDefinition(@NotNull String name, @NotNull JsonValue value, @NotNull JsonSchemaObject schema) {
-    if (value instanceof JsonObject) {
-      final JsonSchemaObject defined = new JsonSchemaObject((JsonObject)value);
+    if (value instanceof JsonContainer) {
+      final JsonSchemaObject defined = new JsonSchemaObject((JsonContainer)value);
       myQueue.add(defined);
       Map<String, JsonSchemaObject> definitions = schema.getDefinitionsMap();
       if (definitions == null) schema.setDefinitionsMap(definitions = new HashMap<>());

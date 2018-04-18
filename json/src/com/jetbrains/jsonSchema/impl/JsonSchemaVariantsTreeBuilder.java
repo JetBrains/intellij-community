@@ -15,6 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.psi.JsonContainer;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.diagnostic.Logger;
@@ -95,7 +96,7 @@ public class JsonSchemaVariantsTreeBuilder {
   }
 
   private static void expandChildSchema(@NotNull JsonSchemaTreeNode node, @NotNull JsonSchemaObject childSchema, @NotNull JsonSchemaService service) {
-    final JsonObject element = childSchema.getJsonObject();
+    final JsonContainer element = childSchema.getJsonObject();
     if (interestingSchema(childSchema)) {
       final Operation operation =
         CachedValuesManager.getManager(element.getProject())
@@ -115,9 +116,18 @@ public class JsonSchemaVariantsTreeBuilder {
 
   public static List<Step> buildSteps(@NotNull String nameInSchema) {
     final List<String> chain = StringUtil.split(JsonSchemaService.normalizeId(nameInSchema).replace("\\", "/"), "/");
-    return chain.stream().filter(s -> !s.isEmpty())
-      .map(item -> Step.createPropertyStep(item))
-      .collect(Collectors.toList());
+    List<Step> steps = ContainerUtil.newArrayListWithCapacity(chain.size());
+    for (String s: chain) {
+      if (!StringUtil.isEmpty(s)) {
+        try {
+          steps.add(Step.createArrayElementStep(Integer.parseInt(s)));
+        }
+        catch (NumberFormatException e) {
+          steps.add(Step.createPropertyStep(s));
+        }
+      }
+    }
+    return steps;
   }
 
   static abstract class Operation {
@@ -132,10 +142,10 @@ public class JsonSchemaVariantsTreeBuilder {
       myChildOperations = new ArrayList<>();
     }
 
-    protected abstract void map(@NotNull Set<JsonObject> visited);
+    protected abstract void map(@NotNull Set<JsonContainer> visited);
     protected abstract void reduce();
 
-    public void doMap(@NotNull final Set<JsonObject> visited) {
+    public void doMap(@NotNull final Set<JsonContainer> visited) {
       map(visited);
       for (Operation operation : myChildOperations) {
         operation.doMap(visited);
@@ -197,7 +207,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonObject> visited) {
+    public void map(@NotNull final Set<JsonContainer> visited) {
       JsonSchemaObject current = mySourceNode;
       while (!StringUtil.isEmptyOrSpaces(current.getRef())) {
         final JsonSchemaObject definition = getSchemaFromDefinition(current, myService);
@@ -234,7 +244,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonObject> visited) {
+    public void map(@NotNull final Set<JsonContainer> visited) {
       assert mySourceNode.getAllOf() != null;
       myChildOperations.addAll(mySourceNode.getAllOf().stream()
                                            .map(sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)).collect(Collectors.toList()));
@@ -313,7 +323,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonObject> visited) {
+    public void map(@NotNull final Set<JsonContainer> visited) {
       assert mySourceNode.getOneOf() != null;
       myChildOperations.addAll(mySourceNode.getOneOf().stream()
                                            .map(sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)).collect(Collectors.toList()));
@@ -342,7 +352,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonObject> visited) {
+    public void map(@NotNull final Set<JsonContainer> visited) {
       assert mySourceNode.getAnyOf() != null;
       myChildOperations.addAll(mySourceNode.getAnyOf().stream()
                                            .map(sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)).collect(Collectors.toList()));

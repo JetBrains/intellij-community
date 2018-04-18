@@ -3,7 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonContainer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
@@ -31,7 +31,7 @@ public class JsonSchemaObject {
   @NonNls public static final String ITEMS = "items";
   @NonNls public static final String ADDITIONAL_ITEMS = "additionalItems";
   @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
-  @NotNull private final JsonObject myJsonObject;
+  @NotNull private final JsonContainer myJsonObject;
   @Nullable private Map<String, JsonSchemaObject> myDefinitionsMap;
   @NotNull private Map<String, JsonSchemaObject> myProperties;
 
@@ -94,7 +94,7 @@ public class JsonSchemaObject {
   @Nullable private JsonSchemaObject myElse;
   private boolean myShouldValidateAgainstJSType;
 
-  public JsonSchemaObject(@NotNull JsonObject object) {
+  public JsonSchemaObject(@NotNull JsonContainer object) {
     myJsonObject = object;
     myProperties = new HashMap<>();
   }
@@ -191,7 +191,7 @@ public class JsonSchemaObject {
   }
 
   @NotNull
-  public JsonObject getJsonObject() {
+  public JsonContainer getJsonObject() {
     return myJsonObject;
   }
 
@@ -640,7 +640,7 @@ public class JsonSchemaObject {
   }
 
   @Nullable
-  public Map<JsonObject, String> getInvalidPatternProperties() {
+  public Map<JsonContainer, String> getInvalidPatternProperties() {
     if (myPatternProperties != null) {
       final Map<String, String> patterns = myPatternProperties.getInvalidPatterns();
 

@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.google.common.base.Predicates;
 import com.intellij.json.JsonBundle;
+import com.intellij.json.psi.JsonContainer;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.util.Pair;
@@ -344,12 +345,12 @@ class JsonSchemaAnnotatorChecker {
         continue;
       }
 
-      final JsonObject element = prop.getJsonObject();
-      if (!element.isValid()) {
+      final JsonContainer element = prop.getJsonObject();
+      if (!(element instanceof JsonObject) || !element.isValid()) {
         continue;
       }
 
-      final JsonProperty pattern = element.findProperty("pattern");
+      final JsonProperty pattern = ((JsonObject)element).findProperty("pattern");
       if (pattern != null) {
         error(StringUtil.convertLineSeparators(patternError), pattern.getValue());
       }
@@ -357,11 +358,11 @@ class JsonSchemaAnnotatorChecker {
   }
 
   private void reportInvalidPatternProperties(JsonSchemaObject schema) {
-    final Map<JsonObject, String> invalidPatternProperties = schema.getInvalidPatternProperties();
+    final Map<JsonContainer, String> invalidPatternProperties = schema.getInvalidPatternProperties();
     if (invalidPatternProperties == null) return;
 
-    for (Map.Entry<JsonObject, String> entry : invalidPatternProperties.entrySet()) {
-      final JsonObject element = entry.getKey();
+    for (Map.Entry<JsonContainer, String> entry : invalidPatternProperties.entrySet()) {
+      final JsonContainer element = entry.getKey();
       if (element == null || !element.isValid()) continue;
       final PsiElement parent = element.getParent();
       if (parent instanceof JsonProperty) {
