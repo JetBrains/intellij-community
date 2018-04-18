@@ -118,6 +118,9 @@ inline fun Promise<*>.onError(node: Obsolescent, crossinline handler: (Throwable
   override fun accept(param: Throwable) = handler(param)
 })
 
+/**
+ * Merge results into one list.
+ */
 @JvmOverloads
 fun <T> collectResults(promises: List<Promise<T>>, ignoreErrors: Boolean = false): Promise<List<T>> {
   if (promises.isEmpty()) {
@@ -196,6 +199,9 @@ fun Promise<Any?>.toActionCallback(): ActionCallback {
 
 fun all(promises: Collection<Promise<*>>): Promise<*> = if (promises.size == 1) promises.first() else all(promises, null)
 
+/**
+ * @see collectResults
+ */
 @JvmOverloads
 fun <T: Any?> all(promises: Collection<Promise<*>>, totalResult: T, ignoreErrors: Boolean = false): Promise<T> {
   if (promises.isEmpty()) {
