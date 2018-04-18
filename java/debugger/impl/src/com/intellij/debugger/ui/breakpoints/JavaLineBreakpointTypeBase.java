@@ -19,7 +19,6 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 import org.jetbrains.java.debugger.breakpoints.JavaBreakpointFiltersPanel;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
@@ -38,13 +37,13 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     return true;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public final XBreakpointCustomPropertiesPanel<XLineBreakpoint<P>> createCustomRightPropertiesPanel(@NotNull Project project) {
     return new JavaBreakpointFiltersPanel<>(project);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public final XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<P> breakpoint, @NotNull Project project) {
     return new JavaDebuggerEditorsProvider();
