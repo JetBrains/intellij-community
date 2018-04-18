@@ -27,7 +27,7 @@ import java.util.UUID;
 * @author Eugene Zhuravlev
 */
 class AutoMakeMessageHandler extends DefaultMessageHandler {
-  private static final Key<Notification> LAST_AUTO_MAKE_NOFITICATION = Key.create("LAST_AUTO_MAKE_NOFITICATION");
+  private static final Key<Notification> LAST_AUTO_MAKE_NOTIFICATION = Key.create("LAST_AUTO_MAKE_NOTIFICATION");
   private CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status myBuildStatus;
   private final Project myProject;
   private final WolfTheProblemSolver myWolf;
@@ -178,13 +178,13 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
       if (!myProject.isDisposed()) {
         notification.notify(myProject);
       }
-      myProject.putUserData(LAST_AUTO_MAKE_NOFITICATION, notification);
+      myProject.putUserData(LAST_AUTO_MAKE_NOTIFICATION, notification);
     }
     else {
-      Notification notification = myProject.getUserData(LAST_AUTO_MAKE_NOFITICATION);
+      Notification notification = myProject.getUserData(LAST_AUTO_MAKE_NOTIFICATION);
       if (notification != null) {
         notification.expire();
-        myProject.putUserData(LAST_AUTO_MAKE_NOFITICATION, null);
+        myProject.putUserData(LAST_AUTO_MAKE_NOTIFICATION, null);
       }
     }
     if (!myProject.isDisposed()) {
