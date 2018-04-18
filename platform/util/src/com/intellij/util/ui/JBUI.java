@@ -12,7 +12,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -1418,22 +1417,22 @@ public class JBUI {
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {
-        return getColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
+        return JBColor.namedColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
       }
 
       @NotNull
       public static Color tabSelectedActiveBackground() {
-        return getColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
+        return JBColor.namedColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
       }
 
       @NotNull
       public static Color tabHoveredBackground() {
-        return getColor("ToolWindow.header.tab.hovered.background", tabSelectedBackground());
+        return JBColor.namedColor("ToolWindow.header.tab.hovered.background", tabSelectedBackground());
       }
 
       @NotNull
       public static Color tabHoveredActiveBackground() {
-        return getColor("ToolWindow.header.tab.hovered.active.background", tabSelectedActiveBackground());
+        return JBColor.namedColor("ToolWindow.header.tab.hovered.active.background", tabSelectedActiveBackground());
       }
 
       @NotNull
@@ -1453,17 +1452,17 @@ public class JBUI {
 
       @NotNull
       public static Color headerBackground() {
-        return getColor("ToolWindow.header.background", 0xECECEC);
+        return JBColor.namedColor("ToolWindow.header.background", 0xECECEC);
       }
 
       @NotNull
       public static Color headerBorderBackground() {
-        return getColor("ToolWindow.header.border.background", 0xC9C9C9);
+        return JBColor.namedColor("ToolWindow.header.border.background", 0xC9C9C9);
       }
 
       @NotNull
       public static Color headerActiveBackground() {
-        return getColor("ToolWindow.header.active.background", 0xE2E6EC);
+        return JBColor.namedColor("ToolWindow.header.active.background", 0xE2E6EC);
       }
 
       public static int tabVerticalPadding() {
@@ -1482,7 +1481,7 @@ public class JBUI {
 
       @NotNull
       public static Color hoveredIconBackground() {
-        return getColor("ToolWindow.header.closeButton.background", 0xB9B9B9);
+        return JBColor.namedColor("ToolWindow.header.closeButton.background", 0xB9B9B9);
       }
 
       @NotNull
@@ -1501,8 +1500,8 @@ public class JBUI {
     public static class Label {
       @NotNull
       public static Color foreground(boolean selected) {
-        return selected ? getColor("Label.selectedForeground", 0xFFFFFF)
-                        : getColor("Label.foreground", 0x000000);
+        return selected ? JBColor.namedColor("Label.selectedForeground", 0xFFFFFF)
+                        : JBColor.namedColor("Label.foreground", 0x000000);
       }
 
       @NotNull
@@ -1512,8 +1511,8 @@ public class JBUI {
 
       @NotNull
       public static Color disabledForeground(boolean selected) {
-        return selected ? getColor("Label.selectedDisabledForeground", 0x999999)
-                        : getColor("Label.disabledForeground", getColor("Label.disabledText", 0x999999));
+        return selected ? JBColor.namedColor("Label.selectedDisabledForeground", 0x999999)
+                        : JBColor.namedColor("Label.disabledForeground", JBColor.namedColor("Label.disabledText", 0x999999));
       }
 
       @NotNull
@@ -1525,8 +1524,8 @@ public class JBUI {
     public static class Popup {
       public static Color headerBackground(boolean active) {
         return active
-               ? getColor("Popup.Header.activeBackground", 0xe6e6e6)
-               : getColor("Popup.Header.inactiveBackground", 0xededed);
+               ? JBColor.namedColor("Popup.Header.activeBackground", 0xe6e6e6)
+               : JBColor.namedColor("Popup.Header.inactiveBackground", 0xededed);
       }
 
       public static int headerHeight() {
@@ -1535,16 +1534,16 @@ public class JBUI {
 
       public static Color borderColor(boolean active) {
         return active
-               ? getColor("Popup.Border.color", 0x808080)
-               : getColor("Popup.Border.inactiveColor", 0xaaaaaa);
+               ? JBColor.namedColor("Popup.Border.color", 0x808080)
+               : JBColor.namedColor("Popup.Border.inactiveColor", 0xaaaaaa);
       }
 
       public static Color toolbarPanelColor() {
-        return getColor("Popup.Toolbar.background", 0xf7f7f7);
+        return JBColor.namedColor("Popup.Toolbar.background", 0xf7f7f7);
       }
 
       public static Color toolbarBorderColor() {
-        return getColor("Popup.Toolbar.Border.color", 0xf7f7f7);
+        return JBColor.namedColor("Popup.Toolbar.Border.color", 0xf7f7f7);
       }
 
       public static int toolbarHeight() {
@@ -1553,24 +1552,6 @@ public class JBUI {
     }
   }
 
-  @NotNull
-  private static Color getColor(@NotNull String propertyName, int defaultColor) {
-    return getColor(propertyName, new Color(defaultColor));
-  }
-
-  @NotNull
-  private static Color getColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
-    NotNullProducer<Color> function = new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        Color color = UIManager.getColor(propertyName);
-        return color == null ? defaultColor : color;
-      }
-    };
-
-    return new JBColor(function);
-  }
 
   public static int getInt(@NotNull String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);
