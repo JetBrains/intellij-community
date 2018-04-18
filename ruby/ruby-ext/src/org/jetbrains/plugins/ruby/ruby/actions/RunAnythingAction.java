@@ -496,11 +496,17 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       return module;
     }
 
+    Project project = getProject();
     if (myVirtualFile != null) {
-      return ModuleUtilCore.findModuleForFile(myVirtualFile, getProject());
+      return ModuleUtilCore.findModuleForFile(myVirtualFile, project);
     }
 
-    return null;
+    VirtualFile[] selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles();
+    if (selectedFiles.length == 0) {
+      return null;
+    }
+
+    return ModuleUtilCore.findModuleForFile(selectedFiles[0], project);
   }
 
   @NotNull
