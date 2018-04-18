@@ -1284,7 +1284,17 @@ public class AllIcons {
     public static final Icon WithCoverageLayer = IconLoader.getIcon("/runConfigurations/withCoverageLayer.png"); // 16x16
 
   }
+  
+  public static class Scope {
+    public static final Icon ChangedFiles = IconLoader.getIcon("/scope/changedFiles.svg"); // 16x16
+    public static final Icon ChangedFilesAll = IconLoader.getIcon("/scope/changedFilesAll.svg"); // 16x16
+    public static final Icon Problems = IconLoader.getIcon("/scope/problems.svg"); // 16x16
+    public static final Icon Production = IconLoader.getIcon("/scope/production.svg"); // 16x16
+    public static final Icon Scratches = IconLoader.getIcon("/scope/scratches.svg"); // 16x16
+    public static final Icon Tests = IconLoader.getIcon("/scope/tests.svg"); // 16x16
 
+  }
+  
   public static class Toolbar {
     public static final Icon Filterdups = IconLoader.getIcon("/toolbar/filterdups.png"); // 16x16
     public static final Icon Folders = IconLoader.getIcon("/toolbar/folders.png"); // 16x16
