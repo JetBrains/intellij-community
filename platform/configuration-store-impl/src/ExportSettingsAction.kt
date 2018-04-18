@@ -217,7 +217,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     if (isFileIncluded || additionalExportFile != null) {
       if (computePresentableNames && onlyExisting && additionalExportFile == null && file.fileName.toString().endsWith(".xml")) {
         val content = fileToContent.getOrPut(file) { file.readText() }
-        if (!content.contains("""<component name="${stateAnnotation.name}">""")) {
+        if (!content.contains("""<component name="${stateAnnotation.name}"""")) {
           return@processAllImplementationClasses true
         }
       }
