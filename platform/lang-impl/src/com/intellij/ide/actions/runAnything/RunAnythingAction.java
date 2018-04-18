@@ -1138,7 +1138,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       finally {
         if (!isCanceled()) {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> myList.getEmptyText().setText(IdeBundle.message("run.command.empty.list.title")));
+          SwingUtilities.invokeLater(() -> myList.getEmptyText().setText(IdeBundle.message("run.anything.command.empty.list.title")));
           updatePopup();
         }
         if (!myDone.isProcessed()) {
