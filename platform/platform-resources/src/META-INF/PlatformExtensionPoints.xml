@@ -116,6 +116,9 @@
 
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
 
+    <extensionPoint name="welcomeFrameTitleContributor" interface="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrameTitleContributor" />
+    <extensionPoint name="ideFrameTitleContributor" interface="com.intellij.openapi.wm.impl.IdeFrameTitleContributor" />
+
     <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider"/>
     <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider"/>
     <extensionPoint name="editorFileSwapper" interface="com.intellij.openapi.fileEditor.impl.EditorFileSwapper"/>

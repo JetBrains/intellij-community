@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
@@ -56,6 +57,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.Comparator;
 
 /**
  * @author Anton Katilin
@@ -329,7 +331,16 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       else if (!SystemInfo.isMac || builder.isEmpty()) {
         builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
-      frame.setTitle(builder.toString());
+
+      StringBuilder stringTitleBuilder = new StringBuilder(builder.toString());
+
+      final IdeFrameTitleContributor[] contributors = IdeFrameTitleContributor.EP_NAME.getExtensions().clone();
+      ContainerUtil.sort(contributors, Comparator.comparingDouble(IdeFrameTitleContributor::getPriority));
+      for (IdeFrameTitleContributor contributor : contributors) {
+        contributor.contribute(stringTitleBuilder);
+      }
+
+      frame.setTitle(stringTitleBuilder.toString());
     }
     finally {
       ourUpdatingTitle = false;

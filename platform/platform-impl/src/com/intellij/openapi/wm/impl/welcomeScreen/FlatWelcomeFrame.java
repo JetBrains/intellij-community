@@ -59,6 +59,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -187,11 +188,21 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   protected String getWelcomeFrameTitle() {
-    String title = "Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName();
+    StringBuilder title = new StringBuilder();
+
+    title.append("Welcome to ").append(ApplicationNamesInfo.getInstance().getFullProductName());
+
     if (Boolean.getBoolean("ide.ui.version.in.title")) {
-      title += ' ' + ApplicationInfo.getInstance().getFullVersion();
+      title.append(' ').append(ApplicationInfo.getInstance().getFullVersion());
     }
-    return title;
+
+    final WelcomeFrameTitleContributor[] contributors = WelcomeFrameTitleContributor.EP_NAME.getExtensions().clone();
+    ContainerUtil.sort(contributors, Comparator.comparingDouble(WelcomeFrameTitleContributor::getPriority));
+    for (WelcomeFrameTitleContributor contributor : contributors) {
+      contributor.contribute(title);
+    }
+
+    return title.toString();
   }
 
   @NotNull
