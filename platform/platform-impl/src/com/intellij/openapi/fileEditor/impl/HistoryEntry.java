@@ -170,9 +170,8 @@ final class HistoryEntry {
       Element stateElement = new Element(STATE_ELEMENT);
       provider.writeState(entry.getValue(), project, stateElement);
 
-      if (!JDOMUtil.isEmpty(stateElement)) {
-        providerElement.addContent(stateElement);
-      }
+      // Android Studio temporary workaround for issue 77600841: parseEntry() requires that the state not be null, so always write it out.
+      providerElement.addContent(stateElement);
 
       e.addContent(providerElement);
     }
