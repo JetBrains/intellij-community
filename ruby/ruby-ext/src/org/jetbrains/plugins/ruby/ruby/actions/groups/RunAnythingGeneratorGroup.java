@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.actions.groups;
 
+import com.intellij.ide.actions.runAnything.groups.RunAnythingActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.containers.ContainerUtil;

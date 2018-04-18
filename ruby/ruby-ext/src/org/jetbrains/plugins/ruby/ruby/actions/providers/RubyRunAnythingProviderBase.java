@@ -4,6 +4,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.ide.actions.runAnything.RunAnythingProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingProvider;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
 
 import java.util.List;

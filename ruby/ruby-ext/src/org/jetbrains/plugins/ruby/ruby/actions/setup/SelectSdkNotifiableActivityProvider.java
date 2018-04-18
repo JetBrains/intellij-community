@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.actions.setup;
 
+import com.intellij.ide.actions.runAnything.activity.RunAnythingNotifiableActivityProviderBase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;

@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.ruby.ruby.actions.commands;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.ide.actions.runAnything.RunAnythingCache;
+import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -19,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.gem.GemsDataKeys;
 import org.jetbrains.plugins.ruby.remote.RubyRemoteInterpreterManager;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
-import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingCache;
 import org.jetbrains.plugins.ruby.ruby.run.RubyAbstractRunner;
 import org.jetbrains.plugins.ruby.rvm.RVMSupportUtil;
 import org.jetbrains.plugins.ruby.utils.OSUtil;
@@ -30,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingCommandItem.getShellCommand;
+import static com.intellij.ide.actions.runAnything.items.RunAnythingCommandItem.getShellCommand;
 
 public class RubyRunAnythingCommandCustomizer extends RunAnythingCommandCustomizer {
   private static final Logger LOG = Logger.getInstance(RubyRunAnythingCommandCustomizer.class);

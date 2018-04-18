@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.actions.handlers;
 
+import com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler;
 import org.jetbrains.plugins.ruby.ruby.run.RubyProcessHandler;
 
 /**

@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.ruby.ruby.actions.setup;
 
+import com.intellij.ide.actions.runAnything.RunAnythingAction;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,7 +10,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingAction;
 
 import java.util.Objects;
 
