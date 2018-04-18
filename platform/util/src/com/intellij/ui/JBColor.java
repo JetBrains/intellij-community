@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,21 @@ public class JBColor extends Color {
     super(0);
     darkColor = null;
     func = function;
+  }
+
+  public static JBColor namedColor(@NotNull String propertyName, int defaultValueRGB) {
+    return namedColor(propertyName, new Color(defaultValueRGB));
+  }
+
+
+  public static JBColor namedColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return ObjectUtils.notNull(UIManager.getColor(propertyName), defaultColor);
+      }
+    });
   }
 
   @NotNull
