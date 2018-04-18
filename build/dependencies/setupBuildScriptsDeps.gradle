@@ -6,9 +6,9 @@ repositories {
   mavenCentral()
   if (project.ext.inJetBrainsNetwork) {
     maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
-    maven { url "http://repo.labs.intellij.net/intellij" }
   }
   maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
+  maven { url "https://jetbrains.bintray.com/test-discovery" }
   jcenter()
 }
 
@@ -62,7 +62,7 @@ task setupTestDiscoveryDeps {
     testDiscoveryDeps.mkdirs()
     configurations.detachedConfiguration(
       (dependencies
-        .create('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.31') as ModuleDependency)
+        .create('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.46') as ModuleDependency)
         .exclude(group: 'org.codehaus.groovy', module: 'groovy-all')
     ).files.each { from ->
       def into = Paths.get("$dir/$from.name")
