@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.module.Module;
@@ -431,8 +432,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         return;
       }
       VirtualFile directory = getWorkDirectory(module);
+      DataContext dataContext = createDataContext(directory, null, null, module, project);
       if (value instanceof RunAnythingCommandItem) {
-        onDone = () -> ((RunAnythingCommandItem)value).run(project, createDataContext(directory, null, null));
+        onDone = () -> ((RunAnythingCommandItem)value).run(dataContext);
       }
       else if (value == null) {
         onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(myDataContext, pattern, directory);
@@ -456,14 +458,16 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       Component c = comp;
       if (c == null) c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
-      value.run(project, createDataContext(null, c, event));
+      value.run(createDataContext(null, c, event, null, project));
     });
   }
 
   @NotNull
   private static DataContext createDataContext(@Nullable VirtualFile directory,
                                                @Nullable Component focusOwner,
-                                               @Nullable AnActionEvent event) {
+                                               @Nullable AnActionEvent event,
+                                               @Nullable Module module,
+                                               @NotNull Project project) {
     HashMap<String, Object> map = ContainerUtil.newHashMap();
     if (directory != null) {
       map.put(CommonDataKeys.VIRTUAL_FILE.getName(), directory);
@@ -478,6 +482,12 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     if (focusOwner != null) {
       map.put(FOCUS_COMPONENT_KEY_NAME.getName(), focusOwner);
     }
+
+    if (module != null) {
+      map.put(LangDataKeys.MODULE.getName(), module);
+    }
+
+    map.put(CommonDataKeys.PROJECT.getName(), project);
 
     return SimpleDataContext.getSimpleContext(map, DataContext.EMPTY_CONTEXT);
   }

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.ruby.ruby.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
@@ -350,7 +349,7 @@ public class RunAnythingUtil {
 
     if (runMatchedActivity(dataContext, pattern)) return;
 
-    RunAnythingCommandItem.runCommand(workDirectory, project, StringUtil.trim(pattern), module, RunAnythingAction.getExecutor());
+    RunAnythingCommandItem.runCommand(workDirectory, StringUtil.trim(pattern), RunAnythingAction.getExecutor(), dataContext);
   }
 
   private static boolean runMatchedActivity(@NotNull DataContext dataContext, @NotNull String pattern) {

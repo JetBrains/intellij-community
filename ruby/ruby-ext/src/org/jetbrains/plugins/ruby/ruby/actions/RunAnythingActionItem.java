@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ruby.ruby.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ObjectUtils;
@@ -22,9 +23,10 @@ public class RunAnythingActionItem extends RunAnythingItem<AnAction> {
   }
 
   @Override
-  public void run(@NotNull Project project, @NotNull DataContext dataContext) {
+  public void run(@NotNull DataContext dataContext) {
     Component focusOwner = dataContext.getData(RunAnythingAction.FOCUS_COMPONENT_KEY_NAME);
     AnActionEvent event = dataContext.getData(RunAnythingAction.RUN_ANYTHING_EVENT_KEY);
+    Project project = dataContext.getData(CommonDataKeys.PROJECT);
     RunAnythingUtil.performRunAnythingAction(myAction, project, focusOwner, event);
   }
 

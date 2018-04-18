@@ -4,7 +4,9 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +16,7 @@ import java.awt.*;
 import java.util.Objects;
 
 public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunConfigurationPopup.ItemWrapper> {
+  private static final Logger LOG = Logger.getInstance(RunAnythingRunConfigurationItem.class);
   static final String RUN_ANYTHING_RUN_CONFIGURATION_AD_TEXT =
     RunAnythingAction.AD_MODULE_CONTEXT + " , " + RunAnythingAction.AD_DEBUG_TEXT;
   @NotNull private final ChooseRunConfigurationPopup.ItemWrapper myWrapper;
@@ -23,8 +26,10 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
   }
 
   @Override
-  public void run(@NotNull Project project, @NotNull DataContext dataContext) {
-    super.run(project, dataContext);
+  public void run(@NotNull DataContext dataContext) {
+    super.run(dataContext);
+    Project project = dataContext.getData(CommonDataKeys.PROJECT);
+    LOG.assertTrue(project != null);
 
     Object value = myWrapper.getValue();
     if (value instanceof RunnerAndConfigurationSettings) {

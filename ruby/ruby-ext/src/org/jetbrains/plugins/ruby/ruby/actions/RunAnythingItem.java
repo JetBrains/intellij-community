@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,9 +52,9 @@ public abstract class RunAnythingItem<T> {
   /**
    * Executes specific action on choosing current item in the list
    *
-   * @param dataContext Use {@link DataContext} to extract focus owner component, original action event, working directory
+   * @param dataContext Use {@link DataContext} to extract focus owner component, original action event, working directory, module and project
    */
-  public void run(@NotNull Project project, @NotNull DataContext dataContext) {
+  public void run(@NotNull DataContext dataContext) {
     triggerUsage();
   }
 }
