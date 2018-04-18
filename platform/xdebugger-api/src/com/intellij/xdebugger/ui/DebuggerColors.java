@@ -17,6 +17,7 @@
 package com.intellij.xdebugger.ui;
 
 import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.util.Key;
@@ -38,4 +39,5 @@ public interface DebuggerColors {
   TextAttributesKey INLINED_VALUES = TextAttributesKey.createTextAttributesKey("DEBUGGER_INLINED_VALUES");
   TextAttributesKey INLINED_VALUES_MODIFIED = TextAttributesKey.createTextAttributesKey("DEBUGGER_INLINED_VALUES_MODIFIED");
   TextAttributesKey INLINED_VALUES_EXECUTION_LINE = TextAttributesKey.createTextAttributesKey("DEBUGGER_INLINED_VALUES_EXECUTION_LINE");
+  TextAttributesKey SMART_STEP_INTO_TARGET = TextAttributesKey.createTextAttributesKey("DEBUGGER_SMART_STEP_INTO_TARGET", EditorColors.SEARCH_RESULT_ATTRIBUTES);
 }
