@@ -25,6 +25,10 @@ public class YAMLHighlighter {
   static final String TEXT_ID = "YAML_TEXT";
   @NonNls
   static final String SIGN_ID = "YAML_SIGN";
+  @NonNls
+  static final String ANCHOR_ID = "YAML_ANCHOR";
+  @NonNls
+  static final String ALIAS_ID = "YAML_ALIAS";
 
   // Text default attrs
   public static final TextAttributesKey SCALAR_KEY_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.KEYWORD;
@@ -35,6 +39,7 @@ public class YAMLHighlighter {
   public static final TextAttributesKey SCALAR_LIST_DEFAULT_ATTRS = HighlighterColors.TEXT;
   public static final TextAttributesKey TEXT_DEFAULT_ATTRS = HighlighterColors.TEXT;
   public static final TextAttributesKey SIGN_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.OPERATION_SIGN;
+  public static final TextAttributesKey ALIAS_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.LABEL;
 
   // text attributes keys
   public static final TextAttributesKey SCALAR_KEY = TextAttributesKey
@@ -50,6 +55,8 @@ public class YAMLHighlighter {
   public static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey(COMMENT_ID, COMMENT_DEFAULT_ATTRS);
   public static final TextAttributesKey TEXT = TextAttributesKey.createTextAttributesKey(TEXT_ID, TEXT_DEFAULT_ATTRS);
   public static final TextAttributesKey SIGN = TextAttributesKey.createTextAttributesKey(SIGN_ID, SIGN_DEFAULT_ATTRS);
+  public static final TextAttributesKey ALIAS = TextAttributesKey.createTextAttributesKey(ALIAS_ID, ALIAS_DEFAULT_ATTRS);
+  public static final TextAttributesKey ANCHOR = TextAttributesKey.createTextAttributesKey(ANCHOR_ID, ALIAS);
 
   private YAMLHighlighter() {
   }
