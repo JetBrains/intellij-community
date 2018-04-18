@@ -170,4 +170,9 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
   public boolean canBeHitInOtherPlaces() {
     return true;
   }
+
+  @Override
+  public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
+    return canPutAtElement(file, line, project, (element, document) -> element instanceof PsiField);
+  }
 }
