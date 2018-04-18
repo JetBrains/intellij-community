@@ -111,6 +111,7 @@ public class FileUndoProvider implements UndoProvider, VirtualFileListener {
   @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent e) {
     if (!shouldProcess(e)) return;
+    if(ForceUndo.IgnoreVFContentChanges) return;
     if (isUndoable(e)) return;
     registerNonUndoableAction(e);
   }
