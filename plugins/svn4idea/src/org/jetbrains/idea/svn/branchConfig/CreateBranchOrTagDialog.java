@@ -183,12 +183,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       relativeUrl = myBranchConfiguration.getRelativeUrl(mySrcURL);
     }
     else {
-      Url url = null;
-      try {
-        url = createUrl(myRepositoryField.getText());
-      }
-      catch (SvnBindException ignored) {
-      }
+      Url url = getRepositoryFieldUrl();
       relativeUrl = url != null ? myBranchConfiguration.getRelativeUrl(url) : null;
     }
 
@@ -253,6 +248,16 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
+  @Nullable
+  private Url getRepositoryFieldUrl() {
+    try {
+      return createUrl(myRepositoryField.getText());
+    }
+    catch (SvnBindException ignored) {
+      return null;
+    }
+  }
+
   public String getToURL() {
     if (myBranchOrTagRadioButton.isSelected()) {
       return getToURLTextFromBranch();
@@ -280,18 +285,51 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    if (myBranchOrTagRadioButton.isSelected() && myBranchTagBaseModel.getSelected() == null) {
-      return new ValidationInfo(message("create.branch.no.base.location.error"), myBranchTagBaseComboBox.getComboBox());
-    }
+    ValidationInfo info = validateSource();
+    return info != null ? info : validateDestination();
+  }
 
-    String url = getToURL();
-    if (isEmptyOrSpaces(url)) {
-      return new ValidationInfo("Invalid branch url", myAnyLocationRadioButton.isSelected() ? myToURLText.getTextField() : null);
-    }
-    else if (myRepositoryRadioButton.isSelected()) {
+  @Nullable
+  private ValidationInfo validateSource() {
+    if (myRepositoryRadioButton.isSelected()) {
+      if (getRepositoryFieldUrl() == null) {
+        return new ValidationInfo("Invalid repository location", myRepositoryField.getTextField());
+      }
+
       Revision revision = getRevision();
       if (!revision.isValid() || revision.isLocal()) {
         return new ValidationInfo(message("create.branch.invalid.revision.error"), myRevisionPanel.getRevisionTextField());
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private ValidationInfo validateDestination() {
+    if (myBranchOrTagRadioButton.isSelected()) {
+      Url branchLocation = myBranchTagBaseModel.getSelected();
+      if (branchLocation == null) {
+        return new ValidationInfo(message("create.branch.no.base.location.error"), myBranchTagBaseComboBox.getComboBox());
+      }
+
+      if (isEmptyOrSpaces(myBranchTextField.getText())) {
+        return new ValidationInfo("Branch name is empty", myBranchTextField);
+      }
+
+      try {
+        branchLocation.appendPath(myBranchTextField.getText(), false);
+      }
+      catch (SvnBindException e) {
+        return new ValidationInfo("Invalid branch name", myBranchTextField);
+      }
+    }
+    else {
+      try {
+        createUrl(myToURLText.getText());
+      }
+      catch (SvnBindException e) {
+        return new ValidationInfo("Invalid branch url", myToURLText.getTextField());
       }
     }
 
