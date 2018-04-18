@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <vendor email="vitaliy.bibaev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -17,6 +17,10 @@
     ]]></description>
 
   <change-notes><![CDATA[
+        0.1.1 <br>
+        <ul>
+            <li> Fix a deadlock (IDEA-190432) </li>
+        </ul>
         0.1.0 <br>
         <ul>
             <li> Collect AST n-gram frequencies for each lookup items. </li>
