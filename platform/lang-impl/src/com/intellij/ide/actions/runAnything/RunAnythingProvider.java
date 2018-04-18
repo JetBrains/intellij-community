@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class RunAnythingProvider {
   public static final ExtensionPointName<RunAnythingProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.runAnythingConfigurationProvider");
+    ExtensionPointName.create("com.intellij.runAnything.configurationProvider");
 
   public abstract boolean isMatched(Project project, @NotNull String commandLine, @NotNull VirtualFile workDirectory);
 

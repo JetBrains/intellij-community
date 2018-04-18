@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class RunAnythingCommandCustomizer {
   public static final ExtensionPointName<RunAnythingCommandCustomizer> EP_NAME =
-    ExtensionPointName.create("com.intellij.runAnythingCommandCustomizer");
+    ExtensionPointName.create("com.intellij.runAnything.commandCustomizer");
 
   /**
    * Customizes command line and pass it to others customizers

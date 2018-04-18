@@ -15,7 +15,7 @@ import java.util.Arrays;
  */
 public interface RunAnythingActivityProvider {
   ExtensionPointName<RunAnythingActivityProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.runAnythingActivityProvider");
+    ExtensionPointName.create("com.intellij.runAnything.activityProvider");
 
   /**
    * If {@code pattern} is matched than an arbitrary activity {@link #runActivity(DataContext, String)} will be executed

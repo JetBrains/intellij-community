@@ -20,7 +20,7 @@ import java.util.Arrays;
  */
 public abstract class RunAnythingGroup {
   public static final ExtensionPointName<RunAnythingGroup> EP_NAME =
-    ExtensionPointName.create("com.intellij.runAnythingGroup");
+    ExtensionPointName.create("com.intellij.runAnything.group");
 
   /**
    * {@link #myMoreIndex} is a group 'load more..' index in the main list.

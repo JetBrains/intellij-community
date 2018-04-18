@@ -15,7 +15,7 @@ import java.util.Arrays;
  */
 public abstract class RunAnythingCommandHandler {
   public static final ExtensionPointName<RunAnythingCommandHandler> EP_NAME =
-    ExtensionPointName.create("com.intellij.runAnythingCommandHandler");
+    ExtensionPointName.create("com.intellij.runAnything.commandHandler");
 
   public abstract boolean isMatched(@NotNull String commandLine);
 
