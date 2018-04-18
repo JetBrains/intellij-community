@@ -9,6 +9,7 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -209,6 +210,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     editorSettings.setAddCaretsOnDoubleCtrl(myCbEnableAddingCaretsOnDoubleCtrlArrows.isSelected());
     
     super.apply();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.SMART_KEYS_CONFIGURABLE_TOPIC).changesApplied();
   }
 
   @Override
