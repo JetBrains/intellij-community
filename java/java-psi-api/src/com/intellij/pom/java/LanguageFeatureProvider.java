@@ -6,10 +6,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * This can be used to modify Java language features availability depending on context (e.g. due to specific runtime implementation).
+ * @see JavaFeature
+ */
 public interface LanguageFeatureProvider {
 
-  ExtensionPointName<LanguageFeatureProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.languageFeatureProvider");
+  ExtensionPointName<LanguageFeatureProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.java.languageFeatureProvider");
 
+  /**
+   * @return {@link ThreeState#YES} or {@link ThreeState#NO} to alternate default ({@link LanguageLevel}-based) availability,
+   * or {@link ThreeState#UNSURE} otherwise.
+   */
   @NotNull
-  ThreeState isFeatureSupported(JavaFeature feature, @NotNull PsiFile file);
+  ThreeState isFeatureSupported(@NotNull JavaFeature feature, @NotNull PsiFile file);
 }
