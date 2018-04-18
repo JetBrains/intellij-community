@@ -380,7 +380,13 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       if (ConsoleBuffer.useCycleBuffer()) {
         final int toRemove = myOriginalDocument.length() - ConsoleBuffer.getCycleBufferSize();
         if (toRemove > 0) {
-          myOriginalDocument.delete(0, toRemove);
+          final int indexOfNewline = myOriginalDocument.lastIndexOf("\n", toRemove);
+
+          if (indexOfNewline == -1) {
+            myOriginalDocument.delete(0, toRemove);
+          } else {
+            myOriginalDocument.delete(0, indexOfNewline + 1);
+          }
         }
       }
     }
