@@ -103,7 +103,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myRepositoryField.addActionListener(e -> {
       Url url = SelectLocationDialog.selectLocation(myProject, mySrcURL);
       if (url != null) {
-        myRepositoryField.setText(url.toString());
+        myRepositoryField.setText(url.toDecodedString());
       }
     });
     myRepositoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -113,13 +113,13 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     });
     myToURLText.addActionListener(e -> {
       try {
-        Url url = createUrl(myToURLText.getText());
+        Url url = createUrl(myToURLText.getText(), false);
         String dstName = mySrcURL.getTail();
         Url destination = SelectLocationDialog
           .selectCopyDestination(myProject, removePathTail(url), message("label.copy.select.location.dialog.copy.as"), dstName, false);
 
         if (destination != null) {
-          myToURLText.setText(destination.toString());
+          myToURLText.setText(destination.toDecodedString());
         }
       }
       catch (SvnBindException ex) {
@@ -153,7 +153,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
     updateToURL();
-    myProjectButton.addActionListener(e -> myRepositoryField.setText(myWcRootUrl.toString()));
+    myProjectButton.addActionListener(e -> myRepositoryField.setText(myWcRootUrl.toDecodedString()));
     //noinspection unchecked
     myBranchTagBaseComboBox.getComboBox().setRenderer(DECODED_URL_RENDERER);
     //noinspection unchecked
@@ -187,7 +187,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
     if (relativeUrl != null && selectedBranch != null) {
       try {
-        myToURLText.setText(selectedBranch.appendPath(myBranchTextField.getText(), false).appendPath(relativeUrl, false).toString());
+        myToURLText.setText(selectedBranch.appendPath(myBranchTextField.getText(), false).appendPath(relativeUrl, false).toDecodedString());
       }
       catch (SvnBindException ignored) {
       }
@@ -216,8 +216,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   protected void init() {
     super.init();
     myWorkingCopyField.setText(mySrcFile.toString());
-    myRepositoryField.setText(mySrcURL.toString());
-    myToURLText.setText(mySrcURL.toString());
+    myRepositoryField.setText(mySrcURL.toDecodedString());
+    myToURLText.setText(mySrcURL.toDecodedString());
     updateControls();
 
     myWorkingCopyRadioButton.setSelected(true);
@@ -244,7 +244,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   @Nullable
   private Url getRepositoryFieldUrl() {
     try {
-      return createUrl(myRepositoryField.getText());
+      return createUrl(myRepositoryField.getText(), false);
     }
     catch (SvnBindException ignored) {
       return null;
@@ -318,7 +318,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
     else {
       try {
-        myDestination = createUrl(myToURLText.getText());
+        myDestination = createUrl(myToURLText.getText(), false);
       }
       catch (SvnBindException e) {
         return new ValidationInfo("Invalid branch url", myToURLText.getTextField());
