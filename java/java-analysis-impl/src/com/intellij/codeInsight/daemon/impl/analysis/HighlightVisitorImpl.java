@@ -206,16 +206,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       // in JSP, XmlAttributeValue may contain java references
       try {
         for (PsiReference reference : element.getReferences()) {
-          if (reference instanceof PsiJavaReference) {
-            PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
-            myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
-          }
-          else if (reference instanceof PsiPolyVariantReference &&
-                   reference instanceof ResolvingHint && ((ResolvingHint)reference).canResolveTo(PsiClass.class)) {
-            ResolveResult[] resolve = ((PsiPolyVariantReference)reference).multiResolve(false);
-            if (resolve.length == 1 && resolve[0] instanceof JavaResolveResult) {
-              myRefCountHolder.registerReference(reference, (JavaResolveResult)resolve[0]);
-            }
+          JavaResolveResult result = resolveJavaReference(reference);
+          if (result != null) {
+            myRefCountHolder.registerReference(reference, result);
           }
         }
       }
@@ -225,6 +218,22 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!(myFile instanceof ServerPageFile)) {
       myHolder.add(DefaultHighlightUtil.checkBadCharacter(element));
     }
+  }
+
+  @Nullable
+  public static JavaResolveResult resolveJavaReference(PsiReference reference) {
+    if (reference instanceof PsiJavaReference) {
+      PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
+      return psiJavaReference.advancedResolve(false);
+    }
+    else if (reference instanceof PsiPolyVariantReference &&
+             reference instanceof ResolvingHint && ((ResolvingHint)reference).canResolveTo(PsiClass.class)) {
+      ResolveResult[] resolve = ((PsiPolyVariantReference)reference).multiResolve(false);
+      if (resolve.length == 1 && resolve[0] instanceof JavaResolveResult) {
+        return (JavaResolveResult)resolve[0];
+      }
+    }
+    return null;
   }
 
   @Override
