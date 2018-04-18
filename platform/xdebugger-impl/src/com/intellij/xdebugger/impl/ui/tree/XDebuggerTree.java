@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.execution.configurations.RemoteRunProfile;
@@ -261,6 +259,18 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       if (node.isEllipsis()) {
         TreeNode parent = node.getParent();
         if (parent instanceof XValueContainerNode) {
+          addTreeListener(new XDebuggerTreeListener() {
+            @Override
+            public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+              if (((XValueContainerNode)parent).isObsolete()) {
+                removeTreeListener(this);
+              }
+              if (node.getParent() == parent) {
+                setSelectionPath(node.getPath());
+                removeTreeListener(this); // remove the listener on first match
+              }
+            }
+          });
           ((XValueContainerNode)parent).startComputingChildren();
           return true;
         }
