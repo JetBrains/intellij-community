@@ -212,6 +212,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
+  public String getTestType() {
+    return getPersistantData().TEST_OBJECT;
+  }
+
+  @Override
   public String prepareParameterizedParameter(String paramSetName) {
     return TestNGConfigurationProducer.getInvocationNumber(paramSetName);
   }

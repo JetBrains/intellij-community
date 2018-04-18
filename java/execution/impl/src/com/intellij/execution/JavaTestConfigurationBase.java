@@ -45,6 +45,8 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   public abstract void beClassConfiguration(PsiClass aClass);
 
   public abstract boolean isConfiguredByElement(PsiElement element);
+  
+  public abstract String getTestType();
 
   public String prepareParameterizedParameter(String paramSetName) {
     return paramSetName;
