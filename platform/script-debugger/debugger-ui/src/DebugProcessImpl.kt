@@ -236,7 +236,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   protected open fun doInitBreakpoints() {
-    beforeInitBreakpoints(mainVm!!)
+    mainVm?.let(::beforeInitBreakpoints)
     runReadAction { session.initBreakpoints() }
   }
 
