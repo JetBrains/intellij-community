@@ -20,6 +20,10 @@ import java.awt.event.KeyEvent;
 import static java.awt.event.ComponentEvent.COMPONENT_FIRST;
 
 public class TBItemAnActionButton extends TBItemButton {
+  public static final int SHOWMODE_IMAGE_ONLY = 0;
+  public static final int SHOWMODE_TEXT_ONLY = 1;
+  public static final int SHOWMODE_IMAGE_TEXT = 2;
+
   private static final Logger LOG = Logger.getInstance(TBItemAnActionButton.class);
 
   private final AnAction myAnAction;
@@ -27,9 +31,9 @@ public class TBItemAnActionButton extends TBItemButton {
 
   private boolean myAutoVisibility = true;
   private final boolean myHiddenWhenDisabled;
-  private final boolean myOnlyImage = true;
+  private final int myShowMode;
 
-  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled) {
+  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode) {
     super(uid);
     myAnAction = action;
     myActionId = ActionManager.getInstance().getId(myAnAction);
@@ -38,6 +42,11 @@ public class TBItemAnActionButton extends TBItemButton {
     myAutoVisibility = true;
     myHiddenWhenDisabled = hiddenWhenDisabled;
     myIsVisible = false;
+    myShowMode = showMode;
+  }
+
+  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled) {
+    this(uid, action, hiddenWhenDisabled, SHOWMODE_IMAGE_ONLY);
   }
 
   boolean isAutoVisibility() { return myAutoVisibility; }
@@ -62,25 +71,27 @@ public class TBItemAnActionButton extends TBItemButton {
     if (!myIsVisible)
       return;
 
-    Icon icon;
-    if (presentation.isEnabled())
-      icon = presentation.getIcon();
-    else {
-      icon = presentation.getDisabledIcon();
-      if (icon == null)
-        icon = IconLoader.getDisabledIcon(presentation.getIcon());
-    }
-    if (icon == null) {
-      LOG.error("can't get icon, action " + myActionId + ", presentation = " + _printPresentation(presentation));
-      icon = EmptyIcon.ICON_18;
+    Icon icon = null;
+    if (myShowMode != SHOWMODE_TEXT_ONLY) {
+      if (presentation.isEnabled())
+        icon = presentation.getIcon();
+      else {
+        icon = presentation.getDisabledIcon();
+        if (icon == null)
+          icon = IconLoader.getDisabledIcon(presentation.getIcon());
+      }
+      if (icon == null) {
+        LOG.error("can't get icon, action " + myActionId + ", presentation = " + _printPresentation(presentation));
+        icon = EmptyIcon.ICON_18;
+      }
     }
 
-    final String text = myOnlyImage ? null : presentation.getText();
+    final String text = myShowMode == SHOWMODE_IMAGE_ONLY ? null : presentation.getText();
 
     // update native peer only when some of resources has been changed
     if (
       icon != myIcon ||
-      (text == null ? myText != null : text.equals(myText))
+      (text == null ? myText != null : !text.equals(myText))
     ) {
       // LOG.info(String.format("[%s:%s] updateView", myUid, myActionId));
       update(icon, text);
