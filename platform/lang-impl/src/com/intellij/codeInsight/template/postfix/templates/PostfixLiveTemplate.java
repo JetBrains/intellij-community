@@ -327,7 +327,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   }
 
   private static Language getLanguage(@NotNull CustomTemplateCallback callback) {
-    return callback.getContext().getLanguage();
+    return PsiUtilCore.getLanguageAtOffset(callback.getFile(), callback.getOffset());
   }
 
   private static int positiveOffset(int offset) {
