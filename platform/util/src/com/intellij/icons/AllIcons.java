@@ -562,7 +562,10 @@ public class AllIcons {
     public static final Icon OpenProject = IconLoader.getIcon("/general/openProject.png"); // 32x32
     public static final Icon OverridenMethod = IconLoader.getIcon("/general/overridenMethod.png"); // 10x14
     public static final Icon OverridingMethod = IconLoader.getIcon("/general/overridingMethod.png"); // 10x14
-    public static final Icon PackagesTab = IconLoader.getIcon("/general/packagesTab.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon PackagesTab = IconLoader.getIcon("/nodes/copyOfFolder.png"); // 16x16
     public static final Icon PasswordLock = IconLoader.getIcon("/general/passwordLock.png"); // 64x64
     public static final Icon PathVariables = IconLoader.getIcon("/general/pathVariables.png"); // 32x32
     public static final Icon Pin_tab = IconLoader.getIcon("/general/pin_tab.png"); // 16x16
@@ -1281,7 +1284,7 @@ public class AllIcons {
     public static final Icon WithCoverageLayer = IconLoader.getIcon("/runConfigurations/withCoverageLayer.png"); // 16x16
 
   }
-  
+
   public static class Toolbar {
     public static final Icon Filterdups = IconLoader.getIcon("/toolbar/filterdups.png"); // 16x16
     public static final Icon Folders = IconLoader.getIcon("/toolbar/folders.png"); // 16x16
