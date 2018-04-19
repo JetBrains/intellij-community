@@ -40,11 +40,11 @@ interface MultiVmDebugProcess {
     }
 }
 
-abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
-                                                     val connection: C,
-                                                     private val editorsProvider: XDebuggerEditorsProvider,
-                                                     private val smartStepIntoHandler: XSmartStepIntoHandler<*>? = null,
-                                                     protected val executionResult: ExecutionResult? = null) : XDebugProcess(session), MultiVmDebugProcess {
+abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
+                                                         val connection: C,
+                                                         private val editorsProvider: XDebuggerEditorsProvider,
+                                                         private val smartStepIntoHandler: XSmartStepIntoHandler<*>? = null,
+                                                         protected val executionResult: ExecutionResult? = null) : XDebugProcess(session), MultiVmDebugProcess {
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
   @Volatile var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
@@ -242,7 +242,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   protected open fun beforeInitBreakpoints(vm: Vm) {
   }
 
-  protected fun addChildVm(vm: Vm, childConnection: RemoteVmConnection) {
+  protected fun addChildVm(vm: Vm, childConnection: RemoteVmConnection<*>) {
     mainVm?.childVMs?.add(vm)
     childConnection.stateChanged {
       if (it.status == ConnectionStatus.CONNECTION_FAILED || it.status == ConnectionStatus.DISCONNECTED || it.status == ConnectionStatus.DETACHED) {
