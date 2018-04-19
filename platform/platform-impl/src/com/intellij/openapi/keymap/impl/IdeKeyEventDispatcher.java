@@ -187,7 +187,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
         // It is needed to ignore ENTER KEY_TYPED events which sometimes can reach editor when an action
         // is invoked from main menu via Enter key.
         setState(KeyState.STATE_PROCESSED);
-        setPressedWasProcessed(true);
         return false;
       }
     }
@@ -810,6 +809,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private void setPressedWasProcessed(boolean pressedWasProcessed) {
     myPressedWasProcessed = pressedWasProcessed;
+    System.err.println("New State: " + myPressedWasProcessed);
   }
 
   public boolean isReady() {
