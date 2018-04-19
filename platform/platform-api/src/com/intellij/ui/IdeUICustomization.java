@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.text.StringUtil;
 
 /**
  * Allows to apply IDE-specific customizations to the terms used in platform UI features.
@@ -24,5 +25,12 @@ public class IdeUICustomization {
    */
   public String getCloseProjectActionText() {
     return IdeBundle.message("action.close.project");
+  }
+
+  /**
+   * Returns the title of the Project view toolwindow.
+   */
+  public String getProjectViewTitle() {
+    return StringUtil.capitalize(getProjectConceptName());
   }
 }
