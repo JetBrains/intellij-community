@@ -56,11 +56,11 @@ def do_list():
 
 
 def do_install(pkgs):
-    return run_pip(['install'] + pkgs)
+    run_pip(['install'] + pkgs)
 
 
 def do_uninstall(pkgs):
-    return run_pip(['uninstall', '-y'] + pkgs)
+    run_pip(['uninstall', '-y'] + pkgs)
 
 
 def run_pip(args):
@@ -135,12 +135,11 @@ def main():
             rmdir = mkdtemp_ifneeded()
 
             pkgs = sys.argv[2:]
-            retcode = do_install(pkgs)
+            do_install(pkgs)
 
             if rmdir is not None:
                 import shutil
                 shutil.rmtree(rmdir)
-
 
         elif cmd == 'untar':
             if len(sys.argv) < 2:
@@ -151,7 +150,7 @@ def main():
             if len(sys.argv) < 2:
                 usage()
             pkgs = sys.argv[2:]
-            retcode = do_uninstall(pkgs)
+            do_uninstall(pkgs)
         elif cmd == 'pyvenv':
             opts, args = getopt.getopt(sys.argv[2:], '', ['system-site-packages'])
             if len(args) != 1:
