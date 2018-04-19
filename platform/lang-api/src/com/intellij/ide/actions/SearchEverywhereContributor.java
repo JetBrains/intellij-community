@@ -3,7 +3,9 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -21,6 +23,10 @@ public interface SearchEverywhereContributor {
 
   @NotNull
   String getGroupName();
+
+  default String includeNonProjectItemsText() {
+    return IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName());
+  }
 
   int getSortWeight();
 

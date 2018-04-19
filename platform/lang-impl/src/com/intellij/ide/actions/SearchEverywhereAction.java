@@ -562,8 +562,23 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
     if (Registry.is("new.search.everywhere")) {
       //todo[mikhail.sokolov] show new UI
+      SearchEverywhereUI searchEverywhereUI = new SearchEverywhereUI(null);
+      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(searchEverywhereUI, searchEverywhereUI.getSearchField())
+                    .setProject(e.getProject())
+                    .setMovable(true)
+                    .setResizable(false)
+                    .setMayBeParent(true)
+                    .setCancelOnClickOutside(true)
+                    .setRequestFocus(true)
+                    .setCancelKeyEnabled(false)
+                    .setCancelCallback(() -> true)
+                    .addUserData("SIMPLE_WINDOW")
+                    .createPopup();
+
+      popup.showInBestPositionFor(e.getDataContext());
       return;
     }
+
     if (myBalloon != null && myBalloon.isVisible()) {
       showAll.set(!showAll.get());
       myNonProjectCheckBox.setSelected(showAll.get());
