@@ -182,7 +182,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   @Override
   protected JComponent createCenterPanel() {
-    JBLabel commentLabel = new JBLabel(DiagnosticBundle.message("diagnostic.error.report.additional.info.label"));
+    JBLabel commentLabel = new JBLabel(DiagnosticBundle.message("error.dialog.comment.prompt"));
 
     myCommentArea = new JTextArea(5, 0);
     myCommentArea.setMargin(JBUI.insets(2));
@@ -193,7 +193,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     });
 
-    JBLabel attachmentsLabel = new JBLabel(DiagnosticBundle.message("diagnostic.error.report.attachments.label"));
+    JBLabel attachmentsLabel = new JBLabel(DiagnosticBundle.message("error.dialog.attachments.prompt"));
 
     myAttachmentsList = new AttachmentsList();
     myAttachmentsList.addListSelectionListener(e -> {
