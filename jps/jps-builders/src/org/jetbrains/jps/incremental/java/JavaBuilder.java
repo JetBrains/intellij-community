@@ -249,7 +249,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     catch (Exception e) {
       LOG.info(e);
       String message = e.getMessage();
-      if (message == null) message = "Internal error: \n" + ExceptionUtil.getThrowableText(e);
+      if (message == null || message.trim().isEmpty()) {
+        message = "Internal error: \n" + ExceptionUtil.getThrowableText(e);
+      }
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
       throw new StopBuildException();
     }
@@ -297,7 +299,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
         context.processMessage(new ProgressMessage("Parsing java... [" + chunk.getPresentableShortName() + "]"));
 
         final int filesCount = files.size();
-        boolean compiledOk = true;
         if (filesCount > 0) {
           LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.containsTests() ? " (tests)" : ""));
           if (LOG.isDebugEnabled()) {
@@ -313,29 +314,25 @@ public class JavaBuilder extends ModuleLevelBuilder {
               LOG.debug("  " + file.getAbsolutePath());
             }
           }
+          boolean compiledOk = false;
           try {
             compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink, compilingTool, hasModules);
           }
           finally {
             filesWithErrors = diagnosticSink.getFilesWithErrors();
-            // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
-            //for (File file : filesWithErrors) {
-            //  if (!file.exists()) {
-            //    FSOperations.markDeleted(context, file);
-            //  }
-            //}
+            if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
+              // unexpected exception occurred or compiler did not output any errors for some reason
+              diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
+            }
+            if (diagnosticSink.getErrorCount() > 0) {
+              diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
+            }
           }
         }
 
         context.checkCanceled();
 
-        if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
-        }
         if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
-          if (!compiledOk) {
-            diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
-          }
           throw new StopBuildException(
             "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
           );
@@ -379,7 +376,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final String message = validateCycle(context, chunk);
       if (message != null) {
         diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
-        return true;
+        return false;
       }
     }
 
@@ -395,7 +392,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (forkSdk == null) {
           String text = "Cannot start javac process for " + chunk.getName() + ": unknown JDK home path.\nPlease check project configuration.";
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, text));
-          return true;
+          return false;
         }
       }
 
@@ -418,7 +415,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                       " differs from javac's platform (" + System.getProperty("java.version") + ")\n" +
                       "Compilation profiles are not supported for such configuration";
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, text));
-        return true;
+        return false;
       }
 
       Collection<File> classPath = originalClassPath;
