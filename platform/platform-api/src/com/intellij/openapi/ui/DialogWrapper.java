@@ -1789,16 +1789,16 @@ public abstract class DialogWrapper {
   }
 
   private void logCloseDialogEvent(int exitCode) {
-    final String title = getTitle();
-    if (StringUtil.isNotEmpty(title)) {
-      FeatureUsageUiEvents.INSTANCE.logCloseDialog(title, exitCode);
+    final String className = getClass().getName();
+    if (StringUtil.isNotEmpty(className)) {
+      FeatureUsageUiEvents.INSTANCE.logCloseDialog(className, exitCode);
     }
   }
 
   private void logShowDialogEvent() {
-    final String title = getTitle();
-    if (StringUtil.isNotEmpty(title)) {
-      FeatureUsageUiEvents.INSTANCE.logShowDialog(title);
+    final String className = getClass().getName();
+    if (StringUtil.isNotEmpty(className)) {
+      FeatureUsageUiEvents.INSTANCE.logShowDialog(className);
     }
   }
 
