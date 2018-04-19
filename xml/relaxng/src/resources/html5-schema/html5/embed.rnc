@@ -168,7 +168,6 @@ namespace local = ""
 			                    | tabindex
 			                    | contenteditable
 			                    | draggable
-			                    | dropzone
 			                    | hidden
 			                    | onabort
 			                    | onautocomplete
@@ -257,6 +256,7 @@ namespace local = ""
 			                    | aria-required
 			                    | aria-roledescription
 			                    | spellcheck
+			                    | autocapitalize
 			                    | accesskey
 			                    | itemref
 			                    | itemprop
@@ -436,6 +436,7 @@ namespace local = ""
 		&	iframe.attrs.height?
 		&	iframe.attrs.sandbox?
 		&	iframe.attrs.allowfullscreen?
+		&	iframe.attrs.allowpaymentrequest?
 		&	iframe.attrs.allowusermedia?
 		&	referrerpolicy?
 		&	(	common.attrs.aria.landmark.application
@@ -471,6 +472,10 @@ namespace local = ""
 		iframe.attrs.allowfullscreen =
 			attribute allowfullscreen {
 				w:string "allowfullscreen" | w:string ""
+			} & v5only
+		iframe.attrs.allowpaymentrequest =
+			attribute allowpaymentrequest {
+				w:string "allowpaymentrequest" | w:string ""
 			} & v5only
 		iframe.attrs.allowusermedia =
 			attribute allowusermedia {
