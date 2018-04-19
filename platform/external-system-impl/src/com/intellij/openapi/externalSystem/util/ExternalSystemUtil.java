@@ -537,7 +537,9 @@ public class ExternalSystemUtil {
             }
           }
         };
+        final long startTS = System.currentTimeMillis();
         resolveProjectTask.execute(indicator, ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
+        LOG.info("External project [" + externalProjectPath + "] resolution task executed in " + (System.currentTimeMillis() - startTS) + " ms.");
         if (project.isDisposed()) return;
 
         try {
