@@ -806,7 +806,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private void setPressedWasProcessed(boolean pressedWasProcessed) {
     myPressedWasProcessed = pressedWasProcessed;
-    System.err.println("New State: " + myPressedWasProcessed);
   }
 
   public boolean isReady() {
