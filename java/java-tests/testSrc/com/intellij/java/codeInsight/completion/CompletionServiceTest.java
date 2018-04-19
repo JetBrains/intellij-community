@@ -8,7 +8,9 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,16 +29,28 @@ public class CompletionServiceTest extends LightCodeInsightFixtureTestCase {
   public void testCompletionServiceSimple() {
     myFixture.configureByFile("Simple.java");
     CompletionServiceImpl service = (CompletionServiceImpl)CompletionService.getCompletionService();
-    CompletionParameters parameters = service.createCompletionParameters(getProject(),
-                                                                         myFixture.getEditor(),
-                                                                         myFixture.getEditor().getCaretModel().getPrimaryCaret(),
-                                                                         1,
-                                                                         CompletionType.BASIC);
-    CompletionLookupArranger arranger = service.createLookupArranger(parameters);
-    service.performCompletion(parameters, result -> arranger.addElement(result));
-    Pair<List<LookupElement>, Integer> items = arranger.arrangeItems();
-    LookupElement element = ContainerUtil.find(items.first, item -> item.getLookupString().equals("_field"));
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> service.handleCompletionItemSelected(parameters, element, arranger.itemMatcher(element), '\n'));
-    myFixture.checkResultByFile("Simple_afterCompletionService.java");
+    Disposable completionDisposable = new Disposable() {
+      @Override
+      public void dispose() {
+      }
+    };
+    try {
+      CompletionParameters parameters = service.createCompletionParameters(getProject(),
+                                                                           myFixture.getEditor(),
+                                                                           myFixture.getEditor().getCaretModel().getPrimaryCaret(),
+                                                                           1,
+                                                                           CompletionType.BASIC,
+                                                                           completionDisposable);
+
+      CompletionLookupArranger arranger = service.createLookupArranger(parameters);
+      service.performCompletion(parameters, result -> arranger.addElement(result));
+      Pair<List<LookupElement>, Integer> items = arranger.arrangeItems();
+      LookupElement element = ContainerUtil.find(items.first, item -> item.getLookupString().equals("_field"));
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> service.handleCompletionItemSelected(parameters, element, arranger.itemMatcher(element), '\n'));
+      myFixture.checkResultByFile("Simple_afterCompletionService.java");
+    }
+    finally {
+      Disposer.dispose(completionDisposable);
+    }
   }
 }

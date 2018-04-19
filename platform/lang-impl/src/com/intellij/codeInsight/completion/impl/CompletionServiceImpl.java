@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
@@ -74,10 +75,12 @@ public final class CompletionServiceImpl extends CompletionService {
                                                          @NotNull Editor editor,
                                                          @NotNull Caret caret,
                                                          int invocationCount,
-                                                         CompletionType completionType) {
+                                                         CompletionType completionType,
+                                                         @NotNull Disposable parentDisposable) {
     CompletionInitializationContext context = CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret,
                                                                                                                      invocationCount, completionType);
     CompletionProcessBase progress = new CompletionProcessBase(context);
+    Disposer.register(parentDisposable, progress);
     return CompletionInitializationUtil.prepareCompletionParameters(context, progress);
   }
 
