@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
 import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isValidURL;
@@ -57,6 +58,7 @@ public class JsonSchemaMappingsView implements Disposable {
   private static final String ADD_SCHEMA_MAPPING = "settings.json.schema.add.mapping";
   private static final String EDIT_SCHEMA_MAPPING = "settings.json.schema.edit.mapping";
   private final Runnable myTreeUpdater;
+  private final Consumer<String> mySchemaPathChangedCallback;
   private TableView<UserDefinedJsonSchemaConfiguration.Item> myTableView;
   private JComponent myComponent;
   private Project myProject;
@@ -67,8 +69,11 @@ public class JsonSchemaMappingsView implements Disposable {
   private JBLabel myErrorIcon;
   private boolean myInitialized;
 
-  public JsonSchemaMappingsView(Project project, Runnable treeUpdater) {
+  public JsonSchemaMappingsView(Project project,
+                                Runnable treeUpdater,
+                                Consumer<String> schemaPathChangedCallback) {
     myTreeUpdater = treeUpdater;
+    mySchemaPathChangedCallback = schemaPathChangedCallback;
     createUI(project);
   }
 
@@ -97,6 +102,12 @@ public class JsonSchemaMappingsView implements Disposable {
     mySchemaField = new TextFieldWithBrowseButton(schemaFieldBacking);
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
+    mySchemaField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        mySchemaPathChangedCallback.accept(mySchemaField.getText());
+      }
+    });
     attachNavigateToSchema();
     myError = SwingHelper.createHtmlLabel(JsonBundle.message("json.schema.conflicting.mappings"), null, s -> {
       final BalloonBuilder builder = JBPopupFactory.getInstance().
@@ -185,10 +196,6 @@ public class JsonSchemaMappingsView implements Disposable {
     String schemaFieldText = mySchemaField.getText();
     if (isHttpPath(schemaFieldText)) return schemaFieldText;
     return FileUtil.toSystemDependentName(getRelativePath(myProject, schemaFieldText));
-  }
-
-  public void runFileChooser() {
-    mySchemaField.getButton().doClick();
   }
 
   private static ColumnInfo[] createColumns() {

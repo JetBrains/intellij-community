@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.UriUtil;
 import com.intellij.util.Urls;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
@@ -30,10 +31,10 @@ import java.io.File;
  */
 public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSchemaConfiguration> {
   private final Project myProject;
-  @NotNull private String mySchemaFilePath;
+  @NotNull private final String mySchemaFilePath;
   @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
   @Nullable private final Runnable myTreeUpdater;
-  private boolean myFresh;
+  @NotNull private final Function<String, String> myNameCreator;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
   private String myError;
@@ -41,13 +42,13 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   public JsonSchemaConfigurable(Project project,
                                 @NotNull String schemaFilePath, @NotNull UserDefinedJsonSchemaConfiguration schema,
                                 @Nullable Runnable updateTree,
-                                boolean fresh) {
+                                @NotNull Function<String, String> nameCreator) {
     super(true, updateTree);
     myProject = project;
     mySchemaFilePath = schemaFilePath;
     mySchema = schema;
     myTreeUpdater = updateTree;
-    myFresh = fresh;
+    myNameCreator = nameCreator;
     myDisplayName = mySchema.getName();
   }
 
@@ -74,7 +75,20 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @Override
   public JComponent createOptionsPanel() {
     if (myView == null) {
-      myView = new JsonSchemaMappingsView(myProject, myTreeUpdater);
+      myView = new JsonSchemaMappingsView(myProject, myTreeUpdater, s -> {
+        if (myDisplayName.startsWith(JsonSchemaMappingsConfigurable.STUB_SCHEMA_NAME)) {
+          int lastSlash = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
+          if (lastSlash > 0) {
+            String substring = s.substring(lastSlash + 1);
+            int dot = substring.lastIndexOf('.');
+            if (dot != -1) {
+              substring = substring.substring(0, dot);
+            }
+            setDisplayName(myNameCreator.fun(substring));
+            updateName();
+          }
+        }
+      });
       myView.setError(myError);
     }
     return myView.getComponent();
@@ -190,25 +204,6 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
       info.setRelativePathToSchema(mySchema.getRelativePathToSchema());
     }
     return info;
-  }
-
-  @Override
-  public void updateName() {
-    if (myFresh) {
-      myView.runFileChooser();
-      String schemaSubPath = myView.getSchemaSubPath();
-      if (schemaSubPath.isEmpty())  {
-        myFresh = false;
-        super.updateName();
-        return;
-      }
-      File file = new File(myProject.getBasePath(), schemaSubPath);
-      mySchemaFilePath = file.getPath();
-      myDisplayName = FileUtil.getNameWithoutExtension(file);
-      mySchema.setName(myDisplayName);
-      myFresh = false;
-    }
-    super.updateName();
   }
 
   @Override
