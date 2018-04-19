@@ -15,7 +15,16 @@ import org.jetbrains.annotations.NotNull;
 public enum JavaFeature {
 
   MULTI_CATCH(LanguageLevel.JDK_1_7),
-  STREAMS(LanguageLevel.JDK_1_8);
+  STREAMS(LanguageLevel.JDK_1_8),
+  /**
+   * java.util.Arrays.setAll, java.util.Collection#removeIf, java.util.List.sort(Comparator),
+   * java.util.Map#putIfAbsent, java.util.Map#forEach
+   */
+  ADVANCED_COLLECTIONS_API(LanguageLevel.JDK_1_8),
+  /**
+   * ThreadLocal.withInitial
+   */
+  THREAD_LOCAL_WITH_INITIAL(LanguageLevel.JDK_1_8);
 
   private final LanguageLevel myMinLevel;
 
