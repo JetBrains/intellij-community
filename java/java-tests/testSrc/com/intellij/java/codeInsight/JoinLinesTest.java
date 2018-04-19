@@ -40,6 +40,12 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testStringLiteral() { doTest(); }
   public void testLiteralSCR4989() { doTest(); }
 
+  public void testCallChain() { doTest(); }
+  public void testCallChain2() { doTest(); }
+  public void testCallChainWrong() { doTest(); }
+  public void testDeclarationAndCall() { doTest(); }
+  public void testAssignmentAndCall() { doTest(); }
+
   public void testSCR3493() {
     CommonCodeStyleSettings settings = getJavaSettings();
     boolean use_tab_character = settings.getIndentOptions().USE_TAB_CHARACTER;
@@ -68,7 +74,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   }
   public void testSCR3493b() {
     CommonCodeStyleSettings settings = getJavaSettings();
-    boolean use_tab_character = settings.getIndentOptions().USE_TAB_CHARACTER;;
+    boolean use_tab_character = settings.getIndentOptions().USE_TAB_CHARACTER;
     boolean smart_tabs = settings.getIndentOptions().SMART_TABS;
     try {
       settings.getIndentOptions().USE_TAB_CHARACTER = true;
@@ -262,7 +268,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     checkResultByFile(path + getTestName(false) + "_after" + ext);
   }
 
-  private void performAction() {
+  private static void performAction() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES);
 
