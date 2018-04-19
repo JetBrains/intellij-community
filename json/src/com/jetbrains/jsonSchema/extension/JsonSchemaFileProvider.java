@@ -21,4 +21,9 @@ public interface JsonSchemaFileProvider {
   default JsonSchemaVersion getSchemaVersion() {
     return JsonSchemaVersion.SCHEMA_4;
   }
+
+  @Nullable
+  default String getThirdPartyApiInformation() {
+    return null;
+  }
 }
