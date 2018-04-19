@@ -147,12 +147,12 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   @Nullable
-  public Object startCommand(@Nullable final Project project,
+  public Object startCommand(@NotNull final Project project,
                              @Nls final String name,
-                             @Nullable final Object groupId,
+                             final Object groupId,
                              @NotNull final UndoConfirmationPolicy undoConfirmationPolicy) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (project != null && project.isDisposed()) return null;
+    if (project.isDisposed()) return null;
 
     if (CommandLog.LOG.isDebugEnabled()) {
       CommandLog.LOG.debug("startCommand: name = " + name + ", groupId = " + groupId);
@@ -169,7 +169,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  public void finishCommand(@Nullable final Project project, @NotNull final Object command, @Nullable Throwable throwable) {
+  public void finishCommand(final Project project, final Object command, final Throwable throwable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
     fireCommandFinished();

@@ -14,7 +14,7 @@ public abstract class CommandProcessorEx extends CommandProcessor {
   public abstract void leaveModal();
 
   @Nullable
-  public abstract Object startCommand(@Nullable Project project, @Nls String name, @Nullable Object groupId, @NotNull UndoConfirmationPolicy undoConfirmationPolicy);
+  public abstract Object startCommand(@NotNull Project project, @Nls String name, Object groupId, @NotNull UndoConfirmationPolicy undoConfirmationPolicy);
 
-  public abstract void finishCommand(@Nullable Project project, @NotNull final Object command, @Nullable Throwable throwable);
+  public abstract void finishCommand(Project project, final Object command, Throwable throwable);
 }

@@ -9,11 +9,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class CommandProcessorImpl extends CoreCommandProcessor {
   @Override
-  public void finishCommand(@Nullable Project project, @NotNull final Object command, @Nullable final Throwable throwable) {
+  public void finishCommand(final Project project, final Object command, final Throwable throwable) {
     if (myCurrentCommand != command) return;
     final boolean failed;
     try {
