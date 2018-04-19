@@ -2,9 +2,13 @@
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmClassKind;
+import com.intellij.lang.jvm.JvmEnumField;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
 import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,5 +108,44 @@ class PsiJvmConversionHelper {
     PsiReferenceList referenceList = psiClass.isInterface() ? psiClass.getExtendsList() : psiClass.getImplementsList();
     if (referenceList == null) return JvmReferenceType.EMPTY_ARRAY;
     return referenceList.getReferencedTypes();
+  }
+
+  @NotNull
+  static String getAnnotationAttributeName(@NotNull PsiNameValuePair pair) {
+    String name = pair.getName();
+    return name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name;
+  }
+
+  @Nullable
+  static JvmAnnotationAttributeValue getAnnotationAttributeValue(@NotNull PsiNameValuePair pair) {
+    return getAnnotationAttributeValue(pair.getValue());
+  }
+
+  @Nullable
+  static JvmAnnotationAttributeValue getAnnotationAttributeValue(@Nullable PsiAnnotationMemberValue value) {
+    if (value instanceof PsiClassObjectAccessExpression) {
+      return new PsiAnnotationClassValue((PsiClassObjectAccessExpression)value);
+    }
+    if (value instanceof PsiAnnotation) {
+      return new PsiNestedAnnotationValue((PsiAnnotation)value);
+    }
+    if (value instanceof PsiArrayInitializerMemberValue) {
+      return new PsiAnnotationArrayValue((PsiArrayInitializerMemberValue)value);
+    }
+    if (value instanceof PsiReferenceExpression) {
+      PsiElement resolved = ((PsiReferenceExpression)value).resolve();
+      if (resolved instanceof JvmEnumField) {
+        return new PsiAnnotationEnumFieldValue((PsiReferenceExpression)value, (JvmEnumField)resolved);
+      }
+    }
+    if (value instanceof PsiExpression) {
+      return new PsiAnnotationConstantValue((PsiExpression)value);
+    }
+
+    if (value != null) {
+      LOG.warn(new RuntimeExceptionWithAttachments("Not implemented: " + value.getClass(), new Attachment("text", value.getText())));
+    }
+
+    return null;
   }
 }
