@@ -21,6 +21,7 @@ public class LayeredIconPaintTest extends CompositeIconPaintTestHelper {
   public static final ExternalResource manageState = new RestoreScaleRule();
 
   @Test
+  @Override
   public void test() {
     super.test();
   }

@@ -15,6 +15,7 @@ import javax.swing.*;
  */
 public class OffsetIconPaintTest extends CompositeIconPaintTestHelper {
   @Test
+  @Override
   public void test() {
     super.test();
   }
