@@ -582,7 +582,7 @@ public class AllIcons {
     @Deprecated
     public static final Icon ProjectSettings = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
     public static final Icon ProjectStructure = IconLoader.getIcon("/general/projectStructure.png"); // 16x16
-    public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.png"); // 16x16
+    public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.svg"); // 16x16
     public static final Icon QuestionDialog = IconLoader.getIcon("/general/questionDialog.png"); // 32x32
     public static final Icon ReadHelp = IconLoader.getIcon("/general/readHelp.png"); // 32x32
     public static final Icon Recursive = IconLoader.getIcon("/general/recursive.png"); // 16x16
@@ -722,7 +722,7 @@ public class AllIcons {
     public static final Icon IncomingChangesOn = IconLoader.getIcon("/ide/incomingChangesOn.png"); // 16x16
     public static final Icon Info_notifications = IconLoader.getIcon("/ide/info_notifications.png"); // 16x16
     public static final Icon Link = IconLoader.getIcon("/ide/link.png"); // 12x12
-    public static final Icon LocalScope = IconLoader.getIcon("/ide/localScope.png"); // 16x16
+    public static final Icon LocalScope = IconLoader.getIcon("/ide/localScope.svg"); // 16x16
     public static final Icon LookupAlphanumeric = IconLoader.getIcon("/ide/lookupAlphanumeric.png"); // 12x12
     public static final Icon LookupRelevance = IconLoader.getIcon("/ide/lookupRelevance.png"); // 12x12
     
