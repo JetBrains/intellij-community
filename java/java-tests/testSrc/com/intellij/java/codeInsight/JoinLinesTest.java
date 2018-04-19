@@ -50,6 +50,10 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testDeclarationAndReassignmentWithCall() { doTest(); }
   public void testAssignmentAndReassignmentWithCall() { doTest(); }
 
+  public void testIfChain() { doTest(); }
+  public void testIfChainNoBraces() { doTest(); }
+  public void testIfChainElse() { doTest(); }
+
   public void testSCR3493() {
     CommonCodeStyleSettings settings = getJavaSettings();
     boolean use_tab_character = settings.getIndentOptions().USE_TAB_CHARACTER;
