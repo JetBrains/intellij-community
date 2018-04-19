@@ -44,6 +44,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testCallChain2() { doTest(); }
   public void testCallChainWrong() { doTest(); }
   public void testDeclarationAndCall() { doTest(); }
+  public void testDeclarationAndCallSelfRef() { doTest(); }
   public void testAssignmentAndCall() { doTest(); }
 
   public void testSCR3493() {

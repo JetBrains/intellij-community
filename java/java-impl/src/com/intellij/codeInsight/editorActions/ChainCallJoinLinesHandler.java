@@ -4,6 +4,8 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +55,7 @@ public class ChainCallJoinLinesHandler implements JoinLinesHandlerDelegate {
     if (!ExpressionUtils.isReferenceTo(qualifier, var)) return false;
     PsiType type = nextCall.getType();
     if (type == null || !type.equals(initializer.getType())) return false;
+    if (ReferencesSearch.search(var, new LocalSearchScope(nextCall)).findAll().size() > 1) return false;
     qualifier.replace(initializer);
     initializer.replace(nextCall);
     return true;
