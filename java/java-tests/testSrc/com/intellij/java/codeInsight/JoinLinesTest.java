@@ -175,14 +175,9 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     }
   }
 
-  @NotNull
-  protected CommonCodeStyleSettings getJavaSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
-  }
+  public void testAssignmentExpression() { doTest(); }
+  public void testAssignmentExpression2() { doTest(); }
 
-  public void testAssignmentExpression() {
-    doTest();
-  }
   public void testReformatInsertsNewlines() {
     CommonCodeStyleSettings settings = getJavaSettings();
     final Element root = new Element("fake");
@@ -273,5 +268,10 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES);
 
     actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+  }
+
+  @NotNull
+  private static CommonCodeStyleSettings getJavaSettings() {
+    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 }

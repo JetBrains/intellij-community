@@ -1,5 +1,5 @@
 class Foo {
     {
-        int x = 2;
+        int x = 1 + 2;
     }
 }

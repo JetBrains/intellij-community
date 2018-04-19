@@ -25,8 +25,10 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler");
@@ -106,17 +108,25 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     }
   }
 
+  /**
+   * Returns an updated initializer after joining with given assignment
+   * @param var variable which initializer should be updated
+   * @param assignment assignment to merge into the initializer
+   * @return updated initializer or null if operation cannot be performed (e.g. code is incomplete)
+   */
+  @Nullable
   public static PsiExpression getInitializerExpression(PsiLocalVariable var,
                                                        PsiAssignmentExpression assignment) {
-    return getInitializerExpression(var.getInitializer(), 
-                                    assignment);
+    return getInitializerExpression(var.getInitializer(), assignment);
   }
 
+  @Nullable
   public static PsiExpression getInitializerExpression(PsiExpression initializer,
                                                        PsiAssignmentExpression assignment) {
     PsiExpression initializerExpression;
     final IElementType originalOpSign = assignment.getOperationTokenType();
     final PsiExpression rExpression = assignment.getRExpression();
+    if (rExpression == null) return null;
     if (originalOpSign == JavaTokenType.EQ) {
       initializerExpression = rExpression;
     }
@@ -166,6 +176,10 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
         }
         else {
           initializerText += rightText;
+        }
+        if ("+".equals(opSign) && ExpressionUtils.isZero(initializer) ||
+            "*".equals(opSign) && ExpressionUtils.isOne(initializer)) {
+          initializerText = rightText;
         }
         initializerExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, assignment);
         initializerExpression = (PsiExpression)CodeStyleManager.getInstance(project).reformat(initializerExpression);
