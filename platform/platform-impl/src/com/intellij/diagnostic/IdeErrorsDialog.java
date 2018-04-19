@@ -195,7 +195,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     JBLabel attachmentsLabel = new JBLabel(DiagnosticBundle.message("diagnostic.error.report.attachments.label"));
 
-    myAttachmentsList = new AttachmentsList(myInternalMode);
+    myAttachmentsList = new AttachmentsList();
     myAttachmentsList.addListSelectionListener(e -> {
       int index = myAttachmentsList.getSelectedIndex();
       if (index < 0) {
@@ -585,19 +585,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   /* UI components */
 
   private static class AttachmentsList extends CheckBoxList<String> {
-    private final boolean myInternalMode;
-
-    private AttachmentsList(boolean internalMode) {
-      myInternalMode = internalMode;
-    }
-
     private void addItem(String item, boolean selected) {
       super.addItem(item, item + "  ", selected);
     }
 
     @Override
     protected boolean isEnabled(int index) {
-      return !myInternalMode && index > 0;
+      return index > 0;
     }
   }
 
