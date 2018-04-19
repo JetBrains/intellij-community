@@ -44,7 +44,7 @@ public class FileWithBranchComparer extends ElementWithBranchComparer {
 
   @Override
   protected void compare() throws VcsException {
-    remoteTitleBuilder.append(myElementUrl);
+    remoteTitleBuilder.append(myElementUrl.toDecodedString());
     content.set(SvnUtil.getFileContents(myVcs, Target.on(myElementUrl), Revision.HEAD, Revision.UNDEFINED));
     success.set(true);
   }
