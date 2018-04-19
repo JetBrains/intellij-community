@@ -347,7 +347,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
 
     List<BreakpointState<?, ?, ?>> breakpointsDefaults = new SmartList<>();
     for (Map.Entry<XBreakpointType, BreakpointState<?,?,?>> entry : myBreakpointsDefaults.entrySet()) {
-      if (statesAreDifferent(entry.getValue(), createBreakpointDefaults(entry.getKey()))) {
+      if (statesAreDifferent(entry.getValue(), createBreakpointDefaults(entry.getKey()), false)) {
         breakpointsDefaults.add(entry.getValue());
       }
     }
@@ -369,13 +369,24 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     }
 
     BreakpointState defaultState = ((XBreakpointBase)defaultBreakpoint).getState();
-    return statesAreDifferent(state, defaultState);
+    return statesAreDifferent(state, defaultState, false);
   }
 
-  private static boolean statesAreDifferent(BreakpointState state1, BreakpointState state2) {
+  public static boolean statesAreDifferent(BreakpointState state1, BreakpointState state2, boolean ignoreTimestamp) {
+    long timeStamp1 = state1.getTimeStamp();
+    long timeStamp2 = state2.getTimeStamp();
+    if (ignoreTimestamp) {
+      state1.setTimeStamp(timeStamp2);
+    }
+
     Element elem1 = XmlSerializer.serialize(state1, SERIALIZATION_FILTER);
     Element elem2 = XmlSerializer.serialize(state2, SERIALIZATION_FILTER);
-    return !JDOMUtil.areElementsEqual(elem1, elem2);
+    boolean res = !JDOMUtil.areElementsEqual(elem1, elem2);
+
+    if (ignoreTimestamp) {
+      state1.setTimeStamp(timeStamp1);
+    }
+    return res;
   }
 
   public void loadState(@NotNull BreakpointManagerState state) {
@@ -510,13 +521,23 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     myLastRemovedBreakpoint = new RemovedBreakpointData(breakpoint);
   }
 
-  public boolean canRestoreRemovedBreakpoint() {
-    return myLastRemovedBreakpoint != null;
+  @Nullable
+  public XBreakpointBase getLastRemovedBreakpoint() {
+    return myLastRemovedBreakpoint != null ? myLastRemovedBreakpoint.myBreakpoint : null;
   }
 
   @Nullable
   public XBreakpoint restoreLastRemovedBreakpoint() {
     if (myLastRemovedBreakpoint != null) {
+      XBreakpointBase breakpoint = myLastRemovedBreakpoint.myBreakpoint;
+      if (breakpoint instanceof XLineBreakpointImpl) {
+        XLineBreakpoint existingBreakpoint = findBreakpointAtLine(((XLineBreakpointImpl)breakpoint).getType(),
+                                                                  ((XLineBreakpointImpl)breakpoint).getFile(),
+                                                                  ((XLineBreakpointImpl)breakpoint).getLine());
+        if (existingBreakpoint != null) {
+          removeBreakpoint(existingBreakpoint);
+        }
+      }
       XBreakpoint res = myLastRemovedBreakpoint.restore();
       myLastRemovedBreakpoint = null;
       return res;
