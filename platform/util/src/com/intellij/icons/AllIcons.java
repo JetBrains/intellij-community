@@ -193,7 +193,10 @@ public class AllIcons {
   
   public static class CodeStyle {
     public static final Icon AddNewSectionRule = IconLoader.getIcon("/codeStyle/AddNewSectionRule.png"); // 16x16
-    public static final Icon Gear = IconLoader.getIcon("/codeStyle/Gear.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Gear = IconLoader.getIcon("/general/gearPlain.png"); // 16x16
     
     public static class Mac {
       public static final Icon AddNewSectionRule = IconLoader.getIcon("/codeStyle/mac/AddNewSectionRule.png"); // 16x16
