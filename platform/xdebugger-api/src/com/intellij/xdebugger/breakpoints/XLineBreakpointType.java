@@ -92,8 +92,9 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
-   * Priority is considered when several breakpoint types can be set on the same code line,
+   * Priority is considered when several breakpoint types can be set inside a folded code block,
    * in this case we choose type with the highest priority
+   * Also it affects types sorting in various places
    */
   public int getPriority() {
     return 0;
