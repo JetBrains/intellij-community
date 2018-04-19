@@ -1180,16 +1180,16 @@ java_library(
     name = "aapt-proto-jarjar",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/base/sdk-common/aapt-proto-jar-generator:jarjar"],
-    runtime_deps = ["//tools/base/sdk-common/aapt-proto-jar-generator:jarjar"],
+    exports = ["//tools/base/sdk-common/aapt-proto-jar-generator:aapt-proto-jarjar"],
+    runtime_deps = ["//tools/base/sdk-common/aapt-proto-jar-generator:aapt-proto-jarjar"],
 )
 
 java_library(
     name = "aia-manifest-proto-1.0-jarjar",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/base/sdk-common/aia-manifest-jar-generator:jarjar"],
-    runtime_deps = ["//tools/base/sdk-common/aia-manifest-jar-generator:jarjar"],
+    exports = ["//tools/base/sdk-common/aia-manifest-jar-generator:aia-manifest-proto-1.0-jarjar"],
+    runtime_deps = ["//tools/base/sdk-common/aia-manifest-jar-generator:aia-manifest-proto-1.0-jarjar"],
 )
 
 java_library(
