@@ -42,8 +42,8 @@ public interface GroovyElementTypes {
   GrStubElementType<GrTypeDefinitionStub, GrTraitTypeDefinition> TRAIT_DEFINITION = new GrTraitElementType("Trait definition");
   GrStubElementType<GrTypeDefinitionStub, GrEnumConstantInitializer> ENUM_CONSTANT_INITIALIZER = new GrEnumConstantInitializerElementType("Enum constant initializer");
 
-  GrStubElementType<GrFieldStub, GrEnumConstant> ENUM_CONSTANT = new GrEnumConstantElementType();
-  GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType();
+  GrStubElementType<GrFieldStub, GrEnumConstant> ENUM_CONSTANT = new GrEnumConstantElementType("Enumeration constant");
+  GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType("field");
   GrMethodElementType METHOD_DEFINITION = new GrMethodElementType("method definition");
   GrStubElementType<GrMethodStub, GrMethod> ANNOTATION_METHOD = new GrAnnotationMethodElementType("annotation method");
 
@@ -150,7 +150,7 @@ public interface GroovyElementTypes {
 
   GrStubElementType<GrTypeParameterStub, GrTypeParameter> TYPE_PARAMETER = new GrTypeParameterElementType("type parameter");
 
-  IStubElementType<GrReferenceListStub, GrReferenceList> TYPE_PARAMETER_EXTENDS_BOUND_LIST = new GrTypeParameterBoundsElementType();
+  IStubElementType<GrReferenceListStub, GrReferenceList> TYPE_PARAMETER_EXTENDS_BOUND_LIST = new GrTypeParameterBoundsElementType("type extends list");
 
   GroovyElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");
 
@@ -161,8 +161,8 @@ public interface GroovyElementTypes {
   GrReferenceListElementType<GrThrowsClause> THROW_CLAUSE = new GrThrowsClauseElementType("throw clause");
   //annotation
   GroovyElementType ANNOTATION_ARRAY_INITIALIZER = new GroovyElementType("annotation array initializer");
-  GrAnnotationArgumentListElementType ANNOTATION_ARGUMENTS = new GrAnnotationArgumentListElementType();
-  GrNameValuePairElementType ANNOTATION_MEMBER_VALUE_PAIR = new GrNameValuePairElementType();
+  GrAnnotationArgumentListElementType ANNOTATION_ARGUMENTS = new GrAnnotationArgumentListElementType("annotation arguments");
+  GrNameValuePairElementType ANNOTATION_MEMBER_VALUE_PAIR = new GrNameValuePairElementType("Annotation name value pair");
 
   GrStubElementType<GrAnnotationStub, GrAnnotation> ANNOTATION = new GrAnnotationElementType("annotation");
   //parameters
@@ -194,11 +194,11 @@ public interface GroovyElementTypes {
   GroovyElementType CLASS_INITIALIZER = new GroovyElementType("static compound statement");
 
   EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION_ERROR = new GrErrorVariableDeclarationElementType("variable definitions with errors");
-  GrVariableDeclarationElementType VARIABLE_DEFINITION = new GrVariableDeclarationElementType();
+  GrVariableDeclarationElementType VARIABLE_DEFINITION = new GrVariableDeclarationElementType("variable definitions");
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
   GroovyElementType TUPLE = new GroovyElementType("tuple");
 
-  GrVariableElementType VARIABLE = new GrVariableElementType();
+  GrVariableElementType VARIABLE = new GrVariableElementType("assigned variable");
 
   //modifiers
   GrStubElementType<GrModifierListStub, GrModifierList> MODIFIERS = new GrModifierListElementType("modifier list");

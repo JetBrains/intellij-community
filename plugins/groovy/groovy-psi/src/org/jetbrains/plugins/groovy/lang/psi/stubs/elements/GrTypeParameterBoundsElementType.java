@@ -8,8 +8,8 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 
 public final class GrTypeParameterBoundsElementType extends GrReferenceListElementType<GrReferenceList> {
 
-  public GrTypeParameterBoundsElementType() {
-    super("type extends list");
+  public GrTypeParameterBoundsElementType(String debugName) {
+    super(debugName);
   }
 
   @Override
