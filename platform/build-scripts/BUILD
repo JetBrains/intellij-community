@@ -4,10 +4,7 @@ iml_module(
     name = "intellij.platform.buildScripts",
     srcs = ["groovy"],
     iml_files = ["intellij.platform.buildScripts.iml"],
-    tags = [
-        "managed",
-        "manual",
-    ],
+    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
@@ -17,6 +14,7 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
     ],
     test_srcs = ["testSrc"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
