@@ -3,8 +3,10 @@
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.intention.impl.config.BeforeAfterActionMetaData;
+import com.intellij.codeInsight.intention.impl.config.BeforeAfterMetaData;
 import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,8 +29,11 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
   private static final String DESCRIPTION_FOLDER = "postfixTemplates";
 
   @NotNull
-  public static PostfixTemplateMetaData createMetaData(@Nullable PostfixTemplate template) {
-    if (template == null || template instanceof PostfixTemplateWrapper || !template.isBuiltin()) return EMPTY_METADATA;
+  public static BeforeAfterMetaData createMetaData(@Nullable PostfixTemplate template) {
+    if (template == null || template instanceof PostfixTemplateWrapper) return EMPTY_METADATA;
+    if (template instanceof EditablePostfixTemplate && !template.isBuiltin()) {
+      return new EditablePostfixTemplateMetaData((EditablePostfixTemplate)template);
+    }
     return new PostfixTemplateMetaData(template);
   }
 
