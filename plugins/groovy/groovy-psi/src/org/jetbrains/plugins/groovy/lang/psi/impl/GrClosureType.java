@@ -27,7 +27,7 @@ public class GrClosureType extends GrLiteralClassType {
   private volatile PsiType[] myTypeArgs;
   private GrClosableBlock myClosure;
 
-  private GrClosureType(LanguageLevel languageLevel,
+  private GrClosureType(@NotNull LanguageLevel languageLevel,
                         @NotNull GlobalSearchScope scope,
                         @NotNull JavaPsiFacade facade,
                         @NotNull GrSignature closureSignature,
@@ -37,7 +37,7 @@ public class GrClosureType extends GrLiteralClassType {
     if (!shouldInferTypeParameters) myTypeArgs = PsiType.EMPTY_ARRAY;
   }
 
-  private GrClosureType(LanguageLevel level,
+  private GrClosureType(@NotNull LanguageLevel level,
                         @NotNull GlobalSearchScope scope,
                         @NotNull JavaPsiFacade facade,
                         @NotNull GrSignature signature,
@@ -161,7 +161,7 @@ public class GrClosureType extends GrLiteralClassType {
   public static GrClosureType create(@NotNull GrSignature signature,
                                      GlobalSearchScope scope,
                                      JavaPsiFacade facade,
-                                     LanguageLevel languageLevel,
+                                     @NotNull LanguageLevel languageLevel,
                                      boolean shouldInferTypeParameters) {
     return new GrClosureType(languageLevel, scope, facade, signature, shouldInferTypeParameters);
   }

@@ -15,15 +15,14 @@
  */
 package com.intellij.refactoring.introduceparameterobject;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,6 +35,7 @@ class ParameterObjectBuilder {
     private final List<ParameterSpec> fields = new ArrayList<>(5);
     private final List<PsiTypeParameter> typeParams = new ArrayList<>();
     private Project myProject;
+    private PsiFile myFile;
   private JavaCodeStyleManager myJavaCodeStyleManager ;
   private String myVisibility;
 
@@ -62,6 +62,10 @@ class ParameterObjectBuilder {
   public void setProject(final Project project) {
     myProject = project;
     myJavaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+  }
+
+  public void setFile(@NotNull PsiFile file) {
+    myFile = file;
   }
 
   public String buildBeanClass() {
@@ -129,14 +133,18 @@ class ParameterObjectBuilder {
       out.append(GenerateMembersUtil.generateGetterPrototype(JavaPsiFacade.getElementFactory(myProject).createField(field.getName(), field.getType())).getText());
     }
 
+  @NotNull
+  private CodeStyleSettings getSettings() {
+    return myFile != null ? CodeStyle.getSettings(myFile) : CodeStyle.getProjectOrDefaultSettings(myProject);
+  }
+
     private void outputConstructor(@NonNls StringBuffer out) {
         out.append("\t" + myVisibility + " " + className + '(');
         for (Iterator<ParameterSpec> iterator = fields.iterator(); iterator.hasNext();) {
           final ParameterSpec field = iterator.next();
           final PsiParameter parameter = field.getParameter();
             outputAnnotationString(parameter, out);
-          out.append(
-            CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS ?
+          out.append(getSettings().getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS ?
             " final " : "");
             final String parameterName = parameter.getName();
           final PsiType type = field.getType();

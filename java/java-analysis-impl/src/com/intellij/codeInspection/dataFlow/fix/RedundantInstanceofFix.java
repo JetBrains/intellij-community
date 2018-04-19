@@ -21,6 +21,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,8 +39,14 @@ public class RedundantInstanceofFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
     String replacement;
+    CommentTracker ct = new CommentTracker();
     if (psiElement instanceof PsiInstanceOfExpression) {
-      replacement = ((PsiInstanceOfExpression)psiElement).getOperand().getText() + " != null";
+      replacement = ct.text(((PsiInstanceOfExpression)psiElement).getOperand()) + " != null";
+    }
+    else if (psiElement instanceof PsiMethodCallExpression) {
+      PsiExpression arg = ArrayUtil.getFirstElement(((PsiMethodCallExpression)psiElement).getArgumentList().getExpressions());
+      if (arg == null) return;
+      replacement = ct.text(arg) + " != null";
     }
     else if (psiElement instanceof PsiMethodReferenceExpression) {
       replacement = CommonClassNames.JAVA_UTIL_OBJECTS + "::nonNull";
@@ -46,7 +54,6 @@ public class RedundantInstanceofFix implements LocalQuickFix {
     else {
       return;
     }
-    PsiExpression compareToNull = JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, psiElement.getParent());
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiElement.replace(compareToNull));
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(ct.replaceAndRestoreComments(psiElement, replacement));
   }
 }

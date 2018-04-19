@@ -90,8 +90,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyDefaultArgumentInspection() {
-    LocalInspectionTool inspection = new PyDefaultArgumentInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyDefaultArgumentInspection.class);
   }
 
   public void testPyDocstringInspection() {

@@ -24,6 +24,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -466,7 +467,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   // PY-28321
-  public void testImportManySourceRootsReverseRootOrder() {
+  // TODO: The test should be turned on as soon as PY-16688 and PY-23087 are implemented
+  public void ignoreTestImportManySourceRootsReverseRootOrder() {
     myFixture.copyDirectoryToProject("importManySourceRoots", "");
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
       final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
@@ -558,5 +560,27 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   public void testImportResolvesToPkgInit() {
     prepareTestDirectory();
     assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/__init__.py");
+  }
+
+  // PY-28764
+  public void testOsAttributesFromPosixPathAndNTPath() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+
+    runWithSourceRoots(
+      Collections.singletonList(myFixture.findFileInTempDir("lib")),
+      () -> {
+        final PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.configureByFile("a.py"));
+        assertInstanceOf(reference, PsiPolyVariantReference.class);
+
+        final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)reference);
+        assertEquals(1, elements.size());
+
+        final PsiElement element = elements.get(0);
+        assertInstanceOf(element, PyFile.class);
+
+        final VirtualFile file = ((PyFile)element).getVirtualFile();
+        assertEquals("ntpath.py", file.getName());
+      }
+    );
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -176,7 +176,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
-    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
+    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);
 
     myUpdater.updateActions(updateActionsNow, false);
@@ -358,6 +358,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (customComponent == null) {
       customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
       presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
+      customComponent.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY, action);
     }
     tweakActionComponentUI(customComponent);
 
@@ -947,7 +948,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final class MySeparator extends JComponent {
     @Override
     public Dimension getPreferredSize() {
-      return (myOrientation == SwingConstants.HORIZONTAL) ? JBUI.size(6, 24) : JBUI.size(24, 6);
+      return (myOrientation == SwingConstants.HORIZONTAL) ? JBUI.size(7, 24) : JBUI.size(24, 7);
     }
 
     @Override

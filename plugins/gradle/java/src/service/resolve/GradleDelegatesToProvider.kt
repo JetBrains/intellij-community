@@ -11,11 +11,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvid
  * @author Vladislav.Soroka
  * @since 11/8/2016
  */
-class GradleDelegatesToProvider() : GrDelegatesToProvider {
+class GradleDelegatesToProvider : GrDelegatesToProvider {
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
     val file = closure.containingFile
-    if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null
+    if (file == null || !FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)) return null
 
     for (contributor in GradleMethodContextContributor.EP_NAME.extensions) {
       val delegatesToInfo = contributor.getDelegatesToInfo(closure)

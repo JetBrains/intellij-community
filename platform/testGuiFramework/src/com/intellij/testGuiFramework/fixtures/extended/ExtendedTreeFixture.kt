@@ -144,13 +144,7 @@ open class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture
     return result
   }
 
-  /**
-   * Find full path of the given node and click
-   * Works fine for test tool window and settings
-   * Works incorrect for npm/gulp.grunt tool windows
-   * @param node - node full name
-   */
-  fun clickPathByNode(node: String) {
+  fun getPathByNode(node: String): List<String> {
     expandNodes()
     Pause.pause(1000) //Wait for EDT thread to finish expanding
     val result: MutableList<String> = mutableListOf()
@@ -174,7 +168,17 @@ open class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture
     }else if (tree.model.root.toString() == ""){
       result.removeAt(0)
     }
-    clickPath(result)
+    return result
+  }
+
+  /**
+   * Find full path of the given node and click
+   * Works fine for test tool window and settings
+   * Works incorrect for npm/gulp.grunt tool windows
+   * @param node - node full name
+   */
+  fun clickPathByNode(node: String) {
+    clickPath(getPathByNode(node))
   }
 
   /**

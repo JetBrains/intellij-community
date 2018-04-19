@@ -238,11 +238,11 @@ class CommunityRepositoryModules {
     plugin("intellij.android.plugin") {
       directoryName = "android"
       mainJarName = "android.jar"
-      withModule("intellij.android.common", "android-common.jar", false)
-      withModule("intellij.android.buildCommon", "build-common.jar", false)
-      withModule("intellij.android.rt", "android-rt.jar", false)
+      withModule("intellij.android.common", "android-common.jar", null)
+      withModule("intellij.android.buildCommon", "build-common.jar", null)
+      withModule("intellij.android.rt", "android-rt.jar", null)
 
-      withModule("intellij.android", "android.jar", false)
+      withModule("intellij.android", "android.jar", null)
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
@@ -266,7 +266,6 @@ class CommunityRepositoryModules {
 
       withModule("android.sdktools.binary-resources", "sdk-tools.jar")
       withModule("android.sdktools.analyzer", "sdk-tools.jar")
-      withModule("android.sdktools.ddmlib", "sdk-tools.jar")
       withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.draw9patch", "sdk-tools.jar")
       withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
@@ -275,7 +274,7 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
 
-      withModule("intellij.android.jps", "jps/android-jps-plugin.jar")
+      withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx") //todo[nik] move to module libraries

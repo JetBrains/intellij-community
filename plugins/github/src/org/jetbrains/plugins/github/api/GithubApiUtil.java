@@ -232,12 +232,23 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static GithubUserDetailed getCurrentUser(@NotNull GithubConnection connection) throws IOException {
+  public static GithubAuthenticatedUser getCurrentUser(@NotNull GithubConnection connection) throws IOException {
     try {
-      return load(connection, "/user", GithubUserDetailed.class, ACCEPT_V3_JSON);
+      return load(connection, "/user", GithubAuthenticatedUser.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get user info");
+      throw e;
+    }
+  }
+
+  @NotNull
+  public static GithubUserDetailed getUser(@NotNull GithubConnection connection, @NotNull String username) throws IOException {
+    try {
+      return load(connection, "/users/" + username, GithubUserDetailed.class, ACCEPT_V3_JSON);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get user info for: " + username);
       throw e;
     }
   }

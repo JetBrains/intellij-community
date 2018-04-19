@@ -17,12 +17,16 @@ package com.jetbrains.env.python.testing;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyScriptTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
+import com.jetbrains.python.testing.PyUnitTestConfiguration;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -325,5 +329,23 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
         assertEquals(3, runner.getPassedTestsCount());
       }
     });
+  }
+
+  @Test
+  public void testMultipleCases() {
+    runPythonTest(
+      new CreateConfigurationMultipleCasesTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+                                                                        PyUnitTestConfiguration.class) {
+        @Override
+        protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {
+          // test_functions.py and test_foo do not contain any TestCase and can't be launched with unittest
+          final PsiFile file = element.getContainingFile();
+          if (file == null) {
+            return true;
+          }
+          final String name = file.getName();
+          return !(name.endsWith("test_functions.py") || name.endsWith("test_foo.py"));
+        }
+      });
   }
 }

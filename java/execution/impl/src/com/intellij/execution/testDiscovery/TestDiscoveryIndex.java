@@ -57,6 +57,12 @@ public class TestDiscoveryIndex implements Disposable {
   }
 
   @NotNull
+  public MultiMap<String, String> getTestsByClassName(@NotNull String classFQName, byte frameworkId) {
+    MultiMap<String, String> map = executeUnderLock(holder -> holder.getTestsByClassName(classFQName, frameworkId));
+    return map == null ? MultiMap.empty() : map;
+  }
+
+  @NotNull
   public MultiMap<String, String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) {
     MultiMap<String, String> map = executeUnderLock(holder -> holder.getTestsByMethodName(classFQName, methodName, frameworkId));
     return map == null ? MultiMap.empty() : map;

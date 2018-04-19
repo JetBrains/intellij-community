@@ -137,10 +137,15 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     }
   }
 
+  @NotNull
   public <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> aClass) {
     synchronized (myCustomSettings) {
       //noinspection unchecked
-      return (T)myCustomSettings.get(aClass);
+      T result = (T)myCustomSettings.get(aClass);
+      if (result == null) {
+        throw new RuntimeException("Unable to get registered settings of #" + aClass.getSimpleName() + " (" + aClass.getName() + ")");
+      }
+      return result;
     }
   }
 

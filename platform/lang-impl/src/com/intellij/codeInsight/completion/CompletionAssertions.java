@@ -120,7 +120,7 @@ class CompletionAssertions {
 
   static void assertHostInfo(PsiFile hostCopy, OffsetMap hostMap) {
     PsiUtilCore.ensureValid(hostCopy);
-    if (hostMap.getOffset(CompletionInitializationContext.START_OFFSET) >= hostCopy.getTextLength()) {
+    if (hostMap.getOffset(CompletionInitializationContext.START_OFFSET) > hostCopy.getTextLength()) {
       throw new AssertionError("startOffset outside the host file: " + hostMap.getOffset(CompletionInitializationContext.START_OFFSET) + "; " + hostCopy);
     }
   }
@@ -138,10 +138,6 @@ class CompletionAssertions {
                                                                    DebugUtil.currentStackTrace(),
                                                                    createFileTextAttachment(fileCopy, originalFile),
                                                                    createAstAttachment(fileCopy, originalFile));
-    }
-
-    if (fileCopy.findElementAt(offset) != insertedElement) {
-      throw new AssertionError("wrong offset");
     }
 
     final TextRange range = insertedElement.getTextRange();

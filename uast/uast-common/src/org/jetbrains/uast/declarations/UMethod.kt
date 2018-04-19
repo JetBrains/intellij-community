@@ -29,6 +29,8 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UMethod : UDeclaration, PsiMethod {
   override val psi: PsiMethod
 
+  override val javaPsi: PsiMethod
+
   /**
    * Returns the body expression (which can be also a [UBlockExpression]).
    */
@@ -114,7 +116,5 @@ interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
   override fun asLogString() = log("name = $name")
 }
 
-@Deprecated("transitional interface, don't rely on it", ReplaceWith("UMethod"))
-interface UMethodTypeSpecific : UMethod {
-  override val javaPsi: PsiMethod
-}
+@Deprecated("no more needed, use UMethod", ReplaceWith("UMethod"))
+interface UMethodTypeSpecific : UMethod

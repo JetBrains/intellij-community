@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -32,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -41,9 +26,8 @@ import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.EmptyIterable;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -269,7 +253,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         }
         else {
           // There may be more than one class/method code on the line, so we need to find out the correct place
-          for (PsiElement elem : getLineElements(file, line)) {
+          for (PsiElement elem : XDebuggerUtilImpl.getLineElements(file, line)) {
             PsiElement remappedElement = remapElement(elem);
             if (remappedElement != null) {
               if (remappedElement.getTextOffset() <= original.getOffset()) break;
@@ -282,48 +266,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
   }
 
-  private static Iterable<PsiElement> getLineElements(final PsiFile file, int lineNumber) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-    if (document == null || lineNumber < 0 || lineNumber >= document.getLineCount()) {
-      return EmptyIterable.getInstance();
-    }
-    final TextRange lineRange = DocumentUtil.getLineTextRange(document, lineNumber);
-    return new Iterable<PsiElement>() {
-      @Override
-      public Iterator<PsiElement> iterator() {
-        return new Iterator<PsiElement>() {
-          PsiElement myElement = DebuggerUtilsEx.findElementAt(file, lineRange.getStartOffset());
-
-          @Override
-          public boolean hasNext() {
-            return myElement != null;
-          }
-
-          @Override
-          public PsiElement next() {
-            PsiElement res = myElement;
-            do {
-              myElement = PsiTreeUtil.nextLeaf(myElement);
-              if (myElement == null || myElement.getTextOffset() > lineRange.getEndOffset()) {
-                myElement = null;
-                break;
-              }
-            } while (myElement.getTextLength() == 0);
-            return res;
-          }
-
-          @Override
-          public void remove() {}
-        };
-      }
-    };
-  }
-
   private static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Set<PsiClass> res = new HashSet<>();
-    for (PsiElement element : getLineElements(file, lineNumber)) {
+    for (PsiElement element : XDebuggerUtilImpl.getLineElements(file, lineNumber)) {
       PsiClass aClass = getEnclosingClass(element);
       if (aClass != null) {
         res.add(aClass);

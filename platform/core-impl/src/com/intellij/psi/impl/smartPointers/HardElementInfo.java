@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -26,12 +25,9 @@ import org.jetbrains.annotations.NotNull;
 class HardElementInfo extends SmartPointerElementInfo {
   @NotNull
   private final PsiElement myElement;
-  @NotNull
-  private final Project myProject;
 
-  HardElementInfo(@NotNull Project project, @NotNull PsiElement element) {
+  HardElementInfo(@NotNull PsiElement element) {
     myElement = element;
-    myProject = project;
   }
 
   @Override
@@ -50,8 +46,7 @@ class HardElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other,
-                                   @NotNull SmartPointerManagerImpl manager) {
+  boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
     return other instanceof HardElementInfo && myElement.equals(((HardElementInfo)other).myElement);
   }
 

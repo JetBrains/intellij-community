@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.rt.execution.application.AppMainV2;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -57,8 +58,9 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       //configuration.USE_SOCKET_TRANSPORT = true;
       //configuration.SERVER_MODE = false;
 
-      RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project).createRunConfiguration(":" + info.myAddress, Objects
-        .requireNonNull(ConfigurationTypeUtil.findConfigurationType("Remote")).getConfigurationFactories()[0]);
+      RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project).createRunConfiguration(
+        "localhost:" + info.myAddress,
+        Objects.requireNonNull(ConfigurationTypeUtil.findConfigurationType("Remote")).getConfigurationFactories()[0]);
 
       RunConfiguration remoteConfiguration = runSettings.getConfiguration();
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "HOST",
@@ -95,7 +97,12 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       StringBuilder res = new StringBuilder();
       String executable = info.getExecutableDisplayName();
       if ("java".equals(executable)) {
-        res.append(StringUtil.notNullize(ArrayUtil.getLastElement(info.getCommandLine().split(" ")))); // should be class name
+        if (!StringUtil.isEmpty(attachInfo.myClass)) {
+          res.append(attachInfo.myClass);
+        }
+        else {
+          res.append(StringUtil.notNullize(ArrayUtil.getLastElement(info.getCommandLine().split(" ")))); // should be class name
+        }
       }
       else {
         res.append(executable);
@@ -143,7 +150,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     if (res == null) {
       Pair<String, Integer> address = DebugAttachDetector.getAttachAddress(ParametersListUtil.parse(processInfo.getCommandLine()));
       if (address != null) {
-        res = new LocalAttachInfo(true, String.valueOf(address.getSecond()));
+        res = new LocalAttachInfo(true, String.valueOf(address.getSecond()), null);
       }
     }
     return res;
@@ -154,9 +161,17 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     VirtualMachine vm = null;
     try {
       vm = VirtualMachine.attach(pid);
-      String property = vm.getAgentProperties().getProperty("sun.jdwp.listenerAddress");
+      Properties agentProperties = vm.getAgentProperties();
+      String property = agentProperties.getProperty("sun.jdwp.listenerAddress");
       if (property != null && property.indexOf(':') != -1) {
-        return new LocalAttachInfo(!"dt_shmem".equals(StringUtil.substringBefore(property, ":")), StringUtil.substringAfter(property, ":"));
+        String command = agentProperties.getProperty("sun.java.command");
+        if (!StringUtil.isEmpty(command)) {
+          command = StringUtil.replace(command, AppMainV2.class.getName(), "").trim();
+          command = StringUtil.substringBefore(command, " ");
+        }
+        return new LocalAttachInfo(!"dt_shmem".equals(StringUtil.substringBefore(property, ":")),
+                                   StringUtil.substringAfter(property, ":"),
+                                   command);
       }
     }
     catch (AttachNotSupportedException | IOException ignored) {
@@ -176,10 +191,12 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   private static class LocalAttachInfo {
     final boolean myUseSocket;
     final String myAddress;
+    final String myClass;
 
-    private LocalAttachInfo(boolean socket, @NotNull String address) {
+    private LocalAttachInfo(boolean socket, @NotNull String address, String aClass) {
       myUseSocket = socket;
       myAddress = address;
+      myClass = aClass;
     }
   }
 }

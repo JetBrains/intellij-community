@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -20,6 +20,8 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   private String category;
   private boolean predefined;
   private long created;
+
+  private transient String myCurrentVariableName = null;
 
   public Configuration() {
     name = "";
@@ -100,6 +102,14 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   public abstract MatchOptions getMatchOptions();
 
   public abstract NamedScriptableDefinition findVariable(String name);
+
+  public String getCurrentVariableName() {
+    return myCurrentVariableName;
+  }
+
+  public void setCurrentVariableName(String variableName) {
+    myCurrentVariableName = variableName;
+  }
 
   @Override
   public int compareTo(Configuration other) {

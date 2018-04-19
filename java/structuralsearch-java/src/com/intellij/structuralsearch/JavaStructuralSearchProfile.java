@@ -58,27 +58,24 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   public String getText(PsiElement match, int start, int end) {
     if (match instanceof PsiIdentifier) {
-      PsiElement parent = match.getParent();
+      final PsiElement parent = match.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement && !(parent instanceof PsiExpression)) {
-        match = parent; // care about generic
+        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
+        final String text = referenceElement.getText();
+        if (end != -1) {
+          return text.substring(start, end);
+        }
+        final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        if (parameterList != null) {
+          // get text without type parameters
+          return text.substring(start, parameterList.getStartOffsetInParent());
+        }
+        return text;
       }
     }
     final String matchText = match.getText();
-    if (start==0 && end==-1) return matchText;
-    return matchText.substring(start,end == -1? matchText.length():end);
-  }
-
-  @Override
-  public Class getElementContextByPsi(PsiElement element) {
-    if (element instanceof PsiIdentifier) {
-      element = element.getParent();
-    }
-
-    if (element instanceof PsiMember) {
-      return PsiMember.class;
-    } else {
-      return PsiExpression.class;
-    }
+    if (start == 0 && end == -1) return matchText;
+    return matchText.substring(start, (end == -1) ? matchText.length() : end);
   }
 
   @Override

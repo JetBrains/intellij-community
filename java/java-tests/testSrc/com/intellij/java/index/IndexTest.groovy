@@ -539,17 +539,37 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void runFindClassStubIndexQueryThatProducesInvalidResult(String qName) {
+    def foundFile = [null]
+
+    def key = qName.hashCode()
+    def searchScope = GlobalSearchScope.allScope(project)
+    def processor = new Processor<PsiFile>() {
+      @Override
+      boolean process(PsiFile file) {
+        foundFile[0] = file
+        return false
+      }
+    }
+    
     try {
-      def foundFile = [null]
 
       StubIndex.instance.
-        processElements(JavaStubIndexKeys.CLASS_FQN, qName.hashCode(), project, GlobalSearchScope.allScope(project), PsiFile.class, new Processor<PsiFile>() {
+        processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiClass.class, new Processor<PsiClass>() {
           @Override
-          boolean process(PsiFile file) {
-            foundFile[0] = file
+          boolean process(PsiClass aClass) {
+            StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiFile.class, processor)
+
             return false
           }
         })
+      fail("Unexpected")
+    }
+    catch (AssertionError ignored) {
+      // stub mismatch
+    }
+    
+    try {      
+      StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiFile.class, processor)
 
       fail("Unexpected")
     }

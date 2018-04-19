@@ -274,7 +274,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  void updateToolTipText() {
+  protected void updateToolTipText() {
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {

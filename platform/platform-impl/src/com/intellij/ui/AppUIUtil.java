@@ -35,10 +35,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
@@ -65,9 +63,9 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -264,22 +262,34 @@ public class AppUIUtil {
           Logger.getInstance(AppUIUtil.class).warn(e);
         }
       }
-      final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
-      if (consentsToShow.second) {
+      showConsentsAgreementIfNeed();
+    }
+  }
+
+  public static boolean showConsentsAgreementIfNeed() {
+    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+    AtomicBoolean result = new AtomicBoolean();
+    if (consentsToShow.second) {
+      Runnable runnable = () -> {
+        List<Consent> confirmed = confirmConsentOptions(consentsToShow.first);
+        if (confirmed != null) {
+          ConsentOptions.getInstance().setConsents(confirmed);
+          result.set(true);
+        }
+      };
+      if (SwingUtilities.isEventDispatchThread()) {
+        runnable.run();
+      } else {
         try {
-          final Ref<Collection<Consent>> result = Ref.create(null);
-          // todo: does not seem to request focus when shown
-          SwingUtilities.invokeAndWait(() -> result.set(confirmConsentOptions(consentsToShow.first)));
-          final Collection<Consent> confirmed = result.get();
-          if (confirmed != null) {
-            ConsentOptions.getInstance().setConsents(confirmed);
-          }
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeAndWait(runnable);
         }
         catch (Exception e) {
           Logger.getInstance(AppUIUtil.class).warn(e);
         }
       }
     }
+    return result.get();
   }
 
   /**
@@ -369,7 +379,7 @@ public class AppUIUtil {
     if (consents.isEmpty()) return null;
 
     ConsentSettingsUi ui = new ConsentSettingsUi(false);
-    final DialogWrapper dialog = new DialogWrapper(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow(), true) {
+    final DialogWrapper dialog = new DialogWrapper(true) {
       @Nullable
       @Override
       protected Border createContentPaneBorder() {
@@ -457,6 +467,10 @@ public class AppUIUtil {
   public static void targetToDevice(@NotNull Component comp, @Nullable Component target) {
     if (comp.isShowing()) return;
     GraphicsConfiguration gc = target != null ? target.getGraphicsConfiguration() : null;
+    setGraphicsConfiguration(comp, gc);
+  }
+
+  public static void setGraphicsConfiguration(@NotNull Component comp, @Nullable GraphicsConfiguration gc) {
     AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc);
   }
 }

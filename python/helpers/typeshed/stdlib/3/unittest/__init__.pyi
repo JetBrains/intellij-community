@@ -191,7 +191,7 @@ class FunctionTestCase(TestCase):
 class _AssertRaisesContext(Generic[_E]):
     exception = ...  # type: _E
     def __enter__(self) -> _AssertRaisesContext[_E]: ...
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception],
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException],
                  exc_tb: Optional[TracebackType]) -> bool: ...
 
 class _AssertWarnsContext:
@@ -199,14 +199,14 @@ class _AssertWarnsContext:
     filename = ...  # type: str
     lineno = ...  # type: int
     def __enter__(self) -> _AssertWarnsContext: ...
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception],
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException],
                  exc_tb: Optional[TracebackType]) -> bool: ...
 
 class _AssertLogsContext:
     records = ...  # type: List[logging.LogRecord]
     output = ...  # type: List[str]
     def __enter__(self) -> _AssertLogsContext: ...
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception],
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException],
                  exc_tb: Optional[TracebackType]) -> bool: ...
 
 

@@ -175,6 +175,9 @@ class FrameType:
     f_lineno = ...  # type: int
     f_locals = ...  # type: Dict[str, Any]
     f_trace = ...  # type: Callable[[], None]
+    if sys.version_info >= (3, 7):
+        f_frace_lines: bool
+        f_trace_opcodes: bool
 
     def clear(self) -> None: ...
 

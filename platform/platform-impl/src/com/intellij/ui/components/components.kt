@@ -4,6 +4,7 @@
 package com.intellij.ui.components
 
 import com.intellij.BundleBase
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
@@ -124,6 +125,9 @@ private fun setTitledBorder(title: String, panel: JPanel) {
   border.acceptMinimumSize(panel)
 }
 
+/**
+ * Consider using [UI DSL](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout#readme) to create panel.
+ */
 fun dialog(title: String,
            panel: JComponent,
            resizable: Boolean = false,
@@ -176,6 +180,11 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
                                                           fileChooserDescriptor: FileChooserDescriptor,
                                                           textComponentAccessor: TextComponentAccessor<T>,
                                                           fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
+  if (ApplicationManager.getApplication() == null) {
+    // tests
+    return
+  }
+
   component.addActionListener(
       object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
         override fun onFileChosen(chosenFile: VirtualFile) {

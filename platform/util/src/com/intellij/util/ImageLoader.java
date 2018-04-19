@@ -46,6 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.util.ImageLoader.ImageDesc.Type.PNG;
+import static com.intellij.util.ImageLoader.ImageDesc.Type.SVG;
 import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 
@@ -136,7 +138,7 @@ public class ImageLoader implements Serializable {
       }
       if (stream == null) {
         if (useCache) {
-          cacheKey = path + (type == Type.SVG ? "_@" + scale + "x" : "");
+          cacheKey = path + (type == SVG ? "_@" + scale + "x" : "");
           Image image = ourCache.get(cacheKey);
           if (image != null) return image;
         }
@@ -165,6 +167,47 @@ public class ImageLoader implements Serializable {
 
   private static class ImageDescList extends ArrayList<ImageDesc> {
     private ImageDescList() {}
+
+    static class Builder {
+      final ImageDescList list = new ImageDescList();
+      final String name;
+      final String ext;
+      final Class cls;
+      final boolean svg;
+      final double scale;
+
+      Builder(String name, String ext, Class cls, boolean svg, double scale) {
+        this.name = name;
+        this.ext = ext;
+        this.cls = cls;
+        this.svg = svg;
+        this.scale = scale;
+      }
+
+      void add(boolean retina, boolean dark) {
+        if (svg) add(retina, dark, SVG);
+        add(retina, dark, PNG);
+      }
+
+      void add(boolean retina, boolean dark, ImageDesc.Type type) {
+        String _ext = SVG == type ? "svg" : ext;
+        double _scale = SVG == type ? scale : retina ? 2 : 1;
+        if (SVG == type && retina) _scale /= 2d;
+
+        list.add(new ImageDesc(name + (dark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, cls, _scale, type));
+        if (retina && dark) {
+          list.add(new ImageDesc(name + "@2x_dark" + "." + _ext, cls, _scale, type));
+        }
+        if (retina) {
+          // a fallback to 1x icon
+          list.add(new ImageDesc(name + (dark ? "_dark" : "") + "." + _ext, cls, (SVG == type ? scale : 1), type));
+        }
+      }
+
+      ImageDescList build() {
+        return list;
+      }
+    }
 
     @Nullable
     public Image load() {
@@ -197,43 +240,32 @@ public class ImageLoader implements Serializable {
                                        boolean allowFloatScaling,
                                        ScaleContext ctx)
     {
-      ImageDescList vars = new ImageDescList();
-
-      boolean ideSvgIconSupport = Registry.is("ide.svg.icon");
-
       // Prefer retina images for HiDPI scale, because downscaling
       // retina images provides a better result than upscaling non-retina images.
       boolean retina = JBUI.isHiDPI(ctx.getScale(PIX_SCALE));
 
-      if (retina || dark || ideSvgIconSupport) {
-        final String name = FileUtil.getNameWithoutExtension(file);
-        final String ext = FileUtilRt.getExtension(file);
+      Builder list = new Builder(FileUtil.getNameWithoutExtension(file),
+                                 FileUtilRt.getExtension(file),
+                                 cls,
+                                 Registry.is("ide.svg.icon"),
+                                 adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
 
-        double scale = adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE));
-
-        if (ideSvgIconSupport && dark) {
-          vars.add(new ImageDesc(name + "_dark.svg", cls, scale, ImageDesc.Type.SVG));
-        }
-
-        if (ideSvgIconSupport) {
-          vars.add(new ImageDesc(name + ".svg", cls, scale, ImageDesc.Type.SVG));
-        }
-
-        if (dark && retina) {
-          vars.add(new ImageDesc(name + "_dark@2x." + ext, cls, 2d, ImageDesc.Type.PNG));
-          vars.add(new ImageDesc(name + "@2x_dark." + ext, cls, 2d, ImageDesc.Type.PNG));
-        }
-
-        if (dark) {
-          vars.add(new ImageDesc(name + "_dark." + ext, cls, 1d, ImageDesc.Type.PNG));
-        }
-
-        if (retina) {
-          vars.add(new ImageDesc(name + "@2x." + ext, cls, 2d, ImageDesc.Type.PNG));
-        }
+      if (retina && dark) {
+        list.add(true, true);
+        list.add(true, false); // fallback to non-dark
       }
-      vars.add(new ImageDesc(file, cls, 1d, ImageDesc.Type.PNG, true));
-      return vars;
+      else if (dark) {
+        list.add(false, true);
+        list.add(false, false); // fallback to non-dark
+      }
+      else if (retina) {
+        list.add(true, false);
+      }
+      else {
+        list.add(false, false);
+      }
+
+      return list.build();
     }
   }
 
@@ -339,7 +371,7 @@ public class ImageLoader implements Serializable {
         withFilter(filters).
         with(new ImageConverter() {
               public Image convert(Image source, ImageDesc desc) {
-                if (source != null && desc.type != ImageDesc.Type.SVG) {
+                if (source != null && desc.type != SVG) {
                   double scale = adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE));
                   if (desc.scale > 1) scale /= desc.scale; // compensate the image original scale
                   source = scaleImage(source, scale);

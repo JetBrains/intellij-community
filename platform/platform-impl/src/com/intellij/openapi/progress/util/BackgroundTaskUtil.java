@@ -30,10 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PairConsumer;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -318,8 +315,8 @@ public class BackgroundTaskUtil {
 
 
   private static class Helper<T> {
-    private static final Object INITIAL_STATE = new Object();
-    private static final Object SLOW_OPERATION_STATE = new Object();
+    private static final Object INITIAL_STATE = ObjectUtils.sentinel("INITIAL_STATE");
+    private static final Object SLOW_OPERATION_STATE = ObjectUtils.sentinel("SLOW_OPERATION_STATE");
 
     private final Semaphore mySemaphore = new Semaphore(0);
     private final AtomicReference<Object> myResultRef = new AtomicReference<>(INITIAL_STATE);

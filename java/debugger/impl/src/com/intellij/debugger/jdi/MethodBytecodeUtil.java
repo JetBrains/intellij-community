@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
 import com.intellij.Patches;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,10 +18,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author egor
@@ -278,6 +276,67 @@ public class MethodBytecodeUtil {
       }, false);
     }
     return methodRef.get();
+  }
+
+  public static List<Location> removeSameLineLocations(@NotNull List<Location> locations) {
+    if (locations.size() < 2) {
+      return locations;
+    }
+    MultiMap<Method, Location> byMethod = new MultiMap<>();
+    for (Location location : locations) {
+      byMethod.putValue(location.method(), location);
+    }
+
+    List<Location> res = new ArrayList<>();
+    for (Map.Entry<Method, Collection<Location>> entry : byMethod.entrySet()) {
+      res.addAll(removeMethodSameLineLocations(entry.getKey(), (List<Location>)entry.getValue()));
+    }
+    return res;
+  }
+
+  private static Collection<Location> removeMethodSameLineLocations(@NotNull Method method, @NotNull List<Location> locations) {
+    int locationsSize = locations.size();
+    if (locationsSize < 2) {
+      return locations;
+    }
+    //noinspection ConstantConditions
+    int lineNumber = ContainerUtil.getFirstItem(locations).lineNumber();
+    List<Boolean> mask = new ArrayList<>(locationsSize);
+    visit(method, new MethodVisitor(Opcodes.API_VERSION) {
+      boolean myNewBlock = true;
+      @Override
+      public void visitLineNumber(int line, Label start) {
+        if (lineNumber == line) {
+          mask.add(myNewBlock);
+          myNewBlock = false;
+        }
+      }
+
+      @Override
+      public void visitInsn(int opcode) {
+        if ((opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN) || opcode == Opcodes.ATHROW) {
+          myNewBlock = true;
+        }
+      }
+
+      @Override
+      public void visitJumpInsn(int opcode, Label label) {
+        myNewBlock = true;
+      }
+    }, true);
+
+    if (mask.size() == locationsSize) {
+      locations.sort(Comparator.comparing(Location::codeIndex));
+      List<Location> res = new ArrayList<>(locationsSize);
+      int pos = 0;
+      for (Location location : locations) {
+        if (mask.get(pos++)) {
+          res.add(location);
+        }
+      }
+      return res;
+    }
+    return locations;
   }
 
   private static class ByteArrayBuilderOutputStream extends ByteArrayOutputStream {

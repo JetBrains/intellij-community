@@ -55,6 +55,11 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     return "reference.dialogs.vcs.shelve";
   }
 
+  @Override
+  public boolean supportsPartialCommit() {
+    return true;
+  }
+
   private class ShelveChangesCommitSession implements CommitSession, CommitSessionContextAware {
     @Override
     public void setContext(CommitContext context) {

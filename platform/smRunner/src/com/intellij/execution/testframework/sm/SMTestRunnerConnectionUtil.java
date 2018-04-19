@@ -318,7 +318,7 @@ public class SMTestRunnerConnectionUtil {
     public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
       boolean isDumbMode = DumbService.isDumb(project);
 
-      if (myPrimaryLocator != null && (!isDumbMode || myPrimaryLocator instanceof DumbAware)) {
+      if (myPrimaryLocator != null && (!isDumbMode || DumbService.isDumbAware(myPrimaryLocator))) {
         List<Location> locations = myPrimaryLocator.getLocation(protocol, path, project);
         if (!locations.isEmpty()) {
           return locations;
@@ -333,7 +333,7 @@ public class SMTestRunnerConnectionUtil {
       }
 
       for (TestLocationProvider provider : myLocators) {
-        if (!isDumbMode || provider instanceof DumbAware) {
+        if (!isDumbMode || DumbService.isDumbAware(provider)) {
           List<Location> locations = provider.getLocation(protocol, path, project);
           if (!locations.isEmpty()) {
             return locations;

@@ -231,6 +231,7 @@ abstract class FoldRegionsTree {
     return null;
   }
 
+  @Nullable
   FoldRegion[] fetchVisible() {
     if (!isFoldingEnabled()) return null;
     CachedData cachedData = ensureAvailableData();

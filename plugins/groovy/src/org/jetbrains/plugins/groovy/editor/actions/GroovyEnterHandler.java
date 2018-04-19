@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.editor.actions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.lang.ASTNode;
@@ -118,7 +119,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
                                                                       GroovyElementTypes.GSTRING_CONTENT);
 
   public static void insertSpacesByGroovyContinuationIndent(Editor editor, Project project) {
-    int indentSize = CodeStyleSettingsManager.getSettings(project).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
+    int indentSize = CodeStyle.getSettings(editor).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
     EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', indentSize));
   }
 
@@ -216,8 +217,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
-    GroovyCodeStyleSettings codeStyleSettings =
-      CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
+    GroovyCodeStyleSettings codeStyleSettings = GroovyCodeStyleSettings.getInstance(editor);
     if (!codeStyleSettings.USE_FLYING_GEESE_BRACES) return false;
 
     PsiElement element = file.findElementAt(caretOffset);

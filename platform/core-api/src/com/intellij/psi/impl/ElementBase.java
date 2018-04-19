@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
+
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.ElementBase");
 
@@ -88,7 +90,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (Registry.is("psi.deferIconLoading")) {
       Icon baseIcon = LastComputedIcon.get(psiElement, flags);
       if (baseIcon == null) {
-        baseIcon = computeBaseIcon(flags);
+        baseIcon = disableTreeLoading(() -> computeBaseIcon(flags));
       }
       return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
     }
@@ -98,6 +100,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   @Nullable
   private static Icon computeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
+    return disableTreeLoading(() -> doComputeIconNow(element, flags));
+  }
+
+  private static Icon doComputeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
       return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(element, providersIcon, flags);

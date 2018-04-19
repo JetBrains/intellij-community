@@ -184,7 +184,16 @@ public class ClassUtils {
 
   @Nullable
   public static PsiClass getContainingClass(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    PsiClass currentClass;
+    while (true) {
+      currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      if (currentClass instanceof PsiAnonymousClass &&
+          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, true)) {
+        element = currentClass;
+      } else {
+        return currentClass;
+      }
+    }
   }
 
   public static PsiClass getOutermostContainingClass(PsiClass aClass) {

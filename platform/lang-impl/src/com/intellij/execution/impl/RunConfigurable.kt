@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.*
@@ -13,7 +13,10 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.options.*
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.SettingsEditorConfigurable
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent.create
 import com.intellij.openapi.ui.Messages
@@ -31,10 +34,11 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
-import com.intellij.util.containers.HashMap
+import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.TreeUtil
+import gnu.trove.THashMap
 import gnu.trove.THashSet
 import gnu.trove.TObjectIntHashMap
 import net.miginfocom.swing.MigLayout
@@ -52,7 +56,7 @@ import javax.swing.tree.*
 private val DEFAULTS = object : Any() {
   override fun toString() = "Defaults"
 }
-private val INITIAL_VALUE_KEY = "initialValue"
+private const val INITIAL_VALUE_KEY = "initialValue"
 private val LOG = logger<RunConfigurable>()
 
 private fun getName(userObject: Any): String {
@@ -65,7 +69,7 @@ private fun getName(userObject: Any): String {
   }
 }
 
-open class RunConfigurable @JvmOverloads constructor(private val myProject: Project, private var myRunDialog: RunDialogBase? = null) : BaseConfigurable(), Disposable {
+open class RunConfigurable @JvmOverloads constructor(private val myProject: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable {
   @Volatile private var isDisposed: Boolean = false
   val root = DefaultMutableTreeNode("Root")
   val treeModel = MyTreeModel(root)
@@ -77,16 +81,16 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   private val recentsLimit = JTextField("5", 2)
   private val confirmation = JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true)
   private val additionalSettings = ArrayList<Pair<UnnamedConfigurable, JComponent>>()
-  private val storedComponents = HashMap<ConfigurationFactory, Configurable>()
+  private val storedComponents = THashMap<ConfigurationFactory, Configurable>()
   private var toolbarDecorator: ToolbarDecorator? = null
   private var isFolderCreating: Boolean = false
   private val toolbarAddAction = MyToolbarAddAction()
   private val runDashboardTypesPanel = RunDashboardTypesPanel(myProject)
 
+  private var isModified = false
+
   companion object {
-    fun collectNodesRecursively(parentNode: DefaultMutableTreeNode,
-                                nodes: MutableList<DefaultMutableTreeNode>,
-                                vararg allowed: RunConfigurableNodeKind) {
+    fun collectNodesRecursively(parentNode: DefaultMutableTreeNode, nodes: MutableList<DefaultMutableTreeNode>, vararg allowed: RunConfigurableNodeKind) {
       for (i in 0 until parentNode.childCount) {
         val child = parentNode.getChildAt(i) as DefaultMutableTreeNode
         if (ArrayUtilRt.find(allowed, getKind(child)) != -1) {
@@ -197,22 +201,19 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       val configurations = manager.getConfigurationSettingsList(type).nullize() ?: continue
       val typeNode = DefaultMutableTreeNode(type)
       root.add(typeNode)
-      val folderMapping = HashMap<String, DefaultMutableTreeNode>()
-      var folderCounter = 0
+      val folderMapping = THashMap<String, DefaultMutableTreeNode>()
       for (configuration in configurations) {
         val folder = configuration.folderName
-        if (folder != null) {
-          var node: DefaultMutableTreeNode? = folderMapping[folder]
-          if (node == null) {
-            node = DefaultMutableTreeNode(folder)
-            typeNode.insert(node, folderCounter)
-            folderCounter++
-            folderMapping.put(folder, node)
-          }
-          node.add(DefaultMutableTreeNode(configuration))
+        if (folder == null) {
+          typeNode.add(DefaultMutableTreeNode(configuration))
         }
         else {
-          typeNode.add(DefaultMutableTreeNode(configuration))
+          val node = folderMapping.getOrPut(folder) {
+            val node = DefaultMutableTreeNode(folder)
+            typeNode.insert(node, folderMapping.size)
+            node
+          }
+          node.add(DefaultMutableTreeNode(configuration))
         }
       }
     }
@@ -360,10 +361,6 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     return userObject
   }
 
-  fun setRunDialog(runDialog: RunDialogBase) {
-    myRunDialog = runDialog
-  }
-
   fun updateRightPanel(configurable: Configurable) {
     rightPanel.removeAll()
     selectedConfigurable = configurable
@@ -452,10 +449,10 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     addIcon.border = JBUI.Borders.empty(0, 3, 0, 3)
     messagePanel.add(addIcon)
 
-    val configurationTypeDescription = if (configurationType != null)
-      configurationType.configurationTypeDescription
-    else
-      ExecutionBundle.message("run.configuration.default.type.description")
+    val configurationTypeDescription = when {
+      configurationType != null -> configurationType.configurationTypeDescription
+      else -> ExecutionBundle.message("run.configuration.default.type.description")
+    }
     messagePanel.add(JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label3", configurationTypeDescription)))
 
     rightPanel.removeAll()
@@ -558,10 +555,10 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
     wholePanel = JPanel(BorderLayout())
     DataManager.registerDataProvider(wholePanel!!) { dataId ->
-      if (RunConfigurationSelector.KEY.name == dataId)
-        RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
-      else
-        null
+      when (dataId) {
+        RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
+        else -> null
+      }
     }
 
     splitter.firstComponent = createLeftPanel()
@@ -648,8 +645,9 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   }
 
   fun updateActiveConfigurationFromSelected() {
-    if (selectedConfigurable != null && selectedConfigurable is SingleConfigurationConfigurable<*>) {
-      runManager.selectedConfiguration = (selectedConfigurable as SingleConfigurationConfigurable<*>).settings as RunnerAndConfigurationSettings
+    val selectedConfigurable = selectedConfigurable
+    if (selectedConfigurable is SingleConfigurationConfigurable<*>) {
+      runManager.selectedConfiguration = selectedConfigurable.settings
     }
   }
 
@@ -752,7 +750,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   }
 
   override fun isModified(): Boolean {
-    if (super.isModified()) {
+    if (isModified) {
       return true
     }
 
@@ -761,11 +759,11 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     var currentSettingCount = 0
     for (i in 0 until root.childCount) {
       val typeNode = root.getChildAt(i) as DefaultMutableTreeNode
-      val `object` = typeNode.userObject as? ConfigurationType ?: continue
+      val configurationType = typeNode.userObject as? ConfigurationType ?: continue
 
       val configurationNodes = ArrayList<DefaultMutableTreeNode>()
       collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION)
-      val allTypeSettings = allSettings.filter { it.type == `object` }
+      val allTypeSettings = allSettings.filter { it.type == configurationType }
       if (allTypeSettings.size != configurationNodes.size) {
         return true
       }
@@ -792,24 +790,13 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
         // we compare by instance, equals is not implemented and in any case object modification is checked by other logic
         // we compare by index among current types settings because indexes among all configurations may differ
         // since temporary configurations are stored in the end
-        if (allTypeSettings.size <= index || allTypeSettings[index] !== settings) {
+        if (allTypeSettings.size <= index || allTypeSettings.get(index) !== settings) {
           return true
         }
       }
     }
-    if (allSettings.size != currentSettingCount) {
-      return true
-    }
 
-    for (configurable in storedComponents.values) {
-      if (configurable.isModified) return true
-    }
-
-    for (each in additionalSettings) {
-      if (each.first.isModified) return true
-    }
-
-    return false
+    return allSettings.size != currentSettingCount || storedComponents.values.any { it.isModified } || additionalSettings.any { it.first.isModified }
   }
 
   override fun disposeUIResources() {
@@ -823,19 +810,19 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
     additionalSettings.forEach { it.first.disposeUIResources() }
 
-    TreeUtil.traverseDepth(root) { node ->
-      if (node is DefaultMutableTreeNode) {
-        val userObject = node.userObject
-        (userObject as? SingleConfigurationConfigurable<*>)?.disposeUIResources()
+    TreeUtil.treeNodeTraverser(root)
+      .traverse(TreeTraversal.PRE_ORDER_DFS)
+      .processEach { node ->
+        ((node as? DefaultMutableTreeNode)?.userObject as? SingleConfigurationConfigurable<*>)?.disposeUIResources()
+        true
       }
-      true
-    }
     rightPanel.removeAll()
     splitter.dispose()
   }
 
   private fun updateDialog() {
-    val executor = (if (myRunDialog != null) myRunDialog!!.executor else null) ?: return
+    val runDialog = runDialog
+    val executor = runDialog?.executor ?: return
     val buffer = StringBuilder()
     buffer.append(executor.id)
     val configuration = selectedConfiguration
@@ -843,8 +830,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       buffer.append(" - ")
       buffer.append(configuration.nameText)
     }
-    myRunDialog!!.setOKActionEnabled(canRunConfiguration(configuration, executor))
-    myRunDialog!!.setTitle(buffer.toString())
+    runDialog.setOKActionEnabled(canRunConfiguration(configuration, executor))
+    runDialog.setTitle(buffer.toString())
   }
 
   private fun setupDialogBounds() {
@@ -874,7 +861,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   }
 
   private fun clickDefaultButton() {
-    myRunDialog?.clickDefaultButton()
+    runDialog?.clickDefaultButton()
   }
 
   private val selectedConfigurationTypeNode: DefaultMutableTreeNode?

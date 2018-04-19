@@ -103,14 +103,16 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   @Suppress("LeakingThis")
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace",
-                                                                                        RunConfigurationSchemeManager(this, false,
+                                                                                        RunConfigurationSchemeManager(this,
+                                                                                                                      isShared = false,
                                                                                                                       isWrapSchemeIntoComponentElement = false),
                                                                                         streamProvider = workspaceSchemeManagerProvider,
-                                                                                        autoSave = false)
+                                                                                        isAutoSave = false)
 
   @Suppress("LeakingThis")
   private var projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations",
-                                                                                      RunConfigurationSchemeManager(this, true,
+                                                                                      RunConfigurationSchemeManager(this,
+                                                                                                                    isShared = true,
                                                                                                                     isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null),
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
                                                                                       streamProvider = schemeManagerIprProvider)
@@ -240,12 +242,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
                                               singleton = factory.isConfigurationSingletonByDefault)
   }
 
-  override fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {
-    settings.isShared = isShared
-    addConfiguration(settings)
+  override fun addConfiguration(settings: RunnerAndConfigurationSettings) {
+    doAddConfiguration(settings, isCheckRecentsLimit = true)
   }
 
-  override fun addConfiguration(settings: RunnerAndConfigurationSettings) {
+  private fun doAddConfiguration(settings: RunnerAndConfigurationSettings, isCheckRecentsLimit: Boolean) {
     val newId = settings.uniqueID
     var existingId: String? = null
     lock.write {
@@ -279,7 +280,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     if (existingId == null) {
-      if (settings.isTemporary) {
+      if (isCheckRecentsLimit && settings.isTemporary) {
         checkRecentsLimit()
       }
       eventPublisher.runConfigurationAdded(settings)
@@ -709,7 +710,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return settings
   }
 
-  internal fun addConfiguration(element: Element, settings: RunnerAndConfigurationSettingsImpl) {
+  internal fun addConfiguration(element: Element, settings: RunnerAndConfigurationSettingsImpl, isCheckRecentsLimit: Boolean = true) {
     if (settings.isTemplate) {
       val factory = settings.factory
       lock.write {
@@ -717,7 +718,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
     }
     else {
-      addConfiguration(settings)
+      doAddConfiguration(settings, isCheckRecentsLimit)
       if (element.getAttributeBooleanValue(SELECTED_ATTR)) {
         // to support old style
         selectedConfiguration = settings
@@ -925,14 +926,20 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
     else {
       val templateConfiguration = getConfigurationTemplate(configuration.factory).configuration
-      val templateTasks = if (templateConfiguration === configuration) {
+      val isTemplate = templateConfiguration === configuration
+      val templateTasks = if (isTemplate) {
         getHardcodedBeforeRunTasks(configuration)
       }
       else {
         getTemplateBeforeRunTasks(templateConfiguration)
       }
 
-      if (templateConfiguration === configuration) {
+      if (isTemplate) {
+        if (tasks == templateTasks) {
+          // nothing is changed
+          return
+        }
+
         // we must update all existing configuration tasks to ensure that effective tasks (own + template) are the same as before template configuration change
         // see testTemplates test
         lock.read {

@@ -150,6 +150,7 @@ fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
   return this
 }
 
+/** @deprecated use [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream] (to be removed in IDEA 2019) */
 fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
   val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
   tempFile.write(data, offset, size)
@@ -163,6 +164,7 @@ fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Pat
   return this
 }
 
+/** @deprecated use [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream] (to be removed in IDEA 2019) */
 fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
   val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
   tempFile.outputStream().use(outConsumer)

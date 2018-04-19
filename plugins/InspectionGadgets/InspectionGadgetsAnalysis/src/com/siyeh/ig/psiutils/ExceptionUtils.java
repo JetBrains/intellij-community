@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -228,8 +228,10 @@ public class ExceptionUtils {
     } else {
       final PsiMethodCallExpression methodCallExpression =
         PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class, PsiClass.class);
-      if (RefactoringChangeUtil.isSuperOrThisMethodCall(methodCallExpression)) {
-        return true;
+      if (JavaPsiConstructorUtil.isConstructorCall(methodCallExpression)) {
+        PsiMethod ctor = methodCallExpression.resolveMethod();
+        return ctor != null &&
+               com.intellij.psi.util.InheritanceUtil.isInheritor(ctor.getContainingClass(), CommonClassNames.JAVA_LANG_THROWABLE);
       }
     }
     return false;

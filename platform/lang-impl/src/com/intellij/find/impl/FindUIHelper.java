@@ -15,14 +15,12 @@
  */
 package com.intellij.find.impl;
 
-import com.intellij.find.FindBundle;
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindSettings;
+import com.intellij.find.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -53,28 +51,34 @@ public class FindUIHelper implements Disposable {
                                   myUI instanceof FindDialog && Registry.is("ide.find.as.popup") ||
                                   myUI == null;
     if (newInstanceRequired) {
+      JComponent component;
       if (Registry.is("ide.find.as.popup")) {
-        myUI = new FindPopupPanel(this);
+        FindPopupPanel panel = new FindPopupPanel(this);
+        component = panel;
+        myUI = panel;
       }
       else {
         FindDialog findDialog = new FindDialog(this);
-        registerAction("ReplaceInPath", true, findDialog);
-        registerAction("FindInPath", false, findDialog);
+        component = ((JDialog)findDialog.getWindow()).getRootPane();
         myUI = findDialog;
       }
+      
+      registerAction("ReplaceInPath", true, component, myUI);
+      registerAction("FindInPath", false, component, myUI);
       Disposer.register(myUI.getDisposable(), this);
     }
     return myUI;
   }
 
-  private void registerAction(String actionName, boolean replace, FindDialog findDialog) {
+  private void registerAction(String actionName, boolean replace, JComponent component, FindUI ui) {
     AnAction action = ActionManager.getInstance().getAction(actionName);
-    JRootPane findDialogRootComponent = ((JDialog)findDialog.getWindow()).getRootPane();
     new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        ui.saveSettings();
+        FindUtil.initStringToFindWithSelection(myModel, e.getData(CommonDataKeys.EDITOR));
         myModel.setReplaceState(replace);
-        findDialog.initByModel();
+        ui.initByModel();
       }
       //@NotNull
       //private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
@@ -94,7 +98,7 @@ public class FindUIHelper implements Disposable {
       //  };
       //}
 
-    }.registerCustomShortcutSet(action.getShortcutSet(), findDialogRootComponent);
+    }.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
 
 

@@ -101,7 +101,8 @@ open class GuiTestCase {
   var defaultTimeout = 120L
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
-  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+//  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+  val defaultSettingsTitle: String = if (isMac()) "Preferences for New Projects" else "Settings for New Projects"
   val slash: String = File.separator
 
 
@@ -357,6 +358,22 @@ open class GuiTestCase {
     }
     else throw unableToFindComponent("""ActionButton by action name "$actionName"""")
 
+
+  /**
+   * Finds a InplaceButton component in hierarchy of context component by icon and returns InplaceButtonFixture.
+   *
+   * @icon of InplaceButton component.
+   * @timeout in seconds to find InplaceButton component. It is better to use static cached icons from (@see com.intellij.openapi.util.IconLoader.AllIcons)
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.inplaceButton(icon: Icon, timeout: Long = defaultTimeout): InplaceButtonFixture {
+    val target = target()
+    return if (target is Container) {
+      InplaceButtonFixture.findInplaceButtonFixture(target, guiTestRule.robot(), icon, timeout)
+    }
+    else throw unableToFindComponent("""InplaceButton by icon "$icon"""")
+  }
+
   /**
    * Finds a ActionButton component in hierarchy of context component by action class name and returns ActionButtonFixture.
    *
@@ -602,13 +619,19 @@ open class GuiTestCase {
     func(this.runConfigurationList)
   }
 
+  fun IdeFrameFixture.gutter(func: GutterFixture.() -> Unit) {
+    func(this.gutter)
+  }
+
   /**
    * Extension function for IDE to iterate through the menu.
    *
    * @path items like: popup("New", "File")
    */
+  @Deprecated(message = "Should be replaced with menu(*path).click()", replaceWith = ReplaceWith("menu(*path).click()"))
   fun IdeFrameFixture.popup(vararg path: String) = this.invokeMenuPath(*path)
 
+  fun IdeFrameFixture.menu(vararg path: String): MenuFixture.MenuItemFixture = this.getMenuPath(*path)
 
   fun CustomToolWindowFixture.ContentFixture.editor(func: EditorFixture.() -> Unit) {
     func(this.editor())

@@ -358,7 +358,8 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   open inner class OptionButtonPopupStep(actions: List<PopupFactoryImpl.ActionItem>, private val defaultSelection: Condition<AnAction>?)
     : ActionPopupStep(actions, null,
-                      Supplier<DataContext> { DataManager.getInstance().getDataContext(optionButton) }, true, defaultSelection, false, true) {
+                      Supplier<DataContext> { DataManager.getInstance().getDataContext(optionButton) },
+                      null, true, defaultSelection, false, true) {
     // if there is no default selection condition - -1 should be returned, this way first enabled action should be selected by
     // OptionButtonPopup.afterShow() (if corresponding ensureSelection parameter is true)
     override fun getDefaultOptionIndex() = defaultSelection?.let { super.getDefaultOptionIndex() } ?: -1

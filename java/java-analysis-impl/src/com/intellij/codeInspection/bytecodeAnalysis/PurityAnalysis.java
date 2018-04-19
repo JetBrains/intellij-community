@@ -118,11 +118,25 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
     }
   };
   static class ParameterDataValue extends DataValue {
+    static final ParameterDataValue PARAM0 = new ParameterDataValue(0);
+    static final ParameterDataValue PARAM1 = new ParameterDataValue(1);
+    static final ParameterDataValue PARAM2 = new ParameterDataValue(2);
+
     final int n;
 
-    ParameterDataValue(int n) {
+    private ParameterDataValue(int n) {
       super(n);
       this.n = n;
+    }
+
+    static ParameterDataValue create(int n) {
+      switch (n) {
+        case 0: return PARAM0;
+        case 1: return PARAM1;
+        case 2: return PARAM2;
+        default:
+          return new ParameterDataValue(n);
+      }
     }
 
     @Override
@@ -373,7 +387,7 @@ class DataInterpreter extends Interpreter<DataValue> {
       if (type == Type.VOID_TYPE) {
         return null;
       } else if (ASMUtils.isReferenceType(type)) {
-        return new DataValue.ParameterDataValue(called - shift);
+        return DataValue.ParameterDataValue.create(called - shift);
       } else {
         return type.getSize() == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
       }

@@ -1,6 +1,6 @@
 # Stubs for ftplib (Python 2.7/3)
 import sys
-from typing import Optional, BinaryIO, Tuple, TextIO, Iterable, Callable, List, Union, Iterator, Dict, Text, TypeVar, Generic, Any
+from typing import Optional, BinaryIO, Tuple, TextIO, Iterable, Callable, List, Union, Iterator, Dict, Text, Type, TypeVar, Generic, Any
 from types import TracebackType
 from socket import socket
 from ssl import SSLContext
@@ -43,7 +43,7 @@ class FTP:
         file = ...  # type: Optional[TextIO]
         encoding = ...  # type: str
         def __enter__(self: _T) -> _T: ...
-        def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception],
+        def __exit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException],
                      exc_tb: Optional[TracebackType]) -> bool: ...
     else:
         file = ...  # type: Optional[BinaryIO]

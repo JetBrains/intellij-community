@@ -22,7 +22,9 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -78,6 +80,6 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
 
   @Override
   public String toString() {
-    return "Project View";
+    return StringUtil.capitalize(IdeUICustomization.getInstance().getProjectConceptName()) + " View";
   }
 }

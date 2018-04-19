@@ -228,4 +228,12 @@ public class YAMLParserTest extends ParsingTestCase {
   public void testScalarsWithNewlines() {
     doTest(true);
   }
+
+  public void testCommentInBlockScalarHeader() {
+    doTest(true);
+  }
+
+  public void testErrorInBlockScalarHeader() {
+    doTest(true);
+  }
 }

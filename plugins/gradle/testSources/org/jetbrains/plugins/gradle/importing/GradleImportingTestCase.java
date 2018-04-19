@@ -36,6 +36,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.StartParameter;
+import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
 import org.gradle.wrapper.PathAssembler;
@@ -132,6 +133,9 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
+
+    File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
+    roots.addAll(collectRootsInside(gradleUserHomeDir.getPath()));
   }
 
   @Override

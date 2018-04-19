@@ -51,7 +51,7 @@ public class GradleJavaFrameworkSupportProvider extends GradleFrameworkSupportPr
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
-      .addPluginDefinition("apply plugin: 'java'")
+      .addPluginDefinitionInPluginsGroup("id 'java'")
       .addPropertyDefinition("sourceCompatibility = 1.8")
       .addRepositoriesDefinition("mavenCentral()")
       .addDependencyNotation("testCompile group: 'junit', name: 'junit', version: '4.12'");

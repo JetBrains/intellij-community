@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.Disposable;
@@ -134,7 +120,9 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
 
     if (CommandLog.LOG.isDebugEnabled()) {
-      CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId);
+      CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId +
+                           ", in command = " + (myCurrentCommand != null) +
+                           ", in transparent action = " + isUndoTransparentActionInProgress());
     }
 
     if (myCurrentCommand != null) {
@@ -159,12 +147,12 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   @Nullable
-  public Object startCommand(@NotNull final Project project,
+  public Object startCommand(@Nullable final Project project,
                              @Nls final String name,
-                             final Object groupId,
+                             @Nullable final Object groupId,
                              @NotNull final UndoConfirmationPolicy undoConfirmationPolicy) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (project.isDisposed()) return null;
+    if (project != null && project.isDisposed()) return null;
 
     if (CommandLog.LOG.isDebugEnabled()) {
       CommandLog.LOG.debug("startCommand: name = " + name + ", groupId = " + groupId);
@@ -174,14 +162,18 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       return null;
     }
 
-    Document document = groupId instanceof Ref && ((Ref)groupId).get() instanceof Document ? (Document)((Ref)groupId).get() : null;
+    Document document = groupId instanceof Document
+                        ? (Document)groupId
+                        : (groupId instanceof Ref && ((Ref)groupId).get() instanceof Document
+                           ? (Document)((Ref)groupId).get()
+                           : null);
     myCurrentCommand = new CommandDescriptor(EmptyRunnable.INSTANCE, project, name, groupId, undoConfirmationPolicy, true, document);
     fireCommandStarted();
     return myCurrentCommand;
   }
 
   @Override
-  public void finishCommand(final Project project, final Object command, final Throwable throwable) {
+  public void finishCommand(@Nullable final Project project, @NotNull final Object command, @Nullable Throwable throwable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
     fireCommandFinished();
@@ -318,11 +310,16 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void runUndoTransparentAction(@NotNull Runnable action) {
+    if (CommandLog.LOG.isDebugEnabled()) {
+      CommandLog.LOG.debug("runUndoTransparentAction: " + action + ", in command = " + (myCurrentCommand != null) +
+                           ", in transparent action = " + isUndoTransparentActionInProgress());
+    }
     if (myUndoTransparentCount++ == 0) fireUndoTransparentStarted();
     try {
       action.run();
     }
     finally {
+      if (myUndoTransparentCount == 1) fireBeforeUndoTransparentFinished();
       if (--myUndoTransparentCount == 0) fireUndoTransparentFinished();
     }
   }
@@ -370,6 +367,17 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     for (CommandListener listener : myListeners) {
       try {
         listener.undoTransparentActionStarted();
+      }
+      catch (Throwable e) {
+        CommandLog.LOG.error(e);
+      }
+    }
+  }
+
+  private void fireBeforeUndoTransparentFinished() {
+    for (CommandListener listener : myListeners) {
+      try {
+        listener.beforeUndoTransparentActionFinished();
       }
       catch (Throwable e) {
         CommandLog.LOG.error(e);

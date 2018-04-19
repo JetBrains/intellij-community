@@ -45,7 +45,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   // indicator -> threads which are running under this indicator. guarded by threadsUnderIndicator.
   // THashMap is avoided here because of tombstones overhead
-  static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>();
+  private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>();
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // top-level indicators for the thread id
@@ -64,7 +64,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Collection<ProgressIndicator> nonStandardIndicators = ConcurrentHashMultiset.create();
 
   /** true if running in non-cancelable section started with
-   * {@link #startNonCancelableSection()} or {@link #executeNonCancelableSection(Runnable)} in this thread
+   * {@link #executeNonCancelableSection(Runnable)} in this thread
    */
   private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<>(); // do not supply initial value to conserve memory
 
@@ -665,7 +665,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @NotNull
   @Override
-  public final NonCancelableSection startNonCancelableSection() {
+  protected final NonCancelableSection startNonCancelableSection() {
     LOG.warn("Use executeNonCancelableSection() instead");
     if (isInNonCancelableSection()) return NonCancelableSection.EMPTY;
     final ProgressIndicator myOld = getProgressIndicator();

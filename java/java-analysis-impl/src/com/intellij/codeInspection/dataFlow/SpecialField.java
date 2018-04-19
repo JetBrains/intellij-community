@@ -7,7 +7,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,10 +25,10 @@ import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstrain
 public enum SpecialField implements DfaVariableSource {
   ARRAY_LENGTH(null, "length", true, LongRangeSet.indexRange()) {
     @Override
-    public boolean isMyAccessor(PsiModifierListOwner accessor) {
-      return accessor instanceof PsiField && "length".equals(((PsiField)accessor).getName()) &&
+    boolean isMyAccessor(PsiMember accessor) {
+      return accessor instanceof PsiField && "length".equals(accessor.getName()) &&
              JavaPsiFacade.getElementFactory(accessor.getProject()).getArrayClass(PsiUtil.getLanguageLevel(accessor)) ==
-             ((PsiField)accessor).getContainingClass();
+             accessor.getContainingClass();
     }
 
     @Override
@@ -98,21 +101,20 @@ public enum SpecialField implements DfaVariableSource {
    * @param accessor accessor to test to test
    * @return true if supplied accessor can be used to read this special field
    */
-  public boolean isMyAccessor(PsiModifierListOwner accessor) {
+  boolean isMyAccessor(PsiMember accessor) {
     return accessor instanceof PsiMethod && MethodUtils.methodMatches((PsiMethod)accessor, myClassName, null, myMethodName);
   }
 
-  public static DfaValue tryCreateValue(DfaValue qualifier, PsiElement element) {
-    if (qualifier == null) return null;
-    DfaValueFactory factory = qualifier.getFactory();
-    if (factory == null) return null;
-    if (!(element instanceof PsiVariable) && !(element instanceof PsiMethod)) return null;
-    for (SpecialField field : values()) {
-      if (field.isMyAccessor((PsiModifierListOwner)element)) {
-        return field.createValue(factory, qualifier);
-      }
-    }
-    return null;
+  /**
+   * Finds a special field which corresponds to given accessor (method or field)
+   * @param accessor accessor to find a special field for
+   * @return found special field or null if accessor cannot be used to access a special field
+   */
+  @Contract("null -> null")
+  @Nullable
+  public static SpecialField findSpecialField(PsiElement accessor) {
+    if (!(accessor instanceof PsiMember)) return null;
+    return StreamEx.of(values()).findFirst(sf -> sf.isMyAccessor((PsiMember)accessor)).orElse(null);
   }
 
   /**

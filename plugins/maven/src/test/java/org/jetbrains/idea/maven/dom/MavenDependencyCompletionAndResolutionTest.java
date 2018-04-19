@@ -309,7 +309,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                                     "<artifactId>m1</artifactId>" +
                                     "<version>1</version>");
 
-    createProjectPom("<groupId>test</groupId>" +
+    configureProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -320,14 +320,14 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    importProjects(myProjectPom, m);
+    importProjectsWithErrors(myProjectPom, m);
 
     assertCompletionVariants(myProjectPom, "m1");
 
     createModulePom("m1", "");
-    importProjects(myProjectPom, m);
+    importProjectsWithErrors(myProjectPom, m);
 
-    createProjectPom("<groupId>test</groupId>" +
+    configureProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -347,7 +347,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                                           "<artifactId>m1</artifactId>" +
                                           "<version>1</version>");
 
-    createProjectPom("<groupId>test</groupId>" +
+    configureProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -358,7 +358,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    importProjects(myProjectPom, m);
+    importProjectsWithErrors(myProjectPom, m);
 
     assertCompletionVariants(myProjectPom, "m1");
 
@@ -400,26 +400,27 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testResolveManagedDependency() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    configureProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<dependencyManagement>" +
-                  "  <dependencies>" +
-                  "    <dependency>" +
-                  "      <groupId>junit</groupId>" +
-                  "      <artifactId>junit</artifactId>" +
-                  "      <version>4.0</version>" +
-                  "    </dependency>" +
-                  "  </dependencies>" +
-                  "</dependencyManagement>" +
+                     "<dependencyManagement>" +
+                     "  <dependencies>" +
+                     "    <dependency>" +
+                     "      <groupId>junit</groupId>" +
+                     "      <artifactId>junit</artifactId>" +
+                     "      <version>4.0</version>" +
+                     "    </dependency>" +
+                     "  </dependencies>" +
+                     "</dependencyManagement>" +
 
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit<caret></artifactId>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit<caret></artifactId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+    importProject();
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
@@ -753,7 +754,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testTypeCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
+    configureProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 

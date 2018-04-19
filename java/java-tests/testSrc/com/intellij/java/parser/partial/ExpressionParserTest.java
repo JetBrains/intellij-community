@@ -144,6 +144,8 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testLambdaExpression26() { doParserTest("(var var) -> var"); }
   public void testAmbiguousLambdaExpression() { doParserTest("f( (x) < y , z > (w) -> v )"); }
 
+  public void testRawLiteral0() { doParserTest("`.`"); }
+
   private void doParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
   }

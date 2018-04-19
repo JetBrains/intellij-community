@@ -102,9 +102,9 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
           showStartMessageForFirstExecution(DEBUG_CONSOLE_START_COMMAND, console);
         }
         myDebugConsoleInitialized = true;
+        console.initialized();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> console.requestFocus());
       }
-
-      IdeFocusManager.findInstance().requestFocus(console.getConsoleEditor().getContentComponent(), true);
     }
   }
 

@@ -31,7 +31,7 @@ Groovy script
   Shift expression
     Reference expression
       PsiElement(identifier)('test')
-    Composite shift operator
+    ASTWrapperPsiElement(<<)
       PsiElement(<)('<')
       PsiElement(<)('<')
     Literal

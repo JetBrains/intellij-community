@@ -1,5 +1,5 @@
 def foo():
-    l = [42 for <weak_warning descr="Local variable '_a' value is not used">_a</weak_warning> in xrange(100)]
+    l = [42 for _a in xrange(100)]
     print(l)
 
 

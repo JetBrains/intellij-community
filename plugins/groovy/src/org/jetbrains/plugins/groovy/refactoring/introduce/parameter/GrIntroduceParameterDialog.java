@@ -24,8 +24,9 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
@@ -93,12 +94,14 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   private JPanel mySignaturePanel;
   private JCheckBox myForceReturnCheckBox;
   private final Project myProject;
+  private final PsiFile myFile;
 
   private final boolean myCanIntroduceSimpleParameter;
 
   public GrIntroduceParameterDialog(IntroduceParameterInfo info) {
     super(info.getProject(), true);
     myInfo = info;
+    myFile = info.getContext().getContainingFile();
     myProject = info.getProject();
     myCanIntroduceSimpleParameter = GroovyIntroduceParameterUtil.findExpr(myInfo) != null ||
                                     GroovyIntroduceParameterUtil.findVar(myInfo) != null ||
@@ -436,7 +439,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
 
   private boolean hasFinalModifier() {
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_CREATE_FINALS;
-    return createFinals == null ? CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS : createFinals.booleanValue();
+    return createFinals == null ? JavaCodeStyleSettings.getInstance(myFile).GENERATE_FINAL_PARAMETERS : createFinals.booleanValue();
   }
 
   @Override

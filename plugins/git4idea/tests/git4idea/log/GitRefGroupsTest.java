@@ -47,7 +47,7 @@ public class GitRefGroupsTest extends GitRefManagerTest {
                      @NotNull List<String> expectedSingleGroups,
                      Pair<String, List<String>>... expectedOtherGroups) {
 
-    List<RefGroup> actualGroups = new GitRefManager(repositoryManager).groupForBranchFilter(actual);
+    List<RefGroup> actualGroups = new GitRefManager(getProject(), repositoryManager).groupForBranchFilter(actual);
 
     List<SingletonRefGroup> singleGroups = ContainerUtil.findAll(actualGroups, SingletonRefGroup.class);
     assertEquals(expectedSingleGroups, ContainerUtil.map(singleGroups,

@@ -20,5 +20,6 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.statsCollector.logEvents" />
     <orderEntry type="library" name="commons-codec" level="project" />
+    <orderEntry type="library" name="org.apache.httpcomponents:fluent-hc" level="project" />
   </component>
 </module>

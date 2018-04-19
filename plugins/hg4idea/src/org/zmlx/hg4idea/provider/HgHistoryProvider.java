@@ -79,7 +79,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
       return null;
     }
     final List<VcsFileRevision> revisions = new ArrayList<>(getHistory(filePath, vcsRoot, myProject));
-    return createAppendableSession(vcsRoot, revisions, null);
+    return createAppendableSession(vcsRoot, filePath, revisions, null);
   }
 
   public void reportAppendableHistory(FilePath filePath, final VcsAppendableHistorySessionPartner partner) throws VcsException {
@@ -88,7 +88,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     final List<HgFileRevision> history = getHistory(filePath, vcsRoot, myProject);
     if (history.size() == 0) return;
 
-    final VcsAbstractHistorySession emptySession = createAppendableSession(vcsRoot, Collections.emptyList(), null);
+    final VcsAbstractHistorySession emptySession = createAppendableSession(vcsRoot, filePath, Collections.emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
 
     for (HgFileRevision hgFileRevision : history) {
@@ -97,11 +97,15 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     partner.finished();
   }
 
-  private VcsAbstractHistorySession createAppendableSession(final VirtualFile vcsRoot, List<VcsFileRevision> revisions, @Nullable VcsRevisionNumber number) {
+  @NotNull
+  private VcsAbstractHistorySession createAppendableSession(@NotNull VirtualFile vcsRoot,
+                                                            @NotNull FilePath filePath,
+                                                            @NotNull List<VcsFileRevision> revisions,
+                                                            @Nullable VcsRevisionNumber number) {
     return new VcsAbstractHistorySession(revisions, number) {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
-        return new HgWorkingCopyRevisionsCommand(myProject).firstParent(vcsRoot);
+        return new HgWorkingCopyRevisionsCommand(myProject).parents(vcsRoot, filePath).first;
       }
 
       public HistoryAsTreeProvider getHistoryAsTreeProvider() {
@@ -110,7 +114,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
 
       @Override
       public VcsHistorySession copy() {
-        return createAppendableSession(vcsRoot, getRevisionList(), getCurrentRevisionNumber());
+        return createAppendableSession(vcsRoot, filePath, getRevisionList(), getCurrentRevisionNumber());
       }
     };
   }

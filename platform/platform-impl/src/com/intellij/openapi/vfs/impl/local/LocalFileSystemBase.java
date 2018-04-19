@@ -460,7 +460,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
     File ioFile = convertToIOFileAndCheck(file);
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") OutputStream stream =
-      shallUseSafeStream(requestor, file) ? new SafeFileOutputStream(ioFile, SystemInfo.isUnix) : new FileOutputStream(ioFile);
+      useSafeStream(requestor, file) ? new SafeFileOutputStream(ioFile, SystemInfo.isUnix) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       @Override
       public void close() throws IOException {
@@ -474,7 +474,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     };
   }
 
-  private static boolean shallUseSafeStream(Object requestor, @NotNull VirtualFile file) {
+  // note: keep in sync with SafeWriteUtil#useSafeStream
+  private static boolean useSafeStream(Object requestor, VirtualFile file) {
     return requestor instanceof SafeWriteRequestor && GeneralSettings.getInstance().isUseSafeWrite() && !file.is(VFileProperty.SYMLINK);
   }
 

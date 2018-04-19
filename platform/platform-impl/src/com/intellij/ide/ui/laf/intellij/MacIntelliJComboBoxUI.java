@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
@@ -60,7 +46,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   public void installUI(JComponent c) {
     super.installUI(c);
 
-    DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", comboBox.isEditable(), false, false, true));
+    DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", false, false, true, comboBox.isEditable()));
     comboBox.setOpaque(false);
     comboBox.setBorder(new MacComboBoxBorder());
 
@@ -101,7 +87,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     myEditableChangeListener = (evt) -> {
       Boolean editable = (Boolean)evt.getNewValue();
-      DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", editable, false, false, false));
+      DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", false, false, false, editable));
       comboBox.invalidate();
     };
     c.addPropertyChangeListener("editable", myEditableChangeListener);
@@ -130,7 +116,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       public void paint(Graphics g) {
         if (!UIUtil.isUnderDefaultMacTheme()) return; // Paint events may still arrive after UI switch until entire UI is updated.
 
-        Icon icon = IconCache.getIcon("comboRight", comboBox.isEditable(), false, false, comboBox.isEnabled());
+        Icon icon = IconCache.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() > icon.getIconWidth() || getHeight() > icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
           UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
@@ -154,8 +140,9 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
     int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
+    int maxHeight = JBUI.scale(JBUI.isUseCorrectInputHeight(comboBox) ? MacIntelliJTextFieldUI.MACOS_LIGHT_INPUT_HEIGHT_TOTAL : 26);
     return new Dimension(Math.max(d.width + JBUI.scale(7), iconWidth),
-                         Math.max(Math.max(iconHeight, editorHeight), JBUI.scale(26)));
+                         Math.max(Math.max(iconHeight, editorHeight), maxHeight));
   }
 
   @Override
@@ -343,5 +330,10 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Nullable Rectangle getArrowButtonBounds() {
     return arrowButton != null ? arrowButton.getBounds() : null;
+  }
+
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(3);
   }
 }

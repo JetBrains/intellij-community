@@ -2,7 +2,8 @@
 package com.intellij.ui.layout
 
 import com.intellij.configurationStore.serialize
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.dumpComponentBounds
+import com.intellij.ui.getComponentKey
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
@@ -12,9 +13,8 @@ import org.yaml.snakeyaml.introspector.Property
 import org.yaml.snakeyaml.nodes.NodeTuple
 import org.yaml.snakeyaml.nodes.Tag
 import org.yaml.snakeyaml.representer.Representer
-import javax.swing.AbstractButton
-import javax.swing.JLabel
-import javax.swing.JPanel
+import java.awt.Container
+import java.awt.Rectangle
 
 private val filter by lazy {
   object : Representer() {
@@ -31,8 +31,30 @@ private val filter by lazy {
         return null
       }
 
+      if (bean is Rectangle && (!property.isWritable || property.name == "size" || property.name == "location")) {
+        return null
+      }
+
       if (bean is BoundSize && property.name == "unset") {
         return null
+      }
+      if (bean is UnitValue) {
+        if (property.name == "unitString") {
+          if (propertyValue != "px" && bean.value != 0f) {
+            throw RuntimeException("Only px must be used")
+          }
+          return null
+        }
+        if (property.name == "unit" && bean.value != 0f) {
+          if (propertyValue != UnitValue.PIXEL) {
+            throw RuntimeException("Only px must be used")
+          }
+          return null
+        }
+        if (property.name == "operation" && propertyValue == 100) {
+          // ignore static operation
+          return null
+        }
       }
 
       val emptyBean = when (bean) {
@@ -60,18 +82,19 @@ private val filter by lazy {
   }
 }
 
+private fun dumpCellBounds(layout: MigLayout): Any {
+  val gridField = MigLayout::class.java.getDeclaredField("grid")
+  gridField.isAccessible = true
+  return MigLayoutTestUtil.getRectangles(gridField.get(layout) as Grid)
+}
+
 @Suppress("UNCHECKED_CAST")
-fun configurationToJson(component: JPanel, layout: MigLayout, rectangles: String? = null): String {
+internal fun serializeLayout(component: Container, isIncludeCellBounds: Boolean = true): String {
+  val layout = component.layout as MigLayout
+
   val componentConstrains = LinkedHashMap<String, Any>()
   for ((index, c) in component.components.withIndex()) {
-    var key = "${c.javaClass.simpleName} #${index}"
-    if (c is JLabel && c.text.isNotEmpty()) {
-      key = StringUtil.removeHtmlTags(c.text)
-    }
-    if (c is AbstractButton && c.text.isNotEmpty()) {
-      key = StringUtil.removeHtmlTags(c.text)
-    }
-    componentConstrains.put(key, layout.getComponentConstraints(c))
+    componentConstrains.put(getComponentKey(c, index), layout.getComponentConstraints(c))
   }
 
   val dumperOptions = DumperOptions()
@@ -83,9 +106,11 @@ fun configurationToJson(component: JPanel, layout: MigLayout, rectangles: String
     "rowConstraints" to layout.rowConstraints,
     "columnConstraints" to layout.columnConstraints,
     "componentConstrains" to componentConstrains,
-    "rectangles" to rectangles
+    "cellBounds" to if (isIncludeCellBounds) dumpCellBounds(layout) else null,
+    "componentBounds" to dumpComponentBounds(component)
   ))
     .replace("constaints", "constraints")
     .replace(" !!net.miginfocom.layout.CC", "")
     .replace(" !!net.miginfocom.layout.AC", "")
+    .replace(" !!net.miginfocom.layout.LC", "")
 }

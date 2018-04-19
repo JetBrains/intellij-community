@@ -31,5 +31,5 @@ if __name__ == '__main__':
     args += additional_args
     jb_doc_args("unittests", args)
     # Working dir should be on path, that is how unittest work when launched from command line
-    sys.path.append(os.getcwd())
+    sys.path.insert(0, os.getcwd())
     main(argv=args, module=None, testRunner=unittestpy.TeamcityTestRunner, buffer=not JB_DISABLE_BUFFERING)

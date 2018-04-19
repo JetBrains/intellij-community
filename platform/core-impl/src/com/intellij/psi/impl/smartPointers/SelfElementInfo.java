@@ -63,13 +63,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   void setRange(@Nullable Segment range) {
-    if (range != null) {
-      myStartOffset = range.getStartOffset();
-      myEndOffset = range.getEndOffset();
-    }
-    else {
+    if (range == null) {
       myStartOffset = -1;
       myEndOffset = -1;
+    }
+    else {
+      myStartOffset = range.getStartOffset();
+      myEndOffset = range.getEndOffset();
     }
   }
 
@@ -146,9 +146,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Nullable
-  public static PsiDirectory restoreDirectoryFromVirtual(final VirtualFile virtualFile, @NotNull final Project project) {
-    if (virtualFile == null) return null;
-
+  public static PsiDirectory restoreDirectoryFromVirtual(@NotNull VirtualFile virtualFile, @NotNull final Project project) {
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
@@ -160,7 +158,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Nullable
-  private static VirtualFile restoreVFile(VirtualFile virtualFile) {
+  private static VirtualFile restoreVFile(@NotNull VirtualFile virtualFile) {
     VirtualFile child;
     if (virtualFile.isValid()) {
       child = virtualFile;

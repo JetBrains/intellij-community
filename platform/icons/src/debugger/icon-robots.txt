@@ -1,0 +1,3 @@
+deprecated: class_filter.png -> /general/filter.png
+deprecated: newWatch.png -> /general/add.png
+deprecated: watches.png -> /debugger/watch.svg

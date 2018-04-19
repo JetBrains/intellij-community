@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NotNull;
 
 public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer {
@@ -43,6 +44,11 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
     return myDelegate.setupConfigurationFromContext(configuration, context, sourceElement);
   }
 
+  @Override
+  protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+    return myDelegate.isApplicableTestType(type, context);
+  }
+
   private static class TestNGInClassConfigurationProducerDelegate extends AbstractInClassConfigurationProducer<TestNGConfiguration> {
     protected TestNGInClassConfigurationProducerDelegate(ConfigurationType configurationType) {
       super(configurationType);
@@ -53,6 +59,11 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
                                                     ConfigurationContext context,
                                                     Ref<PsiElement> sourceElement) {
       return super.setupConfigurationFromContext(configuration, context, sourceElement);
+    }
+
+    @Override
+    protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+      return TestType.CLASS.getType().equals(type) || TestType.METHOD.getType().equals(type);
     }
   }
 }

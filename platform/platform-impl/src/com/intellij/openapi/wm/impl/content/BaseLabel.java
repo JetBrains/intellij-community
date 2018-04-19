@@ -5,6 +5,7 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.OffsetIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -121,11 +122,15 @@ public class BaseLabel extends JLabel {
         if(componentOrientation != null) {
           setComponentOrientation(componentOrientation);
         }
+        Icon icon = content.getIcon();
+        if (icon instanceof OffsetIcon) {
+          icon = ((OffsetIcon)icon).getIcon();
+        }
         if (isSelected) {
-          setIcon(content.getIcon());
+          setIcon(icon);
         }
         else {
-          setIcon(content.getIcon() != null ? new WatermarkIcon(content.getIcon(), .5f) : null);
+          setIcon(icon != null ? new WatermarkIcon(icon, .5f) : null);
         }
       }
       else {

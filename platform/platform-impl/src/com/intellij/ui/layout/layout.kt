@@ -5,10 +5,10 @@ import com.intellij.ui.components.Panel
 import javax.swing.JPanel
 
 /**
+ * See [docs](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout).
+ *
  * Claims all available space in the container for the columns ([LCFlags.fillX], if `constraints` is passed, `fillX` will be not applied - add it explicitly if need).
  * At least one component need to have a [Row.grow] constraint for it to fill the container.
- *
- * See [docs](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout).
  *
  * Check `Tools -> Internal Actions -> UI -> UI DSL Debug Mode` to turn on debug painting.
  *

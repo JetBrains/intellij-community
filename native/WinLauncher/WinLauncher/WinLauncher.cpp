@@ -1,5 +1,5 @@
 /*
-* Copyright 2000-2017 JetBrains s.r.o.
+* Copyright 2000-2018 JetBrains s.r.o.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
 volatile bool terminating = false;
+
+//tools.jar doesn't exist in jdk 9 and later. So check it for jdk 1.8 only.
+bool toolsArchiveExists = true;
 
 HANDLE hFileMapping;
 HANDLE hEvent;
@@ -80,8 +83,10 @@ bool IsValidJRE(const char* path)
 bool Is64BitJRE(const char* path)
 {
   std::string cfgPath(path);
+  std::string cfgJava9Path(path);
   cfgPath += "\\lib\\amd64\\jvm.cfg";
-  return FileExists(cfgPath);
+  cfgJava9Path += "\\lib\\jvm.cfg";
+  return FileExists(cfgPath) || FileExists(cfgJava9Path);
 }
 
 bool FindValidJVM(const char* path)
@@ -192,12 +197,20 @@ bool FindJVMInRegistryKey(const char* key, bool wow64_32)
 bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
 {
   char* keyName = "Java Runtime Environment";
+  // starting from java 9 key name has been changed
+  char* jreKeyName = "JRE";
+  char* jdkKeyName = "JDK";
+
   bool foundJava = false;
   char buf[_MAX_PATH];
   //search jre in registry if the product doesn't require tools.jar
   if (LoadStdString(IDS_JDK_ONLY) != std::string("true")) {
     sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
     foundJava = FindJVMInRegistryKey(buf, wow64_32);
+    if (!foundJava) {
+      sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", jreKeyName, version);
+      foundJava = FindJVMInRegistryKey(buf, wow64_32);
+    }
   }
 
   //search jdk in registry if the product requires tools.jar or jre isn't installed.
@@ -205,6 +218,10 @@ bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
     keyName = "Java Development Kit";
     sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
     foundJava = FindJVMInRegistryKey(buf, wow64_32);
+    if (!foundJava) {
+      sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", jdkKeyName, version);
+      foundJava = FindJVMInRegistryKey(buf, wow64_32);
+    }
   }
   return foundJava;
 }
@@ -214,6 +231,14 @@ bool FindJVMInRegistry()
 #ifndef _M_X64
   if (FindJVMInRegistryWithVersion("1.8", true))
     return true;
+  if (FindJVMInRegistryWithVersion("9", true))
+    toolsArchiveExists = false;
+    return true;
+  if (FindJVMInRegistryWithVersion("10", true))
+    toolsArchiveExists = false;
+    return true;
+
+  //obsolete java versions
   if (FindJVMInRegistryWithVersion("1.7", true))
     return true;
   if (FindJVMInRegistryWithVersion("1.6", true))
@@ -222,6 +247,14 @@ bool FindJVMInRegistry()
 
   if (FindJVMInRegistryWithVersion("1.8", false))
     return true;
+  if (FindJVMInRegistryWithVersion("9", false))
+    toolsArchiveExists = false;
+    return true;
+  if (FindJVMInRegistryWithVersion("10", false))
+    toolsArchiveExists = false;
+    return true;
+
+  //obsolete java versions
   if (FindJVMInRegistryWithVersion("1.7", false))
     return true;
   if (FindJVMInRegistryWithVersion("1.6", false))
@@ -403,11 +436,14 @@ std::string BuildClassPath()
   std::string classpathLibs = LoadStdString(IDS_CLASSPATH_LIBS);
   std::string result = CollectLibJars(classpathLibs);
 
-  std::string toolsJar = FindToolsJar();
-  if (toolsJar.size() > 0)
+  if (toolsArchiveExists)
   {
-    result += ";";
-    result += toolsJar;
+    std::string toolsJar = FindToolsJar();
+    if (toolsJar.size() > 0)
+    {
+      result += ";";
+      result += toolsJar;
+    }
   }
 
   return result;
@@ -615,6 +651,16 @@ void SetProcessDPIAwareProperty()
     }
 }
 
+std::string getErrorMessage(int errorCode)
+{
+  std::string errorMessage = "";
+  if (errorCode == -6)
+  {
+      errorMessage = "MaxJavaStackTraceDepth=-1 is outside the allowed range [ 0 ... 1073741823 ].\nImproperly specified VM option 'MaxJavaStackTraceDepth=-1'\n";
+  }
+  return errorMessage;
+}
+
 bool CreateJVM()
 {
   JavaVMInitArgs initArgs;
@@ -635,11 +681,15 @@ bool CreateJVM()
   if (result != JNI_OK)
   {
     std::stringstream buf;
+    std::string jvmError = getErrorMessage(result);
+    if (jvmError == "") {
+        jvmError = "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in \n";
+        jvmError += "Computer > System Properties > System Settings > Environment Variables.\n";
+    }
 
-    buf << "Failed to create JVM: error code " << result << ".\n";
-    buf << "JVM Path: " << jvmPath << "\n";
-    buf << "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in \n";
-    buf << "Computer > System Properties > System Settings > Environment Variables.";
+    buf << jvmError;
+    buf << "\nFailed to create JVM. ";
+    buf << "JVM Path: " << jvmPath;
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
     MessageBoxA(NULL, buf.str().c_str(), error.c_str(), MB_OK);
   }

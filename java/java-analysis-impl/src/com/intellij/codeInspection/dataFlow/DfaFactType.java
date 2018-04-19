@@ -54,6 +54,11 @@ public abstract class DfaFactType<T> extends Key<T> {
       return super.getPresentationText(fact, type);
     }
 
+    @Override
+    boolean isSuper(@Nullable Boolean superFact, @Nullable Boolean subFact) {
+      return (superFact == null && Boolean.FALSE.equals(subFact)) || super.isSuper(superFact, subFact);
+    }
+
     @Nullable
     @Override
     Boolean intersectFacts(@NotNull Boolean left, @NotNull Boolean right) {

@@ -23,11 +23,19 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Allows adding additional roots to other build targets.
+ *
+ * Implementations of this class are registered as Java services, by
+ * creating a file META-INF/services/org.jetbrains.jps.builders.AdditionalRootsProviderService containing the qualified name of your implementation
+ * class.
  * @author nik
  */
 public abstract class AdditionalRootsProviderService<R extends BuildRootDescriptor> {
   private final Collection<? extends BuildTargetType<? extends BuildTarget<R>>> myTargetTypes;
 
+  /**
+   * @param targetTypes types of target to which additional roots should be added
+   */
   protected AdditionalRootsProviderService(Collection<? extends BuildTargetType<? extends BuildTarget<R>>> targetTypes) {
     myTargetTypes = targetTypes;
   }
@@ -36,6 +44,10 @@ public abstract class AdditionalRootsProviderService<R extends BuildRootDescript
     return myTargetTypes;
   }
 
+  /**
+   * Override this method to return additional roots which should be added to {@link BuildTarget#computeRootDescriptors the roots} returned
+   * by the {@code target} itself.
+   */
   @NotNull
   public List<R> getAdditionalRoots(@NotNull BuildTarget<R> target, BuildDataPaths dataPaths) {
     return Collections.emptyList();

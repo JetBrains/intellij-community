@@ -306,7 +306,7 @@ class VariableView(override val variableName: String, private val variable: Vari
             value = null
             callback.valueModified()
           }
-          .rejected { callback.errorOccurred(it.message!!) }
+          .onError { callback.errorOccurred(it.message!!) }
       }
     }
   }

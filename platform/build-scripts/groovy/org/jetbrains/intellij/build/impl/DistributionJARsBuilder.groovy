@@ -190,6 +190,7 @@ class DistributionJARsBuilder {
     buildLib()
     buildBundledPlugins()
     buildNonBundledPlugins()
+    buildThirdPartyLibrariesList()
 
     def loadingOrderFilePath = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
     if (loadingOrderFilePath != null) {
@@ -224,9 +225,11 @@ class DistributionJARsBuilder {
 
   void buildAdditionalArtifacts() {
     def productProperties = buildContext.productProperties
-    buildContext.messages.block("Generate table of licenses for used third-party libraries") {
-      def generator = new LibraryLicensesListGenerator(buildContext.messages, buildContext.project, productProperties.allLibraryLicenses)
-      generator.generateLicensesTable("$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH", usedModules)
+
+    if (productProperties.generateLibrariesLicensesTable) {
+      String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+      buildContext.ant.copy(file: getThirdPartyLibrariesFilePath(),
+                            tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.html")
     }
 
     if (productProperties.scrambleMainJar) {
@@ -241,6 +244,17 @@ class DistributionJARsBuilder {
       def archiveName = "${productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
       BuildTasks.create(buildContext).zipSourcesOfModules(usedModules, "$buildContext.paths.artifacts/$archiveName")
     }
+  }
+
+  private void buildThirdPartyLibrariesList() {
+    buildContext.messages.block("Generate table of licenses for used third-party libraries") {
+      def generator = new LibraryLicensesListGenerator(buildContext.messages, buildContext.project, buildContext.productProperties.allLibraryLicenses)
+      generator.generateLicensesTable(getThirdPartyLibrariesFilePath(), usedModules)
+    }
+  }
+
+  private String getThirdPartyLibrariesFilePath() {
+    "$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH"
   }
 
   private void buildLib() {

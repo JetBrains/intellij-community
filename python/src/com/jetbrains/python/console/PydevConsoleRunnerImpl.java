@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Lists;
@@ -219,7 +205,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     toolbarActions.add(new ConnectDebuggerAction());
 
     DefaultActionGroup settings = new DefaultActionGroup("Settings", true);
-    settings.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
+    settings.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     settings.add(new PyVariableViewSettings.SimplifiedView(null));
     settings.add(new PyVariableViewSettings.AsyncView());
 
@@ -233,17 +219,17 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Override
   public void open() {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
-    if (toolWindow != null) {
+    if (toolWindow != null && toolWindow.isInitialized()) {
       toolWindow.getToolWindow().activate(() -> {
       }, true);
     }
     else {
-      runSync();
+      runSync(true);
     }
   }
 
   @Override
-  public void runSync() {
+  public void runSync(boolean requestEditorFocus) {
     myPorts = findAvailablePorts(myProject, myConsoleType);
 
     assert myPorts != null;
@@ -259,6 +245,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setText("Connecting to console...");
           connect(myStatementsToExecute);
+          if (requestEditorFocus) {
+            myConsoleView.requestFocus();
+          }
         }
       });
     }
@@ -270,7 +259,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
   @Override
-  public void run() {
+  public void run(boolean requestEditorFocus) {
     TransactionGuard.submitTransaction(myProject, () -> FileDocumentManager.getInstance().saveAllDocuments());
 
     myPorts = findAvailablePorts(myProject, myConsoleType);
@@ -288,6 +277,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           try {
             initAndRun(generalCommandLine);
             connect(myStatementsToExecute);
+            if (requestEditorFocus) {
+              myConsoleView.requestFocus();
+            }
           }
           catch (final Exception e) {
             LOG.warn("Error running console", e);
@@ -941,7 +933,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     public void actionPerformed(AnActionEvent e) {
       PydevConsoleRunner runner =
         PythonConsoleRunnerFactory.getInstance().createConsoleRunner(e.getData(CommonDataKeys.PROJECT), e.getData(LangDataKeys.MODULE));
-      runner.run();
+      runner.run(true);
     }
   }
 

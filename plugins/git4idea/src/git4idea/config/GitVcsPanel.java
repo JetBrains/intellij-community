@@ -40,7 +40,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitVcs;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
@@ -199,7 +198,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   }
 
   private boolean isBranchInfoSupported() {
-    return GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(GitVcs.getInstance(myProject).getVersion());
+    return GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(myProject);
   }
 
   @Override

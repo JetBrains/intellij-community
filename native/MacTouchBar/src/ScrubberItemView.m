@@ -7,8 +7,8 @@ const int g_marginImgText = 3;
 const int g_marginBorders = 10;
 
 @interface ScrubberItemView()
-@property (strong) NSImageView * imageView;
-@property (strong) NSTextField * textField;
+@property (retain) NSImageView * imageView;
+@property (retain) NSTextField * textField;
 @end
 
 @implementation ScrubberItemView

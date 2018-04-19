@@ -714,6 +714,13 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                  "        self.value = self.datetime(2016, 1, 1)");
   }
 
+  // PY-19599
+  public void testDefinedInParameterDefaultAndBody() {
+    doTestByText("def f(p=(x for x in [])):\n" +
+                 "    x = 1\n" +
+                 "    return x");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

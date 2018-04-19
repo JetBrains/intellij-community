@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.ex.LineStatusTracker.Mode
 import com.intellij.openapi.vfs.VirtualFile
@@ -109,11 +108,11 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
     }
 
     fun assertTextContentIs(expected: String) {
-      assertEquals(parseInput(expected), document.text)
+      tracker.assertTextContentIs(expected)
     }
 
     fun assertBaseTextContentIs(expected: String) {
-      assertEquals(parseInput(expected), vcsDocument.text)
+      tracker.assertBaseTextContentIs(expected)
     }
 
     fun assertRangesEmpty() {
@@ -132,7 +131,7 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
 
 
     fun runCommandVerify(task: () -> Unit) {
-      this@BaseLineStatusTrackerTestCase.runCommand(task)
+      this@BaseLineStatusTrackerTestCase.runCommand(null, task)
       verify()
     }
 
@@ -373,9 +372,6 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
   }
 
   protected inner class PartialTest(val partialTracker: PartialLocalLineStatusTracker) : Test(partialTracker) {
-    private val clm = ChangeListManagerImpl.getInstanceImpl(getProject())
-
-
     fun assertAffectedChangeLists(vararg expected: String) {
       partialTracker.assertAffectedChangeLists(*expected)
     }
@@ -399,6 +395,15 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
     fun moveChangesTo(lines: BitSet, list: String) {
       val changeList = clm.addChangeList(list, null)
       partialTracker.moveToChangelist(lines, changeList)
+    }
+
+
+    fun undo() {
+      undo(document)
+    }
+
+    fun redo() {
+      redo(document)
     }
   }
 

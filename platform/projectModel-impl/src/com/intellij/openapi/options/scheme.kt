@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options
 
 import com.intellij.configurationStore.CURRENT_NAME_CONVERTER
@@ -35,13 +35,14 @@ abstract class SchemeManagerFactory {
   }
 
   abstract fun <SCHEME : Any, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
-                                                        processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
-                                                        presentableName: String? = null,
-                                                        roamingType: RoamingType = RoamingType.DEFAULT,
-                                                        schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                        streamProvider: StreamProvider? = null,
-                                                        directoryPath: Path? = null,
-                                                        autoSave: Boolean = true): SchemeManager<SCHEME>
+                                                              processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
+                                                              presentableName: String? = null,
+                                                              roamingType: RoamingType = RoamingType.DEFAULT,
+                                                              schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
+                                                              streamProvider: StreamProvider? = null,
+                                                              directoryPath: Path? = null,
+                                                              isAutoSave: Boolean = true): SchemeManager<SCHEME>
+
   open fun dispose(schemeManager: SchemeManager<*>) {
   }
 }
@@ -60,7 +61,7 @@ abstract class SchemeProcessor<SCHEME, in MUTABLE_SCHEME: SCHEME> {
   /**
    * Element will not be modified, it is safe to return non-cloned instance.
    */
-  abstract fun writeScheme(scheme: MUTABLE_SCHEME): Parent
+  abstract fun writeScheme(scheme: MUTABLE_SCHEME): Parent?
 
   open fun initScheme(scheme: MUTABLE_SCHEME) {
   }

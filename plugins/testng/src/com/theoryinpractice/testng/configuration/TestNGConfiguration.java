@@ -104,7 +104,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return null;
   }
 
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
+  public TestNGRunnableState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final TestData data = getPersistantData();
     if (data.TEST_OBJECT.equals(TestType.SOURCE.getType()) || data.getChangeList() != null) {
       return new TestNGTestDiscoveryRunnableState(env, this);
@@ -209,6 +209,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   @Override
   public boolean isConfiguredByElement(PsiElement element) {
     return TestNGTestObject.fromConfig(this).isConfiguredByElement(element);
+  }
+
+  @Override
+  public String getTestType() {
+    return getPersistantData().TEST_OBJECT;
   }
 
   @Override

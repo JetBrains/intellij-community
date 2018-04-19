@@ -42,7 +42,15 @@ public class IdeBorderFactory {
   }
 
   public static Border createBorder(@MagicConstant(flagsFromClass = SideBorder.class) int borders) {
-    return new SideBorder(getBorderColor(), borders);
+    return createBorder(getBorderColor(), borders);
+  }
+
+  public static Border createBorder(Color color) {
+    return createBorder(color, SideBorder.ALL);
+  }
+
+  public static Border createBorder(Color color, @MagicConstant(flagsFromClass = SideBorder.class) int borders) {
+    return new SideBorder(color, borders);
   }
 
   @NotNull

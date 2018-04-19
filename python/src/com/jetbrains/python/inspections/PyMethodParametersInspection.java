@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -23,6 +24,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.QualifiedName;
@@ -48,6 +50,14 @@ import java.awt.event.ActionListener;
  */
 public class PyMethodParametersInspection extends PyInspection {
   public String MCS = "mcs";
+
+  @Nullable
+  public static PyMethodParametersInspection getInstance(@NotNull PsiElement element) {
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
+    final String toolName = PyMethodParametersInspection.class.getSimpleName();
+    return (PyMethodParametersInspection)inspectionProfile.getUnwrappedTool(toolName, element);
+  }
+
   @Nullable
   @Override
   public JComponent createOptionsPanel() {

@@ -31,6 +31,10 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodUpAction extends BaseCodeInsightAction implements DumbAware {
+  public MethodUpAction() {
+    setEnabledInModalContext(true);
+  }
+
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {

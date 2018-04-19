@@ -38,7 +38,7 @@ public class GroovyFileType extends LanguageFileType {
   @NonNls
   @NotNull
   public String getDescription() {
-    return "Groovy Files";
+    return "Groovy";
   }
 
   @Override

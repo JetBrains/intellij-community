@@ -38,6 +38,8 @@ public class SelectInProjectViewAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent event) {
     SelectInTarget target = SelectInManager.findSelectInTarget(PROJECT_VIEW, event.getProject());
     SelectInContext context = target == null ? null : SelectInContextImpl.createContext(event);
-    if (context != null) target.selectIn(context, true);
+    if (context != null) {
+      target.selectIn(context, true);
+    }
   }
 }

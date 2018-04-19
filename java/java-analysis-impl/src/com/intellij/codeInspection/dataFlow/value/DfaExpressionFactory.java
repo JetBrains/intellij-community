@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,10 +25,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.LongStreamEx;
 import org.jetbrains.annotations.Contract;
@@ -117,14 +119,19 @@ public class DfaExpressionFactory {
       }
     }
 
-    if (expression instanceof PsiThisExpression) {
-      PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)expression).getQualifier();
-      PsiElement target = qualifier == null ? null : qualifier.resolve();
-      if (target instanceof PsiClass) {
-        return myFactory.getVarFactory().createVariableValue(new ThisSource((PsiClass)target), expression.getType());
+    if (expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression) {
+      PsiJavaCodeReferenceElement qualifier = ((PsiQualifiedExpression)expression).getQualifier();
+      PsiClass target;
+      if (qualifier != null) {
+        target = ObjectUtils.tryCast(qualifier.resolve(), PsiClass.class);
       }
+      else {
+        target = ClassUtils.getContainingClass(expression);
+      }
+      return target == null
+             ? myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL)
+             : myFactory.getVarFactory().createThisValue(target);
     }
-
     return null;
   }
 
@@ -148,12 +155,15 @@ public class DfaExpressionFactory {
       DfaValue constValue = myFactory.getConstFactory().create((PsiVariable)psiElement);
       if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, psiElement)) return constValue;
     }
-    if (psiElement != null &&
-        (ExpressionUtil.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(psiElement) ||
-         (psiElement instanceof PsiMethod && psiElement.hasModifierProperty(PsiModifier.STATIC)))) {
+    if (psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter ||
+        (psiElement instanceof PsiField &&
+         psiElement.hasModifierProperty(PsiModifier.STATIC) &&
+         !psiElement.hasModifierProperty(PsiModifier.FINAL)) ||
+        isStaticFinalConstantWithoutInitializationHacks(psiElement) ||
+        (psiElement instanceof PsiMethod && psiElement.hasModifierProperty(PsiModifier.STATIC))) {
       return myFactory.getVarFactory().createVariableValue(var, refExpr.getType());
     }
-    DfaVariableValue qualifier = getQualifierVariable(refExpr.getQualifierExpression());
+    DfaVariableValue qualifier = getQualifierOrThisVariable(refExpr);
     if (qualifier != null) {
       return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), qualifier);
     }
@@ -162,6 +172,38 @@ public class DfaExpressionFactory {
     return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, psiElement));
   }
 
+  /**
+   * Returns a DFA variable which represents the qualifier for given reference if possible. For unqualified reference
+   * to a non-static member, a variable which represents the corresponding {@code this} may be returned
+   *
+   * @param refExpr reference to create a qualifier variable for
+   * @return a qualifier variable or null if qualifier is unnecessary or cannot be represented as a variable
+   */
+  @Nullable
+  public DfaVariableValue getQualifierOrThisVariable(PsiReferenceExpression refExpr) {
+    PsiExpression qualifierExpression = refExpr.getQualifierExpression();
+    if (qualifierExpression == null) {
+      PsiElement element = refExpr.resolve();
+      if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass currentClass;
+        currentClass = ClassUtils.getContainingClass(refExpr);
+        PsiClass memberClass = ((PsiMember)element).getContainingClass();
+        if (memberClass != null && currentClass != null) {
+          PsiClass target;
+          if (currentClass == memberClass || InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true)) {
+            target = currentClass;
+          }
+          else {
+            target = memberClass;
+          }
+          return myFactory.getVarFactory().createThisValue(target);
+        }
+      }
+    }
+    return getQualifierVariable(qualifierExpression);
+  }
+
+  @Nullable
   private DfaVariableValue getQualifierVariable(PsiExpression qualifierExpression) {
     DfaValue qualifierValue = getExpressionDfaValue(qualifierExpression);
     DfaVariableValue qualifier = null;
@@ -197,8 +239,11 @@ public class DfaExpressionFactory {
   private DfaValue createFromSpecialField(PsiReferenceExpression refExpr) {
     PsiElement target = refExpr.resolve();
     if (!(target instanceof PsiModifierListOwner)) return null;
-    DfaVariableValue qualifier = getQualifierVariable(refExpr.getQualifierExpression());
-    return SpecialField.tryCreateValue(qualifier, target);
+    SpecialField sf = SpecialField.findSpecialField(target);
+    if (sf == null) return null;
+    DfaVariableValue qualifier = getQualifierOrThisVariable(refExpr);
+    if (qualifier == null) return null;
+    return sf.createValue(myFactory, qualifier);
   }
 
   @Contract("null -> null")
@@ -380,22 +425,22 @@ public class DfaExpressionFactory {
     }
   }
 
-  private static final class ThisSource implements DfaVariableSource {
-    @Nullable
+  public static final class ThisSource implements DfaVariableSource {
+    @NotNull
     private final PsiClass myQualifier;
 
-    ThisSource(@Nullable PsiClass qualifier) {
+    ThisSource(@NotNull PsiClass qualifier) {
       myQualifier = qualifier;
     }
 
     @NotNull
     @Override
     public String toString() {
-      return myQualifier == null ? "this" : myQualifier.getQualifiedName() + ".this";
+      return myQualifier.getName() + ".this";
     }
 
     @Override
-    public PsiModifierListOwner getPsiElement() {
+    public PsiClass getPsiElement() {
       return myQualifier;
     }
 

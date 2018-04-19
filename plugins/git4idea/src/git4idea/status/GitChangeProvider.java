@@ -146,7 +146,7 @@ public class GitChangeProvider implements ChangeProvider {
   }
 
   private boolean isNewGitChangeProviderAvailable() {
-    return GitVersionSpecialty.KNOWS_STATUS_PORCELAIN.existsIn(GitVcs.getInstance(myProject).getVersion());
+    return GitVersionSpecialty.KNOWS_STATUS_PORCELAIN.existsIn(myProject);
   }
 
   private static class MyNonChangedHolder {

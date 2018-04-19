@@ -97,7 +97,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
           if (handler.couldShowInLookup()) {
             final Object[] items = handler.getParametersForLookup(item, context);
             if (items != null && items.length > 0) {
-              showLookupEditorHint(items, editor, project, handler, requestFocus);
+              showLookupEditorHint(items, editor, handler, requestFocus);
             }
             return;
           }
@@ -122,7 +122,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
   private static void showLookupEditorHint(Object[] descriptors,
                                            final Editor editor,
-                                           final Project project,
                                            ParameterInfoHandler handler,
                                            boolean requestFocus) {
     ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler, requestFocus, false);
@@ -131,7 +130,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Pair<Point, Short> pos = ParameterInfoController.chooseBestHintPosition(project, editor, null, hint, true, HintManager.DEFAULT, true);
+    final Pair<Point, Short> pos = ParameterInfoController.chooseBestHintPosition(editor, null, hint, HintManager.DEFAULT, true);
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!editor.getComponent().isShowing()) return;
       hintManager.showEditorHint(hint, editor, pos.getFirst(),

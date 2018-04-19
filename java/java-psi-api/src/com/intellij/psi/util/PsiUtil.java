@@ -995,7 +995,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isLanguageLevel11OrHigher(@NotNull final PsiElement element) {
-    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_X);
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_11);
   }
 
   @NotNull

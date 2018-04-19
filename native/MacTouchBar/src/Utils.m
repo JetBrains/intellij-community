@@ -1,6 +1,6 @@
 #import "Utils.h"
 
-#define LOGGING_ERRORS_ENABLED
+//#define LOGGING_ERRORS_ENABLED
 //#define LOGGING_TRACE_ENABLED
 
 void nserror(NSString *format, ...) {
@@ -26,6 +26,9 @@ void nstrace(NSString *format, ...) {
 }
 
 NSImage * createImgFrom4ByteRGBA(const unsigned char *bytes, int w, int h) {
+    if (bytes == NULL || w <= 0 || h <= 0)
+        return nil;
+
     const int rowBytes = w*4;
     NSBitmapImageRep *rep =
         [[NSBitmapImageRep alloc]
@@ -49,4 +52,22 @@ NSImage * createImgFrom4ByteRGBA(const unsigned char *bytes, int w, int h) {
     NSImage* nsimg = [[[NSImage alloc] initWithSize:NSMakeSize(w, h)] autorelease];
     [nsimg addRepresentation:rep];
     return nsimg;
+}
+
+NSImage * getImg(ScrubberItemData * jdata) {
+    if (jdata == NULL)
+        return nil;
+    return createImgFrom4ByteRGBA((const unsigned char *)jdata->raster4ByteRGBA, jdata->rasterW, jdata->rasterH);
+}
+
+NSString * getText(ScrubberItemData * jdata) {
+    if (jdata == NULL || jdata->text == NULL)
+        return nil;
+    return [NSString stringWithUTF8String:jdata->text];
+}
+
+NSString * getString(const char * utf8) {
+    if (utf8 == NULL)
+        return nil;
+    return [NSString stringWithUTF8String:utf8];
 }

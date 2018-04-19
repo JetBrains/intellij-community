@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvsoperations.cvsLog;
 
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
@@ -22,19 +8,19 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchesProvider;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.vcs.FilePath;
+import gnu.trove.THashSet;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.log.LogCommand;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 /**
  * author: lesya
  */
 public class LogOperation extends CvsOperationOnFiles implements BranchesProvider{
-  private final List<LogInformation> myLogInformationList = new ArrayList<>();
+  private final Set<String> branches = new THashSet<>();
 
   public LogOperation(Collection<FilePath> files){
     for (final FilePath file : files) {
@@ -52,20 +38,16 @@ public class LogOperation extends CvsOperationOnFiles implements BranchesProvide
   public void fileInfoGenerated(Object info) {
     super.fileInfoGenerated(info);
     if (info instanceof LogInformation) {
-      myLogInformationList.add((LogInformation)info);
+      TagsHelper.collectBranches((LogInformation)info, branches);
     }
   }
 
   public Collection<String> getAllBranches() {
-    return TagsHelper.getAllBranches(myLogInformationList);
+    return branches;
   }
 
   public Collection<CvsRevisionNumber> getAllRevisions() {
     return null;
-  }
-
-  public List<LogInformation> getLogInformationList() {
-    return myLogInformationList;
   }
 
   protected String getOperationName() {

@@ -125,7 +125,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   @Override
   public void dispose() {
-    myInlayTree.dispose();
+    myInlayTree.dispose(myEditor.getDocument());
   }
 
   @Nullable
@@ -175,6 +175,18 @@ public class InlayModelImpl implements InlayModel, Disposable {
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
     return visualPosition.line == inlayStartPosition.line && 
            visualPosition.column >= inlayStartPosition.column && visualPosition.column < inlayStartPosition.column + inlayCount;
+  }
+
+  @Nullable
+  @Override
+  public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
+    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+    List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+    if (inlays.isEmpty()) return null;
+    VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
+    if (visualPosition.line != inlayStartPosition.line) return null;
+    int inlayIndex = visualPosition.column - inlayStartPosition.column;
+    return inlayIndex >= 0 && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
   }
 
   @Nullable

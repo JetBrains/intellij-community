@@ -183,7 +183,6 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
       if (document != null) {
         FileDocumentManager.getInstance().saveDocument(document);
       }
-      ;
     });
     return myProjectsManager.forceUpdateProjects(Collections.singleton(mavenProject));
   }
@@ -213,7 +212,6 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     return plugin;
   }
 
-  @Nullable
   private static String getMavenScope(@NotNull DependencyScope scope) {
     switch (scope) {
       case RUNTIME:
@@ -225,7 +223,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
       case PROVIDED:
         return MavenConstants.SCOPE_PROVIDED;
       default:
-        return null;
+        throw new IllegalArgumentException(String.valueOf(scope));
     }
   }
 }

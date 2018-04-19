@@ -356,7 +356,7 @@ public class GitUpdateProcess {
 
   @NotNull
   private static String recommendSetupTrackingCommand(@NotNull GitRepository repository, @NotNull String branchName) {
-    return String.format(GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository.getVcs().getVersion()) ?
+    return String.format(GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository) ?
                          "git branch --set-upstream-to=origin/%1$s %1$s" :
                          "git branch --set-upstream %1$s origin/%1$s", branchName);
   }

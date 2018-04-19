@@ -275,13 +275,13 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   @Nullable
-  private Object _computeConstantValue(Set<PsiVariable> visitedVars) {
+  private Object _computeConstantValue(@Nullable Set<PsiVariable> visitedVars) {
     PsiType type = getType();
     // javac rejects all non primitive and non String constants, although JLS states constants "variables whose initializers are constant expressions"
     if (!(type instanceof PsiPrimitiveType) && !type.equalsToText("java.lang.String")) return null;
 
     PsiExpression initializer = getDetachedInitializer();
-
+    if (initializer == null) return null;
     return PsiConstantEvaluationHelperImpl.computeCastTo(initializer, type, visitedVars);
   }
 

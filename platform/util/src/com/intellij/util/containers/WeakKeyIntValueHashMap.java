@@ -130,7 +130,7 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
     throw RefValueHashMap.pointlessContainsValue();
   }
 
-  private static final Object GCED = new Object();
+  private static final Object GCED = ObjectUtils.sentinel("GCED");
   @NotNull
   @Override
   public Iterable<Entry<K>> entries() {

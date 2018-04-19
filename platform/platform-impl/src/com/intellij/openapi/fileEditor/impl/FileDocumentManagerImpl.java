@@ -17,7 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -113,7 +113,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
       if (project == null)
         project = ProjectUtil.guessProjectForFile(getFile(document));
-      String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
+      String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
 
       // avoid documents piling up during batch processing
@@ -493,10 +493,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
     String lineSeparator = file == null ? null : LoadTextUtil.getDetectedLineSeparator(file);
     if (lineSeparator == null) {
-      CodeStyleFacade settingsManager = project == null
-                                        ? CodeStyleFacade.getInstance()
-                                        : CodeStyleFacade.getInstance(project);
-      lineSeparator = settingsManager.getLineSeparator();
+      lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
     }
     return lineSeparator;
   }

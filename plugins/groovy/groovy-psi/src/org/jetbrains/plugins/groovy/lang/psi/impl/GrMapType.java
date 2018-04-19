@@ -58,7 +58,7 @@ public abstract class GrMapType extends GrLiteralClassType {
 
   protected GrMapType(JavaPsiFacade facade,
                       GlobalSearchScope scope,
-                      LanguageLevel languageLevel) {
+                      @NotNull LanguageLevel languageLevel) {
     super(languageLevel, scope, facade);
   }
 

@@ -706,7 +706,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public long getIdleTime() {
-    assertIsDispatchThread();
     return IdeEventQueue.getInstance().getIdleTime();
   }
 
@@ -731,6 +730,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   /**
+   * Restarts the IDE with optional process elevation (on Windows).
+   *
+   * @param exitConfirmed if true, the IDE does not ask for exit confirmation.
+   * @param elevate if true and the IDE is running on Windows, the IDE is restarted in elevated mode (with admin privileges)
+   */
+  public void restart(boolean exitConfirmed, boolean elevate) {
+    exit(false, exitConfirmed, true, elevate, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  /**
    * There are two ways we can get an exit notification.
    *  1. From user input i.e. ExitAction
    *  2. From the native system.
@@ -744,6 +753,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   public void exit(boolean force, boolean exitConfirmed, boolean restart, @NotNull String[] beforeRestart) {
+    exit(force, exitConfirmed, restart, false, beforeRestart);
+  }
+
+  private void exit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, @NotNull String[] beforeRestart) {
     if (!force) {
       if (myExitInProgress) return;
       if (!exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) return;
@@ -751,14 +764,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     myExitInProgress = true;
     if (isDispatchThread()) {
-      doExit(force, exitConfirmed, restart, beforeRestart);
+      doExit(force, exitConfirmed, restart, elevate, beforeRestart);
     }
     else {
-      invokeLater(() -> doExit(force, exitConfirmed, restart, beforeRestart), ModalityState.NON_MODAL);
+      invokeLater(() -> doExit(force, exitConfirmed, restart, elevate, beforeRestart), ModalityState.NON_MODAL);
     }
   }
 
-  private void doExit(boolean force, boolean exitConfirmed, boolean restart, String[] beforeRestart) {
+  private void doExit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, String[] beforeRestart) {
     try {
       if (!force && !confirmExitIfNeeded(exitConfirmed)) {
         return;
@@ -786,7 +799,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
-          Restarter.scheduleRestart(beforeRestart);
+          Restarter.scheduleRestart(elevate, beforeRestart);
         }
         catch (Throwable t) {
           LOG.error("Restart failed", t);

@@ -1491,9 +1491,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     try {
       Replacer.testReplace(s1, s2, s3, options, getProject());
-      assertTrue("Undefined replace variable is not checked",false);
-    } catch(UnsupportedPatternException ignored) {
-    }
+      fail("Undefined replace variable is not checked");
+    } catch (MalformedPatternException ignored) {}
 
     String s4 = "a=a;";
     String s5 = "a=a;";
@@ -1501,15 +1500,13 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     try {
       Replacer.testReplace(s4, s5, s6, options, getProject());
-      assertTrue("Undefined no ; in replace",false);
-    } catch(UnsupportedPatternException ignored) {
-    }
+      fail("Undefined no ; in replace");
+    } catch (UnsupportedPatternException ignored) {}
 
     try {
       Replacer.testReplace(s4, s6, s5, options, getProject());
-      assertTrue("Undefined no ; in search",false);
-    } catch(UnsupportedPatternException ignored) {
-    }
+      fail("Undefined no ; in search");
+    } catch (UnsupportedPatternException ignored) {}
   }
 
   public void testActualParameterReplacementInConstructorInvokation() {
@@ -2038,7 +2035,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String replace = "class $TestCase$ implements $others$ {\n    $MyClassContent$\n}";
     String expectedResult = "import java.io.Externalizable;\n" +
                             "import java.io.Serializable;\n" +
-                            "abstract class MyClass implements Externalizable,Serializable {\n    \n}";
+                            "abstract class MyClass implements Serializable,Externalizable {\n    \n}";
 
     assertEquals(expectedResult, Replacer.testReplace(source, search, replace, options, getProject(), true));
   }
@@ -2462,5 +2459,44 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "    System.out.println();" +
                  "  }" +
                  "}", Replacer.testReplace(in, what, by, options, getProject(), true));
+  }
+
+  public void testReplaceGenerics() {
+    options.setToShortenFQN(false);
+    String in = "import java.util.ArrayList;" +
+                "import java.util.List;" +
+                "class X {" +
+                "  List<String> list = new java.util.LinkedList<String>();" +
+                "  List<Integer> list2 = new java.util.ArrayList<Integer>();" +
+                "  List<Double> list3 = new ArrayList<>();" +
+                "}";
+
+    assertEquals("should properly replace with diamond",
+                 "import java.util.ArrayList;" +
+                 "import java.util.List;" +
+                 "class X {" +
+                 "  List<String> list = new java.util.LinkedList<>();" +
+                 "  List<Integer> list2 = new ArrayList<>();" +
+                 "  List<Double> list3 = new ArrayList<>();" +
+                 "}",
+                 Replacer.testReplace(in, "new '_X<'_p+>()", "new $X$<>()", options, getProject(), true));
+    assertEquals("should keep generics when matching without",
+                 "import java.util.ArrayList;" +
+                 "import java.util.List;" +
+                 "class X {" +
+                 "  List<String> list = new /*1*/java.util.LinkedList<String>();" +
+                 "  List<Integer> list2 = new /*1*/ArrayList<Integer>();" +
+                 "  List<Double> list3 = new /*1*/ArrayList<>();" +
+                 "}",
+                 Replacer.testReplace(in, "new '_X()", "new /*1*/$X$()", options, getProject(), true));
+    assertEquals("should not duplicate generic parameters",
+                 "import java.util.ArrayList;" +
+                 "import java.util.List;" +
+                 "class X {" +
+                 "  List<String> list = new java.util.LinkedList</*0*/String>();" +
+                 "  List<Integer> list2 = new ArrayList</*0*/Integer>();" +
+                 "  List<Double> list3 = new ArrayList<>();" +
+                 "}",
+                 Replacer.testReplace(in, "new '_X<'_p+>()", "new $X$</*0*/$p$>()", options, getProject(), true));
   }
 }

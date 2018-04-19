@@ -321,6 +321,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
+  public String getTestType() {
+    return getPersistentData().TEST_OBJECT;
+  }
+
+  @Override
   public TestSearchScope getTestSearchScope() {
     return getPersistentData().getScope();
   }

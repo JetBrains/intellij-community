@@ -1,8 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiType
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
@@ -24,13 +27,12 @@ internal fun setupParameters(method: GrMethod, parameters: ExpectedParameters): 
   var paramTypesExpressions = listOf<ChooseTypeExpression>()
   for (i in 0 until minOf(parameters.size, 255)) {
     val parameterInfo = parameters[i]
-    val names = extractNames(parameterInfo.first) { "p" + i }
-    val dummyParameter = factory.createParameter(names.first(), PsiType.INT)
+    val dummyParameter = factory.createParameter("p$i", PsiType.INT)
     postprocessReformattingAspect.postponeFormattingInside(Computable {
       parameterList.add(dummyParameter)
     }) as GrParameter
 
-    paramTypesExpressions += setupTypeElement(method, createConstraints(project, parameterInfo.second))
+    paramTypesExpressions += setupTypeElement(method, createConstraints(project, parameterInfo.expectedTypes))
   }
 
   return paramTypesExpressions
@@ -40,6 +42,11 @@ internal fun setupTypeElement(method: GrMethod, constraints: List<TypeConstraint
   return ChooseTypeExpression(constraints.toTypedArray(), method.manager, method.resolveScope, false)
 }
 
-internal fun setupNameExpressions(parameters: ExpectedParameters): List<ParameterNameExpression> {
-  return parameters.map { SuggestedParameterNameExpression(it.first) }
+internal fun setupNameExpressions(parameters: ExpectedParameters, project: Project): List<ParameterNameExpression> {
+  val codeStyleManager = JavaCodeStyleManager.getInstance(project)
+  return parameters.map {
+    val type = it.expectedTypes.firstOrNull()?.theType as? PsiType
+    val nameInfo = codeStyleManager.suggestNames(it.semanticNames, VariableKind.PARAMETER, type)
+    SuggestedParameterNameExpression(nameInfo)
+  }
 }

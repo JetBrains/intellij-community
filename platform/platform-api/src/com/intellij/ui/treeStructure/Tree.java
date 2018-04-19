@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
@@ -55,7 +56,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private Dimension myHoldSize;
   private final MySelectionModel mySelectionModel = new MySelectionModel();
-  private boolean myHorizontalAutoScrolling = true;
+  private boolean myHorizontalAutoScrolling = Registry.is("ide.tree.horizontal.default.autoscrolling", false);
 
   private TreePath rollOverPath;
 

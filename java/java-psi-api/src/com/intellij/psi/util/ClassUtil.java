@@ -297,6 +297,9 @@ public class ClassUtil {
       public String visitArrayType(PsiArrayType arrayType) {
         PsiType componentType = arrayType.getComponentType();
         String typePresentation = componentType.accept(this);
+        if (arrayType.getDeepComponentType() instanceof PsiPrimitiveType) {
+          return typePresentation + "[]";
+        }
         if (componentType instanceof PsiClassType) {
           typePresentation = "L" + typePresentation + ";";
         }

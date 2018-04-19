@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -26,7 +12,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -428,7 +413,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
       document.setModificationStamp(file.getModificationStamp());
     });
 
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void beforeDocumentSaving(@NotNull Document documentToSave) {
         assertNotSame(document, documentToSave);
@@ -505,7 +490,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
       myDocumentManager.saveDocument(document);
 
       getProject().getMessageBus().connect(getTestRootDisposable())
-        .subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+        .subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
           @Override
           public void beforeDocumentSaving(@NotNull Document documentToSave) {
             assertNotSame(document, documentToSave);
@@ -584,7 +569,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     final PsiFile file = getPsiFile(original);
     assertNotNull(file);
-    FileDocumentManagerListener saveListener = new FileDocumentManagerAdapter() {
+    FileDocumentManagerListener saveListener = new FileDocumentManagerListener() {
       @Override
       public void beforeDocumentSaving(@NotNull Document document) {
         WriteCommandAction.runWriteCommandAction(getProject(), () -> {

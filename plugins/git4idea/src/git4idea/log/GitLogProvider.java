@@ -85,7 +85,7 @@ public class GitLogProvider implements VcsLogProvider {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myUserRegistry = userRegistry;
-    myRefSorter = new GitRefManager(myRepositoryManager);
+    myRefSorter = new GitRefManager(myProject, myRepositoryManager);
     myVcsObjectsFactory = factory;
     myVcs = GitVcs.getInstance(project);
   }

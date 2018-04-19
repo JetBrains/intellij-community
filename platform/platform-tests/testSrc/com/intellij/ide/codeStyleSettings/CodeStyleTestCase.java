@@ -16,7 +16,15 @@
 package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.options.SchemeFactory;
+import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jdom.Element;
@@ -58,7 +66,7 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
   @NotNull
   protected final String getTestDataPath() {
     String testDir = getTestDir();
-    return BASE_PATH + (testDir != null ? testDir : "") + File.separator;
+    return getBasePath() + (testDir != null ? testDir : "") + File.separator;
   }
 
   @NotNull
@@ -74,4 +82,23 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
   }
 
   protected void setupProject() throws Exception {}
+
+  protected CodeStyleSettings importSettings() throws SchemeImportException {
+    final CodeStyleScheme targetScheme = new CodeStyleSchemeImpl("Test", false, null);
+    SchemeFactory<CodeStyleScheme> schemeFactory = new SchemeFactory<CodeStyleScheme>() {
+      @Override
+      public CodeStyleScheme createNewScheme(@Nullable String name) {
+        return targetScheme;
+      }
+    };
+    File ioFile = new File(getTestDataPath() + getTestName(true) + ".xml");
+    assertExists(ioFile);
+    VirtualFile vFile = VfsUtil.findFileByIoFile(ioFile, true);
+    CodeStyleSchemeXmlImporter importer = new CodeStyleSchemeXmlImporter();
+    return importer.importScheme(getProject(), vFile, targetScheme, schemeFactory).getCodeStyleSettings();
+  }
+
+  protected String getBasePath() {
+    return BASE_PATH;
+  }
 }

@@ -4,14 +4,12 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,8 +53,7 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   @Override
   public List<FoldingBuilder> allForLanguage(@NotNull Language language) {
     for (Language l = language; l != null; l = l.getBaseLanguage()) {
-      List<FoldingBuilder> extensions = new ArrayList<>(forKey(l));
-      MetaLanguage.getAllMatchingMetaLanguages(l).map(this::forKey).forEach(extensions::addAll);
+      List<FoldingBuilder> extensions = forKey(l);
       if (!extensions.isEmpty()) {
         return extensions;
       }

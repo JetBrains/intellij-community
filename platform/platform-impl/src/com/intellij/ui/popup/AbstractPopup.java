@@ -929,12 +929,6 @@ public class AbstractPopup implements JBPopup {
 
     window.setFocusableWindowState(myRequestFocus);
     window.setFocusable(myRequestFocus);
-    // temporary w/a (will be brought back in jdk)
-    if ("TRUE".equals(getContent().getClientProperty("BookmarkPopup"))) {
-      window.setType(Window.Type.NORMAL);
-    } else if (SystemInfo.isJetBrainsJvm) {
-      //window.setType(Window.Type.POPUP);
-    }
 
     // Swing popup default always on top state is set in true
     window.setAlwaysOnTop(false);
@@ -974,11 +968,17 @@ public class AbstractPopup implements JBPopup {
 
     window.setAutoRequestFocus(myRequestFocus);
 
+    final String data = getUserData(String.class);
+    if (data != null) {
+      myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data));
+    }
+
+    myWindow = window;
+    setMinimumSize(myMinSize);
+
     myPopup.show();
 
     WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
-
-    myWindow = window;
 
     myWindowListener = new MyWindowListener();
     window.addWindowListener(myWindowListener);
@@ -991,8 +991,6 @@ public class AbstractPopup implements JBPopup {
         WindowManager.getInstance().doNotSuggestAsParent(myWindow);
       }
     }
-
-    setMinimumSize(myMinSize);
 
     final Runnable afterShow = () -> {
       if (isDisposed()) {

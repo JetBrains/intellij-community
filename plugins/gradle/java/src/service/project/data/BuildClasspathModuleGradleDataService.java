@@ -23,10 +23,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
@@ -39,6 +38,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -96,26 +96,6 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
       }
     };
 
-    final NotNullLazyValue<Set<String>> buildSrcProjectsRoots = new NotNullLazyValue<Set<String>>() {
-      @NotNull
-      @Override
-      protected Set<String> compute() {
-        Set<String> result = new LinkedHashSet<>();
-        //// add main java root of buildSrc project
-        result.add(linkedExternalProjectPath + "/buildSrc/src/main/java");
-        //// add main groovy root of buildSrc project
-        result.add(linkedExternalProjectPath + "/buildSrc/src/main/groovy");
-        for (Module module : modelsProvider.getModules(projectData)) {
-          final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
-          if(projectPath != null && StringUtil.startsWith(projectPath, linkedExternalProjectPath + "/buildSrc")) {
-            final List<String> sourceRoots = ContainerUtil.map(modelsProvider.getSourceRoots(module, false), VirtualFile::getPath);
-            result.addAll(sourceRoots);
-          }
-        }
-        return result;
-      }
-    };
-
     final Map<String, ExternalProjectBuildClasspathPojo> localProjectBuildClasspath = new THashMap<>(localSettings.getProjectBuildClasspath());
     for (final DataNode<BuildScriptClasspathData> node : toImport) {
       if (GradleConstants.SYSTEM_ID.equals(node.getData().getOwner())) {
@@ -127,15 +107,16 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
           LOG.warn("Gradle SDK distribution type was not configured for the project at " + linkedExternalProjectPath);
         }
 
-        final Set<String> buildClasspath = ContainerUtil.newLinkedHashSet();
+        final Set<String> buildClasspathSources = ContainerUtil.newLinkedHashSet();
+        final Set<String> buildClasspathClasses = ContainerUtil.newLinkedHashSet();
         BuildScriptClasspathData buildScriptClasspathData = node.getData();
         for (BuildScriptClasspathData.ClasspathEntry classpathEntry : buildScriptClasspathData.getClasspathEntries()) {
           for (String path : classpathEntry.getSourcesFile()) {
-            buildClasspath.add(FileUtil.toCanonicalPath(path));
+            buildClasspathSources.add(FileUtil.toCanonicalPath(path));
           }
 
           for (String path : classpathEntry.getClassesFile()) {
-            buildClasspath.add(FileUtil.toCanonicalPath(path));
+            buildClasspathClasses.add(FileUtil.toCanonicalPath(path));
           }
         }
 
@@ -147,11 +128,11 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
         }
 
         List<String> projectBuildClasspath = ContainerUtil.newArrayList(externalProjectGradleSdkLibs.getValue());
-        projectBuildClasspath.addAll(buildSrcProjectsRoots.getValue());
 
         projectBuildClasspathPojo.setProjectBuildClasspath(projectBuildClasspath);
+        List<String> buildClasspath = StreamEx.of(buildClasspathSources).append(buildClasspathClasses).collect(Collectors.toList());
         projectBuildClasspathPojo.getModulesBuildClasspath().put(
-          externalModulePath, new ExternalModuleBuildClasspathPojo(externalModulePath, ContainerUtil.newArrayList(buildClasspath)));
+          externalModulePath, new ExternalModuleBuildClasspathPojo(externalModulePath, buildClasspath));
       }
     }
     localSettings.setProjectBuildClasspath(localProjectBuildClasspath);

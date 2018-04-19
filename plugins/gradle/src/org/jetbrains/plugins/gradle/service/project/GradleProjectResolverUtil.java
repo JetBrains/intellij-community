@@ -135,15 +135,23 @@ public class GradleProjectResolverUtil {
                                       @NotNull ProjectResolverContext resolverCtx) {
     String delimiter;
     StringBuilder moduleName = new StringBuilder();
+    String defaultGroupId = resolverCtx.getDefaultGroupId();
     if (resolverCtx.isUseQualifiedModuleNames()) {
       delimiter = ".";
-      if (StringUtil.isNotEmpty(externalProject.getGroup())) {
-        moduleName.append(externalProject.getGroup()).append(delimiter);
+      String groupId = externalProject.getGroup();
+      if (StringUtil.isEmpty(groupId)) {
+        groupId = defaultGroupId;
+      }
+      if (StringUtil.isNotEmpty(groupId)) {
+        moduleName.append(groupId).append(delimiter);
       }
       moduleName.append(externalProject.getName());
     }
     else {
       delimiter = "_";
+      if (StringUtil.isNotEmpty(defaultGroupId)) {
+        moduleName.append(defaultGroupId).append(delimiter);
+      }
       moduleName.append(gradleModule.getName());
     }
     if (sourceSetName != null) {

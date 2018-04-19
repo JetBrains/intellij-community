@@ -1,6 +1,6 @@
 <component version="12">
   <filetypes>
-    <filetype name="IDL" description="IDL files"
+    <filetype name="IDL" description="IDL"
               extensions="idl"
               default_extension="idl"
               binary="false"
@@ -20,7 +20,7 @@
       </highlighting>
     </filetype>
 
-    <filetype name="JavaFX" description="JavaFX files"
+    <filetype name="JavaFX" description="JavaFX"
               extensions="fx"
               default_extension="fx"
               binary="false"
@@ -46,7 +46,7 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="cpp" extensions="c;cpp;h;hpp;cc" description="C/C++ files" name="C++"
+    <filetype binary="false" default_extension="cpp" extensions="c;cpp;h;hpp;cc" description="C/C++" name="C++"
               icon="AllIcons.FileTypes.Custom">
       <highlighting>
         <options>
@@ -69,7 +69,7 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="cs" extensions="cs" description="C# files" name="C#" icon="AllIcons.FileTypes.Custom">
+    <filetype binary="false" default_extension="cs" extensions="cs" description="C#" name="C#" icon="AllIcons.FileTypes.Custom">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="//"/>
@@ -88,7 +88,7 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="pl" extensions="pl;pm" description="Perl files" name="Perl"
+    <filetype binary="false" default_extension="pl" extensions="pl;pm" description="Perl" name="Perl"
               icon="AllIcons.FileTypes.Custom">
       <highlighting>
         <options>
@@ -125,7 +125,7 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="erl" extensions="erl" description="Erlang files" name="Erlang">
+    <filetype binary="false" default_extension="erl" extensions="erl" description="Erlang" name="Erlang">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="%"/>
@@ -148,7 +148,7 @@
       </extensionMap>
     </filetype>
 
-    <filetype binary="false" default_extension="hs" extensions="hs" description="Haskell files" name="Haskell">
+    <filetype binary="false" default_extension="hs" extensions="hs" description="Haskell" name="Haskell">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="--"/>
@@ -176,7 +176,7 @@
       </extensionMap>
     </filetype>
 
-    <filetype binary="false" default_extension="sql" extensions="sql" description="SQL files (syntax highlighting only)" name="SQL">
+    <filetype binary="false" default_extension="sql" extensions="sql" description="SQL (syntax highlighting only)" name="SQL">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="--"/>
@@ -195,7 +195,7 @@
       </extensionMap>
     </filetype>
 
-    <filetype binary="false" default_extension="css" extensions="css" description="CSS files (syntax highlighting only)" name="CSS"
+    <filetype binary="false" default_extension="css" extensions="css" description="CSS (syntax highlighting only)" name="CSS"
               icon="AllIcons.FileTypes.Css">
       <highlighting>
         <options>
@@ -211,7 +211,7 @@
       </extensionMap>
     </filetype>
 
-    <filetype binary="false" default_extension="js" extensions="js" description="JavaScript files (syntax highlighting only)"
+    <filetype binary="false" default_extension="js" extensions="js" description="JavaScript (syntax highlighting only)"
               name="JavaScript" icon="AllIcons.FileTypes.JavaScript">
       <highlighting>
         <options>
@@ -233,7 +233,7 @@
       </extensionMap>
     </filetype>
 
-    <filetype binary="false" default_extension="php" extensions="" description="PHP files (syntax highlighting only)" name="PHP">
+    <filetype binary="false" default_extension="php" extensions="" description="PHP (syntax highlighting only)" name="PHP">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="//"/>
@@ -248,7 +248,7 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="jsp" extensions="jsp;jsf;jspf;tag;tagf" description="JSP files (syntax highlighting only)"
+    <filetype binary="false" default_extension="jsp" extensions="jsp;jsf;jspf;tag;tagf" description="JSP (syntax highlighting only)"
               name="JSP" icon="AllIcons.FileTypes.Jsp">
       <highlighting>
         <options>

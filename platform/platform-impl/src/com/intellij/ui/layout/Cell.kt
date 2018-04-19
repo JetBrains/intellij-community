@@ -26,7 +26,11 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
+@DslMarker
+annotation class CellMarker
+
 // separate class to avoid row related methods in the `cell { } `
+@CellMarker
 abstract class Cell {
   /**
    * Sets how keen the component should be to grow in relation to other component **in the same cell**. Use `push` in addition if need.
@@ -56,10 +60,10 @@ abstract class Cell {
     result()
   }
 
-  fun button(text: String, actionListener: (event: ActionEvent) -> Unit) {
+  fun button(text: String, vararg constraints: CCFlags, actionListener: (event: ActionEvent) -> Unit) {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
-    button()
+    button(*constraints)
   }
 
   fun textFieldWithBrowseButton(browseDialogTitle: String,

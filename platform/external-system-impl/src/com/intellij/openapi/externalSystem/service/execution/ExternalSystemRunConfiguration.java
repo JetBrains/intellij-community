@@ -63,6 +63,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
@@ -281,33 +282,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
       if (myProject.isDisposed()) return null;
 
-      final JavaParameters extensionsJP = new JavaParameters();
-      final RunConfigurationExtension[] extensions = Extensions.getExtensions(RunConfigurationExtension.EP_NAME);
-      for (RunConfigurationExtension ext : extensions) {
-        ext.updateJavaParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings());
+      if (mySettings.getTaskNames().isEmpty()) {
+        throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
       }
 
-      String jvmAgentSetup;
-      if (myDebugPort > 0) {
-        jvmAgentSetup = DEBUG_SETUP_PREFIX + myDebugPort;
-        if (getForkSocket() != null) {
-          jvmAgentSetup += " -forkSocket" + getForkSocket().getLocalPort();
-        }
-      }
-      else {
-        ParametersList parametersList = extensionsJP.getVMParametersList();
-        final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
-        if (data != null) {
-          parametersList.addAll(data.getList());
-        }
-        for (String parameter : parametersList.getList()) {
-          if (parameter.startsWith("-agentlib:")) continue;
-          if (parameter.startsWith("-agentpath:")) continue;
-          if (parameter.startsWith("-javaagent:")) continue;
-          throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
-        }
-        jvmAgentSetup = parametersList.getParametersString();
-      }
+      String jvmAgentSetup = getJvmAgentSetup();
 
       ApplicationManager.getApplication().assertIsDispatchThread();
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -466,6 +445,42 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actions);
       executionResult.setRestartActions(restartActions);
       return executionResult;
+    }
+
+    @Nullable
+    private String getJvmAgentSetup() throws ExecutionException {
+      // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
+      if(!ExternalSystemApiUtil.isJavaCompatibleIde()) return null;
+
+      final JavaParameters extensionsJP = new JavaParameters();
+      final RunConfigurationExtension[] extensions = Extensions.getExtensions(RunConfigurationExtension.EP_NAME);
+      for (RunConfigurationExtension ext : extensions) {
+        ext.updateJavaParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings());
+      }
+
+      String jvmAgentSetup;
+
+      if (myDebugPort > 0) {
+        jvmAgentSetup = DEBUG_SETUP_PREFIX + myDebugPort;
+        if (getForkSocket() != null) {
+          jvmAgentSetup += " -forkSocket" + getForkSocket().getLocalPort();
+        }
+      }
+      else {
+        ParametersList parametersList = extensionsJP.getVMParametersList();
+        final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
+        if (data != null) {
+          parametersList.addAll(data.getList());
+        }
+        for (String parameter : parametersList.getList()) {
+          if (parameter.startsWith("-agentlib:")) continue;
+          if (parameter.startsWith("-agentpath:")) continue;
+          if (parameter.startsWith("-javaagent:")) continue;
+          throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
+        }
+        jvmAgentSetup = parametersList.getParametersString();
+      }
+      return jvmAgentSetup;
     }
 
     private BuildProgressListener createBuildView(ExternalSystemTaskId id,

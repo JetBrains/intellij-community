@@ -137,7 +137,7 @@ public abstract class AsyncValueLoader<T> {
 
     effectivePromise.onSuccess(doneHandler);
     if (isCancelOnReject()) {
-      effectivePromise.rejected(throwable -> ref.compareAndSet(effectivePromise, null));
+      effectivePromise.onError(throwable -> ref.compareAndSet(effectivePromise, null));
     }
 
     if (effectivePromise != promise) {

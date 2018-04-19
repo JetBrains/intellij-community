@@ -36,11 +36,13 @@ public abstract class XmlValueReference implements PsiReference {
     myRange = ElementManipulators.getValueTextRange(tag);
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myTag;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return myRange;

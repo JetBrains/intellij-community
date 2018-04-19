@@ -77,26 +77,21 @@ public class AnnotationUtil {
   }
 
   private static PsiAnnotation findOwnAnnotation(final PsiModifierListOwner listOwner, Collection<String> annotationNames) {
-    Map<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
-      listOwner,
-      () -> {
-        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(annotationNames1-> {
-            final PsiModifierList list = listOwner.getModifierList();
-            if (list == null) return null;
-            for (PsiAnnotation annotation : list.getAnnotations()) {
-              if (annotationNames1.contains(annotation.getQualifiedName())) {
-                return annotation;
-              }
-            }
-            return null;
-          }
-        );
-        return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
-      });
-    return map.get(annotationNames);
+    final PsiModifierList list = listOwner.getModifierList();
+    if (list == null) return null;
+    for (PsiAnnotation annotation : list.getAnnotations()) {
+      if (annotationNames.contains(annotation.getQualifiedName())) {
+        return annotation;
+      }
+    }
+    return null;
   }
 
   private static PsiAnnotation findNonCodeAnnotation(final PsiModifierListOwner listOwner, Collection<String> annotationNames) {
+    if (listOwner instanceof PsiLocalVariable) {
+      // Non-code annotations for local variables are not supported: don't bother to search them
+      return null;
+    }
     Map<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
@@ -157,8 +152,14 @@ public class AnnotationUtil {
         collectSuperParameters(result, (PsiParameter)element);
       }
 
-      //noinspection unchecked
-      List<T> list = new ArrayList<>((Collection<? extends T>)result);
+      List<T> list;
+      if(result.isEmpty()) {
+        list = Collections.emptyList();
+      } else {
+        PsiModifierListOwner[] array = result.toArray(new PsiModifierListOwner[0]);
+        //noinspection unchecked
+        list = Arrays.asList((T[])array);
+      }
 
       return CachedValueProvider.Result.create(list, PsiModificationTracker.MODIFICATION_COUNT);
     });
@@ -169,23 +170,13 @@ public class AnnotationUtil {
     PsiAnnotation directAnnotation = findAnnotation(listOwner, annotationNames);
     if (directAnnotation != null) return directAnnotation;
 
-    Map<Set<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
-      listOwner,
-      () -> {
-        Map<Set<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(annotationNames1->
-           {
-            for (PsiModifierListOwner superOwner : getSuperAnnotationOwners(listOwner)) {
-              PsiAnnotation annotation = findAnnotation(superOwner, annotationNames1);
-              if (annotation != null) {
-                return annotation;
-              }
-            }
-            return null;
-          }
-        );
-        return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
-      });
-    return map.get(annotationNames);
+    for (PsiModifierListOwner superOwner : getSuperAnnotationOwners(listOwner)) {
+      PsiAnnotation annotation = findAnnotation(superOwner, annotationNames);
+      if (annotation != null) {
+        return annotation;
+      }
+    }
+    return null;
   }
 
   private static void collectSuperParameters(@NotNull final Set<PsiModifierListOwner> result, @NotNull PsiParameter parameter) {
@@ -264,7 +255,7 @@ public class AnnotationUtil {
       else if (listOwner instanceof PsiVariable) {
         type = ((PsiVariable)listOwner).getType();
       }
-      if (type != null && type.findAnnotation(annotationFQN) != null) {
+      if (type != null && type.hasAnnotation(annotationFQN)) {
         return true;
       }
     }

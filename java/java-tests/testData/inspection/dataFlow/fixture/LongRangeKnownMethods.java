@@ -268,4 +268,28 @@ public class LongRangeKnownMethods {
       System.out.println("Impossible");
     }
   }
+
+  native void unknown();
+
+  void testNewList() {
+    List<String> list = new ArrayList<>();
+    if(<warning descr="Condition 'list.isEmpty()' is always 'true'">list.isEmpty()</warning>) {
+      System.out.println("Always");
+    }
+    unknown();
+    if(<warning descr="Condition 'list.isEmpty()' is always 'true'">list.isEmpty()</warning>) {
+      System.out.println("Still always");
+    }
+    testListIndexOf(list);
+    if(list.isEmpty()) {
+      System.out.println("Not sure anymore");
+    }
+  }
+
+  void testSizeCheck() {
+    List<String> list = new ArrayList<>();
+    list.add(null);
+    if(list.size() == 0) return;
+    if(<warning descr="Condition 'list.size() == 0' is always 'false'">list.size() == 0</warning>) return;
+  }
 }

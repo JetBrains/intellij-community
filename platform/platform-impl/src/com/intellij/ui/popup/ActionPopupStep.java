@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,23 +21,26 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private final List<PopupFactoryImpl.ActionItem> myItems;
   private final String myTitle;
   private final Supplier<DataContext> myContext;
+  private final String myActionPlace;
   private final boolean myEnableMnemonics;
   private final int myDefaultOptionIndex;
   private final boolean myAutoSelectionEnabled;
   private final boolean myShowDisabledActions;
   private Runnable myFinalRunnable;
-  @Nullable private final Condition<AnAction> myPreselectActionCondition;
+  private final Condition<AnAction> myPreselectActionCondition;
 
-  public ActionPopupStep(@NotNull final List<PopupFactoryImpl.ActionItem> items,
-                         final String title,
+  public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
+                         String title,
                          @NotNull Supplier<DataContext> context,
+                         @Nullable String actionPlace,
                          boolean enableMnemonics,
                          @Nullable Condition<AnAction> preselectActionCondition,
-                         final boolean autoSelection,
+                         boolean autoSelection,
                          boolean showDisabledActions) {
     myItems = items;
     myTitle = title;
     myContext = context;
+    myActionPlace = ObjectUtils.notNull(actionPlace, ActionPlaces.UNKNOWN);
     myEnableMnemonics = enableMnemonics;
     myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(preselectActionCondition, items);
     myPreselectActionCondition = preselectActionCondition;
@@ -65,8 +69,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                 boolean useAlphaAsNumbers,
                                                 boolean showDisabledActions,
                                                 String title,
-                                                boolean honorActionMnemonics, final boolean autoSelectionEnabled,
+                                                boolean honorActionMnemonics,
+                                                boolean autoSelectionEnabled,
                                                 Supplier<DataContext> contextSupplier,
+                                                @Nullable String actionPlace,
                                                 Condition<AnAction> preselectCondition,
                                                 int defaultOptionIndex) {
     final ActionStepBuilder builder =
@@ -77,15 +83,13 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                               honorActionMnemonics &&
                               items.stream().anyMatch(actionItem -> actionItem.getAction().getTemplatePresentation().getMnemonic() != 0);
 
-    return new ActionPopupStep(items,
-                               title,
-                               contextSupplier,
-                               enableMnemonics,
-                               preselectCondition != null ? preselectCondition : action -> defaultOptionIndex >= 0 &&
-                                                                                          defaultOptionIndex < items.size() &&
-                                                                                          items.get(defaultOptionIndex).getAction().equals(action),
-                               autoSelectionEnabled,
-                               showDisabledActions);
+    return new ActionPopupStep(
+      items, title, contextSupplier, actionPlace, enableMnemonics,
+      preselectCondition != null ? preselectCondition :
+      action -> defaultOptionIndex >= 0 &&
+                defaultOptionIndex < items.size() && items.get(defaultOptionIndex).getAction().equals(action),
+      autoSelectionEnabled,
+      showDisabledActions);
   }
 
   @Override
@@ -164,16 +168,17 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     final AnAction action = actionChoice.getAction();
     final DataContext dataContext = myContext.get();
     if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(dataContext))) {
-      return
-        createActionsStep((ActionGroup)action,
-                          dataContext,
-                          myEnableMnemonics,
-                          true,
-                          myShowDisabledActions,
-                          null,
-                          false, false,
-                          myContext,
-                          myPreselectActionCondition, -1);
+      return createActionsStep(
+        (ActionGroup)action,
+        dataContext,
+        myEnableMnemonics,
+        true,
+        myShowDisabledActions,
+        null,
+        false, false,
+        myContext,
+        myActionPlace,
+        myPreselectActionCondition, -1);
     }
     else {
       myFinalRunnable = () -> performAction(action, eventModifiers);
@@ -186,9 +191,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   public void performAction(@NotNull AnAction action, int modifiers, InputEvent inputEvent) {
-    final DataContext dataContext = myContext.get();
-    final AnActionEvent event = new AnActionEvent(inputEvent, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                                                  ActionManager.getInstance(), modifiers);
+    DataContext dataContext = myContext.get();
+    AnActionEvent event = new AnActionEvent(
+      inputEvent, dataContext, myActionPlace, action.getTemplatePresentation().clone(),
+      ActionManager.getInstance(), modifiers);
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       ActionUtil.performActionDumbAware(action, event);

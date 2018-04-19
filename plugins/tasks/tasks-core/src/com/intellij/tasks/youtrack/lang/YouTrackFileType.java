@@ -27,7 +27,7 @@ public class YouTrackFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "YouTrack Query Language";
+    return "YouTrack query";
   }
 
   @NotNull

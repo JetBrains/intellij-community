@@ -67,15 +67,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     private ExportedNameCache(long modificationStamp) {
       myModificationStamp = modificationStamp;
 
-      processDeclarations(PyPsiUtils.collectAllStubChildren(PyFileImpl.this, getStub()), element -> {
-        if (element instanceof PsiNamedElement && !(element instanceof PyKeywordArgument)) {
+      final StubElement stub = getStub();
+      processDeclarations(PyPsiUtils.collectAllStubChildren(PyFileImpl.this, stub), element -> {
+        if (element instanceof PsiNamedElement &&
+            !(element instanceof PyKeywordArgument) &&
+            !(stub == null && element.getParent() instanceof PyImportElement)) {
           final PsiNamedElement namedElement = (PsiNamedElement)element;
-          final String name = namedElement.getName();
-          if (!myNamedElements.containsKey(name)) {
-            myNamedElements.put(name, Lists.newArrayList());
-          }
-          final List<PsiNamedElement> elements = myNamedElements.get(name);
-          elements.add(namedElement);
+          myNamedElements.computeIfAbsent(namedElement.getName(), __ -> new ArrayList<>()).add(namedElement);
         }
         if (element instanceof PyImportedNameDefiner) {
           myImportedNameDefiners.add((PyImportedNameDefiner)element);
@@ -617,11 +615,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
   }
 
+  /**
+   * @deprecated This method will be removed in 2018.3.
+   */
   @Nullable
+  @Deprecated
   public static List<String> getStringListFromTargetExpression(final String name, List<PyTargetExpression> attrs) {
     for (PyTargetExpression attr : attrs) {
       if (name.equals(attr.getName())) {
-        return PyUtil.getStringListFromTargetExpression(attr);
+        return PyUtil.strListValue(attr.findAssignedValue());
       }
     }
     return null;
@@ -752,13 +754,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     final PsiElement newElement = super.setName(name);
     PyUtil.deletePycFiles(path);
     return newElement;
-  }
-
-  private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {
-    @Override
-    protected List<String> initialValue() {
-      return new ArrayList<>();
-    }
   }
 
   @Override

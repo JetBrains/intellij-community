@@ -22,7 +22,7 @@ public final class ProblemsScope extends NamedScope {
   public static final ProblemsScope INSTANCE = new ProblemsScope();
 
   private ProblemsScope() {
-    super(NAME, AllIcons.Toolwindows.Problems, new FilteredPackageSet(NAME) {
+    super(NAME, AllIcons.Scope.Problems, new FilteredPackageSet(NAME) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         WolfTheProblemSolver solver = project.isDisposed() ? null : WolfTheProblemSolver.getInstance(project);

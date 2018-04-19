@@ -8,6 +8,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
@@ -435,6 +436,32 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static void keep(Value value, EvaluationContext context) {
     if (value instanceof ObjectReference) {
       ((SuspendContextImpl)context.getSuspendContext()).keep((ObjectReference)value);
+    }
+  }
+
+  public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
+    throws EvaluateException {
+    return computeAndKeep(() -> virtualMachineProxy.mirrorOf(s), context);
+  }
+
+  public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
+    throws EvaluateException {
+    return computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension), context);
+  }
+
+  public static <T extends Value> T computeAndKeep(EvaluatingComputable<T> computable, EvaluationContext context) throws EvaluateException {
+    int retries = 10;
+    while (true) {
+      T res = computable.compute();
+      try {
+        keep(res, context);
+        return res;
+      }
+      catch (ObjectCollectedException oce) {
+        if (--retries < 0) {
+          throw oce;
+        }
+      }
     }
   }
 

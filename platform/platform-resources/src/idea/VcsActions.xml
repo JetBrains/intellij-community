@@ -83,7 +83,7 @@
     <action id="ChangesView.Revert" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
             icon="AllIcons.Actions.Rollback"/>
 
-    <group id="ChangesView.GroupBy" text="Group By" icon="AllIcons.General.SecondaryGroup" popup="true"
+    <group id="ChangesView.GroupBy" text="Group By" icon="AllIcons.Actions.GroupBy" popup="true"
            class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
       <action id="ChangesView.GroupBy.Directory" text="Directory"
               class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
@@ -178,7 +178,7 @@
       <reference ref="ShelvedChanges.ShowHideDeleted" />
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
      <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"
-              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.SecondaryGroup"/>
+              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.GearPlain"/>
     </group>
 
     <!--a group for plugins to add their actions-->

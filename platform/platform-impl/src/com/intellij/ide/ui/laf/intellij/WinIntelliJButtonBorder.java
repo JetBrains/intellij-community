@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.VisualPaddingsProvider;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -18,7 +20,7 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPH
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJButtonBorder implements Border, UIResource {
+public class WinIntelliJButtonBorder implements Border, UIResource, VisualPaddingsProvider {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!(c instanceof AbstractButton) || UIUtil.isHelpButton(c)) return;
@@ -48,6 +50,12 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
     } finally {
       g2.dispose();
     }
+  }
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(1);
   }
 
   private static Color getBorderColor(AbstractButton b) {

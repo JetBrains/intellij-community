@@ -27,6 +27,15 @@ public interface OverrideImplementsAnnotationsHandler {
   /**
    * Returns annotations which should be copied from a source to an implementation (by default, no annotations are copied).
    */
+  default String[] getAnnotations(@NotNull PsiFile file) {
+    //noinspection deprecation
+    return getAnnotations(file.getProject());
+  }
+
+  /**
+   * @deprecated Use {@link #getAnnotations(PsiFile)}
+   */
+  @Deprecated
   String[] getAnnotations(Project project);
 
   @Deprecated
@@ -43,7 +52,7 @@ public interface OverrideImplementsAnnotationsHandler {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
     for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(EP_NAME)) {
-      for (String annotation : each.getAnnotations(project)) {
+      for (String annotation : each.getAnnotations(target.getContainingFile())) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
 
         int flags = CHECK_EXTERNAL | CHECK_TYPE;

@@ -4,13 +4,16 @@ package com.intellij.refactoring.extractMethod.preview;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestPanel;
+import com.intellij.diff.comparison.ComparisonManagerImpl;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool;
+import com.intellij.diff.tools.util.text.LineOffsets;
+import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Range;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -24,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -45,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.intellij.refactoring.extractMethod.ExtractMethodHandler.REFACTORING_NAME;
 
@@ -54,14 +57,18 @@ import static com.intellij.refactoring.extractMethod.ExtractMethodHandler.REFACT
  */
 class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewTreeListener {
   private final Project myProject;
+  private final PreviewTree myTree;
   private final List<SmartPsiElementPointer<PsiElement>> myPattern;
   private final ExtractMethodSnapshot mySnapshot;
   private final SmartPsiElementPointer<PsiElement> myAnchor;
   private final DiffRequestPanel myDiffPanel;
-  private RefactoringResult myRefactoringResult; // accessed from EDT
+  private PreviewDiffRequest myDiffRequest; // accessed in EDT
+  private Document myPatternDocument; // accessed in EDT
+  private long myInitialDocumentStamp; // accessed in EDT
 
-  public PreviewDiffPanel(@NotNull ExtractMethodProcessor processor) {
+  public PreviewDiffPanel(@NotNull ExtractMethodProcessor processor, PreviewTree tree) {
     myProject = processor.getProject();
+    myTree = tree;
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
 
     myPattern = ContainerUtil.map2List(processor.getElements(), smartPointerManager::createSmartPsiElementPointer);
@@ -79,7 +86,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   public void dispose() {
   }
 
-  public void doExtract(@NotNull List<DuplicateNode> enabledNodes) {
+  public void doExtract() {
+    List<DuplicateNode> enabledNodes = myTree.getModel().getEnabledDuplicates();
     PsiElement[] pattern = getPatternElements();
     if (pattern.length == 0) {
       // todo suggest re-running the refactoring
@@ -96,22 +104,23 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
                                              () -> doExtractImpl(processor, enabledNodes), pattern[0].getContainingFile());
   }
 
-  public void initLater(@NotNull List<DuplicateNode> allDuplicates, @NotNull Consumer<PsiMethod> whenDone) {
+  public void initLater() {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Preparing Diff") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        initLaterImpl(allDuplicates, whenDone, indicator);
+        initLaterImpl(indicator);
       }
     });
   }
 
-  private void initLaterImpl(@NotNull List<DuplicateNode> allDuplicates,
-                             @NotNull Consumer<PsiMethod> whenDone,
-                             @NotNull ProgressIndicator indicator) {
+  private void initLaterImpl(@NotNull ProgressIndicator indicator) {
+    PreviewTreeModel treeModel = myTree.getModel();
     indicator.setIndeterminate(false);
+    List<DuplicateNode> allDuplicates = treeModel.getAllDuplicates();
     int total = allDuplicates.size() + 4, count = 0;
+
+    PsiElement[] pattern = ReadAction.compute(() -> getPatternElements());
     PsiElement[] patternCopy = ReadAction.compute(() -> {
-      PsiElement[] pattern = getPatternElements();
       PsiFile patternFile = pattern[0].getContainingFile();
       return IntroduceParameterHandler.getElementsInCopy(myProject, patternFile, pattern, false);
     });
@@ -174,10 +183,101 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       ApplicationManager.getApplication().invokeLater(() -> {
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(copyProcessor.getProject());
         documentManager.doPostponedOperationsAndUnblockDocument(refactoredDocument);
-        myRefactoringResult = new RefactoringResult(method, patternReplacement, duplicateReplacements, refactoredDocument);
-        whenDone.accept(method);
+        MethodNode methodNode = myTree.getModel().updateMethod(method);
+
+        initDiff(pattern, patternReplacement, refactoredDocument,
+                 methodNode, method.getTextRange(),
+                 duplicateReplacements);
+
+        myTree.onUpdateLater();
       });
     }
+  }
+
+  private void initDiff(@NotNull PsiElement[] pattern,
+                        @NotNull ElementsRange patternReplacement,
+                        @NotNull Document refactoredDocument,
+                        @NotNull MethodNode methodNode,
+                        @NotNull TextRange methodRange,
+                        @NotNull Map<DuplicateNode, ElementsRange> duplicateReplacements) {
+    PsiFile patternFile = pattern[0].getContainingFile();
+    myPatternDocument = FileDocumentManager.getInstance().getDocument(patternFile.getViewProvider().getVirtualFile());
+    if (myPatternDocument == null) {
+      return;
+    }
+    myInitialDocumentStamp = myPatternDocument.getModificationStamp();
+
+    List<Range> diffRanges = new ArrayList<>();
+    Map<FragmentNode, Couple<TextRange>> linesBounds = new HashMap<>();
+
+    for (Map.Entry<DuplicateNode, ElementsRange> entry : duplicateReplacements.entrySet()) {
+      DuplicateNode duplicateNode = entry.getKey();
+      TextRange patternRange = duplicateNode.getTextRange();
+      TextRange matchRange = entry.getValue().getTextRange();
+      Range diffRange = getDiffRange(patternRange, myPatternDocument, matchRange, refactoredDocument);
+      if (diffRange != null) {
+        diffRanges.add(diffRange);
+        linesBounds.put(duplicateNode, Couple.of(getLinesRange(patternRange, myPatternDocument),
+                                                 getLinesRange(matchRange, refactoredDocument)));
+      }
+    }
+    PsiElement anchorElement = myAnchor.getElement();
+    if (anchorElement != null) {
+      int anchorOffset = anchorElement.getTextRange().getEndOffset();
+      int anchorLineNumber = myPatternDocument.getLineNumber(anchorOffset);
+      Range diffRange = new Range(anchorLineNumber,
+                                  anchorLineNumber,
+                                  getStartLineNumber(refactoredDocument, methodRange),
+                                  getEndLineNumber(refactoredDocument, methodRange));
+      diffRanges.add(diffRange);
+      linesBounds.put(methodNode, Couple.of(new TextRange(anchorOffset, anchorOffset),
+                                            getLinesRange(methodRange, refactoredDocument)));
+    }
+    TextRange patternRange = ExtractableFragment.getTextRange(pattern);
+    TextRange replacementRange = patternReplacement.getTextRange();
+    Range diffRange = getDiffRange(patternRange, myPatternDocument, replacementRange, refactoredDocument);
+    if (diffRange != null) {
+      diffRanges.add(diffRange);
+      linesBounds.put(myTree.getModel().getPatternNode(), Couple.of(getLinesRange(patternRange, myPatternDocument),
+                                                                    getLinesRange(replacementRange, refactoredDocument)));
+    }
+    diffRanges.sort(Comparator.comparing(r -> r.start1));
+
+    DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+    DocumentContent oldContent = contentFactory.create(myProject, myPatternDocument);
+    DocumentContent newContent = contentFactory.create(myProject, refactoredDocument);
+
+    myDiffRequest = new PreviewDiffRequest(linesBounds, oldContent, newContent, node -> myTree.selectNode(node));
+    myDiffRequest.putUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER, getDiffComputer(diffRanges));
+    myDiffPanel.setRequest(myDiffRequest);
+  }
+
+  private static int getStartLineNumber(Document document, TextRange textRange) {
+    return document.getLineNumber(textRange.getStartOffset());
+  }
+
+  private static int getEndLineNumber(Document document, TextRange textRange) {
+    return Math.min(document.getLineNumber(textRange.getEndOffset() + 1), document.getLineCount() - 1);
+  }
+
+  private static Range getDiffRange(@Nullable TextRange patternRange,
+                                    @NotNull Document patternDocument,
+                                    @Nullable TextRange refactoredRange,
+                                    @NotNull Document refactoredDocument) {
+    if (patternRange == null || refactoredRange == null) {
+      return null;
+    }
+    return new Range(getStartLineNumber(patternDocument, patternRange),
+                     getEndLineNumber(patternDocument, patternRange),
+                     getStartLineNumber(refactoredDocument, refactoredRange),
+                     getEndLineNumber(refactoredDocument, refactoredRange));
+  }
+
+  @NotNull
+  private static TextRange getLinesRange(@NotNull TextRange textRange, @NotNull Document document) {
+    int startLine = document.getLineNumber(textRange.getStartOffset());
+    int endLine = document.getLineNumber(Math.min(textRange.getEndOffset(), document.getTextLength()));
+    return new TextRange(document.getLineStartOffset(startLine), document.getLineEndOffset(endLine));
   }
 
   private static void doExtractImpl(@NotNull JavaDuplicatesExtractMethodProcessor processor,
@@ -194,45 +294,10 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   @Override
-  public void onFragmentSelected(FragmentNode node, List<DuplicateNode> enabledDuplicates) {
-    if (myRefactoringResult == null) {
-      showDiff(null);
-      return;
+  public void onNodeSelected(@NotNull FragmentNode node) {
+    if (myDiffRequest != null) {
+      myDiffRequest.onNodeSelected(node);
     }
-    PsiElement[] pattern = getPatternElements();
-    if (pattern.length == 0) {
-      showDiff(null);
-      return;
-    }
-    PsiFile patternFile = pattern[0].getContainingFile();
-    assert patternFile != null : "patternFile";
-
-    Document patternDocument = FileDocumentManager.getInstance().getDocument(patternFile.getViewProvider().getVirtualFile());
-    if (patternDocument == null) {
-      showDiff(null);
-      return;
-    }
-    DiffRequest request = null;
-    if (node instanceof MethodNode) {
-      request = getMethodDiffRequest(patternDocument, myRefactoringResult.myDocument, myRefactoringResult.myMethod.getTextRange());
-    }
-    else if (node instanceof DuplicateNode) {
-      DuplicateNode duplicateNode = (DuplicateNode)node;
-      ElementsRange selectedReplacement = myRefactoringResult.myDuplicateReplacements.get(duplicateNode);
-      if (selectedReplacement != null) {
-        TextRange patternRange = duplicateNode.getTextRange();
-        TextRange refactoredRange = selectedReplacement.getTextRange();
-
-        request = getFragmentDiffRequest(patternDocument, patternRange, myRefactoringResult.myDocument, refactoredRange);
-      }
-    }
-    else if (node instanceof PatternNode) {
-      TextRange patternRange = ExtractableFragment.getTextRange(pattern);
-      TextRange refactoredRange = myRefactoringResult.myPatternReplacement.getTextRange();
-
-      request = getFragmentDiffRequest(patternDocument, patternRange, myRefactoringResult.myDocument, refactoredRange);
-    }
-    showDiff(request);
   }
 
   @NotNull
@@ -263,46 +328,19 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     return selectedDuplicates;
   }
 
-  private void showDiff(@Nullable DiffRequest request) {
-    myDiffPanel.setRequest(request);
-  }
-
-  @Nullable
-  private DiffRequest getFragmentDiffRequest(Document patternDocument, TextRange patternRange,
-                                             Document refactoredDocument, TextRange refactoredRange) {
-    if (patternRange != null && refactoredRange != null) {
-      patternRange = extendRangeToStartOfLine(patternDocument, patternRange);
-      DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-      DocumentContent oldContent = contentFactory.createFragment(myProject, patternDocument, patternRange);
-      refactoredRange = extendRangeToStartOfLine(refactoredDocument, refactoredRange);
-      DocumentContent newContent = contentFactory.createFragment(myProject, refactoredDocument, refactoredRange);
-      return new SimpleDiffRequest(null, oldContent, newContent, null, null);
-    }
-    return null;
-  }
-
   @NotNull
-  private DiffRequest getMethodDiffRequest(Document patternDocument,
-                                           Document refactoredDocument, TextRange refactoredRange) {
-    DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+  private static DiffUserDataKeysEx.DiffComputer getDiffComputer(@NotNull Collection<Range> ranges) {
+    return (text1, text2, policy, innerChanges, indicator) -> {
+      LineOffsets offsets1 = LineOffsetsUtil.create(text1);
+      LineOffsets offsets2 = LineOffsetsUtil.create(text2);
 
-    PsiElement element = myAnchor.getElement();
-    int anchorOffset = element != null ? element.getTextRange().getEndOffset() : patternDocument.getTextLength();
-    DocumentContent oldContent = contentFactory.createFragment(myProject, patternDocument, new TextRange(anchorOffset, anchorOffset));
-    refactoredRange = extendRangeToStartOfLine(refactoredDocument, refactoredRange);
-    DocumentContent newContent = contentFactory.createFragment(myProject, refactoredDocument, refactoredRange);
-    return new SimpleDiffRequest(null, oldContent, newContent, null, null);
-  }
-
-  private static TextRange extendRangeToStartOfLine(Document document, TextRange range) {
-    CharSequence text = document.getCharsSequence();
-    for (int offset = range.getStartOffset(); offset > 0; --offset) {
-      char c = text.charAt(offset - 1);
-      if (c == '\n' || !Character.isWhitespace(c)) {
-        return new TextRange(offset, range.getEndOffset());
+      List<LineFragment> result = new ArrayList<>();
+      ComparisonManagerImpl comparisonManager = ComparisonManagerImpl.getInstanceImpl();
+      for (Range range : ranges) {
+        result.addAll(comparisonManager.compareLinesInner(range, text1, text2, offsets1, offsets2, policy, innerChanges, indicator));
       }
-    }
-    return range;
+      return result;
+    };
   }
 
   public void tryExtractAgain() {
@@ -350,6 +388,10 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     return EditorFactory.getInstance().createEditor(document, myProject);
   }
 
+  boolean isModified() {
+    return myPatternDocument == null || myPatternDocument.getModificationStamp() != myInitialDocumentStamp;
+  }
+
   private static class Bounds {
     final PsiElement myParent;
     final PsiElement myBefore;
@@ -385,23 +427,6 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     public TextRange getTextRange() {
       return new TextRange(myStart.getTextRange().getStartOffset(), myEnd.getTextRange().getEndOffset());
-    }
-  }
-
-  static class RefactoringResult {
-    final PsiMethod myMethod;
-    final ElementsRange myPatternReplacement;
-    final Map<DuplicateNode, ElementsRange> myDuplicateReplacements;
-    final Document myDocument;
-
-    public RefactoringResult(@NotNull PsiMethod method,
-                             @NotNull ElementsRange patternReplacement,
-                             @NotNull Map<DuplicateNode, ElementsRange> duplicateReplacements,
-                             @NotNull Document document) {
-      myMethod = method;
-      myPatternReplacement = patternReplacement;
-      myDuplicateReplacements = duplicateReplacements;
-      myDocument = document;
     }
   }
 }

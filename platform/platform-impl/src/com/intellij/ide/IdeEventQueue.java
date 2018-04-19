@@ -88,8 +88,6 @@ public class IdeEventQueue extends EventQueue {
   private final List<Runnable> myIdleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<Runnable> myActivityListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Alarm myIdleRequestsAlarm = new Alarm();
-  private final Alarm myIdleTimeCounterAlarm = new Alarm();
-  private long myIdleTime;
   private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<>();
   // IdleListener -> MyFireIdleRequest
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
@@ -115,7 +113,7 @@ public class IdeEventQueue extends EventQueue {
   private boolean myIsInInputEvent;
   @NotNull
   private AWTEvent myCurrentEvent = new InvocationEvent(this, EmptyRunnable.getInstance());
-  private long myLastActiveTime;
+  private volatile long myLastActiveTime = System.nanoTime();
   private long myLastEventTime = System.currentTimeMillis();
   private WindowManagerEx myWindowManager;
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -197,7 +195,6 @@ public class IdeEventQueue extends EventQueue {
     EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
     systemEventQueue.push(this);
-    addIdleTimeCounterRequest();
 
     KeyboardFocusManager keyboardFocusManager = IdeKeyboardFocusManager.replaceDefault();
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
@@ -246,28 +243,6 @@ public class IdeEventQueue extends EventQueue {
 
   public void setWindowManager(final WindowManagerEx windowManager) {
     myWindowManager = windowManager;
-  }
-
-
-  private void addIdleTimeCounterRequest() {
-    if (isTestMode()) return;
-
-    myIdleTimeCounterAlarm.cancelAllRequests();
-    myLastActiveTime = System.currentTimeMillis();
-    myIdleTimeCounterAlarm.addRequest(() -> {
-      myIdleTime += System.currentTimeMillis() - myLastActiveTime;
-      addIdleTimeCounterRequest();
-    }, 20000, ModalityState.NON_MODAL);
-  }
-
-  /**
-   * This class performs special processing in order to have {@link #getIdleTime()} return more or less up-to-date data.
-   * <p/>
-   * This method allows to stop that processing (convenient in non-intellij environment like upsource).
-   */
-  @SuppressWarnings("unused") // Used in upsource.
-  public void stopIdleTimeCalculation() {
-    myIdleTimeCounterAlarm.cancelAllRequests();
   }
 
   public void addIdleListener(@NotNull final Runnable runnable, final int timeoutMillis) {
@@ -677,12 +652,19 @@ public class IdeEventQueue extends EventQueue {
             MouseEvent.MOUSE_PRESSED == e.getID() ||
             MouseEvent.MOUSE_RELEASED == e.getID() ||
             MouseEvent.MOUSE_CLICKED == e.getID()) {
-          addIdleTimeCounterRequest();
+          myLastActiveTime = System.nanoTime();
           for (Runnable activityListener : myActivityListeners) {
             activityListener.run();
           }
         }
       }
+    }
+
+    // We must ignore typed events that are dispatched between KEY_PRESSED and KEY_RELEASED.
+    // Key event dispatcher resets its state on KEY_RELEASED event
+    if (e.getID() == KeyEvent.KEY_TYPED &&
+        (myKeyEventDispatcher.isPressedWasProcessed())) {
+      ((KeyEvent)e).consume();
     }
 
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
@@ -925,9 +907,8 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public long getIdleTime() {
-    return myIdleTime;
+    return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - myLastActiveTime);
   }
-
 
   @NotNull
   public IdePopupManager getPopupManager() {
@@ -1170,12 +1151,10 @@ public class IdeEventQueue extends EventQueue {
   private static boolean doesFocusGoIntoPopupFromWindowEvent(AWTEvent e) {
     if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS ||
         (SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED)) {
-      WindowEvent windowEvent = (WindowEvent)e;
-      Window eventWindow = windowEvent.getWindow();
-        if (eventWindow.getClass().getName().contains("HeavyWeightWindow")) {
-          TYPEAHEAD_LOG.debug("Focus goes into HeavyWeightWindow");
-          return true;
-        }
+      if (UIUtil.isTypeAheadAware(((WindowEvent)e).getWindow())) {
+        TYPEAHEAD_LOG.debug("Focus goes into TypeAhead aware window");
+        return true;
+      }
     }
     return false;
   }

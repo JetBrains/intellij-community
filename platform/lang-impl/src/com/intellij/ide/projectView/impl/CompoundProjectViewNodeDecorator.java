@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -30,8 +31,8 @@ public final class CompoundProjectViewNodeDecorator implements ProjectViewNodeDe
    * @return a shared instance for the specified project
    */
   @NotNull
-  public static ProjectViewNodeDecorator get(@NotNull Project project) {
-    if (project.isDisposed()) return EMPTY;
+  public static ProjectViewNodeDecorator get(@Nullable Project project) {
+    if (project == null || project.isDisposed()) return EMPTY;
     ProjectViewNodeDecorator provider = project.getUserData(KEY);
     if (provider != null) return provider;
     provider = new CompoundProjectViewNodeDecorator(EP_NAME.getExtensions(project));

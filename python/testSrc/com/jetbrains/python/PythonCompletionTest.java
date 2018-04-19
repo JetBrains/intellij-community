@@ -42,6 +42,15 @@ public class PythonCompletionTest extends PyTestCase {
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
+  private void doMultiFileTestAssertSameOrderedElements(String... variants) {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertOrderedEquals(suggested, variants);
+  }
+
   @Nullable
   private List<String> doTestByText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
@@ -1262,22 +1271,23 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-28461
   public void testImplicitImportsInsidePackage() {
     runWithLanguageLevel(LanguageLevel.PYTHON37,
-                         () -> doMultiFileAssertSameElements("m1", "pkg2", "pkg3", "bar", "foo", "foo2"));
+                         () -> doMultiFileTestAssertSameOrderedElements("bar", "foo", "foo2", "m1", "pkg2", "pkg3"));
   }
 
   // PY-28461
   public void testImplicitImportsInsidePackagePy2() {
     runWithLanguageLevel(LanguageLevel.PYTHON27,
-                         () -> doMultiFileAssertSameElements("m1", "pkg2", "pkg3", "bar", "foo", "foo2"));
+                         () -> doMultiFileTestAssertSameOrderedElements("bar", "foo", "foo2", "m1", "pkg2", "pkg3"));
   }
 
-  private void doMultiFileAssertSameElements(String... variants) {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
-    assertSameElements(suggested, variants);
+  // PY-3674
+  public void testUnderscoredItemsOrderModuleImport() {
+    doMultiFileTestAssertSameOrderedElements("A", "B", "f", "_A", "_f", "_g", "__A", "__f");
+  }
+
+  // PY-3674
+  public void testUnderscoredItemsOrderFromModuleImport() {
+    doMultiFileTestAssertSameOrderedElements("A", "B", "f", "_A", "_f", "_g", "__A", "__f");
   }
 
   // PY-17810
@@ -1323,6 +1333,25 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-28989
   public void testModuleFromNamespacePackage() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::assertSingleVariantInExtendedCompletion);
+  }
+
+  // PY-28341
+  public void testCompletionForUsedAttribute() {
+    doMultiFileTest();
+  }
+
+  // PY-28103
+  public void testPrintFunctionWithoutFuture() {
+    final List<String> suggested = doTestByText("pr<caret>");
+    assertNotNull(suggested);
+    assertSameElements(suggested, "print", "property", "repr");
+  }
+
+  // PY-28103
+  public void testPrintFunctionWithFuture() {
+    final List<String> suggested = doTestByText("from __future__ import print_function\npr<caret>");
+    assertNotNull(suggested);
+    assertSameElements(suggested, "print", "print", "print_function", "property", "repr");
   }
 
   private void assertNoVariantsInExtendedCompletion() {

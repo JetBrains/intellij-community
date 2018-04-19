@@ -47,4 +47,34 @@ class Test {
     // toUnmodifiableSet will not preserve order; not suggested here
     return Collections.unmodifiableSet(result);
   }
+
+  Map<String, Integer> map(List<String> input) {
+    Map<String, Integer> result = new HashMap<>(100);
+    for (String s : input) {
+      if (!s.isEmpty()) {
+        result.put(s, s.length());
+      }
+    }
+    return Collections.unmodifiableMap(result);
+  }
+
+  Map<String, Integer> map1(List<String> input) {
+    Map<String, Integer> result = new TreeMap<>();
+    for (String s : input) {
+      if (!s.isEmpty()) {
+        result.put(s, s.length());
+      }
+    }
+    return Collections.unmodifiableMap(result);
+  }
+
+  Map<String, Integer> map2(int[] input) {
+    Map<String, Integer> result = new HashMap<>();
+    for (int s : input) {
+      if (s > 0) {
+        result.put(String.valueOf(s), s);
+      }
+    }
+    return Collections.unmodifiableMap(result);
+  }
 }

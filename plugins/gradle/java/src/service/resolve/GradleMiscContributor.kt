@@ -33,8 +33,8 @@ class GradleMiscContributor : GradleMethodContextContributor {
     val domainCollectionWithTypeClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DOMAIN_OBJECT_COLLECTION, "withType"))
     val manifestClosure = groovyClosure().inMethod(psiMethod(GRADLE_JVM_TASKS_JAR, "manifest"))
     //    val publicationsClosure = groovyClosure().inMethod(psiMethod("org.gradle.api.publish.PublishingExtension", "publications"))
-    val downloadSpecFqn = "de.undercouch.gradle.tasks.download.DownloadSpec"
-    val pluginDependenciesSpecFqn = "org.gradle.plugin.use.PluginDependenciesSpec"
+    const val downloadSpecFqn = "de.undercouch.gradle.tasks.download.DownloadSpec"
+    const val pluginDependenciesSpecFqn = "org.gradle.plugin.use.PluginDependenciesSpec"
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
@@ -50,9 +50,9 @@ class GradleMiscContributor : GradleMethodContextContributor {
     if (manifestClosure.accepts(closure)) {
       return DelegatesToInfo(createType(GRADLE_API_JAVA_ARCHIVES_MANIFEST, closure), Closure.DELEGATE_FIRST)
     }
-//    if (publicationsClosure.accepts(closure)) {
-//      return DelegatesToInfo(TypesUtil.createType("org.gradle.api.publish.PublicationContainer", closure), Closure.DELEGATE_FIRST)
-//    }
+    //    if (publicationsClosure.accepts(closure)) {
+    //      return DelegatesToInfo(TypesUtil.createType("org.gradle.api.publish.PublicationContainer", closure), Closure.DELEGATE_FIRST)
+    //    }
 
     val parent = closure.parent
     if (domainCollectionWithTypeClosure.accepts(closure)) {
@@ -66,9 +66,9 @@ class GradleMiscContributor : GradleMethodContextContributor {
 
     // resolve closure type to delegate based on return method type, e.g.
     // FlatDirectoryArtifactRepository flatDir(Closure configureClosure)
-    if(parent is GrMethodCall) {
+    if (parent is GrMethodCall) {
       val psiType = parent.invokedExpression.type
-      if(psiType != null && psiType != PsiType.VOID) {
+      if (psiType != null && psiType != PsiType.VOID) {
         return DelegatesToInfo(psiType, Closure.DELEGATE_FIRST)
       }
     }
@@ -83,7 +83,8 @@ class GradleMiscContributor : GradleMethodContextContributor {
     val resolveScope = place.resolveScope
 
     if (shouldProcessMethods && place.parent?.parent is GroovyFile && place.text == "plugins") {
-      val pluginsDependenciesClass = JavaPsiFacade.getInstance(place.project).findClass(pluginDependenciesSpecFqn, resolveScope) ?: return true
+      val pluginsDependenciesClass = JavaPsiFacade.getInstance(place.project).findClass(pluginDependenciesSpecFqn, resolveScope)
+                                     ?: return true
       val returnClass = groovyPsiManager.createTypeByFQClassName(pluginDependenciesSpecFqn, resolveScope) ?: return true
       val methodBuilder = GrLightMethodBuilder(place.manager, "plugins").apply {
         containingClass = pluginsDependenciesClass

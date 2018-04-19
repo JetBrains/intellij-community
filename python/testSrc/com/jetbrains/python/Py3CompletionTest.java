@@ -7,6 +7,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,7 +176,30 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-17828
   public void testDunderPrepare() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        final String testName = getTestName(true);
+        myFixture.configureByFile(testName + ".py");
+        myFixture.completeBasicAllCarets(null);
+        myFixture.checkResultByFile(testName + ".after.py");
+      }
+    );
+  }
+
+  // PY-17828
+  public void testDunderPrepareHonourInspectionSettings() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        myFixture.enableInspections(PyMethodParametersInspection.class);
+
+        final String testName = getTestName(true);
+        myFixture.configureByFile(testName + ".py");
+        myFixture.completeBasicAllCarets(null);
+        myFixture.checkResultByFile(testName + ".after.py");
+      }
+    );
   }
 
   // PY-20279

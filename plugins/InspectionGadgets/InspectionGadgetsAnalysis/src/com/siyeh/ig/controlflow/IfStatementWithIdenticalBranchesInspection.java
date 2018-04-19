@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 // Not really with identical branches, but also common parts
-public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLocalInspectionTool {
+public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -276,6 +276,7 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
           PsiVariable thenVariable = extractVariable(thenStatement);
           PsiLocalVariable elseVariable = extractVariable(elseStatement);
           if(thenVariable == null || elseVariable == null) return false;
+          String typeText = thenVariable.getType().getCanonicalText();
           String thenVariableTypeText = thenVariable.getType().getCanonicalText();
           PsiModifierList thenModifierList = thenVariable.getModifierList();
           String modifiers;
@@ -298,8 +299,8 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
             PsiStatement varDeclarationStmt = factory.createStatementFromText(variableDeclaration, parent);
             parent.addBefore(varDeclarationStmt, ifStatement);
 
-            replaceWithDeclarationIfNeeded(ifStatement, factory, thenStatement, thenInitializer, varName);
-            replaceWithDeclarationIfNeeded(ifStatement, factory, elseStatement, elseInitializer, varName);
+            replaceWithDeclarationIfNeeded(ifStatement, factory, thenStatement, thenInitializer, varName, typeText);
+            replaceWithDeclarationIfNeeded(ifStatement, factory, elseStatement, elseInitializer, varName, typeText);
             continue;
           }
         }
@@ -348,9 +349,16 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
                                                        PsiElementFactory factory,
                                                        PsiStatement statement,
                                                        PsiExpression initializer,
-                                                       String varName) {
+                                                       String varName,
+                                                       String type) {
       if (initializer != null) {
-        PsiStatement assignment = factory.createStatementFromText(varName + "=" + initializer.getText() + ";", ifStatement);
+        final String initializerText;
+        if (initializer instanceof PsiArrayInitializerExpression) {
+          initializerText = "new " + type + initializer.getText();
+        } else {
+          initializerText = initializer.getText();
+        }
+        PsiStatement assignment = factory.createStatementFromText(varName + "=" + initializerText + ";", ifStatement);
         statement.replace(assignment);
       }
     }

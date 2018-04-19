@@ -316,11 +316,13 @@ public class BuildManager implements Disposable {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        final Document document = e.getDocument();
-        if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
-          final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-          if (file != null && file.isInLocalFileSystem()) {
-            scheduleProjectSave();
+        if (Registry.is("compiler.document.save.enabled", true)) {
+          final Document document = e.getDocument();
+          if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+            final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+            if (file != null && file.isInLocalFileSystem()) {
+              scheduleProjectSave();
+            }
           }
         }
       }
@@ -526,26 +528,33 @@ public class BuildManager implements Disposable {
     if (project == null || !canStartAutoMake(project)) {
       return;
     }
-    final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
-    final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
-    final TaskFuture future = scheduleBuild(
-      project, false, true, false, scopes, Collections.emptyList(), Collections.emptyMap(),
-      handler
-    );
-    if (future != null) {
-      myAutomakeFutures.put(future, project);
-      try {
-        future.waitFor();
-      }
-      finally {
-        myAutomakeFutures.remove(future);
-        if (handler.unprocessedFSChangesDetected()) {
-          scheduleAutoMake();
+    if (shouldPostponeAutomake()) {
+      // the system cannot be considered idle. Re-schedule the automake in order not to interfere with the user's activity
+      scheduleAutoMake();
+    }
+    else {
+      // run automake
+      final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
+      final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
+      final TaskFuture future = scheduleBuild(
+        project, false, true, false, scopes, Collections.emptyList(), Collections.emptyMap(),
+        handler
+      );
+      if (future != null) {
+        myAutomakeFutures.put(future, project);
+        try {
+          future.waitFor();
+        }
+        finally {
+          myAutomakeFutures.remove(future);
+          if (handler.unprocessedFSChangesDetected()) {
+            scheduleAutoMake();
+          }
         }
       }
     }
   }
-
+  
   private static boolean canStartAutoMake(@NotNull Project project) {
     if (project.isDisposed()) {
       return false;
@@ -555,6 +564,18 @@ public class BuildManager implements Disposable {
       return false;
     }
     return config.allowAutoMakeWhileRunningApplication() || !hasRunningProcess(project);
+  }
+
+  private static boolean shouldPostponeAutomake() {
+    // Heuristics for postpone-decision:
+    // 1. There are unsaved documents OR
+    // 2. The IDE is not idle: the last activity happened less than 3 seconds ago (registry-configurable)
+    if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
+      return true;
+    }
+    final long threshold = (long)Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
+    final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
+    return idleSinceLastActivity < threshold;
   }
 
   @Nullable

@@ -21,8 +21,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.PathUtil;
-import com.vladium.emma.rt.RT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,9 +58,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
 
   @Nullable
   public static String handleSpacesInAgentPath(@NotNull String agentPath) {
-    String agentName = new File(agentPath).getName();
-    String containingDir = JavaExecutionUtil.handleSpacesInAgentPath(agentPath, "testAgent", JAVA_COVERAGE_AGENT_AGENT_PATH);
-    return containingDir == null ? null : FileUtil.join(containingDir, agentName);
+    return JavaExecutionUtil.handleSpacesInAgentPath(agentPath, "testAgent", JAVA_COVERAGE_AGENT_AGENT_PATH);
   }
 
   protected static void write2file(File tempFile, String arg) throws IOException {

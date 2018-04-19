@@ -366,6 +366,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     }
 
     restartDaemons();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.OPTIONS_PANEL_TOPIC).changesApplied();
   }
 
   private int getQuickDocDelayFromGui() {

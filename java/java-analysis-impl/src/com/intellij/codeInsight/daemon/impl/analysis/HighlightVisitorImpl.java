@@ -33,7 +33,6 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -42,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   private final PsiResolveHelper myResolveHelper;
@@ -195,8 +196,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder = holder;
     myFile = file;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
-    myJavaSdkVersion = ObjectUtils
-      .notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
+    myJavaSdkVersion = notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
     myJavaModule = myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
   }
 
@@ -206,16 +206,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       // in JSP, XmlAttributeValue may contain java references
       try {
         for (PsiReference reference : element.getReferences()) {
-          if (reference instanceof PsiJavaReference) {
-            PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
-            myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
-          }
-          else if (reference instanceof PsiPolyVariantReference &&
-                   reference instanceof ResolvingHint && ((ResolvingHint)reference).canResolveTo(PsiClass.class)) {
-            ResolveResult[] resolve = ((PsiPolyVariantReference)reference).multiResolve(false);
-            if (resolve.length == 1 && resolve[0] instanceof JavaResolveResult) {
-              myRefCountHolder.registerReference(reference, (JavaResolveResult)resolve[0]);
-            }
+          JavaResolveResult result = resolveJavaReference(reference);
+          if (result != null) {
+            myRefCountHolder.registerReference(reference, result);
           }
         }
       }
@@ -225,6 +218,22 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!(myFile instanceof ServerPageFile)) {
       myHolder.add(DefaultHighlightUtil.checkBadCharacter(element));
     }
+  }
+
+  @Nullable
+  public static JavaResolveResult resolveJavaReference(PsiReference reference) {
+    if (reference instanceof PsiJavaReference) {
+      PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
+      return psiJavaReference.advancedResolve(false);
+    }
+    else if (reference instanceof PsiPolyVariantReference &&
+             reference instanceof ResolvingHint && ((ResolvingHint)reference).canResolveTo(PsiClass.class)) {
+      ResolveResult[] resolve = ((PsiPolyVariantReference)reference).multiResolve(false);
+      if (resolve.length == 1 && resolve[0] instanceof JavaResolveResult) {
+        return (JavaResolveResult)resolve[0];
+      }
+    }
+    return null;
   }
 
   @Override
@@ -332,7 +341,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults()) myHolder.add(LambdaHighlightingUtil.checkConsistentParameterDeclaration(expression));
-    
+
     PsiType functionalInterfaceType = null;
     if (!myHolder.hasErrorResults()) {
       functionalInterfaceType = expression.getFunctionalInterfaceType();
@@ -459,20 +468,20 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitJavaToken(PsiJavaToken token) {
     super.visitJavaToken(token);
-    if (!myHolder.hasErrorResults()
-        && token.getTokenType() == JavaTokenType.RBRACE
-        && token.getParent() instanceof PsiCodeBlock) {
-
-      final PsiElement gParent = token.getParent().getParent();
-      final PsiCodeBlock codeBlock;
-      final PsiType returnType;
+    if (!myHolder.hasErrorResults() && token.getTokenType() == JavaTokenType.RAW_STRING_LITERAL) {
+      myHolder.add(checkFeature(token, Feature.RAW_LITERALS));
+    }
+    if (!myHolder.hasErrorResults() && token.getTokenType() == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock) {
+      PsiElement gParent = token.getParent().getParent();
+      PsiCodeBlock codeBlock;
+      PsiType returnType;
       if (gParent instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)gParent;
         codeBlock = method.getBody();
         returnType = method.getReturnType();
       }
       else if (gParent instanceof PsiLambdaExpression) {
-        final PsiElement body = ((PsiLambdaExpression)gParent).getBody();
+        PsiElement body = ((PsiLambdaExpression)gParent).getBody();
         if (!(body instanceof PsiCodeBlock)) return;
         codeBlock = (PsiCodeBlock)body;
         returnType = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)gParent);
@@ -1429,7 +1438,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightMethodUtil.checkStaticInterfaceCallQualifier(expression, result, expression.getTextRange(), containingClass));
       }
     }
-    
+
     if (!myHolder.hasErrorResults()) {
       myHolder.add(PsiMethodReferenceHighlightingUtil.checkRawConstructorReference(expression));
     }
@@ -1473,7 +1482,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
 
         if (description != null) {
-          PsiElement referenceNameElement = ObjectUtils.notNull(expression.getReferenceNameElement(), expression);
+          PsiElement referenceNameElement = notNull(expression.getReferenceNameElement(), expression);
           HighlightInfoType type = results.length == 0 ? HighlightInfoType.WRONG_REF : HighlightInfoType.ERROR;
           HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(type).descriptionAndTooltip(description).range(referenceNameElement).create();
           myHolder.add(highlightInfo);

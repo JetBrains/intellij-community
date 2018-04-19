@@ -646,6 +646,9 @@ public class TabLabel extends JPanel implements Accessible {
     if (myActionPanel != null) {
       add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
       myActionPanel.setVisible(visible);
+      if (visible) {
+        myActionPanel.update();
+      }
     }
   }
 

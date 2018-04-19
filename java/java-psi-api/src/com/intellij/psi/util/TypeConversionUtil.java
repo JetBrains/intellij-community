@@ -60,6 +60,8 @@ public class TypeConversionUtil {
     }
   };
   private static final Key<PsiElement> ORIGINAL_CONTEXT = Key.create("ORIGINAL_CONTEXT");
+  public static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
+  public static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
 
   static {
     TYPE_TO_RANK_MAP.put(PsiType.BYTE, BYTE_RANK);
@@ -808,7 +810,16 @@ public class TypeConversionUtil {
       return isAssignable(left, ((PsiDisjunctionType)right).getLeastUpperBound(), allowUncheckedConversion, capture);
     }
 
-    if (left instanceof PsiArrayType) return false;
+    if (left instanceof PsiArrayType) {
+      if (right instanceof PsiClassType) {
+        PsiClass aClass = ((PsiClassType)right).resolve();
+        if (aClass instanceof PsiTypeParameter) {
+          PsiType upperBound = getUpperBound(aClass);
+          return upperBound != null && isAssignable(left, upperBound, allowUncheckedConversion, capture);
+        }
+      }
+      return false;
+    }
     if (right instanceof PsiPrimitiveType) {
       if (isVoidType(right)) return false;
       if (!(left instanceof PsiPrimitiveType)) {
@@ -1448,6 +1459,14 @@ public class TypeConversionUtil {
   
   public static void markAsFreshVariable(PsiTypeParameter parameter, PsiElement context) {
     parameter.putUserData(ORIGINAL_CONTEXT, context);
+  }
+
+  public static PsiType getUpperBound(@NotNull PsiClass psiClass) {
+    return psiClass.getUserData(UPPER_BOUND);
+  }
+
+  public static PsiType getLowerBound(@NotNull PsiClass psiClass) {
+    return psiClass.getUserData(LOWER_BOUND);
   }
 
   private interface Caster {

@@ -390,7 +390,7 @@ public class MavenModuleImporter {
         String mavenProjectReleaseLevel = myMavenProject.getReleaseLevel();
         level = LanguageLevel.parse(mavenProjectReleaseLevel);
         if (level == null && (StringUtil.isNotEmpty(mavenProjectSourceLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
-          level = LanguageLevel.JDK_X;
+          level = LanguageLevel.HIGHEST;
         }
       }
     }

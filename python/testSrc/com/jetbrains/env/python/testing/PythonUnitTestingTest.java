@@ -35,8 +35,10 @@ import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -138,6 +140,51 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     });
   }
 
+  @Test
+  public void testSysPathOrder() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/sysPath", "test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner("", 0) {
+          @Override
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUnitTestConfiguration configuration) throws IOException {
+            super.configurationCreatedAndWillLaunch(configuration);
+            configuration.getTarget().setTargetType(PyRunTargetVariant.PYTHON);
+            configuration.getTarget().setTarget("test.DemoTest");
+            final VirtualFile subfolder = myFixture.getTempDirFixture().getFile("subfolder");
+            assert subfolder != null;
+            configuration.setWorkingDirectory(subfolder.getPath());
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertEquals("test failed: " + runner.getAllConsoleText(), 1, runner.getPassedTestsCount());
+      }
+    });
+  }
+
+  @Test
+  public void testDiff() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/testDiff", "test_test.py") {
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertThat("No expected", stdout, Matchers.containsString("expected='1'"));
+        Assert.assertThat("No actual", stdout, Matchers.containsString("actual='2'"));
+      }
+    });
+  }
+
   @Override
   PyUnitTestProcessRunner createTestRunner(@NotNull final TestRunnerConfig config) {
     return new PyUnitTestProcessRunner(config.getScriptName(), config.getRerunFailedTests());
@@ -217,10 +264,10 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String all) {
         assertEquals("Runner did not stop after first fail", 1, runner.getAllTestsCount());
         assertEquals("Bad tree produced for failfast", "Test tree:\n" +
-                                                              "[root]\n" +
-                                                              ".test_test\n" +
-                                                              "..SomeTestCase\n" +
-                                                              "...test_1_test(-)\n", runner.getFormattedTestTree());
+                                                       "[root]\n" +
+                                                       ".test_test\n" +
+                                                       "..SomeTestCase\n" +
+                                                       "...test_1_test(-)\n", runner.getFormattedTestTree());
       }
     });
   }
@@ -259,7 +306,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   // Ensure failed and error subtests work
   @Test
-  @StagingOn(os=TestEnv.WINDOWS) //Flaky
+  @StagingOn(os = TestEnv.WINDOWS) //Flaky
   @EnvTestTagsRequired(tags = "python3")
   public void testSubTestError() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py") {
@@ -290,7 +337,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   // Ensure failed and error subtests work
   @Test
   @EnvTestTagsRequired(tags = "python3")
-  @StagingOn(os=TestEnv.WINDOWS) //Flaky
+  @StagingOn(os = TestEnv.WINDOWS) //Flaky
   public void testSubTestAssertEqualsError() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_assert_test.py") {
 
@@ -404,13 +451,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         assertEquals("Output tree broken for skipped exception thrown in setup method", "Test tree:\n" +
-                                                                                               "[root]\n" +
-                                                                                               ".test_test\n" +
-                                                                                               "..TestSimple\n" +
-                                                                                               "...setUpClass(~)\n" +
-                                                                                               "..TestSubSimple\n" +
-                                                                                               "...setUpClass(~)\n",
-                            runner.getFormattedTestTree());
+                                                                                        "[root]\n" +
+                                                                                        ".test_test\n" +
+                                                                                        "..TestSimple\n" +
+                                                                                        "...setUpClass(~)\n" +
+                                                                                        "..TestSubSimple\n" +
+                                                                                        "...setUpClass(~)\n",
+                     runner.getFormattedTestTree());
       }
     });
   }
@@ -541,7 +588,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
   @Test
-  @StagingOn(os=TestEnv.WINDOWS) //Flaky
+  @StagingOn(os = TestEnv.WINDOWS) //Flaky
   public void testSubtest() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_subtest.py", 1) {
       @Override
@@ -571,7 +618,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   }
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
-  @StagingOn(os=TestEnv.WINDOWS) //Flaky
+  @StagingOn(os = TestEnv.WINDOWS) //Flaky
   @Test
   public void testSubtestSkipped() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py", 1) {
@@ -788,28 +835,10 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                           @NotNull final PsiElement elementToRightClickOn) {
           super.checkConfiguration(configuration, elementToRightClickOn);
           assertEquals("UnitTest does not obey default working directory", SOME_RANDOM_DIR,
-                              configuration.getWorkingDirectorySafe());
+                       configuration.getWorkingDirectorySafe());
         }
       }
     );
-  }
-
-  @Test
-  public void testMultipleCases() {
-    runPythonTest(
-      new CreateConfigurationMultipleCasesTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                        PyUnitTestConfiguration.class) {
-        @Override
-        protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {
-          // test_functions.py and test_foo do not contain any TestCase and can't be launched with unittest
-          final PsiFile file = element.getContainingFile();
-          if (file == null) {
-            return true;
-          }
-          final String name = file.getName();
-          return !(name.endsWith("test_functions.py") || name.endsWith("test_foo.py"));
-        }
-      });
   }
 
 

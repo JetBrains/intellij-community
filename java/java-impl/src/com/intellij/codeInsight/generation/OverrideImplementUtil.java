@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -18,7 +19,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -37,7 +37,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
@@ -79,12 +82,11 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                  ? TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY)
                                  : PsiSubstitutor.EMPTY;
     return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc,
-                                     CodeStyleSettingsManager.getSettings(aClass.getProject())
-                                       .getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION);
+                                     JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION);
   }
 
   public static boolean isInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
-    if (!CodeStyleSettingsManager.getSettings(targetClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION) {
+    if (!JavaCodeStyleSettings.getInstance(targetClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {
       return false;
     }
     return canInsertOverride(superMethod, targetClass);
@@ -192,7 +194,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
     annotateOnOverrideImplement(result, aClass, method, insertOverrideIfPossible);
 
-    if (CodeStyleSettingsManager.getSettings(aClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).REPEAT_SYNCHRONIZED &&
+    if (JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).REPEAT_SYNCHRONIZED &&
         method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
       result.getModifierList().setModifierProperty(PsiModifier.SYNCHRONIZED, true);
     }
@@ -211,7 +213,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     // probably, it's better to reformat the whole method - it can go from other style sources
     final Project project = method.getProject();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    CommonCodeStyleSettings javaSettings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings javaSettings = CodeStyle.getLanguageSettings(aClass.getContainingFile(), JavaLanguage.INSTANCE);
     boolean keepBreaks = javaSettings.KEEP_LINE_BREAKS;
     javaSettings.KEEP_LINE_BREAKS = false;
     result = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
@@ -229,8 +231,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden) {
     annotateOnOverrideImplement(method, targetClass, overridden,
-                                CodeStyleSettingsManager.getSettings(method.getProject())
-                                  .getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION);
+                                JavaCodeStyleSettings.getInstance(targetClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION);
   }
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden, boolean insertOverride) {
@@ -612,14 +613,14 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   public static void overrideOrImplementMethodsInRightPlace(Editor editor1, PsiClass aClass, Collection<PsiMethodMember> members, boolean copyJavadoc) {
     boolean insert =
-      CodeStyleSettingsManager.getSettings(aClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION;
+      JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
     overrideOrImplementMethodsInRightPlace(editor1, aClass, members, copyJavadoc, insert);
   }
 
   public static List<PsiMethod> overrideOrImplementMethodCandidates(PsiClass aClass, Collection<CandidateInfo> candidatesToImplement,
                                                                     boolean copyJavadoc) throws IncorrectOperationException {
     boolean insert =
-      CodeStyleSettingsManager.getSettings(aClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION;
+      JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
     return overrideOrImplementMethodCandidates(aClass, candidatesToImplement, copyJavadoc, insert);
   }
 }

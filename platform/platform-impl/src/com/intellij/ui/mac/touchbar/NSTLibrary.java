@@ -4,44 +4,50 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.*;
+import java.util.Arrays;
+import java.util.List;
 
 public interface NSTLibrary extends Library {
-  ID createTouchBar(String name);
+  ID createTouchBar(String name, ItemCreator creator);
   void releaseTouchBar(ID tbObj);
-
-  ID registerSpacing(ID tbObj, String type); // allowed types: 'small', 'large', 'flexible'
-  ID registerButtonText(ID tbObj, String text, Action action);
-  ID registerButtonImg(ID tbObj, byte[] raster4ByteRGBA, int w, int h, Action action);
-  ID registerButtonImgText(ID tbObj, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
-  ID registerPopover(ID tbObj, String text, byte[] raster4ByteRGBA, int w, int h, int popW);
-  void setPopoverExpandTouchBar(ID popoverObj, ID expandTbObj);
-  void setPopoverTapAndHoldTouchBar(ID popoverObj, ID tapHoldTbObj);
-
-  void selectAllItemsToShow(ID tbObj);
   void setTouchBar(ID tbObj);
-
-  ID registerScrubber(ID tbObj, int scrubW);
-  void addScrubberItem(ID scrubObj, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
+  void selectItemsToShow(ID tbObj, String[] ids, int count);
 
   interface Action extends Callback {
     void execute();
   }
 
-  static byte[] getRasterFromIcon(Icon icon) {
-    final int w = icon.getIconWidth();
-    final int h = icon.getIconHeight();
-    final WritableRaster raster = Raster.createInterleavedRaster(new DataBufferByte(w * h * 4), w, h, 4 * w, 4, new int[]{0, 1, 2, 3}, (Point) null);
-    final ColorModel colorModel = new ComponentColorModel(ColorModel.getRGBdefault().getColorSpace(), true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
-    final BufferedImage image = new BufferedImage(colorModel, raster, false, null);
-    final Graphics2D g = image.createGraphics();
-    g.setComposite(AlphaComposite.SrcOver);
-    icon.paintIcon(null, g, 0, 0);
-    g.dispose();
+  class ScrubberItemData extends Structure {
+    @Override
+    protected List<String> getFieldOrder() { return Arrays.asList("text", "raster4ByteRGBA", "rasterW", "rasterH", "action"); }
 
-    return ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
+    public static class ByRef extends ScrubberItemData implements Structure.ByReference {
+      public ByRef() {}
+    }
+
+    public Pointer text;
+    public Pointer raster4ByteRGBA;
+    public int rasterW;
+    public int rasterH;
+    public Action action;
   }
+
+  interface ItemCreator extends Callback {
+    ID createItem(String uid);
+  }
+
+  // all creators are called from AppKit (when TB becomes visible and asks delegate to create objects) => autorelease objects are owned by default NSAutoReleasePool (of AppKit-thread)
+  // creator returns non-autorelease obj to be owned by java-wrapper
+  ID createButton(String uid, int buttWidth, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
+  ID createPopover(String uid, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
+  ID createScrubber(String uid, int itemWidth, ScrubberItemData[] items, int count);
+
+  // all updaters are called from EDT (when update UI)
+  // C-implementation creates NSAutoReleasePool internally
+  void updateButton(ID buttonObj, int buttWidth, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
+  void updatePopover(ID popoverObj, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
+  void updateScrubber(ID scrubObj, int itemWidth, ScrubberItemData[] items, int count);
 }

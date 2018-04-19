@@ -209,6 +209,7 @@ public class ExtractLightMethodObjectHandler {
     boolean useMagicAccessor = Registry.is("debugger.compiling.evaluator.magic.accessor") &&
                                javaVersion != null && !javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9);
     if (useMagicAccessor) {
+      LOG.info("Magic accessor available");
       copy.accept(new JavaRecursiveElementWalkingVisitor() {
         private void makePublic(PsiMember method) {
           if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -275,6 +276,7 @@ public class ExtractLightMethodObjectHandler {
                             Registry.is("debugger.compiling.evaluator.reflection.access.with.java8");
     if (useReflection && methods.length == 1) {
       final PsiMethod method = methods[0];
+      LOG.info("Use reflection to evaluate inaccessible members");
       CompositeReflectionAccessor.createAccessorToEverything(inner, elementFactory)
                                  .accessThroughReflection(method);
     }

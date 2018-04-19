@@ -1,35 +1,38 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="externalSystemManager" interface="com.intellij.openapi.externalSystem.ExternalSystemManager"/>
-    <extensionPoint name="externalSystemWorkspaceContributor"
+    <extensionPoint qualifiedName="com.intellij.externalSystemManager"
+                    interface="com.intellij.openapi.externalSystem.ExternalSystemManager"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemWorkspaceContributor"
                     interface="com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl$Contributor"/>
-    <extensionPoint name="externalProjectDataService"
+    <extensionPoint qualifiedName="com.intellij.externalProjectDataService"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"/>
-    <extensionPoint name="externalSystemConfigurationHandler"
+    <extensionPoint qualifiedName="com.intellij.externalSystemConfigurationHandler"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler"/>
-    <extensionPoint name="externalSystem.runConfigurationImporter"
+    <extensionPoint qualifiedName="com.intellij.externalSystem.runConfigurationImporter"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter"/>
-    <extensionPoint name="externalSystem.facetConfigurationImporter"
+    <extensionPoint qualifiedName="com.intellij.externalSystem.facetConfigurationImporter"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter"/>
-    <extensionPoint name="externalSystem.codeStyleConfigurationImporter"
+    <extensionPoint qualifiedName="com.intellij.externalSystem.codeStyleConfigurationImporter"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationImporter"/>
-    <extensionPoint name="externalSystem.beforeRunTaskImporter"
+    <extensionPoint qualifiedName="com.intellij.externalSystem.beforeRunTaskImporter"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.BeforeRunTaskImporter"/>
-    <extensionPoint name="externalSystemConfigLocator"
+    <extensionPoint qualifiedName="com.intellij.externalSystemConfigLocator"
                     interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator"/>
-    <extensionPoint name="externalSystemNotificationExtension"
+    <extensionPoint qualifiedName="com.intellij.externalSystemNotificationExtension"
                     interface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension"/>
-    <extensionPoint name="externalSystemKeymapProvider"
+    <extensionPoint qualifiedName="com.intellij.externalSystemKeymapProvider"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension$ActionsProvider"/>
-    <extensionPoint name="externalSystemTaskNotificationListener"
+    <extensionPoint qualifiedName="com.intellij.externalSystemTaskNotificationListener"
                     interface="com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener"/>
-    <extensionPoint name="externalSystemExecutionConsoleManager"
+    <extensionPoint qualifiedName="com.intellij.externalSystemExecutionConsoleManager"
                     interface="com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager"/>
-    <extensionPoint name="externalSystemOutputParserProvider"
+    <extensionPoint qualifiedName="com.intellij.externalSystemOutputParserProvider"
                     interface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider"/>
-    <extensionPoint name="externalSystemViewContributor" interface="com.intellij.openapi.externalSystem.view.ExternalSystemViewContributor"/>
-    <extensionPoint name="externalProjectStructureCustomizer" interface="com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer"/>
-    <extensionPoint name="externalProjectWatcherContributor"
+    <extensionPoint qualifiedName="com.intellij.externalSystemViewContributor"
+                    interface="com.intellij.openapi.externalSystem.view.ExternalSystemViewContributor"/>
+    <extensionPoint qualifiedName="com.intellij.externalProjectStructureCustomizer"
+                    interface="com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer"/>
+    <extensionPoint qualifiedName="com.intellij.externalProjectWatcherContributor"
                     interface="com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl$Contributor"/>
   </extensionPoints>
 </idea-plugin>

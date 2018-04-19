@@ -3,10 +3,7 @@ package com.intellij.psi.impl.beanProperties
 
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.AnnotationRequest
-import com.intellij.lang.jvm.actions.CreateMethodRequest
-import com.intellij.lang.jvm.actions.expectedTypes
-import com.intellij.lang.jvm.actions.suggestJavaParamName
+import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
@@ -21,7 +18,6 @@ internal class CreateBeanPropertyRequest(
 ) : CreateMethodRequest {
 
   private val isSetter: Boolean = propertyKind == PropertyKind.SETTER
-  private val names = suggestJavaParamName(project, type, propertyName)
   private val expectedTypes = expectedTypes(type)
 
   private val myMethodName = getAccessorName(propertyName, propertyKind)
@@ -38,8 +34,11 @@ internal class CreateBeanPropertyRequest(
   private val myTargetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
   override fun getTargetSubstitutor() = myTargetSubstitutor
 
-  private val myParameters = if (isSetter) listOf(Pair(names, expectedTypes)) else emptyList()
-  override fun getParameters() = myParameters
+  private val myParameters = if (isSetter) listOf(expectedParameter(type, propertyName)) else emptyList()
+  override fun getExpectedParameters() = myParameters
+
+  private val oldParameters = getParameters(myParameters, project)
+  override fun getParameters() = oldParameters
 
   override fun isValid() = type.isValid
 }

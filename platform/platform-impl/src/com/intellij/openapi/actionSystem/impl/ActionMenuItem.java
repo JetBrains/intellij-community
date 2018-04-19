@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -219,9 +219,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       }
       else if (!(getUI() instanceof GtkMenuItemUI)) {
         if (myToggled) {
-          setIcon(IconCache.getIcon("checkmark", false, false, true));
-          setSelectedIcon(IconCache.getIcon("checkmark", true, false, true));
-          setDisabledIcon(IconCache.getIcon("checkmark", false, false, false));
+          setIcon(IconCache.getIcon("checkmark"));
+          setSelectedIcon(IconCache.getSelectedIcon("checkmark"));
+          setDisabledIcon(IconCache.getDisabledIcon("checkmark"));
         }
         else {
           setIcon(EmptyIcon.ICON_16);

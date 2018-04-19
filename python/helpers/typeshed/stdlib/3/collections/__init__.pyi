@@ -52,7 +52,10 @@ _VT = TypeVar('_VT')
 
 
 # namedtuple is special-cased in the type checker; the initializer is ignored.
-if sys.version_info >= (3, 6):
+if sys.version_info >= (3, 7):
+    def namedtuple(typename: str, field_names: Union[str, Iterable[str]], *,
+                   rename: bool = ..., module: Optional[str] = ...) -> Type[tuple]: ...
+elif sys.version_info >= (3, 6):
     def namedtuple(typename: str, field_names: Union[str, Iterable[str]], *,
                    verbose: bool = ..., rename: bool = ..., module: Optional[str] = ...) -> Type[tuple]: ...
 else:
@@ -187,7 +190,8 @@ class UserString(Sequence[str]):
 # methods did not exist).
 # But in practice it's not worth losing sleep over.
 class deque(MutableSequence[_T], Generic[_T]):
-    maxlen = ...  # type: Optional[int] # TODO readonly
+    @property
+    def maxlen(self) -> Optional[int]: ...
     def __init__(self, iterable: Iterable[_T] = ...,
                  maxlen: int = ...) -> None: ...
     def append(self, x: _T) -> None: ...

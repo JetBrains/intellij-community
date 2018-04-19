@@ -5,10 +5,7 @@
 
 package com.intellij.patterns.uast
 
-import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.ObjectPattern
-import com.intellij.patterns.PatternCondition
-import com.intellij.patterns.StandardPatterns
+import com.intellij.patterns.*
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
@@ -47,6 +44,14 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
   fun inCall(callPattern: ElementPattern<UCallExpression>) =
     filter { it.getUCallExpression()?.let { callPattern.accepts(it) } ?: false }
 
+  fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>) =
+    filter {
+      val call = it.getUCallExpression() as? UCallExpressionEx ?: return@filter false
+      call.getArgumentForParameter(parameterIndex) == it && callPattern.accepts(call)
+    }
+
+  fun constructorParameter(parameterIndex: Int, classFQN: String) = callParameter(parameterIndex, callExpression().constructor(classFQN))
+
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
 
@@ -58,6 +63,13 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
   fun withMethodName(methodName : String) = withMethodName(string().equalTo(methodName))
 
   fun withMethodName(namePattern: ElementPattern<String>) = filter { it.methodName?.let { namePattern.accepts(it) } ?: false }
+
+  fun constructor(classPattern: ElementPattern<PsiClass>) = filter {
+    val psiMethod = it.resolve() ?: return@filter false;
+    psiMethod.isConstructor && classPattern.accepts(psiMethod.containingClass)
+  }
+
+  fun constructor(className: String) = constructor(PsiJavaPatterns.psiClass().withQualifiedName(className))
 
 }
 

@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class FormReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
+  public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<? super PsiReference> consumer) {
     SearchScope userScope = p.getScopeDeterminedByUser();
     if (!scopeCanContainForms(userScope)) return true;
     final PsiElement refElement = p.getElementToSearch();
@@ -104,7 +104,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     return false;
   }
 
-  private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
+  private static boolean processReferencesInUIForms(Processor<? super PsiReference> processor,
                                                     PsiManager psiManager, final PsiClass aClass,
                                                     GlobalSearchScope scope, final LocalSearchScope filterScope) {
     String className = getQualifiedName(aClass);
@@ -118,7 +118,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     });
   }
 
-  private static boolean processEnumReferencesInUIForms(Processor<PsiReference> processor,
+  private static boolean processEnumReferencesInUIForms(Processor<? super PsiReference> processor,
                                                         PsiManager psiManager, final PsiEnumConstant enumConstant,
                                                         GlobalSearchScope scope, final LocalSearchScope filterScope) {
     String className = ReadAction.compute(() -> enumConstant.getName());
@@ -127,7 +127,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
 
   private static boolean processReferencesInUIFormsInner(String name,
                                                          PsiElement element,
-                                                         Processor<PsiReference> processor,
+                                                         Processor<? super PsiReference> processor,
                                                          GlobalSearchScope scope1,
                                                          PsiManager manager,
                                                          final LocalSearchScope filterScope) {
@@ -137,7 +137,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     return processReferencesInFiles(files, manager, name, element, filterScope, processor);
   }
 
-  private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
+  private static boolean processReferencesInUIForms(Processor<? super PsiReference> processor,
                                                     PsiManager psiManager,
                                                     PsiField field,
                                                     GlobalSearchScope scope1,
@@ -150,7 +150,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     return processReferencesInFiles(files, psiManager, fieldName, field, filterScope, processor);
   }
 
-  private static boolean processReferences(final Processor<PsiReference> processor,
+  private static boolean processReferences(final Processor<? super PsiReference> processor,
                                            final PsiFile file,
                                            String name,
                                            final PsiElement element,
@@ -190,7 +190,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     return true;
   }
 
-  private static boolean processReferencesInUIForms(final Processor<PsiReference> processor,
+  private static boolean processReferencesInUIForms(final Processor<? super PsiReference> processor,
                                                     PsiManager psiManager,
                                                     final Property property,
                                                     final GlobalSearchScope globalSearchScope,
@@ -228,7 +228,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     return true;
   }
 
-  private static boolean processReferencesInUIForms(final Processor<PsiReference> processor,
+  private static boolean processReferencesInUIForms(final Processor<? super PsiReference> processor,
                                                     PsiManager psiManager,
                                                     final PropertiesFile propFile,
                                                     final GlobalSearchScope globalSearchScope,
@@ -246,7 +246,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
                                                   PsiManager psiManager, String baseName,
                                                   PsiElement element,
                                                   LocalSearchScope filterScope,
-                                                  Processor<PsiReference> processor) {
+                                                  Processor<? super PsiReference> processor) {
     psiManager.startBatchFilesProcessingMode();
 
     try {

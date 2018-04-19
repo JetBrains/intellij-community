@@ -176,6 +176,7 @@ public class SemanticEditorPosition {
       }
       if (rightParenthesis.equals(map(myIterator.getTokenType()))) {
         moveBeforeParentheses(leftParenthesis, rightParenthesis);
+        continue;
       }
       else if (leftParenthesis.equals(map(myIterator.getTokenType()))) {
         break; 

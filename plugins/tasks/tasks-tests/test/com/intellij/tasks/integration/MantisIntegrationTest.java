@@ -7,6 +7,7 @@ import com.intellij.tasks.mantis.MantisFilter;
 import com.intellij.tasks.mantis.MantisProject;
 import com.intellij.tasks.mantis.MantisRepository;
 import com.intellij.tasks.mantis.MantisRepositoryType;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 
@@ -52,6 +53,13 @@ public class MantisIntegrationTest extends TaskManagerTestCase {
     final GetMethod method = new GetMethod(task1.getIssueUrl());
     client.executeMethod(method);
     assertEquals(method.getStatusCode(), 200);
+  }
+
+  public void testSerialization() {
+    MantisRepository repository = new MantisRepository();
+    repository.setCurrentProject(new MantisProject());
+    repository.setCurrentFilter(new MantisFilter());
+    XmlSerializer.serialize(repository);
   }
 
   @Override

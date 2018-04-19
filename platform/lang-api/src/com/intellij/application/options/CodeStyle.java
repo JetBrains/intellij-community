@@ -56,6 +56,17 @@ public class CodeStyle {
   }
 
   /**
+   * Returns either project settings if the project is not null or default application-wide settings otherwise.
+   *
+   * @param project The project to return the settings for or {@code null} for default settings.
+   * @return Project or default code style settings.
+   */
+  @NotNull
+  public static CodeStyleSettings getProjectOrDefaultSettings(@Nullable Project project) {
+    return project != null ? getSettings(project) : getDefaultSettings();
+  }
+
+  /**
    * Returns root code style settings for the given PSI file. For configurable language settings use {@link #getLanguageSettings(PsiFile)} or
    * {@link #getLanguageSettings(PsiFile, Language)}.
    * @param file The file to get code style settings for.
@@ -209,21 +220,6 @@ public class CodeStyle {
   public static void dropTemporarySettings(@NotNull Project project) {
     //noinspection deprecation
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-  }
-
-  /**
-   * @return A global application-level line separator. By default line separator is the same as defined in the system.
-   */
-  public static String getDefaultLineSeparator() {
-    return getDefaultSettings().getLineSeparator();
-  }
-
-  /**
-   * @param project The project to get a configured line separator for.
-   * @return The line separator configured for the project or system line separator if not defined.
-   */
-  public static String getLineSeparator(@NotNull Project project) {
-    return getSettings(project).getLineSeparator();
   }
 
 }

@@ -2,6 +2,7 @@ package com.jetbrains.jsonSchema.impl
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest
+import org.intellij.lang.annotations.Language
 import org.junit.Assert
 
 /**
@@ -280,8 +281,99 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
   }
 
   @Throws(Exception::class)
-  private fun testImpl(schema: String, text: String,
+  private fun testImpl(@Language("JSON") schema: String, text: String,
                        vararg variants: String) {
     testBySchema(schema, text, ".json", *variants)
+  }
+
+  private val ifThenElseSchema: String
+    get() {
+      @Suppress("UnnecessaryVariable")
+      @Language("JSON") val schema = """{
+    "if": {
+      "properties": {
+        "a": {
+          "type": "string"
+        }
+      },
+      "required": ["a"]
+    },
+    "then": {
+      "properties": {
+        "b": {
+          "type": "number",
+          "description": "Target b description"
+        }
+      },
+      "required": ["b"]
+    },
+    "else": {
+      "properties": {
+        "c": {
+          "type": "boolean",
+          "description": "Target c description"
+        }
+      },
+      "required": ["c"]
+    }
+  }"""
+      return schema
+    }
+
+  @Throws(Exception::class)
+  fun testIfThenElseV7EmptyPropName() {
+    testImpl(ifThenElseSchema, "{<caret>}", "\"c\"")
+    Assert.assertEquals(1, myItems.size.toLong())
+    val presentation = LookupElementPresentation()
+    myItems[0].renderElement(presentation)
+    Assert.assertEquals("Target c description", presentation.typeText)
+  }
+
+  @Throws(Exception::class)
+  fun testIfThenElseV7ThenPropName() {
+    testImpl(ifThenElseSchema, """{"a": "a", <caret>}""", "\"b\"")
+    Assert.assertEquals(1, myItems.size.toLong())
+    val presentation = LookupElementPresentation()
+    myItems[0].renderElement(presentation)
+    Assert.assertEquals("Target b description", presentation.typeText)
+  }
+
+  @Throws(Exception::class)
+  fun testIfThenElseV7ElsePropName() {
+    testImpl(ifThenElseSchema, """{"a": 5, <caret>}""", "\"c\"")
+    Assert.assertEquals(1, myItems.size.toLong())
+    val presentation = LookupElementPresentation()
+    myItems[0].renderElement(presentation)
+    Assert.assertEquals("Target c description", presentation.typeText)
+  }
+
+  @Throws(Exception::class)
+  fun testIfThenElseV7ElsePropValue() {
+    testImpl(ifThenElseSchema, """{"a": 5, "c": <caret>}""", "false", "true")
+    Assert.assertEquals(2, myItems.size.toLong())
+  }
+
+  @Throws(Exception::class)
+  fun testNestedPropsMerging() {
+    testImpl("""{
+  "allOf": [
+    {
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["a", "b"]
+        }
+      }
+    },
+    {
+      "properties": {
+        "severity": {
+        }
+      }
+    }
+  ]
+}""","""{
+  "severity": <caret>
+}""", "\"a\"", "\"b\"");
   }
 }

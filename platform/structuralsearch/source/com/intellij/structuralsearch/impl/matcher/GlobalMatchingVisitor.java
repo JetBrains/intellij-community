@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
+
 /**
  * Visitor class to manage pattern matching
  */
@@ -69,6 +71,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       elements2,
       matchContext
     );
+  }
+
+  @Override
+  public boolean matchOptionally(@Nullable PsiElement patternNode, @Nullable PsiElement matchNode) {
+    return patternNode == null && isLeftLooseMatching() ||
+           matchSequentially(newSingleNodeIterator(patternNode), newSingleNodeIterator(matchNode));
   }
 
   @NotNull
@@ -286,5 +294,33 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   public boolean matchText(String left, String right) {
     return matchContext.getOptions().isCaseSensitiveMatch() ? left.equals(right) : left.equalsIgnoreCase(right);
+  }
+
+  public void scopeMatch(PsiElement patternNode, boolean typedVar, PsiElement matchNode) {
+    final MatchResultImpl ourResult = matchContext.hasResult() ? matchContext.getResult() : null;
+    matchContext.popResult();
+
+    if (myResult) {
+      if (typedVar) {
+        final SubstitutionHandler handler = (SubstitutionHandler)matchContext.getPattern().getHandler(patternNode);
+        if (ourResult != null) ourResult.setScopeMatch(true);
+        handler.setNestedResult(ourResult);
+        setResult(handler.handle(matchNode, matchContext));
+
+        final MatchResultImpl nestedResult = handler.getNestedResult();
+        if (nestedResult != null) { // some constraint prevent from adding
+          copyResults(nestedResult);
+          handler.setNestedResult(null);
+        }
+      }
+      else if (ourResult != null) {
+        copyResults(ourResult);
+      }
+    }
+  }
+
+  private void copyResults(MatchResult ourResult) {
+    final MatchResultImpl result = matchContext.getResult();
+    for (MatchResult son : ourResult.getChildren()) result.addChild(son);
   }
 }

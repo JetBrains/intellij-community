@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.structuralsearch.impl.matcher.strategies.XmlMatchingStrategy;
@@ -17,6 +18,6 @@ public class XmlCompiledPattern extends CompiledPattern {
   }
 
   public boolean isTypedVar(final String str) {
-    return str.startsWith(XML_TYPED_VAR_PREFIX);
+    return str.trim().startsWith(XML_TYPED_VAR_PREFIX);
   }
 }

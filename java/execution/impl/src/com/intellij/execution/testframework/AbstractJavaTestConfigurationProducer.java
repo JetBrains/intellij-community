@@ -83,6 +83,10 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     return null;
   }
 
+  protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+    return true;
+  }
+  
   @Override
   public boolean isConfigurationFromContext(T configuration, ConfigurationContext context) {
     if (isMultipleElementsSelected(context)) {
@@ -108,6 +112,8 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       : null;
     if (vmParameters != null && !Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
     if (differentParamSet(configuration, contextLocation)) return false;
+
+    if (!isApplicableTestType(configuration.getTestType(), context)) return false;
 
     if (configuration.isConfiguredByElement(element)) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();

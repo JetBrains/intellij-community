@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.TIntArrayList;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -821,6 +822,15 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       PsiElement lBrace = aClass.getLBrace();
       PsiElement rBrace = aClass.getRBrace();
       if (lBrace == null || rBrace == null) return;
+
+       //PsiEnumConstant holds comments inside, we need codegen to know about this comments to place \n correctly
+      for (SortableEntry entry : sortableList.myEntries) {
+        List<PsiComment> comments = StreamEx.ofTree(entry.myElement, el -> StreamEx.of(el.getChildren())).select(PsiComment.class).toList();
+        for (PsiComment comment : comments) {
+          entry.myBeforeSeparator.add((PsiComment)comment.copy());
+          comment.delete();
+        }
+      }
       StringBuilder sb = new StringBuilder();
       sortableList.generate(sb);
       PsiElement elementToPreserve = lastElement.getNextSibling();

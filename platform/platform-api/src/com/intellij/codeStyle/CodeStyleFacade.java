@@ -84,25 +84,25 @@ public abstract class CodeStyleFacade {
    */
   public abstract boolean isSmartTabs(final FileType fileType);
 
+  /**
+   * @deprecated Use {@code getRightMargin(Language)} method of {@code CodeStyle.getSettings(PsiFile)} or
+   *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
+   */
   public abstract int getRightMargin(Language language);
 
   /**
-   * @return True if wrap on typing is enabled
-   * @deprecated Use isWrapOnTyping(language) instead
+   * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).TAB_SIZE}. See {@code CodeStyle for more information}
    */
-  public abstract boolean isWrapWhenTypingReachesRightMargin();
-
-  @SuppressWarnings("deprecation")
-  public boolean isWrapOnTyping(@Nullable Language language) {
-    return isWrapWhenTypingReachesRightMargin();
-  }
-
   public abstract int getTabSize(final FileType fileType);
 
+  /**
+   * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).USE_TAB_CHARACTER}. See {@code CodeStyle for more information}
+   */
   public abstract boolean useTabCharacter(final FileType fileType);
 
   /**
-   * @deprecated Use {@code CodeStyle.getDefaultLineSeparator()} or {@code CodeStyle.getLineSeparator(Project)}
+   * @deprecated Use {@code getLineSeparator()} method of {@code CodeStyle.getSettings(PsiFile)} or
+   *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
    */
   public abstract String getLineSeparator();
 

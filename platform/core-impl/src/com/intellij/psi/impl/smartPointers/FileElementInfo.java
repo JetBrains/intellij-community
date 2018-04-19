@@ -32,9 +32,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class FileElementInfo extends SmartPointerElementInfo {
+  @NotNull
   private final VirtualFile myVirtualFile;
+  @NotNull
   private final Project myProject;
+  @NotNull
   private final Language myLanguage;
+  @NotNull
   private final Class<? extends PsiFile> myFileClass;
 
   FileElementInfo(@NotNull final PsiFile file) {
@@ -67,6 +71,7 @@ class FileElementInfo extends SmartPointerElementInfo {
     return other instanceof FileElementInfo && Comparing.equal(myVirtualFile, ((FileElementInfo)other).myVirtualFile);
   }
 
+  @NotNull
   @Override
   VirtualFile getVirtualFile() {
     return myVirtualFile;

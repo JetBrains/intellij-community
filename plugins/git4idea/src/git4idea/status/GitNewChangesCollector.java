@@ -298,38 +298,38 @@ class GitNewChangesCollector extends GitChangesCollector {
   }
 
   private void reportModified(String filepath, VcsRevisionNumber head) throws VcsException {
-    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, true, false);
-    ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false);
+    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false);
+    ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false);
     reportChange(FileStatus.MODIFIED, before, after);
   }
 
   private void reportTypeChanged(String filepath, VcsRevisionNumber head) throws VcsException {
-    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, true, false);
+    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false);
     ContentRevision after = GitContentRevision.createRevisionForTypeChange(myProject, myVcsRoot, filepath, null, false);
     reportChange(FileStatus.MODIFIED, before, after);
   }
 
   private void reportAdded(String filepath) throws VcsException {
     ContentRevision before = null;
-    ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false);
+    ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false);
     reportChange(FileStatus.ADDED, before, after);
   }
 
   private void reportDeleted(String filepath, VcsRevisionNumber head) throws VcsException {
-    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, true, false);
+    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false);
     ContentRevision after = null;
     reportChange(FileStatus.DELETED, before, after);
   }
 
   private void reportRename(String filepath, String oldFilename, VcsRevisionNumber head) throws VcsException {
-    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, oldFilename, head, myProject, true, false);
-    ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false);
+    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, oldFilename, head, myProject, false);
+    ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false);
     reportChange(FileStatus.MODIFIED, before, after);
   }
 
   private void reportConflict(String filepath, VcsRevisionNumber head) throws VcsException {
-    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, true, false);
-    ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false);
+    ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false);
+    ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false);
     reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);
   }
 

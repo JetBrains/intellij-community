@@ -3,7 +3,6 @@ package com.intellij.ide;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +43,7 @@ public class SelectInManager  {
     checkLoadExtensions();
     Stream<SelectInTarget> stream = myTargets.stream();
     if (DumbService.getInstance(myProject).isDumb()) {
-      stream = stream.filter(target -> target instanceof DumbAware);
+      stream = stream.filter(target -> DumbService.isDumbAware(target));
     }
     return stream.sorted(SelectInTargetComparator.INSTANCE).toArray(SelectInTarget[]::new);
   }

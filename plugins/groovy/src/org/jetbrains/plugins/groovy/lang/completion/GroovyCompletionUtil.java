@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
@@ -19,7 +20,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -376,7 +376,7 @@ public class GroovyCompletionUtil {
 
 
   private static boolean showSpaceAfterComma(PsiClass element) {
-    return CodeStyleSettingsManager.getSettings(element.getProject()).getCommonSettings(GroovyLanguage.INSTANCE).SPACE_AFTER_COMMA;
+    return CodeStyle.getLanguageSettings(element.getContainingFile(), GroovyLanguage.INSTANCE).SPACE_AFTER_COMMA;
   }
 
 

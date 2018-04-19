@@ -2,11 +2,7 @@
 package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.ProjectViewNodeDecorator;
-import com.intellij.ide.projectView.TreeStructureProvider;
-import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -17,7 +13,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -45,12 +40,7 @@ import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.stripe.ErrorStripe;
-import com.intellij.ui.tree.AbstractTreeWalker;
-import com.intellij.ui.tree.BaseTreeModel;
-import com.intellij.ui.tree.ProjectFileNode;
-import com.intellij.ui.tree.ProjectFileTreeModel;
-import com.intellij.ui.tree.TreePathUtil;
-import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Invoker;
@@ -59,13 +49,11 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
+import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
-import java.awt.Color;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -73,9 +61,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.projectView.impl.ProjectRootsUtil.findSourceFolder;
 import static com.intellij.openapi.roots.ui.configuration.SourceRootPresentation.getSourceRootIcon;
 import static com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome;
-import static com.intellij.openapi.vfs.VfsUtilCore.getRelativePath;
-import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
-import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
+import static com.intellij.openapi.vfs.VfsUtilCore.*;
 import static java.util.Collections.emptyList;
 
 public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> implements InvokerSupplier {
@@ -225,6 +211,13 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     find(file, null, found -> {
       if (found instanceof Node) {
         Node node = (Node)found;
+        if (file.isDirectory()) {
+          ViewSettings settings = root.getSettings();
+          if (settings.isFlattenPackages() || settings.isHideEmptyMiddlePackages()) {
+            AbstractTreeNode parent = node.getParent();
+            if (parent instanceof Node) node = (Node)parent;
+          }
+        }
         if (node.childrenValid) {
           node.childrenValid = false;
           update(node, true);
@@ -275,7 +268,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
           }
         };
         walker.start(root);
-        walker.promise().processed(path -> consumer.consume(path == null ? null : path.getLastPathComponent()));
+        walker.promise().onProcessed(path -> consumer.consume(path == null ? null : path.getLastPathComponent()));
       }
     });
   }
@@ -491,6 +484,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
     @NotNull
     Collection<AbstractTreeNode> createChildren(@NotNull Node parent, @NotNull Collection<AbstractTreeNode> old) {
+      boolean hideEmptyMiddlePackages = getSettings().isHideEmptyMiddlePackages();
       Mapper<FileNode, ProjectFileNode> mapper = new Mapper<>(FileNode::new, FileNode.class, old);
       List<AbstractTreeNode> children = new SmartList<>();
       List<PsiFile> files = new SmartList<>();
@@ -498,8 +492,24 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       model.getChildren(parent.getValue()).forEach(child -> {
         PsiElement element = child.getPsiElement();
         if (element instanceof PsiDirectory) {
-          //TODO:create folders of different kinds
-          children.add(mapper.apply(parent, child));
+          Icon icon = getFolderIcon(child, element, parent.getIcon());
+          ProjectFileNode childNext = !hideEmptyMiddlePackages ? null : getSingleDirectory(child);
+          while (childNext != null) {
+            Icon iconNext = getFolderIcon(childNext, null, icon);
+            if (icon == iconNext) {
+              child = childNext;
+              childNext = getSingleDirectory(child);
+            }
+            else if (icon == AllIcons.Nodes.Folder && iconNext != AllIcons.Nodes.Package) {
+              icon = iconNext;
+              child = childNext;
+              childNext = null;
+            }
+            else {
+              childNext = null;
+            }
+          }
+          children.add(mapper.apply(parent, child, icon));
         }
         else if (element instanceof PsiFile) {
           if (provider == null) {
@@ -515,6 +525,13 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
                                                    .map(file -> new PsiFileNode(getProject(), file, getSettings()))
                                                    .collect(Collectors.toList()), getSettings()));
       return children;
+    }
+
+    @Nullable
+    private ProjectFileNode getSingleDirectory(ProjectFileNode parent) {
+      List<ProjectFileNode> children = model.getChildren(parent);
+      ProjectFileNode child = children.size() != 1 ? null : children.get(0);
+      return child != null && child.getVirtualFile().isDirectory() ? child : null;
     }
 
     @Override
@@ -538,18 +555,31 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
 
   private static class FileNode extends Node implements ProjectFileNode {
+    final List<VirtualFile> compacted;
     final ProjectFileNode node;
 
     FileNode(@NotNull Node parent, @NotNull ProjectFileNode node) {
       super(parent, node);
       this.node = node;
+      compacted = getCompactedFolders(parent.getVirtualFile(), node.getVirtualFile());
     }
 
     @Override
     protected void update(PresentationData presentation) {
       String title = getTitle();
       presentation.setPresentableText(title != null ? title : toString());
-      presentation.setIcon(getFileIcon(node));
+      Icon icon = getIcon();
+      if (icon == null && node.isValid()) {
+        VirtualFile file = node.getVirtualFile();
+        if (file.isDirectory()) {
+          AbstractTreeNode parent = getParent();
+          icon = getFolderIcon(node, null, parent == null ? null : parent.getIcon());
+        }
+        else {
+          icon = file.getFileType().getIcon();
+        }
+      }
+      presentation.setIcon(icon);
       decorate(presentation);
     }
 
@@ -559,6 +589,17 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       ProjectNode parent = findParent(ProjectNode.class);
       if (parent == null) return emptyList();
       return parent.createChildren(this, old);
+    }
+
+    @Override
+    boolean canRepresent(@NotNull VirtualFile file) {
+      // may be called from unexpected thread
+      return super.canRepresent(file) || isCompactedFolder(file);
+    }
+
+    boolean isCompactedFolder(@NotNull VirtualFile file) {
+      // may be called from unexpected thread
+      return compacted != null && compacted.stream().anyMatch(file::equals);
     }
 
     @Override
@@ -602,6 +643,12 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     @NotNull
     @Override
     public String toString() {
+      if (compacted != null) {
+        StringBuilder sb = new StringBuilder();
+        char separator = AllIcons.Nodes.Package == getIcon() ? '.' : VFS_SEPARATOR_CHAR;
+        compacted.forEach(file -> sb.append(file.getName()).append(separator));
+        return sb.append(getVirtualFile().getName()).toString();
+      }
       return getVirtualFile().getName();
     }
   }
@@ -868,12 +915,33 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       return node;
     }
 
+    @Nullable
+    private Group getSingleGroup() {
+      if (!roots.isEmpty() || groups.size() != 1) return null;
+      return groups.values().stream().findFirst().orElse(null);
+    }
+
     @NotNull
     Collection<AbstractTreeNode> createChildren(@NotNull Node parent, @NotNull Collection<AbstractTreeNode> old) {
       Mapper<GroupNode, Object> mapper = new Mapper<>(GroupNode::new, GroupNode.class, old);
+      ModuleManager manager = getModuleManager(parent.getProject());
+      char separator = manager != null && manager.hasModuleGroups() ? VFS_SEPARATOR_CHAR : '.';
+      boolean hideEmptyMiddlePackages = parent.getSettings().isHideEmptyMiddlePackages();
       List<AbstractTreeNode> children = new SmartList<>();
       for (Group group : groups.values()) {
-        GroupNode node = mapper.apply(parent, group.id);
+        Object id = group.id;
+        Group single = !hideEmptyMiddlePackages ? null : group.getSingleGroup();
+        if (single != null) {
+          StringBuilder sb = new StringBuilder(id.toString());
+          do {
+            group = single;
+            sb.append(separator).append(group.id);
+            single = single.getSingleGroup();
+          }
+          while (single != null);
+          id = sb.toString();
+        }
+        GroupNode node = mapper.apply(parent, id);
         node.setGroup(group);
         children.add(node);
       }
@@ -889,7 +957,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
   }
 
 
-  private static final class Mapper<N extends Node, V> implements BiFunction<Node, V, N> {
+  private static final class Mapper<N extends Node, V> {
     private final HashMap<Object, N> map;
     private final BiFunction<Node, V, N> creator;
 
@@ -907,10 +975,15 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     }
 
     @NotNull
-    @Override
-    public final N apply(Node parent, V value) {
+    N apply(@NotNull Node parent, @NotNull V value) {
+      return apply(parent, value, null);
+    }
+
+    @NotNull
+    N apply(@NotNull Node parent, @NotNull V value, @Nullable Icon icon) {
       N node = map.isEmpty() ? null : map.get(value);
       if (node == null) node = creator.apply(parent, value);
+      node.setIcon(icon);
       node.childrenValid = false;
       return node;
     }
@@ -960,25 +1033,31 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     return index == null ? null : index.getModuleForFile(file);
   }
 
-  @Nullable
-  private static Icon getFileIcon(@NotNull ProjectFileNode node) {
-    if (!node.isValid()) return null;
-    VirtualFile file = node.getVirtualFile();
-    if (!file.isDirectory()) return FileTypeRegistry.getInstance().getFileTypeByFile(file).getIcon();
+  @NotNull
+  private static Icon getFolderIcon(@NotNull ProjectFileNode node, @Nullable PsiElement element, @Nullable Icon parent) {
+    if (parent == AllIcons.Nodes.Package) return parent;
     Module module = node.getModule();
     if (module.isDisposed()) return AllIcons.Nodes.Folder;
+    VirtualFile file = node.getVirtualFile();
     SourceFolder folder = findSourceFolder(module, file);
     if (folder != null) return getSourceRootIcon(folder);
     ProjectFileIndex index = getProjectFileIndex(module.getProject());
-    if (index != null) {
-      if (index.isExcluded(file)) return AllIcons.Modules.ExcludeRoot;
-      PsiElement element = node.getPsiElement();
-      if (element instanceof PsiDirectory) {
-        PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(module.getProject());
-        if (factory != null && factory.isPackage((PsiDirectory)element)) return AllIcons.Nodes.Package;
+    if (index == null) return AllIcons.Nodes.Folder;
+    if (index.isExcluded(file)) return AllIcons.Modules.ExcludeRoot;
+    if (element == null) element = node.getPsiElement();
+    if (isPackage(element)) return AllIcons.Nodes.Package;
+    return AllIcons.Nodes.Folder;
+  }
+
+  private static boolean isPackage(@Nullable PsiElement element) {
+    if (element instanceof PsiDirectory && element.isValid()) {
+      PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(element.getProject());
+      if (factory != null && factory.isPackage((PsiDirectory)element)) {
+        // IDEA-153822: temporary solution to distinguish META-INF from other packages
+        return factory.isValidPackageName(factory.getQualifiedName((PsiDirectory)element, false));
       }
     }
-    return AllIcons.Nodes.Folder;
+    return false;
   }
 
   @NotNull
@@ -1000,5 +1079,17 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       }
     }
     return new SmartList<>(name);
+  }
+
+  @Nullable
+  private static List<VirtualFile> getCompactedFolders(@Nullable VirtualFile ancestor, @NotNull VirtualFile file) {
+    if (ancestor == null || !isAncestor(ancestor, file, true)) return null;
+    ArrayDeque<VirtualFile> deque = new ArrayDeque<>();
+    while (true) {
+      file = file.getParent();
+      if (file == null || !isAncestor(ancestor, file, true)) break;
+      deque.addFirst(file);
+    }
+    return deque.isEmpty() ? null : new SmartList<>(deque);
   }
 }

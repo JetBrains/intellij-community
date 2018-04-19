@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.VisualPaddingsProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
@@ -37,7 +38,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("GtkPreferredJComboBoxRenderer")
-public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
+public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable, VisualPaddingsProvider {
 
   public DarculaComboBoxUI() {}
 
@@ -528,5 +529,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       }
       super.show(invoker, x, y);
     }
+  }
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(3);
   }
 }

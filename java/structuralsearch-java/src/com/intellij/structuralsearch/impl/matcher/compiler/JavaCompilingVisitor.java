@@ -43,7 +43,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private static final Pattern ourPattern3 = Pattern.compile("/\\*\\*" + COMMENT + "\\*/", Pattern.DOTALL);
 
   static final Set<String> excludedKeywords = ContainerUtil.newHashSet(PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM,
-                                                                               PsiKeyword.THROWS, PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS);
+                                                                       PsiKeyword.THROWS, PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS);
 
   public JavaCompilingVisitor(GlobalCompilingVisitor compilingVisitor) {
     this.myCompilingVisitor = compilingVisitor;
@@ -421,6 +421,13 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     if (parent != null && parent.getParent() instanceof PsiClass) {
       GlobalCompilingVisitor.setFilter(myCompilingVisitor.getContext().getPattern().getHandler(reference), TypeFilter.getInstance());
     }
+    else if (parent instanceof PsiNewExpression) {
+      final PsiNewExpression newExpression = (PsiNewExpression)parent;
+      if (newExpression.getArrayInitializer() != null) {
+        GlobalCompilingVisitor.setFilter(myCompilingVisitor.getContext().getPattern().getHandler(reference),
+                                         e -> e instanceof PsiJavaCodeReferenceElement || e instanceof PsiKeyword);
+      }
+    }
   }
 
   @Override
@@ -454,7 +461,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private void createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText, boolean classQualifier) {
     final SubstitutionHandler substitutionHandler =
-      new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, false);
+      new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, true);
     final boolean caseSensitive = myCompilingVisitor.getContext().getOptions().isCaseSensitiveMatch();
     substitutionHandler.setPredicate(new RegExpPredicate(StructuralSearchUtil.shieldRegExpMetaChars(referenceText),
                                                          caseSensitive, null, false, false));

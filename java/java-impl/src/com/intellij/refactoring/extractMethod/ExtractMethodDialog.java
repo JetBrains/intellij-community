@@ -494,16 +494,32 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   @NotNull
   private JBLabel createDuplicatesCountLabel() {
-    JBLabel duplicatesCount = new JBLabel(RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.pending"));
+    JBLabel duplicatesCount = new JBLabel();
     if (myDuplicatesCountSupplier != null) {
+      duplicatesCount.setText(RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.pending"));
       ProgressManager.getInstance().run(
         new Task.Backgroundable(myProject, RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.progress")) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             int count = ReadAction.compute(() -> myDuplicatesCountSupplier.get());
             ApplicationManager.getApplication().invokeLater(
-              () -> duplicatesCount.setText(RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.count", count)),
+              () -> {
+                if (count != 0) {
+                  showCount(UIUtil.getBalloonInformationIcon(),
+                            " " + RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.count", count),
+                            JBUI.Borders.empty(18, 0));
+                }
+                else {
+                  showCount(null, "", null);
+                }
+              },
               ModalityState.any());
+          }
+
+          private void showCount(Icon icon, String message, Border border) {
+            duplicatesCount.setIcon(icon);
+            duplicatesCount.setText(message);
+            duplicatesCount.setBorder(border);
           }
         });
     }

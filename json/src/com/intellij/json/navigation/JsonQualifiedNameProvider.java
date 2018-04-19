@@ -24,6 +24,10 @@ public class JsonQualifiedNameProvider implements QualifiedNameProvider {
   @Nullable
   @Override
   public String getQualifiedName(PsiElement element) {
+    return generateQualifiedName(element, JsonQualifiedNameKind.Qualified);
+  }
+
+  public static String generateQualifiedName(PsiElement element, JsonQualifiedNameKind qualifiedNameKind) {
     if (!(element instanceof JsonElement)) {
       return null;
     }
@@ -32,12 +36,12 @@ public class JsonQualifiedNameProvider implements QualifiedNameProvider {
     while (parentProperty != null) {
       if (parentProperty instanceof JsonProperty) {
         builder.insert(0, parentProperty.getName());
-        builder.insert(0, ".");
+        builder.insert(0, qualifiedNameKind == JsonQualifiedNameKind.JsonPointer ? "/" : ".");
       }
       else {
         int index = JsonUtil.getArrayIndexOfItem(element instanceof JsonProperty ? element.getParent() : element);
         if (index == -1) return null;
-        builder.insert(0, "[" + index + "]");
+        builder.insert(0, qualifiedNameKind == JsonQualifiedNameKind.JsonPointer ? ("/" + index) : ("[" + index + "]"));
       }
       element = parentProperty;
       parentProperty = PsiTreeUtil.getParentOfType(parentProperty, JsonProperty.class, JsonArray.class);

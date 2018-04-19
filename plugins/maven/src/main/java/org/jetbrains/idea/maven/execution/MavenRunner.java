@@ -87,6 +87,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
           return settings.isRunMavenInBackground();
         }
 
+        @Override
         public void processSentToBackground() {
           settings.setRunMavenInBackground(true);
         }

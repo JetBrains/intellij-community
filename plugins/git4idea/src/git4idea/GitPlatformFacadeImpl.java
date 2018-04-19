@@ -22,6 +22,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public class GitPlatformFacadeImpl implements GitPlatformFacade {
 
   @Override

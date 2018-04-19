@@ -30,6 +30,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.*;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -359,7 +360,8 @@ public class PatternCompiler {
     final int segmentsCount = template.getSegmentsCount();
     final String text = template.getTemplateText();
     int prevOffset = 0;
-    final Set<String> seen = new HashSet<>();
+    final Set<String> seen = ContainerUtil.newTroveSet();
+    final Set<String> variableNames = ContainerUtil.newTroveSet();
 
     for(int i = 0; i < segmentsCount; i++) {
       final int offset = template.getSegmentOffset(i);
@@ -373,6 +375,7 @@ public class PatternCompiler {
       final String compiledName = prefix + name;
       buf.append(text, prevOffset, offset).append(compiledName);
 
+      variableNames.add(name);
       if (seen.add(compiledName)) {
         // the same variable can occur multiple times in a single template
         // no need to process it more than once
@@ -426,7 +429,7 @@ public class PatternCompiler {
         }
 
         addExtensionPredicates(options, constraint, handler);
-        addScriptConstraint(project, name, constraint, handler);
+        addScriptConstraint(project, name, constraint, handler, variableNames);
 
         if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
           MatchPredicate predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
@@ -463,30 +466,30 @@ public class PatternCompiler {
       }
 
       addExtensionPredicates(options, constraint, handler);
-      addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler);
+      addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler, variableNames);
     }
 
     buf.append(text.substring(prevOffset));
 
-    PsiElement[] matchStatements;
+    PsiElement[] patternElements;
 
     try {
-      matchStatements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
+      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
                                                            options.getDialect(), options.getPatternContext(), project, false);
-      if (matchStatements.length==0) throw new MalformedPatternException();
+      if (patternElements.length == 0) throw new MalformedPatternException();
     } catch (IncorrectOperationException e) {
       throw new MalformedPatternException(e.getMessage());
     }
 
     NodeFilter filter = LexicalNodesFilter.getInstance();
     List<PsiElement> elements = new SmartList<>();
-    for (PsiElement matchStatement : matchStatements) {
-      if (!filter.accepts(matchStatement)) {
-        elements.add(matchStatement);
+    for (PsiElement element : patternElements) {
+      if (!filter.accepts(element)) {
+        elements.add(element);
       }
     }
 
-    GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
+    final GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
     compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
     new DeleteNodesAction(compilingVisitor.getLexicalNodes()).run();
     return elements;
@@ -502,7 +505,8 @@ public class PatternCompiler {
     }
   }
 
-  private static void addScriptConstraint(Project project, String name, MatchVariableConstraint constraint, SubstitutionHandler handler)
+  private static void addScriptConstraint(Project project, String name, MatchVariableConstraint constraint,
+                                          SubstitutionHandler handler, Set<String> variableNames)
     throws MalformedPatternException {
     if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
       final String script = StringUtil.unquoteString(constraint.getScriptCodeConstraint());
@@ -510,7 +514,7 @@ public class PatternCompiler {
       if (problem != null) {
         throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem " + problem);
       }
-      addPredicate(handler, new ScriptPredicate(project, name, script));
+      addPredicate(handler, new ScriptPredicate(project, name, script, variableNames));
     }
   }
 

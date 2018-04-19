@@ -264,10 +264,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
         catch (Exception e) {
           errorHappened = true;
-          if (!"org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin".equals(adapter.getAssignableToClassName()) &&
-              !"org.jetbrains.uast.java.JavaUastLanguagePlugin".equals(adapter.getAssignableToClassName())) {
-            LOG.error(e);
-          }
+          LOG.error(e);
         }
         myExtensionAdapters.remove(adapter);
       }

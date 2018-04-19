@@ -1,0 +1,2 @@
+deprecated: TreeClosed.png -> /nodes/folder.png
+deprecated: TreeOpen.png -> /nodes/folder.png

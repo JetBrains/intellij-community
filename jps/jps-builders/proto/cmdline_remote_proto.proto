@@ -128,6 +128,7 @@ message Message {
         PROGRESS = 4;
         JPS_INFO = 5;
         OTHER = 6;
+        INTERNAL_BUILDER_ERROR = 7;
       }
       required Kind kind = 1;
       optional string text = 2;

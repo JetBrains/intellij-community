@@ -120,18 +120,19 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testSystemDependencyWithoutPath() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "    <scope>system</scope>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "    <scope>system</scope>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+    importProjectWithErrors(true);
 
     assertModules("project");
     assertModuleLibDeps("project"); // dependency was not added due to reported pom model problem. 
@@ -187,7 +188,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
                      "</dependencies>");
 
-    importProject();
+    importProjectWithErrors(true);
     assertModuleLibDeps("project", "Maven: group:lib:1");
   }
 
@@ -1315,7 +1316,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                          "  </dependency>" +
                          "</dependencies>");
 
-    importProject();
+    importProjectWithErrors(true);
 
     assertModules("project", "m");
     assertModuleLibDeps("m");

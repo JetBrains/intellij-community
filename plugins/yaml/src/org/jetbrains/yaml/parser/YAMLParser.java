@@ -8,6 +8,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 
@@ -215,33 +216,38 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   @NotNull
   private IElementType parseMultiLineScalar(final IElementType tokenType) {
     int indent = -1;
+
+    assert tokenType == getTokenType();
+    // Accept header token: '|' or '>'
+    advanceLexer();
+
+    // Parse header tail: TEXT is used as placeholder for invalid symbols in this context
+    if (getTokenType() == TEXT) {
+      PsiBuilder.Marker err = myBuilder.mark();
+      advanceLexer();
+      err.error(YAMLBundle.message("YAMLParser.invalid.header.symbols"));
+    }
+    PsiBuilder.Marker endOfValue = myBuilder.mark();
+
     IElementType type = getTokenType();
-    PsiBuilder.Marker endOfValue = null;
     while (type == tokenType || type == INDENT || type == EOL) {
+      int length = getCurrentTokenLength();
       if (indent == -1 && type == INDENT) {
-        indent = getCurrentTokenLength();
+        indent = length;
       }
-      
-      if (type == tokenType || type == INDENT && getCurrentTokenLength() > indent) {
-        advanceLexer();
-        if (endOfValue != null) {
-          endOfValue.drop();
-        }
+
+      advanceLexer();
+      if (type == tokenType || type == INDENT && length > indent) {
+        endOfValue.drop();
         endOfValue = myBuilder.mark();
       }
-      else {
-        advanceLexer();
-      }
-      
+
       type = getTokenType();
     }
-    if (endOfValue == null) {
-      rollBackToEol();
-    }
-    else {
-      dropEolMarker();
-      endOfValue.rollbackTo();
-    }
+
+    dropEolMarker();
+    endOfValue.rollbackTo();
+
     return tokenType == SCALAR_LIST ? YAMLElementTypes.SCALAR_LIST_VALUE : YAMLElementTypes.SCALAR_TEXT_VALUE;
   }
 

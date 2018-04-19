@@ -19,13 +19,17 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.*;
+import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,15 +116,16 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     }
     final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<>();
     final TIntArrayList passesRefusedToCreate = new TIntArrayList();
+    boolean isDumb = DumbService.getInstance(myProject).isDumb();
     myRegisteredPassFactories.forEachKey(passId -> {
       if (ArrayUtil.find(passesToIgnore, passId) != -1) {
         return true;
       }
       PassConfig passConfig = myRegisteredPassFactories.get(passId);
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-      final TextEditorHighlightingPass pass = factory.createHighlightingPass(psiFile, editor);
-
-      if (pass == null) {
+      final TextEditorHighlightingPass pass = isDumb && !DumbService.isDumbAware(factory)
+                                              ? null : factory.createHighlightingPass(psiFile, editor);
+      if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
         passesRefusedToCreate.add(passId);
       }
       else {

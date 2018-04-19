@@ -372,7 +372,7 @@ public abstract class DialogWrapper {
         if (myDisposed) return;
         setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(info.isEmpty());
+        getOKAction().setEnabled(info.isEmpty() || info.stream().noneMatch(info1 -> info1.disableOk));
       });
     }
   }
@@ -1300,16 +1300,20 @@ public abstract class DialogWrapper {
     JComponent centerSection = new JPanel(new BorderLayout());
     root.add(centerSection, BorderLayout.CENTER);
 
-    root.setBorder(createContentPaneBorder());
-
     final JComponent n = createNorthPanel();
     if (n != null) {
       centerSection.add(n, BorderLayout.NORTH);
     }
 
-    final JComponent c = createCenterPanel();
-    if (c != null) {
-      centerSection.add(c, BorderLayout.CENTER);
+    final JComponent centerPanel = createCenterPanel();
+    if (centerPanel != null) {
+      centerSection.add(centerPanel, BorderLayout.CENTER);
+    }
+
+    boolean isVisualPaddingCompensatedOnComponentLevel = JBUI.isCompensateVisualPaddingOnComponentLevel(centerPanel);
+    if (isVisualPaddingCompensatedOnComponentLevel) {
+      // see comment about visual paddings in the MigLayoutBuilder.build
+      root.setBorder(createContentPaneBorder());
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
@@ -1318,6 +1322,9 @@ public abstract class DialogWrapper {
     southSection.add(myErrorText, BorderLayout.CENTER);
     final JComponent south = createSouthPanel();
     if (south != null) {
+      if (!isVisualPaddingCompensatedOnComponentLevel) {
+        south.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
+      }
       southSection.add(south, BorderLayout.SOUTH);
     }
 
@@ -1860,7 +1867,7 @@ public abstract class DialogWrapper {
         }
 
         startTrackingValidation();
-        return;
+        if(infoList.stream().anyMatch(info1 -> info1.disableOk)) return;
       }
       doOKAction();
     }
@@ -1871,7 +1878,7 @@ public abstract class DialogWrapper {
   }
 
   private void recordAction(String name, AWTEvent event) {
-    if (event instanceof KeyEvent) {
+    if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
       String shortcut = getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event));
       ActionsCollector.getInstance().record(name + " " + shortcut);
     }

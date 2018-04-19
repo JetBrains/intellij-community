@@ -65,7 +65,11 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         handleBuildEvent(sessionId, event);
         break;
       case COMPILE_MESSAGE:
-        handleCompileMessage(sessionId, msg.getCompileMessage());
+        CmdlineRemoteProto.Message.BuilderMessage.CompileMessage compileMessage = msg.getCompileMessage();
+        handleCompileMessage(sessionId, compileMessage);
+        if (compileMessage.getKind() == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.INTERNAL_BUILDER_ERROR) {
+          LOG.error("Internal build error:\n" + compileMessage.getText());
+        }
         break;
       case CONSTANT_SEARCH_TASK:
         final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task = msg.getConstantSearchTask();

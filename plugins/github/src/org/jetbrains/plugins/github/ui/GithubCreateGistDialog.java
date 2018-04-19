@@ -17,17 +17,24 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.components.*;
+import com.intellij.openapi.ui.panel.PanelGridBuilder;
+import com.intellij.ui.components.JBBox;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
+import org.jetbrains.plugins.github.authentication.ui.GithubAccountCombobox;
 
 import javax.swing.*;
+import java.util.Set;
 
+import static com.intellij.util.ui.UI.PanelFactory.grid;
 import static com.intellij.util.ui.UI.PanelFactory.panel;
 
 public class GithubCreateGistDialog extends DialogWrapper {
@@ -35,14 +42,21 @@ public class GithubCreateGistDialog extends DialogWrapper {
   @NotNull private final JTextArea myDescriptionField;
   @NotNull private final JBCheckBox mySecretCheckBox;
   @NotNull private final JBCheckBox myOpenInBrowserCheckBox;
+  @NotNull private final GithubAccountCombobox myAccountSelector;
 
-  public GithubCreateGistDialog(@NotNull Project project, @Nullable String fileName, boolean secret, boolean openInBrowser) {
+  public GithubCreateGistDialog(@NotNull Project project,
+                                @NotNull Set<GithubAccount> accounts,
+                                @Nullable GithubAccount defaultAccount,
+                                @Nullable String fileName,
+                                boolean secret,
+                                boolean openInBrowser) {
     super(project, true);
 
     myFileNameField = fileName != null ? new JBTextField(fileName) : null;
     myDescriptionField = new JTextArea();
     mySecretCheckBox = new JBCheckBox("Secret", secret);
     myOpenInBrowserCheckBox = new JBCheckBox("Open in browser", openInBrowser);
+    myAccountSelector = new GithubAccountCombobox(accounts, defaultAccount, null);
 
     setTitle("Create Gist");
     init();
@@ -56,17 +70,15 @@ public class GithubCreateGistDialog extends DialogWrapper {
     checkBoxes.add(myOpenInBrowserCheckBox);
 
     JBScrollPane descriptionPane = new JBScrollPane(myDescriptionField);
-    descriptionPane.setMinimumSize(new JBDimension(150, 50));
-    descriptionPane.setPreferredSize(new JBDimension(150, 50));
-    descriptionPane.setBorder(BorderFactory.createEtchedBorder());
+    descriptionPane.setPreferredSize(new JBDimension(270, 55));
+    descriptionPane.setMinimumSize(new JBDimension(270, 55));
 
-    BorderLayoutPanel panel = UI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
-                                       .addToCenter(UI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
-                                                             .addToCenter(descriptionPane)
-                                                             .addToTop(new JBLabel("Description:")))
-                                       .addToBottom(checkBoxes);
-    if (myFileNameField != null) panel.addToTop(panel(myFileNameField).withLabel("Filename:").createPanel());
-    return panel;
+    PanelGridBuilder grid = grid().resize();
+    if (myFileNameField != null) grid.add(panel(myFileNameField).withLabel("Filename:"));
+    grid.add(panel(descriptionPane).withLabel("Description:").anchorLabelOn(UI.Anchor.Top).resizeY(true))
+        .add(panel(checkBoxes));
+    if (myAccountSelector.isEnabled()) grid.add(panel(myAccountSelector).withLabel("Create for:").resizeX(false));
+    return grid.createPanel();
   }
 
   @Override
@@ -100,5 +112,11 @@ public class GithubCreateGistDialog extends DialogWrapper {
 
   public boolean isOpenInBrowser() {
     return myOpenInBrowserCheckBox.isSelected();
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @NotNull
+  public GithubAccount getAccount() {
+    return (GithubAccount)myAccountSelector.getSelectedItem();
   }
 }

@@ -59,12 +59,12 @@ internal class BinaryRequestHandlerTest {
     channel.writeAndFlush(message).await(5, TimeUnit.SECONDS)
 
     try {
-      result.rejected { error -> TestCase.fail(error.message) }
+      result.onError { error -> TestCase.fail(error.message) }
 
       if (result.state == Promise.State.PENDING) {
         val semaphore = Semaphore()
         semaphore.down()
-        result.processed { semaphore.up() }
+        result.onProcessed { semaphore.up() }
         if (!semaphore.waitForUnsafe(5000)) {
           TestCase.fail("Time limit exceeded")
           return

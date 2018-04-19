@@ -2,11 +2,17 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.ide.file.BatchFileChangeListener
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.DocumentReferenceProvider
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -26,6 +32,10 @@ import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
+import org.mockito.Mockito
+import java.lang.IllegalStateException
+import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 
 abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   protected lateinit var vcs: MyMockVcs
@@ -38,6 +48,7 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   protected lateinit var testRoot: VirtualFile
 
   protected lateinit var vcsManager: ProjectLevelVcsManagerImpl
+  protected lateinit var undoManager: UndoManagerImpl
 
   protected var arePartialChangelistsSupported: Boolean = true
 
@@ -61,6 +72,8 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
     vcsManager.directoryMappings = listOf(VcsDirectoryMapping(testRoot.path, vcs.name))
     vcsManager.waitForInitialized()
     assertTrue(vcsManager.hasActiveVcss())
+
+    undoManager = UndoManager.getInstance(getProject()) as UndoManagerImpl
 
     try {
       resetTestState()
@@ -186,10 +199,28 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   protected fun VirtualFile.assertAffectedChangeLists(vararg expectedNames: String) {
     assertSameElements(clm.getChangeLists(this).map { it.name }, *expectedNames)
   }
-  protected open fun runCommand(task: () -> Unit) {
+
+  protected open fun runCommand(groupId: String? = null, task: () -> Unit) {
     CommandProcessor.getInstance().executeCommand(getProject(), {
       ApplicationManager.getApplication().runWriteAction(task)
-    }, "", null)
+    }, "", groupId)
+  }
+
+  protected fun undo(document: Document) {
+    val editor = createMockFileEditor(document)
+    undoManager.undo(editor)
+  }
+
+  protected fun redo(document: Document) {
+    val editor = createMockFileEditor(document)
+    undoManager.redo(editor)
+  }
+
+  private fun createMockFileEditor(document: Document): FileEditor {
+    val editor = Mockito.mock(FileEditor::class.java, Mockito.withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
+    val references = listOf(DocumentReferenceManager.getInstance().create(document))
+    Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references);
+    return editor
   }
 
   protected fun String.asListNameToList(): LocalChangeList = clm.changeLists.find { it.name == this }!!
@@ -204,9 +235,17 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
     assertSameElements(this.affectedChangeListsIds.asListIdsToNames(), *expectedNames)
   }
 
+  protected fun LineStatusTracker<*>.assertTextContentIs(expected: String) {
+    assertEquals(parseInput(expected), document.text)
+  }
+
+  protected fun LineStatusTracker<*>.assertBaseTextContentIs(expected: String) {
+    assertEquals(parseInput(expected), vcsDocument.text)
+  }
+
   protected fun Range.assertChangeList(listName: String) {
     val localRange = this as PartialLocalLineStatusTracker.LocalRange
-    assertEquals(localRange.changelistId, listName.asListNameToId())
+    assertEquals(listName, localRange.changelistId.asListIdToName())
   }
 
 
@@ -247,7 +286,10 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   }
 
 
-  protected class MyMockChangeProvider : ChangeProvider {
+  protected inner class MyMockChangeProvider : ChangeProvider {
+    private val semaphore = Semaphore(1)
+    private val markerSemaphore = Semaphore(0)
+
     val changes = mutableMapOf<FilePath, ContentRevision?>()
     val files = mutableSetOf<VirtualFile>()
 
@@ -255,16 +297,24 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
                             builder: ChangelistBuilder,
                             progress: ProgressIndicator,
                             addGate: ChangeListManagerGate) {
-      for ((filePath, beforeRevision) in changes) {
-        val file = files.find { VcsUtil.getFilePath(it) == filePath }
-        val afterContent: ContentRevision? = when (file) {
-          null -> null
-          else -> CurrentContentRevision(filePath)
+      markerSemaphore.release()
+      semaphore.acquireOrThrow()
+      try {
+        for ((filePath, beforeRevision) in changes) {
+          val file = files.find { VcsUtil.getFilePath(it) == filePath }
+          val afterContent: ContentRevision? = when (file) {
+            null -> null
+            else -> CurrentContentRevision(filePath)
+          }
+
+          val change = Change(beforeRevision, afterContent)
+
+          builder.processChange(change, MockAbstractVcs.getKey())
         }
-
-        val change = Change(beforeRevision, afterContent)
-
-        builder.processChange(change, MockAbstractVcs.getKey())
+      }
+      finally {
+        semaphore.release()
+        markerSemaphore.acquireOrThrow()
       }
     }
 
@@ -273,6 +323,27 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
     }
 
     override fun doCleanup(files: List<VirtualFile>) {
+    }
+
+    fun awaitAndBlockRefresh(): AccessToken {
+      semaphore.acquireOrThrow()
+
+      dirtyScopeManager.markEverythingDirty()
+      clm.scheduleUpdate()
+
+      markerSemaphore.acquireOrThrow()
+      markerSemaphore.release()
+
+      return object : AccessToken() {
+        override fun finish() {
+          semaphore.release()
+        }
+      }
+    }
+
+    private fun Semaphore.acquireOrThrow() {
+      val success = this.tryAcquire(10000, TimeUnit.MILLISECONDS)
+      if (!success) throw IllegalStateException()
     }
   }
 
