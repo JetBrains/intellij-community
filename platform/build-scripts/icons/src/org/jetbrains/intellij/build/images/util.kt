@@ -31,10 +31,10 @@ internal fun isImage(file: File, iconsOnly: Boolean): Boolean {
   return !iconsOnly || isIcon(file)
 }
 
-internal fun isIcon(file: File): Boolean {
+internal fun isIcon(file: File, pixels: Int = 100): Boolean {
   if (!isImage(file)) return false
   val size = imageSize(file) ?: return false
-  return size.height == size.width || size.height <= 100 && size.width <= 100
+  return size.height == size.width || size.height <= pixels && size.width <= pixels
 }
 
 private fun isImage(file: File) = ImageExtension.fromFile(file) != null
