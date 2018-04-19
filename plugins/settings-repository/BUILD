@@ -1,5 +1,6 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.settingsRepository",
     # do not sort: must match IML order
@@ -9,7 +10,6 @@ iml_module(
     ],
     iml_files = ["intellij.settingsRepository.iml"],
     package_prefixes = {"src": "org.jetbrains.settingsRepository"},
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
@@ -49,11 +49,11 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.settingsRepository.tests",
     iml_files = ["intellij.settingsRepository.tests.iml"],
     package_prefixes = {"testSrc": "org.jetbrains.settingsRepository.test"},
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",

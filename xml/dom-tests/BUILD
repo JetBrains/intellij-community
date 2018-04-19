@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.xml.dom.tests",
     iml_files = ["intellij.xml.dom.tests.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    tags = ["managed"],
     test_srcs = ["tests"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],

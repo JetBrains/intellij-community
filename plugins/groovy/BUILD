@@ -1,5 +1,6 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.groovy",
     srcs = ["src"],
@@ -7,7 +8,6 @@ iml_module(
     iml_files = ["intellij.groovy.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
-    tags = ["managed"],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],

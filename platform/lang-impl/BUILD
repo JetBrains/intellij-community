@@ -1,5 +1,6 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.lang.impl",
     # do not sort: must match IML order
@@ -10,7 +11,6 @@ iml_module(
     iml_files = ["intellij.platform.lang.impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
@@ -70,10 +70,10 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.lang.tests",
     iml_files = ["intellij.platform.lang.tests.iml"],
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",

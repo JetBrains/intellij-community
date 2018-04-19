@@ -1,5 +1,6 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.eclipse",
     # do not sort: must match IML order
@@ -9,7 +10,6 @@ iml_module(
     ],
     iml_files = ["intellij.eclipse.iml"],
     resources = ["resources"],
-    tags = ["managed"],
     test_runtime_deps = ["//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl"],
     test_srcs = ["testSources"],
     test_tags = ["manual"],

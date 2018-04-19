@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.java.guiForms.compiler",
     srcs = ["src"],
     iml_files = ["intellij.java.guiForms.compiler.iml"],
-    tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],  # This is flaky on macOS and we don't use it anyway.
     visibility = ["//visibility:public"],

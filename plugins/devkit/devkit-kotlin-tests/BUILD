@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.devkit.kotlin.tests",
     iml_files = ["intellij.devkit.kotlin.tests.iml"],
-    tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],  # fails after IDEA 181.2784.17 merge
     visibility = ["//visibility:public"],

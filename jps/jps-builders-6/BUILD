@@ -1,5 +1,6 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.jps.build.javac.rt",
     srcs = ["src"],
@@ -8,7 +9,6 @@ iml_module(
         "src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
     ],
     iml_files = ["intellij.platform.jps.build.javac.rt.iml"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     runtime_deps = ["//tools/idea/jps/lib:optimizedFileManager"],
     # do not sort: must match IML order

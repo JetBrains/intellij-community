@@ -1,11 +1,11 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.debugger.impl",
     srcs = ["src"],
     iml_files = ["intellij.platform.debugger.impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    tags = ["managed"],
     test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

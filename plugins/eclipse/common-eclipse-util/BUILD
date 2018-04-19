@@ -1,11 +1,11 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.eclipse.common",
     srcs = ["src"],
     iml_files = ["intellij.eclipse.common.iml"],
     package_prefixes = {"src": "org.jetbrains.idea.eclipse"},
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [

@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.java.structuralSearch",
     srcs = ["src"],
     iml_files = ["intellij.java.structuralSearch.iml"],
-    tags = ["managed"],
     test_runtime_deps = ["//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

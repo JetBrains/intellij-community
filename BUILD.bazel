@@ -1,5 +1,6 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module", "iml_project")
 
+# managed by go/iml_to_build
 iml_project(
     name = "android-studio",
     ant = "//tools/idea/studio:BazelAntLauncher",
@@ -459,7 +460,6 @@ iml_project(
         "//tools/vendor/intellij/cidr:intellij.clion",
     ],
     tags = [
-        "managed",
         "no_windows",
     ],
     visibility = ["//visibility:public"],
@@ -471,6 +471,7 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.java.analysis.impl",
     # do not sort: must match IML order
@@ -480,7 +481,6 @@ iml_module(
     ],
     iml_files = ["java/java-analysis-impl/intellij.java.analysis.impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
@@ -527,6 +527,7 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.java.impl",
     # do not sort: must match IML order
@@ -539,7 +540,6 @@ iml_module(
     ],
     iml_files = ["java/java-impl/intellij.java.impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    tags = ["managed"],
     test_runtime_deps = ["//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -597,6 +597,7 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.java.tests",
     exclude = [
@@ -605,7 +606,6 @@ iml_module(
     ],
     iml_files = ["java/java-tests/intellij.java.tests.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    tags = ["managed"],
     test_srcs = [
         "java/java-tests/testSrc",
         "plugins/InspectionGadgets/testsrc",
@@ -678,10 +678,10 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.idea.community.main",
     iml_files = ["intellij.idea.community.main.iml"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
@@ -814,6 +814,7 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.jps.build_and_others",
     # do not sort: must match IML order
@@ -832,7 +833,6 @@ iml_module(
         "java/debugger/impl/intellij.java.debugger.impl.iml",
     ],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    tags = ["managed"],
     test_srcs = ["jps/jps-builders/testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -914,10 +914,10 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.java.ui.tests",
     iml_files = ["java/idea-ui/intellij.java.ui.tests.iml"],
-    tags = ["managed"],
     test_runtime_deps = ["//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl"],
     test_srcs = ["java/idea-ui/testSrc"],
     test_tags = ["manual"],
@@ -935,10 +935,10 @@ iml_module(
     deps = ["//tools/idea:intellij.platform.jps.build_and_others[module]"],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.java.compiler.tests",
     iml_files = ["java/compiler/intellij.java.compiler.tests.iml"],
-    tags = ["managed"],
     test_srcs = ["java/compiler/tests"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],

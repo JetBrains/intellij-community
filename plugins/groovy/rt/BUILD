@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.groovy.rt",
     srcs = ["src"],
     iml_files = ["intellij.groovy.rt.iml"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/.idea/libraries:Groovy"],
     # do not sort: must match IML order

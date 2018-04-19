@@ -1,12 +1,12 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.maven",
     srcs = ["src/main/java"],
     iml_files = ["intellij.maven.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["src/main/resources"],
-    tags = ["managed"],
     test_srcs = ["src/test/java"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -76,12 +76,12 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.maven.server.m2.impl",
     srcs = ["maven2-server-impl/src"],
     iml_files = ["maven2-server-impl/intellij.maven.server.m2.impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",

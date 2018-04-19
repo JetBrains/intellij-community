@@ -1,5 +1,6 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.xslt.debugger.engine",
     # do not sort: must match IML order
@@ -8,7 +9,6 @@ iml_module(
         "lib",
     ],
     iml_files = ["intellij.xslt.debugger.engine.iml"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/.idea/libraries:Trove4j"],
     # do not sort: must match IML order
@@ -19,9 +19,9 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 java_import(
     name = "lib/rmi-stubs",
     jars = ["lib/rmi-stubs.jar"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
 )

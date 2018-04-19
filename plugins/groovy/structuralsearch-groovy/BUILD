@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.groovy.structuralSearch",
     srcs = ["src"],
     iml_files = ["intellij.groovy.structuralSearch.iml"],
-    tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],

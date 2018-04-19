@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.java.structureView",
     srcs = ["src"],
     iml_files = ["intellij.java.structureView.iml"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/structure-view-impl:intellij.platform.structureView.impl"],
     # do not sort: must match IML order

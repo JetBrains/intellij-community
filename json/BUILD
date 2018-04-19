@@ -1,5 +1,6 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.json",
     # do not sort: must match IML order
@@ -10,7 +11,6 @@ iml_module(
     iml_files = ["intellij.json.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/images:intellij.platform.images",

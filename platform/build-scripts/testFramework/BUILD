@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.buildScripts.testFramework",
     iml_files = ["intellij.platform.buildScripts.testFramework.iml"],
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",

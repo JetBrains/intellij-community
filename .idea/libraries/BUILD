@@ -1,22 +1,22 @@
+# managed by go/iml_to_build
 java_library(
     name = "javax-inject",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/javax/inject/javax.inject/1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/javax/inject/javax.inject/1:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "protobuf",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/protobuf/protobuf-java/3.0.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/protobuf/protobuf-java/3.0.0:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "JUnit4",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -30,33 +30,33 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "truth",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "equalsverifier",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.1.5:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.1.5:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "easymock-tools",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/easymock-tools:easymock-3.1"],
     runtime_deps = ["//prebuilts/tools/common/easymock-tools:easymock-3.1"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "mockito",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -74,33 +74,33 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "gson",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.2:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.2:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "kxml2",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/net/sf/kxml/kxml2/2.3.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/net/sf/kxml/kxml2/2.3.0:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Trove4j",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/trove4j/1.0.20160824:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/trove4j/1.0.20160824:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "jsr305",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = ["//tools/idea/lib:jsr305"],
@@ -108,33 +108,33 @@ java_library(
     runtime_deps = ["//tools/idea/lib:jsr305"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "JUnit3",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/junit/junit/3.8.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/junit/junit/3.8.1:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "commons-compress",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/apache/commons/commons-compress/1.10:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/commons/commons-compress/1.10:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "jimfs",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/jimfs/jimfs/1.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/jimfs/jimfs/1.1:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "http-client",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -152,9 +152,9 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "bouncy-castle",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -168,25 +168,25 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "bouncy-castle-provider",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.56:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.56:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "XmlRPC",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/apache/ws/xmlrpc/xmlrpc/2.0.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/ws/xmlrpc/xmlrpc/2.0.1:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Ant",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -240,33 +240,33 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Guava",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava/21.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava/21.0:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "commons-io",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/commons-io/commons-io/2.4:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-io/commons-io/2.4:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "antlr4-runtime-4.5.3",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/adt/idea/android/lib:antlr4-runtime-4.5.3"],
     runtime_deps = ["//tools/adt/idea/android/lib:antlr4-runtime-4.5.3"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "KotlinJavaRuntime",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -282,33 +282,33 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "ASM",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:asm-all"],
     runtime_deps = ["//tools/idea/lib:asm-all"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "JDOM",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:jdom"],
     runtime_deps = ["//tools/idea/lib:jdom"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "jgoodies-forms",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:jgoodies-forms"],
     runtime_deps = ["//tools/idea/lib:jgoodies-forms"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "hamcrest",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = ["//prebuilts/tools/common/m2/repository/org/hamcrest/hamcrest-library/1.3:jar"],
@@ -316,9 +316,9 @@ java_library(
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/hamcrest/hamcrest-library/1.3:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "TestNG",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -332,9 +332,9 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Coverage",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -354,33 +354,33 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Mac",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:eawtstub"],
     runtime_deps = ["//tools/idea/lib:eawtstub"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Log4J",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:log4j"],
     runtime_deps = ["//tools/idea/lib:log4j"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "picocontainer",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:picocontainer"],
     runtime_deps = ["//tools/idea/lib:picocontainer"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "jna",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -394,57 +394,57 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "OroMatcher",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/oro/oro/2.0.8:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/oro/oro/2.0.8:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Snappy-Java",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:snappy-in-java-0.5.1"],
     runtime_deps = ["//tools/idea/lib:snappy-in-java-0.5.1"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "imgscalr",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/imgscalr/imgscalr-lib/4.2:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/imgscalr/imgscalr-lib/4.2:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "batik",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:batik-all"],
     runtime_deps = ["//tools/idea/lib:batik-all"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "xmlgraphics-commons",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/1.5:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/1.5:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "XStream",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:xstream-1.4.8"],
     runtime_deps = ["//tools/idea/lib:xstream-1.4.8"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Xerces",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = ["//tools/idea/lib:xercesImpl"],
@@ -452,57 +452,57 @@ java_library(
     runtime_deps = ["//tools/idea/lib:xercesImpl"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "CGLIB",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:cglib-nodep-3.2.4"],
     runtime_deps = ["//tools/idea/lib:cglib-nodep-3.2.4"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "NanoXML",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/be/cyberelf/nanoxml/nanoxml/2.2.3:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/be/cyberelf/nanoxml/nanoxml/2.2.3:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "commons-codec",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/commons-codec/commons-codec/1.9:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-codec/commons-codec/1.9:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Netty",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:netty-all-4.1.13.Final"],
     runtime_deps = ["//tools/idea/lib:netty-all-4.1.13.Final"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "proxy-vole",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:proxy-vole-1.0.3"],
     runtime_deps = ["//tools/idea/lib:proxy-vole-1.0.3"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "pty4j",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:pty4j-0.7.1"],
     runtime_deps = ["//tools/idea/lib:pty4j-0.7.1"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Mocks",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -522,17 +522,17 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "microba",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:microba"],
     runtime_deps = ["//tools/idea/lib:microba"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "asm-tools",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -548,41 +548,41 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "layoutlib",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/studio/layoutlib:data/layoutlib"],
     runtime_deps = ["//prebuilts/studio/layoutlib:data/layoutlib"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Groovy",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.12:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.12:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "assertJ",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/assertj/assertj-core/3.6.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/assertj/assertj-core/3.6.1:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Jaxen",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/jaxen/jaxen/1.1.3:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/jaxen/jaxen/1.1.3:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "XmlBeans",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -598,73 +598,73 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "jcip",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/net/jcip/jcip-annotations/1.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/net/jcip/jcip-annotations/1.0:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "swingx",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/swinglabs/swingx-core/1.6.2-2:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/swinglabs/swingx-core/1.6.2-2:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Velocity",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:velocity"],
     runtime_deps = ["//tools/idea/lib:velocity"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "xpp3-1.1.4-min",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:xpp3-1.1.4-min"],
     runtime_deps = ["//tools/idea/lib:xpp3-1.1.4-min"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "cli-parser",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/github/spullara/cli-parser/cli-parser/1.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/spullara/cli-parser/cli-parser/1.1:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "commons-logging",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/commons-logging/commons-logging/1.2:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-logging/commons-logging/1.2:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "JavaHelp",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:jh"],
     runtime_deps = ["//tools/idea/lib:jh"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "winp",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.25:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.25:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "miglayout-swing",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -678,17 +678,17 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "jayatana",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:jayatana-1.2.4"],
     runtime_deps = ["//tools/idea/lib:jayatana-1.2.4"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Slf4j",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -702,17 +702,17 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "KotlinTest",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-test"],
     runtime_deps = ["//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-test"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Kryo",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -730,65 +730,65 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "tcServiceMessages",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:serviceMessages"],
     runtime_deps = ["//tools/idea/lib:serviceMessages"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Eclipse",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:ecj-4.7.2"],
     runtime_deps = ["//tools/idea/lib:ecj-4.7.2"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Groovy-Eclipse-Batch",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/plugins/groovy/lib:groovy-eclipse-batch-2.3.4-01"],
     runtime_deps = ["//tools/idea/plugins/groovy/lib:groovy-eclipse-batch-2.3.4-01"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "nekohtml",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:nekohtml-1.9.14"],
     runtime_deps = ["//tools/idea/lib:nekohtml-1.9.14"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "freemarker",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/freemarker/freemarker/2.3.20:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/freemarker/freemarker/2.3.20:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "jgraphx-3.4.0.1",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/adt/idea/android/lib:jgraphx-3.4.0.1"],
     runtime_deps = ["//tools/adt/idea/android/lib:jgraphx-3.4.0.1"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "baksmali",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/adt/idea/android/lib:baksmali-2.2.1"],
     runtime_deps = ["//tools/adt/idea/android/lib:baksmali-2.2.1"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "dexlib2",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -802,17 +802,17 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "studio-profiler-grpc-1.0-jarjar",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
     runtime_deps = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "junit5_rt",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -832,9 +832,9 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "imageio-tiff",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -856,17 +856,17 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "purejavacomm",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:purejavacomm"],
     runtime_deps = ["//tools/idea/lib:purejavacomm"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "cucumber-core",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -880,41 +880,41 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "cucumber-java",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/info/cukes/cucumber-java/1.2.4:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/info/cukes/cucumber-java/1.2.4:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "cucumber-testing",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/info/cukes/cucumber-jvm-deps/1.0.3:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/info/cukes/cucumber-jvm-deps/1.0.3:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "JSch",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/jcraft/jsch/0.1.54:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jcraft/jsch/0.1.54:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "tightvnc",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/tightvnc:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/tightvnc:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "http-client-3.1",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = ["//tools/idea/lib:commons-httpclient-3.1-patched"],
@@ -922,17 +922,17 @@ java_library(
     runtime_deps = ["//tools/idea/lib:commons-httpclient-3.1-patched"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "markdownj",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:markdownj-core-0.4.2-SNAPSHOT"],
     runtime_deps = ["//tools/idea/lib:markdownj-core-0.4.2-SNAPSHOT"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "JaCoCo",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -946,41 +946,41 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "automaton",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:automaton"],
     runtime_deps = ["//tools/idea/lib:automaton"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "StreamEx",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.6.5:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.6.5:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "memoryfilesystem",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/github/marschall/memoryfilesystem/1.0.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/marschall/memoryfilesystem/1.0.0:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "snakeyaml",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.17:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.17:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "Gradle",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -998,33 +998,33 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "guava-testlib",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/adt/idea/android/lib:guava-testlib-21.0"],
     runtime_deps = ["//tools/adt/idea/android/lib:guava-testlib-21.0"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "jediterm-pty",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:jediterm-pty-2.7"],
     runtime_deps = ["//tools/idea/lib:jediterm-pty-2.7"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "gradle-api",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/base/build-system:gradle-api_neverlink"],
     runtime_deps = ["//tools/base/build-system:gradle-api_neverlink"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "auto-value-1.4.1",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1:jar"],
@@ -1036,9 +1036,9 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "kotlin-stdlib-jre8",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -1052,25 +1052,25 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "commons-lang",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/commons-lang/commons-lang/2.6:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-lang/commons-lang/2.6:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "juniversalchardet-1.0.3",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
     runtime_deps = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "cucumber-core_2.0.1",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -1090,9 +1090,9 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "trilead-ssh2",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -1108,33 +1108,33 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "ini4j",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/ini4j/0.5.5-2:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/ini4j/0.5.5-2:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "commons-imaging",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/commons-imaging/1.0-RC:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/commons-imaging/1.0-RC:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "precompiled_jshell-frontend",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:jshell-frontend"],
     runtime_deps = ["//tools/idea/lib:jshell-frontend"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "JUnit5",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -1152,97 +1152,97 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "sqlite",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.20.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.20.1:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "javapoet-1.8.0",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/squareup/javapoet/1.8.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/squareup/javapoet/1.8.0:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "xml-apis-ext",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/xml-apis/xml-apis-ext/1.3.04:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/xml-apis/xml-apis-ext/1.3.04:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "aapt-proto-jarjar",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/base/sdk-common/aapt-proto-jar-generator:aapt-proto-jarjar"],
     runtime_deps = ["//tools/base/sdk-common/aapt-proto-jar-generator:aapt-proto-jarjar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "aia-manifest-proto-1.0-jarjar",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/base/sdk-common/aia-manifest-jar-generator:aia-manifest-proto-1.0-jarjar"],
     runtime_deps = ["//tools/base/sdk-common/aia-manifest-jar-generator:aia-manifest-proto-1.0-jarjar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "gant-groovy",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/gant/gant_groovy2.3/1.9.11:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/gant/gant_groovy2.3/1.9.11:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "kotlinx-coroutines-core",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-core/0.20:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-core/0.20:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "kotlinx-coroutines-jdk8",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/0.20:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/0.20:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "javaxdelta",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "fastutil",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "lz4-java",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:lz4-java-1.3"],
     runtime_deps = ["//tools/idea/lib:lz4-java-1.3"],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "de.ruedigermoeller_fst",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -1260,9 +1260,9 @@ java_library(
     ],
 )
 
+# managed by go/iml_to_build
 java_library(
     name = "jetifier-core",
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/jetifier/jetifier-core/0.0.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/jetifier/jetifier-core/0.0.1:jar"],

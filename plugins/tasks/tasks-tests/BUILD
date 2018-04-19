@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.tasks.tests",
     iml_files = ["intellij.tasks.tests.iml"],
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = ["//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl"],
     test_srcs = ["test"],

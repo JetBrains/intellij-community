@@ -1,5 +1,6 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.devkit",
     # do not sort: must match IML order
@@ -13,7 +14,6 @@ iml_module(
         "src": "org.jetbrains.idea.devkit",
     },
     resources = ["resources"],
-    tags = ["managed"],
     test_srcs = ["testSources"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],

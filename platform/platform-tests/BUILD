@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.tests",
     iml_files = ["intellij.platform.tests.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    tags = ["managed"],
     test_runtime_deps = ["//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

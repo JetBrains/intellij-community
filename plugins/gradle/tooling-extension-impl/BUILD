@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.gradle.toolingExtension.impl",
     srcs = ["src"],
     iml_files = ["intellij.gradle.toolingExtension.impl.iml"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
@@ -17,10 +17,10 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.gradle.toolingExtension.tests",
     iml_files = ["intellij.gradle.toolingExtension.tests.iml"],
-    tags = ["managed"],
     test_resources = ["testData"],
     test_srcs = ["testSources"],
     test_tags = ["manual"],

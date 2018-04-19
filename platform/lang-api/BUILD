@@ -1,11 +1,11 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.lang",
     srcs = ["src"],
     iml_files = ["intellij.platform.lang.iml"],
     javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
-    tags = ["managed"],
     test_srcs = ["testSources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

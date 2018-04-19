@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.tools.jetCheck",
     srcs = ["src"],
     iml_files = ["intellij.tools.jetCheck.iml"],
-    tags = ["managed"],
     test_srcs = ["test"],
     test_tags = ["manual"],  # b/77882590
     visibility = ["//visibility:public"],

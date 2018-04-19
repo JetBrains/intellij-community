@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.buildScripts",
     srcs = ["groovy"],
     iml_files = ["intellij.platform.buildScripts.iml"],
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
@@ -64,11 +64,11 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.images.build",
     srcs = ["icons/src"],
     iml_files = ["icons/intellij.platform.images.build.iml"],
-    tags = ["managed"],
     test_srcs = ["icons/tests"],
     test_tags = ["manual"],  # fails after IDEA 181.2784.17 merge
     visibility = ["//visibility:public"],

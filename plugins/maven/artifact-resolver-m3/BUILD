@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.maven.artifactResolver.m3",
     srcs = ["src"],
     iml_files = ["intellij.maven.artifactResolver.m3.iml"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/plugins/maven/artifact-resolver/common:intellij.maven.artifactResolver.common"],
     # do not sort: must match IML order

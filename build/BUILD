@@ -1,5 +1,6 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.idea.community.build",
     # do not sort: must match IML order
@@ -15,7 +16,6 @@ iml_module(
         "*.txt",
     ]),
     iml_files = ["intellij.idea.community.build.iml"],
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
@@ -65,10 +65,10 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.tools.dependencies",
     iml_files = ["dependencies/intellij.tools.dependencies.iml"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 

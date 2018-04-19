@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.tasks.impl",
     srcs = ["src"],
     iml_files = ["intellij.platform.tasks.impl.iml"],
-    tags = ["managed"],
     test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

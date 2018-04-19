@@ -1,12 +1,12 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.util",
     srcs = ["src"],
     iml_files = ["intellij.platform.util.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -36,11 +36,11 @@ iml_module(
     ],
 )
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.util.tests",
     iml_files = ["testSrc/intellij.platform.util.tests.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",

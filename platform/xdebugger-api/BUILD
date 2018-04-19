@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
+# managed by go/iml_to_build
 iml_module(
     name = "intellij.platform.debugger",
     srcs = ["src"],
     iml_files = ["intellij.platform.debugger.iml"],
-    tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/lang-api:intellij.platform.lang"],
     deps = ["//tools/idea/platform/lang-api:intellij.platform.lang[module]"],
