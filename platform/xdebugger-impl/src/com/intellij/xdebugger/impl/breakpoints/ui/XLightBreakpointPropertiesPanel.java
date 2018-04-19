@@ -7,10 +7,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
@@ -50,6 +52,12 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     }
   }
 
+  private void createUIComponents() {
+    myRestoreLink = LinkLabel.create(XDebuggerBundle.message("xbreakpoints.restore.label"), () -> WriteAction.run(
+      () -> ((XBreakpointManagerImpl)XDebuggerManager.getInstance(myBreakpoint.getProject()).getBreakpointManager())
+        .restoreLastRemovedBreakpoint()));
+  }
+
   public interface Delegate {
     void showMoreOptions();
   }
@@ -80,7 +88,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   private JPanel myConditionCheckboxPanel;
   private JPanel myLanguageChooserPanel;
   private JPanel myConditionExpressionPanel;
-  private JButton myRestoreButton;
+  private LinkLabel myRestoreLink;
   private final List<XBreakpointCustomPropertiesPanel> myCustomPanels;
 
   private final List<XBreakpointPropertiesSubPanel> mySubPanels = new ArrayList<>();
@@ -203,12 +211,10 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
     myEnabledCheckbox.addActionListener(e -> myBreakpoint.setEnabled(myEnabledCheckbox.isSelected()));
     XBreakpointBase lastRemovedBreakpoint = ((XBreakpointManagerImpl)breakpointManager).getLastRemovedBreakpoint();
-    myRestoreButton.setVisible(lastRemovedBreakpoint != null &&
-                               breakpointType.equals(lastRemovedBreakpoint.getType()) &&
-                               XSourcePosition.isOnTheSameLine(sourcePosition, lastRemovedBreakpoint.getSourcePosition()) &&
-                               XBreakpointManagerImpl.statesAreDifferent(lastRemovedBreakpoint.getState(), breakpoint.getState(), true));
-    myRestoreButton.addActionListener(e -> WriteAction.run(
-      () -> ((XBreakpointManagerImpl)breakpointManager).restoreLastRemovedBreakpoint()));
+    myRestoreLink.setVisible(lastRemovedBreakpoint != null &&
+                             breakpointType.equals(lastRemovedBreakpoint.getType()) &&
+                             XSourcePosition.isOnTheSameLine(sourcePosition, lastRemovedBreakpoint.getSourcePosition()) &&
+                             XBreakpointManagerImpl.statesAreDifferent(lastRemovedBreakpoint.getState(), breakpoint.getState(), true));
   }
 
   private void onCheckboxChanged() {
