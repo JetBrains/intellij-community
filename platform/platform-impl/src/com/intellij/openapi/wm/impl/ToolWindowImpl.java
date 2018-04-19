@@ -434,7 +434,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public final void setIcon(final Icon icon) {
+  public final void setIcon(Icon icon) {
+    //icon = IconUtil.filterIcon(icon, new UIUtil.GrayFilter(), myComponent);
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
     if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
