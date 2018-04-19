@@ -489,11 +489,12 @@ public final class HttpRequests {
   }
 
   private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
+    if (builder.myForceHttps && StringUtil.startsWith(request.myUrl, "http:")) {
+      request.myUrl = "https:" + request.myUrl.substring(5);
+    }
+
     for (int i = 0; i < builder.myRedirectLimit; i++) {
       String url = request.myUrl;
-      if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
-        request.myUrl = url = "https:" + url.substring(5);
-      }
 
       final URLConnection connection;
       if (!builder.myUseProxy) {
