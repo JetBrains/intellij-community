@@ -13,6 +13,14 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
+/**
+ * <pre>{@code
+ * sb.append(a);
+ * sb.append(b);
+ * =>
+ * sb.append(a).append(b);
+ * }</pre>
+ */
 public class ChainCallJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
   public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
@@ -80,7 +88,7 @@ public class ChainCallJoinLinesHandler implements JoinLinesHandlerDelegate {
   }
 
   @Nullable
-  private static PsiExpression getDeepQualifier(PsiMethodCallExpression firstCall) {
+  static PsiExpression getDeepQualifier(PsiMethodCallExpression firstCall) {
     PsiExpression firstQualifier = firstCall;
     while (firstQualifier instanceof PsiMethodCallExpression) {
       firstQualifier = ((PsiMethodCallExpression)firstQualifier).getMethodExpression().getQualifierExpression();
