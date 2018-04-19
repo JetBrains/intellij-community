@@ -5,6 +5,7 @@ import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.execution.RunConfigurationConverter
+import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.diagnostic.logger
@@ -12,6 +13,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.attribute
+import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.function.Function
 
@@ -23,6 +25,8 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
   private val converters by lazy {
     ConfigurationType.CONFIGURATION_TYPE_EP.extensions.filterIsInstance(RunConfigurationConverter::class.java)
   }
+
+  private val cachedSerializedTemplateIdToData = THashMap<ConfigurationFactory, Element>()
 
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
     // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
@@ -112,8 +116,10 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     else if (scheme.isTemplate) {
       val factory = scheme.factory
       if (factory != UnknownConfigurationType.getFactory()) {
-        val templateSettings = manager.createTemplateSettings(factory)
-        if (JDOMUtil.areElementsEqual(result, templateSettings.writeScheme())) {
+        val originalTemplate = cachedSerializedTemplateIdToData.getOrPut(factory) {
+          JDOMUtil.internElement(manager.createTemplateSettings(factory).writeScheme())
+        }
+        if (JDOMUtil.areElementsEqual(result, originalTemplate)) {
           return null
         }
       }

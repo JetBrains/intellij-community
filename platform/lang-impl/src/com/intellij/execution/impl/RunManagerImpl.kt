@@ -97,7 +97,17 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   private val recentlyUsedTemporaries = ArrayList<RunnerAndConfigurationSettings>()
 
-  private val workspaceSchemeManagerProvider = SchemeManagerIprProvider("configuration")
+  // templates should be first because to migrate old before run list to effective, we need to get template before run task
+  private val workspaceSchemeManagerProvider = SchemeManagerIprProvider("configuration", Comparator { n1, n2 ->
+    val w1 = getNameWeight(n1)
+    val w2 = getNameWeight(n2)
+    if (w1 == w2) {
+      n1.compareTo(n2)
+    }
+    else {
+      w1 - w2
+    }
+  })
 
   internal val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("configuration")
 
@@ -156,16 +166,17 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return createConfiguration(factory.createConfiguration(name, template.configuration), template)
   }
 
-  override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory) = createConfiguration(
-    runConfiguration, getConfigurationTemplate(factory))
+  override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
+    return createConfiguration(runConfiguration, getConfigurationTemplate(factory))
+  }
 
-  private fun createConfiguration(configuration: RunConfiguration,
-                                  template: RunnerAndConfigurationSettingsImpl): RunnerAndConfigurationSettings {
-    val settings = RunnerAndConfigurationSettingsImpl(this, configuration, false)
+  private fun createConfiguration(configuration: RunConfiguration, template: RunnerAndConfigurationSettingsImpl): RunnerAndConfigurationSettings {
+    val settings = RunnerAndConfigurationSettingsImpl(this, configuration)
     settings.importRunnerAndConfigurationSettings(template)
     if (!settings.isShared) {
       shareConfiguration(settings, template.isShared)
     }
+    configuration.beforeRunTasks = template.configuration.beforeRunTasks
     return settings
   }
 
@@ -226,9 +237,12 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return lock.read { templateIdToConfiguration.get(key) } ?: lock.write {
       templateIdToConfiguration.getOrPut(key) {
         val template = createTemplateSettings(factory)
-        (template.configuration as? UnknownRunConfiguration)?.let {
+        val configuration = template.configuration
+        (configuration as? UnknownRunConfiguration)?.let {
           it.isDoNotStore = true
         }
+
+        configuration.beforeRunTasks = getHardcodedBeforeRunTasks(configuration)
 
         workspaceSchemeManager.addScheme(template)
 
@@ -398,17 +412,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     workspaceSchemeManager.save()
 
     lock.read {
-      // backward compatibility - write templates in the end
-      workspaceSchemeManagerProvider.writeState(element, Comparator { n1, n2 ->
-        val w1 = if (n1.startsWith("<template> of ")) 1 else 0
-        val w2 = if (n2.startsWith("<template> of ")) 1 else 0
-        if (w1 != w2) {
-          w1 - w2
-        }
-        else {
-          n1.compareTo(n2)
-        }
-      })
+      workspaceSchemeManagerProvider.writeState(element)
 
       if (idToSettings.size > 1) {
         selectedConfiguration?.let {
@@ -465,38 +469,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     settings.forEach { parentNode.addContent((it as RunnerAndConfigurationSettingsImpl).writeScheme()) }
   }
 
-  internal fun writeBeforeRunTasks(settings: RunnerAndConfigurationSettings, configuration: RunConfiguration): Element? {
-    var tasks = if (settings.isTemplate) configuration.beforeRunTasks
-    else getEffectiveBeforeRunTasks(configuration, ownIsOnlyEnabled = false, isDisableTemplateTasks = false)
-
-    if (!tasks.isEmpty() && !settings.isTemplate) {
-      val templateTasks = getTemplateBeforeRunTasks(getConfigurationTemplate(configuration.factory).configuration)
-      if (!templateTasks.isEmpty()) {
-        var index = 0
-        for (templateTask in templateTasks) {
-          if (!templateTask.isEnabled) {
-            continue
-          }
-
-          if (templateTask == tasks.get(index)) {
-            index++
-          }
-          else {
-            break
-          }
-        }
-
-        if (index > 0) {
-          tasks = tasks.subList(index, tasks.size)
-        }
-      }
-    }
-
-    if (tasks.isEmpty() && settings.isNewSerializationAllowed) {
-      return null
-    }
-
+  internal fun writeBeforeRunTasks(configuration: RunConfiguration): Element? {
+    val tasks = configuration.beforeRunTasks
     val methodElement = Element(METHOD)
+    methodElement.attribute("v", "2")
     for (task in tasks) {
       val child = Element(OPTION)
       child.setAttribute(NAME_ATTR, task.providerId.toString())
@@ -726,27 +702,43 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
   }
 
-  internal fun readStepsBeforeRun(child: Element, settings: RunnerAndConfigurationSettings): List<BeforeRunTask<*>> {
+  internal fun readBeforeRunTasks(element: Element?, settings: RunnerAndConfigurationSettings, configuration: RunConfiguration) {
     var result: MutableList<BeforeRunTask<*>>? = null
-    for (methodElement in child.getChildren(OPTION)) {
-      val key = methodElement.getAttributeValue(NAME_ATTR)
-      val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
-      val beforeRunTask = provider.createTask(settings.configuration) ?: continue
-      if (beforeRunTask is PersistentStateComponent<*>) {
-        // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
-        beforeRunTask.isEnabled = true
-        beforeRunTask.deserializeAndLoadState(methodElement)
+    if (element != null) {
+      for (methodElement in element.getChildren(OPTION)) {
+        val key = methodElement.getAttributeValue(NAME_ATTR)
+        val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
+        val beforeRunTask = provider.createTask(configuration) ?: continue
+        if (beforeRunTask is PersistentStateComponent<*>) {
+          // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
+          beforeRunTask.isEnabled = true
+          beforeRunTask.deserializeAndLoadState(methodElement)
+        }
+        else {
+          @Suppress("DEPRECATION")
+          beforeRunTask.readExternal(methodElement)
+        }
+        if (result == null) {
+          result = SmartList()
+        }
+        result.add(beforeRunTask)
+      }
+    }
+
+    if (element?.getAttributeValue("v") == null) {
+      if (settings.isTemplate) {
+        if (result.isNullOrEmpty()) {
+          configuration.beforeRunTasks = getHardcodedBeforeRunTasks(configuration)
+          return
+        }
       }
       else {
-        @Suppress("DEPRECATION")
-        beforeRunTask.readExternal(methodElement)
+        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory).configuration.beforeRunTasks, true, false)
+        return
       }
-      if (result == null) {
-        result = SmartList()
-      }
-      result.add(beforeRunTask)
     }
-    return result ?: emptyList()
+
+    configuration.beforeRunTasks = result ?: emptyList()
   }
 
   override fun getConfigurationType(typeName: String) = idToType.get(typeName)
@@ -870,36 +862,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return result ?: emptyList()
   }
 
-  override fun getBeforeRunTasks(configuration: RunConfiguration) = getEffectiveBeforeRunTasks(configuration)
-
-  private fun getEffectiveBeforeRunTasks(configuration: RunConfiguration,
-                                         ownIsOnlyEnabled: Boolean = true,
-                                         isDisableTemplateTasks: Boolean = false,
-                                         newTemplateTasks: List<BeforeRunTask<*>>? = null,
-                                         newOwnTasks: List<BeforeRunTask<*>>? = null): List<BeforeRunTask<*>> {
-    if (configuration is WrappingRunConfiguration<*>) {
-      return getBeforeRunTasks(configuration.peer)
+  override fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
+    return when (configuration) {
+      is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
+      else -> configuration.beforeRunTasks
     }
-
-    val ownTasks: List<BeforeRunTask<*>> = newOwnTasks ?: configuration.beforeRunTasks
-
-    val templateConfiguration = getConfigurationTemplate(configuration.factory).configuration
-    if (templateConfiguration is UnknownRunConfiguration) {
-      return emptyList()
-    }
-
-    val templateTasks = newTemplateTasks ?: if (templateConfiguration === configuration) {
-      getHardcodedBeforeRunTasks(configuration)
-    }
-    else {
-      getTemplateBeforeRunTasks(templateConfiguration)
-    }
-
-    // if no own tasks, no need to write
-    if (newTemplateTasks == null && ownTasks.isEmpty()) {
-      return if (isDisableTemplateTasks) emptyList() else templateTasks.filterSmart { !ownIsOnlyEnabled || it.isEnabled }
-    }
-    return getEffectiveBeforeRunTaskList(ownTasks, templateTasks, ownIsOnlyEnabled, isDisableTemplateTasks = isDisableTemplateTasks)
   }
 
   fun shareConfiguration(settings: RunnerAndConfigurationSettings, value: Boolean) {
@@ -915,53 +882,15 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>, addEnabledTemplateTasksIfAbsent: Boolean) {
+    setBeforeRunTasks(configuration, tasks)
+  }
+
+  override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>) {
     if (configuration is UnknownRunConfiguration) {
       return
     }
 
-    val result: List<BeforeRunTask<*>>
-    if (addEnabledTemplateTasksIfAbsent) {
-      // copy to be sure that list is immutable
-      result = tasks.mapSmart { it }
-    }
-    else {
-      val templateConfiguration = getConfigurationTemplate(configuration.factory).configuration
-      val isTemplate = templateConfiguration === configuration
-      val templateTasks = if (isTemplate) {
-        getHardcodedBeforeRunTasks(configuration)
-      }
-      else {
-        getTemplateBeforeRunTasks(templateConfiguration)
-      }
-
-      if (isTemplate) {
-        if (tasks == templateTasks) {
-          // nothing is changed
-          return
-        }
-
-        // we must update all existing configuration tasks to ensure that effective tasks (own + template) are the same as before template configuration change
-        // see testTemplates test
-        lock.read {
-          for (otherSettings in allSettings) {
-            val otherConfiguration = otherSettings.configuration
-            if (otherConfiguration !is WrappingRunConfiguration<*> && otherConfiguration.factory === templateConfiguration.factory) {
-              otherConfiguration.beforeRunTasks = getEffectiveBeforeRunTasks(otherConfiguration, ownIsOnlyEnabled = false,
-                                                                             isDisableTemplateTasks = true, newTemplateTasks = tasks)
-            }
-          }
-        }
-      }
-
-      result = if (tasks == templateTasks) {
-        emptyList()
-      }
-      else {
-        getEffectiveBeforeRunTaskList(tasks, templateTasks = templateTasks, ownIsOnlyEnabled = false, isDisableTemplateTasks = true)
-      }
-    }
-
-    configuration.beforeRunTasks = result
+    configuration.beforeRunTasks = tasks
     fireBeforeRunTasksUpdated()
   }
 
@@ -1069,3 +998,5 @@ internal class IprRunManagerImpl(private val project: Project) : PersistentState
     lastLoadedState.set(state)
   }
 }
+
+private fun getNameWeight(n1: String) = if (n1.startsWith("<template> of ") || n1.startsWith("_template__ ")) 0 else 1

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.BeforeRunTask
@@ -8,9 +8,8 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.util.SmartList
 import com.intellij.util.containers.filterSmartMutable
 import com.intellij.util.containers.mapSmartSet
-import com.intellij.util.containers.nullize
 
-internal fun getEffectiveBeforeRunTaskList(ownTasks: List<BeforeRunTask<*>>, templateTasks: List<BeforeRunTask<*>>, ownIsOnlyEnabled: Boolean, isDisableTemplateTasks: Boolean): MutableList<BeforeRunTask<*>> {
+internal fun getEffectiveBeforeRunTaskList(ownTasks: List<BeforeRunTask<*>>, templateTasks: List<BeforeRunTask<*>>, ownIsOnlyEnabled: Boolean, isDisableTemplateTasks: Boolean): List<BeforeRunTask<*>> {
   val idToSet = ownTasks.mapSmartSet { it.providerId }
   val result = ownTasks.filterSmartMutable { !ownIsOnlyEnabled || it.isEnabled }
   var i = 0
@@ -29,10 +28,6 @@ internal fun getEffectiveBeforeRunTaskList(ownTasks: List<BeforeRunTask<*>>, tem
     }
   }
   return result
-}
-
-internal fun getTemplateBeforeRunTasks(templateConfiguration: RunConfiguration): List<BeforeRunTask<*>> {
-  return templateConfiguration.beforeRunTasks.nullize() ?: getHardcodedBeforeRunTasks(templateConfiguration)
 }
 
 internal fun getHardcodedBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
