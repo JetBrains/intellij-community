@@ -196,7 +196,7 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Gear = IconLoader.getIcon("/general/gearPlain.png"); // 16x16
+    public static final Icon Gear = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
     
     public static class Mac {
       public static final Icon AddNewSectionRule = IconLoader.getIcon("/codeStyle/mac/AddNewSectionRule.png"); // 16x16
@@ -504,7 +504,7 @@ public class AllIcons {
     public static final Icon Floating = IconLoader.getIcon("/general/floating.png"); // 14x14
     public static final Icon Gear = IconLoader.getIcon("/general/gear.png"); // 21x16
     public static final Icon GearHover = IconLoader.getIcon("/general/gearHover.png"); // 21x16
-    public static final Icon GearPlain = IconLoader.getIcon("/general/gearPlain.png"); // 16x16
+    public static final Icon GearPlain = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
     public static final Icon GetProjectfromVCS = IconLoader.getIcon("/general/getProjectfromVCS.png"); // 32x32
     public static final Icon Help = IconLoader.getIcon("/general/help.png"); // 10x10
     public static final Icon Help_small = IconLoader.getIcon("/general/help_small.png"); // 16x16
@@ -580,7 +580,7 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ProjectSettings = IconLoader.getIcon("/general/gearPlain.png"); // 16x16
+    public static final Icon ProjectSettings = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
     public static final Icon ProjectStructure = IconLoader.getIcon("/general/projectStructure.png"); // 16x16
     public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.png"); // 16x16
     public static final Icon QuestionDialog = IconLoader.getIcon("/general/questionDialog.png"); // 32x32
@@ -595,7 +595,7 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon SecondaryGroup = IconLoader.getIcon("/general/gearPlain.png"); // 16x16
+    public static final Icon SecondaryGroup = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
     public static final Icon SeparatorH = IconLoader.getIcon("/general/separatorH.png"); // 17x11
     public static final Icon Settings = IconLoader.getIcon("/general/settings.png"); // 16x16
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.png"); // 16x16
