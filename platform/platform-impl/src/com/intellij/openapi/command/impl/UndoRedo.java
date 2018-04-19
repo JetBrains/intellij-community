@@ -27,9 +27,6 @@ abstract class UndoRedo {
   protected final FileEditor myEditor;
   protected final UndoableGroup myUndoableGroup;
 
-  //prevent from reentrancy when falling back to global undo stack
-  private boolean myIsDelegatingToGlobalUndo = false;
-
   //public static void execute(UndoManagerImpl manager, FileEditor editor, boolean isUndo) {
   //  do {
   //    UndoRedo undoOrRedo = isUndo ? new Undo(manager, editor) : new Redo(manager, editor);
@@ -146,22 +143,11 @@ abstract class UndoRedo {
   private boolean tryFallbackToGlobalUndo() {
     UndoableGroup globalUndoableGroup = getStackHolder().findGlobalUndoableGroup(myUndoableGroup);
     if (globalUndoableGroup != null) {
-      if (myIsDelegatingToGlobalUndo) {
-        return false;
+      if (isRedo()) {
+        myManager.redo(null);
       }
-
-      try {
-        myIsDelegatingToGlobalUndo = true;
-
-        if (isRedo()) {
-          myManager.redo(null);
-        }
-        else {
-          myManager.undo(null);
-        }
-      }
-      finally {
-        myIsDelegatingToGlobalUndo = false;
+      else {
+        myManager.undo(null);
       }
 
       return true;
