@@ -23,7 +23,9 @@ public class CompletionProcessBase implements CompletionProcessEx, Disposable {
   protected final Object myLock = new String("CompletionProgressIndicator");
   protected OffsetsInFile myHostOffsets;
   private CompletionParameters myParameters;
+  @NotNull
   private final Caret myCaret;
+  @NotNull
   private final OffsetMap myOffsetMap;
 
   public CompletionProcessBase(CompletionInitializationContext context) {
@@ -33,21 +35,25 @@ public class CompletionProcessBase implements CompletionProcessEx, Disposable {
     myOffsetMap = context.getOffsetMap();
   }
 
+  @NotNull
   @Override
   public Project getProject() {
     return myParameters.getOriginalFile().getProject();
   }
 
+  @NotNull
   @Override
   public Editor getEditor() {
     return myParameters.getEditor();
   }
 
+  @NotNull
   @Override
   public Caret getCaret() {
     return myCaret;
   }
 
+  @NotNull
   @Override
   public OffsetMap getOffsetMap() {
     return myOffsetMap;
@@ -64,6 +70,7 @@ public class CompletionProcessBase implements CompletionProcessEx, Disposable {
     return myInvocationCount == 0;
   }
 
+  @NotNull
   @Override
   public OffsetsInFile getHostOffsets() {
     return myHostOffsets;

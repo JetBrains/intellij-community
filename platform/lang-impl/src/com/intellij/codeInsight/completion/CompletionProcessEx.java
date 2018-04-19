@@ -18,10 +18,19 @@ import java.util.function.Supplier;
  * @author yole
  */
 interface CompletionProcessEx extends CompletionProcess {
+  @NotNull
   Project getProject();
+
+  @NotNull
   Editor getEditor();
+
+  @NotNull
   Caret getCaret();
+
+  @NotNull
   OffsetMap getOffsetMap();
+
+  @NotNull
   OffsetsInFile getHostOffsets();
 
   @Nullable

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
@@ -288,7 +289,15 @@ public final class CompletionServiceImpl extends CompletionService {
   }
 
   @SuppressWarnings("unused")
-  public void handleCompletionItemSelected(CompletionParameters parameters, LookupElement lookupElement, char completionChar) {
+  public void handleCompletionItemSelected(CompletionParameters parameters,
+                                           LookupElement lookupElement,
+                                           PrefixMatcher prefixMatcher,
+                                           char completionChar) {
+
+    LookupImpl.insertLookupString(parameters.getPosition().getProject(),
+                                  parameters.getEditor(),
+                                  lookupElement,
+                                  prefixMatcher, prefixMatcher.getPrefix(), prefixMatcher.getPrefix().length());
     CodeCompletionHandlerBase handler =
       CodeCompletionHandlerBase.createHandler(parameters.getCompletionType(), true, parameters.isAutoPopup(), true);
     handler.handleCompletionElementSelected(parameters, lookupElement, completionChar);
