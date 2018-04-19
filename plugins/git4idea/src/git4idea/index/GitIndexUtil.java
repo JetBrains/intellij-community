@@ -46,14 +46,14 @@ public class GitIndexUtil {
   private static final String DEFAULT_MODE = "100644";
 
   @Nullable
-  public static StagedFile list(@NotNull GitRepository repository, @NotNull FilePath filePath) throws VcsException {
-    List<StagedFile> result = list(repository, Collections.singleton(filePath));
+  public static StagedFile listStaged(@NotNull GitRepository repository, @NotNull FilePath filePath) throws VcsException {
+    List<StagedFile> result = listStaged(repository, Collections.singleton(filePath));
     if (result.size() != 1) return null;
     return result.get(0);
   }
 
   @NotNull
-  public static List<StagedFile> list(@NotNull GitRepository repository, @NotNull Collection<FilePath> filePaths) throws VcsException {
+  public static List<StagedFile> listStaged(@NotNull GitRepository repository, @NotNull Collection<FilePath> filePaths) throws VcsException {
     List<StagedFile> result = new ArrayList<>();
 
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.LS_FILES);

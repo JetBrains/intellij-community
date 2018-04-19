@@ -417,13 +417,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private static GitIndexUtil.StagedFile getStagedFile(@NotNull GitRepository repository, @NotNull Change change) throws VcsException {
     FilePath bPath = getBeforePath(change);
     if (bPath != null) {
-      GitIndexUtil.StagedFile file = GitIndexUtil.list(repository, bPath);
+      GitIndexUtil.StagedFile file = GitIndexUtil.listStaged(repository, bPath);
       if (file != null) return file;
     }
 
     FilePath aPath = getAfterPath(change);
     if (aPath != null) {
-      GitIndexUtil.StagedFile file = GitIndexUtil.list(repository, aPath);
+      GitIndexUtil.StagedFile file = GitIndexUtil.listStaged(repository, aPath);
       if (file != null) return file;
     }
     return null;
