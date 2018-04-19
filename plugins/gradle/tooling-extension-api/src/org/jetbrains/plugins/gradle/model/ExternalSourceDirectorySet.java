@@ -58,5 +58,8 @@ public interface ExternalSourceDirectorySet extends Serializable {
   Set<String> getIncludes();
 
   @NotNull
+  FilePatternSet getPatterns();
+
+  @NotNull
   List<ExternalFilter> getFilters();
 }
