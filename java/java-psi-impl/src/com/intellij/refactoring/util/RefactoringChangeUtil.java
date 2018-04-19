@@ -46,10 +46,6 @@ public class RefactoringChangeUtil {
       }
       return null;
     }
-    PsiClass refClass = PsiUtil.resolveClassInType(type);
-    if (refClass instanceof PsiAnonymousClass) {
-      type = ((PsiAnonymousClass)refClass).getBaseClassType();
-    }
 
     return GenericsUtil.getVariableTypeByExpressionType(type);
   }

@@ -385,7 +385,8 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     if (expression == null) return false;
     PsiType rType = expression.getType();
-    return rType != null && toType != null && TypeConversionUtil.areTypesConvertible(rType, toType);
+    PsiType castType = GenericsUtil.getVariableTypeByExpressionType(toType);
+    return rType != null && toType != null && TypeConversionUtil.areTypesConvertible(rType, toType) && toType.isAssignableFrom(castType);
   }
 
 
