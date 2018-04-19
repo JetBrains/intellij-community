@@ -94,3 +94,4 @@ org.covscript 1.8.3
 org.ice1000.julia 0.1.8
 com.javils.ThemeSwitcher 1.0 1.1 1.2
 org.ziglang 0.0.3
+com.intellij.aspectj 0.7
