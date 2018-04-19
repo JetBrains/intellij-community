@@ -22,7 +22,7 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
 
   private val sessionId = UUID.randomUUID().toString().shortedUUID()
   private val bucket = "-1"
-  private val recorderVersion = "1"
+  private val recorderVersion = "2"
 
   private var fileAppender: FeatureUsageEventFileAppender? = null
   private val eventLogger: Logger = Logger.getLogger("feature-usage-event-logger")
