@@ -169,19 +169,20 @@ public final class PyTypeUtil {
   @Nullable
   public static Ref<PyType> injectTypeInMultiResolveResults(@NotNull PsiElement expression,
                                                             @NotNull TypeEvalContext context,
-                                                            @NotNull Function<PyTypedElement, Ref<PyType>> processor) {
+                                                            @NotNull Function<PsiElement, Ref<PyType>> processor) {
     PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-    final List<PsiElement> resolved = PyUtil.multiResolveTopPriority(expression, resolveContext);
     Ref<Boolean> applicable = Ref.create(false);
-    final Ref<PyType> altered = StreamEx.of(resolved)
-                                        .select(PyTypedElement.class)
-                                        .map(typed -> {
-                                          final Ref<PyType> provided = processor.apply(typed);
+    final Ref<PyType> altered = StreamEx.of(PyUtil.multiResolveTopPriority(expression, resolveContext))
+                                        .map(result -> {
+                                          final Ref<PyType> provided = processor.apply(result);
                                           if (provided != null) {
                                             applicable.set(true);
                                             return provided;
                                           }
-                                          return Ref.create(context.getType(typed));
+                                          else if (result instanceof PyTypedElement) {
+                                            return Ref.create(context.getType((PyTypedElement)result));
+                                          }
+                                          return null;
                                         })
                                         .collect(toUnionFromRef());
 

@@ -15,16 +15,17 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.util.Processor;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,21 +38,27 @@ import java.util.List;
  */
 public class PyJavaTypeProvider extends PyTypeProviderBase {
   @Nullable
-  public PyType getReferenceType(@NotNull final PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PsiClass) {
-      return new PyJavaClassType((PsiClass) referenceTarget, true);
-    }
-    if (referenceTarget instanceof PsiPackage) {
-      return new PyJavaPackageType((PsiPackage) referenceTarget, anchor == null ? null : ModuleUtil.findModuleForPsiElement(anchor));
-    }
-    if (referenceTarget instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) referenceTarget;
-      return new PyJavaMethodType(method);
-    }
-    if (referenceTarget instanceof PsiField) {
-      return asPyType(((PsiField)referenceTarget).getType());
-    }
-    return null;
+  @Override
+  public PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
+    return Ref.deref(PyTypeUtil.injectTypeInMultiResolveResults(referenceExpression, context, referenceTarget -> {
+      if (referenceTarget instanceof PsiClass) {
+        return Ref.create(new PyJavaClassType((PsiClass)referenceTarget, true));
+      }
+      if (referenceTarget instanceof PsiPackage) {
+        return Ref.create(new PyJavaPackageType((PsiPackage)referenceTarget, ModuleUtilCore.findModuleForPsiElement(referenceExpression)));
+      }
+      if (referenceTarget instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)referenceTarget;
+        return Ref.create(new PyJavaMethodType(method));
+      }
+      if (referenceTarget instanceof PsiField) {
+        final PyType pyType = asPyType(((PsiField)referenceTarget).getType());
+        if (pyType != null) {
+          return Ref.create(pyType);
+        }
+      }
+      return null;
+    }));
   }
 
   @Nullable
