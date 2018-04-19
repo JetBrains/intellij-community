@@ -12,7 +12,6 @@ import com.intellij.xdebugger.DefaultDebugProcessHandler
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
-import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -252,21 +251,5 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     }
 
     mainVm?.debugListener?.childVmAdded(vm)
-  }
-}
-
-@Suppress("UNCHECKED_CAST")
-class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, val manager: LineBreakpointManager)
-    : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, *>>) {
-  override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
-    manager.debugProcess.collectVMs.forEach {
-      manager.setBreakpoint(it, breakpoint)
-    }
-  }
-
-  override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {
-    manager.debugProcess.collectVMs.forEach {
-      manager.removeBreakpoint(it, breakpoint, temporary)
-    }
   }
 }
