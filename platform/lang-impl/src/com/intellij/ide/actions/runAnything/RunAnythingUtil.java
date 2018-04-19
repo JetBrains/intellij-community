@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.*;
@@ -343,7 +342,6 @@ public class RunAnythingUtil {
                                           @NotNull String pattern,
                                           @NotNull VirtualFile workDirectory) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Module module = LangDataKeys.MODULE.getData(dataContext);
 
     if (pattern.isEmpty()) return;
 

@@ -70,7 +70,10 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
     commands.add(commandString);
 
     dataContext = RunAnythingCommandCustomizer.customizeContext(dataContext);
-    GeneralCommandLine commandLine = RunAnythingCommandCustomizer.customizeCommandLine(dataContext, workDirectory, commandString);
+
+    GeneralCommandLine initialCommandLine =
+      new GeneralCommandLine(commandString).withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
+    GeneralCommandLine commandLine = RunAnythingCommandCustomizer.customizeCommandLine(dataContext, workDirectory, initialCommandLine);
     try {
       ExecutionEnvironmentBuilder.create(project, executor, new RunAnythingRunProfile(commandLine, commandString))
                                  .dataContext(dataContext)
