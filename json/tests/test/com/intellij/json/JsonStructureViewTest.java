@@ -12,10 +12,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
+import static com.intellij.testFramework.PlatformTestUtil.expandAll;
 
 /**
  * @author Mikhail Golubev
@@ -25,7 +25,7 @@ public class JsonStructureViewTest extends JsonTestCase {
   private void doTest(final String expected) {
     myFixture.configureByFile(getTestName(false) + ".json");
     myFixture.testStructureView(svc -> {
-      TreeUtil.expandAll(svc.getTree());
+      expandAll(svc.getTree());
       assertTreeEqual(svc.getTree(), expected);
     });
   }
