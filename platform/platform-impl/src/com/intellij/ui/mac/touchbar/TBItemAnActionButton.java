@@ -1,12 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
@@ -33,11 +32,19 @@ public class TBItemAnActionButton extends TBItemButton {
   private final boolean myHiddenWhenDisabled;
   private final int myShowMode;
 
-  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode) {
+  private final Component myComponent;
+
+  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode, Component component, ModalityState modality) {
     super(uid);
     myAnAction = action;
     myActionId = ActionManager.getInstance().getId(myAnAction);
-    myAction = () -> ApplicationManager.getApplication().invokeLater(() -> _performAction());
+    myComponent = component;
+    myAction = () -> {
+      if (modality != null)
+        ApplicationManager.getApplication().invokeLater(() -> _performAction(), modality);
+      else
+        ApplicationManager.getApplication().invokeLater(() -> _performAction());
+    };
 
     myAutoVisibility = true;
     myHiddenWhenDisabled = hiddenWhenDisabled;
@@ -45,8 +52,25 @@ public class TBItemAnActionButton extends TBItemButton {
     myShowMode = showMode;
   }
 
+  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode) {
+    this(uid, action, hiddenWhenDisabled, showMode, null, null);
+  }
+
   TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled) {
-    this(uid, action, hiddenWhenDisabled, SHOWMODE_IMAGE_ONLY);
+    this(uid, action, hiddenWhenDisabled, SHOWMODE_IMAGE_ONLY, null, null);
+  }
+
+  void updateAnAction(Presentation presentation) {
+    final DataContext dctx = DataManager.getInstance().getDataContext(_getComponent());
+    final AnActionEvent e = new AnActionEvent(
+      null,
+      dctx,
+      ActionPlaces.TOUCHBAR_GENERAL,
+      presentation,
+      ActionManagerEx.getInstanceEx(),
+      0
+    );
+    myAnAction.update(e);
   }
 
   boolean isAutoVisibility() { return myAutoVisibility; }
@@ -100,15 +124,21 @@ public class TBItemAnActionButton extends TBItemButton {
 
   private void _performAction() {
     final ActionManagerEx actionManagerEx = ActionManagerEx.getInstanceEx();
+    final Component src = _getComponent();
+    final InputEvent ie = new KeyEvent(src, COMPONENT_FIRST, System.currentTimeMillis(), 0, 0, '\0');
+    actionManagerEx.tryToExecute(myAnAction, ie, src, ActionPlaces.TOUCHBAR_GENERAL, true);
+  }
+
+  private Component _getComponent() { return myComponent != null ? myComponent : _getCurrentFocusComponent(); }
+
+  private static Component _getCurrentFocusComponent() {
     final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     Component focusOwner = focusManager.getFocusOwner();
     if (focusOwner == null) {
-      // LOG.info(String.format("WARNING: [%s:%s] _performAction: null focus-owner, use focused window", myUid, myActionId));
-      focusOwner = focusManager.getFocusedWindow();
+      // LOG.info(String.format("WARNING: [%s:%s] _getCurrentFocusContext: null focus-owner, use focused window", myUid, myActionId));
+      return focusManager.getFocusedWindow();
     }
-
-    final InputEvent ie = new KeyEvent(focusOwner, COMPONENT_FIRST, System.currentTimeMillis(), 0, 0, '\0');
-    actionManagerEx.tryToExecute(myAnAction, ie, focusOwner, ActionPlaces.TOUCHBAR_GENERAL, true);
+    return focusOwner;
   }
 
   private static String _printPresentation(Presentation presentation) {
