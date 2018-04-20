@@ -1,25 +1,34 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -71,6 +80,12 @@ public class TouchBarsManager {
         }
       }
     );
+  }
+
+  public static TouchBar showTempButtonsBar(List<JButton> jbuttons, Project project) {
+    final TouchBar tb = _createButtonsBar(jbuttons, project);
+    showTempTouchBar(tb);
+    return tb;
   }
 
   public static void initialize() {
@@ -210,27 +225,82 @@ public class TouchBarsManager {
       LOG.trace(String.format(fmt, args));
   }
 
-  private static TouchBar _createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
-    final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup);
+  private static TouchBar _createButtonsBar(List<JButton> jbuttons, Project project) {
+    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+      TouchBarActionBase result = new TouchBarActionBase("dialog_buttons", project);
+      final ModalityState ms = LaterInvocator.getCurrentModalityState();
+      for (JButton jb : jbuttons) {
+        if (jb instanceof JBOptionButton) {
+          JBOptionButton ob = (JBOptionButton)jb;
+          Action[] opts = ob.getOptions();
+          DefaultActionGroup ag = new DefaultActionGroup();
+          for (Action a : opts) {
+            if (a == null)
+              continue;
+            AnAction anAct = _createAnAction(a, ob);
+            if (anAct == null)
+              continue;
+            ag.add(anAct);
+          }
 
-    List<TBItemScrubber.ItemData> items = new ArrayList<>();
-    @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
-    for (Object obj: listPopupStep.getValues()) {
-      final Icon ic = listPopupStep.getIconFor(obj);
-      final String txt = listPopupStep.getTextFor(obj);
+          if (ag.getChildrenCount() > 0)
+            result.addActionGroupButtons(ag, ob, ms);
+        }
 
-      final Runnable action = () -> {
-        listPopup.getList().setSelectedValue(obj, false);
-        listPopup.handleSelect(true);
-      };
+        final NSTLibrary.Action act = () -> ApplicationManager.getApplication().invokeLater(() -> jb.doClick(), ms);
+        result.addButton(null, jb.getText(), act);
+      }
 
-      items.add(new TBItemScrubber.ItemData(ic, txt, ()-> ApplicationManager.getApplication().invokeLater(() -> action.run())));
+      return result;
     }
-    final TBItemScrubber scrub = result.addScrubber();
-    scrub.setItems(items);
+  }
 
-    result.selectVisibleItemsToShow();
-    return result;
+  private static AnAction _createAnAction(@NotNull Action action, JBOptionButton fromButton) {
+    final Object anAct = action.getValue(OptionAction.AN_ACTION);
+    if (anAct == null) {
+      // LOG.warn("null AnAction in action: '" + action + "', use wrapper");
+      return new DumbAwareAction() {
+        {
+          setEnabledInModalContext(true);
+          final Object name = action.getValue(Action.NAME);
+          getTemplatePresentation().setText(name != null && name instanceof String ? (String)name : "");
+        }
+        @Override
+        public void actionPerformed(AnActionEvent e) { action.actionPerformed(new ActionEvent(fromButton, ActionEvent.ACTION_PERFORMED, null)); }
+        @Override
+        public void update(AnActionEvent e) { e.getPresentation().setEnabled(action.isEnabled()); }
+      };
+    }
+    if (!(anAct instanceof AnAction)) {
+      // LOG.warn("unknown type of awt.Action's property: " + anAct.getClass().toString());
+      return null;
+    }
+    return (AnAction)anAct;
+  }
+
+  private static TouchBar _createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
+    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+      final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup);
+
+      List<TBItemScrubber.ItemData> items = new ArrayList<>();
+      @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
+      for (Object obj : listPopupStep.getValues()) {
+        final Icon ic = listPopupStep.getIconFor(obj);
+        final String txt = listPopupStep.getTextFor(obj);
+
+        final Runnable action = () -> {
+          listPopup.getList().setSelectedValue(obj, false);
+          listPopup.handleSelect(true);
+        };
+
+        items.add(new TBItemScrubber.ItemData(ic, txt, () -> ApplicationManager.getApplication().invokeLater(() -> action.run())));
+      }
+      final TBItemScrubber scrub = result.addScrubber();
+      scrub.setItems(items);
+
+      result.selectVisibleItemsToShow();
+      return result;
+    }
   }
 
   private static class TempBarContainer implements BarContainer {

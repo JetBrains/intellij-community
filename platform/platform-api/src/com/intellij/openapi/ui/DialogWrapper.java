@@ -523,6 +523,7 @@ public abstract class DialogWrapper {
       }
     }
 
+    myPeer.setTouchBarButtons(rightSideButtons);
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
   }

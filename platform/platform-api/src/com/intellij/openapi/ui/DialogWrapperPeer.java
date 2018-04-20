@@ -25,6 +25,7 @@ import java.awt.*;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.List;
 
 public abstract class DialogWrapperPeer {
   public static Object HAVE_INITIAL_SELECTION = new Object();
@@ -160,4 +161,6 @@ public abstract class DialogWrapperPeer {
   public Object[] getCurrentModalEntities() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
+
+  public void setTouchBarButtons(List<JButton> buttons) {}
 }
