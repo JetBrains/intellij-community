@@ -12,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Implement this class if a particular run configuration should be created for matching input string.
  */
-public abstract class RunAnythingProvider {
-  public static final ExtensionPointName<RunAnythingProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.runAnything.configurationProvider");
+public abstract class RunAnythingRunConfigurationProvider {
+  public static final ExtensionPointName<RunAnythingRunConfigurationProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.runAnything.runConfigurationProvider");
 
   /**
    * If {@code commandLine} is matched than current provider associated run configuration of factory {@link #getConfigurationFactory()}
@@ -47,16 +47,16 @@ public abstract class RunAnythingProvider {
   public abstract ConfigurationFactory getConfigurationFactory();
 
   /**
-   * Finds matched provider along with all {@link RunAnythingProvider} providers
+   * Finds matched provider along with all {@link RunAnythingRunConfigurationProvider} providers
    *
    * @param commandLine      'Run Anything' input string
    * @param workingDirectory command execution context directory
    */
   @Nullable
-  public static RunAnythingProvider findMatchedProvider(@NotNull Project project,
-                                                        @NotNull String commandLine,
-                                                        @NotNull VirtualFile workingDirectory) {
-    for (RunAnythingProvider provider : EP_NAME.getExtensions()) {
+  public static RunAnythingRunConfigurationProvider findMatchedProvider(@NotNull Project project,
+                                                                        @NotNull String commandLine,
+                                                                        @NotNull VirtualFile workingDirectory) {
+    for (RunAnythingRunConfigurationProvider provider : EP_NAME.getExtensions()) {
       if (provider.isMatched(project, commandLine, workingDirectory)) {
         return provider;
       }

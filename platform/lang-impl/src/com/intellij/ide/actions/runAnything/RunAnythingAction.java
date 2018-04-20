@@ -159,7 +159,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         Map<String, Icon> map = ContainerUtil.newHashMap();
         map.put(UNKNOWN_CONFIGURATION, UNDEFINED_COMMAND_ICON);
 
-        for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
+        for (RunAnythingRunConfigurationProvider provider : RunAnythingRunConfigurationProvider.EP_NAME.getExtensions()) {
           map.put(provider.getConfigurationFactory().getName(), provider.getConfigurationFactory().getIcon());
         }
 
@@ -830,7 +830,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     JBTextField textField = myPopupField.getTextEditor();
     String pattern = textField.getText();
 
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule()));
+    RunAnythingRunConfigurationProvider
+      provider = RunAnythingRunConfigurationProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule()));
     String name = provider != null ? provider.getConfigurationFactory().getName() : null;
 
     if (name != null) {

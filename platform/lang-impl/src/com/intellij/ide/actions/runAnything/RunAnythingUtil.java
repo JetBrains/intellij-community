@@ -366,7 +366,7 @@ public class RunAnythingUtil {
   }
 
   private static boolean runMatchedConfiguration(@NotNull Project project, @NotNull String pattern, @NotNull VirtualFile workDirectory) {
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(project, pattern, workDirectory);
+    RunAnythingRunConfigurationProvider provider = RunAnythingRunConfigurationProvider.findMatchedProvider(project, pattern, workDirectory);
     if (provider != null) {
       triggerDebuggerStatistics();
       runMatchedConfiguration(RunAnythingAction.getExecutor(), project, provider.createConfiguration(project, pattern, workDirectory));
