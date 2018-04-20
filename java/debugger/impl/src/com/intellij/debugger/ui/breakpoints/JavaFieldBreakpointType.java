@@ -52,6 +52,12 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
 
   @NotNull
   @Override
+  public Icon getSuspendNoneIcon() {
+    return AllIcons.Debugger.Db_no_suspend_field_breakpoint;
+  }
+
+  @NotNull
+  @Override
   public Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_field_breakpoint;
   }
