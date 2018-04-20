@@ -59,7 +59,7 @@ public class AttachExternalProjectAction extends AnAction {
       presentation.setDescription(ExternalSystemBundle.message("action.attach.external.project.description", name));
     }
 
-    presentation.setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Add : AllIcons.ToolbarDecorator.Add);
+    presentation.setIcon(AllIcons.General.Add);
   }
 
   @Override

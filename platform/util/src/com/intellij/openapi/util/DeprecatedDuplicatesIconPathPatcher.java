@@ -14,19 +14,52 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
   @NonNls private static final Map<String, String> ourDeprecatedIconsReplacements = new HashMap<String, String>();
 
   static {
+    ourDeprecatedIconsReplacements.put("/actions/prevfile.png", "AllIcons.Actions.Back");
+    ourDeprecatedIconsReplacements.put("/actions/prevfile.svg", "AllIcons.Actions.Back");
+
+    ourDeprecatedIconsReplacements.put("/modules/edit.png", "AllIcons.Actions.Edit");
+    ourDeprecatedIconsReplacements.put("/modules/edit.svg", "AllIcons.Actions.Edit");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/edit.png", "AllIcons.Actions.Edit");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/edit.svg", "AllIcons.Actions.Edit");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/edit.png", "AllIcons.Actions.Edit");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/edit.svg", "AllIcons.Actions.Edit");
+
     ourDeprecatedIconsReplacements.put("/actions/findPlain.png", "AllIcons.Actions.Find");
     ourDeprecatedIconsReplacements.put("/actions/findPlain.svg", "AllIcons.Actions.Find");
     ourDeprecatedIconsReplacements.put("/actions/menu_find.png", "AllIcons.Actions.Find");
     ourDeprecatedIconsReplacements.put("/actions/menu_find.svg", "AllIcons.Actions.Find");
 
+    ourDeprecatedIconsReplacements.put("/actions/nextfile.png", "AllIcons.Actions.Forward");
+    ourDeprecatedIconsReplacements.put("/actions/nextfile.svg", "AllIcons.Actions.Forward");
+
     ourDeprecatedIconsReplacements.put("/actions/menu_help.png", "AllIcons.Actions.Help");
     ourDeprecatedIconsReplacements.put("/actions/menu_help.svg", "AllIcons.Actions.Help");
+
+    ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.png", "AllIcons.Actions.Menu_saveall");
+    ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.svg", "AllIcons.Actions.Menu_saveall");
+
+    ourDeprecatedIconsReplacements.put("/actions/sortAsc.png", "AllIcons.Actions.MoveDown");
+    ourDeprecatedIconsReplacements.put("/actions/sortAsc.svg", "AllIcons.Actions.MoveDown");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/moveDown.png", "AllIcons.Actions.MoveDown");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/moveDown.svg", "AllIcons.Actions.MoveDown");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/moveDown.png", "AllIcons.Actions.MoveDown");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/moveDown.svg", "AllIcons.Actions.MoveDown");
+
+    ourDeprecatedIconsReplacements.put("/actions/sortDesc.png", "AllIcons.Actions.MoveUp");
+    ourDeprecatedIconsReplacements.put("/actions/sortDesc.svg", "AllIcons.Actions.MoveUp");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/moveUp.png", "AllIcons.Actions.MoveUp");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/moveUp.svg", "AllIcons.Actions.MoveUp");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/moveUp.png", "AllIcons.Actions.MoveUp");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/moveUp.svg", "AllIcons.Actions.MoveUp");
 
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/paused.png", "AllIcons.Actions.Pause");
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/paused.svg", "AllIcons.Actions.Pause");
 
     ourDeprecatedIconsReplacements.put("/actions/showSource.png", "AllIcons.Actions.Preview");
     ourDeprecatedIconsReplacements.put("/actions/showSource.svg", "AllIcons.Actions.Preview");
+
+    ourDeprecatedIconsReplacements.put("/actions/browser-externalJavaDoc.png", "AllIcons.Actions.PreviousOccurence");
+    ourDeprecatedIconsReplacements.put("/actions/browser-externalJavaDoc.svg", "AllIcons.Actions.PreviousOccurence");
 
     ourDeprecatedIconsReplacements.put("/actions/sync.png", "AllIcons.Actions.Refresh");
     ourDeprecatedIconsReplacements.put("/actions/sync.svg", "AllIcons.Actions.Refresh");
@@ -38,6 +71,15 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/actions/refreshUsages.png", "AllIcons.Actions.Rerun");
     ourDeprecatedIconsReplacements.put("/actions/refreshUsages.svg", "AllIcons.Actions.Rerun");
 
+    ourDeprecatedIconsReplacements.put("/debugger/threadStates/running.png", "AllIcons.Actions.Resume");
+    ourDeprecatedIconsReplacements.put("/debugger/threadStates/running.svg", "AllIcons.Actions.Resume");
+
+    ourDeprecatedIconsReplacements.put("/actions/reset.png", "AllIcons.Actions.Rollback");
+    ourDeprecatedIconsReplacements.put("/actions/reset.svg", "AllIcons.Actions.Rollback");
+
+    ourDeprecatedIconsReplacements.put("/vcs/mergeSourcesTree.png", "AllIcons.Actions.ShowAsTree");
+    ourDeprecatedIconsReplacements.put("/vcs/mergeSourcesTree.svg", "AllIcons.Actions.ShowAsTree");
+
     ourDeprecatedIconsReplacements.put("/general/debug.png", "AllIcons.Actions.StartDebugger");
     ourDeprecatedIconsReplacements.put("/general/debug.svg", "AllIcons.Actions.StartDebugger");
 
@@ -48,14 +90,20 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
     ourDeprecatedIconsReplacements.put("/debugger/newWatch.png", "AllIcons.General.Add");
     ourDeprecatedIconsReplacements.put("/debugger/newWatch.svg", "AllIcons.General.Add");
+    ourDeprecatedIconsReplacements.put("/modules/addContentEntry.png", "AllIcons.General.Add");
+    ourDeprecatedIconsReplacements.put("/modules/addContentEntry.svg", "AllIcons.General.Add");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/add.png", "AllIcons.General.Add");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/add.svg", "AllIcons.General.Add");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/add.png", "AllIcons.General.Add");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/add.svg", "AllIcons.General.Add");
 
     ourDeprecatedIconsReplacements.put("/compiler/error.png", "AllIcons.General.Error");
     ourDeprecatedIconsReplacements.put("/compiler/error.svg", "AllIcons.General.Error");
     ourDeprecatedIconsReplacements.put("/ide/errorSign.png", "AllIcons.General.Error");
     ourDeprecatedIconsReplacements.put("/ide/errorSign.svg", "AllIcons.General.Error");
 
+    ourDeprecatedIconsReplacements.put("/actions/filter_small.png", "AllIcons.General.Filter");
+    ourDeprecatedIconsReplacements.put("/actions/filter_small.svg", "AllIcons.General.Filter");
     ourDeprecatedIconsReplacements.put("/ant/filter.png", "AllIcons.General.Filter");
     ourDeprecatedIconsReplacements.put("/ant/filter.svg", "AllIcons.General.Filter");
     ourDeprecatedIconsReplacements.put("/debugger/class_filter.png", "AllIcons.General.Filter");
@@ -82,6 +130,16 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/actions/consoleHistory.svg", "AllIcons.General.MessageHistory");
     ourDeprecatedIconsReplacements.put("/vcs/messageHistory.png", "AllIcons.General.MessageHistory");
     ourDeprecatedIconsReplacements.put("/vcs/messageHistory.svg", "AllIcons.General.MessageHistory");
+
+    ourDeprecatedIconsReplacements.put("/debugger/threadStates/locked.png", "AllIcons.Debugger.MuteBreakpoints");
+    ourDeprecatedIconsReplacements.put("/debugger/threadStates/locked.svg", "AllIcons.Debugger.MuteBreakpoints");
+
+    ourDeprecatedIconsReplacements.put("/actions/exclude.png", "AllIcons.General.Remove");
+    ourDeprecatedIconsReplacements.put("/actions/exclude.svg", "AllIcons.General.Remove");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/remove.png", "AllIcons.General.Remove");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/remove.svg", "AllIcons.General.Remove");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/remove.png", "AllIcons.General.Remove");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/remove.svg", "AllIcons.General.Remove");
 
     ourDeprecatedIconsReplacements.put("/general/applicationSettings.png", "AllIcons.General.Settings");
     ourDeprecatedIconsReplacements.put("/general/applicationSettings.svg", "AllIcons.General.Settings");

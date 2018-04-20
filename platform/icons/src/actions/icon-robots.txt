@@ -1,5 +1,13 @@
+deprecated: browser-externalJavaDoc.png -> /actions/previousOccurence.png
+deprecated: exclude.png -> /general/remove.png
 deprecated: fileStatus.png
+deprecated: filter_small.png -> /general/filter.svg
 deprecated: findPlain.png -> /actions/find.png
 deprecated: menu-find.png -> /actions/find.png
 deprecated: menu-help.png -> /actions/help.svg
+deprecated: nextfile.png -> /actions/forward.svg
+deprecated: prevfile.png -> /actions/back.svg
+deprecated: reset.png -> /actions/rollback.svg
+deprecated: sortAsc.png -> /actions/moveUp.svg
+deprecated: sortDesc.png -> /actions/moveDown.svg
 deprecated: synchronizeFS.png -> /actions/refresh.png
