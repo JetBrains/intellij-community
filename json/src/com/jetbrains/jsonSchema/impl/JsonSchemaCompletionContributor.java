@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.json.psi.JsonProperty;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -287,6 +289,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
       }
 
+      builder = builder.withIcon(getIcon(jsonSchemaObject.getType()));
+
       if (hasSameType(variants)) {
         final JsonSchemaType type = jsonSchemaObject.getType();
         final List<Object> values = jsonSchemaObject.getEnum();
@@ -298,6 +302,19 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       }
 
       myVariants.add(builder);
+    }
+
+    @NotNull
+    private static Icon getIcon(@Nullable JsonSchemaType type) {
+      if (type == null) return AllIcons.Nodes.Property;
+      switch (type) {
+        case _object:
+          return AllIcons.Json.Property_braces;
+        case _array:
+          return AllIcons.Json.Property_brackets;
+        default:
+          return AllIcons.Nodes.Property;
+      }
     }
 
     private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
