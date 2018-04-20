@@ -29,11 +29,7 @@ public class CompletionServiceTest extends LightCodeInsightFixtureTestCase {
   public void testCompletionServiceSimple() {
     myFixture.configureByFile("Simple.java");
     CompletionServiceImpl service = (CompletionServiceImpl)CompletionService.getCompletionService();
-    Disposable completionDisposable = new Disposable() {
-      @Override
-      public void dispose() {
-      }
-    };
+    Disposable completionDisposable = Disposer.newDisposable();
     try {
       CompletionParameters parameters = service.createCompletionParameters(getProject(),
                                                                            myFixture.getEditor(),
