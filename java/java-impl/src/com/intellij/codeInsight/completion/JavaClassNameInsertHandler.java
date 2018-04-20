@@ -24,8 +24,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
@@ -129,8 +127,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
                                                   @NotNull PsiFile file,
                                                   @NotNull Project project) 
   {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings javaSettings = getInstance(file);
     
     switch (javaSettings.CLASS_NAMES_IN_JAVADOC) {
       case FULLY_QUALIFY_NAMES_ALWAYS:

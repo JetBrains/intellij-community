@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner;
@@ -37,7 +38,6 @@ import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -438,7 +438,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       int signatureOffset = afterSharp;
 
       PsiElement element = context.getFile().findElementAt(signatureOffset - 1);
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+      final CodeStyleSettings styleSettings = CodeStyle.getSettings(context.getFile());
       PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR && tag != null) {
         final PsiDocTagValue valueElement = tag.getValueElement();
