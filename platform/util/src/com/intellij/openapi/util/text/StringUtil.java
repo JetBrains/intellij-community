@@ -1070,6 +1070,15 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
+  public static CharSequence trimStart(@NotNull CharSequence s, @NonNls @NotNull CharSequence prefix) {
+    if (startsWith(s, prefix)) {
+      return s.subSequence(0, prefix.length());
+    }
+    return s;
+  }
+
+  @NotNull
+  @Contract(pure = true)
   public static String trimExtensions(@NotNull String name) {
     int index = name.indexOf('.');
     return index < 0 ? name : name.substring(0, index);
