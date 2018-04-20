@@ -19,8 +19,7 @@ import java.util.Objects;
 
 public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunConfigurationPopup.ItemWrapper> {
   private static final Logger LOG = Logger.getInstance(RunAnythingRunConfigurationItem.class);
-  static final String RUN_ANYTHING_RUN_CONFIGURATION_AD_TEXT =
-    RunAnythingAction.AD_MODULE_CONTEXT + " , " + RunAnythingAction.AD_DEBUG_TEXT;
+  static final String RUN_ANYTHING_RUN_CONFIGURATION_AD_TEXT = RunAnythingAction.AD_CONTEXT_TEXT + " , " + RunAnythingAction.AD_DEBUG_TEXT;
   @NotNull private final ChooseRunConfigurationPopup.ItemWrapper myWrapper;
 
   public RunAnythingRunConfigurationItem(@NotNull ChooseRunConfigurationPopup.ItemWrapper wrapper) {

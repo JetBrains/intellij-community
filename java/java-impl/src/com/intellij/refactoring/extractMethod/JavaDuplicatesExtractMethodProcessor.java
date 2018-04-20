@@ -53,22 +53,31 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myArtificialOutputVariable = variablesMapping.getOrDefault(from.myArtificialOutputVariable, from.myArtificialOutputVariable);
 
     List<VariableData> variableDatum = new ArrayList<>();
+    List<VariableData> inputVariables = getInputVariables().getInputVariables();
     for (int i = 0; i < from.myVariableDatum.length; i++) {
       VariableData fromData = from.myVariableDatum[i];
       PsiVariable mappedVariable = variablesMapping.get(fromData.variable);
-      if (isReferenced(mappedVariable, fromData.variable)) {
+      if (isReferenced(mappedVariable, fromData.variable) && isUnchanged(mappedVariable, fromData.type, inputVariables)) {
         VariableData newData = fromData.substitute(mappedVariable);
         variableDatum.add(newData);
       }
     }
     Set<PsiVariable> parameterVariables = ContainerUtil.map2Set(variableDatum, data -> data.variable);
-    List<VariableData> inputVariables = getInputVariables().getInputVariables();
     for (VariableData data : inputVariables) {
       if (!parameterVariables.contains(data.variable)) {
         variableDatum.add(data);
       }
     }
     myVariableDatum = variableDatum.toArray(new VariableData[0]);
+  }
+
+  private static boolean isUnchanged(PsiVariable fromVariable, PsiType fromType, @NotNull List<VariableData> inputVariables) {
+    for (VariableData data : inputVariables) {
+      if (data.variable == fromVariable) {
+        return data.type != null && data.type.equalsToText(fromType.getCanonicalText());
+      }
+    }
+    return true;
   }
 
   public void applyFromSnapshot(@NotNull ExtractMethodSnapshot from) {

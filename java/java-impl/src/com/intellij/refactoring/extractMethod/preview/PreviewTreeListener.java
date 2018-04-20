@@ -3,9 +3,14 @@ package com.intellij.refactoring.extractMethod.preview;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.tree.TreeNode;
+import java.util.List;
+
 /**
  * @author Pavel.Dolgov
  */
 interface PreviewTreeListener {
-  void onNodeSelected(@NotNull FragmentNode node);
+  default void onFragmentNodeSelected(@NotNull FragmentNode node) {}
+
+  default void onTreeNodesSelected(@NotNull List<TreeNode> nodes) {}
 }

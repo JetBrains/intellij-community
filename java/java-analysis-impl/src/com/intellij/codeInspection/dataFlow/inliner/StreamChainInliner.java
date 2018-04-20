@@ -52,8 +52,7 @@ public class StreamChainInliner implements CallInliner {
     anyOf(instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max").parameterCount(0),
           instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "reduce").parameterCount(1),
           instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "findFirst", "findAny").parameterCount(0));
-  private static final CallMatcher MIN_MAX_TERMINAL =
-    instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max", "reduce").parameterCount(1);
+  private static final CallMatcher MIN_MAX_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max").parameterCount(1);
   private static final CallMatcher COLLECT_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
 
@@ -261,10 +260,15 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     void iteration(CFGBuilder builder) {
+      DfaValue presentOptional = builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true);
       if (myFunction != null) {
-        builder.pushUnknown().invokeFunction(2, myFunction);
+        builder.push(myResult)
+               .push(presentOptional)
+               .ifCondition(JavaTokenType.INSTANCEOF_KEYWORD)
+                .push(builder.getFactory().getFactValue(DfaFactType.CAN_BE_NULL, false)).swap().invokeFunction(2, myFunction, Nullness.NOT_NULL)
+               .end();
       }
-      builder.assign(myResult, builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true)).splice(2);
+      builder.assign(myResult, presentOptional).splice(2);
     }
   }
 

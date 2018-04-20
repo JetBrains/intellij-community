@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -92,7 +93,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile file = holder.getFile();
     VirtualFile virtualFile = file.getVirtualFile();
-    if (!PsiUtil.isLanguageLevel8OrHigher(file) || virtualFile == null ||
+    if (!JavaFeature.STREAMS.isFeatureSupported(file) || virtualFile == null ||
         !FileIndexFacade.getInstance(holder.getProject()).isInSourceContent(virtualFile)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }

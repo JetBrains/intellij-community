@@ -31,18 +31,18 @@ public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnyt
                                @NotNull RunAnythingSearchListModel model,
                                @NotNull String pattern,
                                boolean isInsertionMode,
-                               @NotNull Runnable check) {
+                               @NotNull Runnable cancellationChecker) {
 
     final SearchResult result = new SearchResult();
 
-    check.run();
+    cancellationChecker.run();
     for (T action : getActions(module)) {
       String actionText = getActionText(action);
       RunAnythingActionItem actionItem = new RunAnythingActionItem(action, actionText == null ? ObjectUtils
         .notNull(action.getTemplatePresentation().getText(), IdeBundle.message("run.anything.acton.group.title")) : actionText);
 
       if (addToList(model, result, pattern, actionItem, getPrefix() + " " + actionItem.getText(), isInsertionMode)) break;
-      check.run();
+      cancellationChecker.run();
     }
 
     return result;

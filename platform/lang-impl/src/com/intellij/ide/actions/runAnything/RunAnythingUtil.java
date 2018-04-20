@@ -3,11 +3,16 @@ package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider;
+import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer;
+import com.intellij.ide.actions.runAnything.execution.RunAnythingRunProfile;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingCommandItem;
 import com.intellij.ide.ui.UISettings;
@@ -16,10 +21,12 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,6 +59,7 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
 public class RunAnythingUtil {
+  public static final Logger LOG = Logger.getInstance(RunAnythingUtil.class);
   private static final Key<Collection<Pair<String, String>>> RUN_ANYTHING_WRAPPED_COMMANDS = Key.create("RUN_ANYTHING_WRAPPED_COMMANDS");
   private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
   private static final String DEBUGGER_FEATURE_USAGE = RunAnythingAction.RUN_ANYTHING + " - " + "DEBUGGER";
@@ -349,7 +357,7 @@ public class RunAnythingUtil {
 
     if (runMatchedActivity(dataContext, pattern)) return;
 
-    RunAnythingCommandItem.runCommand(workDirectory, StringUtil.trim(pattern), RunAnythingAction.getExecutor(), dataContext);
+    runCommand(workDirectory, StringUtil.trim(pattern), RunAnythingAction.getExecutor(), dataContext);
   }
 
   private static boolean runMatchedActivity(@NotNull DataContext dataContext, @NotNull String pattern) {
@@ -358,7 +366,7 @@ public class RunAnythingUtil {
   }
 
   private static boolean runMatchedConfiguration(@NotNull Project project, @NotNull String pattern, @NotNull VirtualFile workDirectory) {
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(project, pattern, workDirectory);
+    RunAnythingRunConfigurationProvider provider = RunAnythingRunConfigurationProvider.findMatchedProvider(project, pattern, workDirectory);
     if (provider != null) {
       triggerDebuggerStatistics();
       runMatchedConfiguration(RunAnythingAction.getExecutor(), project, provider.createConfiguration(project, pattern, workDirectory));
@@ -421,5 +429,32 @@ public class RunAnythingUtil {
       project.putUserData(RUN_ANYTHING_WRAPPED_COMMANDS, list);
     }
     return list;
+  }
+
+  public static void runCommand(@NotNull VirtualFile workDirectory,
+                                @NotNull String commandString,
+                                @NotNull Executor executor,
+                                @NotNull DataContext dataContext) {
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    LOG.assertTrue(project != null);
+
+    Collection<String> commands = RunAnythingCache.getInstance(project).getState().getCommands();
+    commands.remove(commandString);
+    commands.add(commandString);
+
+    dataContext = RunAnythingCommandCustomizer.customizeContext(dataContext);
+
+    GeneralCommandLine initialCommandLine =
+      new GeneralCommandLine(commandString).withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
+    GeneralCommandLine commandLine = RunAnythingCommandCustomizer.customizeCommandLine(dataContext, workDirectory, initialCommandLine);
+    try {
+      ExecutionEnvironmentBuilder.create(project, executor, new RunAnythingRunProfile(commandLine, commandString))
+                                 .dataContext(dataContext)
+                                 .buildAndExecute();
+    }
+    catch (ExecutionException e) {
+      LOG.warn(e);
+      Messages.showInfoMessage(project, e.getMessage(), IdeBundle.message("run.anything.console.error.title"));
+    }
   }
 }

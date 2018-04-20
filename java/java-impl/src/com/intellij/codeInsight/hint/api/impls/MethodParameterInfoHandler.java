@@ -777,8 +777,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         context.setUIComponentEnabled(false);
         return;
       }
+      PsiElement parameterOwner = context.getParameterOwner();
+      PsiCall call = parameterOwner instanceof PsiExpressionList ? getCall((PsiExpressionList)parameterOwner) : null;
 
-      updateMethodPresentation(method, getCandidateInfoSubstitutor(context.getParameterOwner(), info, false), context);
+      updateMethodPresentation(method, getCandidateInfoSubstitutor(parameterOwner, info, call != null && call.resolveMethod() == method), context);
     }
     else {
       updateMethodPresentation((PsiMethod)p, null, context);

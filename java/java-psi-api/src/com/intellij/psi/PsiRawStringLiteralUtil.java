@@ -12,10 +12,10 @@ public class PsiRawStringLiteralUtil {
   public static String getAdditionalTics(String text, String tics) {
     int quotesLength = tics.length();
     int textLength = text.length();
-    int idx = quotesLength;
+    int idx = 0;
     int maxQuotesNumber = -1;
     boolean hasToReplace = false;
-    while ((idx = text.indexOf(tics, idx)) > 0 && idx < textLength) {
+    while ((idx = text.indexOf(tics, idx)) >= 0 && idx < textLength) {
       int additionalQuotesLength = getTicsSequence(text, textLength, idx + quotesLength);
       if (additionalQuotesLength == 0) {
         hasToReplace = true;

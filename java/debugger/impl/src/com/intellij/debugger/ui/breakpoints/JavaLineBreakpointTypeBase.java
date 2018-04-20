@@ -74,6 +74,11 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
       return false;
     }
 
+    // workaround for KT-23886, remove after it is fixed
+    if ("kt".equals(psiFile.getFileType().getDefaultExtension())) {
+      return false;
+    }
+
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       Ref<Boolean> res = Ref.create(false);

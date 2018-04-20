@@ -4,12 +4,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Holds object representation of icons used at the {@code Gradle} plugin.
- * 
- * @author Denis Zhdanov
- * @since 8/1/11 3:10 PM
- */
 public class GradleConstants {
 
   @NotNull @NonNls public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("GRADLE");

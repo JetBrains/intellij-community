@@ -1,4 +1,4 @@
-from typing import Any, Callable, IO, Iterable, List, Optional, TypeVar, Union, Tuple as _PyTuple
+from typing import Any, Callable, IO, Iterable, List, Optional, TypeVar, Union, Tuple as _PyTuple, Type
 import uuid
 
 from click.core import Context, Parameter
@@ -184,7 +184,7 @@ class Path(ParamType):
         readable: bool = ...,
         resolve_path: bool = ...,
         allow_dash: bool = ...,
-        path_type: Optional[_PathType] = ...,
+        path_type: Optional[Type[_PathType]] = ...,
     ) -> None:
         ...
 

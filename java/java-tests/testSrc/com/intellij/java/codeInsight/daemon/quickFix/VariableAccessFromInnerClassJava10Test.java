@@ -17,7 +17,7 @@ public class VariableAccessFromInnerClassJava10Test extends LightQuickFixParamet
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
+  protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.JDK_10;
   }
 }

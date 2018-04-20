@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -579,7 +580,7 @@ public class ExpectedTypesProvider {
       if (parent instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
         CandidateInfo[] candidates = helper.getReferencedMethodCandidates(methodCall, false, true);
-        Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(candidates, list, myExpr, myForCompletion));
+        Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(candidates, list, myExpr, myForCompletion, methodCall.resolveMethod()));
       }
       else if (parent instanceof PsiEnumConstant) {
         getExpectedArgumentsTypesForEnumConstant((PsiEnumConstant)parent, list);
@@ -597,7 +598,7 @@ public class ExpectedTypesProvider {
       final PsiClass aClass = enumConstant.getContainingClass();
       if (aClass != null) {
         LOG.assertTrue(aClass.isEnum());
-        getExpectedTypesForConstructorCall(aClass, list, PsiSubstitutor.EMPTY);
+        getExpectedTypesForConstructorCall(aClass, list, PsiSubstitutor.EMPTY, enumConstant.resolveMethod());
       }
     }
 
@@ -607,7 +608,8 @@ public class ExpectedTypesProvider {
         final JavaResolveResult[] candidates = PsiDiamondTypeImpl.collectStaticFactories(newExpr, DuplicateConflictResolver.INSTANCE);
         if (candidates != null) {
           final PsiExpressionList argumentList = newExpr.getArgumentList();
-          Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(ContainerUtil.map(candidates, candidate -> (CandidateInfo)candidate, CandidateInfo.EMPTY_ARRAY), argumentList, myExpr, myForCompletion));
+          Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(ContainerUtil.map(candidates, candidate -> (CandidateInfo)candidate, CandidateInfo.EMPTY_ARRAY), argumentList, myExpr, myForCompletion,
+                                                                             newExpr.resolveMethod()));
         }
         return;
       }
@@ -628,19 +630,19 @@ public class ExpectedTypesProvider {
         else {
           return;
         }
-        getExpectedTypesForConstructorCall(newClass, list, substitutor);
+        getExpectedTypesForConstructorCall(newClass, list, substitutor, newExpr.resolveMethod());
       }
     }
 
     private void getExpectedTypesForConstructorCall(@NotNull final PsiClass referencedClass,
                                                     @NotNull final PsiExpressionList argumentList,
-                                                    final PsiSubstitutor substitutor) {
+                                                    final PsiSubstitutor substitutor, PsiMethod method) {
       List<CandidateInfo> array = new ArrayList<>();
       for (PsiMethod constructor : referencedClass.getConstructors()) {
         array.add(new MethodCandidateInfo(constructor, substitutor, false, false, argumentList, null, argumentList.getExpressionTypes(), null));
       }
       CandidateInfo[] candidates = array.toArray(CandidateInfo.EMPTY_ARRAY);
-      Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(candidates, argumentList, myExpr, myForCompletion));
+      Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(candidates, argumentList, myExpr, myForCompletion, method));
     }
 
     @Override
@@ -941,7 +943,8 @@ public class ExpectedTypesProvider {
     private ExpectedTypeInfo[] getExpectedArgumentTypesForMethodCall(@NotNull CandidateInfo[] allCandidates,
                                                                      @NotNull PsiExpressionList argumentList,
                                                                      @NotNull PsiExpression argument,
-                                                                     boolean forCompletion) {
+                                                                     boolean forCompletion,
+                                                                     @Nullable PsiMethod targetMethod) {
       if (allCandidates.length == 0) {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
@@ -986,8 +989,10 @@ public class ExpectedTypesProvider {
         PsiSubstitutor substitutor;
         if (candidateInfo instanceof MethodCandidateInfo) {
           final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
-          substitutor = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false,
-                                                                                   () -> info.inferSubstitutorFromArgs(policy, args));
+          Computable<PsiSubstitutor> computable = () -> info.inferSubstitutorFromArgs(policy, args);
+          substitutor = info.isInferencePossible() && targetMethod == method 
+                        ? computable.compute() 
+                        : MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false, computable);
           if (!info.isStaticsScopeCorrect() && !method.hasModifierProperty(PsiModifier.STATIC) || info.getInferenceErrorMessage() != null) continue;
         }
         else {
@@ -999,8 +1004,10 @@ public class ExpectedTypesProvider {
         inferMethodCallArgumentTypes(argument, forCompletion, args, index, method, substitutor, array);
 
         if (leftArgs != null && candidateInfo instanceof MethodCandidateInfo) {
-          substitutor = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false,
-                                                                                   () -> ((MethodCandidateInfo)candidateInfo).inferSubstitutorFromArgs(policy, leftArgs));
+          Computable<PsiSubstitutor> computable = () -> ((MethodCandidateInfo)candidateInfo).inferSubstitutorFromArgs(policy, leftArgs);
+          substitutor = ((MethodCandidateInfo)candidateInfo).isInferencePossible() && targetMethod == method 
+                        ? computable.compute() 
+                        : MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false, computable);
           if (substitutor != null) {
             inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, array);
           }

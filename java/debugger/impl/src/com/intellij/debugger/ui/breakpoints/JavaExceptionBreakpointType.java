@@ -41,19 +41,19 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
   @NotNull
   @Override
   public Icon getDisabledIcon() {
-    return AllIcons.Debugger.Db_disabled_exception_breakpoint;
+    return AllIcons.Debugger.Db_exception_breakpoint;
   }
 
   @NotNull
   @Override
   public Icon getMutedEnabledIcon() {
-    return AllIcons.Debugger.Db_muted_exception_breakpoint;
+    return AllIcons.Debugger.Db_exception_breakpoint;
   }
 
   @NotNull
   @Override
   public Icon getMutedDisabledIcon() {
-    return AllIcons.Debugger.Db_muted_disabled_exception_breakpoint;
+    return AllIcons.Debugger.Db_exception_breakpoint;
   }
 
   //@Override

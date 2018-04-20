@@ -12,4 +12,9 @@ public interface JvmPrimitiveType extends JvmType {
 
   @NotNull
   JvmPrimitiveTypeKind getKind();
+
+  @Override
+  default <T> T accept(@NotNull JvmTypeVisitor<T> visitor) {
+    return visitor.visitPrimitiveType(this);
+  }
 }

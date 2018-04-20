@@ -7,10 +7,10 @@ import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -40,10 +40,14 @@ public class GradleGroovyScriptRunConfigurationProducer extends RunConfiguration
     final Module module = context.getModule();
     if (module == null) return false;
 
-    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
-
-    final String projectPath = resolveProjectPath(module);
-    if (projectPath == null) return false;
+    String projectPath = resolveProjectPath(module);
+    if (projectPath == null) {
+      VirtualFile virtualFile = contextLocation.getVirtualFile();
+      projectPath = virtualFile != null ? virtualFile.getPath() : null;
+    }
+    if (projectPath == null) {
+      return false;
+    }
 
     List<String> tasksToRun = getTasksTarget(contextLocation);
     taskExecutionSettings.setExternalProjectPath(projectPath);
@@ -70,7 +74,9 @@ public class GradleGroovyScriptRunConfigurationProducer extends RunConfiguration
 
     List<String> tasks = getTasksTarget(contextLocation);
     List<String> taskNames = configuration.getSettings().getTaskNames();
-    if (tasks.isEmpty() && taskNames.isEmpty()) return true;
+    if (tasks.isEmpty() && taskNames.isEmpty()) {
+      return true;
+    }
 
     if (tasks.containsAll(taskNames) && !taskNames.isEmpty()) return true;
     return false;

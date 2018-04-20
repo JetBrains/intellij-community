@@ -62,7 +62,11 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
   }
 
   public void testPasteInRawStringEndingWithTics() {
-    doTestPaste("class A {{String s = `q<caret>`;}}", "``a\n``b``", "class A {{String s = ```q``a\n" + "``b```+ \"``\";}}");
+    doTestPaste("class A {{String s = `q<caret>`;}}", "``a\n``b``", "class A {{String s = `q``a\n" + "``b`+ \"``\";}}");
+  }
+
+  public void testPasteInRawStringStaringWithStartingTics() {
+    doTestPaste("class A {{String s = `q<caret>`;}}", "`a", "class A {{String s = ``q`a``;}}");
   }
 
   public void testPasteInRawStringLiteralOneAndTwo() {
