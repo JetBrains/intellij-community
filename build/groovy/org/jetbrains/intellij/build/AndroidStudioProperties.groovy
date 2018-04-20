@@ -201,7 +201,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
-      withResourceFromModule("intellij.android.core", "lib/antlr4-runtime-4.5.3.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/asm-5.0.3.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/asm-analysis-5.0.3.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/asm-tree-5.0.3.jar", "lib")

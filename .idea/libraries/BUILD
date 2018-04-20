@@ -258,14 +258,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "antlr4-runtime-4.5.3",
-    visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea/android/lib:antlr4-runtime-4.5.3"],
-    runtime_deps = ["//tools/adt/idea/android/lib:antlr4-runtime-4.5.3"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "KotlinJavaRuntime",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

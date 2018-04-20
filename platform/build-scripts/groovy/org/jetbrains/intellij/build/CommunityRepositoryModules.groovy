@@ -316,7 +316,6 @@ class CommunityRepositoryModules {
       */
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
-      withResource("lib/antlr4-runtime-4.5.3.jar", "lib")  // Android Studio
       withResource("lib/asm-5.0.3.jar", "lib")  // Android Studio
       withResource("lib/asm-analysis-5.0.3.jar", "lib")  // Android Studio
       withResource("lib/asm-tree-5.0.3.jar", "lib")  // Android Studio

@@ -22,7 +22,7 @@ import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 @CompileStatic
 class AndroidStudioLibraryLicenses {
   public static final List<LibraryLicense> LICENSES_LIST = (([
-    new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime-4.5.3", version: "4.5.3", license: "BSD",
+    new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime", version: "4.5.3", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
     new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", version: "2.4", license: "Apache 2.0",
                        url: "http://commons.apache.org/io/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
