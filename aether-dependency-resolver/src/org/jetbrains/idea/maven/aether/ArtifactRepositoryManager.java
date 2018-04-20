@@ -177,7 +177,7 @@ public class ArtifactRepositoryManager {
           );
           final ArtifactRequestBuilder builder = new ArtifactRequestBuilder(kind);
           collectResult.getRoot().accept(new TreeDependencyVisitor(
-            new FilteringDependencyVisitor(builder, DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE))
+            new FilteringDependencyVisitor(builder, DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE, JavaScopes.RUNTIME))
           ));
           requests = builder.getRequests();
         }
