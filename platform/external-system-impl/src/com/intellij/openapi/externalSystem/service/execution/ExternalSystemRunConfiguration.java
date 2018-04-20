@@ -282,10 +282,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
       if (myProject.isDisposed()) return null;
 
-      if (mySettings.getTaskNames().isEmpty()) {
-        throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
-      }
-
       String jvmAgentSetup = getJvmAgentSetup();
 
       ApplicationManager.getApplication().assertIsDispatchThread();
