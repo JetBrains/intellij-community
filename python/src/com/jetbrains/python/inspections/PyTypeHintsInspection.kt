@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
@@ -16,6 +17,7 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyGenericType
 import com.jetbrains.python.psi.types.PyTypeChecker
 
@@ -47,6 +49,8 @@ class PyTypeHintsInspection : PyInspection() {
         if (genericQName in calleeQName) {
           checkGenericInstantiation(node)
         }
+
+        checkInstanceAndClassChecks(node)
       }
     }
 
@@ -161,6 +165,123 @@ class PyTypeHintsInspection : PyInspection() {
       registerProblem(call,
                       "Type 'Generic' cannot be instantiated; it can be used only as a base class",
                       ProblemHighlightType.GENERIC_ERROR)
+    }
+
+    private fun checkInstanceAndClassChecks(call: PyCallExpression) {
+      if (call.isCalleeText(PyNames.ISINSTANCE, PyNames.ISSUBCLASS)) {
+        val base = call.arguments.getOrNull(1) ?: return
+
+        checkInstanceAndClassChecksOnTypeVar(base)
+        checkInstanceAndClassChecksOnReference(base)
+        checkInstanceAndClassChecksOnSubscription(base)
+      }
+    }
+
+    private fun checkInstanceAndClassChecksOnTypeVar(base: PyExpression) {
+      if (myTypeEvalContext.getType(base) is PyGenericType) {
+        registerProblem(base,
+                        "Type variables cannot be used with instance and class checks",
+                        ProblemHighlightType.GENERIC_ERROR)
+
+      }
+    }
+
+    private fun checkInstanceAndClassChecksOnReference(base: PyExpression) {
+      if (base is PyReferenceExpression) {
+        val resolvedBase = PyResolveUtil.fullMultiResolveLocally(base)
+
+        resolvedBase
+          .asSequence()
+          .filterIsInstance<PyImportElement>()
+          .mapNotNull { PyResolveUtil.getImportedElementQName(it) }
+          .forEach {
+            when (it.toString()) {
+              PyTypingTypeProvider.ANY,
+              PyTypingTypeProvider.UNION,
+              PyTypingTypeProvider.GENERIC,
+              PyTypingTypeProvider.OPTIONAL,
+              PyTypingTypeProvider.CLASS_VAR,
+              PyTypingTypeProvider.NO_RETURN -> registerProblem(base,
+                                                                "'${it.lastComponent}' cannot be used with instance and class checks",
+                                                                ProblemHighlightType.GENERIC_ERROR)
+            }
+          }
+
+        resolvedBase
+          .asSequence()
+          .filterIsInstance<PyTargetExpression>()
+          .mapNotNull { it.findAssignedValue() as? PySubscriptionExpression }
+          .forEach { checkInstanceAndClassChecksOnSubscriptionOperand(base, it.operand) }
+      }
+    }
+
+    private fun checkInstanceAndClassChecksOnSubscription(base: PyExpression) {
+      if (base is PySubscriptionExpression) {
+        checkInstanceAndClassChecksOnSubscriptionOperand(base, base.operand)
+      }
+    }
+
+    private fun checkInstanceAndClassChecksOnSubscriptionOperand(base: PyExpression, operand: PyExpression) {
+      if (operand is PyReferenceExpression) {
+        PyResolveUtil
+          .fullMultiResolveLocally(operand)
+          .forEach {
+            if (it == null) return@forEach
+
+            if (it is PyImportElement) {
+              val qName = PyResolveUtil.getImportedElementQName(it)
+
+              if (qName == genericQName) {
+                registerProblem(base,
+                                "'Generic' cannot be used with instance and class checks",
+                                ProblemHighlightType.GENERIC_ERROR)
+
+                return@forEach
+              }
+
+              if (qName != null) {
+                val qNameAsString = qName.toString()
+
+                if (qNameAsString == PyTypingTypeProvider.UNION ||
+                    qNameAsString == PyTypingTypeProvider.OPTIONAL ||
+                    qNameAsString == PyTypingTypeProvider.CLASS_VAR) {
+                  registerProblem(base,
+                                  "'${qName.lastComponent}' cannot be used with instance and class checks",
+                                  ProblemHighlightType.GENERIC_ERROR)
+
+                  return@forEach
+                }
+              }
+            }
+
+            val resolved = if (it is PyImportElement) it.multiResolve() else listOf(RatedResolveResult(RatedResolveResult.RATE_NORMAL, it))
+
+            resolved
+              .asSequence()
+              .filterNotNull()
+              .mapNotNull { it.element as? PyTypedElement }
+              .any {
+                if (it is PyQualifiedNameOwner) {
+                  val qName = it.qualifiedName
+
+                  if (qName == PyTypingTypeProvider.CALLABLE ||
+                      qName == PyTypingTypeProvider.TYPE ||
+                      qName == PyTypingTypeProvider.PROTOCOL ||
+                      qName == PyTypingTypeProvider.PROTOCOL_EXT) return@any true
+                }
+
+                val type = myTypeEvalContext.getType(it)
+                type is PyWithAncestors && PyTypingTypeProvider.isGeneric(type, myTypeEvalContext)
+              }
+              .let {
+                if (it) {
+                  registerProblem(base,
+                                  "Parameterized generics cannot be used with instance and class checks",
+                                  ProblemHighlightType.GENERIC_ERROR)
+                }
+              }
+          }
+      }
     }
 
     private fun checkPlainGenericInheritance(superClassExpressions: List<PyExpression>) {

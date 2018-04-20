@@ -232,6 +232,244 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "    pass");
   }
 
+  // PY-28249
+  public void testInstanceAndClassChecksOnAny() {
+    doTestByText("from typing import Any\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Any' cannot be used with instance and class checks\">Any</error>)\n" +
+                 "B = Any\n" +
+                 "assert issubclass(A, <error descr=\"'Any' cannot be used with instance and class checks\">B</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnNoReturn() {
+    doTestByText("from typing import NoReturn\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'NoReturn' cannot be used with instance and class checks\">NoReturn</error>)\n" +
+                 "B = NoReturn\n" +
+                 "assert issubclass(A, <error descr=\"'NoReturn' cannot be used with instance and class checks\">B</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnTypeVar() {
+    doTestByText("from typing import TypeVar\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\")\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), TypeVar)\n" +
+                 "assert issubclass(A, TypeVar)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"Type variables cannot be used with instance and class checks\">T</error>)\n" +
+                 "assert issubclass(A, <error descr=\"Type variables cannot be used with instance and class checks\">T</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnUnion() {
+    doTestByText("from typing import Union\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union</error>)\n" +
+                 "B = Union\n" +
+                 "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">B</error>)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union[int, str]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">B[int, str]</error>)\n" +
+                 "C = B[int, str]\n" +
+                 "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnOptional() {
+    doTestByText("from typing import Optional\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Optional' cannot be used with instance and class checks\">Optional</error>)\n" +
+                 "B = Optional\n" +
+                 "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">B</error>)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Optional' cannot be used with instance and class checks\">Optional[int]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">B[int]</error>)\n" +
+                 "C = B[int]\n" +
+                 "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnClassVar() {
+    doTestByText("from typing import ClassVar\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'ClassVar' cannot be used with instance and class checks\">ClassVar</error>)\n" +
+                 "B = ClassVar\n" +
+                 "assert issubclass(A, <error descr=\"'ClassVar' cannot be used with instance and class checks\">B</error>)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'ClassVar' cannot be used with instance and class checks\">ClassVar[int]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"'ClassVar' cannot be used with instance and class checks\">B[int]</error>)\n" +
+                 "C = B[int]\n" +
+                 "assert issubclass(A, <error descr=\"'ClassVar' cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnGeneric() {
+    doTestByText("from typing import TypeVar, Generic\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\")\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Generic' cannot be used with instance and class checks\">Generic</error>)\n" +
+                 "B = Generic\n" +
+                 "assert issubclass(A, <error descr=\"'Generic' cannot be used with instance and class checks\">B</error>)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Generic' cannot be used with instance and class checks\">Generic[T]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"'Generic' cannot be used with instance and class checks\">B[T]</error>)\n" +
+                 "C = B[T]\n" +
+                 "assert issubclass(A, <error descr=\"'Generic' cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnGenericInheritor() {
+    doTestByText("from typing import TypeVar, List\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\")\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), List)\n" +
+                 "B = List\n" +
+                 "assert issubclass(A, B)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"Parameterized generics cannot be used with instance and class checks\">List[T]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">B[T]</error>)\n" +
+                 "C = B[T]\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnTuple() {
+    doTestByText("from typing import Tuple\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), Tuple)\n" +
+                 "B = Tuple\n" +
+                 "assert issubclass(A, B)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"Parameterized generics cannot be used with instance and class checks\">Tuple[int, str]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">B[int, str]</error>)\n" +
+                 "C = B[int, str]\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnType() {
+    doTestByText("from typing import Type\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), Type)\n" +
+                 "B = Type\n" +
+                 "assert issubclass(A, B)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"Parameterized generics cannot be used with instance and class checks\">Type[int]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">B[int]</error>)\n" +
+                 "C = B[int]\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnCallable() {
+    doTestByText("from typing import Callable\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), Callable)\n" +
+                 "B = Callable\n" +
+                 "assert issubclass(A, B)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"Parameterized generics cannot be used with instance and class checks\">Callable[..., str]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">B[..., str]</error>)\n" +
+                 "C = B[..., str]\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnProtocol() {
+    doTestByText("from typing import Protocol, TypeVar\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "    \n" +
+                 "T = TypeVar(\"T\")\n" +
+                 "\n" +
+                 "assert isinstance(A(), Protocol)\n" +
+                 "B = Protocol\n" +
+                 "assert issubclass(A, B)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"Parameterized generics cannot be used with instance and class checks\">Protocol[T]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">B[T]</error>)\n" +
+                 "C = B[T]\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnUserClass() {
+    doTestByText("from typing import Generic, TypeVar\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\")    \n" +
+                 "\n" +
+                 "class D(Generic[T]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), D)\n" +
+                 "B = D\n" +
+                 "assert issubclass(A, B)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"Parameterized generics cannot be used with instance and class checks\">D[int]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">B[int]</error>)\n" +
+                 "C = B[int]\n" +
+                 "assert issubclass(A, <error descr=\"Parameterized generics cannot be used with instance and class checks\">C</error>)");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnUnknown() {
+    doTestByText("from m1 import D\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), D)\n" +
+                 "B = D\n" +
+                 "assert issubclass(A, B)\n" +
+                 "\n" +
+                 "assert isinstance(A(), D[int])\n" +
+                 "assert issubclass(A, B[int])\n" +
+                 "C = B[int]\n" +
+                 "assert issubclass(A, C)");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

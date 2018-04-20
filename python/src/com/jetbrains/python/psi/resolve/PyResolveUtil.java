@@ -165,25 +165,26 @@ public class PyResolveUtil {
       return StreamEx
         .of(fullMultiResolveLocally(expression))
         .select(PyImportElement.class)
-        .map(
-          element -> {
-            final PyStatement importStatement = element.getContainingImportStatement();
-
-            if (importStatement instanceof PyFromImportStatement) {
-              final QualifiedName importSourceQName = ((PyFromImportStatement)importStatement).getImportSourceQName();
-              final QualifiedName importedQName = element.getImportedQName();
-
-              if (importSourceQName != null && importedQName != null) {
-                return importSourceQName.append(importedQName);
-              }
-            }
-
-            return element.getImportedQName();
-          }
-        )
+        .map(PyResolveUtil::getImportedElementQName)
         .nonNull()
         .toList();
     }
+  }
+
+  @Nullable
+  public static QualifiedName getImportedElementQName(@NotNull PyImportElement element) {
+    final PyStatement importStatement = element.getContainingImportStatement();
+
+    if (importStatement instanceof PyFromImportStatement) {
+      final QualifiedName importSourceQName = ((PyFromImportStatement)importStatement).getImportSourceQName();
+      final QualifiedName importedQName = element.getImportedQName();
+
+      if (importSourceQName != null && importedQName != null) {
+        return importSourceQName.append(importedQName);
+      }
+    }
+
+    return element.getImportedQName();
   }
 
   /**

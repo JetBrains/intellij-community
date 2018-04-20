@@ -81,11 +81,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String COUNTER = "typing.Counter";
   private static final String DEQUE = "typing.Deque";
   private static final String TUPLE = "typing.Tuple";
-  private static final String CLASS_VAR = "typing.ClassVar";
+  public static final String CLASS_VAR = "typing.ClassVar";
   public static final String TYPE_VAR = "typing.TypeVar";
   private static final String CHAIN_MAP = "typing.ChainMap";
-  private static final String UNION = "typing.Union";
-  private static final String OPTIONAL = "typing.Optional";
+  public static final String UNION = "typing.Union";
+  public static final String OPTIONAL = "typing.Optional";
+  public static final String NO_RETURN = "typing.NoReturn";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
@@ -149,6 +150,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(COUNTER)
     .add(DEQUE)
     .add(CHAIN_MAP)
+    .add(NO_RETURN)
     .build();
 
   @Nullable
