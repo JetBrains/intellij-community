@@ -912,16 +912,12 @@
                         serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
-    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
     <projectService serviceImplementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager"/>
     <diff.DiffExtension implementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodDiffViewerCustomizer"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
     <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
-
-    <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 
     <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
     <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>

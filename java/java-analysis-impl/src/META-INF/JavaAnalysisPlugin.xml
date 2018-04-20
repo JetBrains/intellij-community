@@ -232,11 +232,14 @@
     <lang.psiTypeAnnotationModifier implementation="com.intellij.codeInsight.NullityAnnotationModifier"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
                     serviceImplementation="com.intellij.codeInsight.guess.impl.GuessManagerImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
+                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.intention.QuickFixFactory"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.codeInspection.reference.RefJavaUtil"
                         serviceImplementation="com.intellij.codeInspection.reference.RefJavaUtilImpl"/>
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
+    <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
   </extensions>
 </idea-plugin>
