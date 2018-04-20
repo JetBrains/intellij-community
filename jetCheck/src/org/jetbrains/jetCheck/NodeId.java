@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 class NodeId {
   private final AtomicInteger counter;
   final int number;
-  @Nullable final Generator<?> generator;
+  @Nullable final Integer generatorHash;
 
   NodeId(@NotNull Generator<?> generator) {
     this(new AtomicInteger(), generator);
@@ -20,7 +20,7 @@ class NodeId {
 
   private NodeId(AtomicInteger counter, @Nullable Generator<?> generator) {
     this.counter = counter;
-    this.generator = generator;
+    this.generatorHash = generator == null ? null : generator.getGeneratorFunction().hashCode();
     number = counter.getAndIncrement();
   }
 
