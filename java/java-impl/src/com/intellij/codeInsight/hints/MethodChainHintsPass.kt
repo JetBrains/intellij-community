@@ -4,14 +4,14 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.util.DocumentUtil
 import com.siyeh.ig.psiutils.ExpressionUtils
 import gnu.trove.TIntObjectHashMap
 
@@ -66,24 +66,19 @@ class MethodChainHintsPass(
     return chain
   }
 
-  override fun applyHintsToEditor() {
-    val inlayModel = myEditor.inlayModel
+  override fun isNotChangedInlay(inlay: Inlay): Boolean {
+    if (!METHOD_CHAIN_INLAY_KEY.isIn(inlay)) return false
+    val inlayText = hints.get(inlay.offset)
+    return inlayText == null || inlayText == (inlay.renderer as MethodChainHintRenderer).text
+  }
 
-    val toRemove = inlayModel.getInlineElementsInRange(rootElement.textRange.startOffset + 1, rootElement.textRange.endOffset - 1)
-      .filter { METHOD_CHAIN_INLAY_KEY.isIn(it) }
-      .filter { inlay ->
-        val inlayText = hints.get(inlay.offset)
-        inlayText == null || inlayText == (inlay.renderer as MethodChainHintRenderer).text // not changed inlays
-      }
+  override fun getCollectedHintsCount() = hints.values.count()
 
-    DocumentUtil.executeInBulk(myEditor.document, toRemove.size + hints.values.count() > 1000) {
-      toRemove.forEach { Disposer.dispose(it) }
-
-      hints.forEachEntry { offset, inlayText ->
-        val inlay = inlayModel.addInlineElement(offset, MethodChainHintRenderer(inlayText))
-        inlay?.putUserData(METHOD_CHAIN_INLAY_KEY, true)
-        true
-      }
+  override fun applyCollectedHints(inlayModel: InlayModel) {
+    hints.forEachEntry { offset, inlayText ->
+      val inlay = inlayModel.addInlineElement(offset, MethodChainHintRenderer(inlayText))
+      inlay?.putUserData(METHOD_CHAIN_INLAY_KEY, true)
+      true
     }
   }
 
