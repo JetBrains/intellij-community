@@ -80,7 +80,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
   private fun intercept() {
     val app = ApplicationManager.getApplication()
     val connection = app.messageBus.connect(app)
-    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before.Adapter() {
+    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
       override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
         if (!myLegalNoticeAccepted && file.fileType === StdFileTypes.CLASS && ClassFileDecompilers.find(file) === this@IdeaDecompiler) {
           myFutures[file] = app.executeOnPooledThread(Callable<CharSequence> { decompile(file) })
@@ -96,10 +96,10 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
               PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, true)
               myLegalNoticeAccepted = true
 
-              app.invokeLater({
+              app.invokeLater {
                 RefreshQueue.getInstance().processSingleEvent(
-                    VFileContentChangeEvent(this@IdeaDecompiler, file, file.modificationStamp, -1, false))
-              })
+                  VFileContentChangeEvent(this@IdeaDecompiler, file, file.modificationStamp, -1, false))
+              }
 
               connection.disconnect()
             }

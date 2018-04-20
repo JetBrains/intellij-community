@@ -225,7 +225,7 @@ public class DebuggerUIUtil {
       }
     };
 
-    balloon.addListener(new JBPopupListener.Adapter() {
+    balloon.addListener(new JBPopupListener() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
         propertiesPanel.saveProperties();

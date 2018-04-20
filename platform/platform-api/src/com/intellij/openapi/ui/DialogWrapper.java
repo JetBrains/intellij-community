@@ -523,6 +523,7 @@ public abstract class DialogWrapper {
       }
     }
 
+    myPeer.setTouchBarButtons(rightSideButtons);
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
   }
@@ -2377,7 +2378,7 @@ public abstract class DialogWrapper {
         }
       };
 
-      balloon.addListener(new JBPopupListener.Adapter() {
+      balloon.addListener(new JBPopupListener() {
         @Override public void onClosed(LightweightWindowEvent event) {
           JRootPane rootPane = getRootPane();
           if (rootPane != null) {

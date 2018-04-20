@@ -186,7 +186,7 @@ public final class IconLoader {
     }
     if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
-    URL myURL = aClass.getResource(path);
+    URL myURL = findURL(path, aClass);
     if (myURL == null) {
       if (strict) throw new RuntimeException("Can't find icon in '" + path + "' near " + aClass);
       return null;
@@ -204,6 +204,7 @@ public final class IconLoader {
     for (IconPathPatcher patcher : ourPatchers) {
       String newPath = patcher.patchPath(path);
       if (newPath != null) {
+        LOG.info("replace '" + path + "' with '" + newPath + "'");
         return Pair.create(newPath, patcher.getContextClass(path));
       }
     }
@@ -213,6 +214,15 @@ public final class IconLoader {
   private static boolean isReflectivePath(@NotNull String path) {
     List<String> paths = StringUtil.split(path, ".");
     return paths.size() > 1 && paths.get(0).endsWith("Icons");
+  }
+
+  @Nullable
+  private static URL findURL(@NotNull String path, @NotNull Class aClass) {
+    URL url = aClass.getResource(path);
+    if (url != null || !path.endsWith(".png")) return url;
+    url = aClass.getResource(path.substring(0, path.length() - 4) + ".svg");
+    if (url != null) LOG.info("replace '" + path + "' with '" + url + "'");
+    return url;
   }
 
   @Nullable

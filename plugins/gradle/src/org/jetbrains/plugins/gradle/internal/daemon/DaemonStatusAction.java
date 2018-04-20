@@ -15,6 +15,7 @@ import org.gradle.launcher.daemon.registry.DaemonStopEvent;
 import org.gradle.launcher.daemon.registry.DaemonStopEvents;
 import org.gradle.launcher.daemon.server.expiry.DaemonExpirationStatus;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -65,7 +66,9 @@ public class DaemonStatusAction extends DaemonAction {
             Integer idleTimeout = connectionDaemon.getContext().getIdleTimeout();
             File registryDir = connectionDaemon.getContext().getDaemonRegistryDir();
 
-            ReportStatus statusCommand = new ReportStatus(this.idGenerator.generateId(), daemon.getToken());
+            Object id = this.idGenerator.generateId();
+            byte[] token = daemon.getToken();
+            ReportStatus statusCommand = createCommand(ReportStatus.class, id, token);
             Status status = this.reportStatusDispatcher.dispatch(connection, statusCommand);
             if (status != null) {
               daemons.add(new DaemonState(connectionDaemon.getPid(),

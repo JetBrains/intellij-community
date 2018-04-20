@@ -20,10 +20,7 @@ package org.jetbrains.uast
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.PsiParameter
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -111,7 +108,7 @@ fun PsiElement?.getContainingClass() = this?.let { PsiTreeUtil.getParentOfType(i
 
 fun PsiElement?.findContainingUClass(): UClass? {
   var element = this
-  while (element != null) {
+  while (element != null && element !is PsiFileSystemItem) {
     element.toUElementOfType<UClass>()?.let { return it }
     element = element.parent
   }

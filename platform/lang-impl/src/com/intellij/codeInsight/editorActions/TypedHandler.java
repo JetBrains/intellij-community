@@ -630,7 +630,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
       if (element.getNode() != null && isBrace) {
         DefaultRawTypedHandler handler = ((EditorActionManagerImpl) EditorActionManager.getInstance()).getDefaultRawTypedHandler();
-        handler.beginUndoablePostProcessing(project);
+        handler.beginUndoablePostProcessing();
 
         final int finalLBraceOffset = lBraceOffset;
         ApplicationManager.getApplication().runWriteAction(() -> {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl;
 
@@ -437,7 +435,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     final ScopeHighlighter highlighter = new ScopeHighlighter(myEditor);
     final ScopeHighlighter injectionHighlighter = new ScopeHighlighter(injectedEditor);
     
-    myPopup.addListener(new JBPopupListener.Adapter() {
+    myPopup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
         highlighter.dropHighlight();

@@ -71,8 +71,11 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
   @Override
   @NotNull
-  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
+  public FileEditorState readState(@Nullable Element element, @NotNull Project project, @NotNull VirtualFile file) {
     TextEditorState state = new TextEditorState();
+    if (element == null) {
+      return state;
+    }
 
     try {
       List<Element> caretElements = element.getChildren(CARET_ELEMENT);

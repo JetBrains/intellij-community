@@ -22,11 +22,13 @@
       <implementation-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.EditorHistoryManager</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.fileEditor.ex.IdeDocumentHistory</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
     </component>
   </project-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager"/>
+    <postStartupActivity implementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"/>
+  </extensions>
 </idea-plugin>

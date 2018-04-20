@@ -9,4 +9,9 @@ public class Json5Language extends JsonLanguage {
   protected Json5Language() {
     super("JSON5", "application/json5");
   }
+
+  @Override
+  public boolean acceptsStringNewlines() {
+    return true;
+  }
 }

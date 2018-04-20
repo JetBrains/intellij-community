@@ -17,4 +17,6 @@ public class JsonLanguage extends Language {
   public boolean isCaseSensitive() {
     return true;
   }
+
+  public boolean acceptsStringNewlines() { return false; }
 }

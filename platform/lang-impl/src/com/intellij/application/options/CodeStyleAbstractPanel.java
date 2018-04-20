@@ -21,6 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -204,18 +205,11 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         applySettingsToModel();
         CodeStyleSettings clone = mySettings.clone();
         clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
-        CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-        PsiFile formatted;
-        try {
-          formatted = doReformat(project, psiFile);
-        }
-        finally {
-          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-        }
-
+        final Ref<PsiFile> formatted = Ref.create();
+        CodeStyle.doWithTemporarySettings(project, clone, () -> formatted.set(doReformat(project, psiFile)));
         myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
         Document document = myEditor.getDocument();
-        document.replaceString(0, document.getTextLength(), formatted.getText());
+        document.replaceString(0, document.getTextLength(), formatted.get().getText());
         if (beforeReformat != null) {
           highlightChanges(beforeReformat);
         }
@@ -253,13 +247,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     prepareForReformat(psiFile);
     CodeStyleSettings clone = mySettings.clone();
     clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
-    CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-    try {
-      CodeStyleManager.getInstance(project).reformat(psiFile);
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    }
+    CodeStyle.doWithTemporarySettings(project, clone, () -> CodeStyleManager.getInstance(project).reformat(psiFile));
     return getDocumentBeforeChanges(project, psiFile);
   }
 

@@ -76,7 +76,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     if (project != null) {
       final MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
-      model.addMarkupModelListener(this, new MarkupModelListener.Adapter() {
+      model.addMarkupModelListener(this, new MarkupModelListener() {
         @Override
         public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
           incErrorCount(highlighter, 1);

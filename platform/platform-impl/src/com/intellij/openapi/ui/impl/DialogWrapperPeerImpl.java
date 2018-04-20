@@ -39,6 +39,8 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.ui.mac.touchbar.TouchBar;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
@@ -72,6 +74,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private final List<Runnable> myDisposeActions = new ArrayList<>();
   private Project myProject;
   private ActionCallback myTypeAheadCallback;
+
+  private TouchBar myTouchBar;
+  private List<JButton> myTouchBarButtons;
 
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
     boolean headless = isHeadlessEnv();
@@ -250,6 +255,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           myDialog.remove(myDialog.getRootPane());
         }
       });
+
+      TouchBarsManager.closeTempTouchBar(myTouchBar);
     };
 
     UIUtil.invokeLaterIfNeeded(disposer);
@@ -421,6 +428,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     myDialog.getWindow().setAutoRequestFocus(true);
+
+    if (myTouchBarButtons != null && myProject != null)
+      myTouchBar = TouchBarsManager.showTempButtonsBar(myTouchBarButtons, myProject);
 
     try {
       myDialog.show();
@@ -996,5 +1006,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   public void setAutoRequestFocus(boolean b) {
     UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
+  }
+
+  @Override
+  public void setTouchBarButtons(List<JButton> buttons) {
+    if (!TouchBarsManager.isTouchBarAvailable())
+      return;
+    myTouchBarButtons = buttons;
   }
 }

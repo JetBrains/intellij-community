@@ -130,12 +130,12 @@ public class CppModelBuilder implements ModelBuilderService {
   private static File getExecutableFile(LinkExecutable linkExecutable) {
     File executableFile;
     RegularFileProperty binaryFile = null;
-    if (GradleVersion.current().compareTo(GradleVersion.version("4.7")) < 0) {
-      binaryFile = linkExecutable.getBinaryFile();
+    if (GradleVersion.current().compareTo(GradleVersion.version("4.7")) >= 0) {
+      binaryFile = linkExecutable.getLinkedFile();
     }
     else {
       try {
-        Object linkedFile = linkExecutable.getClass().getMethod("getLinkedFile").invoke(linkExecutable);
+        Object linkedFile = linkExecutable.getClass().getMethod("getBinaryFile").invoke(linkExecutable);
         if (linkedFile instanceof RegularFileProperty) {
           binaryFile = (RegularFileProperty)linkedFile;
         }

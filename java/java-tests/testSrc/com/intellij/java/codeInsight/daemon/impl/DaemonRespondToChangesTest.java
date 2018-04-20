@@ -694,7 +694,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     final int[] count = {0};
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
-    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
+    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         count[0]++;
@@ -820,7 +820,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(errors);
 
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
-    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
+    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
         if (TextRange.create(highlighter).substring(highlighter.getDocument().getText()).equals("TTTTTTTTTTTTTTT")) {
@@ -1854,7 +1854,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, false);
     final boolean[] errorRemoved = {false};
 
-    model.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
+    model.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
         HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
