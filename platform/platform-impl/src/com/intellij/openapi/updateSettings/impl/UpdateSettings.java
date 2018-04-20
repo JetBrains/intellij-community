@@ -24,6 +24,9 @@ import java.util.stream.Stream;
   }
 )
 public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, UserUpdateSettings {
+  public static final String TOOLBOX_PM = "Toolbox";
+  public static final String SNAP_PM = "Snap";
+
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);
   }
@@ -37,9 +40,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, 
 
   @Nullable
   public String getPackageManagerName() {
-    return "true".equalsIgnoreCase(myPackageManager) ? "Toolbox" :
-           PathManager.isSnap() ? "Snap" :
-           myPackageManager;
+    return "true".equalsIgnoreCase(myPackageManager) ? TOOLBOX_PM : PathManager.isSnap() ? SNAP_PM : myPackageManager;
   }
 
   @NotNull
