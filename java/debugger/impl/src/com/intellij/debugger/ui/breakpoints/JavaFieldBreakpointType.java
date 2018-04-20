@@ -68,6 +68,12 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
     return AllIcons.Debugger.Db_muted_disabled_field_breakpoint;
   }
 
+  @NotNull
+  @Override
+  public Icon getValidatingIcon() {
+    return AllIcons.Debugger.Db_validate_field_breakpoint;
+  }
+
   //@Override
   protected String getHelpID() {
     return HelpID.FIELD_WATCHPOINTS;

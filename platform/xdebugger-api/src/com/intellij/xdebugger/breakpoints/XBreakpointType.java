@@ -116,6 +116,11 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return AllIcons.Debugger.Db_muted_disabled_breakpoint;
   }
 
+  @Nullable
+  public Icon getValidatingIcon() {
+    return null;
+  }
+
   /**
    * @return the icon which is shown for a dependent breakpoint until its master breakpoint is reached
    */
