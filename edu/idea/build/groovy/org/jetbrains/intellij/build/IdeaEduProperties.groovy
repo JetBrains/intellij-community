@@ -27,7 +27,7 @@ class IdeaEduProperties extends IdeaCommunityProperties {
     dependenciesPath = "$home/edu/dependencies"
   }
 
-
+  @Override
   WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
     return new WindowsDistributionCustomizer() {
       {
@@ -35,6 +35,20 @@ class IdeaEduProperties extends IdeaCommunityProperties {
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
         fileAssociations = [".java", ".groovy", ".kt", ".py"]
       }
+
+      @Override
+      String getFullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { "IntelliJ IDEA Community Edition" }
+
+      @Override
+      String getFullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { "IntelliJ IDEA Community Edition" }
+
+      @Override
+      String getUninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
+        "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
+      }
+
+      @Override
+      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/idea" }
     }
   }
 
