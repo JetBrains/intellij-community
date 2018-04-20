@@ -31,7 +31,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 @State(name = "editorHistoryManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -201,6 +200,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   /**
    * @return array of valid files that are in the history, oldest first. May contain duplicates.
    */
+  @NotNull
   public synchronized VirtualFile[] getFiles() {
     List<VirtualFile> result = new ArrayList<>(myEntriesList.size());
     for (HistoryEntry entry : myEntriesList) {
@@ -221,13 +221,12 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   /**
    * @return a set of valid files that are in the history, oldest first.
    */
-  public LinkedHashSet<VirtualFile> getFileSet() {
-    LinkedHashSet<VirtualFile> result = new LinkedHashSet<>();
+  @NotNull
+  public synchronized List<VirtualFile> getFileSet() {
+    List<VirtualFile> result = new ArrayList<>();
     for (HistoryEntry entry : myEntriesList) {
       VirtualFile file = entry.getFile();
-      if (file != null) {
-        // if the file occurs several times in the history, only its last occurrence counts
-        result.remove(file);
+      if (file != null && !result.contains(file)) {
         result.add(file);
       }
     }

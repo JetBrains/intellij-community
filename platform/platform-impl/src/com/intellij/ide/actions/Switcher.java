@@ -173,14 +173,14 @@ public class Switcher extends AnAction implements DumbAware {
       SWITCHER.goForward();
       return null;
     }
-    return project == null ? null : createAndShowSwitcher(project, title, pinned, vFiles);
+    return project == null ? null : createAndShowSwitcher(project, title, pinned, vFiles == null ? null : Arrays.asList(vFiles));
   }
 
   @Nullable
   private static SwitcherPanel createAndShowSwitcher(@NotNull Project project,
                                                      @NotNull String title,
                                                      boolean pinned,
-                                                     @Nullable final VirtualFile[] vFiles) {
+                                                     @Nullable final List<VirtualFile> vFiles) {
     synchronized (Switcher.class) {
       if (SWITCHER != null) {
         SWITCHER.cancel();
@@ -188,7 +188,7 @@ public class Switcher extends AnAction implements DumbAware {
       SWITCHER = new SwitcherPanel(project, title, pinned) {
         @NotNull
         @Override
-        protected VirtualFile[] getFiles(@NotNull Project project) {
+        protected List<VirtualFile> getFiles(@NotNull Project project) {
           return vFiles != null ? vFiles : super.getFiles(project);
         }
       };
@@ -411,19 +411,19 @@ public class Switcher extends AnAction implements DumbAware {
         if (isPinnedMode() && editors.size() > 1) {
           filesData.addAll(editors);
         }
-        final VirtualFile[] recentFiles = ArrayUtil.reverseArray(getFiles(project));
-        final int maxFiles = Math.max(editors.size(), recentFiles.length);
-        final int len = isPinnedMode() ? recentFiles.length : Math.min(toolWindows.getModel().getSize(), maxFiles);
+        final List<VirtualFile> recentFiles = getFiles(project);
+        final int maxFiles = Math.max(editors.size(), recentFiles.size());
+        final int minIndex = isPinnedMode() ? 0 : (recentFiles.size() - Math.min(toolWindows.getModel().getSize(), maxFiles));
         boolean firstRecentMarked = false;
         final List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
-        for (int i = 0; i < len; i++) {
+        for (int i = recentFiles.size(); i >= minIndex; i--) {
           if (isPinnedMode()
-              && selectedFiles.contains(recentFiles[i])
+              && selectedFiles.contains(recentFiles.get(i))
               && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
             continue;
           }
 
-          final FileInfo info = new FileInfo(recentFiles[i], null, project);
+          final FileInfo info = new FileInfo(recentFiles.get(i), null, project);
           boolean add = true;
           if (isPinnedMode()) {
             for (FileInfo fileInfo : filesData) {
@@ -672,8 +672,8 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    protected VirtualFile[] getFiles(@NotNull Project project) {
-      return EditorHistoryManager.getInstance(project).getFiles();
+    protected List<VirtualFile> getFiles(@NotNull Project project) {
+      return EditorHistoryManager.getInstance(project).getFileSet();
     }
 
     @NotNull
