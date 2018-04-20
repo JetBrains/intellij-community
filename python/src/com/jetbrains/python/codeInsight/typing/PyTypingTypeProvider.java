@@ -164,7 +164,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
     // Check for the exact name in advance for performance reasons
     if ("Protocol".equals(referenceExpression.getName())) {
-      if (resolveToQualifiedNames(referenceExpression, context).contains(PROTOCOL)) {
+      if (ContainerUtil.exists(resolveToQualifiedNames(referenceExpression, context), n -> PROTOCOL.equals(n) || PROTOCOL_EXT.equals(n))) {
         return createTypingProtocolType(referenceExpression);
       }
     }
@@ -465,16 +465,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      final String targetQName = target.getQualifiedName();
+
       // Depends on typing.Generic defined as a target expression
-      if (GENERIC.equals(target.getQualifiedName())) {
+      if (GENERIC.equals(targetQName)) {
         return Ref.create(createTypingGenericType(target));
       }
       // Depends on typing.Protocol defined as a target expression
-      if (PROTOCOL.equals(target.getQualifiedName())) {
+      if (PROTOCOL.equals(targetQName) || PROTOCOL_EXT.equals(targetQName)) {
         return Ref.create(createTypingProtocolType(target));
       }
       // Depends on typing.Callable defined as a target expression
-      if (CALLABLE.equals(target.getQualifiedName())) {
+      if (CALLABLE.equals(targetQName)) {
         return Ref.create(createTypingCallableType(referenceTarget));
       }
 

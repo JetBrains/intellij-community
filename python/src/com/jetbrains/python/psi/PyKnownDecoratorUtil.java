@@ -62,6 +62,7 @@ public class PyKnownDecoratorUtil {
 
     TYPING_OVERLOAD("typing." + PyNames.OVERLOAD),
     TYPING_RUNTIME("typing.runtime"),
+    TYPING_RUNTIME_EXT("typing_extensions.runtime"),
 
     REPRLIB_RECURSIVE_REPR("reprlib.recursive_repr"),
 
@@ -241,6 +242,8 @@ public class PyKnownDecoratorUtil {
 
   private static boolean allDecoratorsAreKnown(@NotNull PyDecoratable element, @NotNull List<KnownDecorator> decorators) {
     final PyDecoratorList decoratorList = element.getDecoratorList();
-    return decoratorList == null ? decorators.isEmpty() : decoratorList.getDecorators().length == decorators.size();
+    return decoratorList == null
+           ? decorators.isEmpty()
+           : decoratorList.getDecorators().length == StreamEx.of(decorators).groupingBy(KnownDecorator::getShortName).size();
   }
 }
