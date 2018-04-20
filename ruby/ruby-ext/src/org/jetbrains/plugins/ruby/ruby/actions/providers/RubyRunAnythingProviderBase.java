@@ -4,7 +4,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.ide.actions.runAnything.RunAnythingProvider;
+import com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfigur
 
 import java.util.List;
 
-public abstract class RubyRunAnythingProviderBase<T extends AbstractRubyRunConfiguration> extends RunAnythingProvider {
+public abstract class RubyRunAnythingProviderBase<T extends AbstractRubyRunConfiguration> extends RunAnythingRunConfigurationProvider {
   @Override
   public boolean isMatched(@NotNull Project project, @NotNull String commandLine, @NotNull VirtualFile workDirectory) {
     if (!commandLine.startsWith(getExecCommand())) return false;
