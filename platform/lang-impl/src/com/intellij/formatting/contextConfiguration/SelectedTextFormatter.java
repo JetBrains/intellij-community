@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.contextConfiguration;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -61,13 +62,7 @@ public class SelectedTextFormatter {
   void reformatSelectedText(@NotNull CodeStyleSettings reformatSettings) {
     final SelectionModel model = myEditor.getSelectionModel();
     if (model.hasSelection()) {
-      try {
-        CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(reformatSettings);
-        reformatRange(myFile, getSelectedRange());
-      }
-      finally {
-        CodeStyleSettingsManager.getInstance(myProject).dropTemporarySettings();
-      }
+      CodeStyle.doWithTemporarySettings(myProject, reformatSettings, () -> reformatRange(myFile, getSelectedRange()));
     }
   }
 
