@@ -528,6 +528,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
     }
 
+    VirtualFile[] selectedFiles = FileEditorManager.getInstance(getProject()).getSelectedFiles();
+    if (selectedFiles.length > 0) {
+      return selectedFiles[0].getParent();
+    }
+
     return getBaseDirectory(module);
   }
 
