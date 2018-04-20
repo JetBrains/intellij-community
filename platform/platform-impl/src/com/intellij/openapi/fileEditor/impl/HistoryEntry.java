@@ -195,17 +195,14 @@ final class HistoryEntry {
       if (provider == null) {
         continue;
       }
-      if (Boolean.valueOf(providerElement.getAttributeValue(SELECTED_ATTR_VALUE))) {
+      if (Boolean.parseBoolean(providerElement.getAttributeValue(SELECTED_ATTR_VALUE))) {
         selectedProvider = provider;
       }
 
-      Element stateElement = providerElement.getChild(STATE_ELEMENT);
-      if (stateElement == null) {
-        throw new InvalidDataException();
-      }
-
       if (file != null) {
-        FileEditorState state = provider.readState(stateElement, project, file);
+        Element stateElement = providerElement.getChild(STATE_ELEMENT);
+        // due to backward compatibility null cannot be passed, so, use empty element
+        FileEditorState state = provider.readState(stateElement == null ? JDOMUtil.internElement(new Element("")) : stateElement, project, file);
         providerStates.add(Pair.create(provider, state));
       }
     }
