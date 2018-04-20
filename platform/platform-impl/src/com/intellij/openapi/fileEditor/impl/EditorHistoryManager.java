@@ -202,7 +202,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
    * @return array of valid files that are in the history, oldest first. May contain duplicates.
    */
   public synchronized VirtualFile[] getFiles() {
-    final List<VirtualFile> result = new ArrayList<>(myEntriesList.size());
+    List<VirtualFile> result = new ArrayList<>(myEntriesList.size());
     for (HistoryEntry entry : myEntriesList) {
       VirtualFile file = entry.getFile();
       if (file != null) result.add(file);
@@ -223,10 +223,13 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
    */
   public LinkedHashSet<VirtualFile> getFileSet() {
     LinkedHashSet<VirtualFile> result = new LinkedHashSet<>();
-    for (VirtualFile file : getFiles()) {
-      // if the file occurs several times in the history, only its last occurrence counts
-      result.remove(file);
-      result.add(file);
+    for (HistoryEntry entry : myEntriesList) {
+      VirtualFile file = entry.getFile();
+      if (file != null) {
+        // if the file occurs several times in the history, only its last occurrence counts
+        result.remove(file);
+        result.add(file);
+      }
     }
     return result;
   }
