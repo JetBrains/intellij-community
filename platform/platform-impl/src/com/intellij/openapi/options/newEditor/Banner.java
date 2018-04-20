@@ -54,9 +54,10 @@ final class Banner extends SimpleBanner {
     }
     else {
       myProjectIcon.setVisible(true);
+      String projectConceptName = IdeUICustomization.getInstance().getProjectConceptName();
       myProjectIcon.setText(project.isDefault()
-                            ? OptionsBundle.message("configurable.default.project.tooltip", IdeUICustomization.getInstance().getProjectConceptName())
-                            : OptionsBundle.message("configurable.current.project.tooltip"));
+                            ? OptionsBundle.message("configurable.default.project.tooltip", projectConceptName)
+                            : OptionsBundle.message("configurable.current.project.tooltip", projectConceptName));
     }
   }
 
