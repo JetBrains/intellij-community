@@ -8,6 +8,9 @@ import com.intellij.testGuiFramework.util.*
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import org.hamcrest.core.Is.`is` as Matcher_Is
 
 /**
@@ -435,7 +438,7 @@ fun KotlinGuiTestCase.checkKotlinLibInProject(projectPath: String,
 
   actualLibs.forEach {
     logInfo("check if existing '$it' is expected")
-//    collector.checkThat( expectedLibs.contains(it), Matcher_Is(true) ) { "Unexpected file: $it" }               	
+//    collector.checkThat( expectedLibs.contains(it), Matcher_Is(true) ) { "Unexpected file: $it" }
     assert(expectedLibs.contains(it)) { "Unexpected file: $it" }
   }
 
@@ -517,6 +520,21 @@ fun KotlinGuiTestCase.makeTestRoot(projectPath: String, testRoot: String) {
   }
 }
 
+fun fileSearchAndReplace(fileName: String, isRegex: Boolean, search: String, vararg replace: String) {
+  val buffer = mutableListOf<String>()
+  val inputFile = Paths.get(fileName)
+  for (line in Files.readAllLines(inputFile)) {
+    if ((isRegex && line.contains(search.toRegex(RegexOption.IGNORE_CASE))) ||
+        (!isRegex && line.contains(search)))
+      replace.forEach { buffer.add(it) }
+    else buffer.add(line)
+  }
+  val tmpFile = Files.createTempFile(inputFile.fileName.toString(), "tmp")
+  Files.write(tmpFile, buffer)
+  Files.copy(tmpFile, inputFile, StandardCopyOption.REPLACE_EXISTING)
+  tmpFile.toFile().deleteOnExit()
+}
+
 fun KotlinGuiTestCase.editorSearchAndReplace(isRegex: Boolean, isReplaceAll: Boolean, search: String, vararg replace: String) {
   ideFrame {
     editor {
@@ -578,27 +596,27 @@ fun KotlinGuiTestCase.editorClearSearchAndReplace() {
   }
 }
 
-fun KotlinGuiTestCase.addDevRepositoryToBuildGradle(isKotlinDslUsed: Boolean) {
+fun KotlinGuiTestCase.addDevRepositoryToBuildGradle(fileName: String, isKotlinDslUsed: Boolean) {
   val mavenCentral = "mavenCentral()"
   val urlGDsl = "maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }"
   val urlKDsl = "maven { setUrl (\"https://dl.bintray.com/kotlin/kotlin-dev/\") }"
   if (isKotlinDslUsed)
-    editorSearchAndReplace(
+    fileSearchAndReplace(
+      fileName = fileName,
       isRegex = false,
-      isReplaceAll = true,
       search = mavenCentral,
       replace = *arrayOf(mavenCentral, urlKDsl)
     )
   else
-    editorSearchAndReplace(
+    fileSearchAndReplace(
+      fileName = fileName,
       isRegex = false,
-      isReplaceAll = true,
       search = mavenCentral,
       replace = *arrayOf(mavenCentral, urlGDsl)
     )
 }
 
-fun KotlinGuiTestCase.addDevRepositoryToPomXml() {
+fun KotlinGuiTestCase.addDevRepositoryToPomXml(fileName: String) {
   val searchedLine = """</dependencies>"""
   val changingLine = """
     <repositories>
@@ -619,15 +637,16 @@ fun KotlinGuiTestCase.addDevRepositoryToPomXml() {
         </pluginRepository>
     </pluginRepositories>
     """.split("\n").toTypedArray()
-  editorSearchAndReplace(
-      isRegex = false,
-      isReplaceAll = true,
-      search = searchedLine,
-      replace = *arrayOf(searchedLine, *changingLine)
-    )
+  fileSearchAndReplace(
+    fileName = fileName,
+    isRegex = false,
+    search = searchedLine,
+    replace = *arrayOf(searchedLine, *changingLine)
+  )
 }
 
-fun KotlinGuiTestCase.changePluginsInBuildGradle(kotlinKind: KotlinKind) {
+fun KotlinGuiTestCase.changePluginsInBuildGradle(fileName: String,
+                                                 kotlinKind: KotlinKind) {
   val regex = "plugins\\s*\\{[\\s\\S]*?}"
   val pluginsJava = "plugins{java}"
   val pluginsKotlin = when (kotlinKind) {
@@ -637,33 +656,35 @@ fun KotlinGuiTestCase.changePluginsInBuildGradle(kotlinKind: KotlinKind) {
     KotlinKind.Common -> throw IllegalStateException("Gradle with Kotlin DSL doesn't support Common modules still.")
   }
 
-  editorSearchAndReplace(
+  fileSearchAndReplace(
+    fileName = fileName,
     isRegex = true,
-    isReplaceAll = false,
     search = regex,
     replace = *arrayOf(pluginsJava, pluginsKotlin)
   )
 }
 
-fun KotlinGuiTestCase.changeKotlinVersionInBuildGradle(isKotlinDslUsed: Boolean, kotlinVersion: String) {
+fun KotlinGuiTestCase.changeKotlinVersionInBuildGradle(fileName: String,
+                                                       isKotlinDslUsed: Boolean,
+                                                       kotlinVersion: String) {
   val oldVersion = if (isKotlinDslUsed) "kotlin_version\\s*=\\s*\".*\""
   else "ext\\.kotlin_version\\s*=\\s*'.*'"
-  val newVersion = if(isKotlinDslUsed) "kotlin_version = \"$kotlinVersion\""
+  val newVersion = if (isKotlinDslUsed) "kotlin_version = \"$kotlinVersion\""
   else "ext.kotlin_version = '$kotlinVersion'"
-  editorSearchAndReplace(
+  fileSearchAndReplace(
+    fileName = fileName,
     isRegex = true,
-    isReplaceAll = false,
     search = oldVersion,
     replace = *arrayOf(newVersion)
   )
 }
 
-fun KotlinGuiTestCase.changeKotlinVersionInPomXml(kotlinVersion: String) {
+fun KotlinGuiTestCase.changeKotlinVersionInPomXml(fileName: String, kotlinVersion: String) {
   val oldVersion = "<kotlin\\.version>.+<\\/kotlin\\.version>"
   val newVersion = "<kotlin.version>$kotlinVersion</kotlin.version>"
-  editorSearchAndReplace(
+  fileSearchAndReplace(
+    fileName = fileName,
     isRegex = true,
-    isReplaceAll = false,
     search = oldVersion,
     replace = *arrayOf(newVersion)
   )
@@ -684,38 +705,45 @@ fun KotlinGuiTestCase.openFileFromProjectView(vararg fileName: String) {
 }
 
 fun KotlinGuiTestCase.openBuildGradle(isKotlinDslUsed: Boolean, vararg projectName: String) {
-      val buildGradleName = "build.gradle${if (isKotlinDslUsed) ".kts" else ""}"
-    openFileFromProjectView(*projectName, buildGradleName)
+  val buildGradleName = "build.gradle${if (isKotlinDslUsed) ".kts" else ""}"
+  openFileFromProjectView(*projectName, buildGradleName)
 }
 
 fun KotlinGuiTestCase.openPomXml(vararg projectName: String) {
-    openFileFromProjectView(*projectName, "pom.xml")
+  openFileFromProjectView(*projectName, "pom.xml")
 }
 
-fun KotlinGuiTestCase.editBuildGradle(kotlinVersion: String,
-                                      isKotlinDslUsed: Boolean = false,
-                                      kotlinKind: KotlinKind,
-                                      vararg projectName: String) {
-//   if project is configured to old Kotlin version, it must be released and no changes are required in the build.gradle file
+fun KotlinGuiTestCase.editBuildGradle(
+  kotlinVersion: String,
+  isKotlinDslUsed: Boolean = false,
+  kotlinKind: KotlinKind,
+  vararg projectName: String = arrayOf()) {
+  //   if project is configured to old Kotlin version, it must be released and no changes are required in the build.gradle file
   if (!KotlinTestProperties.isActualKotlinUsed()) return
-  if (KotlinTestProperties.isArtifactOnlyInDevRep || isKotlinDslUsed || KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
-    openBuildGradle(isKotlinDslUsed, *projectName)
-  if (isKotlinDslUsed) changePluginsInBuildGradle(kotlinKind)
-  if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(isKotlinDslUsed)
-  if (KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
-    changeKotlinVersionInBuildGradle(isKotlinDslUsed, kotlinVersion)
+
+  val innerPath = if (projectName.isNotEmpty()) "/" + projectName.joinToString(separator = "/") else ""
+  val fileName = projectFolder + innerPath + "/build.gradle${if (isKotlinDslUsed) ".kts" else ""}"
+  logTestStep("Going to edit $fileName")
+
+  if (isKotlinDslUsed) changePluginsInBuildGradle(fileName, kotlinKind)
+  if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed)
+  if (!KotlinTestProperties.isArtifactPresentInConfigureDialog && KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
+    changeKotlinVersionInBuildGradle(fileName, isKotlinDslUsed, kotlinVersion)
 }
 
 fun KotlinGuiTestCase.editPomXml(kotlinVersion: String,
                                  kotlinKind: KotlinKind,
-                                 vararg projectName: String) {
-//   if project is configured to old Kotlin version, it must be released and no changes are required in the pom.xml file
+                                 vararg projectName: String = arrayOf()) {
+  //   if project is configured to old Kotlin version, it must be released and no changes are required in the pom.xml file
   if (!KotlinTestProperties.isActualKotlinUsed()) return
-  if (KotlinTestProperties.isArtifactOnlyInDevRep || KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
-    openPomXml(*projectName)
-  if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToPomXml()
-  if (KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
-    changeKotlinVersionInPomXml(kotlinVersion)
+
+  val innerPath = if (projectName.isNotEmpty()) "/" + projectName.joinToString(separator = "/") else ""
+  val fileName = "$projectFolder$innerPath/pom.xml"
+  logTestStep("Going to edit $fileName")
+
+  if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToPomXml(fileName)
+  if (!KotlinTestProperties.isArtifactPresentInConfigureDialog && KotlinTestProperties.kotlin_plugin_version_main != KotlinTestProperties.kotlin_artifact_version)
+    changeKotlinVersionInPomXml(fileName, kotlinVersion)
 }
 
 fun getVersionFromString(versionString: String): LanguageVersion {
@@ -812,7 +840,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
     projectPath = projectFolder,
     group = groupName,
     artifact = projectName,
-    gradleOptions =gradleOptions,
+    gradleOptions = gradleOptions,
     isJavaUsed = isJavaUsed,
     isKotlinDslUsed = isKotlinDslUsed)
   waitAMoment(extraTimeOut)
@@ -825,8 +853,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   editBuildGradle(
     kotlinVersion = kotlinVersion,
     isKotlinDslUsed = isKotlinDslUsed,
-    kotlinKind = kotlinKind,
-    projectName = projectName
+    kotlinKind = kotlinKind
   )
   waitAMoment(extraTimeOut)
   gradleReimport()
