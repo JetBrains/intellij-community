@@ -28,7 +28,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import java.util.HashSet;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -49,6 +48,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -881,7 +881,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   public void startSmartFadeoutTimer(int delay) {
     mySmartFadeout = true;
     mySmartFadeoutDelay = delay;
-    FrameStateManager.getInstance().addListener(new FrameStateListener.Adapter() {
+    FrameStateManager.getInstance().addListener(new FrameStateListener() {
       @Override
       public void onFrameDeactivated() {
         if (myFadeoutAlarm.getActiveRequestCount() > 0) {
