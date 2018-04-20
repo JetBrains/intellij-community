@@ -1121,32 +1121,27 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String notNullize(@Nullable final String s) {
+  public static String notNullize(@Nullable String s) {
     return notNullize(s, "");
   }
 
   @NotNull
   @Contract(pure = true)
-  public static String notNullize(@Nullable final String s, @NotNull String defaultValue) {
+  public static String notNullize(@Nullable String s, @NotNull String defaultValue) {
     return s == null ? defaultValue : s;
   }
 
   @Nullable
   @Contract(pure = true)
-  public static String nullize(@Nullable final String s) {
+  public static String nullize(@Nullable String s) {
     return nullize(s, false);
   }
 
   @Nullable
   @Contract(pure = true)
-  public static String nullize(@Nullable final String s, boolean nullizeSpaces) {
-    if (nullizeSpaces) {
-      if (isEmptyOrSpaces(s)) return null;
-    }
-    else {
-      if (isEmpty(s)) return null;
-    }
-    return s;
+  public static String nullize(@Nullable String s, boolean nullizeSpaces) {
+    boolean empty = nullizeSpaces ? isEmptyOrSpaces(s) : isEmpty(s);
+    return empty ? null : s;
   }
 
   @Contract(value = "null -> true",pure = true)
