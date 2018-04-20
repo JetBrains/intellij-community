@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
+import com.intellij.openapi.command.CommandToken;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DefaultRawTypedHandler implements TypedActionHandlerEx {
   private final TypedAction myAction;
-  private Object myCurrentCommandToken;
+  private CommandToken myCurrentCommandToken;
   private boolean myInOuterCommand = false;
 
   public DefaultRawTypedHandler(TypedAction action) {
@@ -66,13 +67,13 @@ public class DefaultRawTypedHandler implements TypedActionHandlerEx {
     }
     finally {
       if (!myInOuterCommand) {
-        commandProcessorEx.finishCommand(project, myCurrentCommandToken, null);
+        commandProcessorEx.finishCommand(myCurrentCommandToken, null);
         myCurrentCommandToken = null;
       }
     }
   }
 
-  public void beginUndoablePostProcessing(Project project) {
+  public void beginUndoablePostProcessing() {
     if (myInOuterCommand) {
       return;
     }
@@ -80,7 +81,8 @@ public class DefaultRawTypedHandler implements TypedActionHandlerEx {
       throw new IllegalStateException("Not in a typed action at this time");
     }
     CommandProcessorEx commandProcessorEx = (CommandProcessorEx)CommandProcessor.getInstance();
-    commandProcessorEx.finishCommand(project, myCurrentCommandToken, null);
+    Project project = myCurrentCommandToken.getProject();
+    commandProcessorEx.finishCommand(myCurrentCommandToken, null);
     myCurrentCommandToken = commandProcessorEx.startCommand(project, "", null, UndoConfirmationPolicy.DEFAULT);
   }
 }
