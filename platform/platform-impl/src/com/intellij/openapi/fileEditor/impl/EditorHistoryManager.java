@@ -282,9 +282,9 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
    * If total number of files in history more then {@code UISettings.RECENT_FILES_LIMIT}
    * then removes the oldest ones to fit the history to new size.
    */
-  private synchronized void trimToSize(){
+  private synchronized void trimToSize() {
     final int limit = UISettings.getInstance().getRecentFilesLimit() + 1;
-    while(myEntriesList.size()>limit){
+    while (myEntriesList.size() > limit) {
       HistoryEntry removed = myEntriesList.remove(0);
       removed.destroy();
     }
@@ -297,9 +297,10 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     // is initComponent() called
     final Element state = element.clone();
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      myEntriesList.clear();
       for (Element e : state.getChildren(HistoryEntry.TAG)) {
         try {
-          addEntry(HistoryEntry.createHeavy(myProject, e));
+          myEntriesList.add(HistoryEntry.createHeavy(myProject, e));
         }
         catch (ProcessCanceledException ignored) {
         }
