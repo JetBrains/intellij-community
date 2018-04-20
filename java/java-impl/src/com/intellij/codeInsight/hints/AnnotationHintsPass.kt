@@ -10,13 +10,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
-import com.intellij.util.DocumentUtil
 import gnu.trove.TIntObjectHashMap
 
 class AnnotationHintsPass(
@@ -57,28 +56,24 @@ class AnnotationHintsPass(
     }
   }
 
-  override fun applyHintsToEditor() {
-    val inlayModel = myEditor.inlayModel
-    val toRemove = inlayModel.getInlineElementsInRange(rootElement.textRange.startOffset + 1, rootElement.textRange.endOffset - 1)
-      .filter { ANNOTATION_INLAY_KEY.isIn(it) }
-      .filter { inlay: Inlay ->
-        val hintsList = hints.get(inlay.offset)
-        hintsList == null || !hintsList.removeAll { it.presentationText == (inlay.renderer as AnnotationHintRenderer).text }
-      }
-      .toList()
+  override fun isNotChangedInlay(inlay: Inlay): Boolean {
+    if (!ANNOTATION_INLAY_KEY.isIn(inlay)) return false
+    val hintsList = hints.get(inlay.offset)
+    return hintsList == null || !hintsList.removeAll { it.presentationText == (inlay.renderer as AnnotationHintRenderer).text }
+  }
 
-    DocumentUtil.executeInBulk(myEditor.document, toRemove.size + hints.values.flatMap { it as MutableList<*> }.count() > 1000) {
-      toRemove.forEach { Disposer.dispose(it) }
+  override fun getCollectedHintsCount() = hints.values.flatMap { it as MutableList<*> }.count()
 
-      hints.forEachEntry { offset, info ->
-        info.forEach {
-          val inlay = inlayModel.addInlineElement(offset, AnnotationHintRenderer(it.presentationText))
-          inlay?.putUserData(ANNOTATION_INLAY_KEY, true)
-        }
-        true
+  override fun applyCollectedHints(inlayModel: InlayModel) {
+    hints.forEachEntry { offset, info ->
+      info.forEach {
+        val inlay = inlayModel.addInlineElement(offset, AnnotationHintRenderer(it.presentationText))
+        inlay?.putUserData(ANNOTATION_INLAY_KEY, true)
       }
+      true
     }
   }
+
 
   data class HintData(val presentationText: String)
 

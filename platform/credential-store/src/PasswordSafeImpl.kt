@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PackageDirectoryMismatch")
 
 package com.intellij.ide.passwordSafe.impl
@@ -27,15 +13,12 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.runAsync
 import java.nio.file.Paths
 
-fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
-  if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)) {
+private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
+  if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
     return KeePassCredentialStore(memoryOnly = true)
   }
   else if (settings.providerType == ProviderType.KEEPASS) {
-    val dbFile = settings.state.keepassDb?.let {
-      LOG.runAndLogException { return@let Paths.get(it) }
-      return@let null
-    }
+    val dbFile = settings.state.keepassDb?.let { LOG.runAndLogException { Paths.get(it) } }
     return KeePassCredentialStore(dbFile = dbFile)
   }
   else {
@@ -44,7 +27,16 @@ fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
 }
 
 class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
-                                                 internal @Volatile var currentProvider: CredentialStore = computeProvider(settings)) : PasswordSafe(), SettingsSavingComponent {
+                                                 provider: CredentialStore? = null) : PasswordSafe(), SettingsSavingComponent {
+
+  private var _currentProvider: Lazy<CredentialStore> = if (provider == null) lazy { computeProvider(settings) } else lazyOf(provider)
+
+  internal var currentProvider: CredentialStore
+    get() = _currentProvider.value
+    set(value) {
+      _currentProvider = lazyOf(value)
+    }
+
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider = lazy { KeePassCredentialStore(emptyMap(), memoryOnly = true) }
 
@@ -157,7 +149,7 @@ internal fun createPersistentCredentialStore(existing: KeePassCredentialStore? =
 }
 
 @TestOnly
-fun createKeePassStore(file: String): PasswordSafe =
+internal fun createKeePassStore(file: String): PasswordSafe =
   PasswordSafeImpl(
     PasswordSafeSettings().apply { loadState(PasswordSafeSettings.State().apply { providerType = ProviderType.KEEPASS; keepassDb = file }) },
     KeePassCredentialStore(dbFile = Paths.get(file)))

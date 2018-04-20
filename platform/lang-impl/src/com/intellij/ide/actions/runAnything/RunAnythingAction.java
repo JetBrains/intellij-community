@@ -108,12 +108,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final DataKey<Component> FOCUS_COMPONENT_KEY_NAME = DataKey.create("FOCUS_COMPONENT_KEY_NAME");
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
   static final String SHIFT_SHORTCUT_TEXT = KeymapUtil.getShortcutText(KeyboardShortcut.fromString(("SHIFT")));
-  public static final String AD_ACTION_TEXT = String.format("Press %s to run with default settings", SHIFT_SHORTCUT_TEXT);
-  public static final String AD_DEBUG_TEXT = String.format("%s to debug", SHIFT_SHORTCUT_TEXT);
-  public static final String AD_MODULE_CONTEXT =
-    String.format("Press %s to run in the current file context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
-  public static final String AD_REMOVE_COMMAND =
-    String.format("%s to delete recent command", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
+  public static final String AD_ACTION_TEXT
+    = String.format(IdeBundle.message("run.anything.ad.run.action.with.default.settings"), SHIFT_SHORTCUT_TEXT);
+  public static final String AD_DEBUG_TEXT
+    = String.format(IdeBundle.message("run.anything.ad.run.with.debug"), SHIFT_SHORTCUT_TEXT);
+  public static final String AD_CONTEXT_TEXT = String
+    .format(IdeBundle.message("run.anything.ad.run.in.context"), KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
+  public static final String AD_DELETE_COMMAND_TEXT = String.format(IdeBundle.message("run.anything.ad.command.delete"), KeymapUtil
+    .getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
 
   private static final int MAX_RUN_ANYTHING_HISTORY = 50;
   private static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
@@ -157,7 +159,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         Map<String, Icon> map = ContainerUtil.newHashMap();
         map.put(UNKNOWN_CONFIGURATION, UNDEFINED_COMMAND_ICON);
 
-        for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
+        for (RunAnythingRunConfigurationProvider provider : RunAnythingRunConfigurationProvider.EP_NAME.getExtensions()) {
           map.put(provider.getConfigurationFactory().getName(), provider.getConfigurationFactory().getIcon());
         }
 
@@ -526,6 +528,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
     }
 
+    VirtualFile[] selectedFiles = FileEditorManager.getInstance(getProject()).getSelectedFiles();
+    if (selectedFiles.length > 0) {
+      return selectedFiles[0].getParent();
+    }
+
     return getBaseDirectory(module);
   }
 
@@ -741,7 +748,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     panel.add(topPanel, BorderLayout.NORTH);
     panel.setBorder(JBUI.Borders.empty(3, 5, 4, 5));
 
-    myAdComponent = HintUtil.createAdComponent(AD_MODULE_CONTEXT, JBUI.Borders.empty(1, 5), SwingConstants.LEFT);
+    myAdComponent = HintUtil.createAdComponent(AD_CONTEXT_TEXT, JBUI.Borders.empty(1, 5), SwingConstants.LEFT);
 
     panel.add(myAdComponent, BorderLayout.SOUTH);
 
@@ -823,7 +830,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     JBTextField textField = myPopupField.getTextEditor();
     String pattern = textField.getText();
 
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule()));
+    RunAnythingRunConfigurationProvider
+      provider = RunAnythingRunConfigurationProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule()));
     String name = provider != null ? provider.getConfigurationFactory().getName() : null;
 
     if (name != null) {

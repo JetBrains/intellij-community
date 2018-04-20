@@ -1,0 +1,1 @@
+deprecated: Gear.png -> /general/gearPlain.svg

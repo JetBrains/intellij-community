@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * Utility class for miscellaneous code style settings retrieving methods.
@@ -201,10 +202,15 @@ public class CodeStyle {
   /**
    * Set temporary settings for the project. Temporary settings will override any user settings until {@link #dropTemporarySettings(Project)}
    * is called.
+   * <p>
+   *   <b>Note</b>
+   * The method is supposed to be used in test's {@code setUp()} method. In production code use
+   * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
    *
    * @param project The project.
    * @param settings The settings to use temporarily with the project.
    */
+  @TestOnly
   public static void setTemporarySettings(@NotNull Project project, @NotNull CodeStyleSettings settings) {
     //noinspection deprecation
     CodeStyleSettingsManager.getInstance(project).setTemporarySettings(settings);
@@ -213,13 +219,39 @@ public class CodeStyle {
 
   /**
    * Drop temporary settings.
+   * <p>
+   *   <b>Note</b>
+   * The method is supposed to be used in test's {@code tearDown()} method. In production code use
+   * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
    *
    * @param project The project to drop temporary settings for.
    * @see #setTemporarySettings(Project, CodeStyleSettings)
    */
+  @TestOnly
   public static void dropTemporarySettings(@NotNull Project project) {
     //noinspection deprecation
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+  }
+
+  /**
+   * Execute the specified runnable with the given temporary code style settings and restore the old settings even if the runnable fails
+   * with an exception.
+   *
+   * @param project       The current project.
+   * @param tempSettings  The temporary code style settings.
+   * @param runnable      The runnable to execute with the temporary settings.
+   */
+  @SuppressWarnings("TestOnlyProblems")
+  public static void doWithTemporarySettings(@NotNull Project project,
+                                             @NotNull CodeStyleSettings tempSettings,
+                                             @NotNull Runnable runnable) {
+    try {
+      setTemporarySettings(project, tempSettings);
+      runnable.run();
+    }
+    finally {
+      dropTemporarySettings(project);
+    }
   }
 
 }

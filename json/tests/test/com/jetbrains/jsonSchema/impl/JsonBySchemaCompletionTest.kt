@@ -281,7 +281,7 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
   }
 
   @Throws(Exception::class)
-  private fun testImpl(schema: String, text: String,
+  private fun testImpl(@Language("JSON") schema: String, text: String,
                        vararg variants: String) {
     testBySchema(schema, text, ".json", *variants)
   }
@@ -351,5 +351,29 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
   fun testIfThenElseV7ElsePropValue() {
     testImpl(ifThenElseSchema, """{"a": 5, "c": <caret>}""", "false", "true")
     Assert.assertEquals(2, myItems.size.toLong())
+  }
+
+  @Throws(Exception::class)
+  fun testNestedPropsMerging() {
+    testImpl("""{
+  "allOf": [
+    {
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["a", "b"]
+        }
+      }
+    },
+    {
+      "properties": {
+        "severity": {
+        }
+      }
+    }
+  ]
+}""","""{
+  "severity": <caret>
+}""", "\"a\"", "\"b\"");
   }
 }

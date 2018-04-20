@@ -4,10 +4,8 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RowIcon;
-import org.junit.Test;
 
 import javax.swing.*;
-import java.net.MalformedURLException;
 
 /**
  * Tests {@link com.intellij.ui.RowIcon} painting.
@@ -15,17 +13,11 @@ import java.net.MalformedURLException;
  * @author tav
  */
 public class RowIconPaintTest extends LayeredIconPaintTest {
-  @Test
   @Override
-  public void test() throws MalformedURLException {
-    super.test();
-  }
-
-  @Override
-  protected ScalableIcon createAndSetIcons(Icon icon1, Icon icon2) {
+  protected ScalableIcon createCompositeIcon(Icon... cellIcons) {
     RowIcon icon = new RowIcon(2);
-    icon.setIcon(icon1, 0);
-    icon.setIcon(icon2, 1);
+    icon.setIcon(cellIcons[0], 0);
+    icon.setIcon(cellIcons[1], 1);
     return icon;
   }
 

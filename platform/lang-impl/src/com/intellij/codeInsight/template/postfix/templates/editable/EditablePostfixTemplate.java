@@ -23,7 +23,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -45,7 +44,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
                                  @NotNull String templateKey,
                                  @NotNull TemplateImpl liveTemplate,
                                  @NotNull String example,
-                                 @Nullable PostfixTemplateProvider provider) {
+                                 @NotNull PostfixTemplateProvider provider) {
     super(templateId, templateName, templateKey, example, provider);
     assert StringUtil.isNotEmpty(liveTemplate.getKey());
     myLiveTemplate = liveTemplate;
@@ -121,6 +120,14 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   @NotNull
   protected Function<PsiElement, String> getElementRenderer() {
     return element -> element.getText();
+  }
+
+  @NotNull
+  @Override
+  public PostfixTemplateProvider getProvider() {
+    PostfixTemplateProvider provider = super.getProvider();
+    assert provider != null;
+    return provider;
   }
 
   private void prepareAndExpandForChooseExpression(@NotNull PsiElement element, @NotNull Editor editor) {

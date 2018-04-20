@@ -1,4 +1,4 @@
 deprecated: debug.png -> /actions/startDebugger.png
 deprecated: packagesTab.png -> /nodes/copyOfFolder.png
-deprecated: projectSettings.png -> /general/gearPlain.png
-deprecated: secondaryGroup.png -> /general/gearPlain.png
+deprecated: projectSettings.png -> /general/gearPlain.svg
+deprecated: secondaryGroup.png -> /general/gearPlain.svg

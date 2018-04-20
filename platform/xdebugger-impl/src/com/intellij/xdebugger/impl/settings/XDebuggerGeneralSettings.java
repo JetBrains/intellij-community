@@ -15,7 +15,7 @@ public class XDebuggerGeneralSettings {
   private boolean hideDebuggerOnProcessTermination;
   private boolean myShowDebuggerOnBreakpoint = true;
   private boolean myScrollToCenter = false;
-  private boolean myConfirmBreakpointRemoval = true;
+  private boolean myConfirmBreakpointRemoval = false;
 
   @Tag("evaluation-dialog-mode")
   public EvaluationMode getEvaluationDialogMode() {

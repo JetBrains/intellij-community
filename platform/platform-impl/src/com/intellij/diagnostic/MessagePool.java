@@ -41,8 +41,8 @@ public class MessagePool {
       myGrouper.addToGroup(message);
     }
     else if (myErrors.size() == MAX_POOL_SIZE) {
-      String msg = DiagnosticBundle.message("error.monitor.too.many.errors");
-      myGrouper.addToGroup(new LogMessage(new LoggingEvent(msg, LogManager.getRootLogger(), Level.ERROR, null, new TooManyErrorsException())));
+      TooManyErrorsException t = new TooManyErrorsException();
+      myGrouper.addToGroup(new LogMessage(new LoggingEvent(t.getMessage(), LogManager.getRootLogger(), Level.ERROR, null, t)));
     }
   }
 

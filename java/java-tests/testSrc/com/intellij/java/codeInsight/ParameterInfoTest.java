@@ -269,6 +269,24 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertEquals("<html>@TA String s</html>", parameterPresentation(-1));
   }
 
+  public void testInferredParametersInNestedCallsNoOverloads() {
+    myFixture.configureByText("a.java", "import java.util.function.Consumer;\n" +
+                                        "class A {\n" +
+                                        "        interface Context<T> {\n" +
+                                        "        }\n" +
+                                        "        static <A> Context<A> withProvider(Consumer<A> consumer) {\n" +
+                                        "            return null;\n" +
+                                        "        }\n" +
+                                        "        static <T> Context<T> withContext(Class<T> clazz, Context<T> context) {\n" +
+                                        "            return null;\n" +
+                                        "        }\n" +
+                                        "        public static void testInference() {\n" +
+                                        "            withContext(String.class, withProvider(<caret>));\n" +
+                                        "        }\n" +
+                                        "}");
+    assertEquals("<html>Consumer&lt;String&gt; consumer</html>", parameterPresentation(-1));
+  }
+
   public void testParameterUndocumentedTypeAnnotation() {
     myFixture.addClass("import java.lang.annotation.*;\n@Target({ElementType.PARAMETER, ElementType.TYPE_USE}) @interface TA { }");
     myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");

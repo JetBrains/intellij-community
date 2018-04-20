@@ -291,7 +291,8 @@
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
 
-    <extensionPoint name="runAnything.configurationProvider" interface="com.intellij.ide.actions.runAnything.RunAnythingProvider"/>
+    <extensionPoint name="runAnything.runConfigurationProvider"
+                    interface="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
 
     <extensionPoint name="runAnything.activityProvider"
                     interface="com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider"/>

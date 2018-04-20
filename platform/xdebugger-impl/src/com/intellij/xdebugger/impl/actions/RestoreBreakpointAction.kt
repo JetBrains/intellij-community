@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
@@ -14,8 +15,8 @@ class RestoreBreakpointAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project != null) {
-      (XDebuggerManagerImpl.getInstance(project).breakpointManager as XBreakpointManagerImpl)
-        .restoreLastRemovedBreakpoint()?.navigatable?.navigate(true)
+      WriteAction.run<Throwable> { (XDebuggerManagerImpl.getInstance(project).breakpointManager as XBreakpointManagerImpl)
+        .restoreLastRemovedBreakpoint()?.navigatable?.navigate(true) }
     }
   }
 
@@ -23,7 +24,7 @@ class RestoreBreakpointAction : DumbAwareAction() {
     val project = e.project
     if (project != null) {
       e.presentation.isEnabledAndVisible =
-        (XDebuggerManagerImpl.getInstance(project).breakpointManager as XBreakpointManagerImpl).canRestoreRemovedBreakpoint()
+        (XDebuggerManagerImpl.getInstance(project).breakpointManager as XBreakpointManagerImpl).lastRemovedBreakpoint != null
     }
   }
 }

@@ -42,7 +42,7 @@ public abstract class TasksViewManager extends AbstractViewManager {
 
   @Override
   protected Icon getContentIcon() {
-    return AllIcons.CodeStyle.Gear;
+    return AllIcons.General.GearPlain;
   }
 
   @Override

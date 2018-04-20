@@ -222,7 +222,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     runnerSettings.loadState(element)
     configurationPerRunnerSettings.loadState(element)
 
-    configuration.beforeRunTasks = element.getChild(METHOD)?.let { manager.readStepsBeforeRun(it, this) } ?: emptyList()
+    manager.readBeforeRunTasks(element.getChild(METHOD), this, configuration)
   }
 
   // do not call directly
@@ -269,7 +269,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
 
     if (configuration !is UnknownRunConfiguration) {
-      manager.writeBeforeRunTasks(this, configuration)?.let {
+      manager.writeBeforeRunTasks(configuration)?.let {
         element.addContent(it)
       }
     }
@@ -338,12 +338,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun getType(): ConfigurationType = _configuration?.type ?: UnknownConfigurationType.INSTANCE
 
   public override fun clone(): RunnerAndConfigurationSettingsImpl {
-    val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone(), false)
+    val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone())
     copy.importRunnerAndConfigurationSettings(this)
     return copy
   }
 
-  fun importRunnerAndConfigurationSettings(template: RunnerAndConfigurationSettingsImpl) {
+  internal fun importRunnerAndConfigurationSettings(template: RunnerAndConfigurationSettingsImpl) {
     importFromTemplate(template.runnerSettings, runnerSettings)
     importFromTemplate(template.configurationPerRunnerSettings, configurationPerRunnerSettings)
 

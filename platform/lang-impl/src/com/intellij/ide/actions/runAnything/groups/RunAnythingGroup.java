@@ -66,34 +66,34 @@ public abstract class RunAnythingGroup {
   /**
    * Gets current group items to add into the main list.
    *
-   * @param model           needed to avoid adding duplicates into the list
-   * @param pattern         input search string
-   * @param isInsertionMode if true gets {@link #getMaxItemsToInsert()} group items, else limits to {@link #getMaxInitialItems()}
-   * @param check           checks 'load more' calculation process to be cancelled
+   * @param model               needed to avoid adding duplicates into the list
+   * @param pattern             input search string
+   * @param isInsertionMode     if true gets {@link #getMaxItemsToInsert()} group items, else limits to {@link #getMaxInitialItems()}
+   * @param cancellationChecker checks 'load more' calculation process to be cancelled
    */
   protected abstract SearchResult getItems(@NotNull Project project,
                                            @Nullable Module module,
                                            @NotNull RunAnythingSearchListModel model,
                                            @NotNull String pattern,
                                            boolean isInsertionMode,
-                                           @NotNull Runnable check);
+                                           @NotNull Runnable cancellationChecker);
 
   /**
    * Gets all current group matched by {@code pattern} items if its visibility turned on and empty collection otherwise
    *
-   * @param model           needed to avoid adding duplicates into the list
-   * @param pattern         input search string
-   * @param isInsertionMode limits group items to get by a constant group specific value
-   * @param check           checks 'load more' calculation process to be cancelled
+   * @param model               needed to avoid adding duplicates into the list
+   * @param pattern             input search string
+   * @param isInsertionMode     limits group items to get by a constant group specific value
+   * @param cancellationChecker checks 'load more' calculation process to be cancelled
    */
   public SearchResult getVisibleItems(@NotNull Project project,
                                       @Nullable Module module,
                                       @NotNull RunAnythingSearchListModel model,
                                       @NotNull String pattern,
                                       boolean isInsertionMode,
-                                      @NotNull Runnable check) {
+                                      @NotNull Runnable cancellationChecker) {
     return RunAnythingCache.getInstance(project).isGroupVisible(getVisibilityKey())
-           ? getItems(project, module, model, pattern, isInsertionMode, check) : new SearchResult();
+           ? getItems(project, module, model, pattern, isInsertionMode, cancellationChecker) : new SearchResult();
   }
 
   /**

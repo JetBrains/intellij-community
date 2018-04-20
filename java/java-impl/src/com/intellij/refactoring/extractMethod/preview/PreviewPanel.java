@@ -17,6 +17,7 @@ import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.*;
+import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.content.Content;
 import com.intellij.usages.impl.UsageModelTracker;
 import com.intellij.util.Alarm;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.util.List;
 import java.util.Optional;
@@ -56,8 +58,14 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
 
     BorderLayoutPanel leftPanel = new BorderLayoutPanel();
     leftPanel.addToCenter(treePane);
-    myButtonsPanel = new ButtonsPanel(myProject);
-    leftPanel.addToBottom(myButtonsPanel);
+    myButtonsPanel = new ButtonsPanel();
+    InfoLabel infoLabel = new InfoLabel();
+    myTree.addTreeListener(infoLabel);
+
+    JPanel bottomPanel = new JPanel(new HorizontalLayout(JBUI.scale(8)));
+    bottomPanel.add(myButtonsPanel);
+    bottomPanel.add(infoLabel);
+    leftPanel.addToBottom(bottomPanel);
 
     JBSplitter splitter = new OnePixelSplitter(false);
     splitter.setProportion(0.3f);
@@ -141,8 +149,8 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     myDiffPanel.tryExtractAgain();
   }
 
-  void onTreeUpdated() {
-    myTree.repaint();
+  void updateTree() {
+    myTree.update();
   }
 
   private void updateLater() {
@@ -168,12 +176,10 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     private final JButton myRefactorButton;
     private final JButton myRerunButton;
     private final JButton myCancelButton;
-    private final Project myProject;
     private boolean myModified; // Accessed in EDT
 
-    public ButtonsPanel(@NotNull Project project) {
+    public ButtonsPanel() {
       super(new FlowLayout(FlowLayout.LEFT, JBUI.scale(8), 0));
-      myProject = project;
 
       myRefactorButton = new JButton(RefactoringBundle.message("refactoring.extract.method.preview.button.refactor"));
       DialogUtil.registerMnemonic(myRefactorButton);
@@ -192,7 +198,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
 
       updateButtonsImpl(false, false);
 
-      project.getMessageBus().connect(PreviewPanel.this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      myProject.getMessageBus().connect(PreviewPanel.this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
         public void enteredDumbMode() {
           updateButtonsLater(true);
@@ -223,6 +229,26 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
       myRefactorButton.setVisible(!isModified);
       myRerunButton.setEnabled(!isDumb && isModified);
       myRerunButton.setVisible(isModified);
+    }
+  }
+
+  private static class InfoLabel extends JLabel implements PreviewTreeListener {
+    public InfoLabel() {
+      setForeground(Gray.x78);
+    }
+
+    @Override
+    public void onTreeNodesSelected(@NotNull List<TreeNode> nodes) {
+      String text = "";
+      if (nodes.size() == 1) {
+        TreeNode node = nodes.get(0);
+        if (node instanceof DuplicateNode) {
+          boolean isExcluded = ((DuplicateNode)node).isExcluded();
+          text = isExcluded ? RefactoringBundle.message("refactoring.extract.method.preview.info.include")
+                            : RefactoringBundle.message("refactoring.extract.method.preview.info.exclude");
+        }
+      }
+      setText(text);
     }
   }
 }

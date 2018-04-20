@@ -530,27 +530,14 @@ public abstract class DebuggerUtils {
 
   public abstract PsiClass chooseClassDialog(String title, Project project);
 
-  /**
-   * IDEA-122113
-   * Will be removed when Java debugger will be moved to XDebugger API
-   */
-  public static boolean isDebugActionAware(@NotNull PsiFile file) {
-    return isDebugAware(file, false);
-  }
-
   public static boolean isBreakpointAware(@NotNull PsiFile file) {
-    return isDebugAware(file, true);
-  }
-
-  private static boolean isDebugAware(@NotNull PsiFile file, boolean breakpointAware) {
     FileType fileType = file.getFileType();
     //noinspection deprecation
     if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).isJVMDebuggingSupported()) {
       return true;
     }
 
-    return Arrays.stream(JavaDebugAware.EP_NAME.getExtensions())
-      .anyMatch(provider -> breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file));
+    return Arrays.stream(JavaDebugAware.EP_NAME.getExtensions()).anyMatch(provider -> provider.isBreakpointAware(file));
   }
 
   public static boolean isAndroidVM(@NotNull VirtualMachine virtualMachine) {

@@ -4,13 +4,17 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.util.DocumentUtil
 
 abstract class ElementProcessingHintPass(
   val rootElement: PsiElement,
@@ -51,7 +55,18 @@ abstract class ElementProcessingHintPass(
    */
   abstract fun collectElementHints(element: PsiElement)
 
-  abstract fun applyHintsToEditor()
+  fun applyHintsToEditor() {
+    val inlayModel = myEditor.inlayModel
+
+    val toRemove = inlayModel.getInlineElementsInRange(rootElement.textRange.startOffset + 1, rootElement.textRange.endOffset - 1)
+      .filter { isNotChangedInlay(it) }
+
+    DocumentUtil.executeInBulk(myEditor.document, toRemove.size + getCollectedHintsCount() > 1000) {
+      toRemove.forEach { Disposer.dispose(it) }
+
+      applyCollectedHints(inlayModel)
+    }
+  }
 
   /**
    * Clear collected hint information
@@ -59,9 +74,15 @@ abstract class ElementProcessingHintPass(
   abstract fun clearCollected()
 
   abstract val modificationStampHolder: ModificationStampHolder
+
+
+  abstract fun isNotChangedInlay(inlay: Inlay): Boolean
+  abstract fun getCollectedHintsCount(): Int
+  abstract fun applyCollectedHints(inlayModel: InlayModel)
+
 }
 
-class ModificationStampHolder (private val key: Key<Long>) {
+class ModificationStampHolder(private val key: Key<Long>) {
   fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
     editor.putUserData<Long>(key, ParameterHintsPassFactory.getCurrentModificationStamp(file))
   }

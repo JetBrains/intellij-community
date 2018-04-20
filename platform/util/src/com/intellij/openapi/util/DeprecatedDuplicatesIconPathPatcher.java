@@ -65,6 +65,8 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
     ourDeprecatedIconsReplacements.put("/actions/showSettings.png", "AllIcons.General.GearPlain");
     ourDeprecatedIconsReplacements.put("/actions/showSettings.svg", "AllIcons.General.GearPlain");
+    ourDeprecatedIconsReplacements.put("/codeStyle/Gear.png", "AllIcons.General.GearPlain");
+    ourDeprecatedIconsReplacements.put("/codeStyle/Gear.svg", "AllIcons.General.GearPlain");
     ourDeprecatedIconsReplacements.put("/general/projectSettings.png", "AllIcons.General.GearPlain");
     ourDeprecatedIconsReplacements.put("/general/projectSettings.svg", "AllIcons.General.GearPlain");
     ourDeprecatedIconsReplacements.put("/general/secondaryGroup.png", "AllIcons.General.GearPlain");

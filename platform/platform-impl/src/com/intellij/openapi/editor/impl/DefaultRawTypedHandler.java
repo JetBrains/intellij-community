@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultRawTypedHandler implements TypedActionHandlerEx {
   private final TypedAction myAction;
   private Object myCurrentCommandToken;
+  private boolean myInOuterCommand = false;
 
   public DefaultRawTypedHandler(TypedAction action) {
     myAction = action;
@@ -36,7 +37,11 @@ public class DefaultRawTypedHandler implements TypedActionHandlerEx {
   public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
     CommandProcessorEx commandProcessorEx = (CommandProcessorEx)CommandProcessor.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (myCurrentCommandToken != null) {
+      throw new IllegalStateException("Unexpected reentrancy of DefaultRawTypedHandler");
+    }
     myCurrentCommandToken = commandProcessorEx.startCommand(project, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT);
+    myInOuterCommand = myCurrentCommandToken == null;
     try {
       if (!EditorModificationUtil.requestWriting(editor)) {
         HintManager.getInstance().showInformationHint(editor, "File is not writable");
@@ -60,12 +65,17 @@ public class DefaultRawTypedHandler implements TypedActionHandlerEx {
       });
     }
     finally {
-      commandProcessorEx.finishCommand(project, myCurrentCommandToken, null);
-      myCurrentCommandToken = null;
+      if (!myInOuterCommand) {
+        commandProcessorEx.finishCommand(project, myCurrentCommandToken, null);
+        myCurrentCommandToken = null;
+      }
     }
   }
 
   public void beginUndoablePostProcessing(Project project) {
+    if (myInOuterCommand) {
+      return;
+    }
     if (myCurrentCommandToken == null) {
       throw new IllegalStateException("Not in a typed action at this time");
     }

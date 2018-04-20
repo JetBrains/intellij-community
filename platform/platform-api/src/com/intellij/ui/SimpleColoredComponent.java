@@ -840,31 +840,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
         g.setColor(color);
         doDrawString(g, i, offset, textBaseline);
-      }
 
-      // for some reason strokeState here may be incorrect, resetting the stroke helps
-      g.setStroke(g.getStroke());
+        // for some reason strokeState here may be incorrect, resetting the stroke helps
+        g.setStroke(g.getStroke());
 
-      // 1. Strikeout effect
-      if (attributes.isStrikeout() && !secondPass) {
-        EffectPainter.STRIKE_THROUGH.paint(g, (int)offset, textBaseline, (int)fragmentWidth, getCharHeight(g), font);
-      }
-      // 2. Waved effect
-      if (attributes.isWaved()) {
-        if (attributes.getWaveColor() != null) {
-          g.setColor(attributes.getWaveColor());
-        }
-        EffectPainter.WAVE_UNDERSCORE.paint(g, (int)offset, textBaseline + 1, (int)fragmentWidth, Math.max(2, metrics.getDescent()), font);
-      }
-      // 3. Underline
-      if (attributes.isUnderline()) {
-        EffectPainter.LINE_UNDERSCORE.paint(g, (int)offset, textBaseline, (int)fragmentWidth, metrics.getDescent(), font);
-      }
-      // 4. Bold Dotted Line
-      if (attributes.isBoldDottedLine()) {
-        final int dottedAt = SystemInfo.isMac ? textBaseline : textBaseline + 1;
-        final Color lineColor = attributes.getWaveColor();
-        UIUtil.drawBoldDottedLine(g, (int)offset, (int)(offset + fragmentWidth), dottedAt, bgColor, lineColor, isOpaque());
+        drawTextAttributes(g, attributes, (int)offset, textBaseline, (int)fragmentWidth, metrics, font);
       }
 
       if (secondPass) {
@@ -915,9 +895,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       g.setColor(fgColor);
       g.drawString(text, x1, baseline);
 
-      if (attributes.isStrikeout()) {
-        EffectPainter.STRIKE_THROUGH.paint(g, (int)x1, (int)baseline, (int)(x2 - x1), getCharHeight(g), g.getFont());
-      }
+      int fragmentWidth = (int)(x2 - x1);
+      drawTextAttributes(g, attributes, (int)x1, (int)baseline, fragmentWidth, g.getFontMetrics(), g.getFont());
     }
     return (int)offset;
   }
@@ -934,6 +913,35 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     g.setColor(new JBColor(Gray.xCC, new Color(0x757b80)));
     g.draw(shape);
     c.restore();
+  }
+
+  private void drawTextAttributes(@NotNull Graphics2D g,
+                                  @NotNull SimpleTextAttributes attributes,
+                                  int offset,
+                                  int textBaseline,
+                                  int fragmentWidth,
+                                  @NotNull FontMetrics metrics,
+                                  Font font) {
+    if (attributes.isStrikeout()) {
+      EffectPainter.STRIKE_THROUGH.paint(g, offset, textBaseline, fragmentWidth, getCharHeight(g), font);
+    }
+
+    if (attributes.isWaved()) {
+      if (attributes.getWaveColor() != null) {
+        g.setColor(attributes.getWaveColor());
+      }
+      EffectPainter.WAVE_UNDERSCORE.paint(g, offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent()), font);
+    }
+
+    if (attributes.isUnderline()) {
+      EffectPainter.LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), font);
+    }
+
+    if (attributes.isBoldDottedLine()) {
+      final int dottedAt = SystemInfo.isMac ? textBaseline : textBaseline + 1;
+      final Color lineColor = attributes.getWaveColor();
+      UIUtil.drawBoldDottedLine(g, offset, offset + fragmentWidth, dottedAt, attributes.getBgColor(), lineColor, isOpaque());
+    }
   }
 
   private static int getCharHeight(Graphics g) {

@@ -47,6 +47,13 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testDeclarationAndCallSelfRef() { doTest(); }
   public void testAssignmentAndCall() { doTest(); }
 
+  public void testDeclarationAndReassignmentWithCall() { doTest(); }
+  public void testAssignmentAndReassignmentWithCall() { doTest(); }
+
+  public void testIfChain() { doTest(); }
+  public void testIfChainNoBraces() { doTest(); }
+  public void testIfChainElse() { doTest(); }
+
   public void testSCR3493() {
     CommonCodeStyleSettings settings = getJavaSettings();
     boolean use_tab_character = settings.getIndentOptions().USE_TAB_CHARACTER;
@@ -223,9 +230,8 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   
   public void testLeaveTrailingComment() { doTest(); }
 
-  public void testConvertComment() {
-    doTest();
-  }
+  public void testConvertComment() { doTest();}
+  public void testConvertComment2() { doTest();}
 
   public void testJoiningMethodCallWhenItDoesntFit() {
     CommonCodeStyleSettings settings = getJavaSettings();

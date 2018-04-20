@@ -25,6 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.awt.image.RGBImageFilter;
 
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
 import static java.lang.Math.round;
@@ -694,5 +695,13 @@ public class IconUtil {
     icon.setIcon(base, 0);
     icon.setIcon(textToIcon(text, new JLabel(), JBUI.scale(6f)), 1, SwingConstants.SOUTH_EAST);
     return icon;
+  }
+
+  /**
+   * Creates new icon with the filter applied.
+   */
+  @Nullable
+  public static Icon filterIcon(@NotNull Icon icon, RGBImageFilter filter, @Nullable Component ancestor) {
+    return IconLoader.filterIcon(icon, filter, ancestor);
   }
 }

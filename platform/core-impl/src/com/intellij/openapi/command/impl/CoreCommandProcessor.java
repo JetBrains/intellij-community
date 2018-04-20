@@ -162,7 +162,11 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       return null;
     }
 
-    Document document = groupId instanceof Ref && ((Ref)groupId).get() instanceof Document ? (Document)((Ref)groupId).get() : null;
+    Document document = groupId instanceof Document
+                        ? (Document)groupId
+                        : (groupId instanceof Ref && ((Ref)groupId).get() instanceof Document
+                           ? (Document)((Ref)groupId).get()
+                           : null);
     myCurrentCommand = new CommandDescriptor(EmptyRunnable.INSTANCE, project, name, groupId, undoConfirmationPolicy, true, document);
     fireCommandStarted();
     return myCurrentCommand;

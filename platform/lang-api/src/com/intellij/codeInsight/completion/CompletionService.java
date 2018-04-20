@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -56,6 +57,7 @@ public abstract class CompletionService {
    *
    * @param caret the selected caret in the given editor
    * @param invocationCount the number of times the user has pressed the code completion shortcut (0 if autopopup)
+   * @param parentDisposable The disposable you need to dispose when the completion procedure is over.
    * @return the completion parameters instance
    */
   @SuppressWarnings("unused")
@@ -63,7 +65,8 @@ public abstract class CompletionService {
                                                                   @NotNull Editor editor,
                                                                   @NotNull Caret caret,
                                                                   int invocationCount,
-                                                                  CompletionType completionType);
+                                                                  CompletionType completionType,
+                                                                  @NotNull Disposable parentDisposable);
 
   /**
    * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors

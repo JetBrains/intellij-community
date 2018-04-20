@@ -4,7 +4,6 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -20,7 +19,7 @@ public class JavaVirtualFileQualifiedNameProvider implements CopyReferenceAction
   @Nullable
   @Override
   public String getQualifiedName(@NotNull Project project, @NotNull VirtualFile virtualFile) {
-    Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+    Module module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false);
     if (module == null || !ModuleType.is(module, JavaModuleType.getModuleType())) {
       return null;
     }

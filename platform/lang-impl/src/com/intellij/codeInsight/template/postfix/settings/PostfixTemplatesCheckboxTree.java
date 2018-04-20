@@ -314,6 +314,9 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
           lastPathComponent.setTemplate(newTemplate);
         }
         myModel.nodeStructureChanged(lastPathComponent);
+        
+        //update before /after panel
+        selectionChanged();
       }
     }
   }
