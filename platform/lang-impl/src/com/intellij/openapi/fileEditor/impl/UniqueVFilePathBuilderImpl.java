@@ -114,7 +114,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       }
     }
     if (!skipNonOpenedFiles) {
-      for (VirtualFile recentlyEditedFile : EditorHistoryManager.getInstance(project).getFileSet()) {
+      for (VirtualFile recentlyEditedFile : EditorHistoryManager.getInstance(project).getFileList()) {
         if (recentlyEditedFile.getName().equals(fileName)) {
           setOfFilesWithTheSameName.add(recentlyEditedFile);
         }

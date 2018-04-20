@@ -152,7 +152,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     assert SWITCHER != null;
     if (!SWITCHER.isPinnedMode()) {
-      if (e.getInputEvent().isShiftDown()) {
+      if (e.getInputEvent() != null && e.getInputEvent().isShiftDown()) {
         SWITCHER.goBack();
       }
       else {
@@ -416,7 +416,7 @@ public class Switcher extends AnAction implements DumbAware {
         final int minIndex = isPinnedMode() ? 0 : (recentFiles.size() - Math.min(toolWindows.getModel().getSize(), maxFiles));
         boolean firstRecentMarked = false;
         final List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
-        for (int i = recentFiles.size(); i >= minIndex; i--) {
+        for (int i = recentFiles.size() - 1; i >= minIndex; i--) {
           if (isPinnedMode()
               && selectedFiles.contains(recentFiles.get(i))
               && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
@@ -673,7 +673,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     @NotNull
     protected List<VirtualFile> getFiles(@NotNull Project project) {
-      return EditorHistoryManager.getInstance(project).getFileSet();
+      return EditorHistoryManager.getInstance(project).getFileList();
     }
 
     @NotNull

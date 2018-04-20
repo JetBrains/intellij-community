@@ -30,7 +30,7 @@ import java.util.Map;
  */
 final class HistoryEntry {
   @NonNls static final String TAG = "entry";
-  private static final String FILE_ATTR = "file";
+  static final String FILE_ATTR = "file";
   @NonNls private static final String PROVIDER_ELEMENT = "provider";
   @NonNls private static final String EDITOR_TYPE_ID_ATTR = "editor-type-id";
   @NonNls private static final String SELECTED_ATTR_VALUE = "selected";
@@ -115,7 +115,6 @@ final class HistoryEntry {
     }
     return entry;
   }
-
 
   @NotNull
   public VirtualFilePointer getFilePointer() {
@@ -202,7 +201,7 @@ final class HistoryEntry {
       if (file != null) {
         Element stateElement = providerElement.getChild(STATE_ELEMENT);
         // due to backward compatibility null cannot be passed, so, use empty element
-        FileEditorState state = provider.readState(stateElement == null ? JDOMUtil.internElement(new Element("")) : stateElement, project, file);
+        FileEditorState state = provider.readState(stateElement == null ? JDOMUtil.internElement(new Element("state")) : stateElement, project, file);
         providerStates.add(Pair.create(provider, state));
       }
     }
@@ -210,7 +209,7 @@ final class HistoryEntry {
     return new EntryData(url, providerStates, selectedProvider);
   }
 
-  private static class EntryData {
+  static class EntryData {
     @NotNull private final String url;
     @NotNull private final List<Pair<FileEditorProvider, FileEditorState>> providerStates;
     @Nullable private final FileEditorProvider selectedProvider;

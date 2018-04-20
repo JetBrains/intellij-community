@@ -336,9 +336,9 @@ public class EditorWindow {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getActiveMruEditorOnClose()) {
       // try to open last visited file
-      final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
-      for (int idx = histFiles.length - 1; idx >= 0; idx--) {
-        final VirtualFile histFile = histFiles[idx];
+      final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFileList();
+      for (int idx = histFiles.size() - 1; idx >= 0; idx--) {
+        final VirtualFile histFile = histFiles.get(idx);
         if (histFile.equals(fileBeingClosed)) {
           continue;
         }
@@ -1140,7 +1140,7 @@ public class EditorWindow {
 
   private LinkedHashSet<VirtualFile> getTabClosingOrder(boolean closeNonModifiedFilesFirst) {
     final VirtualFile[] allFiles = getFiles();
-    final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileSet();
+    final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileList();
 
     LinkedHashSet<VirtualFile> closingOrder = ContainerUtil.newLinkedHashSet();
 
