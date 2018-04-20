@@ -969,9 +969,8 @@ public class AbstractPopup implements JBPopup {
     window.setAutoRequestFocus(myRequestFocus);
 
     final String data = getUserData(String.class);
-    if (data != null) {
-      myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data));
-    }
+    final boolean popupIsSimpleWindow = "TRUE".equals(getContent().getClientProperty("BookmarkPopup"));
+    myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data) || popupIsSimpleWindow);
 
     myWindow = window;
     setMinimumSize(myMinSize);
