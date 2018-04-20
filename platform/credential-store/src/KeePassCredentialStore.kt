@@ -23,6 +23,24 @@ private const val GROUP_NAME = SERVICE_NAME_PREFIX
 
 internal const val DB_FILE_NAME = "c.kdbx"
 
+private fun loadOrNewOnError(dbFile: Path, masterPassword: ByteArray): KeePassDatabase {
+  if (!dbFile.exists()) {
+    return KeePassDatabase()
+  }
+
+  return try {
+    loadKdbx(dbFile, KdbxPassword(masterPassword))
+  }
+  catch (e: Throwable) {
+    LOG.error(e)
+    LOG.runAndLogException {
+      dbFile.move(dbFile.parent.resolve("corrupted.c.kdbx"))
+    }
+    NOTIFICATION_MANAGER.notify("KeePass database file is corrupted, new one is created", null)
+    KeePassDatabase()
+  }
+}
+
 internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null,
                                       baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
                                       var memoryOnly: Boolean = false,
@@ -65,7 +83,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
           db = KeePassDatabase()
         }
         else {
-          db = loadKdbx(this.dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
+          db = loadOrNewOnError(this.dbFile, masterPassword)
           if (existingMasterPassword != null) {
             masterKeyStorage.set(existingMasterPassword)
           }

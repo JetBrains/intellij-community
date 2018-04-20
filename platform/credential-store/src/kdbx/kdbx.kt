@@ -2,7 +2,7 @@
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.util.SmartList
-import com.intellij.util.io.inputStreamIfExists
+import com.intellij.util.io.inputStream
 import com.intellij.util.loadElement
 import com.intellij.util.write
 import org.bouncycastle.crypto.engines.Salsa20Engine
@@ -17,8 +17,8 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.*
 
-internal fun loadKdbx(file: Path, credentials: KeePassCredentials): KeePassDatabase? {
-  return file.inputStreamIfExists()?.use { inputStream ->
+internal fun loadKdbx(file: Path, credentials: KeePassCredentials): KeePassDatabase {
+  return file.inputStream().use { inputStream ->
     val kdbxHeader = KdbxHeader()
     val element = KdbxSerializer.createUnencryptedInputStream(credentials, kdbxHeader, inputStream).use {
       load(it, Salsa20Encryption(kdbxHeader.protectedStreamKey))
