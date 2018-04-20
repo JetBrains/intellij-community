@@ -484,7 +484,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
           myHideAlarm.addRequest(() -> {
             JBPopup popup = JBPopupFactory.getInstance().getChildFocusedPopup(e.getComponent());
             if (popup != null) {
-              popup.addListener(new JBPopupListener.Adapter() {
+              popup.addListener(new JBPopupListener() {
                 @Override
                 public void onClosed(@NotNull LightweightWindowEvent event) {
                   if (event.isOk()) {
