@@ -88,7 +88,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   public Icon getTemporaryIcon() {
-    return AllIcons.Debugger.Db_temporary_breakpoint;
+    return AllIcons.Debugger.Db_set_breakpoint;
   }
 
   /**
