@@ -145,7 +145,8 @@ setupJdk16.onlyIf { inJetBrainsNetwork }
 def intellijProjectDir() {
   def projectDir = project.file("../..")
   if (projectDir.name == 'community') {
-    while (new File(projectDir.parentFile, ".idea").exists()) {
+    def dotIdea = new File(projectDir.parentFile, ".idea")
+    while (dotIdea.exists() && !new File(dotIdea, '.notIdeaProject').exists()) {
       projectDir = projectDir.parentFile
     }
     return projectDir
