@@ -58,6 +58,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
 
     val currentProvider = (PasswordSafe.getInstance() as PasswordSafeImpl).currentProvider
+    @Suppress("IfThenToElvis")
     keePassDbFile.text = settings.keepassDb ?: if (currentProvider is KeePassCredentialStore) currentProvider.dbFile.toString() else getDefaultKeePassDbFilePath()
     updateEnabledState()
   }
