@@ -118,7 +118,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP), ActionPlaces.EDITOR_TAB_POPUP, false).addTabMouseListener(new TabMouseListener()).getPresentation()
       .setTabDraggingEnabled(true).setUiDecorator(() -> new UiDecorator.UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 8, TabsUtil.TAB_VERTICAL_PADDING, 8))).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
-      .addListener(new TabsListener.Adapter() {
+      .addListener(new TabsListener() {
         @Override
         public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
           final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);

@@ -71,7 +71,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       TabInfo progressTab = new TabInfo(createProgressGridPanel()).setText("Progress Grid");
       tabs.addTab(progressTab);
 
-      tabs.addListener(new TabsListener.Adapter(){
+      tabs.addListener(new TabsListener(){
         @Override
         public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
           if (newSelection == progressTab) {
