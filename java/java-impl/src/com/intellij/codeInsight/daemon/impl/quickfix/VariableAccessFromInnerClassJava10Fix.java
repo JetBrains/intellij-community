@@ -5,9 +5,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -16,6 +13,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -26,21 +24,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Collections.emptyList;
 
 public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
-  private final static String[] myNames = new String[]{
+  private final static String[] NAMES = new String[]{
     "ref",
     "lambdaContext",
     "context",
     "rContext"
   };
-  private static final String VARIABLE_NAME = "VARIABLE_NAME";
+  private static final LinkedHashSet<String> ourSuggestions = new LinkedHashSet<>(Arrays.asList(NAMES));
 
   private final PsiElement myContext;
 
@@ -102,66 +100,27 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
           return;
         }
 
+
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-        String boxName = codeStyleManager.suggestUniqueVariableName(myNames[0], variable, true);
+        String boxName = codeStyleManager.suggestUniqueVariableName(NAMES[0], variable, true);
         if (editor != null) {
-          TemplateManager manager = TemplateManager.getInstance(project);
-          Template template = manager.createTemplate("", "");
-          template.addTextSegment("var ");
-          template.setToReformat(true);
-
-          final TextResult result = new TextResult(boxName);
-          LookupElement[] lookupElements = Arrays.stream(myNames)
-                                                 .map(s -> codeStyleManager.suggestUniqueVariableName(s, variable, true))
-                                                 .map(s -> new StringLookupElement(s))
-                                                 .toArray(LookupElement[]::new);
-          Expression expr = new Expression() {
-            @Override
-            public Result calculateResult(ExpressionContext context) {
-              return result;
-            }
-
-            @Override
-            public Result calculateQuickResult(ExpressionContext context) {
-              return calculateResult(context);
-            }
-
-            @Override
-            public LookupElement[] calculateLookupItems(ExpressionContext context) {
-              return lookupElements;
-            }
-          };
-
-
-          template.addVariable(VARIABLE_NAME, expr, true);
-          template.addTextSegment(" = new Object(){" + variableText + "};\n");
-          editor.getCaretModel().moveToOffset(variable.getTextOffset());
-          SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-          List<SmartPsiElementPointer<PsiReferenceExpression>> pointers = findReferences(variable)
-            .stream()
-            .map(expression -> pointerManager.createSmartPsiElementPointer(expression))
-            .collect(Collectors.toList());
-          String variableName = variable.getName();
-          variable.delete();
+          String boxDeclarationText = "var " +
+                                      boxName +
+                                      " = new Object(){" +
+                                      variableText +
+                                      "};";
+          PsiStatement boxDeclaration = factory.createStatementFromText(boxDeclarationText, variable);
+          replaceReferences(variable, factory, boxName);
+          PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)variable.replace(boxDeclaration);
+          PsiLocalVariable localVariable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
+          SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+          SmartPsiElementPointer<PsiLocalVariable> pointer = smartPointerManager.createSmartPsiElementPointer(localVariable);
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-          manager.startTemplate(editor, template, new TemplateEditingAdapter() {
-            @Override
-            public void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex) {
-              TextResult variableValue = templateState.getVariableValue(VARIABLE_NAME);
-              assert variableValue != null;
-              String newReferenceName = variableValue.getText();
-              if (variableText.isEmpty()) return;
-              PsiExpression expr = factory.createExpressionFromText(newReferenceName + "." + variableName, null);
-              ApplicationManager.getApplication().runWriteAction(() -> {
-                for (SmartPsiElementPointer<PsiReferenceExpression> pointer : pointers) {
-                  PsiReferenceExpression element = pointer.getElement();
-                  if (element != null) {
-                    element.replace(expr);
-                  }
-                }
-              });
-            }
-          });
+          PsiLocalVariable varToChange = pointer.getElement();
+          if (varToChange == null) return;
+          editor.getCaretModel().moveToOffset(varToChange.getTextOffset());
+          editor.getSelectionModel().removeSelection();
+          new MemberInplaceRenamer(varToChange, varToChange, editor).performInplaceRefactoring(ourSuggestions);
         }
         else {
           String boxDeclarationText = "var " +
