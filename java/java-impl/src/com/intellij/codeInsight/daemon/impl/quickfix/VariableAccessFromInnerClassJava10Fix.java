@@ -3,29 +3,45 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Collections.emptyList;
 
-public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction implements HighPriorityAction {
+public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
+  private final static String[] myNames = new String[]{
+    "ref",
+    "lambdaContext",
+    "context",
+    "rContext"
+  };
+  private static final String VARIABLE_NAME = "VARIABLE_NAME";
+
   private final PsiElement myContext;
 
   public VariableAccessFromInnerClassJava10Fix(PsiElement context) {
@@ -36,11 +52,12 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction i
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Make final";
+    return "Variable accessFromInnerClass";
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!PsiUtil.isLanguageLevel10OrHigher(file)) return false;
     if (!myContext.isValid()) return false;
     PsiReferenceExpression reference = tryCast(myContext, PsiReferenceExpression.class);
     if (reference == null) return false;
@@ -48,6 +65,15 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction i
     if (variable == null) return false;
     String name = variable.getName();
     if (name == null) return false;
+
+    PsiType type = variable.getType();
+    if (!PsiTypesUtil.isDenotableType(type) ||
+        (variable.getTypeElement().isInferredType() &&
+         type instanceof PsiClassType &&
+         ((PsiClassType)type).resolve() instanceof PsiAnonymousClass)
+      ) {
+      return false;
+    }
     setText(QuickFixBundle.message("convert.variable.to.field.in.anonymous.class.fix.name", name));
     return true;
   }
@@ -67,7 +93,8 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction i
 
         PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myContext, PsiLambdaExpression.class);
         if (lambdaExpression == null) return;
-        DeclarationInfo declarationInfo = DeclarationInfo.findExistingAnonymousClass(variable, lambdaExpression);
+        DeclarationInfo declarationInfo = DeclarationInfo.findExistingAnonymousClass(variable);
+
         if (declarationInfo != null) {
           replaceReferences(variable, factory, declarationInfo.name);
           declarationInfo.replace(variableText);
@@ -75,16 +102,77 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction i
           return;
         }
 
+        JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+        String boxName = codeStyleManager.suggestUniqueVariableName(myNames[0], variable, true);
+        if (editor != null) {
+          TemplateManager manager = TemplateManager.getInstance(project);
+          Template template = manager.createTemplate("", "");
+          template.addTextSegment("var ");
+          template.setToReformat(true);
 
-        String boxName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("ref", variable, true);
-        String boxDeclarationText = "var " +
-                                    boxName +
-                                    " = new Object() { " +
-                                    variableText +
-                                    " };";
-        PsiStatement boxDeclaration = factory.createStatementFromText(boxDeclarationText, variable);
-        replaceReferences(variable, factory, boxName);
-        variable.replace(boxDeclaration);
+          final TextResult result = new TextResult(boxName);
+          LookupElement[] lookupElements = Arrays.stream(myNames)
+                                                 .map(s -> codeStyleManager.suggestUniqueVariableName(s, variable, true))
+                                                 .map(s -> new StringLookupElement(s))
+                                                 .toArray(LookupElement[]::new);
+          Expression expr = new Expression() {
+            @Override
+            public Result calculateResult(ExpressionContext context) {
+              return result;
+            }
+
+            @Override
+            public Result calculateQuickResult(ExpressionContext context) {
+              return calculateResult(context);
+            }
+
+            @Override
+            public LookupElement[] calculateLookupItems(ExpressionContext context) {
+              return lookupElements;
+            }
+          };
+
+
+          template.addVariable(VARIABLE_NAME, expr, true);
+          template.addTextSegment(" = new Object(){" + variableText + "};\n");
+          editor.getCaretModel().moveToOffset(variable.getTextOffset());
+          SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+          List<SmartPsiElementPointer<PsiReferenceExpression>> pointers = findReferences(variable)
+            .stream()
+            .map(expression -> pointerManager.createSmartPsiElementPointer(expression))
+            .collect(Collectors.toList());
+          String variableName = variable.getName();
+          variable.delete();
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+          manager.startTemplate(editor, template, new TemplateEditingAdapter() {
+            @Override
+            public void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex) {
+              TextResult variableValue = templateState.getVariableValue(VARIABLE_NAME);
+              assert variableValue != null;
+              String newReferenceName = variableValue.getText();
+              if (variableText.isEmpty()) return;
+              PsiExpression expr = factory.createExpressionFromText(newReferenceName + "." + variableName, null);
+              ApplicationManager.getApplication().runWriteAction(() -> {
+                for (SmartPsiElementPointer<PsiReferenceExpression> pointer : pointers) {
+                  PsiReferenceExpression element = pointer.getElement();
+                  if (element != null) {
+                    element.replace(expr);
+                  }
+                }
+              });
+            }
+          });
+        }
+        else {
+          String boxDeclarationText = "var " +
+                                      boxName +
+                                      " = new Object(){" +
+                                      variableText +
+                                      "};";
+          PsiStatement boxDeclaration = factory.createStatementFromText(boxDeclarationText, variable);
+          replaceReferences(variable, factory, boxName);
+          variable.replace(boxDeclaration);
+        }
       }
     });
   }
@@ -130,15 +218,16 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction i
     }
 
     @Nullable
-    static DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable, @NotNull PsiLambdaExpression lambdaExpression) {
+    static DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable) {
       PsiElement varDeclarationStatement = RefactoringUtil.getParentStatement(variable, false);
       if (varDeclarationStatement == null) return null;
       PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(varDeclarationStatement, PsiStatement.class);
       PsiDeclarationStatement nextDeclarationStatement = tryCast(nextStatement, PsiDeclarationStatement.class);
-      DeclarationInfo nextDeclaration = findExistingAnonymousClass(variable, lambdaExpression, nextDeclarationStatement, true);
+      DeclarationInfo nextDeclaration = findExistingAnonymousClass(variable, nextDeclarationStatement, true);
       if (nextDeclaration != null) return nextDeclaration;
-      PsiDeclarationStatement previousDeclarationStatement = PsiTreeUtil.getPrevSiblingOfType(varDeclarationStatement, PsiDeclarationStatement.class);
-      return findExistingAnonymousClass(variable, lambdaExpression, previousDeclarationStatement, false);
+      PsiDeclarationStatement previousDeclarationStatement =
+        PsiTreeUtil.getPrevSiblingOfType(varDeclarationStatement, PsiDeclarationStatement.class);
+      return findExistingAnonymousClass(variable, previousDeclarationStatement, false);
     }
 
     void replace(@NotNull String variableText) {
@@ -162,7 +251,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction i
 
     @Nullable
     private static DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable,
-                                                              @NotNull PsiLambdaExpression lambdaExpression,
                                                               @Nullable PsiDeclarationStatement declarationStatement,
                                                               boolean isBefore) {
       if (declarationStatement == null) return null;
@@ -170,52 +258,23 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction i
       if (declaredElements.length != 1) return null;
       PsiLocalVariable localVariable = tryCast(declaredElements[0], PsiLocalVariable.class);
       if (localVariable == null) return null;
-      String name = localVariable.getName();
-      if (name == null) return null;
+      String boxName = localVariable.getName();
+      if (boxName == null) return null;
       PsiNewExpression newExpression = tryCast(localVariable.getInitializer(), PsiNewExpression.class);
       if (newExpression == null) return null;
       PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
       if (anonymousClass == null) return null;
-      PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
-      if (outerCodeBlock == null) return null;
-      ReferenceUsageVisitor visitor = new ReferenceUsageVisitor(localVariable, lambdaExpression);
-      outerCodeBlock.accept(visitor);
-      if (visitor.foundOutsideOfLambdaUsage) return null;
-      return new DeclarationInfo(isBefore, declarationStatement, anonymousClass, newExpression, localVariable, name);
-    }
-
-    private static class ReferenceUsageVisitor extends JavaRecursiveElementVisitor {
-      private final PsiLocalVariable myLocalVariable;
-      private final PsiLambdaExpression myLambdaExpression;
-      private boolean foundOutsideOfLambdaUsage;
-
-      public ReferenceUsageVisitor(PsiLocalVariable localVariable, PsiLambdaExpression lambdaExpression) {
-        myLocalVariable = localVariable;
-        myLambdaExpression = lambdaExpression;
-        foundOutsideOfLambdaUsage = false;
+      String variableName = variable.getName();
+      if (variableName == null) return null;
+      if (!TypeUtils.isJavaLangObject(anonymousClass.getBaseClassType())) return null;
+      if (Arrays.stream(anonymousClass.getFields())
+                .map(field -> field.getName())
+                .filter(Objects::nonNull)
+                .anyMatch(name -> name.equals(variableName))) {
+        return null;
       }
-
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
-        if (foundOutsideOfLambdaUsage) return;
-        if (ExpressionUtils.isReferenceTo(expression, myLocalVariable)) {
-          if (!isParent(expression, myLambdaExpression)) {
-            foundOutsideOfLambdaUsage = true;
-          }
-        }
-      }
+      return new DeclarationInfo(isBefore, declarationStatement, anonymousClass, newExpression, localVariable, boxName);
     }
-  }
-
-  private static boolean isParent(@NotNull PsiElement place, @NotNull PsiElement parent) {
-    while (place != null) {
-      if (place == parent) {
-        return true;
-      }
-      place = place.getParent();
-    }
-    return false;
   }
 
   private static List<PsiReferenceExpression> findReferences(@NotNull PsiLocalVariable variable) {
@@ -236,5 +295,19 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction i
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  private static class StringLookupElement extends LookupElement {
+    private String lookupString;
+
+    public StringLookupElement(String lookupString) {
+      this.lookupString = lookupString;
+    }
+
+    @NotNull
+    @Override
+    public String getLookupString() {
+      return lookupString;
+    }
   }
 }
