@@ -102,7 +102,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Nullable
-  public XLineBreakpointType<?> getBreakpointTypeByPosition(@NotNull final Project project,
+  private XLineBreakpointType<?> getBreakpointTypeByPosition(@NotNull final Project project,
                                                             @NotNull final VirtualFile file,
                                                             final int line) {
     XLineBreakpointType<?> typeWinner = null;
