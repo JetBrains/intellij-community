@@ -499,12 +499,6 @@ public class EditorWindow {
     return myPanel.isShowing();
   }
 
-  public void setPaintBlocked(boolean blocked) {
-    if (myTabbedPane != null) {
-      myTabbedPane.setPaintBlocked(blocked);
-    }
-  }
-
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
     @NotNull final EditorWithProviderComposite myEditor;
     protected final EditorWindow myWindow;
@@ -527,7 +521,7 @@ public class EditorWindow {
             if (!hasFocus()) return;
             final JComponent focus = myEditor.getSelectedEditorWithProvider().getFirst().getPreferredFocusedComponent();
             if (focus != null && !focus.hasFocus()) {
-              IdeFocusManager.getGlobalInstance().requestFocus(focus, true);
+              getGlobalInstance().requestFocus(focus, true);
             }
           });
         }
