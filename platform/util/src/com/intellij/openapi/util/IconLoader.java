@@ -204,6 +204,7 @@ public final class IconLoader {
     for (IconPathPatcher patcher : ourPatchers) {
       String newPath = patcher.patchPath(path);
       if (newPath != null) {
+        LOG.info("replace '" + path + "' with '" + newPath + "'");
         return Pair.create(newPath, patcher.getContextClass(path));
       }
     }
@@ -215,11 +216,13 @@ public final class IconLoader {
     return paths.size() > 1 && paths.get(0).endsWith("Icons");
   }
 
+  @Nullable
   private static URL findURL(@NotNull String path, @NotNull Class aClass) {
     URL url = aClass.getResource(path);
     if (url != null || !path.endsWith(".png")) return url;
-    path = path.substring(0, path.length() - 4) + ".svg";
-    return aClass.getResource(path);
+    url = aClass.getResource(path.substring(0, path.length() - 4) + ".svg");
+    if (url != null) LOG.info("replace '" + path + "' with '" + url + "'");
+    return url;
   }
 
   @Nullable
