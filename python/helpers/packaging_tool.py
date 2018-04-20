@@ -135,11 +135,12 @@ def main():
             rmdir = mkdtemp_ifneeded()
 
             pkgs = sys.argv[2:]
-            do_install(pkgs)
-
-            if rmdir is not None:
-                import shutil
-                shutil.rmtree(rmdir)
+            try:
+                do_install(pkgs)
+            finally:
+                if rmdir is not None:
+                    import shutil
+                    shutil.rmtree(rmdir)
 
         elif cmd == 'untar':
             if len(sys.argv) < 2:
