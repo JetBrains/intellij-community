@@ -9,6 +9,7 @@ import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.launcher.daemon.client.DaemonClientFactory;
 import org.gradle.launcher.daemon.configuration.DaemonParameters;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -32,5 +33,16 @@ public abstract class DaemonAction {
       @Override
       public void onOutput(OutputEvent event) { }
     }, daemonParameters);
+  }
+
+  @NotNull
+  protected static <T> T createCommand(Class<T> commandClass, Object id, byte[] token) {
+    try {
+      //noinspection unchecked
+      return (T)commandClass.getConstructors()[0].newInstance(id, token);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }
