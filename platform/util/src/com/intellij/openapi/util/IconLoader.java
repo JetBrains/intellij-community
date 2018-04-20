@@ -186,7 +186,7 @@ public final class IconLoader {
     }
     if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
-    URL myURL = aClass.getResource(path);
+    URL myURL = findURL(path, aClass);
     if (myURL == null) {
       if (strict) throw new RuntimeException("Can't find icon in '" + path + "' near " + aClass);
       return null;
@@ -213,6 +213,13 @@ public final class IconLoader {
   private static boolean isReflectivePath(@NotNull String path) {
     List<String> paths = StringUtil.split(path, ".");
     return paths.size() > 1 && paths.get(0).endsWith("Icons");
+  }
+
+  private static URL findURL(@NotNull String path, @NotNull Class aClass) {
+    URL url = aClass.getResource(path);
+    if (url != null || !path.endsWith(".png")) return url;
+    path = path.substring(0, path.length() - 4) + ".svg";
+    return aClass.getResource(path);
   }
 
   @Nullable
