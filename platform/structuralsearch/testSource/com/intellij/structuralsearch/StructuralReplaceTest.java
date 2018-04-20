@@ -1671,7 +1671,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                          "}";
       final String what4 = "System.out.println(1);";
       final String by4 = "System.out.println(2);";
-      final String expected5 = "import java.util.Collections;import static java.lang.System.out;\n" +
+      final String expected5 = "import java.util.Collections;" +
+                               "import static java.lang.System.out;\n" +
                                "public class X {\n" +
                                "    void some() {\n" +
                                "        out.println(2);\n" +
@@ -1703,7 +1704,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                          "    InnerAnnotation[] value();\n" +
                          "}";
       configureFromFileText("ReplacementTest.java", in5);
-      this.options.getMatchOptions().setScope(new LocalSearchScope(getFile()));
+      options.getMatchOptions().setScope(new LocalSearchScope(getFile()));
 
       final String what5 = "@'_a:[regex( InnerAnnotation )](classes = { String.class })";
       final String by5 = "@$a$(classes = { Integer.class })\n" +
@@ -1736,6 +1737,22 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                    "    InnerAnnotation[] value();\n" +
                    "}",
                    Replacer.testReplace(null, what5, by5, options, getProject(), true));
+
+      final String in6 = "class X {{" +
+                         "  Predicate<String> p = Integer::valueOf;" +
+                         "}}" +
+                         "interface Predicate<T> {" +
+                         "  boolean test(T t);" +
+                         "}";
+      final String what6 = "Integer::valueOf";
+      final String by6 = "Boolean::valueOf";
+      assertEquals("class X {{" +
+                   "  Predicate<String> p = Boolean::valueOf;" +
+                   "}}" +
+                   "interface Predicate<T> {" +
+                   "  boolean test(T t);" +
+                   "}",
+                   Replacer.testReplace(in6, what6, by6, options, getProject(), true));
     } finally {
       options.setToUseStaticImport(save);
     }
