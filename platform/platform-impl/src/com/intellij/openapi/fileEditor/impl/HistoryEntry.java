@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -18,7 +16,7 @@ import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.SmartList;
-import java.util.HashMap;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +41,7 @@ final class HistoryEntry {
    * can be null when read from XML
    */
   @Nullable private FileEditorProvider mySelectedProvider;
-  @NotNull private final Map<FileEditorProvider, FileEditorState> myProvider2State = new HashMap<>();
+  @NotNull private final Map<FileEditorProvider, FileEditorState> myProviderToState = new THashMap<>();
 
   @Nullable private final Disposable myDisposable;
 
@@ -130,11 +128,11 @@ final class HistoryEntry {
   }
 
   public FileEditorState getState(@NotNull FileEditorProvider provider) {
-    return myProvider2State.get(provider);
+    return myProviderToState.get(provider);
   }
 
   void putState(@NotNull FileEditorProvider provider, @NotNull FileEditorState state) {
-    myProvider2State.put(provider, state);
+    myProviderToState.put(provider, state);
   }
 
   @Nullable
@@ -154,28 +152,27 @@ final class HistoryEntry {
    * @return element that was added to the {@code element}.
    * Returned element has tag {@link #TAG}. Never null.
    */
-  public Element writeExternal(Element element, Project project) {
+  @NotNull
+  public Element writeExternal(@NotNull Element element, @NotNull Project project) {
     Element e = new Element(TAG);
     element.addContent(e);
     e.setAttribute(FILE_ATTR, myFilePointer.getUrl());
 
-    for (final Map.Entry<FileEditorProvider, FileEditorState> entry : myProvider2State.entrySet()) {
-      FileEditorProvider provider = entry.getKey();
-
+    myProviderToState.forEach((provider, state) -> {
       Element providerElement = new Element(PROVIDER_ELEMENT);
       if (provider.equals(mySelectedProvider)) {
         providerElement.setAttribute(SELECTED_ATTR_VALUE, Boolean.TRUE.toString());
       }
       providerElement.setAttribute(EDITOR_TYPE_ID_ATTR, provider.getEditorTypeId());
-      Element stateElement = new Element(STATE_ELEMENT);
-      provider.writeState(entry.getValue(), project, stateElement);
 
+      Element stateElement = new Element(STATE_ELEMENT);
+      provider.writeState(state, project, stateElement);
       if (!JDOMUtil.isEmpty(stateElement)) {
         providerElement.addContent(stateElement);
       }
 
       e.addContent(providerElement);
-    }
+    });
 
     return e;
   }
