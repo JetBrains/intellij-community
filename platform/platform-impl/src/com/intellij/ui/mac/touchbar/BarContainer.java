@@ -5,5 +5,5 @@ public interface BarContainer {
   TouchBar get();
   void release();
 
-  default boolean isPopup() { return false; }
+  default boolean isTemporary() { return false; }
 }

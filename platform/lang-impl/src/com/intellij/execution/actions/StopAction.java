@@ -24,7 +24,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -35,6 +34,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.mac.touchbar.NSAutoreleaseLock;
 import com.intellij.ui.mac.touchbar.TBItemScrubber;
 import com.intellij.ui.mac.touchbar.TouchBar;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +118,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
 
       if (e.getPlace().equals(ActionPlaces.TOUCHBAR_GENERAL)) {
-        createStopSelectTouchBar(stoppableDescriptors).show();
+        final TouchBar tb = createStopSelectTouchBar(stoppableDescriptors);
+        TouchBarsManager.showTempTouchBar(tb);
         return;
       }
 
@@ -283,14 +284,14 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       result.addButton(null, "Stop all", () -> {
         for (RunContentDescriptor sd : stoppableDescriptors)
           ExecutionManagerImpl.stopProcess(sd);
-        ApplicationManager.getApplication().invokeLater(()->result.closeAndRelease());
+        TouchBarsManager.closeTempTouchBar(result);
       });
       final TBItemScrubber stopScrubber = result.addScrubber();
       List<TBItemScrubber.ItemData> scrubItems = new ArrayList<>();
       for (RunContentDescriptor sd : stoppableDescriptors) {
         scrubItems.add(new TBItemScrubber.ItemData(sd.getIcon(), sd.getDisplayName(), () -> {
           ExecutionManagerImpl.stopProcess(sd);
-          ApplicationManager.getApplication().invokeLater(()->result.closeAndRelease());
+          TouchBarsManager.closeTempTouchBar(result);
         }));
       }
       stopScrubber.setItems(scrubItems);

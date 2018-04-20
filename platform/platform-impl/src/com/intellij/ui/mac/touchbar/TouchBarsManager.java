@@ -43,12 +43,12 @@ public class TouchBarsManager {
       private BarContainer myEditorBar = ProjectBarsStorage.instance(proj).getBarContainer(ProjectBarsStorage.EDITOR);
       @Override
       public void focusGained(Editor editor) {
-        if (!hasVisiblePopup())
+        if (!hasTemporary())
           showTouchBar(myEditorBar);
       }
       @Override
       public void focusLost(Editor editor) {
-        if (!hasVisiblePopup())
+        if (!hasTemporary())
           closeTouchBar(myEditorBar);
       }
     });
@@ -59,20 +59,14 @@ public class TouchBarsManager {
       return;
 
     listPopup.addPopupListener(new JBPopupListener() {
-        BarContainer myPopupBar = new SingleBarContainer(()->_createScrubberBarFromPopup(listPopup)) {
-          @Override
-          public boolean isPopup() { return true; }
-        };
+        private TouchBar myPopupBar = _createScrubberBarFromPopup(listPopup);
         @Override
         public void beforeShown(LightweightWindowEvent event) {
-          System.out.println("open popup: " + listPopup);
-          showTouchBar(myPopupBar);
+          showTempTouchBar(myPopupBar);
         }
         @Override
         public void onClosed(LightweightWindowEvent event) {
-          System.out.println("closed popup: " + listPopup);
-          closeTouchBar(myPopupBar);
-          myPopupBar.release();
+          closeTempTouchBar(myPopupBar);
           myPopupBar = null;
         }
       }
@@ -148,8 +142,34 @@ public class TouchBarsManager {
     }
   }
 
-  synchronized public static boolean hasVisiblePopup() {
-    return ourTouchBarStack.stream().anyMatch((bc)->bc.isPopup());
+  synchronized public static boolean hasTemporary() {
+    return ourTouchBarStack.stream().anyMatch((bc)->bc.isTemporary());
+  }
+
+  synchronized public static void showTempTouchBar(TouchBar tb) {
+    if (tb == null)
+      return;
+
+    tb.selectVisibleItemsToShow();
+    BarContainer container = new TempBarContainer(tb);
+    showTouchBar(container);
+  }
+
+  synchronized public static void closeTempTouchBar(TouchBar tb) {
+    if (tb == null)
+      return;
+
+    tb.release();
+
+    if (ourTouchBarStack.isEmpty())
+      return;
+
+    BarContainer top = ourTouchBarStack.peek();
+    if (top.get() == tb) {
+      ourTouchBarStack.pop();
+      _setTouchBar(ourTouchBarStack.peek());
+    } else
+      ourTouchBarStack.removeIf(bc -> bc.isTemporary() && bc.get() == tb);
   }
 
   synchronized public static void showTouchBar(@NotNull BarContainer bar) {
@@ -211,5 +231,17 @@ public class TouchBarsManager {
 
     result.selectVisibleItemsToShow();
     return result;
+  }
+
+  private static class TempBarContainer implements BarContainer {
+    private @NotNull TouchBar myTouchBar;
+
+    TempBarContainer(@NotNull TouchBar tb) { myTouchBar = tb; }
+    @Override
+    public TouchBar get() { return myTouchBar; }
+    @Override
+    public void release() { myTouchBar.release(); }
+    @Override
+    public boolean isTemporary() { return true; }
   }
 }
