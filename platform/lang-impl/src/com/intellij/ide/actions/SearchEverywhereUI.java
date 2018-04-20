@@ -17,8 +17,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -28,6 +32,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   private SETab mySelectedTab;
   private final JTextField mySearchField;
   private final JCheckBox myNonProjectCB = new JBCheckBox();
+  private final List<SETab> myTabs = new ArrayList<>();
 
   public SearchEverywhereUI(@Nullable SearchEverywhereContributor selected) {
     withMinimumWidth(670);
@@ -45,6 +50,18 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
   public JTextField getSearchField() {
     return mySearchField;
+  }
+
+  private void switchToNextTab() {
+    int currentIndex = myTabs.indexOf(mySelectedTab);
+    SETab nextTab = currentIndex == myTabs.size() - 1 ? myTabs.get(0) : myTabs.get(currentIndex + 1);
+    switchToTab(nextTab);
+  }
+
+  private void switchToTab(SETab tab) {
+    mySelectedTab = tab;
+    myNonProjectCB.setText(tab.getContributor().includeNonProjectItemsText());
+    repaint();
   }
 
   private JTextField createSearchField() {
@@ -91,6 +108,17 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     searchField.setBorder(border);
     searchField.setBackground(JBUI.CurrentTheme.SearchEverywhere.searchFieldBackground());
 
+    searchField.setFocusTraversalKeysEnabled(false);
+    searchField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_TAB) {
+          switchToNextTab();
+          e.consume();
+        }
+      }
+    });
+
     return searchField;
   }
 
@@ -135,42 +163,63 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     contributorsPanel.setOpaque(false);
 
     String allNonProjectItemsText = IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName());
-    SETab allTab = new SETab(IdeBundle.message("searcheverywhere.allelements.tab.name"), allNonProjectItemsText);
+    SETab allTab = new SETab(allElementsContributor);
     contributorsPanel.add(allTab);
+    myTabs.add(allTab);
 
     SearchEverywhereContributor.getProvidersSorted().forEach(contributor -> {
       SETab tab = new SETab(contributor);
       if (contributor == selected) {
-        mySelectedTab = tab;
+        switchToTab(tab);
       }
       contributorsPanel.add(tab);
+      myTabs.add(tab);
     });
 
     if (mySelectedTab == null) {
-      mySelectedTab = allTab;
-      myNonProjectCB.setText(allNonProjectItemsText);
+      switchToTab(allTab);
     }
 
     return contributorsPanel;
   }
 
-  private class SETab extends JLabel {
-    public SETab(SearchEverywhereContributor contributor) {
-      this(contributor.getGroupName(), contributor.includeNonProjectItemsText());
+  private SearchEverywhereContributor allElementsContributor = new SearchEverywhereContributor() {
+    @NotNull
+    @Override
+    public String getSearchProviderId() {
+      return "All";
     }
 
-    public SETab(String tabName, String nonProjectItemCBText) {
-      super(tabName);
+    @NotNull
+    @Override
+    public String getGroupName() {
+      return IdeBundle.message("searcheverywhere.allelements.tab.name");
+    }
+
+    @Override
+    public int getSortWeight() {
+      return 0;
+    }
+  };
+
+  private class SETab extends JLabel {
+    private final SearchEverywhereContributor myContributor;
+
+    public SETab(SearchEverywhereContributor contributor) {
+      super(contributor.getGroupName());
+      myContributor = contributor;
       Insets insets = JBUI.CurrentTheme.SearchEverywhere.tabInsets();
       setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(MouseEvent e) {
-          mySelectedTab = SETab.this;
-          SearchEverywhereUI.this.repaint();
-          myNonProjectCB.setText(nonProjectItemCBText);
+          switchToTab(SETab.this);
         }
       });
+    }
+
+    public SearchEverywhereContributor getContributor() {
+      return myContributor;
     }
 
     @Override
