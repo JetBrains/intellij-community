@@ -1,5 +1,5 @@
 deprecated: fileStatus.png
 deprecated: findPlain.png -> /actions/find.png
 deprecated: menu-find.png -> /actions/find.png
-deprecated: menu-help.png -> /actions/help.png
+deprecated: menu-help.png -> /actions/help.svg
 deprecated: synchronizeFS.png -> /actions/refresh.png
