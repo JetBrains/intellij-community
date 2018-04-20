@@ -55,7 +55,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> trimToSize());
 
-    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
+    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before() {
       @Override
       public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         updateHistoryEntry(file, false);
