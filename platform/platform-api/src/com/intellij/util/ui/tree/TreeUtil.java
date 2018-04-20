@@ -784,19 +784,7 @@ public final class TreeUtil {
   }
 
   public static void expandAll(@NotNull JTree tree) {
-    Object root = tree.getModel().getRoot();
-    if (root == null) return;
-    tree.expandPath(new TreePath(root));
-    int oldRowCount = 0;
-    do {
-      int rowCount = tree.getRowCount();
-      if (rowCount == oldRowCount) break;
-      oldRowCount = rowCount;
-      for (int i = 0; i < rowCount; i++) {
-          tree.expandRow(i);
-        }
-     }
-    while (true);
+    promiseExpandAll(tree);
   }
 
   /**
@@ -1158,7 +1146,7 @@ public final class TreeUtil {
    * @param consumer a path consumer called on done
    */
   public static void visit(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
-    promiseVisit(tree, visitor).onProcessed(path -> consumer.accept(path));
+    promiseVisit(tree, visitor).onProcessed(consumer);
   }
 
   /**
