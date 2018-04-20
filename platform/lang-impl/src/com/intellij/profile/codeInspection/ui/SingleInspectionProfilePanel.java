@@ -41,6 +41,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -707,6 +708,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       return;
     }
     Collection<InspectionConfigTreeNode.Tool> nodes = myTreeTable.getSelectedToolNodes();
+    ScopesAndSeveritiesTable scopesAndScopesAndSeveritiesTable;
     if (!nodes.isEmpty()) {
       final InspectionConfigTreeNode.Tool singleNode = myTreeTable.getStrictlySelectedToolNode();
       if (singleNode != null) {
@@ -808,6 +810,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           setConfigPanel(configPanelAnchor, myProfile.getToolDefaultState(singleNode.getDefaultDescriptor().getKey().toString(),
                                                                                   project));
         }
+        scopesAndScopesAndSeveritiesTable = null;
       }
       else {
         if (singleNode != null) {
@@ -815,7 +818,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             descriptor.loadConfig();
           }
         }
-        final JTable scopesAndScopesAndSeveritiesTable =
+        scopesAndScopesAndSeveritiesTable =
           new ScopesAndSeveritiesTable(new ScopesAndSeveritiesTable.TableSettings(nodes, myProfile, project) {
             @Override
             protected void onScopeChosen(@NotNull final ScopeToolState state) {
@@ -865,11 +868,14 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
       myOptionsPanel.add(severityPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, severityPanelWeightY, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                                JBUI.insets(0, 2, 0, 0), 0, 0));
-      if (configPanelAnchor.getComponentCount() != 0) {
-        configPanelAnchor.setBorder(IdeBorderFactory.createTitledBorder("Options", false, new JBInsets(7, 0, 0, 0)));
-      }
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
-      if (configPanelAnchor.getComponentCount() != 0 || scopesNames.isEmpty()) {
+      if (configPanelAnchor.getComponentCount() != 0) {
+        myOptionsPanel.add(new ToolOptionsSeparator(configPanelAnchor, scopesAndScopesAndSeveritiesTable), new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                                                                        JBUI.emptyInsets(), 0, 0));
+        myOptionsPanel.add(configPanelAnchor, new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                                                              JBUI.insets(0, 2, 0, 0), 0, 0));
+      }
+      else if (scopesNames.isEmpty()) {
         myOptionsPanel.add(configPanelAnchor, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                                      JBUI.insets(0, 2, 0, 0), 0, 0));
       }
@@ -1161,6 +1167,74 @@ public class SingleInspectionProfilePanel extends JPanel {
         restoreTreeState();
       } else {
         TreeUtil.expandAll(myTreeTable.getTree());
+      }
+    }
+  }
+
+  private class ToolOptionsSeparator extends JPanel {
+    private final LinkLabel<?> myResetLink;
+    @Nullable
+    private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
+
+    public ToolOptionsSeparator(JComponent options, @Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
+      myScopesAndSeveritiesTable = scopesAndSeveritiesTable;
+      setLayout(new GridBagLayout());
+      GridBagConstraints optionsLabelConstraints = new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(0, 2, 0, 0), 0, 0);
+      add(new JBLabel("Options"), optionsLabelConstraints);
+      GridBagConstraints separatorConstraints =
+        new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, JBUI.insets(2,
+                                                                                                                       TitledSeparator.SEPARATOR_LEFT_INSET,
+                                                                                                                       0,
+                                                                                                                       TitledSeparator.SEPARATOR_RIGHT_INSET),
+                               0, 0);
+      add(new JSeparator(SwingConstants.HORIZONTAL), separatorConstraints);
+      GridBagConstraints resetLabelConstraints = new GridBagConstraints(2, 0, 0, 1, 0, 1, GridBagConstraints.EAST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0);
+
+      UserActivityWatcher userActivityWatcher = new UserActivityWatcher();
+      userActivityWatcher.addUserActivityListener(new UserActivityListener() {
+        @Override
+        public void stateChanged() {
+          setupResetLinkVisibility();
+        }
+      });
+      userActivityWatcher.register(options);
+      myResetLink = LinkLabel.create("Reset", () -> {
+        ScopeToolState state = getSelectedState();
+        if (state != null) {
+          state.resetConfigPanel();
+          Project project = myProjectProfileManager.getProject();
+          myProfile.resetToBase(state.getTool().getTool().getShortName(), state.getScope(project), project);
+          updateOptionsAndDescriptionPanel();
+        }
+      });
+      add(myResetLink, resetLabelConstraints);
+      setupResetLinkVisibility();
+    }
+
+    private void setupResetLinkVisibility() {
+      if (myTreeTable == null) return;
+      InspectionConfigTreeNode.Tool node = myTreeTable.getStrictlySelectedToolNode();
+      if (node != null) {
+        ScopeToolState state = getSelectedState();
+        if (state == null) return;
+        Project project = myProjectProfileManager.getProject();
+        boolean canReset = !myProfile.isProperSetting(state.getTool().getTool().getShortName(), state.getScope(project), project);
+
+        myResetLink.setVisible(canReset);
+        revalidate();
+        repaint();
+      }
+    }
+
+    private ScopeToolState getSelectedState() {
+      InspectionConfigTreeNode.Tool node = myTreeTable.getStrictlySelectedToolNode();
+      if (node == null) return null;
+      if (myScopesAndSeveritiesTable != null) {
+        List<ScopeToolState> selectedStates = myScopesAndSeveritiesTable.getSelectedStates();
+        LOG.assertTrue(selectedStates.size() == 1);
+        return selectedStates.get(0);
+      } else {
+        return node.getDescriptors().getDefaultDescriptor().getState();
       }
     }
   }
