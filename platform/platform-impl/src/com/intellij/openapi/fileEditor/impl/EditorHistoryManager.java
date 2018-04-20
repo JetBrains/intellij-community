@@ -23,11 +23,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -210,11 +210,19 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @TestOnly
+  public synchronized void removeAllFiles() {
+    for (HistoryEntry entry : myEntriesList) {
+      entry.destroy();
+    }
+    myEntriesList.clear();
+  }
+
   /**
    * @return a set of valid files that are in the history, oldest first.
    */
   public LinkedHashSet<VirtualFile> getFileSet() {
-    LinkedHashSet<VirtualFile> result = ContainerUtil.newLinkedHashSet();
+    LinkedHashSet<VirtualFile> result = new LinkedHashSet<>();
     for (VirtualFile file : getFiles()) {
       // if the file occurs several times in the history, only its last occurrence counts
       result.remove(file);
