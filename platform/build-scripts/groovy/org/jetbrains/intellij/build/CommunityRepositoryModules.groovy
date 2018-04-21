@@ -322,7 +322,6 @@ class CommunityRepositoryModules {
       withResource("lib/commons-io-2.4.jar", "lib")  // Android Studio
       withResource("lib/commons-compress-1.8.1.jar", "lib")  // Android Studio
       withResource("lib/javawriter-2.2.1.jar", "lib")  // Android Studio
-      withResource("lib/juniversalchardet-1.0.3.jar", "lib")  // Android Studio
 
       withResource("lib/androidWidgets", "lib/androidWidgets")  // Android Studio
       withResource("device-art-resources", "lib/device-art-resources")  // Android Studio

@@ -1054,14 +1054,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "juniversalchardet-1.0.3",
-    visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
-    runtime_deps = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "cucumber-core_2.0.1",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
