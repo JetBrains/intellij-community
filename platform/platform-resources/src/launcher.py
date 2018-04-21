@@ -1,10 +1,11 @@
 #!/usr/bin/env $PYTHON$
 # -*- coding: utf-8 -*-
 
+import os
 import socket
 import struct
 import sys
-import os
+import tempfile
 import time
 
 # see com.intellij.idea.SocketLock for the server side of this interface
@@ -17,15 +18,24 @@ SYSTEM_PATH = u'$SYSTEM_PATH$'
 def print_usage(cmd):
     print(('Usage:\n' +
            '  {0} -h | -? | --help\n' +
-           '  {0} [project_dir]\n' +
-           '  {0} [-l|--line line] [project_dir|--temp-project] file[:line]\n' +
+           '  {0} [project_dir] [-w|--wait]\n' +
+           '  {0} [-l|--line line] [project_dir|--temp-project] [-w|--wait] file[:line]\n' +
            '  {0} diff <left> <right>\n' +
            '  {0} merge <local> <remote> [base] <merged>').format(cmd))
+
+
+def generate_temp_filename():
+    filepath = None
+    try:
+        _, filepath = tempfile.mkstemp(suffix='ideapid')
+    finally:
+        return filepath
 
 
 def process_args(argv):
     args = []
 
+    wait_filename = None
     skip_next = False
     for i, arg in enumerate(argv[1:]):
         if arg == '-h' or arg == '-?' or arg == '--help':
@@ -36,6 +46,11 @@ def process_args(argv):
         elif arg == '-l' or arg == '--line':
             args.append(arg)
             skip_next = True
+        elif arg == '-w' or arg == '--wait':
+            wait_filename = generate_temp_filename()
+            if not (wait_filename is None):
+                args.append('--wait')
+                args.append(wait_filename)
         elif skip_next:
             args.append(arg)
             skip_next = False
@@ -49,7 +64,7 @@ def process_args(argv):
                     path = file_path
             args.append(os.path.abspath(path))
 
-    return args
+    return args, wait_filename
 
 
 def try_activate_instance(args):
@@ -95,16 +110,26 @@ def try_activate_instance(args):
     return False
 
 
+def wait_until_ide_returns(wait_filename):
+    while True:
+        if not os.path.isfile(wait_filename):
+            break
+        time.sleep(0.5)
+
+
 def start_new_instance(args):
     if sys.platform == 'darwin':
         if len(args) > 0:
             args.insert(0, '--args')
-        os.execvp('/usr/bin/open', ['-a', RUN_PATH] + args)
+        os.spawnvp(os.P_NOWAIT, '/usr/bin/open', ['-a', RUN_PATH] + args)
     else:
         bin_file = os.path.split(RUN_PATH)[1]
-        os.execv(RUN_PATH, [bin_file] + args)
+        os.spawnv(os.P_NOWAIT, RUN_PATH, [bin_file] + args)
 
 
-ide_args = process_args(sys.argv)
+ide_args, wait_filename = process_args(sys.argv)
 if not try_activate_instance(ide_args):
     start_new_instance(ide_args)
+
+if not (wait_filename is None):
+    wait_until_ide_returns(wait_filename)
