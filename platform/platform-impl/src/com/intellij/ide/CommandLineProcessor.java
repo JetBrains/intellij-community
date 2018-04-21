@@ -42,34 +42,46 @@ public class CommandLineProcessor {
   private CommandLineProcessor() { }
 
   @Nullable
-  private static Project doOpenFileOrProject(VirtualFile file) {
+  private static Project doOpenFileOrProject(VirtualFile file, @Nullable String waitLockFileName) {
     String path = file.getPath();
     if (ProjectKt.isValidProjectPath(path) || ProjectOpenProcessor.getImportProvider(file) != null) {
       Project project = ProjectUtil.openOrImport(path, null, true);
       if (project == null) {
         Messages.showErrorDialog("Cannot open project '" + FileUtil.toSystemDependentName(path) + "'", "Cannot Open Project");
       }
+      else if (waitLockFileName != null) {
+        CommandLineWaitingManager.getInstance().addHookForProject(project, waitLockFileName);
+      }
+      
       return project;
     }
     else {
-      return doOpenFile(file, -1, false);
+      return doOpenFile(file, -1, false, waitLockFileName);
     }
   }
 
   @Nullable
-  private static Project doOpenFile(VirtualFile file, int line, boolean tempProject) {
+  private static Project doOpenFile(VirtualFile file, int line, boolean tempProject, @Nullable String waitLockFileName) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0 || tempProject) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, tempProject);
       if (project == null) {
         Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
       }
+      else if (waitLockFileName != null) {
+        CommandLineWaitingManager.getInstance().addHookForFile(file, waitLockFileName);
+      }
+      
       return project;
     }
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
       (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
+      
+      if (waitLockFileName != null) {
+        CommandLineWaitingManager.getInstance().addHookForFile(file, waitLockFileName);
+      }
       return project;
     }
   }
@@ -138,6 +150,7 @@ public class CommandLineProcessor {
     Project lastOpenedProject = null;
     int line = -1;
     boolean tempProject = false;
+    String waitLockFileName = null;
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
@@ -164,6 +177,15 @@ public class CommandLineProcessor {
         tempProject = true;
         continue;
       }
+      if (arg.equals("--wait")) {
+        //noinspection AssignmentToForLoopParameter
+        i++;
+        if (i == args.size()) {
+          break;
+        }
+        waitLockFileName = args.get(i);
+        continue;
+      }
 
       if (StringUtil.isQuotedString(arg)) {
         arg = StringUtil.unquoteString(arg);
@@ -175,7 +197,7 @@ public class CommandLineProcessor {
       VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
       if (line != -1 || tempProject) {
         if (file != null && !file.isDirectory()) {
-          lastOpenedProject = doOpenFile(file, line, tempProject);
+          lastOpenedProject = doOpenFile(file, line, tempProject, waitLockFileName);
         }
         else {
           Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
@@ -183,7 +205,7 @@ public class CommandLineProcessor {
       }
       else {
         if (file != null) {
-          lastOpenedProject = doOpenFileOrProject(file);
+          lastOpenedProject = doOpenFileOrProject(file, waitLockFileName);
         }
         else {
           Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
@@ -194,6 +216,10 @@ public class CommandLineProcessor {
       tempProject = false;
     }
 
+    if (lastOpenedProject == null) {
+      CommandLineWaitingManager.deleteTempFile(waitLockFileName);
+    }
+    
     return lastOpenedProject;
   }
 }
