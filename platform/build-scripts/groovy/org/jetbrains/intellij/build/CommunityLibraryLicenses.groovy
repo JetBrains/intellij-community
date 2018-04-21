@@ -408,7 +408,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JUniversal Char Detection", libraryName: "juniversalchardet", version: "1.0.3", license: "MPL 1.1",
                        url: "https://code.google.com/archive/p/juniversalchardet"),
     // Android Studio: added by Change Ib7a30b9c / commit 91531e9
-    new LibraryLicense(name: "Java Poet", libraryName: "javapoet-1.8.0", version: "1.8.0", license: "Apache 2.0",
+    new LibraryLicense(name: "Java Poet", libraryName: "javapoet", version: "1.8.0", license: "Apache 2.0",
                        url: "https://github.com/square/javapoet"),
     jetbrainsLibrary("kotlin-stdlib-jre8"),  // Android Studio: added by Change If94a51ef / commit e8d58c9
 

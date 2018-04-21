@@ -1154,14 +1154,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "javapoet-1.8.0",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/squareup/javapoet/1.8.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/squareup/javapoet/1.8.0:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "xml-apis-ext",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/xml-apis/xml-apis-ext/1.3.04:jar"],
