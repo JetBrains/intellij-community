@@ -764,14 +764,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "jgraphx-3.4.0.1",
-    visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea/android/lib:jgraphx-3.4.0.1"],
-    runtime_deps = ["//tools/adt/idea/android/lib:jgraphx-3.4.0.1"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "baksmali",
     visibility = ["//visibility:public"],
     exports = ["//tools/adt/idea/android/lib:baksmali-2.2.1"],

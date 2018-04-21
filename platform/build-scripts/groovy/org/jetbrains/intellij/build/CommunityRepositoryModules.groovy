@@ -309,7 +309,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
-      withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       /* Android Studio: exclude
       withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
