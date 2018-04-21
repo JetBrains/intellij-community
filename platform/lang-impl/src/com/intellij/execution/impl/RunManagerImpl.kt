@@ -237,23 +237,22 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return lock.read { templateIdToConfiguration.get(key) } ?: lock.write {
       templateIdToConfiguration.getOrPut(key) {
         val template = createTemplateSettings(factory)
-        val configuration = template.configuration
-        (configuration as? UnknownRunConfiguration)?.let {
-          it.isDoNotStore = true
-        }
-
-        configuration.beforeRunTasks = getHardcodedBeforeRunTasks(configuration)
-
         workspaceSchemeManager.addScheme(template)
-
         template
       }
     }
   }
 
   internal fun createTemplateSettings(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
-    return RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(project, this), isTemplate = true,
-                                              singleton = factory.isConfigurationSingletonByDefault)
+    val configuration = factory.createTemplateConfiguration(project, this)
+    val template = RunnerAndConfigurationSettingsImpl(this, configuration,
+                                                      isTemplate = true,
+                                                      singleton = factory.isConfigurationSingletonByDefault)
+    if (configuration is UnknownRunConfiguration) {
+      configuration.isDoNotStore = true
+    }
+    configuration.beforeRunTasks = getHardcodedBeforeRunTasks(configuration)
+    return template
   }
 
   override fun addConfiguration(settings: RunnerAndConfigurationSettings) {

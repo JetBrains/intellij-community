@@ -135,7 +135,7 @@ abstract class RunManager {
 
   /**
    * Creates a configuration settings object based on a specified [RunConfiguration]. Note that you need to call
-   * [.addConfiguration] if you want the configuration to be persisted in the project.
+   * [addConfiguration] if you want the configuration to be persisted in the project.
    * @param runConfiguration the run configuration
    * @param factory the factory instance.
    */
