@@ -217,25 +217,39 @@ For AOSP push:
     .idea/runConfigurations/OneStudio.xml and the reference in .idea/ant.xml
     to vendor/google3.
 
- 2. Remove the build.xml reference which calls ant in tools/adt/idea to
-    build the protobufs from source; instead, after a build, check these
-    in as prebuilts into android/lib.
+    There are many other smaller tasks to handle as well - updating vcs.xml
+    to not reference unavailable git repositories, etc etc.
 
-    $ cp tools/idea/out/studio/dist.all/plugins/android/lib/studio-profiler-grpc-1.0-jarjar.jar \
-      tools/adt/idea/android/lib/
+    There are three basic tasks:
+    (1) Build the IDE from the command line, and copy the profiler prebuilts
 
-    Also remove
-      fileset(dir: "$root/out/studio/runtime")
-    from
-      build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
+        $ cp tools/idea/out/studio/dist.all/plugins/android/lib/studio-profiler-grpc-1.0-jarjar.jar \
+             tools/adt/idea/android/lib/
 
-    And remove the same hook from .idea/ant.xml.
+        $ cp-recursive tools/idea/out/studio/dist.all/plugins/android/resources/ \
+                prebuilts/tools/common/profiler/$VERSION/
 
- 3. Perform a test build of tools/idea/build\_studio.sh and make sure the sources
-    build correctly.
+    Also add in a README and license file in the new profiler prebuilts folder.
 
- 4. Ensure that the branch names for the tools/idea and tools/base projects
-    are sensible:
+    Then remove the references from build.xml and .idea/build.xml to
+    the adt build.xml file which would run profiler prebuild steps.
+
+    (2) Open the project in IntelliJ, and fix all warnings in the project
+        structure dialog, then make sure the project builds and runs; for
+        this you may have to fix up source code in case there are any
+        dependencies on closed source code that shouldn't be there.
+        For example, right now the appindexing plugin depends on the
+        url-assistant
+
+    (3) Make the build_studio.sh script compile. This involves removing
+        the various cidr plugins and closed source plugins, as well as
+        removing compilation/copy tasks for the gradle offline repository,
+        lldb, etc. Also add a copy task to place the profiler prebuilts
+        into place.
+
+
+    (4) Ensure that the branch names for the tools/idea and tools/base projects
+        are sensible:
 
     ```diff
     diff --git a/.idea/.name b/.idea/.name
@@ -249,6 +263,14 @@ For AOSP push:
     \ No newline at end of file
     ```
 
+ Relevant CLs from the 3.1 push:
+ Change-Id: I8ca078c08a4fff0a6ebeae8c6ba7a6fa55bec490
+ Change-Id: I15c8e3ce46099d54e77c17fff0f0d42d11238e3b
+ Change-Id: Ia656d3e023d9887da7aa0486ca934388e75436db
+
+ Relevant CLs from the 3.0 AOSP push:
+ https://android-review.googlesource.com/#/q/topic:studio-30
+
  Relevant CLs from the 2.3 AOSP push (though they'll need to be adjusted to
  account for the big build script changes in 2.4) :
  Change-Id: I364ee67262524aa27f71831e6ed01164826e54ad
@@ -256,5 +278,3 @@ For AOSP push:
  Change-Id: Ic60a95a21ea0e483d82f6013539d112b89a7d0c0 (AOSP)
  Change-Id: I42bcad10589b8172a46a3f74aa1e7a5826ea52fc (AOSP)
 
- Relevant CLs from the 3.0 AOSP push:
- https://android-review.googlesource.com/#/q/topic:studio-30
