@@ -54,7 +54,7 @@ public class ModelSearchHelperImpl implements ModelSearchHelper {
   }
 
   @Override
-  public boolean runParameters(@NotNull ModelReferenceSearchParameters parameters, @NotNull Processor<ModelReference> processor) {
+  public boolean runSearch(@NotNull ModelReferenceSearchParameters parameters, @NotNull Processor<ModelReference> processor) {
     final List<SearchRequestCollectorImpl> collectors = new LinkedList<>();
     collectors.add(initCollector(parameters, Preprocessor.id()));
     return runCollectors(collectors, processor);
