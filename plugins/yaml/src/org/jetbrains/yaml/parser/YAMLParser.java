@@ -63,8 +63,8 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     final PsiBuilder.Marker marker = mark();
     PsiBuilder.Marker endOfNodeMarker = null;
     IElementType nodeType = null;
-    
-    
+
+
     // It looks like tag for a block node should be located on a separate line 
     if (getTokenType() == YAMLTokenTypes.TAG && myBuilder.lookAhead(1) == YAMLTokenTypes.EOL) {
       advanceLexer();
@@ -99,7 +99,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
         endOfNodeMarker.drop();
       }
       endOfNodeMarker = mark();
-      
+
     }
 
     if (endOfNodeMarker != null) {
@@ -148,11 +148,9 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     if (eof()) {
       return null;
     }
-    
+
     final PsiBuilder.Marker marker = mark();
-    if (getTokenType() == YAMLTokenTypes.TAG) {
-      advanceLexer();
-    }
+    parseNodeProperties();
 
     final IElementType tokenType = getTokenType();
     final IElementType nodeType;
@@ -174,11 +172,22 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     else if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())) {
       nodeType = parseScalarValue(indent);
     }
+    else if (tokenType == STAR) {
+      advanceLexer(); // symbol *
+      if (getTokenType() == YAMLTokenTypes.ALIAS) {
+        advanceLexer(); // alias name
+        nodeType = YAMLElementTypes.ALIAS_NODE;
+      }
+      else {
+        // Should be impossible now (because of lexer rules)
+        nodeType = null;
+      }
+    }
     else {
       advanceLexer();
       nodeType = null;
     }
-    
+
     if (nodeType != null) {
       marker.done(nodeType);
     }
@@ -186,6 +195,57 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       marker.drop();
     }
     return nodeType;
+  }
+
+  /**
+   * Each node may have two optional properties, anchor and tag, in addition to its content.
+   * Node properties may be specified in any order before the node’s content.
+   * Either or both may be omitted.
+   *
+   * <pre>
+   * [96] c-ns-properties(n,c) ::= ( c-ns-tag-property ( s-separate(n,c) c-ns-anchor-property )? )
+   *                             | ( c-ns-anchor-property ( s-separate(n,c) c-ns-tag-property )? )
+   *
+   * </pre>
+   * See <a href="http://www.yaml.org/spec/1.2/spec.html#id2783797">6.9. Node Properties</a>
+   */
+  private void parseNodeProperties() {
+    // By standard here could be no more than one TAG or ANCHOR
+    // By better to support sequence of them
+    boolean anchorWasRead = false;
+    boolean tagWasRead = false;
+    while (getTokenType() == YAMLTokenTypes.TAG || getTokenType() == YAMLTokenTypes.AMPERSAND) {
+      if (getTokenType() == YAMLTokenTypes.AMPERSAND) {
+        PsiBuilder.Marker errorMarker = null;
+        if (anchorWasRead) {
+          errorMarker = mark();
+        }
+        anchorWasRead = true;
+        PsiBuilder.Marker anchorMarker = mark();
+        advanceLexer(); // symbol &
+        if (getTokenType() == YAMLTokenTypes.ANCHOR) {
+          advanceLexer(); // anchor name
+          anchorMarker.done(YAMLElementTypes.ANCHOR_NODE);
+        }
+        else {
+          // Should be impossible now (because of lexer rules)
+          anchorMarker.drop();
+        }
+        if (errorMarker != null) {
+          errorMarker.error(YAMLBundle.message("YAMLParser.multiple.anchors"));
+        }
+      } else { // tag case
+        if (tagWasRead) {
+          PsiBuilder.Marker errorMarker = mark();
+          advanceLexer();
+          errorMarker.error(YAMLBundle.message("YAMLParser.multiple.tags"));
+        }
+        else {
+          tagWasRead = true;
+          advanceLexer();
+        }
+      }
+    }
   }
 
   @Nullable
@@ -329,7 +389,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     advanceLexer();
 
     final PsiBuilder.Marker rollbackMarker = mark();
-    
+
     passJunk();
     if (eolSeen && (eof() || myIndent + getIndentBonus(false) < indent + indentAddition)) {
       dropEolMarker();
@@ -391,7 +451,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
         advanceLexer();
         continue;
       }
-      
+
       final PsiBuilder.Marker marker = mark();
       final IElementType parsedElement = parseSingleStatement(0);
       if (parsedElement != null) {
@@ -400,7 +460,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       else {
         marker.error("Sequence item expected");
       }
-      
+
       if (getTokenType() == YAMLTokenTypes.COMMA) {
         advanceLexer();
       }
