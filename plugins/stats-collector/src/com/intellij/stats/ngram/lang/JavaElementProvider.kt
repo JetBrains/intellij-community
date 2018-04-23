@@ -2,6 +2,7 @@ package com.intellij.stats.ngram.lang
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.ASTNode
+import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.stats.ngram.AbstractNGramElementProvider
@@ -10,7 +11,11 @@ import com.intellij.stats.ngram.AbstractNGramElementProvider
 class JavaElementProvider : AbstractNGramElementProvider() {
 
     override fun getSupportedFileTypes(): Set<FileType> {
-        return setOf(JavaFileType.INSTANCE)
+        if (Language.getRegisteredLanguages().find { "Java".equals(it.displayName, ignoreCase = true) } != null) {
+            return setOf(JavaFileType.INSTANCE)
+        }
+
+        return emptySet()
     }
 
     override fun shouldIndex(element: ASTNode, content: CharSequence): Boolean {
