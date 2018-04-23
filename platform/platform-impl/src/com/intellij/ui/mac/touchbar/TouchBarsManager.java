@@ -38,7 +38,7 @@ public class TouchBarsManager {
   private final static boolean IS_LOGGING_ENABLED = false;
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
   private static final ArrayDeque<BarContainer> ourTouchBarStack = new ArrayDeque<>();
-  private static TouchBar ourCurrentBar;
+  private static final ChangeScheduler ourTouchBarChanger = new ChangeScheduler();
   private static long ourCurrentKeyMask;
 
   public static void attachEditorBar(EditorEx editor) {
@@ -177,7 +177,7 @@ public class TouchBarsManager {
 
     ourTouchBarStack.remove(bar);
     ourTouchBarStack.push(bar);
-    _setTouchBar(bar.get());
+    ourTouchBarChanger.updateTouchBar(bar.get());
   }
 
   synchronized public static void closeTouchBar(@NotNull BarContainer tb) {
@@ -195,22 +195,39 @@ public class TouchBarsManager {
 
   synchronized private static void _setBarContainer(BarContainer barContainer) {
     if (barContainer == null) {
-      _setTouchBar(null);
+      ourTouchBarChanger.updateTouchBar(null);
       return;
     }
 
     if (barContainer instanceof MultiBarContainer)
       ((MultiBarContainer)barContainer).selectBarByKeyMask(ourCurrentKeyMask);
 
-    _setTouchBar(barContainer.get());
+    ourTouchBarChanger.updateTouchBar(barContainer.get());
   }
 
-  private static void _setTouchBar(TouchBar bar) {
-    if (ourCurrentBar == bar)
-      return;
+  private static class ChangeScheduler {
+    private TouchBar myCurrentBar;
+    private TouchBar myNextBar;
 
-    ourCurrentBar = bar;
-    NST.setTouchBar(bar);
+    synchronized void updateTouchBar(TouchBar bar) {
+      // the usual event sequence "focus lost -> show underlay bar -> focus gained" produces annoying flicker
+      // use slightly deferred update to skip "showing underlay bar"
+      myNextBar = bar;
+      final Timer timer = new Timer(50, (event)->{
+        _setNextTouchBar();
+      });
+      timer.setRepeats(false);
+      timer.start();
+    }
+
+    synchronized private void _setNextTouchBar() {
+      if (myCurrentBar == myNextBar) {
+        return;
+      }
+
+      myCurrentBar = myNextBar;
+      NST.setTouchBar(myCurrentBar);
+    }
   }
 
   private static void trace(String fmt, Object... args) {
