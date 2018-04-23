@@ -41,8 +41,6 @@ public interface RunConfiguration extends RunProfile, Cloneable {
 
   /**
    * Returns the factory that has created the run configuration.
-   *
-   * @return the factory instance.
    */
   ConfigurationFactory getFactory();
 
@@ -66,8 +64,6 @@ public interface RunConfiguration extends RunProfile, Cloneable {
 
   /**
    * Returns the project in which the run configuration exists.
-   *
-   * @return the project instance.
    */
   Project getProject();
 
