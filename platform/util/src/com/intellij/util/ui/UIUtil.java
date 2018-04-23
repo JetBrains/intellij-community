@@ -2055,7 +2055,7 @@ public class UIUtil {
   /**
    * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, ImageObserver)}.
    *
-   * @see #drawImage(Graphics, Image, int, int, int, int, ImageObserver)
+   * @see #drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
    */
   public static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, @Nullable ImageObserver observer) {
     drawImage(g, image, new Rectangle(x, y, -1, -1), null, null, observer);
@@ -2069,6 +2069,7 @@ public class UIUtil {
    * just fine for the general-purpose one-to-one drawing, however when the dst and src bounds need to be specific,
    * use {@link #drawImage(Graphics, Image, Rectangle, Rectangle, BufferedImageOp, ImageObserver)}.
    */
+  @Deprecated
   public static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable ImageObserver observer) {
     drawImage(g, image, x, y, width, height, null, observer);
   }
