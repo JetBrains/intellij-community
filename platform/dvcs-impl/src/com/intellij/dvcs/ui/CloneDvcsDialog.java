@@ -93,7 +93,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   private ComboBox<String> myRepositoryUrlCombobox;
-  private EditorTextField myRepositoryUrlField;
+  private CollectionComboBoxModel<String> myRepositoryUrlComboboxModel;
+  private TextFieldWithAutoCompletion<String> myRepositoryUrlField;
   private ComponentVisibilityProgressManager mySpinnerProgressManager;
   private JButton myTestButton; // test repository
   private MyTextFieldWithBrowseButton myDirectoryField;
@@ -108,7 +109,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @NotNull private final List<String> myLoadedRepositoryHostingServicesNames;
   @Nullable private Alarm myRepositoryUrlAutoCompletionTooltipAlarm;
-  @NotNull private final List<String> myAvailableRepositories;
+  @NotNull private final Set<String> myUniqueAvailableRepositories;
 
   public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName) {
     this(project, displayName, vcsDirectoryName, null);
@@ -122,7 +123,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myProject = project;
     myVcsDirectoryName = vcsDirectoryName;
     myLoadedRepositoryHostingServicesNames = new ArrayList<>();
-    myAvailableRepositories = new ArrayList<>();
+    myUniqueAvailableRepositories = new HashSet<>();
 
     initComponents(defaultUrl);
     initUrlAutocomplete();
@@ -171,11 +172,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   private void initComponents(@Nullable String defaultUrl) {
-    DvcsRememberedInputs rememberedInputs = getRememberedInputs();
-    String parentDirectory = rememberedInputs.getCloneParentDir();
+    String parentDirectory = getRememberedInputs().getCloneParentDir();
 
+    myRepositoryUrlComboboxModel = new CollectionComboBoxModel<>();
     myRepositoryUrlField = TextFieldWithAutoCompletion.create(myProject,
-                                                              myAvailableRepositories,
+                                                              myRepositoryUrlComboboxModel.getItems(),
                                                               false,
                                                               "");
 
@@ -189,6 +190,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myRepositoryUrlCombobox.setEditable(true);
     myRepositoryUrlCombobox.setEditor(ComboBoxCompositeEditor.withComponents(myRepositoryUrlField,
                                                                              repositoryUrlFieldSpinner));
+    myRepositoryUrlCombobox.setModel(myRepositoryUrlComboboxModel);
 
     myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
@@ -229,18 +231,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       }
     });
 
-    boolean defaultAlreadyAdded = false;
-    for (String url : rememberedInputs.getVisitedUrls()) {
-      myRepositoryUrlCombobox.addItem(url);
-      if (defaultUrl != null) {
-        defaultAlreadyAdded = defaultUrl.equalsIgnoreCase(url);
-      }
-    }
-    if (defaultUrl != null && !defaultAlreadyAdded) {
-      myRepositoryUrlCombobox.addItem(defaultUrl);
+    if (defaultUrl != null) {
       myRepositoryUrlField.setText(defaultUrl);
+      myRepositoryUrlField.selectAll();
+      myTestButton.setEnabled(true);
     }
-    myTestButton.setEnabled(!getCurrentUrlText().isEmpty());
   }
 
   private void initUrlAutocomplete() {
@@ -288,16 +283,25 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   private void schedule(@NotNull String serviceDisplayName, @NotNull RepositoryListLoader loader) {
     mySpinnerProgressManager.run(new Task.Backgroundable(myProject, "Not Visible") {
-      private List<String> myLoadedRepositories;
+      private final List<String> myNewRepositories = new ArrayList<>();
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        myLoadedRepositories = loader.getAvailableRepositories(indicator);
+        for (String repository : loader.getAvailableRepositories(indicator)) {
+          if (myUniqueAvailableRepositories.add(repository)) {
+            myNewRepositories.add(repository);
+          }
+        }
       }
 
       @Override
       public void onSuccess() {
-        myAvailableRepositories.addAll(myLoadedRepositories);
+        if (!myNewRepositories.isEmpty()) {
+          // otherwise editor content will be reset
+          myRepositoryUrlCombobox.setSelectedItem(myRepositoryUrlField.getText());
+          myRepositoryUrlComboboxModel.addAll(myRepositoryUrlComboboxModel.getSize(), myNewRepositories);
+          myRepositoryUrlField.setVariants(myRepositoryUrlComboboxModel.getItems());
+        }
         myLoadedRepositoryHostingServicesNames.add(serviceDisplayName);
         showRepositoryUrlAutoCompletionTooltip();
       }
