@@ -285,7 +285,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
         Messages.showErrorDialog(e.localizedMessage, "Error")
       }
       else {
-        showExecutionErrorDialog(project, cause)
+        showProcessExecutionErrorDialog(project, cause)
       }
       return
     }
