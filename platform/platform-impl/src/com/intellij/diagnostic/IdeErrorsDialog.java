@@ -195,7 +195,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     JBLabel attachmentsLabel = new JBLabel(DiagnosticBundle.message("error.dialog.attachments.prompt"));
 
+    Dimension listSize = JBUI.size(150, 400), areaSize = JBUI.size(500, 400);
+
     myAttachmentsList = new AttachmentsList();
+    myAttachmentsList.setMinimumSize(listSize);
     myAttachmentsList.addListSelectionListener(e -> {
       int index = myAttachmentsList.getSelectedIndex();
       if (index < 0) {
@@ -216,6 +219,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     });
 
     myAttachmentArea = new JTextArea();
+    myAttachmentArea.setMinimumSize(areaSize);
+    myAttachmentArea.setPreferredSize(areaSize);
     myAttachmentArea.setMargin(JBUI.insets(2));
     myAttachmentArea.setEditable(false);
 
@@ -257,13 +262,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel commentPanel = new JPanel(new BorderLayout());
     commentPanel.setBorder(JBUI.Borders.emptyTop(5));
     commentPanel.add(commentLabel, BorderLayout.NORTH);
-    commentPanel.add(scrollPane(myCommentArea, 500, 150), BorderLayout.CENTER);
+    commentPanel.add(scrollPane(myCommentArea), BorderLayout.CENTER);
 
     JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUI.scale(5), 0));
     attachmentsPanel.setBorder(JBUI.Borders.emptyTop(5));
     attachmentsPanel.add(attachmentsLabel, BorderLayout.NORTH);
-    attachmentsPanel.add(scrollPane(myAttachmentsList, 100, 400), BorderLayout.WEST);
-    attachmentsPanel.add(scrollPane(myAttachmentArea, 400, 400), BorderLayout.CENTER);
+    attachmentsPanel.add(scrollPane(myAttachmentsList), BorderLayout.WEST);
+    attachmentsPanel.add(scrollPane(myAttachmentArea), BorderLayout.CENTER);
 
     JPanel bottomRow = new JPanel(new BorderLayout());
     if (myInternalMode) {
@@ -278,9 +283,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return rootPanel;
   }
 
-  private static JScrollPane scrollPane(JComponent component, int width, int height) {
+  private static JScrollPane scrollPane(JComponent component) {
     JScrollPane scrollPane = new JBScrollPane(component);
-    scrollPane.setMinimumSize(JBUI.size(width, height));
+    scrollPane.setMinimumSize(component.getMinimumSize());
     return scrollPane;
   }
 
