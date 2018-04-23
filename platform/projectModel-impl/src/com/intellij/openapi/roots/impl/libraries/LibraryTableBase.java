@@ -19,7 +19,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -180,7 +179,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     addedLibraries.removeAll(myModel.myLibraries);
     Set<Library> removedLibraries = ContainerUtil.newIdentityTroveSet(myModel.myLibraries);
     removedLibraries.removeAll(model.myLibraries);
-
+    model.myLibrariesToDispose.removeAll(model.myLibraries);
+    model.myLibrariesToDispose.removeAll(myModel.myLibraries);
     for (Library library : removedLibraries) {
       fireBeforeLibraryRemoved(library);
     }
@@ -211,6 +211,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
   class LibraryModel implements ModifiableModel, JDOMExternalizable, Listener, Disposable {
     private final List<Library> myLibraries = new ArrayList<>();
+    private final Set<Library> myLibrariesToDispose = ContainerUtil.newIdentityTroveSet();
     private volatile Map<String, Library> myLibraryByNameCache;
     private boolean myWritable;
 
@@ -234,6 +235,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     @Override
     public void dispose() {
       myDispatcher.removeListener(this);
+      for (Library library : myLibrariesToDispose) {
+        Disposer.dispose(library);
+      }
     }
 
     @Override
@@ -297,6 +301,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       assertWritable();
       final LibraryImpl library = new LibraryImpl(name, kind, LibraryTableBase.this, null, externalSource);
       myLibraries.add(library);
+      if (myWritable) {
+        myLibrariesToDispose.add(library);
+      }
       myLibraryByNameCache = null;
       return library;
     }
@@ -327,6 +334,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
         final LibraryImpl library = new LibraryImpl(LibraryTableBase.this, libraryElement, null);
         if (library.getName() != null) {
           myLibraries.add(library);
+          if (myWritable) {
+            myLibrariesToDispose.add(library);
+          }
           fireLibraryAdded(library);
         }
         else {

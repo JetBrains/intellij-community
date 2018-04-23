@@ -160,6 +160,22 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertEquals("b", assertOneElement(getLibraryTable().getLibraries()).getName());
   }
 
+  public void testReloadLibraryTableWithoutChanges() {
+    ((LibraryTableBase)getLibraryTable()).loadState(new Element("component"));
+    createLibrary("a", null, null);
+    ((LibraryTableBase)getLibraryTable()).loadState(new Element("component").addContent(new Element("library").setAttribute("name", "a")));
+    assertEquals("a", assertOneElement(getLibraryTable().getLibraries()).getName());
+  }
+
+  public void testNonCommittedLibraryIsDisposed() {
+    LibraryTable table = getLibraryTable();
+    LibraryTable.ModifiableModel model = table.getModifiableModel();
+    Library library = model.createLibrary("a");
+    model.removeLibrary(library);
+    commit(model);
+    assertEmpty(table.getLibraries());
+  }
+
   public void testResolveDependencyToRenamedLibrary() {
     Library library = createLibrary("jdom2", getJDomJar(), null);
 
