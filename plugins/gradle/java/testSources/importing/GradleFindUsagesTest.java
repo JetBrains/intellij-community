@@ -8,12 +8,16 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.gradle.initialization.BuildLayoutParameters;
+import org.gradle.wrapper.PathAssembler;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -30,6 +34,15 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
+  }
+
+  @Override
+  protected void collectAllowedRoots(List<String> roots, PathAssembler.LocalDistribution distribution) {
+    File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
+    File generatedGradleJarsDir = new File(gradleUserHomeDir, "caches/" + gradleVersion + "/generated-gradle-jars");
+    roots.add(generatedGradleJarsDir.getPath());
+    File gradleDistLibDir = new File(distribution.getDistributionDir(), "gradle-" + gradleVersion + "/lib");
+    roots.add(gradleDistLibDir.getPath());
   }
 
   @Test
