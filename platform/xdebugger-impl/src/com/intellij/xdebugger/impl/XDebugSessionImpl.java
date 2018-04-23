@@ -395,9 +395,10 @@ public class XDebugSessionImpl implements XDebugSession {
       boolean active = ReadAction.compute(() -> isBreakpointActive(b));
       if (active) {
         synchronized (myRegisteredBreakpoints) {
-          CustomizedBreakpointPresentation validatingPresentation = new CustomizedBreakpointPresentation();
-          validatingPresentation.setIcon(b.getType().getValidatingIcon());
-          myRegisteredBreakpoints.put(b, validatingPresentation);
+          myRegisteredBreakpoints.put(b, new CustomizedBreakpointPresentation());
+          if (b instanceof XLineBreakpoint) {
+            updateBreakpointPresentation((XLineBreakpoint)b, b.getType().getValidatingIcon(), null);
+          }
         }
         handler.registerBreakpoint(b);
       }
