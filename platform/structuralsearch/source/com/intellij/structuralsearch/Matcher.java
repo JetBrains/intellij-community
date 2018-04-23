@@ -214,7 +214,10 @@ public class Matcher {
         matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions));
         out.put(configuration, matchContext);
       }
-      catch (StructuralSearchException ignored) {}
+      catch (StructuralSearchException e) {
+        LOG.warn("Malformed structural search inspection pattern \"" + configuration.getName() + '"', e);
+        out.put(configuration, null);
+      }
     }
   }
 
