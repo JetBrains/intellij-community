@@ -111,7 +111,8 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
                                    { _, _ -> true },
                                    this,
                                    host = decorator.account.server.toString(),
-                                   editableHost = false)
+                                   editableHost = false,
+                                   login = decorator.account.name)
     if (dialog.showAndGet()) {
       decorator.account.name = dialog.getLogin()
       newTokensMap[decorator.account] = dialog.getToken()
