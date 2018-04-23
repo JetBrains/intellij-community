@@ -294,7 +294,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   @Override
-  public void onFragmentNodeSelected(@NotNull FragmentNode node) {
+  public void onNodeSelected(@NotNull FragmentNode node) {
     if (myDiffRequest != null) {
       myDiffRequest.onNodeSelected(node);
     }

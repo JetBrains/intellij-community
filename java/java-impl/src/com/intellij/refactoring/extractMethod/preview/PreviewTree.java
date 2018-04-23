@@ -14,7 +14,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.IntStreamEx;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,21 +71,7 @@ class PreviewTree implements Disposable {
     FragmentNode firstSelectedNode = getFirstSelectedNode();
     if (firstSelectedNode != null) {
       for (PreviewTreeListener listener : myTreeListeners) {
-        listener.onFragmentNodeSelected(firstSelectedNode);
-      }
-    }
-    fireTreeNodesSelected();
-  }
-
-  private void fireTreeNodesSelected() {
-    TreePath[] selectionPaths = myTree.getSelectionPaths();
-    if (selectionPaths != null) {
-      List<TreeNode> selectedNodes = StreamEx.of(selectionPaths)
-                                             .map(TreePath::getLastPathComponent)
-                                             .select(TreeNode.class)
-                                             .toList();
-      for (PreviewTreeListener listener : myTreeListeners) {
-        listener.onTreeNodesSelected(selectedNodes);
+        listener.onNodeSelected(firstSelectedNode);
       }
     }
   }
@@ -143,9 +128,8 @@ class PreviewTree implements Disposable {
     return myTree;
   }
 
-  public void update() {
+  public void repaint() {
     myTree.repaint();
-    fireTreeNodesSelected();
   }
 
   void onUpdateLater() {
@@ -163,7 +147,7 @@ class PreviewTree implements Disposable {
 
   public void setValid(boolean valid) {
     myModel.setValid(valid);
-    update();
+    repaint();
   }
 
   @Override
