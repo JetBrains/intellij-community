@@ -44,6 +44,7 @@ import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
+import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.search.*
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.StubIndex
@@ -388,6 +389,17 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     PlatformTestUtil.tryGcSoftlyReachableObjects()
     assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
+  }
+  
+  void "test unknown file type in stubs" () {
+    def vFile = myFixture.addFileToProject("Foo.java", "").virtualFile
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.setText("class Foo {}")
+    PsiDocumentManager.getInstance(project).commitAllDocuments() 
+    assert findClass("Foo")
+    
+    vFile.rename(null, "Foo1")
+    assert !findClass("Foo")
   }
 
   void "test changing a file without psi makes the document committed and updates index"() {
@@ -1011,6 +1023,21 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
       VfsUtil.saveText(file, fileText)
       assertNotNull(findClass("Bar"))
-   }
+    }
+  }
+
+  void "test IDEA-188028" () {
+    def file = myFixture.addFileToProject('a.java', 'class Foo {}') as PsiJavaFileImpl
+    WriteCommandAction.runWriteCommandAction(project) {
+      def document = file.viewProvider.document
+      document.setText('')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      PsiManager.getInstance(project).reloadFromDisk(file)
+      document.setText('')
+      assert !findClass('Foo')
+      file.virtualFile.rename(this, 'a1.java')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      assert !findClass('Foo')
+    }
   }
 }
