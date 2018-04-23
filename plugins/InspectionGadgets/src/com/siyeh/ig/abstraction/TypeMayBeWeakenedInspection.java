@@ -75,6 +75,9 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("PublicField")
   public boolean doNotWeakenReturnType = true;
 
+  @SuppressWarnings("PublicField")
+  public boolean doNotWeakenInferredVariableType = true;
+
   public OrderedSet<String> myStopClassSet = new OrderedSet<>();
 
   private final ListWrappingTableModel myStopClassesModel =
@@ -147,6 +150,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     doNotWeakenToJavaLangObject = readOrDefault(values, "doNotWeakenToJavaLangObject");
     onlyWeakentoInterface = readOrDefault(values, "onlyWeakentoInterface");
     doNotWeakenReturnType = readOrDefault(values, "doNotWeakenReturnType");
+    doNotWeakenInferredVariableType = readOrDefault(values, "doNotWeakenInferredVariableType");
     readStopClasses(node);
   }
 
@@ -171,6 +175,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     writeBool(node, useParameterizedTypeForCollectionMethods, "useParameterizedTypeForCollectionMethods");
     writeBool(node, doNotWeakenToJavaLangObject, "doNotWeakenToJavaLangObject");
     writeBool(node, onlyWeakentoInterface, "onlyWeakentoInterface");
+    writeBool(node, doNotWeakenInferredVariableType, "doNotWeakenInferredVariableType");
     if (!doNotWeakenReturnType) {
       writeBool(node, true, "doNotWeakenReturnType");
     }
@@ -240,6 +245,8 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
                              "onlyWeakentoInterface");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.return.type"),
                              "doNotWeakenReturnType");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.type"),
+                             "doNotWeakenInferredVariableType");
     verticalBox.add(optionsPanel);
     final ListTable stopClassesTable = new ListTable(myStopClassesModel);
 
@@ -394,6 +401,12 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
         // checking variables with greater visibility is too expensive
         // for error checking in the editor
         if (!variable.hasModifierProperty(PsiModifier.PRIVATE)) {
+          return;
+        }
+      }
+      if (doNotWeakenInferredVariableType && variable instanceof PsiLocalVariable) {
+        PsiTypeElement typeElement = variable.getTypeElement();
+        if (typeElement != null && typeElement.isInferredType()) {
           return;
         }
       }
