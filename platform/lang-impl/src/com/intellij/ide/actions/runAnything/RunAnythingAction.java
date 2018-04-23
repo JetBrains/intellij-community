@@ -388,7 +388,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       final RunAnythingSearchListModel model = getSearchingModel(myList);
       if (model != null) {
         if (isMoreItem(index)) {
-          RunAnythingGroup group = RunAnythingGroup.findRunAnythingGroup(index);
+          RunAnythingGroup group = RunAnythingGroup.findGroupByMoreIndex(index);
 
           if (group != null) {
             myCurrentWorker.doWhenProcessed(() -> {
@@ -1320,7 +1320,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
               RunAnythingGroup.shiftIndexes(index, shift);
               if (!result.isNeedMore()) {
-                group.dropMoreIndex();
+                group.resetMoreIndex();
               }
 
               clearSelection();

@@ -41,7 +41,7 @@ public class RunAnythingCommandGroup extends RunAnythingGroupBase {
 
     cancellationChecker.run();
     for (String command : ContainerUtil.iterateBackward(RunAnythingCache.getInstance(project).getState().getCommands())) {
-      if (addToList(model, result, pattern, new RunAnythingCommandItem(project, module, command), command, isInsertionMode)) break;
+      if (addToList(model, result, pattern, command, isInsertionMode, new RunAnythingCommandItem(project, module, command))) break;
       cancellationChecker.run();
     }
     return result;

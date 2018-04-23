@@ -41,7 +41,7 @@ public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnyt
       RunAnythingActionItem actionItem = new RunAnythingActionItem(action, actionText == null ? ObjectUtils
         .notNull(action.getTemplatePresentation().getText(), IdeBundle.message("run.anything.acton.group.title")) : actionText);
 
-      if (addToList(model, result, pattern, actionItem, getPrefix() + " " + actionItem.getText(), isInsertionMode)) break;
+      if (addToList(model, result, pattern, getPrefix() + " " + actionItem.getText(), isInsertionMode, actionItem)) break;
       cancellationChecker.run();
     }
 
