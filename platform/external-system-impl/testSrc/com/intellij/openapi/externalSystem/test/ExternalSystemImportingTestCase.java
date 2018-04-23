@@ -15,6 +15,12 @@
  */
 package com.intellij.openapi.externalSystem.test;
 
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -32,6 +38,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -40,6 +49,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,8 +58,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -502,6 +515,28 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
       }
     });
     return counter;
+  }
+
+  protected static Collection<UsageInfo> doFindUsages(PsiElement resolved) throws Exception {
+    return ProgressManager.getInstance().run(new Task.WithResult<Collection<UsageInfo>, Exception>(resolved.getProject(), "", false) {
+      @Override
+      protected Collection<UsageInfo> compute(@NotNull ProgressIndicator indicator) {
+        return ApplicationManager.getApplication().runReadAction((Computable<Collection<UsageInfo>>)() -> {
+          FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(resolved.getProject())).getFindUsagesManager();
+          FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(resolved, false);
+          assertNotNull(handler);
+          final FindUsagesOptions options = handler.getFindUsagesOptions();
+          final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
+          for (PsiElement element : handler.getPrimaryElements()) {
+            handler.processElementUsages(element, processor, options);
+          }
+          for (PsiElement element : handler.getSecondaryElements()) {
+            handler.processElementUsages(element, processor, options);
+          }
+          return processor.getResults();
+        });
+      }
+    });
   }
 
   //protected void assertProblems(String... expectedProblems) {

@@ -221,26 +221,4 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   private static void assertUsagesCount(int expectedUsagesCount, PsiElement resolved) throws Exception {
     assertEquals(expectedUsagesCount, doFindUsages(resolved).size());
   }
-
-  private static Collection<UsageInfo> doFindUsages(PsiElement resolved) throws Exception {
-    return ProgressManager.getInstance().run(new Task.WithResult<Collection<UsageInfo>, Exception>(resolved.getProject(), "", false) {
-      @Override
-      protected Collection<UsageInfo> compute(@NotNull ProgressIndicator indicator) {
-        return ApplicationManager.getApplication().runReadAction((Computable<Collection<UsageInfo>>)() -> {
-          FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(resolved.getProject())).getFindUsagesManager();
-          FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(resolved, false);
-          assertNotNull(handler);
-          final FindUsagesOptions options = handler.getFindUsagesOptions();
-          final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
-          for (PsiElement element : handler.getPrimaryElements()) {
-            handler.processElementUsages(element, processor, options);
-          }
-          for (PsiElement element : handler.getSecondaryElements()) {
-            handler.processElementUsages(element, processor, options);
-          }
-          return processor.getResults();
-        });
-      }
-    });
-  }
 }
