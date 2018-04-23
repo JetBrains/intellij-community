@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -107,21 +106,12 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final DataKey<AnActionEvent> RUN_ANYTHING_EVENT_KEY = DataKey.create("RUN_ANYTHING_EVENT_KEY");
   public static final DataKey<Component> FOCUS_COMPONENT_KEY_NAME = DataKey.create("FOCUS_COMPONENT_KEY_NAME");
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
-  static final String SHIFT_SHORTCUT_TEXT = KeymapUtil.getShortcutText(KeyboardShortcut.fromString(("SHIFT")));
-  public static final String AD_ACTION_TEXT
-    = String.format(IdeBundle.message("run.anything.ad.run.action.with.default.settings"), SHIFT_SHORTCUT_TEXT);
-  public static final String AD_DEBUG_TEXT
-    = String.format(IdeBundle.message("run.anything.ad.run.with.debug"), SHIFT_SHORTCUT_TEXT);
-  public static final String AD_CONTEXT_TEXT = String
-    .format(IdeBundle.message("run.anything.ad.run.in.context"), KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
-  public static final String AD_DELETE_COMMAND_TEXT = String.format(IdeBundle.message("run.anything.ad.command.delete"), KeymapUtil
-    .getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
+  static final String RUN_ANYTHING = "RunAnything";
 
   private static final int MAX_RUN_ANYTHING_HISTORY = 50;
   private static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(AllIcons.Actions.Run_anything, 16, 16);
-  static final String RUN_ANYTHING = "RunAnything";
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
   private JBPopup myPopup;
@@ -748,7 +738,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     panel.add(topPanel, BorderLayout.NORTH);
     panel.setBorder(JBUI.Borders.empty(3, 5, 4, 5));
 
-    myAdComponent = HintUtil.createAdComponent(AD_CONTEXT_TEXT, JBUI.Borders.empty(1, 5), SwingConstants.LEFT);
+    myAdComponent = HintUtil.createAdComponent(RunAnythingUtil.AD_CONTEXT_TEXT, JBUI.Borders.empty(1, 5), SwingConstants.LEFT);
 
     panel.add(myAdComponent, BorderLayout.SOUTH);
 

@@ -60,6 +60,13 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
 public class RunAnythingUtil {
   public static final Logger LOG = Logger.getInstance(RunAnythingUtil.class);
+  static final String SHIFT_SHORTCUT_TEXT = KeymapUtil.getShortcutText(KeyboardShortcut.fromString(("SHIFT")));
+  public static final String AD_ACTION_TEXT = IdeBundle.message("run.anything.ad.run.action.with.default.settings", SHIFT_SHORTCUT_TEXT);
+  public static final String AD_DEBUG_TEXT = IdeBundle.message("run.anything.ad.run.with.debug", SHIFT_SHORTCUT_TEXT);
+  public static final String AD_CONTEXT_TEXT =
+    IdeBundle.message("run.anything.ad.run.in.context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
+  public static final String AD_DELETE_COMMAND_TEXT =
+    IdeBundle.message("run.anything.ad.command.delete", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
   private static final Key<Collection<Pair<String, String>>> RUN_ANYTHING_WRAPPED_COMMANDS = Key.create("RUN_ANYTHING_WRAPPED_COMMANDS");
   private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
   private static final String DEBUGGER_FEATURE_USAGE = RunAnythingAction.RUN_ANYTHING + " - " + "DEBUGGER";
