@@ -24,9 +24,12 @@ public interface YAMLElementTypes {
   YAMLElementType SCALAR_TEXT_VALUE = new YAMLElementType("Scalar text value");
   YAMLElementType SCALAR_PLAIN_VALUE = new YAMLElementType("Scalar plain style");
   YAMLElementType SCALAR_QUOTED_STRING = new YAMLElementType("Scalar quoted string");
+  YAMLElementType ANCHOR_NODE = new YAMLElementType("Anchor node");
+  YAMLElementType ALIAS_NODE = new YAMLElementType("Alias node");
 
   TokenSet SCALAR_VALUES = TokenSet.create(
     YAMLTokenTypes.SCALAR_TEXT,
+
     YAMLTokenTypes.SCALAR_STRING,
     YAMLTokenTypes.SCALAR_DSTRING,
     YAMLTokenTypes.SCALAR_LIST,

@@ -14,6 +14,14 @@ public class YAMLHighlightingTest extends LightPlatformCodeInsightFixtureTestCas
     doTest();
   }
 
+  public void testMultipleAnchorsError() {
+    doTest();
+  }
+
+  public void testMultipleTagsError() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".yml");
   }

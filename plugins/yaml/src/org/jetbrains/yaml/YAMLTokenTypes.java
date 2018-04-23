@@ -17,6 +17,8 @@ public interface YAMLTokenTypes {
   YAMLElementType COMMA = new YAMLElementType(",");
   YAMLElementType COLON = new YAMLElementType(":");
   YAMLElementType QUESTION = new YAMLElementType("?");
+  YAMLElementType AMPERSAND = new YAMLElementType("&");
+  YAMLElementType STAR = new YAMLElementType("*");
 
   YAMLElementType DOCUMENT_MARKER = new YAMLElementType("---");
   YAMLElementType DOCUMENT_END = new YAMLElementType("...");
@@ -32,4 +34,7 @@ public interface YAMLTokenTypes {
 
   YAMLElementType SCALAR_LIST = new YAMLElementType("scalar list");
   YAMLElementType SCALAR_TEXT = new YAMLElementType("scalar text");
+
+  YAMLElementType ANCHOR = new YAMLElementType("anchor");
+  YAMLElementType ALIAS = new YAMLElementType("alias");
 }
