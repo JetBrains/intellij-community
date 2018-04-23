@@ -9,14 +9,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class UnknownConfigurationType extends ConfigurationTypeBase {
+public final class UnknownConfigurationType extends ConfigurationTypeBase {
+  @NotNull
   public static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
 
-  protected UnknownConfigurationType() {
+  private UnknownConfigurationType() {
     this(AllIcons.RunConfigurations.Unknown);
   }
 
-  protected UnknownConfigurationType(@NotNull Icon icon) {
+  private UnknownConfigurationType(@NotNull Icon icon) {
     super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), icon);
 
     addFactory(new ConfigurationFactory(this) {
@@ -39,5 +40,10 @@ public class UnknownConfigurationType extends ConfigurationTypeBase {
   @NotNull
   public static ConfigurationFactory getFactory() {
     return INSTANCE.getConfigurationFactories()[0];
+  }
+
+  @Override
+  public boolean isManaged() {
+    return false;
   }
 }

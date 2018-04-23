@@ -195,7 +195,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   override val configurationFactories by lazy { idToType.values.toTypedArray() }
 
   override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
-    get() = idToType.values.filterSmart { it !is UnknownConfigurationType }
+    get() = idToType.values.filterSmart { it.isManaged }
 
   /**
    * Template configuration is not included
@@ -404,10 +404,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     if (!isFirstLoadState.get()) {
       lock.read {
         val list = idToSettings.values.toList()
-        for (settings in list) {
-          if (settings.type !is UnknownConfigurationType) {
-            listManager.checkIfDependenciesAreStable(settings.configuration, list)
-          }
+        list.forEachManaged {
+          listManager.checkIfDependenciesAreStable(it.configuration, list)
         }
       }
     }
@@ -425,12 +423,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         }
 
         val listElement = Element("list")
-        for (settings in idToSettings.values) {
-          if (settings.type is UnknownConfigurationType) {
-            continue
-          }
-
-          listElement.addContent(Element("item").setAttribute("itemvalue", settings.uniqueID))
+        idToSettings.values.forEachManaged {
+          listElement.addContent(Element("item").setAttribute("itemvalue", it.uniqueID))
         }
 
         if (!listElement.isEmpty()) {
@@ -439,11 +433,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
 
       val recentList = SmartList<String>()
-      for (settings in recentlyUsedTemporaries) {
-        if (settings.type is UnknownConfigurationType) {
-          continue
-        }
-        recentList.add(settings.uniqueID)
+      recentlyUsedTemporaries.forEachManaged {
+        recentList.add(it.uniqueID)
       }
       if (!recentList.isEmpty()) {
         val recent = Element(RECENT)
@@ -758,21 +749,21 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   override fun getConfigurationType(typeName: String) = idToType.get(typeName)
 
   @JvmOverloads
-  fun getFactory(typeId: String?, _factoryId: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
-    var type = idToType.get(typeId)
+  fun getFactory(typeId: String?, factoryId: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
+    val type = idToType.get(typeId)
     if (type == null) {
       if (checkUnknown && typeId != null) {
-        UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId, _factoryId)
+        UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId, factoryId)
       }
-      type = idToType.get(UnknownConfigurationType.NAME) ?: return null
+      return UnknownConfigurationType.getFactory()
     }
 
-    if (type is UnknownConfigurationType || _factoryId == null) {
-      return type.configurationFactories.get(0)
+    if (type is UnknownConfigurationType) {
+      return type.configurationFactories.firstOrNull()
     }
 
     return type.configurationFactories.firstOrNull {
-      it.id == _factoryId
+      factoryId == null || it.id == factoryId
     }
   }
 
@@ -1014,3 +1005,11 @@ internal class IprRunManagerImpl(private val project: Project) : PersistentState
 }
 
 private fun getNameWeight(n1: String) = if (n1.startsWith("<template> of ") || n1.startsWith("_template__ ")) 0 else 1
+
+private inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(handler: (settings: RunnerAndConfigurationSettings) -> Unit) {
+  for (settings in this) {
+    if (settings.type.isManaged) {
+      handler(settings)
+    }
+  }
+}
