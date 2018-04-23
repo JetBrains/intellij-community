@@ -72,6 +72,7 @@ public class ScratchFileActions {
       Project project = e.getProject();
       String place = e.getPlace();
       boolean enabled = project != null && (
+        e.isFromActionToolbar() ||
         ActionPlaces.isMainMenuOrActionSearch(place) ||
         ActionPlaces.isPopupPlace(place) && e.getData(LangDataKeys.IDE_VIEW) != null);
 
