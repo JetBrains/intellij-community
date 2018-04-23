@@ -67,7 +67,8 @@ public class FindInProjectUtil {
     PsiElement psiElement = null;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
-    if (project != null && !DumbServiceImpl.getInstance(project).isDumb()) {
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (project != null && editor == null && !DumbServiceImpl.getInstance(project).isDumb()) {
       try {
         psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       }
@@ -101,7 +102,6 @@ public class FindInProjectUtil {
       model.setModuleName(module.getName());
     }
 
-    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (model.getModuleName() == null || editor == null) {
       if (directoryName != null) {
         model.setDirectoryName(directoryName);
