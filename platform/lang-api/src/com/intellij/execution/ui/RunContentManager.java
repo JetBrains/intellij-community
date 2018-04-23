@@ -88,11 +88,11 @@ public interface RunContentManager {
 
   void hideRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
 
-  boolean removeRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
+  boolean removeRunContent(@NotNull Executor executor, @NotNull RunContentDescriptor descriptor);
 
-  void toFrontRunContent(Executor requestor, RunContentDescriptor descriptor);
+  void toFrontRunContent(@NotNull Executor requestor, @NotNull RunContentDescriptor descriptor);
 
-  void toFrontRunContent(Executor requestor, ProcessHandler handler);
+  void toFrontRunContent(@NotNull Executor requestor, @NotNull ProcessHandler handler);
 
   @Nullable
   ToolWindow getToolWindowByDescriptor(@NotNull RunContentDescriptor descriptor);
