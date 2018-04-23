@@ -112,8 +112,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   internal val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
+  private val templateDifferenceHelper = TemplateDifferenceHelper(this)
+
+  @Suppress("LeakingThis")
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace",
-                                                                                        RunConfigurationSchemeManager(this,
+                                                                                        RunConfigurationSchemeManager(this, templateDifferenceHelper,
                                                                                                                       isShared = false,
                                                                                                                       isWrapSchemeIntoComponentElement = false),
                                                                                         streamProvider = workspaceSchemeManagerProvider,
@@ -121,7 +124,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   @Suppress("LeakingThis")
   private var projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations",
-                                                                                      RunConfigurationSchemeManager(this,
+                                                                                      RunConfigurationSchemeManager(this, templateDifferenceHelper,
                                                                                                                     isShared = true,
                                                                                                                     isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null),
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
@@ -491,8 +494,14 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   @Suppress("unused")
-// used by MPS. Do not use if not approved.
+  /**
+   * used by MPS. Do not use if not approved.
+   */
   fun reloadSchemes() {
+    lock.write {
+      // not really required, but hot swap friendly - 1) factory is used a key, 2) developer can change some defaults.
+      templateDifferenceHelper.clearCache()
+    }
     workspaceSchemeManager.reload()
     projectSchemeManager.reload()
   }
