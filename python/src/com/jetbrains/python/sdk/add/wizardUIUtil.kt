@@ -72,35 +72,28 @@ internal fun show(panel: JPanel, stepContent: Component) {
   (panel.layout as CardLayout).show(panel, stepContentName)
 }
 
-fun showExecutionErrorDialog(project: Project?, e: PyExecutionException) {
-  val errorMessage = JBLabel("<html>${e.command} could not complete successfully. " +
-                             "Please see the command's output for information about resolving this problem.</html>",
-                             Messages.getErrorIcon(), SwingConstants.LEFT)
-  val formBuilder = FormBuilder().addComponent(errorMessage)
+internal fun showProcessExecutionErrorDialog(project: Project?, e: PyExecutionException) {
+  val errorMessageText = "${e.command} could not complete successfully. " +
+                         "Please see the command's output for information about resolving this problem."
+  // HTML format for text in `JBLabel` enables text wrapping
+  val errorMessageLabel = JBLabel(UIUtil.toHtml(errorMessageText), Messages.getErrorIcon(), SwingConstants.LEFT)
 
-  val commandOutputTextField = JTextPane().apply {
-    val stdoutStyle = addStyle("stdoutStyle", null)
-    StyleConstants.setFontFamily(stdoutStyle, Font.MONOSPACED)
-    val stderrStyle = addStyle("stderrStyle", stdoutStyle)
-    StyleConstants.setForeground(stderrStyle, JBColor.RED)
-    document.apply {
-      e.stdout.let {
-        if (it.isNotEmpty()) insertString(length, it + "\n", stdoutStyle)
-      }
-      e.stderr.let {
-        if (it.isNotEmpty()) insertString(length, it + "\n", stderrStyle)
-      }
-      insertString(length, "Process finished with exit code ${e.exitCode}", stdoutStyle)
-    }
+  val commandOutputTextPane = JTextPane().apply {
+    appendProcessOutput(e.stdout, e.stderr, e.exitCode)
+
     background = JBColor.WHITE
     isEditable = false
   }
 
-  formBuilder.addComponentFillVertically(BorderLayoutPanel().apply {
+  val commandOutputPanel = BorderLayoutPanel().apply {
     border = IdeBorderFactory.createTitledBorder("Command output", false)
 
-    addToCenter(JBScrollPane(commandOutputTextField, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER))
-  }, UIUtil.DEFAULT_VGAP)
+    addToCenter(JBScrollPane(commandOutputTextPane, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER))
+  }
+
+  val formBuilder = FormBuilder()
+    .addComponent(errorMessageLabel)
+    .addComponentFillVertically(commandOutputPanel, UIUtil.DEFAULT_VGAP)
 
   object : DialogWrapper(project) {
     init {
@@ -110,8 +103,21 @@ fun showExecutionErrorDialog(project: Project?, e: PyExecutionException) {
 
     override fun createActions(): Array<Action> = arrayOf(okAction)
 
-    override fun createCenterPanel(): JComponent {
-      return formBuilder.panel.apply { preferredSize = Dimension(600, 300) }
+    override fun createCenterPanel(): JComponent = formBuilder.panel.apply {
+      preferredSize = Dimension(600, 300)
     }
   }.showAndGet()
+}
+
+private fun JTextPane.appendProcessOutput(stdout: String, stderr: String, exitCode: Int) {
+  val stdoutStyle = addStyle(null, null)
+  StyleConstants.setFontFamily(stdoutStyle, Font.MONOSPACED)
+  val stderrStyle = addStyle(null, stdoutStyle)
+  StyleConstants.setForeground(stderrStyle, JBColor.RED)
+  document.apply {
+    arrayOf(stdout to stdoutStyle, stderr to stderrStyle).forEach { (std, style) ->
+      if (std.isNotEmpty()) insertString(length, std + "\n", style)
+    }
+    insertString(length, "Process finished with exit code $exitCode", stdoutStyle)
+  }
 }
