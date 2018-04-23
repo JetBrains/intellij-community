@@ -38,15 +38,15 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.png", "AllIcons.Actions.Menu_saveall");
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.svg", "AllIcons.Actions.Menu_saveall");
 
-    ourDeprecatedIconsReplacements.put("/actions/sortAsc.png", "AllIcons.Actions.MoveDown");
-    ourDeprecatedIconsReplacements.put("/actions/sortAsc.svg", "AllIcons.Actions.MoveDown");
+    ourDeprecatedIconsReplacements.put("/actions/sortDesc.png", "AllIcons.Actions.MoveDown");
+    ourDeprecatedIconsReplacements.put("/actions/sortDesc.svg", "AllIcons.Actions.MoveDown");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/moveDown.png", "AllIcons.Actions.MoveDown");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/moveDown.svg", "AllIcons.Actions.MoveDown");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/moveDown.png", "AllIcons.Actions.MoveDown");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/moveDown.svg", "AllIcons.Actions.MoveDown");
 
-    ourDeprecatedIconsReplacements.put("/actions/sortDesc.png", "AllIcons.Actions.MoveUp");
-    ourDeprecatedIconsReplacements.put("/actions/sortDesc.svg", "AllIcons.Actions.MoveUp");
+    ourDeprecatedIconsReplacements.put("/actions/sortAsc.png", "AllIcons.Actions.MoveUp");
+    ourDeprecatedIconsReplacements.put("/actions/sortAsc.svg", "AllIcons.Actions.MoveUp");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/moveUp.png", "AllIcons.Actions.MoveUp");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/moveUp.svg", "AllIcons.Actions.MoveUp");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/moveUp.png", "AllIcons.Actions.MoveUp");
