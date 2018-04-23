@@ -75,14 +75,9 @@ public class VcsLogContentUtil {
     return findAndSelectContent(project, AbstractVcsLogUi.class, u -> u.equals(ui));
   }
 
-  public static void openAnotherLogTab(@NotNull VcsLogManager logManager, @NotNull Project project) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-    String name = generateShortName(toolWindow);
-    openLogTab(project, logManager, VcsLogContentProvider.TAB_NAME, name, logManager.getMainLogUiFactory(name));
-  }
-
   @NotNull
-  private static String generateShortName(@NotNull ToolWindow toolWindow) {
+  public static String generateTabId(@NotNull Project project) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(toolWindow.getContentManager(), VcsLogContentProvider.TAB_NAME);
     if (tabbedContent != null) {
       return String.valueOf(tabbedContent.getTabs().size() + 1);
@@ -97,17 +92,13 @@ public class VcsLogContentUtil {
 
   public static <U extends AbstractVcsLogUi> void openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
                                                              @NotNull String tabGroupName, @NotNull String shortName,
-                                                             @NotNull VcsLogManager.VcsLogUiFactory<U> factory) {
+                                                             @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
+    U logUi = logManager.createLogUi(ContentUtilEx.getFullName(tabGroupName, shortName), factory);
+
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-
-    String name = ContentUtilEx.getFullName(tabGroupName, shortName);
-
-    U logUi = logManager.createLogUi(name, factory);
-
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(),
-                                   new VcsLogPanel(logManager, logUi), tabGroupName, shortName, true, logUi);
-    toolWindow.activate(null);
-
+                                   new VcsLogPanel(logManager, logUi), tabGroupName, shortName, focus, logUi);
+    if (focus) toolWindow.activate(null);
     logManager.scheduleInitialization();
   }
 

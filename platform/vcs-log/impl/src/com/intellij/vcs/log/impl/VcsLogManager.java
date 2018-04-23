@@ -20,7 +20,6 @@ import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
@@ -91,6 +90,11 @@ public class VcsLogManager implements Disposable {
   @NotNull
   public VcsLogColorManagerImpl getColorManager() {
     return myColorManager;
+  }
+
+  @NotNull
+  public VcsLogTabsProperties getUiProperties() {
+    return myUiProperties;
   }
 
   @NotNull
@@ -165,6 +169,7 @@ public class VcsLogManager implements Disposable {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
     myTabsLogRefresher.closeLogTabs();
+
     Disposer.dispose(myTabsLogRefresher);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Disposer.dispose(this);

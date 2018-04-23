@@ -57,7 +57,7 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
       VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
       assert logManager != null;
       String suffix = hash != null ? " (" + hash.toShortString() + ")" : "";
-      VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.getName() + suffix, new FileHistoryUiFactory(path, hash));
+      VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.getName() + suffix, new FileHistoryUiFactory(path, hash), true);
     }
   }
 }
