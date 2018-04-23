@@ -121,7 +121,7 @@ interface MethodReturnInferenceResult {
       val target = call.resolveMethod()
       return when {
         target == null -> Mutability.UNKNOWN
-        ClassUtils.isImmutable(target.returnType) -> Mutability.UNMODIFIABLE
+        ClassUtils.isImmutable(target.returnType, false) -> Mutability.UNMODIFIABLE
         else -> Mutability.getMutability(target)
       }
     }

@@ -102,7 +102,7 @@ public class JavaSourceInference {
     }
 
     PsiType type = method.getReturnType();
-    if (type == null || ClassUtils.isImmutable(type)) {
+    if (type == null || ClassUtils.isImmutable(type, false)) {
       return Mutability.UNKNOWN;
     }
 
