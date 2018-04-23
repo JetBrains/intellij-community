@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.actions;
+package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -34,6 +34,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   private final JCheckBox myNonProjectCB;
   private final List<SETab> myTabs = new ArrayList<>();
 
+  // todo remove second param #UX-1
   public SearchEverywhereUI(List<SearchEverywhereContributor> contributors, @Nullable SearchEverywhereContributor selected) {
     withMinimumWidth(670);
     withPreferredWidth(670);
@@ -62,6 +63,23 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
   public boolean isUseNonProjectItems() {
     return myNonProjectCB.isSelected();
+  }
+
+  public void switchToContributor(String contributorID) {
+    SETab selectedTab = myTabs.stream()
+                       .filter(tab -> contributorID.equals(tab.getContributor().getSearchProviderId()))
+                       .findAny()
+                       .orElseThrow(() -> new IllegalArgumentException(String.format("Contributor %s is not supported", contributorID)));
+    switchToTab(selectedTab);
+  }
+
+  public SearchEverywhereContributor getSelectedContributor() {
+    return mySelectedTab.getContributor();
+  }
+
+  public void clear() {
+    mySearchField.setText("");
+    myNonProjectCB.setSelected(false);
   }
 
   private void switchToNextTab() {
@@ -175,7 +193,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     JPanel contributorsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     contributorsPanel.setOpaque(false);
 
-    SETab allTab = new SETab(allElementsContributor);
+    SETab allTab = new SETab(new AllSearchEverywhereContributor());
     contributorsPanel.add(allTab);
     myTabs.add(allTab);
 
@@ -195,25 +213,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
     return contributorsPanel;
   }
-
-  private final SearchEverywhereContributor allElementsContributor = new SearchEverywhereContributor() {
-    @NotNull
-    @Override
-    public String getSearchProviderId() {
-      return "All";
-    }
-
-    @NotNull
-    @Override
-    public String getGroupName() {
-      return IdeBundle.message("searcheverywhere.allelements.tab.name");
-    }
-
-    @Override
-    public int getSortWeight() {
-      return 0;
-    }
-  };
 
   private class SETab extends JLabel {
     private final SearchEverywhereContributor myContributor;

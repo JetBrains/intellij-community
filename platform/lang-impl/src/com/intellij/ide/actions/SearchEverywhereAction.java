@@ -562,7 +562,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
     if (Registry.is("new.search.everywhere")) {
       //todo[mikhail.sokolov] show new UI
-      SearchEverywhereHelper.showSearchEverywherePopup(e, null);
       return;
     }
 

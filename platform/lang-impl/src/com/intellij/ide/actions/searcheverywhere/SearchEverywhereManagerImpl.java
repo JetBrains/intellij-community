@@ -1,0 +1,115 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.actions.searcheverywhere;
+
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
+import java.util.List;
+
+public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
+  private final Project myProject;
+
+  private JBPopup myBalloon;
+  private final SearchEverywhereUI mySearchEverywhereUI;
+
+  public SearchEverywhereManagerImpl(Project project) {
+    myProject = project;
+
+    List<SearchEverywhereContributor> contributors = SearchEverywhereContributor.getProvidersSorted();
+    //SearchEverywhereContributor selected = contributors.stream()
+    //                                                   .filter(contributor -> contributor.getSearchProviderId().equals(mySelectedProviderID))
+    //                                                   .findAny()
+    //                                                   .orElse(null);
+    mySearchEverywhereUI = new SearchEverywhereUI(contributors, null);
+  }
+
+  @Override
+  public void show(@NotNull String selectedContributorID) {
+    if (isShown()) {
+      setShownContributor(selectedContributorID);
+    }
+    else {
+      mySearchEverywhereUI.clear();
+      mySearchEverywhereUI.switchToContributor(selectedContributorID);
+      myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
+                                .setProject(myProject)
+                                .setResizable(false)
+                                .setModalContext(false)
+                                .setCancelOnClickOutside(true)
+                                .setRequestFocus(true)
+                                .setCancelKeyEnabled(false)
+                                .setCancelCallback(() -> true)
+                                .addUserData("SIMPLE_WINDOW")
+                                .createPopup();
+
+      AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
+      DumbAwareAction.create(__ -> myBalloon.cancel())
+                     .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(),
+                                                myBalloon.getContent(), myBalloon);
+
+      RelativePoint showingPoint = calculateShowingPoint();
+      if (showingPoint != null) {
+        myBalloon.show(showingPoint);
+      }
+      else {
+        myBalloon.showInFocusCenter();
+      }
+    }
+
+  }
+
+  @Override
+  public boolean isShown() {
+    return myBalloon != null && !myBalloon.isDisposed();
+  }
+
+  @Override
+  public SearchEverywhereContributor getShownContributor() {
+    return mySearchEverywhereUI.getSelectedContributor();
+  }
+
+  @Override
+  public void setShownContributor(@NotNull String contributorID) {
+    if (!contributorID.equals(getShownContributor().getSearchProviderId())) {
+      mySearchEverywhereUI.switchToContributor(contributorID);
+    }
+  }
+
+  @Override
+  public boolean isShowNonProjectItems() {
+    return mySearchEverywhereUI.isUseNonProjectItems();
+  }
+
+  @Override
+  public void setShowNonProjectItems(boolean show) {
+    mySearchEverywhereUI.setUseNonProjectItems(show);
+  }
+
+  private RelativePoint calculateShowingPoint() {
+    final Window window = myProject != null
+                          ? WindowManager.getInstance().suggestParentWindow(myProject)
+                          : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    Component parent = UIUtil.findUltimateParent(window);
+    if (parent == null) {
+      return null;
+    }
+
+    int height = UISettings.getInstance().getShowMainToolbar() ? 135 : 115;
+    if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
+      height -= 20;
+    }
+    return new RelativePoint(parent, new Point((parent.getSize().width - mySearchEverywhereUI.getPreferredSize().width) / 2, height));
+  }
+}
