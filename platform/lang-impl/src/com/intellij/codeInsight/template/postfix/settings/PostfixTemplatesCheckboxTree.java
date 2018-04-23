@@ -42,8 +42,13 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Disposable {
-  private static final Factory<Set<PostfixTemplateCheckedTreeNode>> myNodesComparator = () ->
-    new TreeSet<>((o1, o2) -> Comparing.compare(o1.getTemplate().getPresentableName(), o2.getTemplate().getPresentableName()));
+  private static final Factory<Set<PostfixTemplateCheckedTreeNode>> myNodesComparator = () -> new TreeSet<>((o1, o2) -> {
+    PostfixTemplate template1 = o1.getTemplate();
+    PostfixTemplate template2 = o2.getTemplate();
+    int compare = Comparing.compare(template1.getPresentableName(), template2.getPresentableName());
+    return compare != 0 ? compare : Comparing.compare(template1.getId(), template2.getId());
+  });
+
   @NotNull
   private final CheckedTreeNode myRoot;
   @NotNull
