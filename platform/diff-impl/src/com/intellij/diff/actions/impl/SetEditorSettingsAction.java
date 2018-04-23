@@ -16,9 +16,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.util.ArrayUtil.toObjectArray;
 
 public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull private final TextDiffSettings myTextSettings;
@@ -150,19 +149,22 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    AnAction[] children = ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP)).getChildren(e);
     AnAction editorSettingsGroup = ActionManager.getInstance().getAction("Diff.EditorGutterPopupMenu.EditorSettings");
 
-    DefaultActionGroup ourGroup = new DefaultActionGroup();
-    ourGroup.add(Separator.getInstance());
-    ourGroup.addAll(myActions);
-    ourGroup.add(editorSettingsGroup);
-    ourGroup.add(Separator.getInstance());
+    List<AnAction> actions = new ArrayList<>();
+    ContainerUtil.addAll(actions, myActions);
+    actions.add(editorSettingsGroup);
+    actions.add(Separator.getInstance());
 
-    List<AnAction> result = ContainerUtil.newArrayList(children);
-    replaceOrAppend(result, editorSettingsGroup, ourGroup);
+    if (e != null && ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+      return actions.toArray(AnAction.EMPTY_ARRAY);
+    }
 
-    return toObjectArray(result, AnAction.class);
+    ActionGroup gutterGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP);
+    List<AnAction> result = ContainerUtil.newArrayList(gutterGroup.getChildren(e));
+    result.add(Separator.getInstance());
+    replaceOrAppend(result, editorSettingsGroup, new DefaultActionGroup(actions));
+    return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private static <T> void replaceOrAppend(List<T> list, T from, T to) {
