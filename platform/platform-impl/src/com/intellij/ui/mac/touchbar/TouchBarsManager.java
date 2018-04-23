@@ -39,6 +39,7 @@ public class TouchBarsManager {
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
   private static final ArrayDeque<BarContainer> ourTouchBarStack = new ArrayDeque<>();
   private static TouchBar ourCurrentBar;
+  private static long ourCurrentKeyMask;
 
   public static void attachEditorBar(EditorEx editor) {
     if (!isTouchBarAvailable())
@@ -132,28 +133,10 @@ public class TouchBarsManager {
     if (!isTouchBarAvailable())
       return;
 
-    if (
-      e.getID() != KeyEvent.KEY_PRESSED
-      && e.getID() != KeyEvent.KEY_RELEASED
-    )
-      return;
-
-    if (
-      e.getKeyCode() != KeyEvent.VK_CONTROL
-      && e.getKeyCode() != KeyEvent.VK_ALT
-      && e.getKeyCode() != KeyEvent.VK_META
-      && e.getKeyCode() != KeyEvent.VK_SHIFT
-    )
-      return;
-
-    long keymask = e.getModifiersEx();
-    synchronized (TouchBarsManager.class) {
-      for (BarContainer itb: ourTouchBarStack) {
-        if (itb instanceof MultiBarContainer)
-          ((MultiBarContainer)itb).selectBarByKeyMask(keymask);
-      }
-
-      _setTouchBar(ourTouchBarStack.peek());
+    if (ourCurrentKeyMask != e.getModifiersEx()) {
+//      LOG.debug("change current mask: 0x%X -> 0x%X\n", ourCurrentKeyMask, e.getModifiersEx());
+      ourCurrentKeyMask = e.getModifiersEx();
+      _setBarContainer(ourTouchBarStack.peek());
     }
   }
 
@@ -182,7 +165,7 @@ public class TouchBarsManager {
     BarContainer top = ourTouchBarStack.peek();
     if (top.get() == tb) {
       ourTouchBarStack.pop();
-      _setTouchBar(ourTouchBarStack.peek());
+      _setBarContainer(ourTouchBarStack.peek());
     } else
       ourTouchBarStack.removeIf(bc -> bc.isTemporary() && bc.get() == tb);
   }
@@ -204,13 +187,23 @@ public class TouchBarsManager {
     BarContainer top = ourTouchBarStack.peek();
     if (top == tb) {
       ourTouchBarStack.pop();
-      _setTouchBar(ourTouchBarStack.peek());
+      _setBarContainer(ourTouchBarStack.peek());
     } else {
       ourTouchBarStack.remove(tb);
     }
   }
 
-  private static void _setTouchBar(BarContainer barProvider) { _setTouchBar(barProvider == null ? null : barProvider.get()); }
+  synchronized private static void _setBarContainer(BarContainer barContainer) {
+    if (barContainer == null) {
+      _setTouchBar(null);
+      return;
+    }
+
+    if (barContainer instanceof MultiBarContainer)
+      ((MultiBarContainer)barContainer).selectBarByKeyMask(ourCurrentKeyMask);
+
+    _setTouchBar(barContainer.get());
+  }
 
   private static void _setTouchBar(TouchBar bar) {
     if (ourCurrentBar == bar)
