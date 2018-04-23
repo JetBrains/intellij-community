@@ -49,11 +49,17 @@ internal fun imageSize(file: File): Dimension? {
 }
 
 internal fun loadImage(file: File): Image? {
-  if (file.name.endsWith(".svg")) {
-    return SVGLoader.load(file.toURI().toURL(), 1.0f)
+  try {
+    if (file.name.endsWith(".svg")) {
+      return SVGLoader.load(file.toURI().toURL(), 1.0f)
+    }
+    else {
+      return ImageIO.read(file)
+    }
   }
-  else {
-    return ImageIO.read(file)
+  catch (e: Exception) {
+    e.printStackTrace()
+    return null
   }
 }
 
