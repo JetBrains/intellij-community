@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -18,12 +16,12 @@ import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.SmartList;
-import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -203,12 +201,8 @@ final class HistoryEntry {
       }
 
       Element stateElement = providerElement.getChild(STATE_ELEMENT);
-      if (stateElement == null) {
-        throw new InvalidDataException();
-      }
-
       if (file != null) {
-        FileEditorState state = provider.readState(stateElement, project, file);
+        FileEditorState state = provider.readState(stateElement == null ? new Element(STATE_ELEMENT) : stateElement, project, file);
         providerStates.add(Pair.create(provider, state));
       }
     }
