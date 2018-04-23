@@ -190,7 +190,10 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     @Override
     public TextRange getHighlightRange() {
-      return myElement != null ? myElement.getTextRange() : null;
+      if (myElement != null) {
+        return DebuggerUtilsEx.intersectWithLine(myElement.getTextRange(), myElement.getContainingFile(), mySourcePosition.getLine());
+      }
+      return null;
     }
 
     @NotNull
@@ -239,7 +242,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       if (javaBreakpoint instanceof LineBreakpoint) {
         PsiElement method = getContainingMethod((LineBreakpoint)javaBreakpoint);
         if (method != null) {
-          return method.getTextRange();
+          return DebuggerUtilsEx.intersectWithLine(method.getTextRange(), method.getContainingFile(), breakpoint.getLine());
         }
       }
     }
