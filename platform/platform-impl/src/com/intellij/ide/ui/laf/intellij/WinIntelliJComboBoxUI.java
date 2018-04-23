@@ -9,7 +9,6 @@ import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -434,8 +433,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return c.getComponentOrientation().isLeftToRight() ?
-           JBUI.insets(2, 7, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 7).asUIResource();
+    return JBUI.insets(1);
   }
 
   protected Dimension  getSizeWithButton(Dimension d) {
@@ -564,11 +562,5 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       panel.setBackground(c.getBackground());
       return panel;
     }
-  }
-
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets(1);
   }
 }

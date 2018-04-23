@@ -1,14 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.VisualPaddingsProvider;
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -19,12 +15,13 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.HELP_BUTTON_DIAMETER;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaButtonPainter implements Border, UIResource, VisualPaddingsProvider {
+public class DarculaButtonPainter implements Border, UIResource {
   private static final int myOffset = 4;
 
   @Override
@@ -41,16 +38,16 @@ public class DarculaButtonPainter implements Border, UIResource, VisualPaddingsP
 
       g2.translate(r.x, r.y);
 
-      int diam = JBUI.scale(HELP_BUTTON_DIAMETER);
-      float arc = DarculaUIUtil.buttonArc();
-      float lw = DarculaUIUtil.lw(g2);
-      float bw = DarculaUIUtil.bw();
+      int diam = HELP_BUTTON_DIAMETER.get();
+      float arc = BUTTON_ARC.getFloat();
+      float lw = LW.getFloat();
+      float bw = BW.getFloat();
 
       if (c.hasFocus()) {
         if (UIUtil.isHelpButton(c)) {
-          DarculaUIUtil.paintFocusOval(g2, (r.width - diam) / 2, (r.height - diam) / 2, diam, diam);
+          paintFocusOval(g2, (r.width - diam) / 2, (r.height - diam) / 2, diam, diam);
         } else {
-          DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
+          paintFocusBorder(g2, r.width, r.height, arc, true);
         }
       } else if (!UIUtil.isHelpButton(c)){
         paintShadow(g2, r);
@@ -90,7 +87,7 @@ public class DarculaButtonPainter implements Border, UIResource, VisualPaddingsP
       Composite composite = g2.getComposite();
       g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
 
-      float bw = DarculaUIUtil.bw();
+      float bw = BW.getFloat();
       g2.fill(new Rectangle2D.Float(bw, r.height - bw, r.width - bw * 2, JBUI.scale(2)));
 
       g2.setComposite(composite);
@@ -109,11 +106,5 @@ public class DarculaButtonPainter implements Border, UIResource, VisualPaddingsP
   @Override
   public boolean isBorderOpaque() {
     return false;
-  }
-
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets(3);
   }
 }

@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 import gnu.trove.THashMap
+import org.jetbrains.annotations.NotNull
 import javax.swing.Icon
 
 /**
@@ -13,6 +15,7 @@ object IconCache {
 
   @JvmStatic
   @JvmOverloads
+  @NotNull
   fun getIcon(name: String, selected: Boolean = false, focused: Boolean = false, enabled: Boolean = true, editable: Boolean = false, pressed: Boolean = false, findIfNotInCache: Boolean = true): Icon? {
     var key = name
     if (editable) key += "Editable"
@@ -35,12 +38,12 @@ object IconCache {
 
     key = dir + key
 
-    var icon: Icon? = cache.get(key)
+    var icon: Icon? = cache[key]
     if (icon == null && findIfNotInCache) {
       icon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", IconCache::class.java, true)
-      cache.put(key, icon)
+      cache[key] = icon
     }
-    return icon
+    return if (icon != null) icon else AllIcons.Actions.Stub
   }
 
   @JvmStatic

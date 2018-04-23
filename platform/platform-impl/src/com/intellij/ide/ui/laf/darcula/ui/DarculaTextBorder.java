@@ -1,15 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.VisualPaddingsProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ErrorBorderCapable;
-import com.intellij.ui.ColorPanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -24,15 +20,10 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable, VisualPaddingsProvider {
+public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
-    if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
-      return JBUI.insets(3, 3, 2, 2).asUIResource();
-    }
-    Insets insets = JBUI.insets(JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? 5 : (int)bw(), 9).asUIResource();
-    TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
-    return insets;
+    return JBUI.insets(3).asUIResource();
   }
 
   @Override
@@ -56,12 +47,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        Container parent = c.getParent();
-        // if panel layout will compensate visual paddings,  paint as MacComboBoxBorder does - do not translate to avoid complicating code (and logical expectations)
-        if (JBUI.isCompensateVisualPaddingOnComponentLevel(parent)) {
-          JBInsets.removeFrom(r, JBUI.insets(1));
-        }
-
+        JBInsets.removeFrom(r, paddings());
         g2.translate(r.x, r.y);
 
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
@@ -74,7 +60,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         g2.setColor(getOutlineColor(c.isEnabled() && editable));
         g2.fill(border);
 
-        if (parent instanceof JComboBox) return;
+        if (c.getParent() instanceof JComboBox) return;
         paint(c, g2, r.width, r.height, 0);
       }
       finally {
@@ -110,8 +96,8 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
       g2.translate(r.x, r.y);
 
       float arc = JBUI.scale(6f);
-      float lw = DarculaUIUtil.lw(g);
-      float bw = DarculaUIUtil.bw();
+      float lw = DarculaUIUtil.LW.getFloat();
+      float bw = DarculaUIUtil.BW.getFloat();
       Shape outerShape = new RoundRectangle2D.Float(bw, bw, r.width - bw*2, r.height - bw*2, arc, arc);
       if (fillBackground) {
         g2.setColor(c.getBackground());
@@ -151,20 +137,18 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
   }
 
   protected float lw(Graphics2D g2) {
-    return DarculaUIUtil.lw(g2);
+    return DarculaUIUtil.LW.getFloat();
   }
 
   protected float bw() {
-    return DarculaUIUtil.bw();
+    return DarculaUIUtil.BW.getFloat();
   }
 
   protected Color getOutlineColor(boolean enabled) {
     return DarculaUIUtil.getOutlineColor(enabled);
   }
 
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets((int)bw());
+  protected Insets paddings() {
+    return DarculaUIUtil.paddings();
   }
 }

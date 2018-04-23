@@ -6,8 +6,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -18,12 +16,6 @@ import java.awt.*;
  */
 public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(13)).asUIResource();
-
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets(1, 0);
-  }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {

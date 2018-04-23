@@ -12,12 +12,12 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
+import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.*;
+
 /**
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJButtonUI extends DarculaButtonUI {
-  static final int ARC_SIZE = JBUI.scale(6);
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new MacIntelliJButtonUI();
@@ -44,12 +44,12 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        float lw = getLineWidth(g2);
+        float lw = LW(g2);
+        float arc = ARC.getFloat();
         Insets i = c.getInsets();
 
         // Draw background
-        Shape outerRect = new RoundRectangle2D.Float(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom),
-                                                      ARC_SIZE, ARC_SIZE);
+        Shape outerRect = new RoundRectangle2D.Float(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom), arc, arc);
         g2.setPaint(getBackgroundPaint(c));
         g2.fill(outerRect);
 
@@ -59,7 +59,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         outline.append(new RoundRectangle2D.Float(i.left + lw, i.top + lw,
                                                    w - lw*2 - (i.left + i.right),
                                                    h - lw*2 - (i.top + i.bottom),
-                                                   ARC_SIZE - lw, ARC_SIZE - lw), false);
+                                                   arc - lw, arc - lw), false);
         g2.setPaint(getBorderPaint(c));
         g2.fill(outline);
 
@@ -68,10 +68,6 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         g2.dispose();
       }
     }
-  }
-
-  public static float getLineWidth(Graphics2D g) {
-    return UIUtil.isRetina(g) ? 0.5f : 1.0f;
   }
 
   @SuppressWarnings("UseJBColor")
@@ -117,8 +113,8 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     } else {
       Insets i = c.getInsets();
-      return new Dimension(Math.max(JBUI.scale(28) + prefSize.width, JBUI.scale(72) + i.left + i.right),
-                           Math.max(prefSize.height, JBUI.scale(21) + i.top + i.bottom));
+      return new Dimension(Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
+                           Math.max(prefSize.height, MINIMUM_HEIGHT.get() + i.top + i.bottom));
     }
   }
 

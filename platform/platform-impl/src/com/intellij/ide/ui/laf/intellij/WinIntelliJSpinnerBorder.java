@@ -20,8 +20,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,12 +74,6 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder implements Er
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new JBInsets(2, 2, 2, 2).asUIResource();
-  }
-
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets(1);
+    return JBUI.insets(1).asUIResource();
   }
 }

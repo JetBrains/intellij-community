@@ -23,10 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -40,6 +37,8 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -48,7 +47,9 @@ public class DarculaButtonUI extends BasicButtonUI {
   private final Rectangle textRect = new Rectangle();
   private final Rectangle iconRect = new Rectangle();
 
-  static int HELP_BUTTON_DIAMETER = 22;
+  protected static JBValue HELP_BUTTON_DIAMETER = new JBValue.Float(22);
+  protected static JBValue MINIMUM_BUTTON_WIDTH = new JBValue.Float(72);
+  protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
@@ -80,7 +81,7 @@ public class DarculaButtonUI extends BasicButtonUI {
 
     if (UIUtil.isHelpButton(c)) {
       g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));
-      int diam = JBUI.scale(HELP_BUTTON_DIAMETER);
+      int diam = HELP_BUTTON_DIAMETER.get();
       int x = r.x + (r.width - diam) / 2;
       int y = r.x + (r.height - diam) / 2;
 
@@ -96,8 +97,8 @@ public class DarculaButtonUI extends BasicButtonUI {
 
         g2.translate(r.x, r.y);
 
-        float arc = DarculaUIUtil.buttonArc();
-        float bw = DarculaUIUtil.bw();
+        float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
+        float bw = DarculaUIUtil.BW.getFloat();
 
         if (c.isEnabled()) {
           g2.setPaint(getBackground(c, r));
@@ -203,12 +204,12 @@ public class DarculaButtonUI extends BasicButtonUI {
       return prefSize;
     } else {
       Insets i = c.getInsets();
-      int helpDiam = JBUI.scale(HELP_BUTTON_DIAMETER);
+      int helpDiam = HELP_BUTTON_DIAMETER.get();
       return UIUtil.isHelpButton(c) ?
              new Dimension(Math.max(prefSize.width, helpDiam + i.left + i.right),
                            Math.max(prefSize.height, helpDiam + i.top + i.bottom)):
-             new Dimension(Math.max(JBUI.scale(26) + prefSize.width, JBUI.scale(72) + i.left + i.right),
-                           Math.max(prefSize.height, JBUI.scale(24) + i.top + i.bottom));
+             new Dimension(Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
+                           Math.max(prefSize.height, MINIMUM_HEIGHT.get() + i.top + i.bottom));
     }
   }
 

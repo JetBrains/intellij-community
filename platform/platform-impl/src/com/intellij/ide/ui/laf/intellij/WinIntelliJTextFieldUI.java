@@ -110,11 +110,11 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   @Override
-  protected int getMinimumHeight() {
+  protected int getMinimumHeight(int textHeight) {
     JComponent c = getComponent();
     return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
            UIUtil.getParentOfType(JSpinner.class, c) != null ?
-           JBUI.scale(18) : JBUI.scale(24);
+           textHeight : JBUI.scale(24);
   }
 
   @Override
@@ -151,6 +151,11 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     if (!clickable) return null;
     Icon icon = UIManager.getIcon("TextField.darcula.clear.icon");
     return icon != null ? icon : IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/clear.png", DarculaTextFieldUI.class, true);
+  }
+
+  @Override
+  protected Insets getDefaultMargins() {
+    return JBUI.insets(1, 5);
   }
 
   @Override

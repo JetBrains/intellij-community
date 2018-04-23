@@ -61,7 +61,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
         g2.setColor(state == ActionButtonComponent.PUSHED ? PRESSED_BG : POPPED_BG);
       }
 
-      float arc = DarculaUIUtil.buttonArc();
+      float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
       g2.fill(new RoundRectangle2D.Float(0, 0, rect.width, rect.height, arc, arc));
     } finally {
       g2.dispose();
@@ -89,8 +89,8 @@ public class IdeaActionButtonLook extends ActionButtonLook {
         g2.setColor(state == ActionButtonComponent.PUSHED ? PRESSED_BORDER : POPPED_BORDER);
       }
 
-      float arc = DarculaUIUtil.buttonArc();
-      float lw = DarculaUIUtil.lw(g2);
+      float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
+      float lw = DarculaUIUtil.LW.getFloat();
       Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       border.append(new RoundRectangle2D.Float(0, 0, rect.width, rect.height, arc, arc), false);
       border.append(new RoundRectangle2D.Float(lw, lw, rect.width - lw*2, rect.height- lw*2, arc - lw, arc - lw), false);
