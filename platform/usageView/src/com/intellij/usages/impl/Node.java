@@ -92,13 +92,19 @@ public abstract class Node extends DefaultMutableTreeNode {
     return isFlagSet(EXCLUDED_MASK);
   }
 
-  final synchronized void update(@NotNull UsageView view, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
+  final void update(@NotNull UsageView view, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
     // performance: always update in background because smart pointer' isValid() can cause PSI chameleons expansion which is ridiculously expensive in cpp
     assert !ApplicationManager.getApplication().isDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
     String text = getText(view);
+    doUpdate(edtNodeChangedQueue, isDataValid, isReadOnly, text);
+  }
 
+  private synchronized void doUpdate(@NotNull Consumer<? super Node> edtNodeChangedQueue,
+                                     boolean isDataValid,
+                                     boolean isReadOnly,
+                                     String text) {
     boolean cachedValid = isValid();
     boolean cachedReadOnly = isFlagSet(CACHED_READ_ONLY_MASK);
 
