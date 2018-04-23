@@ -23,6 +23,24 @@ public class UnnecessarilyQualifiedInnerClassAccessFixTest extends IGQuickFixesT
     );
   }
 
+  public void testRemoveQualifierWithImport() {
+    doTest("Remove qualifier",
+      "package p;\n" +
+      "import java.util.List;\n" +
+      "abstract class X implements List<<caret>X.Y> {\n" +
+      "  class Y{}\n" +
+      "}",
+
+      "package p;\n" +
+      "import p.X.Y;\n" +
+      "\n" +
+      "import java.util.List;\n" +
+      "abstract class X implements List<Y> {\n" +
+      "  class Y{}\n" +
+      "}"
+    );
+  }
+
   @Override
   protected BaseInspection getInspection() {
     return new UnnecessarilyQualifiedInnerClassAccessInspection();
