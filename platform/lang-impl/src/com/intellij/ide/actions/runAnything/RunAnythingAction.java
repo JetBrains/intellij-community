@@ -425,12 +425,12 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         return;
       }
       VirtualFile directory = getWorkDirectory(module);
-      DataContext dataContext = createDataContext(directory, null, null, module, project);
+      DataContext dataContext = createDataContext(myDataContext, directory, null, null);
       if (value instanceof RunAnythingCommandItem) {
         onDone = () -> ((RunAnythingCommandItem)value).run(dataContext);
       }
       else if (value == null) {
-        onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(myDataContext, pattern, directory);
+        onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(dataContext, pattern, directory);
         return;
       }
     }
@@ -451,16 +451,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       Component c = comp;
       if (c == null) c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
-      value.run(createDataContext(null, c, event, null, project));
+      value.run(createDataContext(myDataContext, null, c, event));
     });
   }
 
   @NotNull
-  private static DataContext createDataContext(@Nullable VirtualFile directory,
+  private static DataContext createDataContext(@NotNull DataContext parentDataContext,
+                                               @Nullable VirtualFile directory,
                                                @Nullable Component focusOwner,
-                                               @Nullable AnActionEvent event,
-                                               @Nullable Module module,
-                                               @NotNull Project project) {
+                                               @Nullable AnActionEvent event) {
     HashMap<String, Object> map = ContainerUtil.newHashMap();
     if (directory != null) {
       map.put(CommonDataKeys.VIRTUAL_FILE.getName(), directory);
@@ -476,13 +475,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       map.put(FOCUS_COMPONENT_KEY_NAME.getName(), focusOwner);
     }
 
-    if (module != null) {
-      map.put(LangDataKeys.MODULE.getName(), module);
-    }
-
-    map.put(CommonDataKeys.PROJECT.getName(), project);
-
-    return SimpleDataContext.getSimpleContext(map, DataContext.EMPTY_CONTEXT);
+    return SimpleDataContext.getSimpleContext(map, parentDataContext);
   }
 
   @NotNull

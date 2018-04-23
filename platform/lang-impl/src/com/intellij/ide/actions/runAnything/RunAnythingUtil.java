@@ -4,11 +4,8 @@ package com.intellij.ide.actions.runAnything;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider;
 import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer;
@@ -32,7 +29,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -161,21 +157,6 @@ public class RunAnythingUtil {
       popup.setSize(r.getSize());
       popup.setLocation(r.getLocation());
     }
-  }
-
-  @Nullable
-  public static Executor findExecutor(@NotNull RunnerAndConfigurationSettings settings) {
-    final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
-    final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
-
-    Executor executor = !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
-    RunConfiguration runConf = settings.getConfiguration();
-    if (executor == null) return null;
-    ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runConf);
-    if (runner == null) {
-      executor = runExecutor == executor ? debugExecutor : runExecutor;
-    }
-    return executor;
   }
 
   static void jumpNextGroup(boolean forward, JBList list) {

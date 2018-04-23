@@ -30,14 +30,12 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
   public void run(@NotNull DataContext dataContext) {
     super.run(dataContext);
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
+    Executor executor = dataContext.getData(RunAnythingAction.EXECUTOR_KEY);
     LOG.assertTrue(project != null);
+    LOG.assertTrue(executor != null);
 
-    Object value = myWrapper.getValue();
-    if (value instanceof RunnerAndConfigurationSettings) {
-      Executor runExecutor = RunAnythingUtil.findExecutor((RunnerAndConfigurationSettings)value);
-      if (runExecutor != null) {
-        myWrapper.perform(project, runExecutor, dataContext);
-      }
+    if (myWrapper.getValue() instanceof RunnerAndConfigurationSettings) {
+      myWrapper.perform(project, executor, dataContext);
     }
   }
 

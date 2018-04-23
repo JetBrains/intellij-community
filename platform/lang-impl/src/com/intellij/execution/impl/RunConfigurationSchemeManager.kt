@@ -19,14 +19,12 @@ import java.util.function.Function
 
 private val LOG = logger<RunConfigurationSchemeManager>()
 
-internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
+internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val templateDifferenceHelper: TemplateDifferenceHelper, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
 
   private val converters by lazy {
     ConfigurationType.CONFIGURATION_TYPE_EP.extensions.filterIsInstance(RunConfigurationConverter::class.java)
   }
-
-  private val cachedSerializedTemplateIdToData = THashMap<ConfigurationFactory, Element>()
 
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
     // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
@@ -115,15 +113,25 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     }
     else if (scheme.isTemplate) {
       val factory = scheme.factory
-      if (factory != UnknownConfigurationType.getFactory()) {
-        val originalTemplate = cachedSerializedTemplateIdToData.getOrPut(factory) {
-          JDOMUtil.internElement(manager.createTemplateSettings(factory).writeScheme())
-        }
-        if (JDOMUtil.areElementsEqual(result, originalTemplate)) {
-          return null
-        }
+      if (factory != UnknownConfigurationType.getFactory() && !templateDifferenceHelper.isTemplateModified(result, factory)) {
+        return null
       }
     }
     return result
+  }
+}
+
+internal class TemplateDifferenceHelper(private val manager: RunManagerImpl) {
+  private val cachedSerializedTemplateIdToData = THashMap<ConfigurationFactory, Element>()
+
+  fun isTemplateModified(serialized: Element, factory: ConfigurationFactory): Boolean {
+    val originalTemplate = cachedSerializedTemplateIdToData.getOrPut(factory) {
+      JDOMUtil.internElement(manager.createTemplateSettings(factory).writeScheme())
+    }
+    return !JDOMUtil.areElementsEqual(serialized, originalTemplate)
+  }
+
+  fun clearCache() {
+    cachedSerializedTemplateIdToData.clear()
   }
 }
