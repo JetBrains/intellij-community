@@ -345,6 +345,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-layout-inspector/android-layout-inspector-test.iml" filepath="$PROJECT_DIR$/../adt/idea/android-layout-inspector/android-layout-inspector-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/testing/android.sdktools.analytics-testing.iml" filepath="$PROJECT_DIR$/../analytics-library/testing/android.sdktools.analytics-testing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../base/apkparser/analyzer/android.sdktools.analyzer.iml" filepath="$PROJECT_DIR$/../base/apkparser/analyzer/android.sdktools.analyzer.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/annotations/android.sdktools.android-annotations.iml" filepath="$PROJECT_DIR$/../base/annotations/android.sdktools.android-annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/apkparser/binary-resources/android.sdktools.binary-resources.iml" filepath="$PROJECT_DIR$/../base/apkparser/binary-resources/android.sdktools.binary-resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/build-system/builder-model/android.sdktools.builder-model.iml" filepath="$PROJECT_DIR$/../base/build-system/builder-model/android.sdktools.builder-model.iml" />
@@ -357,9 +358,13 @@
       <module fileurl="file://$PROJECT_DIR$/../base/draw9patch/android.sdktools.draw9patch.iml" filepath="$PROJECT_DIR$/../base/draw9patch/android.sdktools.draw9patch.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/device_validator/dvlib/android.sdktools.dvlib.iml" filepath="$PROJECT_DIR$/../base/device_validator/dvlib/android.sdktools.dvlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/fakeadbserver/android.sdktools.fakeadbserver.iml" filepath="$PROJECT_DIR$/../base/fakeadbserver/android.sdktools.fakeadbserver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../base/flags/android.sdktools.flags.iml" filepath="$PROJECT_DIR$/../base/flags/android.sdktools.flags.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/instant-run/instant-run-annotations/android.sdktools.instant-run-annotations.iml" filepath="$PROJECT_DIR$/../base/instant-run/instant-run-annotations/android.sdktools.instant-run-annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/instant-run/instant-run-client/android.sdktools.instant-run-client.iml" filepath="$PROJECT_DIR$/../base/instant-run/instant-run-client/android.sdktools.instant-run-client.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/instant-run/instant-run-common/android.sdktools.instant-run-common.iml" filepath="$PROJECT_DIR$/../base/instant-run/instant-run-common/android.sdktools.instant-run-common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../base/build-system/java-lib-plugin/java-lib-model/android.sdktools.java-lib-model.iml" filepath="$PROJECT_DIR$/../base/build-system/java-lib-plugin/java-lib-model/android.sdktools.java-lib-model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../base/build-system/java-lib-plugin/java-lib-model-builder/android.sdktools.java-lib-model-builder.iml" filepath="$PROJECT_DIR$/../base/build-system/java-lib-plugin/java-lib-model-builder/android.sdktools.java-lib-model-builder.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../base/layoutinspector/android.sdktools.layoutinspector.iml" filepath="$PROJECT_DIR$/../base/layoutinspector/android.sdktools.layoutinspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/layoutlib-api/android.sdktools.layoutlib-api.iml" filepath="$PROJECT_DIR$/../base/layoutlib-api/android.sdktools.layoutlib-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-api/android.sdktools.lint-api.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-api/android.sdktools.lint-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-checks/android.sdktools.lint-checks.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-checks/android.sdktools.lint-checks.iml" />
@@ -406,7 +411,6 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-branding/intellij.android.adt.branding.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-branding/intellij.android.adt.branding.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui/intellij.android.adt.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui/intellij.android.adt.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui-model/intellij.android.adt.ui.model.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui-model/intellij.android.adt.ui.model.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../base/apkparser/analyzer/android.sdktools.analyzer.iml" filepath="$PROJECT_DIR$/../base/apkparser/analyzer/android.sdktools.analyzer.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/artwork/intellij.android.artwork.iml" filepath="$PROJECT_DIR$/../adt/idea/artwork/intellij.android.artwork.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/build-common/intellij.android.buildCommon.iml" filepath="$PROJECT_DIR$/../adt/idea/build-common/intellij.android.buildCommon.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-common/intellij.android.common.iml" filepath="$PROJECT_DIR$/../adt/idea/android-common/intellij.android.common.iml" />
@@ -414,13 +418,9 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/intellij.android.core.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/intellij.android.core.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.iml" filepath="$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../base/flags/android.sdktools.flags.iml" filepath="$PROJECT_DIR$/../base/flags/android.sdktools.flags.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/uitest-framework/intellij.android.guiTestFramework.iml" filepath="$PROJECT_DIR$/../adt/idea/uitest-framework/intellij.android.guiTestFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-uitests/intellij.android.guiTests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-uitests/intellij.android.guiTests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../base/build-system/java-lib-plugin/java-lib-model/android.sdktools.java-lib-model.iml" filepath="$PROJECT_DIR$/../base/build-system/java-lib-plugin/java-lib-model/android.sdktools.java-lib-model.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../base/build-system/java-lib-plugin/java-lib-model-builder/android.sdktools.java-lib-model-builder.iml" filepath="$PROJECT_DIR$/../base/build-system/java-lib-plugin/java-lib-model-builder/android.sdktools.java-lib-model-builder.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/jps-plugin/intellij.android.jps.iml" filepath="$PROJECT_DIR$/../adt/idea/jps-plugin/intellij.android.jps.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../base/layoutinspector/android.sdktools.layoutinspector.iml" filepath="$PROJECT_DIR$/../base/layoutinspector/android.sdktools.layoutinspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib.iml" filepath="$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" filepath="$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable-ui/intellij.android.observable.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/observable-ui/intellij.android.observable.ui.iml" />
