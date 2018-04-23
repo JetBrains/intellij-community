@@ -517,13 +517,13 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return counter;
   }
 
-  protected static Collection<UsageInfo> doFindUsages(PsiElement resolved) throws Exception {
-    return ProgressManager.getInstance().run(new Task.WithResult<Collection<UsageInfo>, Exception>(resolved.getProject(), "", false) {
+  protected static Collection<UsageInfo> findUsages(PsiElement element) throws Exception {
+    return ProgressManager.getInstance().run(new Task.WithResult<Collection<UsageInfo>, Exception>(element.getProject(), "", false) {
       @Override
       protected Collection<UsageInfo> compute(@NotNull ProgressIndicator indicator) {
         return ApplicationManager.getApplication().runReadAction((Computable<Collection<UsageInfo>>)() -> {
-          FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(resolved.getProject())).getFindUsagesManager();
-          FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(resolved, false);
+          FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
+          FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
           assertNotNull(handler);
           final FindUsagesOptions options = handler.getFindUsagesOptions();
           final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();

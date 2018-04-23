@@ -1,26 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.util.CommonProcessors;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
@@ -219,6 +206,6 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   }
 
   private static void assertUsagesCount(int expectedUsagesCount, PsiElement resolved) throws Exception {
-    assertEquals(expectedUsagesCount, doFindUsages(resolved).size());
+    assertEquals(expectedUsagesCount, findUsages(resolved).size());
   }
 }
