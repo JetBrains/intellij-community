@@ -31,7 +31,7 @@ public class JetgroovyIcons {
   
   public static class Griffon {
     public static final Icon Griffon = load("/icons/griffon/griffon.png"); // 16x16
-    public static final Icon GriffonToolWindow = load("/icons/griffon/griffonToolWindow.png"); // 13x13
+    public static final Icon GriffonToolWindow = load("/icons/griffon/griffonToolWindow.svg"); // 13x13
 
   }
   

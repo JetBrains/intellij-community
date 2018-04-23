@@ -33,7 +33,7 @@ public class TasksCoreIcons {
   public static final Icon AutoMode = load("/icons/autoMode.png"); // 16x16
   public static final Icon Bug = load("/icons/bug.png"); // 16x16
   public static final Icon Bugzilla = load("/icons/bugzilla.png"); // 16x16
-  public static final Icon Clock = load("/icons/clock.png"); // 13x13
+  public static final Icon Clock = load("/icons/clock.svg"); // 13x13
   public static final Icon Feature = load("/icons/feature.png"); // 16x16
   public static final Icon Fogbugz = load("/icons/fogbugz.png"); // 16x16
   public static final Icon Github = load("/icons/github.png"); // 16x16

@@ -1,4 +1,4 @@
-deprecated: class_filter.png -> /general/filter.png
+deprecated: class_filter.png -> /general/filter.svg
 deprecated: db_dep_exception_breakpoint.png -> /debugger/db_exception_breakpoint.svg
 deprecated: db_disabled_exception_breakpoint.png -> /debugger/db_exception_breakpoint.svg
 deprecated: db_invalid_field_breakpoint.png -> /debugger/db_invalid_breakpoint.svg
@@ -17,5 +17,5 @@ deprecated: db_temporary_breakpoint.png -> /debugger/db_set_breakpoint.svg
 deprecated: db_verified_breakpoint.png -> /debugger/db_set_breakpoint.svg
 deprecated: db_verified_field_breakpoint.png -> /debugger/db_field_breakpoint.svg
 deprecated: db_verified_method_breakpoint.png -> /debugger/db_method_breakpoint.svg
-deprecated: newWatch.png -> /general/add.png
+deprecated: newWatch.png -> /general/add.svg
 deprecated: watches.png -> /debugger/watch.svg

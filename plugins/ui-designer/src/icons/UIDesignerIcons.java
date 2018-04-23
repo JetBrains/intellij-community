@@ -119,7 +119,7 @@ public class UIDesignerIcons {
   
   @SuppressWarnings("unused")
   public static final Icon ToolbarSeparator = load("/com/intellij/uiDesigner/icons/toolbarSeparator.png"); // 16x16
-  public static final Icon ToolWindowUIDesigner = load("/com/intellij/uiDesigner/icons/toolWindowUIDesigner.png"); // 13x13
+  public static final Icon ToolWindowUIDesigner = load("/com/intellij/uiDesigner/icons/toolWindowUIDesigner.svg"); // 13x13
   
   @SuppressWarnings("unused")
   public static final Icon Tree = load("/com/intellij/uiDesigner/icons/tree.png"); // 16x16

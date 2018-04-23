@@ -34,7 +34,7 @@ public class PythonIcons {
 
     }
     public static final Icon Condaenv = load("/icons/com/jetbrains/python/condaenv.png"); // 16x16
-    public static final Icon DataView = load("/icons/com/jetbrains/python/DataView.png"); // 13x13
+    public static final Icon DataView = load("/icons/com/jetbrains/python/DataView.svg"); // 13x13
     
     public static class Debug {
       public static final Icon CommandLine = load("/icons/com/jetbrains/python/debug/commandLine.png"); // 16x16
@@ -62,7 +62,7 @@ public class PythonIcons {
     public static final Icon Python = load("/icons/com/jetbrains/python/python.png"); // 16x16
     public static final Icon PythonClosed = load("/icons/com/jetbrains/python/pythonClosed.png"); // 16x16
     public static final Icon PythonConsole = load("/icons/com/jetbrains/python/pythonConsole.png"); // 16x16
-    public static final Icon PythonConsoleToolWindow = load("/icons/com/jetbrains/python/pythonConsoleToolWindow.png"); // 13x13
+    public static final Icon PythonConsoleToolWindow = load("/icons/com/jetbrains/python/pythonConsoleToolWindow.svg"); // 13x13
     public static final Icon PythonTests = load("/icons/com/jetbrains/python/pythonTests.png"); // 16x16
     public static final Icon RemoteInterpreter = load("/icons/com/jetbrains/python/RemoteInterpreter.png"); // 16x16
     public static final Icon Ssh = load("/icons/com/jetbrains/python/ssh.png"); // 16x16
