@@ -107,14 +107,15 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       myCalculated = true;
 
       if (userObject instanceof UsageTarget) {
-        UsageTarget usageTarget = (UsageTarget)userObject;
-        if (!usageTarget.isValid()) {
+        LOG.assertTrue(treeNode instanceof Node);
+        if (!((Node)treeNode).isValid()) {
           if (!getCharSequence(false).toString().contains(UsageViewBundle.message("node.invalid"))) {
             append(UsageViewBundle.message("node.invalid"), ourInvalidAttributes);
           }
           return;
         }
 
+        UsageTarget usageTarget = (UsageTarget)userObject;
         final ItemPresentation presentation = usageTarget.getPresentation();
         LOG.assertTrue(presentation != null);
         if (showAsReadOnly) {
