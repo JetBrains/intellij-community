@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -103,6 +105,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @Override
   public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     Function<VirtualFile, VirtualFile> finder = null;
+    Predicate<PsiFile> filter = null;
 
     PsiClass[] classes = clsFile.getClasses();
     if (classes.length > 0) {
@@ -110,12 +113,17 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       String packageName = clsFile.getPackageName();
       String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
       finder = root -> root.findFileByRelativePath(relativePath);
+      filter = PsiClassOwner.class::isInstance;
     }
     else {
       PsiJavaModule module = clsFile.getModuleDeclaration();
       if (module != null) {
         String moduleName = module.getName();
-        finder = root -> moduleName.equals(root.getName()) ? root.findChild(PsiJavaModule.MODULE_INFO_FILE) : null;
+        finder = root -> !JrtFileSystem.isModuleRoot(root) || moduleName.equals(root.getName()) ? root.findChild(PsiJavaModule.MODULE_INFO_FILE) : null;
+        filter = psi -> {
+          PsiJavaModule candidate = psi instanceof PsiJavaFile ? ((PsiJavaFile)psi).getModuleDeclaration() : null;
+          return candidate != null && moduleName.equals(candidate.getName());
+        };
       }
     }
 
@@ -124,8 +132,8 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return findSourceRoots(clsFile.getContainingFile().getVirtualFile())
       .map(finder)
       .filter(source -> source != null && source.isValid())
-      .map(clsFile.getManager()::findFile)
-      .filter(PsiClassOwner.class::isInstance)
+      .map(PsiManager.getInstance(myProject)::findFile)
+      .filter(filter)
       .findFirst()
       .orElse(clsFile);
   }
