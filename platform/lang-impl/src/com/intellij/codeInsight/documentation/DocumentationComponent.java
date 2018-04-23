@@ -1204,7 +1204,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       presentation.setEnabled(!myBackStack.isEmpty());
       if (!isToolbar(e)) {
         presentation.setVisible(presentation.isEnabled());
-        presentation.setIcon(AllIcons.Actions.Left);
       }
     }
   }
@@ -1225,7 +1224,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       presentation.setEnabled(!myForwardStack.isEmpty());
       if (!isToolbar(e)) {
         presentation.setVisible(presentation.isEnabled());
-        presentation.setIcon(AllIcons.Actions.Right);
       }
     }
   }
