@@ -705,18 +705,18 @@
         <constraint name="type" within="" contains="" />
         <constraint name="runnable" nameOfExprType="java.lang.Runnable" exprTypeWithinHierarchy="true" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="DBE model property is private (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  private $FieldType$ $FieldName$&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
+      <searchConfiguration name="DBE model property is private (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  private $FieldType$ $FieldName$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" within="" contains="" />
         <constraint name="FieldName" target="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="DBE model property is package local (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  @Modifier(&quot;packageLocal&quot;) $FieldType$ $FieldName$&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
+      <searchConfiguration name="DBE model property is package local (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  @Modifier(&quot;packageLocal&quot;) $FieldType$ $FieldName$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" within="" contains="" />
         <constraint name="FieldName" target="true" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="DBE model property is protected (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  protected $FieldType$ $FieldName$&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
+      <searchConfiguration name="DBE model property is protected (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  protected $FieldType$ $FieldName$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" within="" contains="" />
         <constraint name="FieldName" target="true" within="" contains="" />
