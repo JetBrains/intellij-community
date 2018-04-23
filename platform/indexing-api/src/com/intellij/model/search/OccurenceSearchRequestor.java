@@ -10,5 +10,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface OccurenceSearchRequestor {
 
+  /**
+   * Queues other search requests by the word occurence,
+   * which was found during the processing of the previous {@link SearchRequestCollector#searchWord word} request.
+   *
+   * @param element         element which contains the requested word
+   * @param offsetInElement offset of the requested word in the {@code element}
+   */
   void collectRequests(@NotNull SearchRequestCollector collector, @NotNull PsiElement element, int offsetInElement);
 }
