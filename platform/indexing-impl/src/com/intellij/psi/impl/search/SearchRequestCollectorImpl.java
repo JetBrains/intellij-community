@@ -22,7 +22,7 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
   private final Set<SearchParamsRequest> myParamsRequests = new LinkedHashSet<>();
   /**
    * Requests that does not require Processor.<br/>
-   * There requests' {@link TextOccurenceProcessor processors} may add another requests while being processed.
+   * These requests' {@link TextOccurenceProcessor processors} may add other requests while being processed.
    * <p>
    * {@code SearchWordRequest -> TextOccurenceProcessor}
    */
