@@ -96,7 +96,7 @@ public interface PlatformIcons {
 
   Icon COMBOBOX_ARROW_ICON = AllIcons.General.ComboArrow;
   
-  Icon EXPORT_ICON = AllIcons.ToolbarDecorator.Export;
+  Icon EXPORT_ICON = AllIcons.Actions.Export;
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;
 
   @Deprecated Icon DIRECTORY_CLOSED_ICON = FOLDER_ICON;

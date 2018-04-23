@@ -738,7 +738,10 @@ public class AllIcons {
   
   public static class Graph {
     public static final Icon ActualZoom = IconLoader.getIcon("/graph/actualZoom.png"); // 16x16
-    public static final Icon Export = IconLoader.getIcon("/graph/export.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Export = IconLoader.getIcon("/actions/export.png"); // 16x16
     public static final Icon FitContent = IconLoader.getIcon("/graph/fitContent.png"); // 16x16
     public static final Icon Grid = IconLoader.getIcon("/graph/grid.png"); // 16x16
     public static final Icon Layout = IconLoader.getIcon("/graph/layout.png"); // 16x16
@@ -1433,7 +1436,10 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Edit = IconLoader.getIcon("/actions/edit.svg"); // 16x16
-    public static final Icon Export = IconLoader.getIcon("/toolbarDecorator/export.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Export = IconLoader.getIcon("/actions/export.png"); // 16x16
     public static final Icon Import = IconLoader.getIcon("/toolbarDecorator/import.png"); // 16x16
     
     public static class Mac {
