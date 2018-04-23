@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.service.project.PerformanceTrace;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Factory;
@@ -171,6 +172,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                      @NotNull final GradleProjectResolverExtension projectResolverChain,
                                                      boolean isBuildSrcProject)
     throws IllegalArgumentException, IllegalStateException {
+    final PerformanceTrace performanceTrace = new PerformanceTrace();
+    final GradleProjectResolverExtension tracedResolverChain = new TracedProjectResolverExtension(projectResolverChain, performanceTrace);
 
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx);
     GradleVersion gradleVersion = null;
@@ -208,7 +211,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
     final GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();
-    for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
+    for (GradleProjectResolverExtension resolverExtension = tracedResolverChain;
          resolverExtension != null;
          resolverExtension = resolverExtension.getNext()) {
       // inject ProjectResolverContext into gradle project resolver extensions
@@ -272,6 +275,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if (allModels == null) {
         throw new IllegalStateException("Unable to get project model for the project: " + resolverCtx.getProjectPath());
       }
+      performanceTrace.addTrace(allModels.getPerformanceTrace());
     }
     catch (UnsupportedVersionException unsupportedVersionException) {
       resolverCtx.checkCancelled();
@@ -288,12 +292,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       final IdeaProject ideaProject = modelBuilder.get();
       allModels = new ProjectImportAction.AllModels(ideaProject);
+      performanceTrace.addTrace(allModels.getPerformanceTrace());
     }
     finally {
       final long timeInMs = (System.currentTimeMillis() - startTime);
       synchronized (myCancellationMap) {
         myCancellationMap.remove(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
       }
+      performanceTrace.logPerformance("Gradle data obtained", timeInMs);
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
     }
 
@@ -305,12 +311,17 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     extractExternalProjectModels(allModels, resolverCtx);
 
     // import project data
-    ProjectData projectData = projectResolverChain.createProject();
+    ProjectData projectData = tracedResolverChain.createProject();
     DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
+    DataNode<PerformanceTrace> performanceTraceNode =
+      new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, performanceTrace,
+                     projectDataNode);
+
+    projectDataNode.addChild(performanceTraceNode);
 
     IdeaProject ideaProject = resolverCtx.getModels().getIdeaProject();
 
-    projectResolverChain.populateProjectExtraModels(ideaProject, projectDataNode);
+    tracedResolverChain.populateProjectExtraModels(ideaProject, projectDataNode);
 
     DomainObjectSet<? extends IdeaModule> gradleModules = ideaProject.getModules();
     if (gradleModules == null || gradleModules.isEmpty()) {
@@ -345,7 +356,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
       }
 
-      DataNode<ModuleData> moduleDataNode = projectResolverChain.createModule(gradleModule, projectDataNode);
+      DataNode<ModuleData> moduleDataNode = tracedResolverChain.createModule(gradleModule, projectDataNode);
       String mainModuleId = getModuleId(resolverCtx, gradleModule);
 
       if (moduleMap.containsKey(mainModuleId)) {
@@ -371,10 +382,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
       }
 
-      projectResolverChain.populateModuleContentRoots(ideaModule, moduleDataNode);
-      projectResolverChain.populateModuleCompileOutputSettings(ideaModule, moduleDataNode);
+      tracedResolverChain.populateModuleContentRoots(ideaModule, moduleDataNode);
+      tracedResolverChain.populateModuleCompileOutputSettings(ideaModule, moduleDataNode);
       if (!isBuildSrcProject) {
-        projectResolverChain.populateModuleTasks(ideaModule, moduleDataNode, projectDataNode);
+        tracedResolverChain.populateModuleTasks(ideaModule, moduleDataNode, projectDataNode);
       }
 
       final List<DataNode<? extends ModuleData>> modules = ContainerUtil.newSmartList();
@@ -408,8 +419,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
       final DataNode<ModuleData> moduleDataNode = pair.first;
       final IdeaModule ideaModule = pair.second;
-      projectResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
-      projectResolverChain.populateModuleExtraModels(ideaModule, moduleDataNode);
+      tracedResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
+      tracedResolverChain.populateModuleExtraModels(ideaModule, moduleDataNode);
     }
     mergeSourceSetContentRoots(moduleMap, resolverCtx);
     if(resolverCtx.isResolveModulePerSourceSet()) {
@@ -424,6 +435,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     myLibraryNamesMixer.mixNames(libraries);
 
     final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
+    performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
     LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
     return projectDataNode;
   }
