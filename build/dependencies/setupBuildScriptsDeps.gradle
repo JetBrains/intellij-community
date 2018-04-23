@@ -1,4 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+import java.nio.file.Files
+import java.nio.file.Paths
+
 repositories {
   mavenCentral()
   if (project.ext.inJetBrainsNetwork) {
@@ -6,10 +9,12 @@ repositories {
   }
   maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
   maven { url "https://jetbrains.bintray.com/test-discovery" }
+  jcenter()
 }
 
 configurations {
   buildScriptsDeps
+  testDiscoveryDeps
 }
 
 List<String> projectLibraries = [
@@ -47,6 +52,23 @@ dependencies {
 task setupBuildScriptsDeps(dependsOn: configurations.buildScriptsDeps, type: Sync) {
   from configurations.buildScriptsDeps.files
   into "${project.buildDir}/build-scripts-deps"
+}
+
+task setupTestDiscoveryDeps {
+  doFirst {
+    def dir = "${project.buildDir}/test-discovery-deps"
+    def testDiscoveryDeps = file(dir)
+    testDiscoveryDeps.deleteDir()
+    testDiscoveryDeps.mkdirs()
+    configurations.detachedConfiguration(
+      (dependencies
+        .create('org.jetbrains.testDiscovery:test-discovery-plugin-base:0.1.52') as ModuleDependency)
+        .exclude(group: 'org.codehaus.groovy', module: 'groovy-all')
+    ).files.each { from ->
+      def into = Paths.get("$dir/$from.name")
+      Files.copy(from.toPath(), into)
+    }
+  }
 }
 
 private Tuple2<String, Boolean> loadProjectLibraryProperties(String libraryName) {
