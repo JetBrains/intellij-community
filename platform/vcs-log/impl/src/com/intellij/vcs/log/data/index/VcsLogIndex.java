@@ -30,6 +30,8 @@ public interface VcsLogIndex {
 
   boolean isIndexed(@NotNull VirtualFile root);
 
+  boolean isIndexingEnabled(@NotNull VirtualFile root);
+
   void markForIndexing(int commit, @NotNull VirtualFile root);
 
   void reindexWithRenames(int commit, @NotNull VirtualFile root);
