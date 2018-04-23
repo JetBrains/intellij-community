@@ -101,7 +101,6 @@ def do_untar(name):
 
     sys.stdout.write(directory_name+chr(10))
     sys.stdout.flush()
-    return 0
 
 
 def mkdtemp_ifneeded():
@@ -127,7 +126,6 @@ def main():
     except ValueError:
         pass
 
-    retcode = 0
     try:
         if len(sys.argv) < 2:
             usage()
@@ -154,7 +152,7 @@ def main():
             if len(sys.argv) < 2:
                 usage()
             name = sys.argv[2]
-            retcode = do_untar(name)
+            do_untar(name)
         elif cmd == 'uninstall':
             if len(sys.argv) < 2:
                 usage()
@@ -175,7 +173,7 @@ def main():
     except Exception:
         traceback.print_exc()
         exit(ERROR_EXCEPTION)
-    exit(retcode)
+
 
 if __name__ == '__main__':
     main()
