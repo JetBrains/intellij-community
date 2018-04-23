@@ -13,7 +13,7 @@ public class ClassSearchEverywhereContributor implements SearchEverywhereContrib
   @NotNull
   @Override
   public String getSearchProviderId() {
-    return "Class";
+    return getClass().getSimpleName();
   }
 
   @NotNull

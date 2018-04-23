@@ -562,20 +562,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
     if (Registry.is("new.search.everywhere")) {
       //todo[mikhail.sokolov] show new UI
-      SearchEverywhereUI searchEverywhereUI = new SearchEverywhereUI(null);
-      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(searchEverywhereUI, searchEverywhereUI.getSearchField())
-                    .setProject(e.getProject())
-                    .setMovable(true)
-                    .setResizable(false)
-                    .setMayBeParent(true)
-                    .setCancelOnClickOutside(true)
-                    .setRequestFocus(true)
-                    .setCancelKeyEnabled(false)
-                    .setCancelCallback(() -> true)
-                    .addUserData("SIMPLE_WINDOW")
-                    .createPopup();
-
-      popup.showInBestPositionFor(e.getDataContext());
+      SearchEverywhereHelper.showSearchEverywherePopup(e, null);
       return;
     }
 
@@ -716,7 +703,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setRequestFocus(true)
       .createPopup();
     myBalloon.getContent().setBorder(JBUI.Borders.empty());
-    final Window window = WindowManager.getInstance().suggestParentWindow(project);
+
 
     project.getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
 
@@ -726,24 +713,35 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     });
 
-    Component parent = UIUtil.findUltimateParent(window);
+
     registerDataProvider(panel, project);
-    final RelativePoint showPoint;
-    if (parent != null) {
-      int height = UISettings.getInstance().getShowMainToolbar() ? 135 : 115;
-      if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
-        height -= 20;
-      }
-      showPoint = new RelativePoint(parent, new Point((parent.getSize().width - panel.getPreferredSize().width) / 2, height));
-    } else {
-      showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
-    }
+    final RelativePoint showPoint = calculateShowingPoint(e, panel);
     myList.setFont(UIUtil.getListFont());
     myBalloon.show(showPoint);
     initSearchActions(myBalloon, myPopupField);
     IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
     focusManager.requestFocus(editor, true);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
+  }
+
+  @NotNull
+  private static RelativePoint calculateShowingPoint(AnActionEvent e, JComponent showingContent) {
+    Project project = e.getProject();
+    final Window window = project != null
+                          ? WindowManager.getInstance().suggestParentWindow(project)
+                          : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    Component parent = UIUtil.findUltimateParent(window);
+    final RelativePoint showPoint;
+    if (parent != null) {
+      int height = UISettings.getInstance().getShowMainToolbar() ? 135 : 115;
+      if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
+        height -= 20;
+      }
+      showPoint = new RelativePoint(parent, new Point((parent.getSize().width - showingContent.getPreferredSize().width) / 2, height));
+    } else {
+      showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
+    }
+    return showPoint;
   }
 
   private void showSettings() {

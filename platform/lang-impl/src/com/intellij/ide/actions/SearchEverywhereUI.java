@@ -31,15 +31,19 @@ import java.util.List;
 public class SearchEverywhereUI extends BorderLayoutPanel {
   private SETab mySelectedTab;
   private final JTextField mySearchField;
-  private final JCheckBox myNonProjectCB = new JBCheckBox();
+  private final JCheckBox myNonProjectCB;
   private final List<SETab> myTabs = new ArrayList<>();
 
-  public SearchEverywhereUI(@Nullable SearchEverywhereContributor selected) {
+  public SearchEverywhereUI(List<SearchEverywhereContributor> contributors, @Nullable SearchEverywhereContributor selected) {
     withMinimumWidth(670);
     withPreferredWidth(670);
     setBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
 
-    JPanel contributorsPanel = createTabPanel(selected);
+    myNonProjectCB = new JBCheckBox();
+    myNonProjectCB.setOpaque(false);
+    myNonProjectCB.setFocusable(false);
+
+    JPanel contributorsPanel = createTabPanel(contributors, selected);
     JPanel settingsPanel = createSettingsPanel();
     mySearchField = createSearchField();
 
@@ -52,6 +56,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     return mySearchField;
   }
 
+  public void setUseNonProjectItems(boolean use) {
+    myNonProjectCB.setSelected(use);
+  }
+
+  public boolean isUseNonProjectItems() {
+    return myNonProjectCB.isSelected();
+  }
+
   private void switchToNextTab() {
     int currentIndex = myTabs.indexOf(mySelectedTab);
     SETab nextTab = currentIndex == myTabs.size() - 1 ? myTabs.get(0) : myTabs.get(currentIndex + 1);
@@ -61,6 +73,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   private void switchToTab(SETab tab) {
     mySelectedTab = tab;
     myNonProjectCB.setText(tab.getContributor().includeNonProjectItemsText());
+    myNonProjectCB.setSelected(false);
     repaint();
   }
 
@@ -112,7 +125,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     searchField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_TAB) {
+        if (e.getKeyCode() == KeyEvent.VK_TAB && e.getModifiers() == 0) {
           switchToNextTab();
           e.consume();
         }
@@ -158,16 +171,16 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
   }
 
   @NotNull
-  private JPanel createTabPanel(@Nullable SearchEverywhereContributor selected) {
+  private JPanel createTabPanel(List<SearchEverywhereContributor> contributors, @Nullable SearchEverywhereContributor selected) {
     JPanel contributorsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     contributorsPanel.setOpaque(false);
 
-    String allNonProjectItemsText = IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName());
     SETab allTab = new SETab(allElementsContributor);
     contributorsPanel.add(allTab);
     myTabs.add(allTab);
 
-    SearchEverywhereContributor.getProvidersSorted().forEach(contributor -> {
+
+    contributors.forEach(contributor -> {
       SETab tab = new SETab(contributor);
       if (contributor == selected) {
         switchToTab(tab);
@@ -183,7 +196,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
     return contributorsPanel;
   }
 
-  private SearchEverywhereContributor allElementsContributor = new SearchEverywhereContributor() {
+  private final SearchEverywhereContributor allElementsContributor = new SearchEverywhereContributor() {
     @NotNull
     @Override
     public String getSearchProviderId() {
