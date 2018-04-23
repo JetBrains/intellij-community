@@ -121,8 +121,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
     if (finder == null) return clsFile;
 
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
-    return findSourceRoots(index, clsFile.getContainingFile().getVirtualFile())
+    return findSourceRoots(clsFile.getContainingFile().getVirtualFile())
       .map(finder)
       .filter(source -> source != null && source.isValid())
       .map(clsFile.getManager()::findFile)
@@ -131,18 +130,17 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       .orElse(clsFile);
   }
 
-  @NotNull
-  private Stream<VirtualFile> findSourceRoots(@NotNull ProjectFileIndex index, @NotNull VirtualFile virtualFile) {
-    Stream<VirtualFile> rootsByProjectModel = index.getOrderEntriesForFile(virtualFile).stream()
+  private Stream<VirtualFile> findSourceRoots(VirtualFile file) {
+    Stream<VirtualFile> modelRoots = ProjectFileIndex.SERVICE.getInstance(myProject).getOrderEntriesForFile(file).stream()
       .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
       .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)));
 
-    Stream<VirtualFile> syntheticLibraryRoots = Stream.of(Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME))
+    Stream<VirtualFile> synthRoots = Stream.of(Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME))
       .flatMap(provider -> provider.getAdditionalProjectLibraries(myProject).stream())
-      .filter(syntheticLibrary -> syntheticLibrary.contains(virtualFile, false, true))
-      .flatMap(lib -> lib.getSourceRoots().stream());
+      .filter(library -> library.contains(file, false, true))
+      .flatMap(library -> library.getSourceRoots().stream());
 
-    return Stream.concat(rootsByProjectModel, syntheticLibraryRoots);
+    return Stream.concat(modelRoots, synthRoots);
   }
 
   @NotNull
