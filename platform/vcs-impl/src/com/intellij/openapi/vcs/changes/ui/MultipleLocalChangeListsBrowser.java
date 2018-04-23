@@ -183,13 +183,14 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   }
 
   private void updateSelectedChangeList(@NotNull LocalChangeList list) {
-    if (!myChangeList.getId().equals(list.getId())) {
+    boolean isListChanged = !myChangeList.getId().equals(list.getId());
+    if (isListChanged) {
       LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
     }
     myChangeList = list;
     myChangeListChooser.setToolTipText(list.getName());
     updateDisplayedChanges();
-    if (mySelectedListChangeListener != null) mySelectedListChangeListener.run();
+    if (isListChanged && mySelectedListChangeListener != null) mySelectedListChangeListener.run();
 
     ((MyChangesBrowserTreeList)myViewer).updateExclusionStates();
   }
