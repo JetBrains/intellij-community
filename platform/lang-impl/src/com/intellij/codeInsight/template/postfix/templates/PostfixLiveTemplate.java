@@ -113,9 +113,10 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Editor editor = callback.getEditor();
+    PsiFile file = callback.getContext().getContainingFile();
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
       PostfixTemplate postfixTemplate = findTemplate(provider, key);
-      if (postfixTemplate != null) {
+      if (postfixTemplate != null && isApplicableTemplate(provider, key, file, editor, postfixTemplate)) {
         expandTemplate(key, callback, editor, provider, postfixTemplate);
         return;
       }
