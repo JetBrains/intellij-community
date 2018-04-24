@@ -1003,21 +1003,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
     private fun getTypesToShow(showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
       if (showApplicableTypesOnly) {
-        val applicableTypes = allTypes.filter { isApplicable(it) }
+        val applicableTypes = allTypes.filter { it.configurationFactories.any { it.isApplicable(myProject) } }
         if (applicableTypes.size < (allTypes.size - 3)) {
           return applicableTypes
         }
       }
       return allTypes
-    }
-
-    private fun isApplicable(type: ConfigurationType): Boolean {
-      for (factory in type.configurationFactories) {
-        if (factory.isApplicable(myProject)) {
-          return true
-        }
-      }
-      return false
     }
   }
 
