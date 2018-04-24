@@ -28,6 +28,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -48,7 +49,7 @@ import java.util.Objects;
 
 import static com.intellij.execution.actions.RunConfigurationsComboBoxAction.EMPTY_ICON;
 import static com.intellij.ide.actions.GotoActionAction.performAction;
-import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
+import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
@@ -337,6 +338,7 @@ public class RunAnythingUtil {
                                           @NotNull String pattern,
                                           @NotNull VirtualFile workDirectory) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Executor executor = EXECUTOR_KEY.getData(dataContext);
 
     if (pattern.isEmpty()) return;
 
@@ -344,7 +346,7 @@ public class RunAnythingUtil {
 
     if (runMatchedActivity(dataContext, pattern)) return;
 
-    runCommand(workDirectory, StringUtil.trim(pattern), RunAnythingAction.getExecutor(), dataContext);
+    runCommand(workDirectory, StringUtil.trim(pattern), Objects.requireNonNull(executor), dataContext);
   }
 
   private static boolean runMatchedActivity(@NotNull DataContext dataContext, @NotNull String pattern) {
@@ -356,10 +358,11 @@ public class RunAnythingUtil {
                                                  @NotNull Project project,
                                                  @NotNull String pattern,
                                                  @NotNull VirtualFile workDirectory) {
+    Executor executor = EXECUTOR_KEY.getData(dataContext);
     RunAnythingRunConfigurationProvider provider = RunAnythingRunConfigurationProvider.findMatchedProvider(project, pattern, workDirectory);
     if (provider != null) {
       triggerDebuggerStatistics(dataContext);
-      runMatchedConfiguration(dataContext, RunAnythingAction.getExecutor(), project, provider.createConfiguration(project, pattern, workDirectory));
+      runMatchedConfiguration(dataContext, Objects.requireNonNull(executor), project, provider.createConfiguration(project, pattern, workDirectory));
       return true;
     }
     return false;
@@ -405,10 +408,12 @@ public class RunAnythingUtil {
   }
 
   public static void triggerDebuggerStatistics(@NotNull DataContext dataContext) {
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    LOG.assertTrue(project != null);
+    Project project = Objects.requireNonNull(CommonDataKeys.PROJECT.getData(dataContext));
+    Executor executor = Objects.requireNonNull(EXECUTOR_KEY.getData(dataContext));
 
-    if (SHIFT_IS_PRESSED.get()) RunAnythingUsageCollector.Companion.trigger(project, DEBUGGER_FEATURE_USAGE);
+    if (ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG) == executor) {
+      RunAnythingUsageCollector.Companion.trigger(project, DEBUGGER_FEATURE_USAGE);
+    }
   }
 
   static void triggerMoreStatistics(@NotNull Project project, @NotNull RunAnythingGroup group) {
