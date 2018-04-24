@@ -15,4 +15,12 @@ final class SearchQueryRequest<T> {
     this.query = query;
     this.preprocessor = preprocessor;
   }
+
+  @Override
+  public String toString() {
+    return "SearchQueryRequest{" +
+           "query=" + query +
+           ", preprocessor=" + preprocessor +
+           '}';
+  }
 }

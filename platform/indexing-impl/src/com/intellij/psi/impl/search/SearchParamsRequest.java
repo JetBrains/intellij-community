@@ -16,4 +16,12 @@ final class SearchParamsRequest {
     this.parameters = parameters;
     this.preprocessor = preprocessor;
   }
+
+  @Override
+  public String toString() {
+    return "SearchParamsRequest{" +
+           "parameters=" + parameters +
+           ", preprocessor=" + preprocessor +
+           '}';
+  }
 }
