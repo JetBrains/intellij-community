@@ -36,7 +36,7 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
       @Override
       public void run() { _updateActionItems(); }
     };
-    ActionManager.getInstance().addTimerListener(500, myTimerListener);
+    ActionManager.getInstance().addTransparentTimerListener(500, myTimerListener); // NOTE: delay param doesn't affect anything
 
     final MessageBus mb = project.getMessageBus();
     mb.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, this);
