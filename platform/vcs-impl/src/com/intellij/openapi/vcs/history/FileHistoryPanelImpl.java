@@ -277,7 +277,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if (myTargetSelection == null) {
       myTargetSelection = myDualView.getFlatView().getSelectedObjects();
     }
-    
+
     myHistorySession = session;
     refreshRevisionsOrder();
     HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
@@ -296,6 +296,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                          myTargetSelection);
     }
 
+    mySplitter.revalidate();
+    mySplitter.repaint();
     myDualView.expandAll();
     myDualView.repaint();
   }
@@ -432,9 +434,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (myInRefresh) return;
       myInRefresh = true;
-
-      mySplitter.revalidate();
-      mySplitter.repaint();
 
       myRefresherI.refresh(canUseCache);
     });
