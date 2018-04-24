@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.VcsInternalDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -88,7 +90,7 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
     JComponent component = ContentUtilEx.findContentComponent(getToolWindow(project).getContentManager(), comp ->
       comp instanceof FileHistoryPanelImpl &&
       sameHistories((FileHistoryPanelImpl)comp, path, startingRevisionNumber));
-    return component == null ? null : ((FileHistoryPanelImpl)component).getRefresher();
+    return component == null ? null : VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData((DataProvider)component);
   }
 
   public void acceptRevision(VcsFileRevision revision) {

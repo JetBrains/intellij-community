@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.VcsInternalDataKeys;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -501,6 +502,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         return flatView.getRow(flatView.getSelectedRow() + 1).getRevision();
       }
     }
+    else if (VcsInternalDataKeys.FILE_HISTORY_REFRESHER.is(dataId)) {
+      return myRefresherI;
+    }
     else {
       return super.getData(dataId);
     }
@@ -551,11 +555,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   public void dispose() {
     myDualView.dispose();
-  }
-
-  @NotNull
-  public FileHistoryRefresherI getRefresher() {
-    return myRefresherI;
   }
 
   private void refreshRevisionsOrder() {
