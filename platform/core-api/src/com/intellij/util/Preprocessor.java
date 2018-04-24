@@ -18,7 +18,6 @@ public interface Preprocessor<Base, Result> extends Function<Processor<? super R
   @Override
   Processor<? super Base> apply(@NotNull Processor<? super Result> processor);
 
-
   /**
    * @return preprocessor returning original processor,
    * meaning elements from base processor will be passed into result processor as is.
@@ -26,7 +25,7 @@ public interface Preprocessor<Base, Result> extends Function<Processor<? super R
    */
   @NotNull
   static <Base extends Result, Result> Preprocessor<Base, Result> id() {
-    return p -> p;
+    return IdPreprocessor.getInstance();
   }
 
   /**
