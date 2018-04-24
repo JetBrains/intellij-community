@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.redundantCast;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -52,8 +49,9 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
           return true;
         });
         if (redundantCast) {
-          holder.registerProblem(castTypeElement, "Cast may be removed narrowing the variable type",
-                                 new CastMayBeReplacedWithSpecificVariableTypeFix(variable, castType));
+          String message = InspectionsBundle
+            .message("inspection.cast.can.be.removed.narrowing.variable.type.message", variable.getName(), castType.getPresentableText());
+          holder.registerProblem(castTypeElement, message, new CastCanBeRemovedNarrowingVariableTypeFix(variable, castType));
         }
       }
     };
@@ -105,11 +103,11 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     return true;
   }
 
-  private static class CastMayBeReplacedWithSpecificVariableTypeFix implements LocalQuickFix {
+  private static class CastCanBeRemovedNarrowingVariableTypeFix implements LocalQuickFix {
     private final String myVariableName;
     private final String myType;
 
-    public CastMayBeReplacedWithSpecificVariableTypeFix(PsiLocalVariable variable, PsiType type) {
+    public CastCanBeRemovedNarrowingVariableTypeFix(PsiLocalVariable variable, PsiType type) {
       myVariableName = variable.getName();
       myType = type.getPresentableText();
     }
@@ -117,13 +115,13 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     @NotNull
     @Override
     public String getName() {
-      return "Change type of '" + myVariableName + "' to '" + myType + "' and remove cast";
+      return InspectionsBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.name", myVariableName, myType);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Change variable type and remove cast";
+      return InspectionsBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.family.name");
     }
 
     @Override
