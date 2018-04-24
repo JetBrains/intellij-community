@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
 public class AllSearchEverywhereContributor implements SearchEverywhereContributor {
@@ -23,4 +24,8 @@ public class AllSearchEverywhereContributor implements SearchEverywhereContribut
     return 0;
   }
 
+  @Override
+  public String includeNonProjectItemsText() {
+    return IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName());
+  }
 }
