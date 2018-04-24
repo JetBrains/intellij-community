@@ -781,11 +781,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public String getPatternPresentation() {
-      final List<String> enabledTests = new ArrayList<>();
-      for (String pattern : myPattern) {
-        enabledTests.add(pattern);
-      }
-      return StringUtil.join(enabledTests, "||");
+      return StringUtil.join(myPattern, "||");
     }
 
     public TestObject getTestObject(@NotNull JUnitConfiguration configuration) {
