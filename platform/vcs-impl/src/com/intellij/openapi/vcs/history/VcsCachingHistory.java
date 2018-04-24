@@ -300,10 +300,6 @@ public class VcsCachingHistory {
         ApplicationManager.getApplication().invokeLater(() -> myContinuation.consume(mySession), ModalityState.defaultModalityState());
       }
     }
-
-    @Override
-    public void beforeRefresh() {
-    }
   }
 
   private static class HistoryPartnerProxy implements VcsAppendableHistorySessionPartner {
@@ -337,11 +333,6 @@ public class VcsCachingHistory {
     public void finished() {
       myPartner.finished();
       myFinish.consume(myCopy);
-    }
-
-    @Override
-    public void beforeRefresh() {
-      myPartner.beforeRefresh();
     }
   }
 }
