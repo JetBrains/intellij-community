@@ -8,9 +8,9 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
 import com.jetbrains.extensions.python.afterDefInMethod
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
 import com.jetbrains.python.codeInsight.stdlib.DATACLASSES_INITVAR_TYPE
-import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
+import com.jetbrains.python.codeInsight.stdlib.parseStdDataclassParameters
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.types.PyClassType
@@ -29,7 +29,7 @@ class PyDataclassPostInitCompletionContributor : CompletionContributor() {
       val cls = parameters.getPyClass() ?: return
       val typeEvalContext = parameters.getTypeEvalContext()
 
-      if (parseDataclassParameters(cls, typeEvalContext)?.init == true) {
+      if (parseStdDataclassParameters(cls, typeEvalContext)?.init == true) {
         val postInitParameters = mutableListOf(PyNames.CANONICAL_SELF)
 
         cls.processClassLevelDeclarations { element, _ ->

@@ -16,14 +16,14 @@ const val DATACLASSES_INITVAR_TYPE: String = "dataclasses.InitVar"
 const val DUNDER_POST_INIT: String = "__post_init__"
 
 
-fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): DataclassParameters? {
+fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
   val decorators = cls.decoratorList ?: return null
 
   for (decorator in decorators.decorators) {
     if (PyKnownDecoratorUtil.asKnownDecorators(decorator, context).contains(PyKnownDecoratorUtil.KnownDecorator.DATACLASSES_DATACLASS)) {
       for (mapping in decorator.multiMapArguments(PyResolveContext.noImplicits().withTypeEvalContext(context))) {
         if (mapping.unmappedArguments.isEmpty() && mapping.unmappedParameters.isEmpty()) {
-          val builder = DataclassParametersBuilder()
+          val builder = PyDataclassParametersBuilder()
 
           mapping
             .mappedParameters
@@ -41,28 +41,28 @@ fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): DataclassP
   return null
 }
 
-data class DataclassParameters(val init: Boolean,
-                               val repr: Boolean,
-                               val eq: Boolean,
-                               val order: Boolean,
-                               val unsafeHash: Boolean,
-                               val frozen: Boolean,
-                               val initArgument: PyExpression?,
-                               val reprArgument: PyExpression?,
-                               val eqArgument: PyExpression?,
-                               val orderArgument: PyExpression?,
-                               val unsafeHashArgument: PyExpression?,
-                               val frozenArgument: PyExpression?)
+data class PyDataclassParameters(val init: Boolean,
+                                 val repr: Boolean,
+                                 val eq: Boolean,
+                                 val order: Boolean,
+                                 val unsafeHash: Boolean,
+                                 val frozen: Boolean,
+                                 val initArgument: PyExpression?,
+                                 val reprArgument: PyExpression?,
+                                 val eqArgument: PyExpression?,
+                                 val orderArgument: PyExpression?,
+                                 val unsafeHashArgument: PyExpression?,
+                                 val frozenArgument: PyExpression?)
 
-private class DataclassParametersBuilder {
+private class PyDataclassParametersBuilder {
 
   companion object {
-    private val DEFAULT_INIT: Boolean = true
-    private val DEFAULT_REPR: Boolean = true
-    private val DEFAULT_EQ: Boolean = true
-    private val DEFAULT_ORDER: Boolean = false
-    private val DEFAULT_UNSAFE_HASH: Boolean = false
-    private val DEFAULT_FROZEN: Boolean = false
+    private const val DEFAULT_INIT = true
+    private const val DEFAULT_REPR = true
+    private const val DEFAULT_EQ = true
+    private const val DEFAULT_ORDER = false
+    private const val DEFAULT_UNSAFE_HASH = false
+    private const val DEFAULT_FROZEN = false
   }
 
   private var init = DEFAULT_INIT
@@ -110,6 +110,6 @@ private class DataclassParametersBuilder {
     }
   }
 
-  fun build() = DataclassParameters(init, repr, eq, order, unsafeHash, frozen,
-                                    initArgument, reprArgument, eqArgument, orderArgument, unsafeHashArgument, frozenArgument)
+  fun build() = PyDataclassParameters(init, repr, eq, order, unsafeHash, frozen,
+                                      initArgument, reprArgument, eqArgument, orderArgument, unsafeHashArgument, frozenArgument)
 }

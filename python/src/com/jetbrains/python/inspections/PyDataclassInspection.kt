@@ -11,8 +11,8 @@ import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.DATACLASSES_INITVAR_TYPE
 import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
-import com.jetbrains.python.codeInsight.stdlib.DataclassParameters
-import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.parseStdDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
@@ -55,7 +55,7 @@ class PyDataclassInspection : PyInspection() {
       super.visitPyClass(node)
 
       if (node != null) {
-        val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
+        val dataclassParameters = parseStdDataclassParameters(node, myTypeEvalContext)
 
         if (dataclassParameters != null) {
           processDataclassParameters(node, dataclassParameters)
@@ -105,11 +105,11 @@ class PyDataclassInspection : PyInspection() {
         val leftClass = getInstancePyClass(node.leftExpression) ?: return
         val rightClass = getInstancePyClass(node.rightExpression) ?: return
 
-        val leftDataclassParameters = parseDataclassParameters(leftClass, myTypeEvalContext)
+        val leftDataclassParameters = parseStdDataclassParameters(leftClass, myTypeEvalContext)
 
         if (leftClass != rightClass &&
             leftDataclassParameters != null &&
-            parseDataclassParameters(rightClass, myTypeEvalContext) != null) {
+            parseStdDataclassParameters(rightClass, myTypeEvalContext) != null) {
           registerProblem(node.psiOperator,
                           "'${node.referencedName}' not supported between instances of '${leftClass.name}' and '${rightClass.name}'",
                           ProblemHighlightType.GENERIC_ERROR)
@@ -149,7 +149,7 @@ class PyDataclassInspection : PyInspection() {
       if (node != null && node.isQualified) {
         val cls = getInstancePyClass(node.qualifier) ?: return
 
-        if (parseDataclassParameters(cls, myTypeEvalContext) != null) {
+        if (parseStdDataclassParameters(cls, myTypeEvalContext) != null) {
           cls.processClassLevelDeclarations { element, _ ->
             if (element is PyTargetExpression && element.name == node.name && isInitVar(element)) {
               registerProblem(node.lastChild,
@@ -167,7 +167,7 @@ class PyDataclassInspection : PyInspection() {
 
     private fun checkMutatingFrozenAttribute(expression: PyQualifiedExpression) {
       val cls = getInstancePyClass(expression.qualifier) ?: return
-      if (parseDataclassParameters(cls, myTypeEvalContext)?.frozen == true) {
+      if (parseStdDataclassParameters(cls, myTypeEvalContext)?.frozen == true) {
         registerProblem(expression, "'${cls.name}' object attribute '${expression.name}' is read-only", ProblemHighlightType.GENERIC_ERROR)
       }
     }
@@ -177,7 +177,7 @@ class PyDataclassInspection : PyInspection() {
       return if (type != null && !type.isDefinition) type.pyClass else null
     }
 
-    private fun processDataclassParameters(cls: PyClass, dataclassParameters: DataclassParameters) {
+    private fun processDataclassParameters(cls: PyClass, dataclassParameters: PyDataclassParameters) {
       if (!dataclassParameters.eq && dataclassParameters.order) {
         registerProblem(dataclassParameters.eqArgument, "'eq' must be true if 'order' is true", ProblemHighlightType.GENERIC_ERROR)
       }
@@ -279,7 +279,7 @@ class PyDataclassInspection : PyInspection() {
     }
 
     private fun processPostInitDefinition(postInit: PyFunction,
-                                          dataclassParameters: DataclassParameters,
+                                          dataclassParameters: PyDataclassParameters,
                                           initVars: List<PyTargetExpression>) {
       if (!dataclassParameters.init) {
         registerProblem(postInit.nameIdentifier,
@@ -324,7 +324,7 @@ class PyDataclassInspection : PyInspection() {
 
       return type !is PyClassType ||
              !allowDefinition && type.isDefinition ||
-             parseDataclassParameters(type.pyClass, myTypeEvalContext) == null
+             parseStdDataclassParameters(type.pyClass, myTypeEvalContext) == null
     }
   }
 }

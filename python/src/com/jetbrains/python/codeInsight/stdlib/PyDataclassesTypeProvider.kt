@@ -21,21 +21,12 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
     if (!param.isPositionalContainer && !param.isKeywordContainer && param.annotationValue == null && func.name == DUNDER_POST_INIT) {
       val cls = func.containingClass
+      val name = param.name
 
-      if (cls != null && parseDataclassParameters(cls, context)?.init == true) {
-        var result: Ref<PyType>? = null
-
-        cls.processClassLevelDeclarations { element, _ ->
-          if (element is PyTargetExpression && element.name == param.name && element.annotationValue != null) {
-            result = Ref.create(getTypeForParameter(element, context))
-            false
-          }
-          else {
-            true
-          }
-        }
-
-        return result
+      if (cls != null && name != null && parseStdDataclassParameters(cls, context)?.init == true) {
+        cls
+          .findClassAttribute(name, false, context)
+          ?.let { return Ref.create(getTypeForParameter(it, context)) }
       }
     }
 
@@ -89,7 +80,7 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
   }
 
   private fun getDataclassTypeForClass(cls: PyClass, context: TypeEvalContext): PyCallableType? {
-    val dataclassParameters = parseDataclassParameters(cls, context)
+    val dataclassParameters = parseStdDataclassParameters(cls, context)
     if (dataclassParameters == null || !dataclassParameters.init) {
       return null
     }
