@@ -589,7 +589,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     collectors.put(collector, processor);
 
     ProgressIndicator progress = getOrCreateIndicator();
-    appendCollectorsFromQueryRequests(progress, collectors);
+    if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.CANCELLED) {
+      return false;
+    }
     do {
       MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<>();
       final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
@@ -611,10 +613,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           return false;
         }
       }
+      final QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
+      if (result == QueryRequestsRunResult.CANCELLED) {
+        return false;
+      }
+      else if (result == QueryRequestsRunResult.UNCHANGED) {
+        return true;
+      }
     }
-    while (appendCollectorsFromQueryRequests(progress, collectors));
-
-    return true;
+    while (true);
   }
 
   @NotNull
@@ -623,8 +630,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return AsyncUtil.wrapBoolean(processRequests(collector, processor));
   }
 
-  private static boolean appendCollectorsFromQueryRequests(@NotNull ProgressIndicator progress,
-                                                           @NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors) {
+  private enum QueryRequestsRunResult {
+    CANCELLED,
+    UNCHANGED,
+    CHANGED,
+  }
+
+  @NotNull
+  private static QueryRequestsRunResult appendCollectorsFromQueryRequests(@NotNull ProgressIndicator progress,
+                                                                          @NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors) {
     boolean changed = false;
     Deque<SearchRequestCollector> queue = new LinkedList<>(collectors.keySet());
     while (!queue.isEmpty()) {
@@ -632,14 +646,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final SearchRequestCollector each = queue.removeFirst();
       for (QuerySearchRequest request : each.takeQueryRequests()) {
         progress.checkCanceled();
-        request.runQuery();
+        if (!request.doRunQuery()) {
+          return QueryRequestsRunResult.CANCELLED;
+        }
         assert !collectors.containsKey(request.collector) || collectors.get(request.collector) == request.processor;
         collectors.put(request.collector, request.processor);
         queue.addLast(request.collector);
         changed = true;
       }
     }
-    return changed;
+    return changed ? QueryRequestsRunResult.CHANGED : QueryRequestsRunResult.UNCHANGED;
   }
 
   private boolean processGlobalRequestsOptimized(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
