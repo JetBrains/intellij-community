@@ -6,14 +6,22 @@ import com.intellij.model.search.SearchRequestCollector
 import com.intellij.model.search.SearchRequestor
 import com.intellij.openapi.application.runReadAction
 import org.jetbrains.plugins.groovy.GroovyFileType.getGroovyEnabledFileTypes
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getFieldAccessors
 import org.jetbrains.plugins.groovy.lang.psi.util.getPropertyName
 
 class AccessorReferenceSearchRequestor : SearchRequestor {
 
   override fun collectSearchRequests(collector: SearchRequestCollector) {
-    val parameters = collector.parameters
-    val target = parameters.target as? JvmMethod ?: return
-    val propertyName = runReadAction { getPropertyName(target) } ?: return
-    collector.searchWord(propertyName).restrictSearchScopeTo(*getGroovyEnabledFileTypes()).search(target)
+    val target = collector.parameters.target
+    if (target is JvmMethod) {
+      val propertyName = runReadAction { getPropertyName(target) } ?: return
+      collector.searchWord(propertyName).restrictSearchScopeTo(*getGroovyEnabledFileTypes()).search(target)
+    }
+    else if (target is GrField) {
+      for (accessor in runReadAction { getFieldAccessors(target) }) {
+        collector.searchTarget(accessor).search()
+      }
+    }
   }
 }
