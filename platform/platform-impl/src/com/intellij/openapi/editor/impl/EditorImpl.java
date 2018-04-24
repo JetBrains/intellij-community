@@ -4382,8 +4382,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean canImport(@NotNull JComponent comp, @NotNull DataFlavor[] transferFlavors) {
-      Editor editor = getEditor(comp);
-      final EditorDropHandler dropHandler = ((EditorImpl)editor).getDropHandler();
+      EditorImpl editor = getEditor(comp);
+      final EditorDropHandler dropHandler = editor.getDropHandler();
       if (dropHandler != null && dropHandler.canHandleDrop(transferFlavors)) {
         return true;
       }

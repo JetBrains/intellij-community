@@ -132,10 +132,10 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       Map<PsiTypeParameter, PsiType> resurrected = new HashMap<>();
       final Set<Map.Entry<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer>> set = myMap.entrySet();
       for (Map.Entry<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> entry : set) {
-        PsiElement element = entry.getKey().getElement();
+        PsiTypeParameter element = entry.getKey().getElement();
         if (element != null) {
           SmartTypePointer typePointer = entry.getValue();
-          resurrected.put((PsiTypeParameter)element, typePointer == null ? null : typePointer.getType());
+          resurrected.put(element, typePointer == null ? null : typePointer.getType());
         }
       }
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable((PsiClass)classElement)) {
@@ -155,13 +155,13 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
 
     private DisjunctionTypePointer(@NotNull PsiDisjunctionType type) {
       super(type);
-      myPointers = ContainerUtil.map(type.getDisjunctions(), psiType -> createSmartTypePointer(psiType));
+      myPointers = ContainerUtil.map(type.getDisjunctions(), SmartTypePointerManagerImpl.this::createSmartTypePointer);
     }
 
     @Override
     protected PsiDisjunctionType calcType() {
       final List<PsiType> types = ContainerUtil.map(myPointers,
-                                                    (NullableFunction<SmartTypePointer, PsiType>)typePointer -> typePointer.getType());
+                                                    (NullableFunction<SmartTypePointer, PsiType>)SmartTypePointer::getType);
       return new PsiDisjunctionType(types, PsiManager.getInstance(myProject));
     }
   }

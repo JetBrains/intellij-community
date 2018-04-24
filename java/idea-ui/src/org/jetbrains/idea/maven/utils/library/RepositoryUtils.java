@@ -139,8 +139,8 @@ public class RepositoryUtils {
                 for (String url : annotationUrls) {
                   editor.addRoot(url, AnnotationOrderRootType.getInstance());
                 }
-                final Library.ModifiableModel model = library.getModifiableModel();
-                editor.applyTo((LibraryEx.ModifiableModelEx)model);
+                final LibraryEx.ModifiableModelEx model = library.getModifiableModel();
+                editor.applyTo(model);
                 model.commit();
               });
             }

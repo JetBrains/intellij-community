@@ -50,7 +50,7 @@ public class RunAnythingRunProfileState extends CommandLineState {
     RunAnythingRunProfile runProfile = getRunProfile();
     GeneralCommandLine commandLine = runProfile.getCommandLine();
     String originalCommand = runProfile.getOriginalCommand();
-    ProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
+    KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
       @Override
       protected void notifyProcessTerminated(int exitCode) {
         print(IdeBundle.message("run.anything.console.process.finished", exitCode), ConsoleViewContentType.SYSTEM_OUTPUT);
@@ -95,7 +95,7 @@ public class RunAnythingRunProfileState extends CommandLineState {
         }
       }
     });
-    ((KillableColoredProcessHandler)processHandler).setHasPty(true);
+    processHandler.setHasPty(true);
     return processHandler;
   }
 }

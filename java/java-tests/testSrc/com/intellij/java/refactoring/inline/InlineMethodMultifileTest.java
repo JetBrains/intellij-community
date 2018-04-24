@@ -5,7 +5,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
@@ -43,10 +42,8 @@ public class InlineMethodMultifileTest extends RefactoringTestCase {
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     final VirtualFile rootDir = createTestProjectStructure(rootBefore);
     PsiClass aClass = myJavaFacade.findClass(className, ProjectScope.getAllScope(myProject));
-    assertTrue(aClass != null);
-    PsiElement element = aClass.findMethodsByName(methodName, false)[0];
-    assertTrue(element instanceof PsiMethod);
-    PsiMethod method = (PsiMethod)element;
+    assertNotNull(aClass);
+    PsiMethod method = aClass.findMethodsByName(methodName, false)[0];
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);
 

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.lang.annotation.Annotation;
 
 /**
  * @author max
@@ -201,9 +200,8 @@ public class ColorUtil {
 
   @Nullable
   public static Color getColor(@NotNull Class<?> cls) {
-    final Annotation annotation = cls.getAnnotation(Colored.class);
-    if (annotation instanceof Colored) {
-      final Colored colored = (Colored)annotation;
+    final Colored colored = cls.getAnnotation(Colored.class);
+    if (colored != null) {
       return fromHex(UIUtil.isUnderDarcula() ? colored.darkVariant() : colored.color(), null);
     }
     return null;

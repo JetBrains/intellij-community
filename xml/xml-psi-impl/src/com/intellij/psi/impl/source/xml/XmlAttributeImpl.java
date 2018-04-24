@@ -373,9 +373,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
 
   @Nullable
   private XmlAttributeDescriptor getDescriptorImpl() {
-    final PsiElement parentElement = getParent();
-    if (parentElement == null) return null; // e.g. XmlDecl or PI
-    final XmlTag tag = (XmlTag)parentElement;
+    final XmlTag tag = getParent();
+    if (tag == null) return null; // e.g. XmlDecl or PI
     final XmlElementDescriptor descr = tag.getDescriptor();
     if (descr == null) return null;
     final XmlAttributeDescriptor attributeDescr = descr.getAttributeDescriptor(this);

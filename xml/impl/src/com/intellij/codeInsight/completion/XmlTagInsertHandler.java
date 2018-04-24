@@ -88,7 +88,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
       int caretOffset = editor.getCaretModel().getOffset();
 
-      PsiElement otherTag = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(caretOffset), XmlTag.class);
+      XmlTag otherTag = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(caretOffset), XmlTag.class);
 
       PsiElement endTagStart = XmlUtil.getTokenOfType(otherTag, XmlTokenType.XML_END_TAG_START);
 
@@ -103,7 +103,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           int eOffset = sibling.getTextRange().getEndOffset();
 
           editor.getDocument().deleteString(sOffset, eOffset);
-          editor.getDocument().insertString(sOffset, ((XmlTag)otherTag).getName());
+          editor.getDocument().insertString(sOffset, otherTag.getName());
         }
       }
 

@@ -310,11 +310,10 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       }
       List<PsiComment> commentsToInsert = new SmartList<>();
       for (final Iterator<PsiComment> iterator = comments.iterator(); iterator.hasNext(); ) {
-        final PsiElement element = iterator.next();
-        if (element.getTextOffset() >= offset) {
+        final PsiComment comment = iterator.next();
+        if (comment.getTextOffset() >= offset) {
           break;
         }
-        final PsiComment comment = (PsiComment)element;
         if (out.length() == 0) {
           leadingComments.add(comment);
         }

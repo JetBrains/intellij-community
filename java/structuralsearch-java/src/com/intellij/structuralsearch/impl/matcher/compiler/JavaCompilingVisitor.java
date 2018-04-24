@@ -394,12 +394,12 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
 
-    final MatchingHandler handler = new DeclarationStatementHandler();
+    final DeclarationStatementHandler handler = new DeclarationStatementHandler();
     myCompilingVisitor.getContext().getPattern().setHandler(psiDeclarationStatement, handler);
     final PsiElement previousNonWhiteSpace = PsiTreeUtil.skipWhitespacesBackward(psiDeclarationStatement);
 
     if (previousNonWhiteSpace instanceof PsiComment) {
-      ((DeclarationStatementHandler)handler).setCommentHandler(myCompilingVisitor.getContext().getPattern().getHandler(previousNonWhiteSpace));
+      handler.setCommentHandler(myCompilingVisitor.getContext().getPattern().getHandler(previousNonWhiteSpace));
       myCompilingVisitor.getContext().getPattern().setHandler(previousNonWhiteSpace, handler);
     }
 

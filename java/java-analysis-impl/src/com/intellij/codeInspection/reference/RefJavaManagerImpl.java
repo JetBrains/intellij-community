@@ -197,8 +197,8 @@ public class RefJavaManagerImpl extends RefJavaManager {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
     
     return myRefManager.getFromRefTableOrCache(param, () -> {
-      RefParameter ref = new RefParameterImpl(param, index, myRefManager);
-      ((RefParameterImpl)ref).initialize();
+      RefParameterImpl ref = new RefParameterImpl(param, index, myRefManager);
+      ref.initialize();
       return ref;
     });
   }
@@ -389,7 +389,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     return Arrays
       .stream(((PsiClassOwner)psiFile).getClasses())
       .flatMap(c -> Arrays.stream(c.getSuperTypes()))
-      .map(t -> t.resolve())
+      .map(PsiClassType::resolve)
       .filter(Objects::nonNull);
   }
 

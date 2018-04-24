@@ -5,14 +5,16 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.*;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
@@ -94,8 +96,8 @@ public abstract class JavaValueModifier extends XValueModifier {
 
   @Override
   public void setValue(@NotNull XExpression expression, @NotNull XModificationCallback callback) {
-    final NodeDescriptorImpl descriptor = myJavaValue.getDescriptor();
-    if(!((ValueDescriptorImpl)descriptor).canSetValue()) {
+    final ValueDescriptorImpl descriptor = myJavaValue.getDescriptor();
+    if(!descriptor.canSetValue()) {
       return;
     }
 

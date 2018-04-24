@@ -100,16 +100,16 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     assertEquals("sort", importStaticStatements[3].getReferenceName());
 
     final PsiImportStaticStatement classReference1 = importStaticStatements[1];
-    final PsiElement element1 = classReference1.resolveTargetClass();
+    final PsiClass element1 = classReference1.resolveTargetClass();
     assertNotNull(element1);
     assertTrue(element1 instanceof PsiClass);
-    assertEquals("java.util.Arrays", ((PsiClass)element1).getQualifiedName());
+    assertEquals("java.util.Arrays", element1.getQualifiedName());
 
     final PsiImportStaticStatement classReference3 = importStaticStatements[3];
-    final PsiElement element3 = classReference3.resolveTargetClass();
+    final PsiClass element3 = classReference3.resolveTargetClass();
     assertNotNull(element3);
     assertTrue(element3 instanceof PsiClass);
-    assertEquals("java.util.Arrays", ((PsiClass)element3).getQualifiedName());
+    assertEquals("java.util.Arrays", element3.getQualifiedName());
 
     if (okToLoadTree) {
       assertEquals("java.util.Collections", getText(importStaticStatements[0]));

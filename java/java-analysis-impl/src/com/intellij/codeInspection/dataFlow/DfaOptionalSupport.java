@@ -38,8 +38,8 @@ public class DfaOptionalSupport {
 
   @Nullable
   static LocalQuickFix registerReplaceOptionalOfWithOfNullableFix(@NotNull PsiExpression qualifier) {
-    final PsiElement call = findCallExpression(qualifier);
-    final PsiMethod method = call == null ? null : ((PsiMethodCallExpression)call).resolveMethod();
+    final PsiMethodCallExpression call = findCallExpression(qualifier);
+    final PsiMethod method = call == null ? null : call.resolveMethod();
     final PsiClass containingClass = method == null ? null : method.getContainingClass();
     if (containingClass != null && "of".equals(method.getName())) {
       final String qualifiedName = containingClass.getQualifiedName();

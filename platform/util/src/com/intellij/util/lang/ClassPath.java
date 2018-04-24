@@ -204,9 +204,9 @@ public class ClassPath {
       return new FileLoader(url, index, this);
     }
     if (file.isFile()) {
-      Loader loader = new JarLoader(url, index, this);
+      JarLoader loader = new JarLoader(url, index, this);
       if (processRecursively) {
-        String[] referencedJars = loadManifestClasspath((JarLoader)loader);
+        String[] referencedJars = loadManifestClasspath(loader);
         if (referencedJars != null) {
           for (String referencedJar : referencedJars) {
             try {
