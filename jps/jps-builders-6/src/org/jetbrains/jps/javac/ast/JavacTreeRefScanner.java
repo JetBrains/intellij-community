@@ -182,6 +182,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
 
   private final Stack<TypeElement> myCurrentEnclosingElement = new Stack<TypeElement>(1);
   private final Stack<Long> myCurrentEnclosingElementOffset = new Stack<Long>(1);
+  private final Stack<NewClassTree> myCurrentAnonymousTree = new Stack<NewClassTree>(1);
 
   @Override
   public Tree visitClass(ClassTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {

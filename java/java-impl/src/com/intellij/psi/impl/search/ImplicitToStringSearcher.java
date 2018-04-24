@@ -34,7 +34,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
   private static final Logger LOG = Logger.getInstance(ImplicitToStringSearcher.class);
 
   @Override
-  public void processQuery(@NotNull ImplicitToStringSearch.SearchParameters parameters, @NotNull Processor<PsiExpression> consumer) {
+  public void processQuery(@NotNull ImplicitToStringSearch.SearchParameters parameters, @NotNull Processor<? super PsiExpression> consumer) {
     PsiMethod targetMethod = parameters.getTargetMethod();
     Project project = PsiUtilCore.getProjectInReadAction(targetMethod);
     if (project == null) return;
@@ -87,7 +87,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
                                      int[] offsets,
                                      PsiManager manager,
                                      PsiMethod targetMethod,
-                                     Processor<PsiExpression> consumer) {
+                                     Processor<? super PsiExpression> consumer) {
     return ReadAction.compute(() -> {
       PsiFile psiFile = ObjectUtils.notNull(manager.findFile(file));
       if (!(psiFile instanceof PsiJavaFile)) {
@@ -124,7 +124,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
   }
 
   private static boolean processPolyadicExprOperand(@NotNull PsiExpression expr,
-                                                    @NotNull Processor<PsiExpression> consumer,
+                                                    @NotNull Processor<? super PsiExpression> consumer,
                                                     @NotNull PsiMethod targetMethod) {
     PsiType type = expr.getType();
     if (type instanceof PsiPrimitiveType) {
@@ -138,63 +138,5 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
       }
     }
     return true;
-  }
-
-  private static class MyImplicitToStringReference implements PsiReference {
-    private final PsiElement myPlace;
-    private final PsiMethod myTargetMethod;
-
-    private MyImplicitToStringReference(PsiElement place, PsiMethod method) {
-      myPlace = place;
-      myTargetMethod = method;
-    }
-
-    @Override
-    public PsiElement getElement() {
-      return myPlace;
-    }
-
-    @Override
-    public TextRange getRangeInElement() {
-      return new TextRange(0, myPlace.getTextLength());
-    }
-
-    @Nullable
-    @Override
-    public PsiElement resolve() {
-      return myTargetMethod;
-    }
-
-    @NotNull
-    @Override
-    public String getCanonicalText() {
-      return myPlace.getText();
-    }
-
-    @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return null;
-    }
-
-    @Override
-    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-      return null;
-    }
-
-    @Override
-    public boolean isReferenceTo(PsiElement element) {
-      return element == myTargetMethod;
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    @Override
-    public boolean isSoft() {
-      return false;
-    }
   }
 }
