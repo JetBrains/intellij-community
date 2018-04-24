@@ -1237,15 +1237,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      if (!isToolbar(e)) {
-        e.getPresentation().setIcon(AllIcons.General.Inline_edit);
-        e.getPresentation().setHoveredIcon(AllIcons.General.Inline_edit_hovered);
-      }
-    }
-
-    @Override
     public void actionPerformed(AnActionEvent e) {
       super.actionPerformed(e);
       final JBPopup hint = myHint;
