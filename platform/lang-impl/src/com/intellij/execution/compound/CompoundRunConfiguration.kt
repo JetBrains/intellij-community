@@ -188,7 +188,7 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
           return@getRunningDescriptors true
         }
 
-        val settings = manager.findConfigurationByTypeAndName(configuration.type.id, configuration.name)
+        val settings = manager.findConfigurationByTypeAndName(configuration.type, configuration.name)
         if (settings != null && settings.isSingleton && configuration == s.configuration) {
           return@getRunningDescriptors true
         }

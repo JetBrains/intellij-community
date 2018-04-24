@@ -304,10 +304,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
         userObject = userObject.settings
       }
       if (userObject is RunnerAndConfigurationSettingsImpl) {
-        val runnerAndConfigurationSettings = userObject as RunnerAndConfigurationSettings
-        val configurationType = configuration.type
-        if (Comparing.strEqual(runnerAndConfigurationSettings.configuration.type.id, configurationType.id) && Comparing.strEqual(
-          runnerAndConfigurationSettings.configuration.name, configuration.name)) {
+        val otherConfiguration = (userObject as RunnerAndConfigurationSettings).configuration
+        if (otherConfiguration.factory?.type?.id == configuration.factory?.type?.id && otherConfiguration.name == configuration.name) {
           TreeUtil.selectInTree(node, true, tree)
           return true
         }

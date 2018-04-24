@@ -36,7 +36,8 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    */
   @NotNull
   default ConfigurationType getType() {
-    return getFactory().getType();
+    ConfigurationFactory factory = getFactory();
+    return factory == null ? UnknownConfigurationType.INSTANCE : factory.getType();
   }
 
   /**
