@@ -187,7 +187,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private class AddExportsOptionFix(module: Module, targetName: String, packageName: String, private val useName: String) : CompilerOptionFix(module) {
-    private val qualifier = targetName + '/' + packageName
+    private val qualifier = "${targetName}/${packageName}"
 
     override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-exports=${qualifier}=${useName}")
 
@@ -210,7 +210,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         candidate == options.size -> options[idx - 1] = "--add-exports=${qualifier}=${useName}"
         else -> {
           val value = options[idx]
-          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + useName else value + ',' + useName
+          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + useName else "${value},${useName}"
         }
       }
     }
@@ -232,7 +232,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         options.size -> options[idx - 1] = "--add-modules=${moduleName}"
         else -> {
           val value = options[idx]
-          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + moduleName else value + ',' + moduleName
+          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + moduleName else "${value},${moduleName}"
         }
       }
     }
