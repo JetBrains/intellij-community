@@ -72,18 +72,13 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
             continue;
           }
 
-          boolean problemRegistered = false;
           for (String annotation : unstableApiAnnotations) {
             if (modifierListOwner.hasAnnotation(annotation)) {
               holder.registerProblem(reference,
                                      DevKitBundle.message("inspections.unstable.api.usage.description", getReferenceText(reference)),
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-              problemRegistered = true;
-              break;
+              return;
             }
-          }
-          if (problemRegistered) {
-            break;
           }
         }
       }
