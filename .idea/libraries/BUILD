@@ -1230,14 +1230,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "jetifier-core",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/jetifier/jetifier-core/0.0.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/jetifier/jetifier-core/0.0.1:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "jgoodies-common",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/jgoodies/jgoodies-common/1.4.0:jar"],
