@@ -35,11 +35,7 @@ public class QuerySearchRequest {
     }
   }
 
-  public void runQuery() {
-    doRunQuery();
-  }
-
-  public boolean doRunQuery() {
+  public boolean runQuery() {
     return query.forEach(processor);
   }
 

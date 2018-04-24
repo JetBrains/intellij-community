@@ -646,7 +646,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final SearchRequestCollector each = queue.removeFirst();
       for (QuerySearchRequest request : each.takeQueryRequests()) {
         progress.checkCanceled();
-        if (!request.doRunQuery()) {
+        if (!request.runQuery()) {
           return QueryRequestsRunResult.CANCELLED;
         }
         assert !collectors.containsKey(request.collector) || collectors.get(request.collector) == request.processor;
