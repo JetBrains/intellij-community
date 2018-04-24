@@ -25,8 +25,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       public void visitLocalVariable(PsiLocalVariable variable) {
         if (!isBoxedType(variable.getType())) return;
         PsiExpression initializer = variable.getInitializer();
-        if (initializer != null &&
-            !isNotNull(initializer)) {
+        if (initializer != null && !(initializer.getType() instanceof PsiPrimitiveType)) {
           return;
         }
         if (ExpressionUtils.isNullLiteral(variable.getInitializer())) return;
@@ -35,7 +34,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         BoxingVisitor visitor = new BoxingVisitor(variable);
         block.accept(visitor);
         if (visitor.myBoxingRequired || !visitor.myHasReferences) return;
-        holder.registerProblem(variable.getTypeElement(), InspectionsBundle.message("inspection.wrapper.type.may.be.primitive.fix.name"),
+        holder.registerProblem(variable.getTypeElement(), InspectionsBundle.message("inspection.wrapper.type.may.be.primitive.name"),
                                new ConvertWrapperTypeToPrimitive());
       }
     };
@@ -60,16 +59,16 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       }
       else if (parent instanceof PsiExpressionList) {
         PsiElement grandParent = parent.getParent();
-        if (!(grandParent instanceof PsiMethodCallExpression)) return;
+        if (!(grandParent instanceof PsiCallExpression)) return;
         PsiExpression[] arguments = ((PsiExpressionList)parent).getExpressions();
         int argumentsIndex = ArrayUtil.indexOf(arguments, expression);
         if (argumentsIndex == -1) return;
-        PsiMethod method = ((PsiMethodCallExpression)grandParent).resolveMethod();
+        PsiMethod method = ((PsiCallExpression)grandParent).resolveMethod();
         if (method == null) return;
         PsiParameter[] parameters = method.getParameterList().getParameters();
         int parameterIndex = parameters.length > argumentsIndex ? parameters.length - 1 : argumentsIndex;
         PsiParameter parameter = parameters[parameterIndex];
-        if (!isBoxedType(parameter.getType())) return;
+        if (parameter.getType() instanceof PsiPrimitiveType) return;
         boxingRequired();
       }
       else if (parent instanceof PsiAssignmentExpression) {
@@ -113,7 +112,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.wrapper.type.may.be.primitive.name");
+      return InspectionsBundle.message("inspection.wrapper.type.may.be.primitive.fix.name");
     }
 
     @Override

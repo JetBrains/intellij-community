@@ -2,7 +2,7 @@ import java.util.*;
 
 class TypeMayBePrimitive {
   void initializer() {
-    <warning descr="Convert wrapper type to primitive">Boolean</warning> b1 = true;
+    <warning descr="Type may be primitive">Boolean</warning> b1 = true;
     use(b1);
     Boolean b2 = null;
     use(b2);
@@ -25,10 +25,19 @@ class TypeMayBePrimitive {
 
     Long withoutInitializer;
 
-    Boolean boxNeeded = getNullBox();
+    Boolean boxNeeded;
+    boxNeeded = getNullBox();
     use(boxNeeded);
-    <warning descr="Convert wrapper type to primitive">Boolean</warning> boxNotNeeded = getNotNullBox();
+    <warning descr="Type may be primitive">Boolean</warning> boxNotNeeded;
+    boxNotNeeded = getNotNullBox();
     use(boxNotNeeded);
+
+    Boolean bool = getBool();
+    use(bool);
+  }
+
+  Boolean getBool() {
+    return true;
   }
 
   private static Boolean getNullBox() {
@@ -45,7 +54,7 @@ class TypeMayBePrimitive {
   void boxedAndPrimitiveParam(int i1, Integer i2) {}
 
   void methods() {
-    <warning descr="Convert wrapper type to primitive">Integer</warning> i1 = 12;
+    <warning descr="Type may be primitive">Integer</warning> i1 = 12;
     primitiveParam(i1);
 
     Integer i2 = 12;
@@ -53,5 +62,18 @@ class TypeMayBePrimitive {
 
     Integer i3 = 12;
     boxedAndPrimitiveParam(i3, i3);
+  }
+
+  void constructors() {
+    Integer i = getBool() ? 1 : 12;
+    C c = new C(i);
+  }
+
+  static class C {
+    Integer i;
+
+    public C(Integer i) {
+      this.i = i;
+    }
   }
 }

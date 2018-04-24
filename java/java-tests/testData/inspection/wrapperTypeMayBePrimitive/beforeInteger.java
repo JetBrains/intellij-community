@@ -1,4 +1,4 @@
-// "Type may be primitive" "true"
+// "Convert wrapper type to primitive" "true"
 import java.util.*;
 
 class TypeMayBePrimitive {
