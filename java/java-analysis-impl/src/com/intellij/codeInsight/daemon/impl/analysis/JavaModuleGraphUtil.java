@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.openapi.module.Module;
@@ -156,7 +156,7 @@ public class JavaModuleGraphUtil {
   }
 
   private static void visit(PsiJavaModule module, MultiMap<PsiJavaModule, PsiJavaModule> relations, Set<String> transitiveEdges) {
-    if (!relations.containsKey(module)) {
+    if (!(module instanceof LightJavaModule) && !relations.containsKey(module)) {
       relations.putValues(module, Collections.emptyList());
       boolean explicitJavaBase = false;
       for (PsiRequiresStatement statement : module.getRequires()) {
@@ -168,7 +168,7 @@ public class JavaModuleGraphUtil {
           visit(dependency, relations, transitiveEdges);
         }
       }
-      if (!explicitJavaBase && !(module instanceof LightJavaModule)) {
+      if (!explicitJavaBase) {
         PsiJavaModule javaBase = PsiJavaModuleReference.resolve(module, PsiJavaModule.JAVA_BASE, false);
         if (javaBase != null) relations.putValue(module, javaBase);
       }
