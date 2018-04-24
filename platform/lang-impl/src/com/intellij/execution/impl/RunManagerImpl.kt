@@ -1015,4 +1015,4 @@ private inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(han
 }
 
 internal val ConfigurationType.isManaged: Boolean
-  get() = this is UnknownRunConfiguration
+  get() = this !is UnknownConfigurationType
