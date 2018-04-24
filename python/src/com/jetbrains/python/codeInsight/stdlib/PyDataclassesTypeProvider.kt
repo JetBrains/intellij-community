@@ -80,7 +80,7 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
   }
 
   private fun getDataclassTypeForClass(cls: PyClass, context: TypeEvalContext): PyCallableType? {
-    val dataclassParameters = parseStdDataclassParameters(cls, context)
+    val dataclassParameters = parseDataclassParameters(cls, context)
     if (dataclassParameters == null || !dataclassParameters.init) {
       return null
     }

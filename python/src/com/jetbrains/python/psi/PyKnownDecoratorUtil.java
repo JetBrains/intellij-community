@@ -70,7 +70,8 @@ public class PyKnownDecoratorUtil {
     DJANGO_UTILS_FUNCTIONAL_CACHED_PROPERTY("django.utils.functional.cached_property"),
     KOMBU_UTILS_CACHED_PROPERTY("kombu.utils.cached_property"),
 
-    DATACLASSES_DATACLASS("dataclasses.dataclass");
+    DATACLASSES_DATACLASS("dataclasses.dataclass"),
+    ATTR_S("attr.__init__.s");
 
     private final QualifiedName myQualifiedName;
 

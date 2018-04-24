@@ -6,6 +6,7 @@ package com.jetbrains.python.codeInsight.stdlib
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
+import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -17,22 +18,42 @@ const val DUNDER_POST_INIT: String = "__post_init__"
 
 
 fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
+  return parseDataclassParameters(cls, context, mapOf(KnownDecorator.DATACLASSES_DATACLASS to PyDataclassParameters.Type.STD))
+}
+
+fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
+  return parseDataclassParameters(
+    cls,
+    context,
+    mapOf(
+      KnownDecorator.DATACLASSES_DATACLASS to PyDataclassParameters.Type.STD,
+      KnownDecorator.ATTR_S to PyDataclassParameters.Type.ATTRS
+    )
+  )
+}
+
+private fun parseDataclassParameters(cls: PyClass,
+                                     context: TypeEvalContext,
+                                     types: Map<KnownDecorator, PyDataclassParameters.Type>): PyDataclassParameters? {
   val decorators = cls.decoratorList ?: return null
 
   for (decorator in decorators.decorators) {
-    if (PyKnownDecoratorUtil.asKnownDecorators(decorator, context).contains(PyKnownDecoratorUtil.KnownDecorator.DATACLASSES_DATACLASS)) {
-      for (mapping in decorator.multiMapArguments(PyResolveContext.noImplicits().withTypeEvalContext(context))) {
-        if (mapping.unmappedArguments.isEmpty() && mapping.unmappedParameters.isEmpty()) {
-          val builder = PyDataclassParametersBuilder()
+    for (knownDecorator in PyKnownDecoratorUtil.asKnownDecorators(decorator, context)) {
+      val type = types[knownDecorator]
+      if (type != null) {
+        for (mapping in decorator.multiMapArguments(PyResolveContext.noImplicits().withTypeEvalContext(context))) {
+          if (mapping.unmappedArguments.isEmpty() && mapping.unmappedParameters.isEmpty()) {
+            val builder = PyDataclassParametersBuilder(type)
 
-          mapping
-            .mappedParameters
-            .entries
-            .forEach {
-              builder.update(it.value.name, it.key)
-            }
+            mapping
+              .mappedParameters
+              .entries
+              .forEach {
+                builder.update(it.value.name, it.key)
+              }
 
-          return builder.build()
+            return builder.build()
+          }
         }
       }
     }
@@ -40,6 +61,7 @@ fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDatac
 
   return null
 }
+
 
 data class PyDataclassParameters(val init: Boolean,
                                  val repr: Boolean,
@@ -52,9 +74,16 @@ data class PyDataclassParameters(val init: Boolean,
                                  val eqArgument: PyExpression?,
                                  val orderArgument: PyExpression?,
                                  val unsafeHashArgument: PyExpression?,
-                                 val frozenArgument: PyExpression?)
+                                 val frozenArgument: PyExpression?,
+                                 val type: Type,
+                                 val others: Map<String, PyExpression>) {
 
-private class PyDataclassParametersBuilder {
+  enum class Type {
+    STD, ATTRS
+  }
+}
+
+private class PyDataclassParametersBuilder(private val type: PyDataclassParameters.Type) {
 
   companion object {
     private const val DEFAULT_INIT = true
@@ -79,6 +108,8 @@ private class PyDataclassParametersBuilder {
   private var unsafeHashArgument: PyExpression? = null
   private var frozenArgument: PyExpression? = null
 
+  private val others = mutableMapOf<String, PyExpression>()
+
   fun update(name: String?, argument: PyExpression?) {
     val value = PyUtil.peelArgument(argument)
 
@@ -86,30 +117,63 @@ private class PyDataclassParametersBuilder {
       "init" -> {
         init = PyEvaluator.evaluateAsBoolean(value, DEFAULT_INIT)
         initArgument = argument
+        return
       }
       "repr" -> {
         repr = PyEvaluator.evaluateAsBoolean(value, DEFAULT_REPR)
         reprArgument = argument
-      }
-      "eq" -> {
-        eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
-        eqArgument = argument
-      }
-      "order" -> {
-        order = PyEvaluator.evaluateAsBoolean(value, DEFAULT_ORDER)
-        orderArgument = argument
-      }
-      "unsafe_hash" -> {
-        unsafeHash = PyEvaluator.evaluateAsBoolean(value, DEFAULT_UNSAFE_HASH)
-        unsafeHashArgument = argument
+        return
       }
       "frozen" -> {
         frozen = PyEvaluator.evaluateAsBoolean(value, DEFAULT_FROZEN)
         frozenArgument = argument
+        return
       }
+    }
+
+    if (type == PyDataclassParameters.Type.STD) {
+      when (name) {
+        "eq" -> {
+          eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
+          eqArgument = argument
+          return
+        }
+        "order" -> {
+          order = PyEvaluator.evaluateAsBoolean(value, DEFAULT_ORDER)
+          orderArgument = argument
+          return
+        }
+        "unsafe_hash" -> {
+          unsafeHash = PyEvaluator.evaluateAsBoolean(value, DEFAULT_UNSAFE_HASH)
+          unsafeHashArgument = argument
+          return
+        }
+      }
+    }
+    else if (type == PyDataclassParameters.Type.ATTRS) {
+      when (name) {
+        "cmp" -> {
+          eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
+          eqArgument = argument
+
+          order = eq
+          orderArgument = eqArgument
+          return
+        }
+        "hash" -> {
+          unsafeHash = PyEvaluator.evaluateAsBoolean(value, DEFAULT_UNSAFE_HASH)
+          unsafeHashArgument = argument
+          return
+        }
+      }
+    }
+
+    if (name != null && argument != null) {
+      others[name] = argument
     }
   }
 
   fun build() = PyDataclassParameters(init, repr, eq, order, unsafeHash, frozen,
-                                      initArgument, reprArgument, eqArgument, orderArgument, unsafeHashArgument, frozenArgument)
+                                      initArgument, reprArgument, eqArgument, orderArgument, unsafeHashArgument, frozenArgument,
+                                      type, others)
 }
