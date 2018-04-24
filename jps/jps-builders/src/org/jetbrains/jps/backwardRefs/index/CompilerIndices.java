@@ -23,7 +23,7 @@ import java.util.List;
 
 public class CompilerIndices {
   //TODO manage version separately
-  public final static int VERSION = 6;
+  public final static int VERSION = 7;
 
   public final static IndexId<LightRef, Integer> BACK_USAGES = IndexId.create("back.refs");
   public final static IndexId<LightRef, Collection<LightRef>> BACK_HIERARCHY = IndexId.create("back.hierarchy");
