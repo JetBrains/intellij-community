@@ -175,9 +175,11 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     writeBool(node, useParameterizedTypeForCollectionMethods, "useParameterizedTypeForCollectionMethods");
     writeBool(node, doNotWeakenToJavaLangObject, "doNotWeakenToJavaLangObject");
     writeBool(node, onlyWeakentoInterface, "onlyWeakentoInterface");
-    writeBool(node, doNotWeakenInferredVariableType, "doNotWeakenInferredVariableType");
     if (!doNotWeakenReturnType) {
-      writeBool(node, true, "doNotWeakenReturnType");
+      writeBool(node, false, "doNotWeakenReturnType");
+    }
+    if (!doNotWeakenInferredVariableType) {
+      writeBool(node, false, "doNotWeakenInferredVariableType");
     }
     if (!myStopClassSet.isEmpty()) {
       Element stopClasses = new Element("stopClasses");
