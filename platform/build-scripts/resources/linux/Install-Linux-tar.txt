@@ -44,8 +44,6 @@ INSTALLATION INSTRUCTIONS
      with at least 1GB of free space.
 
 
-
-
 Enjoy!
 
 -@@product_full@@ Development Team
