@@ -123,6 +123,10 @@ public class UserDefinedJsonSchemaConfiguration {
     myCalculatedPatterns.drop();
   }
 
+  public void refreshPatterns() {
+    myCalculatedPatterns.drop();
+  }
+
   @NotNull
   public List<PairProcessor<Project, VirtualFile>> getCalculatedPatterns() {
     return myCalculatedPatterns.getValue();

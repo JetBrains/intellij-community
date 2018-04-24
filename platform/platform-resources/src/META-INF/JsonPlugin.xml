@@ -7,7 +7,9 @@
   </application-components>
 
   <project-components>
-    <!-- Add your project components here -->
+    <component>
+      <implementation-class>com.jetbrains.jsonSchema.widget.JsonWidgetProvider</implementation-class>
+    </component>
   </project-components>
 
   <actions>

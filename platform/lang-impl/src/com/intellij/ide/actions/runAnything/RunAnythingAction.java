@@ -424,7 +424,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         runOnFocusSettlesDown(project, (RunAnythingItem)value, focusManager);
         return;
       }
-      VirtualFile directory = getWorkDirectory(module);
+      VirtualFile directory = getWorkDirectory(module, ALT_IS_PRESSED.get());
       DataContext dataContext = createDataContext(myDataContext, directory, null, null);
       if (value instanceof RunAnythingCommandItem) {
         onDone = () -> ((RunAnythingCommandItem)value).run(dataContext);
@@ -506,14 +506,16 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   @NotNull
-  private VirtualFile getWorkDirectory(@Nullable Module module) {
-    if (ALT_IS_PRESSED.get() && myVirtualFile != null) {
-      return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
-    }
+  private VirtualFile getWorkDirectory(@Nullable Module module, boolean isAltPressed) {
+    if (isAltPressed) {
+      if (myVirtualFile != null) {
+        return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
+      }
 
-    VirtualFile[] selectedFiles = FileEditorManager.getInstance(getProject()).getSelectedFiles();
-    if (selectedFiles.length > 0) {
-      return selectedFiles[0].getParent();
+      VirtualFile[] selectedFiles = FileEditorManager.getInstance(getProject()).getSelectedFiles();
+      if (selectedFiles.length > 0) {
+        return selectedFiles[0].getParent();
+      }
     }
 
     return getBaseDirectory(module);
@@ -646,36 +648,30 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myTextField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()) {
-          case KeyEvent.VK_SHIFT:
-            myTextFieldTitle.setText(IdeBundle.message("run.anything.run.debug.title"));
-            break;
-          case KeyEvent.VK_ALT:
-            updateByContextSwitch(IdeBundle.message("run.anything.run.in.context.title"), true);
-            break;
-        }
-
-        if (e.isShiftDown() && e.isAltDown()) {
-          myTextFieldTitle.setText(IdeBundle.message("run.anything.run.in.context.debug.title"));
-        }
+        updateByModifierKeysEvent(e);
       }
 
       @Override
       public void keyReleased(KeyEvent e) {
-        switch (e.getKeyCode()) {
-          case KeyEvent.VK_SHIFT:
-            myTextFieldTitle.setText(IdeBundle.message("run.anything.run.anything.title"));
-            break;
-          case KeyEvent.VK_ALT:
-            updateByContextSwitch(IdeBundle.message("run.anything.run.anything.title"), false);
-            break;
-        }
+        updateByModifierKeysEvent(e);
       }
 
-      private void updateByContextSwitch(@NotNull String message, boolean isAltPressed) {
-        ALT_IS_PRESSED.set(isAltPressed);
+      private void updateByModifierKeysEvent(@NotNull KeyEvent e) {
+        String message;
+        if (e.isShiftDown() && e.isAltDown()) {
+          message = IdeBundle.message("run.anything.run.in.context.debug.title");
+        }
+        else if (e.isShiftDown()) {
+          message = IdeBundle.message("run.anything.run.debug.title");
+        }
+        else if (e.isAltDown()) {
+          message = IdeBundle.message("run.anything.run.in.context.title");
+        }
+        else {
+          message = IdeBundle.message("run.anything.run.anything.title");
+        }
         myTextFieldTitle.setText(message);
-        updateMatchedRunConfigurationStuff();
+        updateMatchedRunConfigurationStuff(e.isAltDown());
       }
     });
 
@@ -804,17 +800,17 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myPopupField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        updateMatchedRunConfigurationStuff();
+        updateMatchedRunConfigurationStuff(ALT_IS_PRESSED.get());
       }
     });
   }
 
-  private void updateMatchedRunConfigurationStuff() {
+  private void updateMatchedRunConfigurationStuff(boolean isAltPressed) {
     JBTextField textField = myPopupField.getTextEditor();
     String pattern = textField.getText();
 
-    RunAnythingRunConfigurationProvider
-      provider = RunAnythingRunConfigurationProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule()));
+    RunAnythingRunConfigurationProvider provider =
+      RunAnythingRunConfigurationProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule(), isAltPressed));
     String name = provider != null ? provider.getConfigurationFactory().getName() : null;
 
     if (name != null) {
