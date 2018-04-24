@@ -32,7 +32,7 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   private final FilePath myPath;
   private final AbstractVcs myVcs;
   @Nullable private final VcsRevisionNumber myStartingRevisionNumber;
-  private boolean myCanUseCache;
+  private boolean myFirstTime = true;
   private boolean myIsRefresh;
 
   public FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
@@ -57,7 +57,6 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
     myVcs = vcs;
     myStartingRevisionNumber = startingRevisionNumber;
     mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, path, startingRevisionNumber, vcs, this);
-    myCanUseCache = true;
   }
 
   @NotNull
@@ -88,9 +87,9 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
       VcsCachingHistory.collectInBackground(myVcs, myPath, myStartingRevisionNumber, mySessionPartner);
     }
     else {
-      VcsCachingHistory.collectInBackground(myVcs, myPath, mySessionPartner, myCanUseCache, canUseLastRevision);
+      VcsCachingHistory.collectInBackground(myVcs, myPath, mySessionPartner, myFirstTime, canUseLastRevision);
     }
-    myCanUseCache = false;
+    myFirstTime = false;
   }
 
   /**
