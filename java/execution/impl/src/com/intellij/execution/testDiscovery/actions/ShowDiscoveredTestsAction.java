@@ -18,6 +18,7 @@ import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -320,9 +321,13 @@ public class ShowDiscoveredTestsAction extends AnAction {
   }
 
   private static String getName(PsiClass c) {
-    StringBuilder buf = new StringBuilder();
-    ClassUtil.formatClassName(c, buf);
-    return buf.toString();
+    if (c instanceof PsiAnonymousClass) {
+      PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);
+      if (containingClass != null) {
+        return ClassUtil.getJVMClassName(containingClass) + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)c);
+      }
+    }
+    return ClassUtil.getJVMClassName(c);
   }
 
   @Nullable
