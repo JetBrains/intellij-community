@@ -68,7 +68,7 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
       // TODO: Logic should be revised to just append some revisions to history panel instead of creating and showing new history session
       mySession.getRevisionList().addAll(vcsFileRevisions);
       VcsHistorySession copy = mySession.copyWithCachedRevision();
-      ApplicationManager.getApplication().invokeAndWait(() -> myFileHistoryPanel.getHistoryPanelRefresh().consume(copy));
+      ApplicationManager.getApplication().invokeAndWait(() -> myFileHistoryPanel.setHistorySession(copy));
     };
     myBuffer = new BufferedListConsumer<VcsFileRevision>(5, sessionRefresher, 1000) {
       @Override
@@ -115,7 +115,7 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (mySession != null && !mySession.getRevisionList().isEmpty()) {
-        myFileHistoryPanel.getHistoryPanelRefresh().consume(mySession.copyWithCachedRevision());
+        myFileHistoryPanel.setHistorySession(mySession.copyWithCachedRevision());
       }
     });
   }
@@ -160,7 +160,7 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
         // nothing to be done, exit
         return;
       }
-      myFileHistoryPanel.getHistoryPanelRefresh().finished();
+      myFileHistoryPanel.finishRefresh();
     });
   }
 }

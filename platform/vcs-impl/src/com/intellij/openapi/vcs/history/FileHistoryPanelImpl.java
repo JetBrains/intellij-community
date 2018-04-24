@@ -62,6 +62,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +99,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @NotNull private final FileHistoryRefresherI myRefresherI;
   @NotNull private final FilePath myFilePath;
   @Nullable private final VcsRevisionNumber myStartingRevision;
-  @NotNull private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
   @NotNull private final Map<VcsRevisionNumber, Integer> myRevisionsOrder = ContainerUtil.newHashMap();
   @NotNull private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = ContainerUtil.newHashMap();
   @NotNull private final DetailsPanel myDetails;
@@ -172,30 +172,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if (isStaticEmbedded) {
       setIsStaticAndEmbedded(true);
     }
-
-    myHistoryPanelRefresh = new AsynchConsumer<VcsHistorySession>() {
-      @Override
-      public void finished() {
-        if (treeHistoryProvider != null) {
-          // scroll tree view to most recent change
-          final TreeTableView treeView = myDualView.getTreeView();
-          final int lastRow = treeView.getRowCount() - 1;
-          if (lastRow >= 0) {
-            treeView.scrollRectToVisible(treeView.getCellRect(lastRow, 0, true));
-          }
-        }
-        myInRefresh = false;
-        myTargetSelection = null;
-
-        mySplitter.revalidate();
-        mySplitter.repaint();
-      }
-
-      @Override
-      public void consume(@NotNull VcsHistorySession vcsHistorySession) {
-        FileHistoryPanelImpl.this.refresh(vcsHistorySession);
-      }
-    };
 
     int delayMillis = 20_000;
     Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
@@ -296,7 +272,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return columns.toArray(new DualViewColumnInfo[0]);
   }
 
-  private void refresh(@NotNull VcsHistorySession session) {
+  @CalledInAwt
+  public void setHistorySession(@NotNull VcsHistorySession session) {
     myHistorySession = session;
     refreshRevisionsOrder();
     HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
@@ -317,6 +294,23 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     myDualView.expandAll();
     myDualView.repaint();
+  }
+
+  @CalledInAwt
+  public void finishRefresh() {
+    if (myHistorySession.getHistoryAsTreeProvider() != null) {
+      // scroll tree view to most recent change
+      final TreeTableView treeView = myDualView.getTreeView();
+      final int lastRow = treeView.getRowCount() - 1;
+      if (lastRow >= 0) {
+        treeView.scrollRectToVisible(treeView.getCellRect(lastRow, 0, true));
+      }
+    }
+    myInRefresh = false;
+    myTargetSelection = null;
+
+    mySplitter.revalidate();
+    mySplitter.repaint();
   }
 
   private void adjustEmptyText() {
@@ -441,11 +435,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
       myRefresherI.refresh(canUseCache);
     });
-  }
-
-  @NotNull
-  public AsynchConsumer<VcsHistorySession> getHistoryPanelRefresh() {
-    return myHistoryPanelRefresh;
   }
 
   public Object getData(String dataId) {
