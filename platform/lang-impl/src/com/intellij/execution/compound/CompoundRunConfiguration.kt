@@ -21,9 +21,8 @@ data class TypeNameTarget(val type: String, val name: String, val targetId: Stri
 
 data class SettingsAndEffectiveTarget(val settings: RunnerAndConfigurationSettings, val target: ExecutionTarget)
 
-class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationType, name: String) : RunConfigurationBase(project,
-                                                                                                                          type.configurationFactories[0],
-                                                                                                                          name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
+class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name: String, factory: ConfigurationFactory = CompoundRunConfigurationType.getInstance().configurationFactories.first()) :
+  RunConfigurationBase(project, factory, name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
     @JvmField
     val COMPARATOR = Comparator<RunConfiguration> { o1, o2 ->
@@ -116,7 +115,7 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
     }
   }
 
-  fun getConfigurationsWithEffectiveRunTargets() : List<SettingsAndEffectiveTarget> {
+  fun getConfigurationsWithEffectiveRunTargets(): List<SettingsAndEffectiveTarget> {
     val runManager = RunManagerImpl.getInstanceImpl(project)
     val activeTarget = ExecutionTargetManager.getActiveTarget(project)
     val defaultTarget = DefaultExecutionTarget.INSTANCE
