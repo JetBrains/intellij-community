@@ -67,12 +67,11 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
         }
 
         for (PsiReference reference : element.getReferences()) {
-          PsiElement resolvedElement = resolvedConstructor != null ? resolvedConstructor : reference.resolve();
-          if (!(resolvedElement instanceof PsiModifierListOwner) || !isLibraryElement(resolvedElement)) {
+          PsiModifierListOwner modifierListOwner = getModifierListOwner(reference, resolvedConstructor);
+          if (modifierListOwner == null || !isLibraryElement(modifierListOwner)) {
             continue;
           }
 
-          PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolvedElement;
           boolean problemRegistered = false;
           for (String annotation : unstableApiAnnotations) {
             if (modifierListOwner.hasAnnotation(annotation)) {
@@ -117,6 +116,28 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     }
     // references are not PsiQualifiedReference for annotation attributes
     return StringUtil.getShortName(reference.getCanonicalText());
+  }
+
+  @Nullable
+  private static PsiModifierListOwner getModifierListOwner(@NotNull PsiReference reference, @Nullable PsiMethod resolvedConstructor) {
+    if (resolvedConstructor != null) {
+      return resolvedConstructor;
+    }
+
+    if (reference instanceof ResolvingHint) {
+      if (((ResolvingHint)reference).canResolveTo(PsiModifierListOwner.class)) {
+        return (PsiModifierListOwner)reference.resolve();
+      }
+      else {
+        return null;
+      }
+    }
+
+    PsiElement resolvedElement = reference.resolve();
+    if (resolvedElement instanceof PsiModifierListOwner) {
+      return (PsiModifierListOwner)resolvedElement;
+    }
+    return null;
   }
 
   private boolean isApplicable(@NotNull Project project) {
