@@ -1008,10 +1008,10 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "auto-value-1.4.1",
+    name = "auto-value-annotations",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value-annotations/1.6:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value-annotations/1.6:jar"],
 )
 
 filegroup(
