@@ -183,5 +183,21 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testNestedAnonymouses() {
     assertIndexOnRebuild("Anonymouses.java", "Classes.java")
   }
+
+  fun testImplicitToString() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testImplicitToStringPrimitives() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testImplicitToStringLongObject() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testImplicitToStringHierarchy() {
+    assertIndexOnRebuild("Foo.java")
+  }
 }
 
