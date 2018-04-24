@@ -425,4 +425,56 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
       "}"
     );
   }
+
+  public void testIdea108112() throws IOException {
+    CodeStyleSettings settings = getCodeStyleSettings();
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.ALIGN_MULTILINE_BINARY_OPERATION = true;
+    setCodeStyleSettings(settings);
+
+    doTextTest(
+      "java",
+
+      "public class Test {\n" +
+      "    public void bar() {\n" +
+      "        boolean abc;\n" +
+      "        while (abc &&<caret>) {\n" +
+      "        }\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    public void bar() {\n" +
+      "        boolean abc;\n" +
+      "        while (abc &&\n" +
+      "               <caret>) {\n" +
+      "        }\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testIdea153628() throws IOException {
+    CodeStyleSettings settings = getCodeStyleSettings();
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.ALIGN_MULTILINE_BINARY_OPERATION = true;
+    setCodeStyleSettings(settings);
+
+    doTextTest(
+      "java",
+
+      "public class Test {\n" +
+      "    public boolean hasInvalidResults() {\n" +
+      "        return foo ||<caret>;\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    public boolean hasInvalidResults() {\n" +
+      "        return foo ||\n" +
+      "               <caret>;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

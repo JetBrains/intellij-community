@@ -591,6 +591,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
       else {
         Alignment alignment = alignmentStrategy.getAlignment(childType);
+
+        ChildAttributes delegateAttributes = getDelegateAttributes(result);
+        if (delegateAttributes != null) {
+          alignment = delegateAttributes.getAlignment();
+          if (delegateAttributes.getChildIndent() != null) {
+            childIndent = delegateAttributes.getChildIndent();
+          }
+        }
+
         AlignmentStrategy alignmentStrategyToUse = shouldAlignChild(child)
                                                    ? AlignmentStrategy.wrap(alignment)
                                                    : AlignmentStrategy.getNullStrategy();
@@ -621,6 +630,18 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     return child;
+  }
+
+  @Nullable
+  private ChildAttributes getDelegateAttributes(@NotNull List<Block> result) {
+    if (FormattingMode.ADJUST_INDENT_ON_ENTER.equals(myFormattingMode) && !result.isEmpty()) {
+      final int lastIndex = result.size() - 1;
+      Block lastBlock = result.get(lastIndex);
+      if (lastBlock.isIncomplete()) {
+        return lastBlock.getChildAttributes(lastBlock.getSubBlocks().size());
+      }
+    }
+    return null;
   }
 
   private static boolean isInsideMethodCall(@NotNull PsiElement element) {
