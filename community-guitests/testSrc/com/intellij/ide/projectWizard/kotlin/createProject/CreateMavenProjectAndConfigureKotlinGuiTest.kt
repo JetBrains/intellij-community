@@ -25,8 +25,7 @@ class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
     waitAMoment(extraTimeOut)
     editPomXml(
       kotlinVersion = kotlinVersion,
-      kotlinKind = kotlinKind,
-      projectName = *arrayOf(projectName)
+      kotlinKind = kotlinKind
     )
     waitAMoment(extraTimeOut)
     mavenReimport()
@@ -63,8 +62,7 @@ class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
     waitAMoment(extraTimeOut)
     editPomXml(
       kotlinVersion = kotlinVersion,
-      kotlinKind = kotlinKind,
-      projectName = *arrayOf(projectName)
+      kotlinKind = kotlinKind
     )
     waitAMoment(extraTimeOut)
     mavenReimport()
