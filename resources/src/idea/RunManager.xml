@@ -1,7 +1,4 @@
 <component>
-  <option name="SHOW_SETTINGS_BEFORE_RUNNING" value="true" />
-  <option name="COMPILE_BEFORE_RUNNING" value="true" />
-
   <configuration name="&lt;template&gt;" type="Application" default="true" selected="false">
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
   </configuration>
