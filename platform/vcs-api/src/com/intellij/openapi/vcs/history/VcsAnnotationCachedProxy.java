@@ -193,10 +193,6 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
         public void reportException(VcsException exception) {
           exc[0] = exception;
         }
-
-        @Override
-        public void finished() {
-        }
       });
     } catch (ProcessCanceledException e) {
      // ok

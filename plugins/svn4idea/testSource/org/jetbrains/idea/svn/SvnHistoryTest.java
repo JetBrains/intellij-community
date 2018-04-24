@@ -7,9 +7,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
-import com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsHistorySessionConsumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +131,7 @@ public class SvnHistoryTest extends SvnTestCase {
     AtomicInteger count = new AtomicInteger();
 
     semaphore.down();
-    provider.reportAppendableHistory(path, new VcsAppendableHistorySessionPartner() {
+    provider.reportAppendableHistory(path, new VcsHistorySessionConsumer() {
       @Override
       public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
       }

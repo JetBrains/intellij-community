@@ -39,10 +39,6 @@ public class VcsAppendableHistoryPartnerAdapter implements VcsAppendableHistoryS
     myException = exception;
   }
 
-  @Override
-  public void finished() {
-  }
-
   public void check() throws VcsException {
     if (myException != null) throw myException;
   }

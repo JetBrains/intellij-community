@@ -40,7 +40,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.sameHistories;
 
-public class FileHistorySessionPartner implements VcsAppendableHistorySessionPartner {
+public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
 
   @NotNull private final AbstractVcs myVcs;
   @NotNull private final VcsHistoryProvider myVcsHistoryProvider;
@@ -155,6 +155,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
     toolWindow.activate(null);
   }
 
+  @Override
   public void finished() {
     myBuffer.flush();
     ApplicationManager.getApplication().invokeAndWait(() -> {
