@@ -6,6 +6,8 @@
 
     <preloadingActivity implementation="com.intellij.codeInsight.completion.CompletionPreloader"/>
 
+    <referencesSearch implementation="com.intellij.model.search.impl.ModelToPsiReferenceSearcher" order="first"/>
+    <searchRequestor implementation="com.intellij.model.search.impl.PsiToModelSearchRequestor" order="last"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
 

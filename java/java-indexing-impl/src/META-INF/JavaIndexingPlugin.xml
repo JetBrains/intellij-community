@@ -75,12 +75,10 @@
     <annotatedPackagesSearch implementation="com.intellij.psi.impl.search.AnnotatedPackagesSearcher"/>
     <annotatedElementsSearch implementation="com.intellij.psi.impl.search.AnnotatedElementsSearcher"/>
     <allClassesSearch implementation="com.intellij.psi.impl.search.AllClassesSearchExecutor"/>
-    <referencesSearch implementation="com.intellij.psi.impl.search.ModelToPsiReferenceSearcher" order="first"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.VariableInIncompleteCodeSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SPIReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
     <searchRequestor implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
-    <searchRequestor implementation="com.intellij.psi.impl.search.PsiToModelSearchRequestor" order="last"/>
   </extensions>
 </idea-plugin>
