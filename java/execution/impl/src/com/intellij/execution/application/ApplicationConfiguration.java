@@ -22,11 +22,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -181,7 +184,11 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public void setWorkingDirectory(@Nullable String value) {
-    String normalizedValue = ExternalizablePath.urlValue(value);
+    String normalizedValue = StringUtil.isEmptyOrSpaces(value) ? null : FileUtilRt.toSystemIndependentName(value.trim());
+    if (normalizedValue != null && normalizedValue.equals(getProject().getBasePath())) {
+      normalizedValue = null;
+    }
+
     //noinspection deprecation
     WORKING_DIRECTORY = normalizedValue;
     getOptions().setWorkingDirectory(normalizedValue);
@@ -190,7 +197,11 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   public String getWorkingDirectory() {
     //noinspection deprecation
-    return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
+    String workingDirectory = WORKING_DIRECTORY;
+    if (workingDirectory == null) {
+      return PathUtil.toSystemDependentName(getProject().getBasePath());
+    }
+    return ExternalizablePath.localPathValue(workingDirectory);
   }
 
   @Override
