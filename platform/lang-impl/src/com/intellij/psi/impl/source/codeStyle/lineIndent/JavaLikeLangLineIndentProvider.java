@@ -319,18 +319,24 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   }
 
   /**
-   * Returns {@code true} if the {@code position} starts the statement that <i>can</i> have a code block.
-   * In C-kile languages it is one of {@code if, else, for, while, do, try}. 
+   * Returns {@code true} if the {@code position} starts a statement that <i>can</i> have a code block and the statement
+   * is the first in the code line.
+   * In C-like languages it is one of {@code if, else, for, while, do, try}. 
    * 
    * @param position
    */
   protected boolean isStartOfStatementWithOptionalBlock(@NotNull SemanticEditorPosition position) {
-    return position.isAtAnyOf(
-      ElseKeyword,
-      IfKeyword,
-      ForKeyword,
-      TryKeyword,
-      DoKeyword);
+    return position.matchesRule(
+      self -> {
+        final SemanticEditorPosition before = self.before();
+        return before.isAt(Whitespace)
+               && before.isAtMultiline()
+               && self.isAtAnyOf(ElseKeyword,
+                                 IfKeyword,
+                                 ForKeyword,
+                                 TryKeyword,
+                                 DoKeyword);
+      });
   }
 
   private static boolean atBlockStartAndNeedBlockIndent(@NotNull SemanticEditorPosition position) {
