@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.VcsInternalDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -34,6 +36,7 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +45,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.sameHistories;
 
-public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
+public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Disposable {
 
   @NotNull private final AbstractVcs myVcs;
   @NotNull private final VcsHistoryProvider myVcsHistoryProvider;
@@ -81,6 +84,8 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
         consumerRunnable.run();
       }
     };
+
+    Disposer.register(myFileHistoryPanel, this);
   }
 
   @Nullable
@@ -91,6 +96,11 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
       comp instanceof FileHistoryPanelImpl &&
       sameHistories((FileHistoryPanelImpl)comp, path, startingRevisionNumber));
     return component == null ? null : VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData((DataProvider)component);
+  }
+
+  @CalledInBackground
+  public boolean shouldBeRefreshed() {
+    return mySession.shouldBeRefreshed();
   }
 
   public void acceptRevision(VcsFileRevision revision) {
@@ -164,5 +174,9 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
       }
       myFileHistoryPanel.finishRefresh();
     });
+  }
+
+  @Override
+  public void dispose() {
   }
 }

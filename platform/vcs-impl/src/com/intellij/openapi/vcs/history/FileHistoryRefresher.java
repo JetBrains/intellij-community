@@ -15,12 +15,18 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
+import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * Refreshes file history.
@@ -29,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Kirill Likhodedov
  */
 public class FileHistoryRefresher implements FileHistoryRefresherI {
+  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("File History Refresh");
   private final FileHistorySessionPartner mySessionPartner;
   private final VcsHistoryProvider myVcsHistoryProvider;
   private final FilePath myPath;
@@ -58,6 +65,33 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
     myVcs = vcs;
     myStartingRevisionNumber = startingRevisionNumber;
     mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, path, startingRevisionNumber, vcs, this);
+
+    int delayMillis = 20_000;
+    Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, mySessionPartner);
+    updateAlarm.addRequest(new Runnable() {
+      Future<?> lastTask;
+
+      public void run() {
+        if (lastTask != null) {
+          lastTask.cancel(false);
+        }
+        if (myVcs.getProject().isDisposed()) {
+          return;
+        }
+
+        updateAlarm.cancelAllRequests();
+        if (updateAlarm.isDisposed()) return;
+        updateAlarm.addRequest(this, delayMillis);
+
+        if (!ApplicationManager.getApplication().isActive()) return;
+
+        lastTask = ourExecutor.submit(() -> {
+          if (!updateAlarm.isDisposed() && mySessionPartner.shouldBeRefreshed()) {
+            ApplicationManager.getApplication().invokeLater(() -> refresh(true));
+          }
+        });
+      }
+    }, delayMillis);
   }
 
   @NotNull
