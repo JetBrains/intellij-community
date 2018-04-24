@@ -16,8 +16,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -33,7 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageFilter;
@@ -44,7 +41,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.util.ImageLoader.ImageDesc.Type.IMG;
@@ -65,23 +61,23 @@ public class ImageLoader implements Serializable {
    * For internal usage.
    */
   public interface LoadFunction {
-    Image load(@Nullable LoadFunction delegate, @Nullable ImageDesc.Type type) throws IOException;
+    Image load(@Nullable LoadFunction delegate, @NotNull ImageDesc.Type type) throws IOException;
   }
 
   public static class ImageDesc {
     public enum Type {IMG, SVG}
 
     public final String path;
-    public final @Nullable Class cls; // resource class if present
+    public final Class cls; // resource class if present
     public final double scale; // initial scale factor
     public final Type type;
     public final boolean original; // path is not altered
 
-    public ImageDesc(String path, Class cls, double scale, Type type) {
+    public ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type) {
       this(path, cls, scale, type, false);
     }
 
-    public ImageDesc(String path, Class cls, double scale, Type type, boolean original) {
+    public ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type, boolean original) {
       this.path = path;
       this.cls = cls;
       this.scale = scale;
@@ -130,7 +126,7 @@ public class ImageLoader implements Serializable {
     Image loadImpl(final URL url, final InputStream stream, final double scale) throws IOException {
       LoadFunction f = new LoadFunction() {
         @Override
-        public Image load(LoadFunction delegate, Type type) throws IOException {
+        public Image load(@Nullable LoadFunction delegate, @NotNull Type type) throws IOException {
           switch (type) {
             case SVG:
               return SVGLoader.load(url, stream, ImageDesc.this.scale);
@@ -339,7 +335,7 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling) {
-    return loadFromUrl(url, allowFloatScaling, (ImageFilter)null);
+    return loadFromUrl(url, allowFloatScaling, null);
   }
 
   @Nullable
@@ -452,24 +448,5 @@ public class ImageLoader implements Serializable {
     }
 
     return null;
-  }
-
-  public static boolean isGoodSize(final Icon icon) {
-    return IconLoader.isGoodSize(icon);
-  }
-
-  /**
-   * @deprecated use {@link ImageDescList}
-   */
-  public static List<Pair<String, Integer>> getFileNames(@NotNull String file) {
-    return getFileNames(file, false, false);
-  }
-
-  /**
-   * @deprecated use {@link ImageDescList}
-   */
-  public static List<Pair<String, Integer>> getFileNames(@NotNull String file, boolean dark, boolean retina) {
-    new UnsupportedOperationException("unsupported method").printStackTrace();
-    return new ArrayList<Pair<String, Integer>>();
   }
 }
