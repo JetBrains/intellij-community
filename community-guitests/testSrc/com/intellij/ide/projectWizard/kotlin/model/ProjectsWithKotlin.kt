@@ -824,6 +824,16 @@ fun KotlinGuiTestCase.checkKotlinInstalled() {
   }
 }
 
+fun KotlinGuiTestCase.saveAndCloseCurrentEditor(){
+  ideFrame {
+    editor {
+      logTestStep("Going to save and close currently opened file")
+      shortcut(Modifier.CONTROL + Key.S)
+      shortcut(Modifier.CONTROL + Key.F4)
+    }
+  }
+}
+
 fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   kotlinKind: KotlinKind,
   project: ProjectProperties,
@@ -850,6 +860,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
     else -> throw IllegalStateException("Cannot configure to Kotlin/Common kind.")
   }
   waitAMoment(extraTimeOut)
+  saveAndCloseCurrentEditor()
   editBuildGradle(
     kotlinVersion = kotlinVersion,
     isKotlinDslUsed = isKotlinDslUsed,
