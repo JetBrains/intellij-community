@@ -165,15 +165,4 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
       myFileHistoryPanel.getHistoryPanelRefresh().finished();
     });
   }
-
-  @Override
-  public void forceRefresh() {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (mySession == null) {
-        // nothing to be done, exit
-        return;
-      }
-      myFileHistoryPanel.scheduleRefresh();
-    });
-  }
 }

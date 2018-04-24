@@ -62,7 +62,6 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -277,11 +276,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     String existingRevision = historyPanel.myStartingRevision == null ? null : historyPanel.myStartingRevision.asString();
     String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
     return historyPanel.myFilePath.equals(path) && Comparing.equal(existingRevision, newRevision);
-  }
-
-  @CalledInAwt
-  void scheduleRefresh() {
-    refreshUiAndScheduleDataRefresh(false);
   }
 
   @NotNull

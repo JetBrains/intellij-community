@@ -201,10 +201,6 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
         @Override
         public void beforeRefresh() {
         }
-
-        @Override
-        public void forceRefresh() {
-        }
       });
     } catch (ProcessCanceledException e) {
      // ok

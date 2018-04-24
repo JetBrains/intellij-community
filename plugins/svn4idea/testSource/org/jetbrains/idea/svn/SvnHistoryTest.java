@@ -159,10 +159,6 @@ public class SvnHistoryTest extends SvnTestCase {
       @Override
       public void beforeRefresh() {
       }
-
-      @Override
-      public void forceRefresh() {
-      }
     });
 
     semaphore.waitFor(1000);

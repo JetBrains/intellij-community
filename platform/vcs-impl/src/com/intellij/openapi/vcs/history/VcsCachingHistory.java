@@ -302,10 +302,6 @@ public class VcsCachingHistory {
     }
 
     @Override
-    public void forceRefresh() {
-    }
-
-    @Override
     public void beforeRefresh() {
     }
   }
@@ -346,11 +342,6 @@ public class VcsCachingHistory {
     @Override
     public void beforeRefresh() {
       myPartner.beforeRefresh();
-    }
-
-    @Override
-    public void forceRefresh() {
-      myPartner.forceRefresh();
     }
   }
 }
