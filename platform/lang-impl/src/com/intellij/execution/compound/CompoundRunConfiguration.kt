@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound
 
 import com.intellij.execution.*
@@ -94,7 +92,7 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
       throw RuntimeConfigurationException("There is nothing to run")
     }
 
-    val temp = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), this, false)
+    val temp = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), this)
     if (ExecutionTargetManager.getInstance(project).getTargetsFor(temp).isEmpty()) {
       throw RuntimeConfigurationException("No suitable targets to run on; please choose a target for each configuration")
     }
