@@ -394,7 +394,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             myCurrentWorker.doWhenProcessed(() -> {
               myCalcThread = new CalcThread(project, pattern, true);
               myPopupActualWidth = 0;
-              RunAnythingUtil.triggerMoreStatistics(group);
+              RunAnythingUtil.triggerMoreStatistics(project, group);
               myCurrentWorker = myCalcThread.insert(index, group);
             });
 
@@ -416,7 +416,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       return;
     }
 
-    RunAnythingUtil.triggerExecCategoryStatistics(index);
+    RunAnythingUtil.triggerExecCategoryStatistics(project, index);
 
     Runnable onDone = null;
     try {

@@ -15,7 +15,6 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingCommandItem;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -341,7 +340,7 @@ public class RunAnythingUtil {
 
     if (pattern.isEmpty()) return;
 
-    if (runMatchedConfiguration(Objects.requireNonNull(project), pattern, workDirectory)) return;
+    if (runMatchedConfiguration(dataContext, Objects.requireNonNull(project), pattern, workDirectory)) return;
 
     if (runMatchedActivity(dataContext, pattern)) return;
 
@@ -353,24 +352,28 @@ public class RunAnythingUtil {
     return activityProvider != null && activityProvider.runActivity(dataContext, pattern);
   }
 
-  private static boolean runMatchedConfiguration(@NotNull Project project, @NotNull String pattern, @NotNull VirtualFile workDirectory) {
+  private static boolean runMatchedConfiguration(@NotNull DataContext dataContext,
+                                                 @NotNull Project project,
+                                                 @NotNull String pattern,
+                                                 @NotNull VirtualFile workDirectory) {
     RunAnythingRunConfigurationProvider provider = RunAnythingRunConfigurationProvider.findMatchedProvider(project, pattern, workDirectory);
     if (provider != null) {
-      triggerDebuggerStatistics();
-      runMatchedConfiguration(RunAnythingAction.getExecutor(), project, provider.createConfiguration(project, pattern, workDirectory));
+      triggerDebuggerStatistics(dataContext);
+      runMatchedConfiguration(dataContext, RunAnythingAction.getExecutor(), project, provider.createConfiguration(project, pattern, workDirectory));
       return true;
     }
     return false;
   }
 
 
-  private static void runMatchedConfiguration(@NotNull Executor executor,
+  private static void runMatchedConfiguration(@NotNull DataContext dataContext,
+                                              @NotNull Executor executor,
                                               @NotNull Project project,
                                               @NotNull RunnerAndConfigurationSettings settings) {
     RunManagerEx.getInstanceEx(project).setTemporaryConfiguration(settings);
     RunManager.getInstance(project).setSelectedConfiguration(settings);
 
-    triggerDebuggerStatistics();
+    triggerDebuggerStatistics(dataContext);
     ExecutionUtil.runConfiguration(settings, executor);
   }
 
@@ -391,22 +394,25 @@ public class RunAnythingUtil {
     return KeymapUtil.getShortcutsText(shortcuts);
   }
 
-  static void triggerExecCategoryStatistics(int index) {
+  static void triggerExecCategoryStatistics(@NotNull Project project, int index) {
     for (int i = index; i >= 0; i--) {
       String title = RunAnythingGroup.getTitle(i);
       if (title != null) {
-        UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - execution - " + title);
+        RunAnythingUsageCollector.Companion.trigger(project, RunAnythingAction.RUN_ANYTHING + " - execution - " + title);
         break;
       }
     }
   }
 
-  public static void triggerDebuggerStatistics() {
-    if (SHIFT_IS_PRESSED.get()) UsageTrigger.trigger(DEBUGGER_FEATURE_USAGE);
+  public static void triggerDebuggerStatistics(@NotNull DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    LOG.assertTrue(project != null);
+
+    if (SHIFT_IS_PRESSED.get()) RunAnythingUsageCollector.Companion.trigger(project, DEBUGGER_FEATURE_USAGE);
   }
 
-  static void triggerMoreStatistics(@NotNull RunAnythingGroup group) {
-    UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - more - " + group.getTitle());
+  static void triggerMoreStatistics(@NotNull Project project, @NotNull RunAnythingGroup group) {
+    RunAnythingUsageCollector.Companion.trigger(project, RunAnythingAction.RUN_ANYTHING + " - more - " + group.getTitle());
   }
 
   @NotNull

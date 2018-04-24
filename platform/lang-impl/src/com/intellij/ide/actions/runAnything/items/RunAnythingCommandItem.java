@@ -106,8 +106,8 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
   }
 
   @Override
-  public void triggerUsage() {
-    RunAnythingUtil.triggerDebuggerStatistics();
+  public void triggerUsage(@NotNull DataContext dataContext) {
+    RunAnythingUtil.triggerDebuggerStatistics(dataContext);
   }
 
   @NotNull
