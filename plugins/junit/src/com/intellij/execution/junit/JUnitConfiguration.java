@@ -22,10 +22,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -213,7 +210,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public void setVMParameters(@Nullable String value) {
-    myData.setVMParameters(value);
+    myData.setVMParameters(StringUtil.nullize(value));
   }
 
   @Override
@@ -446,7 +443,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     final Data persistentData = getPersistentData();
-    DefaultJDOMExternalizer.writeExternal(persistentData, element);
+    DefaultJDOMExternalizer.writeExternal(persistentData, element, new DifferenceFilter<>(persistentData, new Data()));
 
     if (!persistentData.getEnvs().isEmpty()) {
       EnvironmentVariablesComponent.writeExternal(element, persistentData.getEnvs());
@@ -572,7 +569,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     private String[] UNIQUE_ID = ArrayUtil.EMPTY_STRING_ARRAY;
     private String TAGS;
     public String TEST_OBJECT = TEST_CLASS;
-    public String VM_PARAMETERS;
+    public String VM_PARAMETERS = "-ea";
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
     public boolean PASS_PARENT_ENVS = true;

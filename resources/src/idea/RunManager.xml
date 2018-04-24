@@ -1,11 +1,9 @@
 <component>
-  <configuration name="&lt;template&gt;" type="JUnit" default="true" selected="false">
-    <option name="VM_PARAMETERS" value="-ea"/>
+  <configuration name="&lt;template&gt;" type="D" default="true" selected="false">
     <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
   </configuration>
 
   <configuration name="&lt;template&gt;" type="TestNG" default="true" selected="false">
-    <option name="VM_PARAMETERS" value="-ea"/>
     <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%"/>
   </configuration>
 </component>
