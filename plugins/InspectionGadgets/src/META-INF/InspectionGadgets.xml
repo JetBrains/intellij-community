@@ -1813,7 +1813,7 @@
                      implementationClass="com.siyeh.ig.numeric.ImplicitNumericConversionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IntegerDivisionInFloatingPointContext" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="integer.division.in.floating.point.context.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.IntegerDivisionInFloatingPointContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IntegerMultiplicationImplicitCastToLong" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="integer.multiplication.implicit.cast.to.long.display.name" groupBundle="messages.InspectionsBundle"
