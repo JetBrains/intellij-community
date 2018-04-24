@@ -91,7 +91,12 @@ public class InspectionTree extends Tree {
     mySeverityGroupNodes.clear();
     myGroups.clear();
     getRoot().removeAllChildren();
-    ApplicationManager.getApplication().invokeLater(() -> nodeStructureChanged(getRoot()));
+    ApplicationManager.getApplication().invokeLater(() -> {
+      InspectionResultsView view = myContext.getView();
+      if (view != null && !view.isDisposed()) {
+        nodeStructureChanged(getRoot());
+      }
+    });
   }
 
   public InspectionTreeNode getRoot() {

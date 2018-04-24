@@ -15,6 +15,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -45,22 +46,35 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     super(descriptor, presentation);
     myElement = element;
     myDescriptor = descriptor;
+    myLevel = ObjectUtils.notNull(calculatePreciseLevel(element, descriptor, presentation), () -> {
+      String shortName = presentation.getToolWrapper().getShortName();
+      final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
+      return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+    });
+    myLineNumber = myDescriptor instanceof ProblemDescriptor
+                   ? ((ProblemDescriptor)myDescriptor).getLineNumber()
+                   : lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt();
+  }
+
+  private static HighlightDisplayLevel calculatePreciseLevel(@Nullable RefEntity element,
+                                                             @Nullable CommonProblemDescriptor descriptor,
+                                                             @NotNull InspectionToolPresentation presentation) {
+    if (element == null) return null;
     final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
     String shortName = presentation.getToolWrapper().getShortName();
     if (descriptor instanceof ProblemDescriptor) {
       InspectionProfileManager inspectionProfileManager = profile.getProfileManager();
       RefElement refElement = (RefElement)element;
       SeverityRegistrar severityRegistrar = inspectionProfileManager.getSeverityRegistrar();
-      HighlightInfoType highlightInfoType = ProblemDescriptorUtil.highlightTypeFromDescriptor((ProblemDescriptor)descriptor, presentation.getSeverity(refElement), severityRegistrar);
+      HighlightSeverity severity = presentation.getSeverity(refElement);
+      if (severity == null) return null;
+      HighlightInfoType highlightInfoType = ProblemDescriptorUtil.highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar);
       HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(refElement.getElement());
-      myLevel = HighlightDisplayLevel.find(highlightSeverity);
+      return HighlightDisplayLevel.find(highlightSeverity);
     }
     else {
-      myLevel = profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+      return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
     }
-    myLineNumber = myDescriptor instanceof ProblemDescriptor
-                   ? ((ProblemDescriptor)myDescriptor).getLineNumber()
-                   : lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt();
   }
 
   @Nullable
