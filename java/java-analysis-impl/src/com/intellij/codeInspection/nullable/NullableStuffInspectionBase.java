@@ -853,24 +853,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         for (PsiMethod overriding : overridings) {
           if (!manager.isInProject(overriding)) continue;
 
-          final boolean applicable = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull);
-          boolean ableToAddNotNullAnnotation = AddAnnotationPsiFix.isAvailable(overriding, defaultNotNull);
           if (!methodQuickFixSuggested
               && annotated.isDeclaredNotNull
               && !isNotNullNotInferred(overriding, false, false)
               && (isNullableNotInferred(overriding, false) || !isNullableNotInferred(overriding, true))
-              && ableToAddNotNullAnnotation) {
+              && AddAnnotationPsiFix.isAvailable(overriding, defaultNotNull)) {
             PsiIdentifier identifier = method.getNameIdentifier();//load tree
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());
             final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
 
-            final LocalQuickFix fix;
-            if (applicable) {
-              fix = new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove);
-            }
-            else {
-              fix = superMethodApplicable ? null : createChangeDefaultNotNullFix(nullableManager, method);
-            }
+            LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull)
+                                ? new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove)
+                                : superMethodApplicable ? null : createChangeDefaultNotNullFix(nullableManager, method);
 
             PsiElement psiElement = annotation;
             if (!annotation.isPhysical()) {
@@ -882,12 +876,15 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                    fix);
             methodQuickFixSuggested = true;
           }
-          if (hasAnnotatedParameter && ableToAddNotNullAnnotation) {
+          if (hasAnnotatedParameter) {
             PsiParameter[] psiParameters = overriding.getParameterList().getParameters();
             for (int i = 0; i < psiParameters.length; i++) {
               if (parameterQuickFixSuggested[i]) continue;
               PsiParameter parameter = psiParameters[i];
-              if (parameterAnnotated[i] && !isNotNullNotInferred(parameter, false, false) && !isNullableNotInferred(parameter, false)) {
+              if (parameterAnnotated[i] && 
+                  !isNotNullNotInferred(parameter, false, false) &&
+                  !isNullableNotInferred(parameter, false) &&
+                  AddAnnotationPsiFix.isAvailable(parameter, defaultNotNull)) {
                 PsiIdentifier identifier = parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
                 PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameters[i], nullableManager.getNotNulls());
                 PsiElement psiElement = annotation;
@@ -895,13 +892,13 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   psiElement = identifier;
                   if (psiElement == null) continue;
                 }
+                LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, defaultNotNull)
+                                    ? new AnnotateOverriddenMethodParameterFix(defaultNotNull, nullableManager.getDefaultNullable())
+                                    : createChangeDefaultNotNullFix(nullableManager, parameters[i]);
                 holder.registerProblem(psiElement,
                                        InspectionsBundle.message("nullable.stuff.problems.overridden.method.parameters.are.not.annotated"),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                       !applicable
-                                       ? createChangeDefaultNotNullFix(nullableManager, parameters[i])
-                                       : new AnnotateOverriddenMethodParameterFix(defaultNotNull,
-                                                                                  nullableManager.getDefaultNullable()));
+                                       fix);
                 parameterQuickFixSuggested[i] = true;
               }
             }
