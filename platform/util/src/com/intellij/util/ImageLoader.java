@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -234,23 +235,26 @@ public class ImageLoader implements Serializable {
       return null;
     }
 
-    public static ImageDescList create(@NotNull String file,
+    public static ImageDescList create(@NotNull String path,
                                        @Nullable Class cls,
                                        boolean dark,
                                        boolean allowFloatScaling,
                                        ScaleContext ctx)
     {
       // Prefer retina images for HiDPI scale, because downscaling
-      // retina images provides a better result than upscaling non-retina images.
+      // retina images provides a better result than up-scaling non-retina images.
       boolean retina = JBUI.isHiDPI(ctx.getScale(PIX_SCALE));
 
-      Builder list = new Builder(FileUtil.getNameWithoutExtension(file),
-                                 FileUtilRt.getExtension(file),
+      Builder list = new Builder(FileUtil.getNameWithoutExtension(path),
+                                 FileUtilRt.getExtension(path),
                                  cls,
                                  Registry.is("ide.svg.icon"),
                                  adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
-
-      if (retina && dark) {
+      if (path.contains("://") && !path.startsWith("file:")) {
+        ImageDesc.Type type = StringUtil.endsWithIgnoreCase(path, ".svg") ? SVG : PNG;
+        list.list.add(new ImageDesc(path, cls, 1.0, type, true));
+      }
+      else if (retina && dark) {
         list.add(true, true);
         list.add(true, false); // fallback to non-dark
       }
