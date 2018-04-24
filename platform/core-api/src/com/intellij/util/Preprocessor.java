@@ -38,6 +38,15 @@ public interface Preprocessor<Result, Base> extends Function<Processor<? super R
   @NotNull
   static <R, I, B> Preprocessor<R, B> compose(@NotNull Preprocessor<? extends R, ? super I> before,
                                               @NotNull Preprocessor<? extends I, ? super B> after) {
+    Preprocessor<?, ?> id = id();
+    if (before == id) {
+      //noinspection unchecked
+      return (Preprocessor<R, B>)after;
+    }
+    else if (after == id) {
+      //noinspection unchecked
+      return (Preprocessor<R, B>)before;
+    }
     return v -> after.apply(before.apply(v));
   }
 
