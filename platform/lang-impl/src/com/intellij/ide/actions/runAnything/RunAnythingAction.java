@@ -507,13 +507,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @NotNull
   private VirtualFile getWorkDirectory(@Nullable Module module, boolean isAltPressed) {
-    if (isAltPressed && myVirtualFile != null) {
-      return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
-    }
+    if (isAltPressed) {
+      if (myVirtualFile != null) {
+        return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
+      }
 
-    VirtualFile[] selectedFiles = FileEditorManager.getInstance(getProject()).getSelectedFiles();
-    if (selectedFiles.length > 0) {
-      return selectedFiles[0].getParent();
+      VirtualFile[] selectedFiles = FileEditorManager.getInstance(getProject()).getSelectedFiles();
+      if (selectedFiles.length > 0) {
+        return selectedFiles[0].getParent();
+      }
     }
 
     return getBaseDirectory(module);
