@@ -590,32 +590,31 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     ProgressIndicator progress = getOrCreateIndicator();
     appendCollectorsFromQueryRequests(progress, collectors);
-    boolean result;
     do {
       MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<>();
       final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
       final Set<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
       Map<RequestWithProcessor, Processor<PsiElement>> localProcessors = new THashMap<>();
       distributePrimitives(collectors, locals, globals, customs, localProcessors, progress);
-      result = processGlobalRequestsOptimized(globals, progress, localProcessors);
-      if (result) {
-        for (RequestWithProcessor local : locals) {
-          progress.checkCanceled();
-          result = processSingleRequest(local.request, local.refProcessor);
-          if (!result) break;
+      if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
+        return false;
+      }
+      for (RequestWithProcessor local : locals) {
+        progress.checkCanceled();
+        if (!processSingleRequest(local.request, local.refProcessor)) {
+          return false;
         }
-        if (result) {
-          for (Computable<Boolean> custom : customs) {
-            progress.checkCanceled();
-            result = custom.compute();
-            if (!result) break;
-          }
+      }
+      for (Computable<Boolean> custom : customs) {
+        progress.checkCanceled();
+        if (!custom.compute()) {
+          return false;
         }
-        if (!result) break;
       }
     }
-    while(appendCollectorsFromQueryRequests(progress, collectors));
-    return result;
+    while (appendCollectorsFromQueryRequests(progress, collectors));
+
+    return true;
   }
 
   @NotNull
