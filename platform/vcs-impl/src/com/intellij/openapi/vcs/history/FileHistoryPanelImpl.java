@@ -274,6 +274,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @CalledInAwt
   public void setHistorySession(@NotNull VcsHistorySession session) {
+    if (myTargetSelection == null) {
+      myTargetSelection = myDualView.getFlatView().getSelectedObjects();
+    }
+    
     myHistorySession = session;
     refreshRevisionsOrder();
     HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
@@ -428,7 +432,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (myInRefresh) return;
       myInRefresh = true;
-      myTargetSelection = myDualView.getFlatView().getSelectedObjects();
 
       mySplitter.revalidate();
       mySplitter.repaint();
