@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.util.ImageLoader.ImageDesc.Type.PNG;
+import static com.intellij.util.ImageLoader.ImageDesc.Type.IMG;
 import static com.intellij.util.ImageLoader.ImageDesc.Type.SVG;
 import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
@@ -69,40 +69,7 @@ public class ImageLoader implements Serializable {
   }
 
   public static class ImageDesc {
-    public enum Type {
-      PNG,
-
-      SVG {
-        @Override
-        public Image load(final URL url, final InputStream is, final double scale) throws IOException {
-          LoadFunction f = new LoadFunction() {
-            @Override
-            public Image load(LoadFunction delegate, Type type) throws IOException {
-              return SVGLoader.load(url, is, scale);
-            }
-          };
-          if (measureLoad != null) {
-            return measureLoad.load(f, SVG);
-          }
-          return f.load(null, null);
-        }
-      },
-
-      UNDEFINED;
-
-      public Image load(final URL url, final InputStream is, final double scale) throws IOException {
-        LoadFunction f = new LoadFunction() {
-          @Override
-          public Image load(LoadFunction delegate, Type type) {
-            return ImageLoader.load(is, scale);
-          }
-        };
-        if (measureLoad != null) {
-          return measureLoad.load(f, PNG);
-        }
-        return f.load(null, null);
-      }
-    }
+    public enum Type {IMG, SVG}
 
     public final String path;
     public final @Nullable Class cls; // resource class if present
@@ -124,7 +91,7 @@ public class ImageLoader implements Serializable {
 
     @Nullable
     public Image load() throws IOException {
-      return  load(true);
+      return load(true);
     }
 
     @Nullable
@@ -151,13 +118,32 @@ public class ImageLoader implements Serializable {
         }
         stream = connection.getInputStream();
       }
-      Image image = type.load(url, stream, scale);
+      Image image = loadImpl(url, stream, scale);
       if (image != null && cacheKey != null &&
           image.getWidth(null) * image.getHeight(null) * 4 <= CACHED_IMAGE_MAX_SIZE)
       {
         ourCache.put(cacheKey, image);
       }
       return image;
+    }
+
+    Image loadImpl(final URL url, final InputStream stream, final double scale) throws IOException {
+      LoadFunction f = new LoadFunction() {
+        @Override
+        public Image load(LoadFunction delegate, Type type) throws IOException {
+          switch (type) {
+            case SVG:
+              return SVGLoader.load(url, stream, ImageDesc.this.scale);
+            case IMG:
+              return ImageLoader.load(stream, scale);
+          }
+          return null;
+        }
+      };
+      if (measureLoad != null) {
+        return measureLoad.load(f, type);
+      }
+      return f.load(null, type);
     }
 
     @Override
@@ -187,7 +173,7 @@ public class ImageLoader implements Serializable {
 
       void add(boolean retina, boolean dark) {
         if (svg) add(retina, dark, SVG);
-        add(retina, dark, PNG);
+        add(retina, dark, IMG);
       }
 
       void add(boolean retina, boolean dark, ImageDesc.Type type) {
@@ -251,7 +237,7 @@ public class ImageLoader implements Serializable {
                                  Registry.is("ide.svg.icon"),
                                  adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
       if (path.contains("://") && !path.startsWith("file:")) {
-        ImageDesc.Type type = StringUtil.endsWithIgnoreCase(path, ".svg") ? SVG : PNG;
+        ImageDesc.Type type = StringUtil.endsWithIgnoreCase(path, ".svg") ? SVG : IMG;
         list.list.add(new ImageDesc(path, cls, 1.0, type, true));
       }
       else if (retina && dark) {
@@ -435,7 +421,7 @@ public class ImageLoader implements Serializable {
 
   public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale, ImageFilter filter) {
     Image image = load(inputStream, scale);
-    ImageDesc desc = new ImageDesc("", null, scale, ImageDesc.Type.UNDEFINED);
+    ImageDesc desc = new ImageDesc("", null, scale, IMG);
     return ImageConverterChain.create().withFilter(filter).withHiDPI(ScaleContext.create()).convert(image, desc);
   }
 
