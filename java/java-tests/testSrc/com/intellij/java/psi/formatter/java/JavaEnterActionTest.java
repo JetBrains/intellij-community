@@ -215,6 +215,55 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                ") {}");
   }
 
+  public void testEnter_AfterStatementWithoutBlock() throws IOException {
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        if (true)\n" +
+               "            while (true) <caret>\n" +
+               "    }\n" +
+               "}\n",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        if (true)\n" +
+               "            while (true) \n" +
+               "                <caret>\n" +
+               "    }\n" +
+               "}\n");
+
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        if (true)\n" +
+               "            while (true) {<caret>\n" +
+               "    }\n" +
+               "}\n",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        if (true)\n" +
+               "            while (true) {\n" +
+               "                <caret>\n" +
+               "            }\n" +
+               "    }\n" +
+               "}\n");
+
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        if (true)\n" +
+               "            try {<caret>\n" +
+               "    }\n" +
+               "}\n",
+               "class T {\n" +
+               "    void test() {\n" +
+               "        if (true)\n" +
+               "            try {\n" +
+               "                <caret>\n" +
+               "            }\n" +
+               "    }\n" +
+               "}\n");
+  }
+
   public void testEnter_AfterStatementWithLabel() throws IOException {
     // as prev
     doTextTest("java",
