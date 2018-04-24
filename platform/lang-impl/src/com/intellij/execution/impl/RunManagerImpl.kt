@@ -257,7 +257,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     if (configuration is UnknownRunConfiguration) {
       configuration.isDoNotStore = true
     }
-    configuration.beforeRunTasks = getHardcodedBeforeRunTasks(configuration)
+    configuration.beforeRunTasks = getHardcodedBeforeRunTasks(configuration, factory)
     return template
   }
 
@@ -733,12 +733,12 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     if (element?.getAttributeValue("v") == null) {
       if (settings.isTemplate) {
         if (result.isNullOrEmpty()) {
-          configuration.beforeRunTasks = getHardcodedBeforeRunTasks(configuration)
+          configuration.beforeRunTasks = getHardcodedBeforeRunTasks(configuration, configuration.factory!!)
           return
         }
       }
       else {
-        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory).configuration.beforeRunTasks, true, false)
+        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks, true, false)
         return
       }
     }
@@ -807,7 +807,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
             tasks.add(task as T)
           }
           else {
-            val template = getConfigurationTemplate(configuration.factory)
+            val template = getConfigurationTemplate(configuration.factory!!)
             if (!checkedTemplates.contains(template)) {
               checkedTemplates.add(template)
               for (templateTask in getBeforeRunTasks(template.configuration)) {
@@ -1013,3 +1013,6 @@ private inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(han
     }
   }
 }
+
+internal val ConfigurationType.isManaged: Boolean
+  get() = this is UnknownRunConfiguration

@@ -42,6 +42,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   /**
    * Returns the factory that has created the run configuration.
    */
+  @Nullable
   ConfigurationFactory getFactory();
 
   /**

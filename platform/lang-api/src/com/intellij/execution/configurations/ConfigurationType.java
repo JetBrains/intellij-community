@@ -59,11 +59,4 @@ public interface ConfigurationType extends PossiblyDumbAware {
    * @return the run configuration factories.
    */
   ConfigurationFactory[] getConfigurationFactories();
-
-  /**
-   * Is configuration fully managed by RunManager.
-   */
-  default boolean isManaged() {
-    return true;
-  }
 }

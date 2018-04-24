@@ -3,6 +3,7 @@ package com.intellij.execution.impl
 
 import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.BeforeRunTaskProvider
+import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.util.SmartList
@@ -30,12 +31,12 @@ internal fun getEffectiveBeforeRunTaskList(ownTasks: List<BeforeRunTask<*>>, tem
   return result
 }
 
-internal fun getHardcodedBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
+internal fun getHardcodedBeforeRunTasks(configuration: RunConfiguration, factory: ConfigurationFactory): List<BeforeRunTask<*>> {
   var result: MutableList<BeforeRunTask<*>>? = null
   for (provider in Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, configuration.project)) {
     val task = provider.createTask(configuration) ?: continue
     if (task.isEnabled) {
-      configuration.factory.configureBeforeRunTaskDefaults(provider.id, task)
+      factory.configureBeforeRunTaskDefaults(provider.id, task)
       if (task.isEnabled) {
         if (result == null) {
           result = SmartList<BeforeRunTask<*>>()

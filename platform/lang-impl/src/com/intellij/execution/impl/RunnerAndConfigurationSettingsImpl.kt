@@ -102,9 +102,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getFactory().createTemplateConfiguration(manager.project)
 
-  override fun createFactory() = Factory<RunnerAndConfigurationSettings> {
-    val configuration = configuration
-    RunnerAndConfigurationSettingsImpl(manager, configuration.factory.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration), false)
+  override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
+    return Factory {
+      val configuration = configuration
+      RunnerAndConfigurationSettingsImpl(manager, configuration.factory!!.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration))
+    }
   }
 
   override fun setName(name: String) {
@@ -115,7 +117,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun getName(): String {
     val configuration = configuration
     if (isTemplate) {
-      return "<template> of ${configuration.factory.id}"
+      return "<template> of ${factory.id}"
     }
     return configuration.name
   }
@@ -229,7 +231,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   // cannot be private - used externally
   fun writeExternal(element: Element) {
     val configuration = configuration
-    val factory = configuration.factory
     if (configuration !is UnknownRunConfiguration) {
       if (isTemplate) {
         element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "true")

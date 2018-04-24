@@ -41,9 +41,4 @@ public final class UnknownConfigurationType extends ConfigurationTypeBase {
   public static ConfigurationFactory getFactory() {
     return INSTANCE.getConfigurationFactories()[0];
   }
-
-  @Override
-  public boolean isManaged() {
-    return false;
-  }
 }
