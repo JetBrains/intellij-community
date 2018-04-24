@@ -38,16 +38,15 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean): ErrorWithFixes? {
     val useFile = place.containingFile?.originalFile
     if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
-      if (targetFile != null && targetFile.isPhysical) {
-        return checkAccess(targetFile, useFile, targetPackageName, quick)
-      }
-      else {
-        val project = useFile.project
-        val target = JavaPsiFacade.getInstance(project).findPackage(targetPackageName)
-        if (target != null) {
-          val useVFile = useFile.virtualFile
-          if (useVFile != null) {
-            val index = ProjectFileIndex.getInstance(useFile.project)
+      val useVFile = useFile.virtualFile
+      val index = ProjectFileIndex.getInstance(useFile.project)
+      if (useVFile == null || !index.isInLibrarySource(useVFile)) {
+        if (targetFile != null && targetFile.isPhysical) {
+          return checkAccess(targetFile, useFile, targetPackageName, quick)
+        }
+        else if (useVFile != null) {
+          val target = JavaPsiFacade.getInstance(useFile.project).findPackage(targetPackageName)
+          if (target != null) {
             val module = index.getModuleForFile(useVFile)
             if (module != null) {
               val test = index.isInTestSourceContent(useVFile)
@@ -74,8 +73,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private val ERR = ErrorWithFixes("-")
 
   private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean): ErrorWithFixes? {
-    val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)?.originalElement as PsiJavaModule?
-    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)?.originalElement as PsiJavaModule?
+    val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
+    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
 
     if (targetModule != null) {
       if (targetModule == useModule) {
