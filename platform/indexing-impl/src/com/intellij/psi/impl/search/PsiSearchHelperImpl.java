@@ -589,7 +589,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     collectors.put(collector, processor);
 
     ProgressIndicator progress = getOrCreateIndicator();
-    appendCollectorsFromQueryRequests(collectors);
+    appendCollectorsFromQueryRequests(progress, collectors);
     boolean result;
     do {
       MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<>();
@@ -600,13 +600,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       result = processGlobalRequestsOptimized(globals, progress, localProcessors);
       if (result) {
         for (RequestWithProcessor local : locals) {
-          ProgressManager.checkCanceled();
+          progress.checkCanceled();
           result = processSingleRequest(local.request, local.refProcessor);
           if (!result) break;
         }
         if (result) {
           for (Computable<Boolean> custom : customs) {
-            ProgressManager.checkCanceled();
+            progress.checkCanceled();
             result = custom.compute();
             if (!result) break;
           }
@@ -614,7 +614,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         if (!result) break;
       }
     }
-    while(appendCollectorsFromQueryRequests(collectors));
+    while(appendCollectorsFromQueryRequests(progress, collectors));
     return result;
   }
 
@@ -624,13 +624,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return AsyncUtil.wrapBoolean(processRequests(collector, processor));
   }
 
-  private static boolean appendCollectorsFromQueryRequests(@NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors) {
+  private static boolean appendCollectorsFromQueryRequests(@NotNull ProgressIndicator progress,
+                                                           @NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors) {
     boolean changed = false;
     Deque<SearchRequestCollector> queue = new LinkedList<>(collectors.keySet());
     while (!queue.isEmpty()) {
+      progress.checkCanceled();
       final SearchRequestCollector each = queue.removeFirst();
       for (QuerySearchRequest request : each.takeQueryRequests()) {
-        ProgressManager.checkCanceled();
+        progress.checkCanceled();
         request.runQuery();
         assert !collectors.containsKey(request.collector) || collectors.get(request.collector) == request.processor;
         collectors.put(request.collector, request.processor);
