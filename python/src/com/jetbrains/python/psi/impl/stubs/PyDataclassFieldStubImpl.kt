@@ -45,11 +45,13 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
 
       val dataclassesField = QualifiedName.fromComponents("dataclasses", "field")
       val attrIb = QualifiedName.fromComponents("attr", "ib")
+      val attrAttr = QualifiedName.fromComponents("attr", "attr")
+      val attrAttrib = QualifiedName.fromComponents("attr", "attrib")
 
       for (originalQName in PyResolveUtil.resolveImportedElementQNameLocally(callee)) {
         when (originalQName) {
           dataclassesField -> return qualifiedName to PyDataclassParameters.Type.STD
-          attrIb -> return qualifiedName to PyDataclassParameters.Type.ATTRS
+          attrIb, attrAttr, attrAttrib -> return qualifiedName to PyDataclassParameters.Type.ATTRS
         }
       }
 

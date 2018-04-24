@@ -27,7 +27,10 @@ fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclas
     context,
     mapOf(
       KnownDecorator.DATACLASSES_DATACLASS to PyDataclassParameters.Type.STD,
-      KnownDecorator.ATTR_S to PyDataclassParameters.Type.ATTRS
+      KnownDecorator.ATTR_S to PyDataclassParameters.Type.ATTRS,
+      KnownDecorator.ATTR_ATTRS to PyDataclassParameters.Type.ATTRS,
+      KnownDecorator.ATTR_ATTRIBUTES to PyDataclassParameters.Type.ATTRS,
+      KnownDecorator.ATTR_DATACLASS to PyDataclassParameters.Type.ATTRS
     )
   )
 }

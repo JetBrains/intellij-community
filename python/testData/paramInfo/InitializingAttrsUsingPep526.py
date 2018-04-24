@@ -48,3 +48,11 @@ class C1:
     b: int
 
 C1(<arg5>)
+
+
+@attr.dataclass
+class D1:
+    x: int
+    y: str = "0"
+
+D1(<arg6>)

@@ -35,3 +35,18 @@ class B1:
 
 B1(<arg4>)
 
+
+@attr.attrs
+class C1:
+    x = attr.ib()
+    y = attr.attr(default=0)
+
+C1(<arg5>)
+
+
+@attr.attributes
+class C2:
+    x = attr.attr()
+    y = attr.attrib(default="0")
+
+C2(<arg6>)
