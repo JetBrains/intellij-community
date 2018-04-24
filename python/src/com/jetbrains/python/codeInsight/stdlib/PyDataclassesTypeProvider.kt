@@ -26,7 +26,7 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
       if (cls != null && name != null && parseStdDataclassParameters(cls, context)?.init == true) {
         cls
           .findClassAttribute(name, false, context)
-          ?.let { return Ref.create(getTypeForParameter(it, context)) }
+          ?.let { return Ref.create(getTypeForParameter(it, PyDataclassParameters.Type.STD, context)) }
       }
     }
 
@@ -90,7 +90,7 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
 
     cls.processClassLevelDeclarations { element, _ ->
       if (element is PyTargetExpression && !PyTypingTypeProvider.isClassVar(element, context)) {
-        fieldToParameter(element, ellipsis, context)?.also { parameters.add(it) }
+        fieldToParameter(element, dataclassParameters.type, ellipsis, context)?.also { parameters.add(it) }
       }
 
       true
@@ -100,6 +100,7 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
   }
 
   private fun fieldToParameter(field: PyTargetExpression,
+                               dataclassType: PyDataclassParameters.Type,
                                ellipsis: PyNoneLiteralExpression,
                                context: TypeEvalContext): PyCallableParameter? {
     val stub = field.stub
@@ -112,22 +113,32 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
         else -> null
       }
 
-      PyCallableParameterImpl.nonPsi(field.name, getTypeForParameter(field, context), value)
+      PyCallableParameterImpl.nonPsi(field.name, getTypeForParameter(field, dataclassType, context), value)
     }
     else if (!fieldStub.initValue()) {
       null
     }
     else {
       val value = if (fieldStub.hasDefault() || fieldStub.hasDefaultFactory()) ellipsis else null
-      PyCallableParameterImpl.nonPsi(field.name, getTypeForParameter(field, context), value)
+      PyCallableParameterImpl.nonPsi(field.name, getTypeForParameter(field, dataclassType, context), value)
     }
   }
 
-  private fun getTypeForParameter(element: PyTargetExpression, context: TypeEvalContext): PyType? {
+  private fun getTypeForParameter(element: PyTargetExpression,
+                                  dataclassType: PyDataclassParameters.Type,
+                                  context: TypeEvalContext): PyType? {
+    if (dataclassType == PyDataclassParameters.Type.ATTRS && context.maySwitchToAST(element)) {
+      (element.findAssignedValue() as? PyCallExpression)
+        ?.getKeywordArgument("type")
+        ?.let { PyTypingTypeProvider.getType(it, context) }
+        ?.apply { return get() }
+    }
+
     val type = context.getType(element)
     if (type is PyCollectionType && type.classQName == DATACLASSES_INITVAR_TYPE) {
       return type.elementTypes.firstOrNull()
     }
+
     return type
   }
 }
