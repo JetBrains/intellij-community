@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel {
 
   private void switchToTab(SETab tab) {
     mySelectedTab = tab;
-    myNonProjectCB.setText(tab.getContributor().includeNonProjectItemsText());
+    DialogUtil.setTextWithMnemonic(myNonProjectCB, tab.getContributor().includeNonProjectItemsText());
     myNonProjectCB.setSelected(false);
     repaint();
   }
