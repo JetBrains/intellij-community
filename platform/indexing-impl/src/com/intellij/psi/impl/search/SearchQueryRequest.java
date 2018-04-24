@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
 final class SearchQueryRequest<T> {
 
   final @NotNull Query<T> query;
-  final @NotNull Preprocessor<T, ModelReference> preprocessor;
+  final @NotNull Preprocessor<ModelReference, T> preprocessor;
 
-  SearchQueryRequest(@NotNull Query<T> query, @NotNull Preprocessor<T, ModelReference> preprocessor) {
+  SearchQueryRequest(@NotNull Query<T> query, @NotNull Preprocessor<ModelReference, T> preprocessor) {
     this.query = query;
     this.preprocessor = preprocessor;
   }

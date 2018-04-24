@@ -7,15 +7,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Preprocessor that doesn't pre-process anything, i.e. returns original processor.
  */
-final class IdPreprocessor<B extends R, R> implements Preprocessor<B, R> {
+final class IdPreprocessor<R, B extends R> implements Preprocessor<R, B> {
 
   private static final Preprocessor<?, ?> INSTANCE = new IdPreprocessor();
 
   @Contract(pure = true)
   @NotNull
-  static <B extends R, R> Preprocessor<B, R> getInstance() {
+  static <R, B extends R> Preprocessor<R, B> getInstance() {
     //noinspection unchecked
-    return (Preprocessor<B, R>)INSTANCE;
+    return (Preprocessor<R, B>)INSTANCE;
   }
 
   @NotNull

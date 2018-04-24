@@ -7,9 +7,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * {@code Processor<Result> -> Processor<Base>}
+ * {@code Processor<R> -> Processor<B>}
  */
-public interface Preprocessor<Base, Result> extends Function<Processor<? super Result>, Processor<? super Base>> {
+public interface Preprocessor<Result, Base> extends Function<Processor<? super Result>, Processor<? super Base>> {
 
   /**
    * @return {@link Base base} processor that processes and feeds elements into {@link Result result} processor
@@ -24,16 +24,20 @@ public interface Preprocessor<Base, Result> extends Function<Processor<? super R
    * Note that no casts are required because {@link Base} is a subtype of {@link Result}
    */
   @NotNull
-  static <Base extends Result, Result> Preprocessor<Base, Result> id() {
+  static <Result, Base extends Result> Preprocessor<Result, Base> id() {
     return IdPreprocessor.getInstance();
   }
 
   /**
-   * {@code (Processor<Result> -> Processor<Base>) -> (Processor<V> -> Processor<Result>) -> (Processor<V> -> Processor<Base>)}
+   * {@code (Processor<I> -> Processor<R>) -> (Processor<R> -> Processor<I>) -> (Processor<R> -> Processor<B>)}
+   *
+   * @param <R> result type
+   * @param <I> intermediate type
+   * @param <B> base type
    */
   @NotNull
-  static <V, Base, Result> Preprocessor<Base, V> compose(@NotNull Preprocessor<? super Base, ? extends Result> after,
-                                                         @NotNull Preprocessor<? super Result, ? extends V> before) {
+  static <R, I, B> Preprocessor<R, B> compose(@NotNull Preprocessor<? extends R, ? super I> before,
+                                              @NotNull Preprocessor<? extends I, ? super B> after) {
     return v -> after.apply(before.apply(v));
   }
 

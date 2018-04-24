@@ -40,7 +40,7 @@ public interface SearchRequestCollector {
    * Note that {@code mapSomeResultToReference} is arbitrary as well as calling {@code originalProcessor},
    * i.e. returned processor is free to do anything.
    */
-  <T> void searchSubQuery(@NotNull Query<T> subQuery, @NotNull Preprocessor<T, ModelReference> preprocessor);
+  <T> void searchSubQuery(@NotNull Query<T> subQuery, @NotNull Preprocessor<ModelReference, T> preprocessor);
 
   /**
    * Starts sub search forming by creating builder-like object with handy methods
