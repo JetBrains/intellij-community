@@ -47,7 +47,6 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
   @NotNull private final FilePath myPath;
   @Nullable private final VcsRevisionNumber myStartingRevisionNumber;
   @NotNull private final LimitHistoryCheck myLimitHistoryCheck;
-  @NotNull private final FileHistoryRefresherI myRefresherI;
   @NotNull private final BufferedListConsumer<VcsFileRevision> myBuffer;
   @NotNull private final FileHistoryPanelImpl myFileHistoryPanel;
 
@@ -57,14 +56,13 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
                                    @NotNull FilePath path,
                                    @Nullable VcsRevisionNumber startingRevisionNumber,
                                    @NotNull AbstractVcs vcs,
-                                   @NotNull FileHistoryRefresherI refresherI) {
+                                   @NotNull FileHistoryRefresherI refresher) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
     myStartingRevisionNumber = startingRevisionNumber;
     myLimitHistoryCheck = new LimitHistoryCheck(vcs.getProject(), path.getPath());
     myVcs = vcs;
-    myRefresherI = refresherI;
-    myFileHistoryPanel = createFileHistoryPanel(new EmptyHistorySession());
+    myFileHistoryPanel = createFileHistoryPanel(new EmptyHistorySession(), refresher);
 
     Consumer<List<VcsFileRevision>> sessionRefresher = vcsFileRevisions -> {
       // TODO: Logic should be revised to just append some revisions to history panel instead of creating and showing new history session
@@ -99,9 +97,9 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
   }
 
   @NotNull
-  private FileHistoryPanelImpl createFileHistoryPanel(@NotNull VcsHistorySession session) {
+  private FileHistoryPanelImpl createFileHistoryPanel(@NotNull VcsHistorySession session, @NotNull FileHistoryRefresherI refresher) {
     ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-    return new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, session, myVcsHistoryProvider, contentManager, myRefresherI,
+    return new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, session, myVcsHistoryProvider, contentManager, refresher,
                                     false);
   }
 
