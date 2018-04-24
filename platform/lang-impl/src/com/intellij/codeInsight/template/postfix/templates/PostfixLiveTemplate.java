@@ -115,8 +115,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     Editor editor = callback.getEditor();
     PsiFile file = callback.getContext().getContainingFile();
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
-      PostfixTemplate postfixTemplate = findTemplate(provider, key);
-      if (postfixTemplate != null && isApplicableTemplate(provider, key, file, editor, postfixTemplate)) {
+      PostfixTemplate postfixTemplate = findApplicableTemplate(provider, key, editor, file);
+      if (postfixTemplate != null) {
         expandTemplate(key, callback, editor, provider, postfixTemplate);
         return;
       }
@@ -305,7 +305,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
                                              @NotNull String key,
                                              @NotNull PsiFile file,
                                              @NotNull Editor editor) {
-    return isApplicableTemplate(provider, key, file, editor, findTemplate(provider, key));
+    return findApplicableTemplate(provider, key, editor, file) != null;
   }
 
   private static boolean isApplicableTemplate(@NotNull PostfixTemplateProvider provider,
@@ -326,9 +326,12 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   }
 
   @Nullable
-  private static PostfixTemplate findTemplate(@NotNull PostfixTemplateProvider provider, @Nullable String key) {
+  private static PostfixTemplate findApplicableTemplate(@NotNull PostfixTemplateProvider provider,
+                                                        @Nullable String key,
+                                                        @NotNull Editor editor,
+                                                        @NotNull PsiFile file) {
     for (PostfixTemplate template : PostfixTemplatesUtils.getAvailableTemplates(provider)) {
-      if (template.getKey().equals(key)) {
+      if (template.getKey().equals(key) && isApplicableTemplate(provider, key, file, editor, template)) {
         return template;
       }
     }
