@@ -156,7 +156,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   protected Icon getValidatingIcon(boolean muted) {
     if (myXBreakpoint != null) {
-      Icon icon = myXBreakpoint.getType().getValidatingIcon();
+      Icon icon = myXBreakpoint.getType().getPendingIcon();
       if (icon != null) {
         return icon;
       }

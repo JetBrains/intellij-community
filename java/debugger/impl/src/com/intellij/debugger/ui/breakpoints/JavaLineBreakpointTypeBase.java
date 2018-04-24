@@ -66,7 +66,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
 
   @Nullable
   @Override
-  public Icon getValidatingIcon() {
+  public Icon getPendingIcon() {
     return AllIcons.Debugger.Db_validate_breakpoint;
   }
 

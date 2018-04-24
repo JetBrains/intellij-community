@@ -70,7 +70,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
 
   @NotNull
   @Override
-  public Icon getValidatingIcon() {
+  public Icon getPendingIcon() {
     return AllIcons.Debugger.Db_validate_field_breakpoint;
   }
 

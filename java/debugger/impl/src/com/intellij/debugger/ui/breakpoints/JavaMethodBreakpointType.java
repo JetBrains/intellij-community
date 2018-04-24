@@ -58,7 +58,7 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
 
   @NotNull
   @Override
-  public Icon getValidatingIcon() {
+  public Icon getPendingIcon() {
     return AllIcons.Debugger.Db_validate_method_breakpoint;
   }
 

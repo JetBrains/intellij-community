@@ -116,8 +116,11 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return AllIcons.Debugger.Db_muted_disabled_breakpoint;
   }
 
+  /**
+   * @return the icon shown for a breakpoint which is scheduled but not yet set (validated, resolved) in the debugger engine
+   */
   @Nullable
-  public Icon getValidatingIcon() {
+  public Icon getPendingIcon() {
     return null;
   }
 
