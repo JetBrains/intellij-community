@@ -36,31 +36,32 @@ import java.util.concurrent.Future;
  * @author Kirill Likhodedov
  */
 public class FileHistoryRefresher implements FileHistoryRefresherI {
-  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("File History Refresh");
-  private final FileHistorySessionPartner mySessionPartner;
-  private final VcsHistoryProvider myVcsHistoryProvider;
-  private final FilePath myPath;
-  private final AbstractVcs myVcs;
+  @NotNull private static final ExecutorService ourExecutor =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("File History Refresh");
+  @NotNull private final FileHistorySessionPartner mySessionPartner;
+  @NotNull private final VcsHistoryProvider myVcsHistoryProvider;
+  @NotNull private final FilePath myPath;
+  @NotNull private final AbstractVcs myVcs;
   @Nullable private final VcsRevisionNumber myStartingRevisionNumber;
   private boolean myFirstTime = true;
 
-  public FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
-                              final FilePath path,
-                              final AbstractVcs vcs) {
+  public FileHistoryRefresher(@NotNull VcsHistoryProvider vcsHistoryProvider,
+                              @NotNull FilePath path,
+                              @NotNull AbstractVcs vcs) {
     this(vcsHistoryProvider, path, null, vcs);
   }
 
-  public FileHistoryRefresher(final VcsHistoryProviderEx vcsHistoryProvider,
-                              final FilePath path,
+  public FileHistoryRefresher(@NotNull VcsHistoryProviderEx vcsHistoryProvider,
+                              @NotNull FilePath path,
                               @Nullable VcsRevisionNumber startingRevisionNumber,
-                              final AbstractVcs vcs) {
+                              @NotNull AbstractVcs vcs) {
     this((VcsHistoryProvider)vcsHistoryProvider, path, startingRevisionNumber, vcs);
   }
 
-  private FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
-                               final FilePath path,
+  private FileHistoryRefresher(@NotNull VcsHistoryProvider vcsHistoryProvider,
+                               @NotNull FilePath path,
                                @Nullable VcsRevisionNumber startingRevisionNumber,
-                               final AbstractVcs vcs) {
+                               @NotNull AbstractVcs vcs) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
     myVcs = vcs;
