@@ -31,6 +31,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -457,10 +458,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   public State getState() {
     State state = new State();
     state.configurationTypes.addAll(myTypes);
-    state.ruleStates = myGroupers.stream()
-      .filter(grouper -> !grouper.getRule().isAlwaysEnabled())
-      .map(grouper -> new RuleState(grouper.getRule().getName(), grouper.isEnabled()))
-      .collect(Collectors.toList());
+    for (RunDashboardGrouper grouper : myGroupers) {
+      if (!grouper.getRule().isAlwaysEnabled()) {
+        state.ruleStates.add(new RuleState(grouper.getRule().getName(), grouper.isEnabled()));
+      }
+    }
     if (myDashboardContent != null) {
       myContentProportion = myDashboardContent.getContentProportion();
     }
@@ -487,8 +489,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   static class State {
-    public Set<String> configurationTypes = ContainerUtil.newHashSet();
-    public List<RuleState> ruleStates = new ArrayList<>();
+    public final Set<String> configurationTypes = new THashSet<>();
+    public final List<RuleState> ruleStates = new ArrayList<>();
     public float contentProportion = DEFAULT_CONTENT_PROPORTION;
   }
 
