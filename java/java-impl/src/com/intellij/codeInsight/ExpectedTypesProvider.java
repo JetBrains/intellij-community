@@ -1185,8 +1185,23 @@ public class ExpectedTypesProvider {
       final PsiManager manager = methodCallExpr.getManager();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       final PsiMethod[] methods = myClassProvider.findDeclaredMethods(manager, reference.getReferenceName());
+      LinkedHashSet<PsiMethod> psiMethods = new LinkedHashSet<>();
+      for (PsiMethod m : methods) {
+        if (m.hasModifierProperty(PsiModifier.STATIC) || m.hasModifierProperty(PsiModifier.PRIVATE)) {
+          psiMethods.add(m);
+        }
+        else {
+          PsiMethod[] superMethods = m.findDeepestSuperMethods();
+          if (superMethods.length > 0) {
+            psiMethods.addAll(Arrays.asList(superMethods));
+          }
+          else {
+            psiMethods.add(m);
+          }
+        }
+      }
       Set<ExpectedTypeInfo> types = new THashSet<>();
-      for (PsiMethod method : methods) {
+      for (PsiMethod method : psiMethods) {
         final PsiClass aClass = method.getContainingClass();
         if (aClass == null || !facade.getResolveHelper().isAccessible(method, reference, aClass)) continue;
 
@@ -1196,7 +1211,8 @@ public class ExpectedTypesProvider {
 
         if (method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
           types.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.DOT));
-        } else if (method.findSuperMethods().length == 0) {
+        }
+        else {
           types.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.DOT));
         }
       }
