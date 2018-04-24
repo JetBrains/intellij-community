@@ -26,4 +26,12 @@ public interface JsonSchemaFileProvider {
   default String getThirdPartyApiInformation() {
     return null;
   }
+
+  default boolean isUserVisible() { return true; }
+
+  @NotNull
+  default String getPresentableName() { return getName(); }
+
+  @Nullable
+  default String getRemoteSource() { return null; }
 }

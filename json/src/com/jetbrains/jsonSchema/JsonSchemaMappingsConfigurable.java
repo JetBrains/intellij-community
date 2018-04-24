@@ -84,9 +84,11 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     return result;
   }
 
-  private void addProjectSchema() {
-    addCreatedMappings(new UserDefinedJsonSchemaConfiguration(createUniqueName(STUB_SCHEMA_NAME),
-                                                              JsonSchemaVersion.SCHEMA_4, "", false, null));
+  public UserDefinedJsonSchemaConfiguration addProjectSchema() {
+    UserDefinedJsonSchemaConfiguration configuration = new UserDefinedJsonSchemaConfiguration(createUniqueName(STUB_SCHEMA_NAME),
+                                                                                     JsonSchemaVersion.SCHEMA_4, "", false, null);
+    addCreatedMappings(configuration);
+    return configuration;
   }
 
   @SuppressWarnings("SameParameterValue")
