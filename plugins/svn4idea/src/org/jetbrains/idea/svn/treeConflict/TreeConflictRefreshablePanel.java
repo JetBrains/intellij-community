@@ -528,6 +528,11 @@ public class TreeConflictRefreshablePanel implements Disposable {
         @Override
         public void selectContent() {
         }
+
+        @Override
+        public boolean isInRefresh() {
+          return false;
+        }
       }, true);
       myFileHistoryPanel.setBottomRevisionForShowDiff(last);
       myFileHistoryPanel.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));

@@ -19,4 +19,6 @@ public interface FileHistoryRefresherI {
   void refresh(boolean canUseCache);
 
   void selectContent();
+
+  boolean isInRefresh();
 }

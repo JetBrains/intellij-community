@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +81,12 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   @Override
   public void selectContent() {
     mySessionPartner.createOrSelectContent();
+  }
+
+  @Override
+  public boolean isInRefresh() {
+    return VcsCachingHistory.getHistoryLock(myVcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, myPath, myStartingRevisionNumber)
+                            .isLocked();
   }
 
   /**

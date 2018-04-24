@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
-import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -195,7 +194,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
         lastTask = ourExecutor.submit(() -> {
           if (!updateAlarm.isDisposed() && myHistorySession.shouldBeRefreshed()) {
-            refreshUiAndScheduleDataRefresh(true);
+            ApplicationManager.getApplication().invokeAndWait(() -> myRefresherI.refresh(true));
           }
         });
       }
@@ -402,15 +401,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @NotNull
   private DefaultActionGroup fillActionGroup(boolean popup, DefaultActionGroup result) {
-    result.add(new RefreshFileHistoryAction());
-
     if (popup) {
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
 
     AnAction actionGroup = ActionManager.getInstance().getAction(popup ? VCS_HISTORY_POPUP_ACTION_GROUP : VCS_HISTORY_TOOLBAR_ACTION_GROUP);
     result.add(actionGroup);
-    AnAction[] additionalActions = myProvider.getAdditionalActions(() -> refreshUiAndScheduleDataRefresh(true));
+    AnAction[] additionalActions =
+      myProvider.getAdditionalActions(() -> ApplicationManager.getApplication().invokeAndWait(() -> myRefresherI.refresh(true)));
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
         if (popup || additionalAction.getTemplatePresentation().getIcon() != null) {
@@ -427,12 +425,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     return result;
-  }
-
-  private void refreshUiAndScheduleDataRefresh(boolean canUseCache) {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      myRefresherI.refresh(canUseCache);
-    });
   }
 
   public Object getData(String dataId) {
@@ -993,27 +985,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public void setSelected(AnActionEvent e, boolean state) {
       VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_AS_TREE = state;
       chooseView();
-    }
-  }
-
-  private class RefreshFileHistoryAction extends RefreshAction implements DumbAware {
-    public RefreshFileHistoryAction() {
-      super(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.description.refresh"), AllIcons.Actions.Refresh);
-      registerShortcutOn(FileHistoryPanelImpl.this);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      refreshUiAndScheduleDataRefresh(false);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(!isInRefresh());
-    }
-
-    private boolean isInRefresh() {
-      return VcsCachingHistory.getHistoryLock(myVcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, myFilePath, myStartingRevision).isLocked();
     }
   }
 
