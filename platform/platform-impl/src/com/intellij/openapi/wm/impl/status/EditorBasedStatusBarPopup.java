@@ -13,9 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
@@ -34,11 +32,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 
 public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   private final TextPanel.WithIconAndArrows myComponent;
   private boolean actionEnabled;
   private final Alarm update;
+  // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
+  private volatile Reference<Editor> myEditor = new WeakReference<>(null);
 
   public EditorBasedStatusBarPopup(@NotNull Project project) {
     super(project);
@@ -64,16 +66,22 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   @Override
   public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    fileChanged();
+    VirtualFile newFile = event.getNewFile();
+    fileChanged(newFile);
   }
 
-  private void fileChanged() {
+  private void fileChanged(VirtualFile newFile) {
+    Project project = getProject();
+    assert project != null;
+    FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(project).getSelectedEditor(newFile);
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    myEditor = new WeakReference<>(editor);
     update();
   }
 
   @Override
   public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    fileChanged();
+    fileChanged(file);
   }
 
   @Override
@@ -101,7 +109,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   protected void updateForDocument(@Nullable("null means update anyway") Document document) {
-    Editor selectedEditor = getEditor();
+    Editor selectedEditor = myEditor.get();
     if (document != null && (selectedEditor == null || selectedEditor.getDocument() != document)) return;
     update();
   }
