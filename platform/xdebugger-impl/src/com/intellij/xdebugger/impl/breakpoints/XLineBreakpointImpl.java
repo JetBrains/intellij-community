@@ -76,6 +76,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
+    if (!isEnabled()) {
+      attributes = attributes.clone();
+      attributes.setBackgroundColor(null);
+    }
+
     RangeHighlighter highlighter = myHighlighter;
     if (highlighter != null &&
         (!highlighter.isValid()
