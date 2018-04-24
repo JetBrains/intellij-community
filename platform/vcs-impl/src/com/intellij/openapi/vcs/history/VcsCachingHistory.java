@@ -197,7 +197,7 @@ public class VcsCachingHistory {
                                          @NotNull Consumer<VcsHistorySession> consumer) {
     VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
     CollectingHistoryPartner partner = new CollectingHistoryPartner(vcs.getProject(), filePath, consumer);
-    BackgroundableActionLock lock = getHistoryLock(vcs, actionKey, filePath);
+    BackgroundableActionLock lock = getHistoryLock(vcs, actionKey, filePath, null);
     history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, true);
   }
 
@@ -207,7 +207,7 @@ public class VcsCachingHistory {
                                          @NotNull VcsAppendableHistorySessionPartner partner,
                                          boolean canUseCache) {
     VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
-    BackgroundableActionLock lock = getHistoryLock(vcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath);
+    BackgroundableActionLock lock = getHistorySessionLock(vcs, filePath, null);
     history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, canUseCache);
   }
 
@@ -217,7 +217,7 @@ public class VcsCachingHistory {
                                          @NotNull VcsAppendableHistorySessionPartner partner) {
     if (!(vcs.getVcsHistoryProvider() instanceof VcsHistoryProviderEx)) throw new UnsupportedOperationException();
 
-    BackgroundableActionLock lock = getHistoryLock(vcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath);
+    BackgroundableActionLock lock = getHistorySessionLock(vcs, filePath, startRevisionNumber);
 
     VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
     history.reportHistoryInBackground(filePath, startRevisionNumber, vcs.getKeyInstanceMethod(), lock, partner, false);
@@ -242,9 +242,20 @@ public class VcsCachingHistory {
   }
 
   @NotNull
+  public static BackgroundableActionLock getHistorySessionLock(@NotNull AbstractVcs vcs,
+                                                               @NotNull FilePath filePath,
+                                                               @Nullable VcsRevisionNumber startRevisionNumber) {
+    return getHistoryLock(vcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath, startRevisionNumber);
+  }
+
+  @NotNull
   public static BackgroundableActionLock getHistoryLock(@NotNull AbstractVcs vcs,
                                                         @NotNull VcsBackgroundableActions actionKey,
-                                                        @NotNull FilePath filePath) {
+                                                        @NotNull FilePath filePath,
+                                                        @Nullable VcsRevisionNumber startRevisionNumber) {
+    if (startRevisionNumber != null) {
+      return getLock(vcs.getProject(), actionKey, filePath.getPath(), startRevisionNumber.asString());
+    }
     return getLock(vcs.getProject(), actionKey, filePath.getPath());
   }
 
