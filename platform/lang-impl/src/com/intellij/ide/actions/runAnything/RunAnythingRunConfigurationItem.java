@@ -52,8 +52,8 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
   }
 
   @Override
-  public void triggerUsage() {
-    RunAnythingUtil.triggerDebuggerStatistics();
+  public void triggerUsage(@NotNull DataContext dataContext) {
+    RunAnythingUtil.triggerDebuggerStatistics(dataContext);
   }
 
   @NotNull

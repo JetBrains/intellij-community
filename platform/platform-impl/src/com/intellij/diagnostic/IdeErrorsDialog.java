@@ -482,10 +482,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myCredentialsLabel.setVisible(true);
       Credentials credentials = ErrorReportConfigurable.getCredentials();
       if (CredentialAttributesKt.isFulfilled(credentials)) {
-        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("diagnostic.error.report.submit.report.as", credentials.getUserName()));
+        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.named", credentials.getUserName()));
       }
       else {
-        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("diagnostic.error.report.submit.error.anonymously"));
+        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.anonymous"));
       }
     }
     else {

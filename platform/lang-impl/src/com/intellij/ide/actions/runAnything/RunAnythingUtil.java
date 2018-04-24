@@ -15,7 +15,6 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingCommandItem;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +28,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -49,7 +49,7 @@ import java.util.Objects;
 
 import static com.intellij.execution.actions.RunConfigurationsComboBoxAction.EMPTY_ICON;
 import static com.intellij.ide.actions.GotoActionAction.performAction;
-import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
+import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
@@ -338,14 +338,15 @@ public class RunAnythingUtil {
                                           @NotNull String pattern,
                                           @NotNull VirtualFile workDirectory) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Executor executor = EXECUTOR_KEY.getData(dataContext);
 
     if (pattern.isEmpty()) return;
 
-    if (runMatchedConfiguration(Objects.requireNonNull(project), pattern, workDirectory)) return;
+    if (runMatchedConfiguration(dataContext, Objects.requireNonNull(project), pattern, workDirectory)) return;
 
     if (runMatchedActivity(dataContext, pattern)) return;
 
-    runCommand(workDirectory, StringUtil.trim(pattern), RunAnythingAction.getExecutor(), dataContext);
+    runCommand(workDirectory, StringUtil.trim(pattern), Objects.requireNonNull(executor), dataContext);
   }
 
   private static boolean runMatchedActivity(@NotNull DataContext dataContext, @NotNull String pattern) {
@@ -353,24 +354,29 @@ public class RunAnythingUtil {
     return activityProvider != null && activityProvider.runActivity(dataContext, pattern);
   }
 
-  private static boolean runMatchedConfiguration(@NotNull Project project, @NotNull String pattern, @NotNull VirtualFile workDirectory) {
+  private static boolean runMatchedConfiguration(@NotNull DataContext dataContext,
+                                                 @NotNull Project project,
+                                                 @NotNull String pattern,
+                                                 @NotNull VirtualFile workDirectory) {
+    Executor executor = EXECUTOR_KEY.getData(dataContext);
     RunAnythingRunConfigurationProvider provider = RunAnythingRunConfigurationProvider.findMatchedProvider(project, pattern, workDirectory);
     if (provider != null) {
-      triggerDebuggerStatistics();
-      runMatchedConfiguration(RunAnythingAction.getExecutor(), project, provider.createConfiguration(project, pattern, workDirectory));
+      triggerDebuggerStatistics(dataContext);
+      runMatchedConfiguration(dataContext, Objects.requireNonNull(executor), project, provider.createConfiguration(project, pattern, workDirectory));
       return true;
     }
     return false;
   }
 
 
-  private static void runMatchedConfiguration(@NotNull Executor executor,
+  private static void runMatchedConfiguration(@NotNull DataContext dataContext,
+                                              @NotNull Executor executor,
                                               @NotNull Project project,
                                               @NotNull RunnerAndConfigurationSettings settings) {
     RunManagerEx.getInstanceEx(project).setTemporaryConfiguration(settings);
     RunManager.getInstance(project).setSelectedConfiguration(settings);
 
-    triggerDebuggerStatistics();
+    triggerDebuggerStatistics(dataContext);
     ExecutionUtil.runConfiguration(settings, executor);
   }
 
@@ -391,22 +397,27 @@ public class RunAnythingUtil {
     return KeymapUtil.getShortcutsText(shortcuts);
   }
 
-  static void triggerExecCategoryStatistics(int index) {
+  static void triggerExecCategoryStatistics(@NotNull Project project, int index) {
     for (int i = index; i >= 0; i--) {
       String title = RunAnythingGroup.getTitle(i);
       if (title != null) {
-        UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - execution - " + title);
+        RunAnythingUsageCollector.Companion.trigger(project, RunAnythingAction.RUN_ANYTHING + " - execution - " + title);
         break;
       }
     }
   }
 
-  public static void triggerDebuggerStatistics() {
-    if (SHIFT_IS_PRESSED.get()) UsageTrigger.trigger(DEBUGGER_FEATURE_USAGE);
+  public static void triggerDebuggerStatistics(@NotNull DataContext dataContext) {
+    Project project = Objects.requireNonNull(CommonDataKeys.PROJECT.getData(dataContext));
+    Executor executor = Objects.requireNonNull(EXECUTOR_KEY.getData(dataContext));
+
+    if (ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG) == executor) {
+      RunAnythingUsageCollector.Companion.trigger(project, DEBUGGER_FEATURE_USAGE);
+    }
   }
 
-  static void triggerMoreStatistics(@NotNull RunAnythingGroup group) {
-    UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - more - " + group.getTitle());
+  static void triggerMoreStatistics(@NotNull Project project, @NotNull RunAnythingGroup group) {
+    RunAnythingUsageCollector.Companion.trigger(project, RunAnythingAction.RUN_ANYTHING + " - more - " + group.getTitle());
   }
 
   @NotNull

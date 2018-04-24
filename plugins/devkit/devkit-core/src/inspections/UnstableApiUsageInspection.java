@@ -6,10 +6,12 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +50,10 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!isApplicable(holder.getProject())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     return new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -67,12 +73,18 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
           }
 
           PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolvedElement;
+          boolean problemRegistered = false;
           for (String annotation : unstableApiAnnotations) {
             if (modifierListOwner.hasAnnotation(annotation)) {
               holder.registerProblem(reference,
                                      DevKitBundle.message("inspections.unstable.api.usage.description", getReferenceText(reference)),
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+              problemRegistered = true;
+              break;
             }
+          }
+          if (problemRegistered) {
+            break;
           }
         }
       }
@@ -105,5 +117,16 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     }
     // references are not PsiQualifiedReference for annotation attributes
     return StringUtil.getShortName(reference.getCanonicalText());
+  }
+
+  private boolean isApplicable(@NotNull Project project) {
+    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    for (String annotation : unstableApiAnnotations) {
+      if (javaPsiFacade.findClass(annotation, scope) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 }
