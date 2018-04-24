@@ -45,8 +45,7 @@ private runUiTests(boolean withCoverage) {
     "-XX:ReservedCodeCacheSize=96m",
     "-Dgradle.adjust.userdir=true",  // work around youtrack.jetbrains.com/issue/IDEA-172452
     "-XX:+UseCodeCacheFlushing",
-    "-Dplugin.path=${home}/../../prebuilts/tools/common/kotlin-plugin/Kotlin,${home}/../../bazel-genfiles/tools/adt/idea/android-uitests/aswb",
-    "-Denable.nav.editor=true",
+    "-Dplugin.path=${home}/../../prebuilts/tools/common/kotlin-plugin/Kotlin,${home}/../../bazel-genfiles/tools/adt/idea/android-uitests/aswb"
   ]
   if (withCoverage) {
     def agent = "${home}/plugins/coverage/lib/jacocoagent.jar"
