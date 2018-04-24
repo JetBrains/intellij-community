@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
@@ -108,7 +109,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @NotNull private VcsHistorySession myHistorySession;
   private VcsFileRevision myBottomRevisionForShowDiff;
-  private volatile boolean myInRefresh;
   private List<Object> myTargetSelection;
   private boolean myIsStaticAndEmbedded;
   private Splitter myDetailsSplitter;
@@ -194,7 +194,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         if (!ApplicationManager.getApplication().isActive()) return;
 
         lastTask = ourExecutor.submit(() -> {
-          if (!myInRefresh && !updateAlarm.isDisposed() && myHistorySession.shouldBeRefreshed()) {
+          if (!updateAlarm.isDisposed() && myHistorySession.shouldBeRefreshed()) {
             refreshUiAndScheduleDataRefresh(true);
           }
         });
@@ -312,7 +312,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         treeView.scrollRectToVisible(treeView.getCellRect(lastRow, 0, true));
       }
     }
-    myInRefresh = false;
     myTargetSelection = null;
 
     mySplitter.revalidate();
@@ -324,7 +323,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if ((virtualFile == null || !virtualFile.isValid()) && !myFilePath.getIOFile().exists()) {
       myDualView.setEmptyText("File " + myFilePath.getName() + " not found");
     }
-    else if (myInRefresh) {
+    else if (VcsCachingHistory.getHistoryLock(myVcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, myFilePath, myStartingRevision).isLocked()) {
       myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
     }
     else {
@@ -432,9 +431,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private void refreshUiAndScheduleDataRefresh(boolean canUseCache) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (myInRefresh) return;
-      myInRefresh = true;
-
       myRefresherI.refresh(canUseCache);
     });
   }
@@ -1007,14 +1003,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     public void actionPerformed(AnActionEvent e) {
-      if (myInRefresh) return;
       refreshUiAndScheduleDataRefresh(false);
     }
 
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(!myInRefresh);
+      e.getPresentation().setEnabled(!isInRefresh());
+    }
+
+    private boolean isInRefresh() {
+      return VcsCachingHistory.getHistoryLock(myVcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, myFilePath, myStartingRevision).isLocked();
     }
   }
 
