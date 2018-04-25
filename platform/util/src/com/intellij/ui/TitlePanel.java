@@ -80,7 +80,7 @@ public class TitlePanel extends CaptionPanel {
     }
 
     final Dimension preferredSize = super.getPreferredSize();
-    preferredSize.height = JBUI.CurrentTheme.Popup.headerHeight();
+    preferredSize.height = JBUI.CurrentTheme.Popup.headerHeight(containsSettingsControls());
     int maxWidth = JBUI.scale(350);
     if (!myHtml && preferredSize.width > maxWidth) { // do not allow caption to extend parent container
       return new Dimension(maxWidth, preferredSize.height);

@@ -1528,8 +1528,8 @@ public class JBUI {
                : JBColor.namedColor("Popup.Header.inactiveBackground", 0xededed);
       }
 
-      public static int headerHeight() {
-        return scale(24);
+      public static int headerHeight(boolean hasControls) {
+        return hasControls ? scale(28) : scale(24);
       }
 
       public static Color borderColor(boolean active) {
