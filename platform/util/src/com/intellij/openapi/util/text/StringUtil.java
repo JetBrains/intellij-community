@@ -3277,6 +3277,7 @@ public class StringUtil extends StringUtilRt {
   public abstract static class BombedCharSequence implements CharSequence {
     private final CharSequence delegate;
     private int i;
+    private boolean myDefused;
 
     public BombedCharSequence(@NotNull CharSequence sequence) {
       delegate = sequence;
@@ -3295,9 +3296,16 @@ public class StringUtil extends StringUtilRt {
     }
 
     protected void check() {
+      if (myDefused) {
+        return;
+      }
       if ((++i & 1023) == 0) {
         checkCanceled();
       }
+    }
+
+    public final void defuse() {
+       myDefused = true;
     }
 
     @NotNull
