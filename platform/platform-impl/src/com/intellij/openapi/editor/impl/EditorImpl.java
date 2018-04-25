@@ -2548,7 +2548,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void run() {
-      if (myEditor != null) {
+      if (myEditor != null && !myEditor.myUpdateCursor) {
         CaretCursor activeCursor = myEditor.myCaretCursor;
 
         long time = System.currentTimeMillis();
@@ -2574,6 +2574,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void updateCaretCursor() {
     myUpdateCursor = true;
+    myCaretCursor.myIsShown = true;
+    myCaretCursor.repaint();
   }
 
   private void setCursorPosition() {
@@ -2715,7 +2717,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void setPositions(CaretRectangle[] locations) {
       myStartTime = System.currentTimeMillis();
       myLocations = locations;
-      myIsShown = true;
     }
 
     private void repaint() {
