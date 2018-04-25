@@ -199,6 +199,12 @@
     <callHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.call.JavaCallHierarchyProvider"/>
     <runLineMarkerContributor language="JAVA" order="after applicationRunLineMarkerProvider"
                               implementationClass="com.intellij.testIntegration.TestRunLineMarkerProvider"/>
+    <projectService serviceImplementation="com.intellij.testIntegration.TestFailedLineManager"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="TestFailedLine"
+                     enabledByDefault="true" level="ERROR"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
+                     displayName="Highlight problem line in test"
+                     implementationClass="com.intellij.testIntegration.TestFailedLineInspection"/>
     <testGenerator language="JAVA" implementationClass="com.intellij.testIntegration.createTest.JavaTestGenerator" />
     <testCreator language="JAVA" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
