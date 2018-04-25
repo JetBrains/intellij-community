@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 const val DATACLASSES_INITVAR_TYPE: String = "dataclasses.InitVar"
 const val DUNDER_POST_INIT: String = "__post_init__"
+const val DUNDER_ATTRS_POST_INIT: String = "__attrs_post_init__"
 
 
 fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {

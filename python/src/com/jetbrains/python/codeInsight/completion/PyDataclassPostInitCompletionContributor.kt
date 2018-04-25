@@ -8,9 +8,7 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
 import com.jetbrains.extensions.python.afterDefInMethod
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.stdlib.DATACLASSES_INITVAR_TYPE
-import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
-import com.jetbrains.python.codeInsight.stdlib.parseStdDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.*
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.types.PyClassType
@@ -29,7 +27,10 @@ class PyDataclassPostInitCompletionContributor : CompletionContributor() {
       val cls = parameters.getPyClass() ?: return
       val typeEvalContext = parameters.getTypeEvalContext()
 
-      if (parseStdDataclassParameters(cls, typeEvalContext)?.init == true) {
+      val dataclassParameters = parseDataclassParameters(cls, typeEvalContext)
+      if (dataclassParameters == null || !dataclassParameters.init) return
+
+      if (dataclassParameters.type == PyDataclassParameters.Type.STD) {
         val postInitParameters = mutableListOf(PyNames.CANONICAL_SELF)
 
         cls.processClassLevelDeclarations { element, _ ->
@@ -51,6 +52,9 @@ class PyDataclassPostInitCompletionContributor : CompletionContributor() {
         }
 
         addMethodToResult(result, cls, typeEvalContext, DUNDER_POST_INIT, postInitParameters.joinToString(prefix = "(", postfix = ")"))
+      }
+      else if (dataclassParameters.type == PyDataclassParameters.Type.ATTRS) {
+        addMethodToResult(result, cls, typeEvalContext, DUNDER_ATTRS_POST_INIT)
       }
     }
   }
