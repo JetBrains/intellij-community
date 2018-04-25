@@ -41,7 +41,7 @@ public class ConflictVersion extends BaseNodeDescription {
 
   @NotNull
   public String toPresentableString() {
-    return "(" + getKind() + ") " + myRepositoryRoot + "/" + myPath + "@" + getPegRevision();
+    return "(" + getKind() + ") " + myRepositoryRoot.toDecodedString() + "/" + myPath + "@" + getPegRevision();
   }
 
   @NotNull
