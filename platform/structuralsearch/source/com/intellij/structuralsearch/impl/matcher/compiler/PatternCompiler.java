@@ -141,7 +141,18 @@ public class PatternCompiler {
   public static CompiledPattern getLastCompiledPattern(MatchOptions options) {
     synchronized (LOCK) {
       final CompiledPattern lastCompiledPattern = ourLastCompiledPattern == null ? null : ourLastCompiledPattern.get();
-      return (lastCompiledPattern == null || !options.equals(ourLastMatchOptions)) ? null : lastCompiledPattern;
+      if (lastCompiledPattern == null || !options.equals(ourLastMatchOptions)) {
+        return null;
+      }
+      if (lastCompiledPattern.getScope() != null) {
+        if (!options.getScope().equals(lastCompiledPattern.getScope())) {
+          return null;
+        }
+      }
+      else if (options.getScope() instanceof GlobalSearchScope) {
+        return null;
+      }
+      return lastCompiledPattern;
     }
   }
 
