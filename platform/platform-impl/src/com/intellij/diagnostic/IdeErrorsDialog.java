@@ -367,7 +367,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     updateCredentialsPanel(submitter);
 
     setOKActionEnabled(submitter != null && !(message.isSubmitted() || message.isSubmitting()));
-    setOKButtonText(submitter != null ? submitter.getReportActionText() : DiagnosticBundle.message("error.report.to.jetbrains.action"));
+    setOKButtonText(submitter != null ? submitter.getReportActionText() : DiagnosticBundle.message("error.report.to.unknown.action"));
   }
 
   private void updateLabels(AbstractMessage message, @Nullable ErrorReportSubmitter submitter) {
@@ -434,7 +434,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         myForeignPluginWarningLabel.setHyperlinkTarget(contactUrl);
       }
       else if (!StringUtil.isEmpty(contactEmail)) {
-        contactEmail = StringUtil.trimStart(contactEmail, " mailto:");
+        contactEmail = StringUtil.trimStart(contactEmail, "mailto:");
         myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.vendor", contactEmail));
         myForeignPluginWarningLabel.setHyperlinkTarget("mailto:" + contactEmail);
       }
