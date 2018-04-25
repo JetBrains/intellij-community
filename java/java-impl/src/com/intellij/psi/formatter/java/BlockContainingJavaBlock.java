@@ -182,6 +182,9 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
                 || child.getElementType() == JavaElementType.TYPE_PARAMETER_LIST)) {
         return Indent.getNoneIndent();
       }
+      else if (child.getElementType() == JavaTokenType.LPARENTH || child.getElementType() == JavaTokenType.RPARENTH) {
+        return Indent.getNoneIndent();
+      }
       else {
         return Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
       }
