@@ -18,6 +18,8 @@ package com.intellij.build;
 import com.intellij.build.events.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -174,7 +176,29 @@ public class ExecutionNode extends CachingSimpleNode {
   }
 
   public boolean isFailed() {
-    return myResult instanceof FailureResult;
+    // Android Studio: Check if at least one of the failures is an error (or its notification is null)
+    if (myResult instanceof FailureResult) {
+      for (Failure failure : ((FailureResult)myResult).getFailures()) {
+        Notification notification = failure.getNotification();
+        if (notification == null || notification.getType() == NotificationType.ERROR) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Android Studio: Check if at least one of the failures is a warning
+  public boolean hasWarnings() {
+    if (myResult instanceof FailureResult) {
+      for (Failure failure : ((FailureResult)myResult).getFailures()) {
+        Notification notification = failure.getNotification();
+        if (notification != null && notification.getType() == NotificationType.WARNING) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public boolean isSkipped() {
@@ -182,7 +206,8 @@ public class ExecutionNode extends CachingSimpleNode {
   }
 
   public boolean isRunning() {
-    return endTime <= 0 && !isSkipped() && !isFailed();
+    // Android Studio: it is not running if it already has warnings
+    return endTime <= 0 && !isSkipped() && !isFailed() && !hasWarnings();
   }
 
   public void setResult(@Nullable EventResult result) {
@@ -278,6 +303,8 @@ public class ExecutionNode extends CachingSimpleNode {
     else {
       return isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
              isFailed() ? AllIcons.Process.State.RedExcl :
+             // Android Studio: Show warning icon if it is not failed but has warnings
+             hasWarnings() ? AllIcons.General.Warning :
              isSkipped() ? AllIcons.Process.State.YellowStr :
              AllIcons.Process.State.GreenOK;
     }
