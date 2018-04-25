@@ -579,7 +579,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     public String TEST_OBJECT = TEST_CLASS;
     public String VM_PARAMETERS = "-ea";
     public String PARAMETERS;
-    public String WORKING_DIRECTORY;
+    public String WORKING_DIRECTORY = "%MODULE_WORKING_DIR%";
     public boolean PASS_PARENT_ENVS = true;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
     private String DIR_NAME;

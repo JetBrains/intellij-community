@@ -31,7 +31,7 @@ public class TestData implements Cloneable
   // should be private, but for now we use DefaultJDOMExternalizer, so, public
   public String VM_PARAMETERS = "-ea";
   public String PARAMETERS;
-  public String WORKING_DIRECTORY;
+  public String WORKING_DIRECTORY = "%MODULE_WORKING_DIR%";
   public String OUTPUT_DIRECTORY;
 
   private Map<String, String> ENVS = new LinkedHashMap<>();
