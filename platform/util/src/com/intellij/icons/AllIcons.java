@@ -547,6 +547,7 @@ public class AllIcons {
   }
   
   public static class General {
+    public static final Icon ActualZoom = IconLoader.getIcon("/general/actualZoom.svg"); // 16x16
     public static final Icon Add = IconLoader.getIcon("/general/add.svg"); // 16x16
     public static final Icon AddFavoritesList = IconLoader.getIcon("/general/addFavoritesList.png"); // 16x16
     public static final Icon AddJdk = IconLoader.getIcon("/general/addJdk.png"); // 16x16
@@ -608,6 +609,7 @@ public class AllIcons {
     public static final Icon ExternalTools = IconLoader.getIcon("/general/externalTools.png"); // 32x32
     public static final Icon ExternalToolsSmall = IconLoader.getIcon("/general/externalToolsSmall.png"); // 16x16
     public static final Icon Filter = IconLoader.getIcon("/general/filter.svg"); // 16x16
+    public static final Icon FitContent = IconLoader.getIcon("/general/fitContent.svg"); // 16x16
     public static final Icon Floating = IconLoader.getIcon("/general/floating.png"); // 14x14
     public static final Icon Gear = IconLoader.getIcon("/general/gear.png"); // 21x16
     public static final Icon GearHover = IconLoader.getIcon("/general/gearHover.png"); // 21x16
@@ -649,6 +651,7 @@ public class AllIcons {
     public static final Icon Jdk = IconLoader.getIcon("/general/jdk.png"); // 16x16
     public static final Icon KeyboardShortcut = IconLoader.getIcon("/general/keyboardShortcut.png"); // 13x13
     public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png"); // 32x32
+    public static final Icon Layout = IconLoader.getIcon("/general/layout.svg"); // 16x16
     public static final Icon LayoutEditorOnly = IconLoader.getIcon("/general/layoutEditorOnly.png"); // 16x16
     public static final Icon LayoutEditorPreview = IconLoader.getIcon("/general/layoutEditorPreview.png"); // 16x16
     public static final Icon LayoutPreviewOnly = IconLoader.getIcon("/general/layoutPreviewOnly.png"); // 16x16
@@ -680,6 +683,7 @@ public class AllIcons {
     public static final Icon PathVariables = IconLoader.getIcon("/general/pathVariables.png"); // 32x32
     public static final Icon Pin_tab = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
     public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png"); // 32x32
+    public static final Icon Print = IconLoader.getIcon("/general/print.svg"); // 16x16
     public static final Icon Progress = IconLoader.getIcon("/general/progress.png"); // 8x10
     public static final Icon ProjectConfigurable = IconLoader.getIcon("/general/projectConfigurable.png"); // 9x9
     public static final Icon ProjectConfigurableBanner = IconLoader.getIcon("/general/projectConfigurableBanner.png"); // 9x9
@@ -738,6 +742,8 @@ public class AllIcons {
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.png"); // 32x32
     public static final Icon Web = IconLoader.getIcon("/general/web.png"); // 13x13
     public static final Icon WebSettings = IconLoader.getIcon("/general/webSettings.png"); // 16x16
+    public static final Icon ZoomIn = IconLoader.getIcon("/general/zoomIn.svg"); // 16x16
+    public static final Icon ZoomOut = IconLoader.getIcon("/general/zoomOut.svg"); // 16x16
 
   }
   
@@ -1441,7 +1447,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Edit = IconLoader.getIcon("/actions/edit.svg"); // 16x16
-    
+
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Export = IconLoader.getIcon("/actions/export.png"); // 16x16
