@@ -175,14 +175,13 @@ class GuiTestRule : TestRule {
     private fun checkForModalDialogs(): List<AssertionError> {
       val errors = ArrayList<AssertionError>()
       // We close all modal dialogs left over, because they block the AWT thread and could trigger a deadlock in the next test.
-      var modalDialog: Dialog? = getActiveModalDialog()
-      while (modalDialog != null) {
+      waitUntil("all modal dialogs will be closed", timeoutInSeconds = 60) {
+        val modalDialog: Dialog = getActiveModalDialog() ?: return@waitUntil true
         robot().close(modalDialog)
         errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
-        modalDialog = getActiveModalDialog()
-      }
-      if (!errors.isEmpty())
         ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
+        false
+      }
       return errors
     }
 
