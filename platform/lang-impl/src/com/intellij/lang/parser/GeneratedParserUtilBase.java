@@ -708,8 +708,8 @@ public class GeneratedParserUtilBase {
     else {
       if (frame != null) {
         int position = ((PsiBuilderImpl.ProductionMarker)marker).getStartIndex();
-        if (frame.errorReportedAt > position && frame.parentFrame != null) {
-          frame.errorReportedAt = frame.parentFrame.errorReportedAt;
+        if (frame.errorReportedAt > position) {
+          frame.errorReportedAt = frame.parentFrame == null ? -1 : frame.parentFrame.errorReportedAt;
         }
       }
       marker.rollbackTo();

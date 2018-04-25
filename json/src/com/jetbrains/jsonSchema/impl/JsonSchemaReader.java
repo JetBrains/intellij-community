@@ -44,6 +44,7 @@ public class JsonSchemaReader {
   }
 
   public static JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile key) throws Exception {
+    if (!key.isValid()) throw new Exception(String.format("Can not load JSON Schema file '%s'", key.getName()));
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(key);
     if (!(psiFile instanceof JsonFile)) throw new Exception(String.format("Can not load PSI for JSON Schema file '%s'", key.getName()));
     final JsonObject value = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
@@ -74,6 +75,7 @@ public class JsonSchemaReader {
 
   @Nullable
   public static String readSchemaId(@NotNull final Project project, @NotNull final VirtualFile schemaFile) {
+    if (!schemaFile.isValid()) return null;
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(schemaFile);
     if (!(psiFile instanceof JsonFile)) return null;
 

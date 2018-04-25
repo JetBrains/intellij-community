@@ -167,7 +167,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
-    myCopyPasteDelegator = createCopyPasteDelegator(myProject, myTree);
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myTree);
 
     setToolbar(createToolbar());
     setupTree();
@@ -176,17 +176,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public static void registerAutoExpandListener(@NotNull JTree tree, @NotNull StructureViewModel structureViewModel) {
     tree.getModel().addTreeModelListener(new MyExpandListener(
       tree, ObjectUtils.tryCast(structureViewModel, StructureViewModel.ExpandInfoProvider.class)));
-  }
-
-  @NotNull
-  public static CopyPasteDelegator createCopyPasteDelegator(@NotNull Project project, @NotNull JTree tree) {
-    return new CopyPasteDelegator(project, tree) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        return PsiUtilCore.toPsiElementArray(getSelectedValues(tree).filter(PsiElement.class).toList());
-      }
-    };
   }
 
   protected boolean showScrollToFromSourceActions() {

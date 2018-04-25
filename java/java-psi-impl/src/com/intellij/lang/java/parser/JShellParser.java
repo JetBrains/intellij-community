@@ -54,6 +54,7 @@ public class JShellParser extends JavaParser {
         ElementType.JAVA_COMMENT_BIT_SET,
         ElementType.EXPRESSION_BIT_SET,
         ElementType.JAVA_STATEMENT_BIT_SET,
+        ElementType.PRIMITIVE_TYPE_BIT_SET,
         TokenSet.create(JShellElementType.ROOT_CLASS, JavaTokenType.IDENTIFIER)
       )
     );

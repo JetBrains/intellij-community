@@ -23,6 +23,7 @@ class IdeaEduProperties extends IdeaCommunityProperties {
 
   IdeaEduProperties(String home) {
     super(home)
+    productCode = "IE"
     dependenciesPath = "$home/edu/dependencies"
   }
 

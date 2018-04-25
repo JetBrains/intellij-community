@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.search.scope;
 
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.ProjectScope;
@@ -24,7 +24,6 @@ import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.Colored;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,38 +43,17 @@ public class NonProjectFilesScope extends NamedScope {
 
       @Override
       public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
-        // do not include fake-files e.g. fragment-editors, database consoles, etc.
-        if (file == null || file.getFileSystem() instanceof NonPhysicalFileSystem) return false;
-        if (!file.isInLocalFileSystem()) return true;
-        if (isInsideProjectContent(project, file)) return false;
-        return !ProjectScope.getProjectScope(project).contains(file);
+        return containsImpl(file, project);
       }
     });
   }
 
-  private static boolean isInsideProjectContent(@NotNull Project project, @NotNull VirtualFile file) {
-    if (!file.isInLocalFileSystem()) {
-      final String projectBaseDir = project.getBasePath();
-      if (projectBaseDir != null) {
-        return FileUtil.isAncestor(projectBaseDir, file.getPath(), false);
-      }
-    }
-    return false;
-  }
-
-  @NotNull
-  public static NamedScope[] removeFromList(@NotNull NamedScope[] scopes) {
-    int nonProjectIdx = -1;
-    for (int i = 0, length = scopes.length; i < length; i++) {
-      NamedScope scope = scopes[i];
-      if (scope instanceof NonProjectFilesScope) {
-        nonProjectIdx = i;
-        break;
-      }
-    }
-    if (nonProjectIdx > -1) {
-      scopes = ArrayUtil.remove(scopes, nonProjectIdx);
-    }
-    return scopes;
+  private static boolean containsImpl(@NotNull VirtualFile file,
+                                      @NotNull Project project) {
+    // do not include fake-files e.g. fragment-editors, etc.
+    if (file == null || file.getFileSystem() instanceof NonPhysicalFileSystem) return false;
+    if (!file.isInLocalFileSystem()) return true;
+    if (ScratchUtil.isScratch(file)) return false;
+    return !ProjectScope.getProjectScope(project).contains(file);
   }
 }

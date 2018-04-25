@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -299,6 +300,9 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
         updateStyle(myEditorPane);
 
+        if (myEditorPane.getCaret() instanceof DefaultCaret) {
+          ((DefaultCaret)myEditorPane.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+        }
         myEditorPane.setText(getText());
         checkMultiline();
         myEditorPane.setCaretPosition(0);
@@ -324,7 +328,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
                   "color:#" + ColorUtil.toHex(getForeground()) + ";" +
                   "font-family:" + getFont().getFamily() + ";" +
                   "font-size:" + getFont().getSize() + "pt;" +
-                  "white-space:" + (myAllowAutoWrapping ? "normal": "nowrap") +";}");
+                  "white-space:" + (myAllowAutoWrapping ? "normal" : "nowrap") + ";}");
     }
   }
 

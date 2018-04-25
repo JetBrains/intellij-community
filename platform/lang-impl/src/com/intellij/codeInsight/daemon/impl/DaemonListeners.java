@@ -585,6 +585,9 @@ public class DaemonListeners implements Disposable {
   private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     @Override
     public void mouseMoved(EditorMouseEvent e) {
+      if (Registry.is("ide.disable.editor.tooltips")) {
+        return;
+      }
       Editor editor = e.getEditor();
       if (myProject != editor.getProject()) return;
       if (editor.getComponent().getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING) != null) return;

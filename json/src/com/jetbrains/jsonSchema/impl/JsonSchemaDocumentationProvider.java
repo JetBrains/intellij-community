@@ -55,7 +55,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
 
     final PsiElement checkable = walker.goUpToCheckable(element);
     if (checkable == null) return null;
-    final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true, true);
+    final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true);
     if (position == null) return null;
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
 

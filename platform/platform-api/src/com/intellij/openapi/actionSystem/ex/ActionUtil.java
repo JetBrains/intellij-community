@@ -316,13 +316,22 @@ public class ActionUtil {
     return a1;
   }
 
-  public static void invokeAction(@NotNull AnAction action, @Nullable InputEvent inputEvent, @NotNull Component component, @NotNull String place, @Nullable Runnable onDone) {
+  public static void invokeAction(@NotNull AnAction action,
+                                  @NotNull Component component,
+                                  @NotNull String place,
+                                  @Nullable InputEvent inputEvent,
+                                  @Nullable Runnable onDone) {
+    invokeAction(action, DataManager.getInstance().getDataContext(component), place, inputEvent, onDone);
+  }
+
+  public static void invokeAction(@NotNull AnAction action,
+                                  @NotNull DataContext dataContext,
+                                  @NotNull String place,
+                                  @Nullable InputEvent inputEvent,
+                                  @Nullable Runnable onDone) {
     Presentation presentation = action.getTemplatePresentation().clone();
-    AnActionEvent event = new AnActionEvent(inputEvent, DataManager.getInstance().getDataContext(component),
-                                            place,
-                                            presentation,
-                                            ActionManager.getInstance(),
-                                            0);
+    AnActionEvent event = new AnActionEvent(
+      inputEvent, dataContext, place, presentation, ActionManager.getInstance(), 0);
     performDumbAwareUpdate(false, action, event, true);
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
       action.actionPerformed(event);
@@ -342,12 +351,13 @@ public class ActionUtil {
           LOG.warn("Can not find action by id " + actionId);
           return;
         }
-        invokeAction(action, null, component, place, null);
+        invokeAction(action, component, place, null, null);
       }
     };
   }
 
+  @NotNull
   public static ActionListener createActionListener(@NotNull AnAction action, @NotNull Component component, @NotNull String place) {
-    return e -> invokeAction(action, null, component, place, null);
+    return e -> invokeAction(action, component, place, null, null);
   }
 }

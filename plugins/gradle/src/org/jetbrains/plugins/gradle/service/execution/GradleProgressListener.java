@@ -25,6 +25,7 @@ import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -68,6 +69,11 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
 
   @Override
   public void statusChanged(org.gradle.tooling.events.ProgressEvent event) {
+    if (!GradleEnvironment.GRADLE_PROGRESS_VERBOSE_EVENTS) {
+      if (event.getDisplayName().startsWith("Resolve ")) return;
+      if (event.getDisplayName().startsWith("Apply plugin ")) return;
+    }
+
     ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(myTaskId, event, myOperationId + "_");
     if (notificationEvent instanceof ExternalSystemTaskExecutionEvent) {
       ExternalSystemProgressEvent progressEvent = ((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent();

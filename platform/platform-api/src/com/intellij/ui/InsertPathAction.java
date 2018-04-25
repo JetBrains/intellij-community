@@ -16,14 +16,15 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -37,20 +38,17 @@ public class InsertPathAction extends AnAction {
   protected final JTextComponent myTextField;
   protected static final CustomShortcutSet CTRL_F = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
   protected final FileChooserDescriptor myDescriptor;
+  protected final boolean myInsertSystemDependentPaths;
   private MouseListener myPopupHandler;
   protected static final Key INSERT_PATH_ACTION= Key.create("insertPathAction");
 
-  private InsertPathAction(JTextComponent textField) {
-    this(textField, FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
-  }
-
-  private InsertPathAction(JTextComponent textField, FileChooserDescriptor descriptor) {
+  private InsertPathAction(JTextComponent textField, FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
     super(UIBundle.message("insert.file.path.to.text.action.name"));
     myTextField = textField;
+    myInsertSystemDependentPaths = insertSystemDependentPaths;
     registerCustomShortcutSet(CTRL_F, myTextField);
     myDescriptor = descriptor;
   }
-
 
   public void actionPerformed(AnActionEvent e) {
     String selectedText = myTextField.getSelectedText();
@@ -65,12 +63,14 @@ public class InsertPathAction extends AnAction {
     //FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.commandLine.insertPath");
     VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myTextField, getEventProject(e), virtualFile);
     if (files.length != 0) {
-      myTextField.replaceSelection(files[0].getPresentableUrl());
+      final String path = files[0].getPath();
+      myTextField.replaceSelection(myInsertSystemDependentPaths? FileUtil.toSystemDependentName(path) : path);
     }
   }
 
   private void uninstall() {
     uninstallPopupHandler();
+    unregisterCustomShortcutSet(myTextField);
     myTextField.putClientProperty(INSERT_PATH_ACTION, null);
   }
 
@@ -93,11 +93,17 @@ public class InsertPathAction extends AnAction {
   }
 
   public static void addTo(JTextComponent textField, FileChooserDescriptor descriptor) {
+    addTo(textField, descriptor, true);
+  }
+  
+  public static void addTo(JTextComponent textField, FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
     if (ApplicationManager.getApplication() != null) { //NPE fixed when another class loader works
       removeFrom(textField);
       if (textField.getClientProperty(INSERT_PATH_ACTION) != null) return;
       DefaultActionGroup actionGroup = new DefaultActionGroup();
-      InsertPathAction action = descriptor != null? new InsertPathAction(textField, descriptor) : new InsertPathAction(textField);
+      InsertPathAction action = new InsertPathAction(
+        textField, descriptor != null? descriptor : FileChooserDescriptorFactory.createSingleLocalFileDescriptor(), insertSystemDependentPaths
+      );
       actionGroup.add(action);
       MouseListener popupHandler = PopupHandler.installUnknownPopupHandler(textField, actionGroup, ActionManager.getInstance());
       action.savePopupHandler(popupHandler);

@@ -57,12 +57,14 @@ open class NameMapper(private val document: Document, private val transpiledDocu
       return null
     }
 
-    if (sourceEntry.generatedLine > document.lineCount) {
-      LOG.warn("Cannot get generated name: source entry line ${sourceEntry.generatedLine} > ${document.lineCount}. Transpiled File: " + transpiledFile?.path)
+    val generatedName: String?
+    try {
+      generatedName = extractName(getGeneratedName(transpiledDocument, sourceMap, sourceEntry))
+    }
+    catch (e: IndexOutOfBoundsException) {
+      LOG.warn("Cannot get generated name: source entry (${sourceEntry.generatedLine},  ${sourceEntry.generatedColumn}). Transpiled File: " + transpiledFile?.path)
       return null
     }
-
-    val generatedName = extractName(getGeneratedName(transpiledDocument, sourceMap, sourceEntry))
     if (generatedName.isEmpty()) {
       return null
     }

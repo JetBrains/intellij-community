@@ -29,7 +29,7 @@ abstract class IntentionActionGroup<T : IntentionAction>(private val actions: Li
     val availableActions = actions.filter { it.isAvailable(project, editor, file) }
     if (availableActions.isEmpty()) return false
 
-    text = availableActions.singleOrNull()?.text ?: getGroupText(actions)
+    text = availableActions.singleOrNull()?.text ?: getGroupText(availableActions)
     return true
   }
 

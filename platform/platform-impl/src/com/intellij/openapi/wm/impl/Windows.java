@@ -17,20 +17,18 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindowType;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
-import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -93,6 +91,17 @@ public class Windows {
       return false;
     }
 
+    public static boolean isInToolWindow (Component component) {
+      Container c = component.getParent();
+      while (c != null) {
+        if (c instanceof ToolWindow) {
+          return true;
+        }
+        c = c.getParent();
+      }
+      return false;
+    }
+
     public Shortcut[] findShortcuts (String actionId) {
       return KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
     }
@@ -118,7 +127,8 @@ public class Windows {
                 //System.err.println("Tool window is loosing focus: " + ToolWindowManager.getActiveToolWindow().getStripeTitle());
 
                 // A toolwindow lost focus
-                if (!focusEvent.isTemporary() && ToolWindowManager.getActiveToolWindow() != null && ToolWindowManager.getActiveToolWindow().isAutoHide()) {
+                ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
+                if (!focusEvent.isTemporary() && activeToolWindow != null && (activeToolWindow.isAutoHide() || activeToolWindow.getType() == ToolWindowType.SLIDING)) {
                   pinnedWindowFocusLostHandler.accept(id);
                 }
               }

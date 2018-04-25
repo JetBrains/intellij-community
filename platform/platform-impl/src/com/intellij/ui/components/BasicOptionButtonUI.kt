@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.DialogWrapperButtonLayout.Companion.EXTRA_WIDTH_KEY
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.ui.popup.JBPopupAdapter
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -113,12 +112,10 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   protected open fun configureOptionButton() {
     optionButton.layout = createLayoutManager()
-    updateExtraWidth()
   }
 
   protected open fun unconfigureOptionButton() {
     optionButton.layout = null
-    optionButton.putClientProperty(EXTRA_WIDTH_KEY, null)
     optionButton.removeAll()
   }
 
@@ -176,7 +173,6 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       TOOL_TIP_TEXT_KEY, PROP_OPTION_TOOLTIP -> updateTooltip()
       PROP_OPTIONS -> {
         closePopup()
-        updateExtraWidth()
         updateTooltip()
         updateOptions()
       }
@@ -295,10 +291,6 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   }
 
   protected open fun createAnAction(action: Action) = action.getValue(OptionAction.AN_ACTION) as? AnAction ?: ActionDelegate(action)
-
-  private fun updateExtraWidth() {
-    optionButton.putClientProperty(EXTRA_WIDTH_KEY, if (!isSimpleButton) arrowButton.preferredSize.width else null)
-  }
 
   private fun updateTooltip() {
     val toolTip = if (!isSimpleButton) optionButton.optionTooltipText else optionButton.toolTipText

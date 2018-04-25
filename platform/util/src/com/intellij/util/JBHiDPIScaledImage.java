@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import org.imgscalr.Scalr;
@@ -95,6 +97,23 @@ public class JBHiDPIScaledImage extends BufferedImage {
    */
   public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, double width, double height, int type) {
     super((int)(width * JBUI.sysScale(gc)), (int)(height * JBUI.sysScale(gc)), type);
+    myImage = null;
+    myUserWidth = width;
+    myUserHeight = height;
+    myScale = JBUI.sysScale(gc);
+  }
+
+  /**
+   * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics config.
+   *
+   * @param gc the graphics config which provides the target scale
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param rm the rounding mode to apply when converting width/height to the device space
+   * @param type the type
+   */
+  public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
+    super(rm.round(width * JBUI.sysScale(gc)), rm.round(height * JBUI.sysScale(gc)), type);
     myImage = null;
     myUserWidth = width;
     myUserHeight = height;

@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.ui.*;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
@@ -53,13 +54,15 @@ public class CompilerModuleOptionsComponent extends JPanel {
     moduleColumn.setHeaderValue("Module");
     moduleColumn.setCellRenderer(new ModuleTableCellRenderer());
 
-    final TableColumn targetLevelColumn = myTable.getColumnModel().getColumn(1);
+    final TableColumn optionsColumn = myTable.getColumnModel().getColumn(1);
     final String columnTitle = "Compilation options";
-    targetLevelColumn.setHeaderValue(columnTitle);
+    optionsColumn.setHeaderValue(columnTitle);
     final int width = myTable.getFontMetrics(myTable.getFont()).stringWidth(columnTitle) + 10;
-    targetLevelColumn.setPreferredWidth(width);
-    targetLevelColumn.setMinWidth(width);
-    //targetLevelColumn.setMaxWidth(width);
+    optionsColumn.setPreferredWidth(width);
+    optionsColumn.setMinWidth(width);
+    final ExpandableTextField editor = new ExpandableTextField();
+    InsertPathAction.addTo(editor, null, false);
+    optionsColumn.setCellEditor(new DefaultCellEditor(editor));
     new TableSpeedSearch(myTable);
 
     final JPanel table = ToolbarDecorator.createDecorator(myTable)

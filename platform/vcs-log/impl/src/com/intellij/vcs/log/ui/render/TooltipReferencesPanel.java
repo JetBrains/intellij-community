@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 class TooltipReferencesPanel extends ReferencesPanel {
@@ -72,8 +73,8 @@ class TooltipReferencesPanel extends ReferencesPanel {
   protected Icon createIcon(@NotNull VcsRefType type, @NotNull Collection<VcsRef> refs, int refIndex, int height) {
     if (refIndex == 0) {
       Color color = type.getBackgroundColor();
-      return new LabelIcon(height, getBackground(),
-                           refs.size() > 1 ? new Color[]{color, color} : new Color[]{color}) {
+      return new LabelIcon(this, height, getBackground(),
+                           refs.size() > 1 ? ContainerUtil.newArrayList(color, color) : Collections.singletonList(color)) {
         @Override
         public int getIconWidth() {
           return getWidth(myHasGroupWithMultipleRefs ? 2 : 1);

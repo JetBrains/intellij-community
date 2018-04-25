@@ -113,7 +113,7 @@ public class PlatformUtils {
     return is(WEB_PREFIX);
   }
 
-  public static boolean isDatabaseIDE() {
+  public static boolean isDataGrip() {
     return is(DBE_PREFIX);
   }
 

@@ -298,12 +298,16 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     myAttributes = attributes;
   }
 
-  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull FilePath parentPath) {
-    appendParentPath(renderer, parentPath.getPresentableUrl());
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {
+    if (parentPath != null) {
+      appendParentPath(renderer, parentPath.getPresentableUrl());
+    }
   }
 
-  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull VirtualFile parentPath) {
-    appendParentPath(renderer, parentPath.getPresentableUrl());
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile parentPath) {
+    if (parentPath != null) {
+      appendParentPath(renderer, parentPath.getPresentableUrl());
+    }
   }
 
   private static void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull String parentPath) {

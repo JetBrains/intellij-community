@@ -115,7 +115,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       final PsiElement checkable = myWalker.goUpToCheckable(myPosition);
       if (checkable == null) return;
       final boolean isName = myWalker.isName(checkable);
-      final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(checkable, isName, !isName);
+      final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(checkable, !isName);
       if (position == null || position.isEmpty() && !isName) return;
 
       final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve();

@@ -13,7 +13,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Utils {
-  private static final long REQUIRED_FREE_SPACE = 10_0000_0000L;
+  private static final long REQUIRED_FREE_SPACE = 20_0000_0000L;
 
   private static final int BUFFER_SIZE = 8192;  // to minimize native memory allocations for I/O operations
   private static final byte[] BUFFER = new byte[BUFFER_SIZE];

@@ -41,6 +41,12 @@ public class SignatureParsingTest {
     assertEquals("p.Obj$.I<p.$Obj1.I,p.Obj2.I$>", parseTypeString("Lp/Obj$$I<Lp/$Obj1$I;Lp/Obj2$I$;>;"));
   }
 
+  @Test
+  public void testDollarInPackageName() throws ClsFormatException {
+    assertEquals("autovalue.shaded.com.google$.common.collect.$ImmutableSet<java.lang.String>",
+                 parseTypeString("Lautovalue/shaded/com/google$/common/collect/$ImmutableSet<Ljava/lang/String;>;"));
+  }
+
   @Test(expected = ClsFormatException.class)
   public void testIllegal() throws ClsFormatException {
     parseTypeString("T");

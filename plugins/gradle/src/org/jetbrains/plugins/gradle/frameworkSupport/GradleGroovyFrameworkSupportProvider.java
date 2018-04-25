@@ -51,7 +51,7 @@ public class GradleGroovyFrameworkSupportProvider extends GradleFrameworkSupport
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
-      .addPluginDefinition("apply plugin: 'groovy'")
+      .addPluginDefinitionInPluginsGroup("id 'groovy'")
       .addRepositoriesDefinition("mavenCentral()")
       .addDependencyNotation("compile 'org.codehaus.groovy:groovy-all:2.3.11'")
       .addDependencyNotation("testCompile group: 'junit', name: 'junit', version: '4.12'");

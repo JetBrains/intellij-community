@@ -84,6 +84,14 @@ public abstract class LRUPopupBuilder<T> {
     });
   }
 
+  @Deprecated
+  @NotNull
+  public static ListPopup forFileLanguages(@NotNull Project project,
+                                           @Nullable Language selection,
+                                           @NotNull Consumer<Language> onChosen) {
+    return forFileLanguages(project, "Languages", selection, onChosen);
+  }
+
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @NotNull String title,

@@ -75,6 +75,10 @@ public class PythonConsoleToolWindow {
     }
   }
 
+  public boolean isInitialized() {
+    return myInitialized;
+  }
+
   private void doInit(@NotNull final ToolWindow toolWindow) {
     myInitialized = true;
 
@@ -92,7 +96,7 @@ public class PythonConsoleToolWindow {
           boolean visible = window.isVisible();
           if (visible && toolWindow.getContentManager().getContentCount() == 0) {
             PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(myProject, null);
-            runner.run();
+            runner.run(true);
           }
         }
       }

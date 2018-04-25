@@ -130,5 +130,7 @@
     <orderEntry type="module" module-name="intellij.android.designer" />
     <orderEntry type="module" module-name="intellij.android.smali" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
+    <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="commons-net" level="project" />
   </component>
 </module>

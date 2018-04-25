@@ -797,8 +797,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
       Window window = UIUtil.getWindow(contents);
       String cleanupKey = "LafManagerImpl.rootPaneCleanup";
-      if (window instanceof RootPaneContainer && window != UIUtil.getWindow(owner) &&
-          ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
+      boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != UIUtil.getWindow(owner);
+      if (isHeavyWeightPopup) {
+        UIUtil.markAsTypeAheadAware(window);
+      }
+      if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
           @Override

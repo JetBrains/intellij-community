@@ -35,6 +35,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -70,7 +71,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  private void resetFileSetForValue(Value value, Object fileSet) {
+  private void resetFileSetForValue(Value value,@NotNull Object fileSet) {
     if (value == null) value = (Value)myNullValue;
     if (!(myInputIdMapping instanceof THashMap)) myInputIdMappingValue = fileSet;
     else ((THashMap<Value, Object>)myInputIdMapping).put(value, fileSet);
@@ -138,8 +139,12 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       THashMap<Value, Object> mapping = (THashMap<Value, Object>)myInputIdMapping;
       mapping.remove(value);
       if (mapping.size() == 1) {
-        myInputIdMapping = mapping.keySet().iterator().next();
-        myInputIdMappingValue = mapping.get((Value)myInputIdMapping);
+        Value mappingValue = mapping.keySet().iterator().next();
+        myInputIdMapping = mappingValue;
+        Object inputIdMappingValue = mapping.get(mappingValue);
+        // prevent NPEs on file set due to Value class being mutable or having inconsistent equals wrt disk persistence 
+        // (instance that is serialized and new instance created with deserialization from the same bytes are expected to be equal)
+        myInputIdMappingValue = inputIdMappingValue != null ? inputIdMappingValue : 0;
       }
     }
   }
@@ -191,8 +196,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         return new InvertedIndexValueIterator<Value>() {
           private Value current;
           private Object currentValue;
-          private final THashMap<Value, Object> myMapping = ((THashMap<Value, Object>)myInputIdMapping);
-          private final Iterator<Value> iterator = myMapping.keySet().iterator();
+          private final Iterator<Map.Entry<Value, Object>> iterator = ((THashMap<Value, Object>)myInputIdMapping).entrySet().iterator();
 
           @Override
           public boolean hasNext() {
@@ -201,9 +205,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
           @Override
           public Value next() {
-            current = iterator.next();
+            Map.Entry<Value, Object> entry = iterator.next();
+            current = entry.getKey();
             Value next = current;
-            currentValue = myMapping.get(next);
+            currentValue = entry.getValue();
             if (next == myNullValue) next = null;
             return next;
           }

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console
 
-import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -29,7 +28,7 @@ class PythonConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, null)
-    TransactionGuard.submitTransaction(project, Runnable { runner.runSync() });
+    TransactionGuard.submitTransaction(project, Runnable { runner.runSync(true) });
   }
 
   companion object {

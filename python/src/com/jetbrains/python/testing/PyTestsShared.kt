@@ -625,6 +625,16 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
 
   override val configurationClass = PyAbstractTestConfiguration::class.java
 
+  override fun createLightConfiguration(context: ConfigurationContext): RunConfiguration? {
+    val module = context.module ?:return null
+    val project = context.project ?:return null
+    val configuration =
+      findConfigurationFactoryFromSettings(module).createTemplateConfiguration(project) as? PyAbstractTestConfiguration
+      ?: return null
+    if (!setupConfigurationFromContext(configuration, context, Ref(context.psiLocation))) return null
+    return configuration
+  }
+
   override fun cloneTemplateConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings {
     return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(context.module))
   }

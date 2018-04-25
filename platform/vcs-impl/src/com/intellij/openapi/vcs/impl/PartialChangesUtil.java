@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -130,12 +131,41 @@ public class PartialChangesUtil {
       return task.compute();
     }
     finally {
-      if (Comparing.equal(clm.getDefaultChangeList().getId(), targetChangeList.getId())) {
-        clm.setDefaultChangeList(oldDefaultList, true);
-      }
-      else {
-        LOG.warn(new Throwable("Active changelist was changed during the operation"));
-      }
+      restoreChangeList(clm, targetChangeList, oldDefaultList);
+    }
+  }
+
+  public static <T> T computeUnderChangeListWithRefresh(@NotNull Project project,
+                                                        @Nullable LocalChangeList targetChangeList,
+                                                        @Nullable String title,
+                                                        @NotNull Computable<T> task) {
+    ChangeListManagerEx clm = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+    LocalChangeList oldDefaultList = clm.getDefaultChangeList();
+
+    if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
+      return task.compute();
+    }
+
+    clm.setDefaultChangeList(targetChangeList, true);
+    try {
+      return task.compute();
+    }
+    finally {
+      InvokeAfterUpdateMode mode = title != null
+                                   ? InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE
+                                   : InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED;
+      clm.invokeAfterUpdate(() -> restoreChangeList(clm, targetChangeList, oldDefaultList), mode, title, ModalityState.NON_MODAL);
+    }
+  }
+
+  private static void restoreChangeList(@NotNull ChangeListManagerEx clm,
+                                        @NotNull LocalChangeList targetChangeList,
+                                        @NotNull LocalChangeList oldDefaultList) {
+    if (Comparing.equal(clm.getDefaultChangeList().getId(), targetChangeList.getId())) {
+      clm.setDefaultChangeList(oldDefaultList, true);
+    }
+    else {
+      LOG.warn(new Throwable("Active changelist was changed during the operation"));
     }
   }
 }

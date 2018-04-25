@@ -76,7 +76,11 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
   }
 
   public void setDescriptor(FileChooserDescriptor descriptor) {
-    InsertPathAction.addTo(myEditor, descriptor);
+    setDescriptor(descriptor, true);
+  }
+  
+  public void setDescriptor(FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
+    InsertPathAction.addTo(myEditor, descriptor, insertSystemDependentPaths);
   }
 
   public String getDialogCaption() {

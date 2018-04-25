@@ -55,7 +55,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     else if (PlatformUtils.isPhpStorm()) {
       recentFileMasks.add("*.php");
     }
-    else if (PlatformUtils.isDatabaseIDE()) {
+    else if (PlatformUtils.isDataGrip()) {
       recentFileMasks.add("*.sql");
     }
   }

@@ -826,9 +826,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (canonicalText.indexOf('$') >= 0) {
       StringBuilder sb = new StringBuilder(canonicalText);
       boolean updated = false;
-      for (int p = 0; p < sb.length(); p++) {
+      int start = canonicalText.lastIndexOf('/') + 2; // -1 => 1 if no package; skip first char in class name
+      for (int p = start; p < sb.length(); p++) {
         char c = sb.charAt(p);
-        if (c == '$' && p > 0 && sb.charAt(p - 1) != '/' && p < sb.length() - 1 && sb.charAt(p + 1) != '$') {
+        if (c == '$' && p < sb.length() - 1 && sb.charAt(p + 1) != '$') {
           sb.setCharAt(p, '.');
           updated = true;
         }

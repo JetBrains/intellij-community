@@ -17,6 +17,7 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -90,6 +91,13 @@ public abstract class Executor {
 
   public String getStartActionText(String configurationName) {
     return getStartActionText() + (StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'");
+  }
+
+  /**
+   * Return false to suppress action visibility for given project.
+   */
+  public boolean isApplicable(@NotNull Project project) {
+    return true;
   }
 
   /**

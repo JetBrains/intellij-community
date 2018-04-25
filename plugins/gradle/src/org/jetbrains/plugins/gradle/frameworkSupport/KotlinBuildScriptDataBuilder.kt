@@ -14,14 +14,8 @@ class KotlinBuildScriptDataBuilder : BuildScriptDataBuilder {
     if (plugins.isEmpty()) {
       return
     }
-    if (myGradleVersion >= GradleVersion.version("4.1")) {
-      lines.add("plugins {")
-      lines.addAll(plugins.map { it.removePrefix("plugin(\"").removeSuffix("\")") }.map { padding.`fun`(it) })
-    }
-    else {
-      lines.add("apply {")
-      lines.addAll(plugins.map { padding.`fun`(it) })
-    }
+    lines.add("apply {")
+    lines.addAll(plugins.map { padding.`fun`(it) })
     lines.add("}")
     lines.add("")
   }

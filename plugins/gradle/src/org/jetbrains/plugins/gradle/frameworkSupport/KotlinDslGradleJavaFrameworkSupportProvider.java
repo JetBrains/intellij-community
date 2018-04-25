@@ -47,7 +47,7 @@ public class KotlinDslGradleJavaFrameworkSupportProvider extends KotlinDslGradle
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
-      .addPluginDefinition("plugin(\"java\")")
+      .addPluginDefinitionInPluginsGroup("java")
       .addOther("configure<JavaPluginConvention> {\n    sourceCompatibility = JavaVersion.VERSION_1_8\n}")
       .addRepositoriesDefinition("mavenCentral()")
       .addDependencyNotation("testCompile(\"junit\", \"junit\", \"4.12\")");

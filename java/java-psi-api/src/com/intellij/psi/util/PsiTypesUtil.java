@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -202,12 +201,12 @@ public class PsiTypesUtil {
         qualifierType = TypeConversionUtil.erasure(qualifier.getType());
       }
       else if (condition != null) {
-        ASTNode parent = call.getNode().getTreeParent();
-        while (parent != null && condition.value(parent.getElementType())) {
-          parent = parent.getTreeParent();
+        PsiElement parent = call.getContext();
+        while (parent != null && condition.value(parent.getNode().getElementType())) {
+          parent = parent.getContext();
         }
         if (parent != null) {
-          qualifierType = JavaPsiFacade.getInstance(project).getElementFactory().createType((PsiClass)parent.getPsi());
+          qualifierType = JavaPsiFacade.getInstance(project).getElementFactory().createType((PsiClass)parent);
         }
       }
       return createJavaLangClassType(methodExpression, qualifierType, true);

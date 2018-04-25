@@ -53,7 +53,7 @@ public interface TreeStructureProvider {
    * @see com.intellij.openapi.actionSystem.DataProvider
    */
   @Nullable
-  default Object getData(Collection<AbstractTreeNode> selected, String dataName) {
+  default Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
     return null;
   }
 }

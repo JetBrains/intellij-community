@@ -380,7 +380,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
     if (filesWithProblems != null) {
       ((FileBasedIndexImpl)FileBasedIndex.getInstance()).runCleanupAction(() -> {
-        stubUpdatingIndex.getWriteLock().lock();
+        boolean locked = stubUpdatingIndex.getWriteLock().tryLock();
+        if (!locked) return; // nested indices invokation, can not cleanup without deadlock
         try {
           Map<Key, StubIdList> artificialOldValues = new THashMap<>();
           artificialOldValues.put(key, new StubIdList());

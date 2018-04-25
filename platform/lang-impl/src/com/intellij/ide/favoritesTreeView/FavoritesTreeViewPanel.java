@@ -14,6 +14,7 @@ import com.intellij.ide.favoritesTreeView.actions.*;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
@@ -49,6 +50,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -97,7 +99,17 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myFavoritesTreeStructure.getRootElement());
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    myTree = new DnDAwareTree(treeModel);
+    myTree = new DnDAwareTree(treeModel) {
+      @Override
+      public boolean isFileColorsEnabled() {
+        return ProjectViewTree.isFileColorsEnabledFor(this);
+      }
+
+      @Override
+      public Color getFileColorFor(Object object) {
+        return ProjectViewTree.getColorForElement(getPsiElement(object));
+      }
+    };
     myBuilder = new FavoritesViewTreeBuilder(myProject, myTree, treeModel, myFavoritesTreeStructure);
     DockManager.getInstance(project).register(this);
 
@@ -172,13 +184,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        return getSelectedPsiElements();
-      }
-    };
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this);
 
     AnActionButton addActionButton = AnActionButton.fromAction(ActionManager.getInstance().getAction("AddNewFavoritesList"));
     addActionButton.getTemplatePresentation().setIcon(CommonActionsPanel.Buttons.ADD.getIcon());
@@ -332,35 +338,33 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
   @NotNull
   private PsiElement[] getSelectedPsiElements() {
-    final Object[] elements = getSelectedNodeElements();
-    if (elements == null) {
-      return PsiElement.EMPTY_ARRAY;
+    List<PsiElement> elements = JBIterable.of(getSelectedNodeElements()).filterMap(this::getPsiElement).toList();
+    return PsiUtilCore.toPsiElementArray(elements);
+  }
+
+  @Nullable
+  private PsiElement getPsiElement(@Nullable Object element) {
+    if (element instanceof FavoritesTreeNodeDescriptor) {
+      element = ((FavoritesTreeNodeDescriptor)element).getElement().getValue();
     }
-    ArrayList<PsiElement> result = new ArrayList<>();
-    for (Object element : elements) {
-      if (element instanceof Bookmark) {
-        element = ((Bookmark)element).getFile();
-      }
-      if (element instanceof PsiElement) {
-        result.add((PsiElement)element);
-      }
-      else if (element instanceof SmartPsiElementPointer) {
-        PsiElement psiElement = ((SmartPsiElementPointer)element).getElement();
+    if (element instanceof Bookmark) {
+      element = ((Bookmark)element).getFile();
+    }
+    if (element instanceof PsiElement) {
+      return (PsiElement)element;
+    }
+    else if (element instanceof SmartPsiElementPointer) {
+      return ((SmartPsiElementPointer)element).getElement();
+    }
+    else if (element != null) {
+      for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
+        PsiElement psiElement = provider.getPsiElement(element);
         if (psiElement != null) {
-          result.add(psiElement);
-        }
-      }
-      else {
-        for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
-          final PsiElement psiElement = provider.getPsiElement(element);
-          if (psiElement != null) {
-            result.add(psiElement);
-            break;
-          }
+          return psiElement;
         }
       }
     }
-    return PsiUtilCore.toPsiElementArray(result);
+    return null;
   }
 
   public FavoritesTreeStructure getFavoritesTreeStructure() {

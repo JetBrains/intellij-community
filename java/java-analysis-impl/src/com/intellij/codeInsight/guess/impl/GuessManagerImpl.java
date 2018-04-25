@@ -340,6 +340,9 @@ public class GuessManagerImpl extends GuessManager {
   @NotNull
   @Override
   public List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr) {
+    if (expr.getType() instanceof PsiPrimitiveType) {
+      return Collections.emptyList();
+    }
     List<PsiType> result = null;
     PsiExpression place = PsiUtil.skipParenthesizedExprDown(expr);
     if (place == null) return Collections.emptyList();
@@ -413,6 +416,9 @@ public class GuessManagerImpl extends GuessManager {
     private void handleAssignment(@Nullable PsiExpression expression) {
       if (expression == null) return;
       PsiType type = expression.getType();
+      if (type instanceof PsiPrimitiveType) {
+        type = ((PsiPrimitiveType)type).getBoxedType(expression);
+      }
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
       if (rawType == null || rawType.equals(PsiType.NULL)) return;
       if (mySpecificType == null) {

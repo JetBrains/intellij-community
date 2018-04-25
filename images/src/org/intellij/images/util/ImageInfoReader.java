@@ -60,7 +60,7 @@ public class ImageInfoReader {
         return new Info(w, h, bpp);
       }
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.warn(e);
     }
     return null;

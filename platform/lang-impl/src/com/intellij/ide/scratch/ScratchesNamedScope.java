@@ -21,8 +21,7 @@ public class ScratchesNamedScope extends NamedScope {
 
       @Override
       public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
-        RootType rootType = RootType.forFile(file);
-        return rootType != null && !rootType.isHidden();
+        return ScratchUtil.isScratch(file);
       }
     });
   }

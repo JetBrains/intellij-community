@@ -81,7 +81,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
       }
       return newChildren;
     }
-    if (settings.isShowMembers()) {
+    if (settings != null && settings.isShowMembers()) {
       List<AbstractTreeNode> newChildren = new ArrayList<>();
       for (AbstractTreeNode child : children) {
         if (child instanceof PsiFileNode && ((PsiFileNode)child).getValue() instanceof PyFile) {

@@ -55,6 +55,7 @@ class TeamcityFormatter(Formatter):
         assert isinstance(scenario, Scenario)
         self.__scenario = scenario
         self.__scenario_opened = False
+        self.__steps.clear()
 
     def step(self, step):
         assert isinstance(step, Step)

@@ -46,11 +46,7 @@ import javax.rmi.PortableRemoteObject;
 import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
 
 /**
@@ -258,7 +254,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   private EntryPoint acquire(final RunningInfo port) throws Exception {
     EntryPoint result = RemoteUtil.executeWithClassLoader(() -> {
-      Registry registry = LocateRegistry.getRegistry("localhost", port.port);
+      Registry registry = LocateRegistry.getRegistry(getLocalHost(), port.port);
       Remote remote = ObjectUtils.assertNotNull(registry.lookup(port.name));
 
       if (Remote.class.isAssignableFrom(myValueClass)) {
@@ -345,7 +341,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           }
           fireModificationCountChanged();
           try {
-            RemoteDeadHand.TwoMinutesTurkish.startCooking("localhost", result.port);
+            RemoteDeadHand.TwoMinutesTurkish.startCooking(getLocalHost(), result.port);
           }
           catch (Throwable e) {
             LOG.warn("The cook failed to start due to " + ExceptionUtil.getRootCause(e));
@@ -353,6 +349,11 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         }
       }
     };
+  }
+
+  @NotNull
+  private static String getLocalHost() {
+    return ObjectUtils.notNull(System.getProperty(RemoteServer.SERVER_HOSTNAME), "127.0.0.1");
   }
 
   private boolean dropProcessInfo(Pair<Target, Parameters> key, @Nullable Throwable error, @Nullable ProcessHandler handler) {
