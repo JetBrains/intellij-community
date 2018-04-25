@@ -64,12 +64,10 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -149,7 +147,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           LOG.warn(e);
         }
       }
-      return Toolkit.getDefaultToolkit().createImage(url);
+      Image image = ImageLoader.loadFromUrl(url);
+      return image != null ? ImageUtil.toBufferedImage(image) : Toolkit.getDefaultToolkit().createImage(url);
     }
   };
   private Runnable myToolwindowCallback;

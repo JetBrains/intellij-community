@@ -23,6 +23,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
+import org.intellij.images.fileTypes.impl.SvgFileType;
 import org.intellij.images.util.ImageInfoReader;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,7 +87,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(ImageFileTypeManager.getInstance().getImageFileType()) {
+    return new DefaultFileTypeSpecificInputFilter(ImageFileTypeManager.getInstance().getImageFileType(), SvgFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
         return file.isInLocalFileSystem() && file.getLength() < ourMaxImageSize;
@@ -96,7 +97,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
 
   @Override
   public int getVersion() {
-    return 6;
+    return 7;
   }
 
   public static class ImageInfo {

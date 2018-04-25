@@ -16,6 +16,7 @@
 package org.intellij.images.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +24,12 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 
 /**
@@ -38,7 +43,13 @@ public class ImageInfoReader {
 
   @Nullable
   public static Info getInfo(@NotNull String file) {
-    return read(new File(file));
+    try (FileInputStream fis = new FileInputStream(file)) {
+      return read(fis);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+    return null;
   }
 
   @Nullable
@@ -47,7 +58,15 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  private static Info read(@NotNull Object input) {
+  private static Info read(@NotNull InputStream input) {
+    try {
+      Image load = SVGLoader.load(input, 1.0f);
+      int bpp = -1;
+      if (load instanceof BufferedImage) {
+        bpp = ImageTypeSpecifier.createFromRenderedImage((BufferedImage)load).getColorModel().getPixelSize();
+      }
+      return new Info(load.getWidth(null), load.getHeight(null), bpp);
+    } catch (IOException ignored) {}
     try (ImageInputStream iis = ImageIO.createImageInputStream(input)) {
       Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
       ImageReader reader = it.hasNext() ? it.next() : null;
