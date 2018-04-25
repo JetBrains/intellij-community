@@ -54,10 +54,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       if (!ExpressionUtils.isReferenceTo(expression, myVariable)) return;
       myHasReferences = true;
       PsiElement parent = expression.getParent();
-      if (parent instanceof PsiConditionalExpression) {
-        boxingRequired();
-      }
-      else if (parent instanceof PsiExpressionList) {
+      if (parent instanceof PsiExpressionList) {
         PsiElement grandParent = parent.getParent();
         if (!(grandParent instanceof PsiCallExpression)) return;
         PsiExpression[] arguments = ((PsiExpressionList)parent).getExpressions();

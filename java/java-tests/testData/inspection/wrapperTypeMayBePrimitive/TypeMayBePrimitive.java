@@ -11,14 +11,6 @@ class TypeMayBePrimitive {
   // While the variable will not be used, we will not show the message
   void use(boolean b) {}
 
-  void conditionalExpr(boolean c) {
-    Boolean b1 = true;
-    boolean res1 = b1 ? true : false;
-
-    Boolean b2 = false;
-    boolean res2 = c ? b2 : false;
-  }
-
   void assignment() {
     Integer i1 = 12;
     i1 = null;
