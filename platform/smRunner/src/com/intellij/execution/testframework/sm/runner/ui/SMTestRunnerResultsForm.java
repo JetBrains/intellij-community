@@ -847,7 +847,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
             storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
                                                                 configurationName == null ? 0 : configurationName.hashCode(),
                                                                 pair == null ? -1 : pair.first, pair == null ? "" : pair.second,
-                                                                proxy.getErrorMessage()));
+                                                                TestStackTraceParser.getErrorMessage(proxy)));
           }
         }
       });

@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.ui;
 
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -47,6 +49,17 @@ public class TestStackTraceParser {
       return null;
     }
     catch (IOException | NumberFormatException e) {
+      return null;
+    }
+  }
+
+  public static String getErrorMessage(SMTestProxy proxy) {
+    if (StringUtil.isNotEmpty(proxy.getErrorMessage()) || proxy.getStacktrace() == null)
+      return proxy.getErrorMessage();
+    try (BufferedReader reader = new BufferedReader(new StringReader(proxy.getStacktrace()))) {
+      return reader.readLine();
+    }
+    catch (IOException e) {
       return null;
     }
   }
