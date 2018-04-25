@@ -128,6 +128,10 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     this(name, project, new Data(), configurationFactory);
   }
 
+  public JUnitConfiguration(final String name, final Project project) {
+    this(name, project, new Data(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+  }
+
   protected JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
     super(name, new JavaRunConfigurationModule(project, false), configurationFactory);
     myData = data;

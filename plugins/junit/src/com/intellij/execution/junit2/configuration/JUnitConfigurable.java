@@ -8,7 +8,6 @@ import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
@@ -747,9 +746,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       }
       final ClassFilter.ClassFilterWithScope classFilter;
       try {
-        final JUnitConfiguration configurationCopy =
-          new JUnitConfiguration(ExecutionBundle.message("default.junit.configuration.name"), getProject(),
-                                 JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+        final JUnitConfiguration configurationCopy = new JUnitConfiguration(ExecutionBundle.message("default.junit.configuration.name"), getProject());
         applyEditorTo(configurationCopy);
         classFilter = TestClassFilter
           .create(SourceScope.modulesWithDependencies(configurationCopy.getModules()), configurationCopy.getConfigurationModule().getModule());

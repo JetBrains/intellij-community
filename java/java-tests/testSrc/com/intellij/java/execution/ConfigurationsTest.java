@@ -189,8 +189,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     Module module1 = getModule1();
     PsiClass psiClass = findTestA(module1);
 
-    JUnitConfiguration configuration =
-      new JUnitConfiguration("", myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration("", myProject);
     configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
     configuration.getPersistentData().setDirName(psiClass.getContainingFile().getContainingDirectory().getVirtualFile().getParent().getPath());
     configuration.setModule(module1);
@@ -212,8 +211,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
 
   public void testRunAllInPackageWhenPackageIsEmptyInModule() throws ExecutionException {
     assignJdk(getModule2());
-    JUnitConfiguration configuration =
-      new JUnitConfiguration("", myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration("", myProject);
     configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
     configuration.getPersistentData().PACKAGE_NAME = "test2";
     configuration.getPersistentData().setScope(TestSearchScope.WHOLE_PROJECT);
@@ -568,7 +566,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       configuration.checkConfiguration();
     }
     catch (RuntimeConfigurationException e) {
-      assertTrue(e.getLocalizedMessage().startsWith(reasonBeginning));
+      assertThat(e.getLocalizedMessage()).startsWith(reasonBeginning);
       return;
     }
 
@@ -601,8 +599,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   }
 
   private JUnitConfiguration createConfiguration(PsiPackage psiPackage, Module module) {
-    JUnitConfiguration configuration =
-      new JUnitConfiguration("", myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration("", myProject);
     configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
     configuration.getPersistentData().PACKAGE_NAME = psiPackage.getQualifiedName();
     configuration.getPersistentData().setScope(TestSearchScope.WHOLE_PROJECT);
