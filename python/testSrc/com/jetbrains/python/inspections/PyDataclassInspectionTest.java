@@ -137,6 +137,26 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-26354
+  public void testAttrsUselessReprStrEq() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsUselessOrder() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsUselessFrozen() {
+    doTest();
+  }
+
+  // PY-26354
+  public void testAttrsUselessHash() {
+    doTest();
+  }
+
+  // PY-26354
   public void testAttrsDefaultThroughKeywordAndDecorator() {
     doTest();
   }

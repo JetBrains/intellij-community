@@ -7,12 +7,14 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.*
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.*
@@ -81,6 +83,8 @@ class PyDataclassInspection : PyInspection() {
             }
           }
           else if (dataclassParameters.type == PyDataclassParameters.Type.ATTRS) {
+            processAttrsParameters(node, dataclassParameters)
+
             node
               .findMethodByName(DUNDER_ATTRS_POST_INIT, false, myTypeEvalContext)
               ?.also { processAttrsPostInitDefinition(it, dataclassParameters) }
@@ -207,21 +211,15 @@ class PyDataclassInspection : PyInspection() {
       var mutatingMethodsExist = false
       var hashMethodExists = false
 
-      cls.visitMethods(
-        {
-          when (it.name) {
-            "__repr__" -> reprMethodExists = true
-            "__eq__" -> eqMethodExists = true
-            in ORDER_OPERATORS -> orderMethodsExist = true
-            "__setattr__", "__delattr__" -> mutatingMethodsExist = true
-            PyNames.HASH -> hashMethodExists = true
-          }
-
-          true
-        },
-        false,
-        myTypeEvalContext
-      )
+      cls.methods.forEach {
+        when (it.name) {
+          "__repr__" -> reprMethodExists = true
+          "__eq__" -> eqMethodExists = true
+          in ORDER_OPERATORS -> orderMethodsExist = true
+          "__setattr__", "__delattr__" -> mutatingMethodsExist = true
+          PyNames.HASH -> hashMethodExists = true
+        }
+      }
 
       hashMethodExists = hashMethodExists || cls.findClassAttribute(PyNames.HASH, false, myTypeEvalContext) != null
 
@@ -253,6 +251,58 @@ class PyDataclassInspection : PyInspection() {
         registerProblem(dataclassParameters.unsafeHashArgument,
                         "'unsafe_hash' should be false if the class defines '${PyNames.HASH}'",
                         ProblemHighlightType.GENERIC_ERROR)
+      }
+    }
+
+    private fun processAttrsParameters(cls: PyClass, dataclassParameters: PyDataclassParameters) {
+      var reprMethod: PyFunction? = null
+      var strMethod: PyFunction? = null
+      val cmpMethods = mutableListOf<PyFunction>()
+      val mutatingMethods = mutableListOf<PyFunction>()
+      var hashMethod: PsiNameIdentifierOwner? = null
+
+      cls.methods.forEach {
+        when (it.name) {
+          "__repr__" -> reprMethod = it
+          "__str__" -> strMethod = it
+          "__eq__",
+          in ORDER_OPERATORS -> cmpMethods.add(it)
+          "__setattr__", "__delattr__" -> mutatingMethods.add(it)
+          PyNames.HASH -> hashMethod = it
+        }
+      }
+
+      hashMethod = hashMethod ?: cls.findClassAttribute(PyNames.HASH, false, myTypeEvalContext)
+
+      // element to register problem and corresponding attr.s parameter
+      val problems = mutableListOf<Pair<PsiNameIdentifierOwner?, String>>()
+
+      if (dataclassParameters.repr && reprMethod != null) {
+        problems.add(reprMethod to "repr")
+      }
+
+      if (PyEvaluator.evaluateAsBoolean(PyUtil.peelArgument(dataclassParameters.others["str"]), false) && strMethod != null) {
+        problems.add(strMethod to "str")
+      }
+
+      if (dataclassParameters.order && cmpMethods.isNotEmpty()) {
+        cmpMethods.forEach { problems.add(it to "cmp") }
+      }
+
+      if (dataclassParameters.frozen && mutatingMethods.isNotEmpty()) {
+        mutatingMethods.forEach { problems.add(it to "frozen") }
+      }
+
+      if (dataclassParameters.unsafeHash && hashMethod != null) {
+        problems.add(hashMethod to "hash")
+      }
+
+      problems.forEach {
+        it.first?.apply {
+          registerProblem(nameIdentifier,
+                          "'$name' is ignored if the class already defines '${it.second}' parameter",
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        }
       }
     }
 
