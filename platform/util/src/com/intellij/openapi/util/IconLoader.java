@@ -186,7 +186,7 @@ public final class IconLoader {
     }
     if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
-    URL myURL = findURL(path, aClass);
+    URL myURL = findURL(path, aClass.getClassLoader());
     if (myURL == null) {
       if (strict) throw new RuntimeException("Can't find icon in '" + path + "' near " + aClass);
       return null;
@@ -217,10 +217,12 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static URL findURL(@NotNull String path, @NotNull Class aClass) {
-    URL url = aClass.getResource(path);
+  private static URL findURL(@NotNull String path, @Nullable ClassLoader loader) {
+    if (loader == null) loader = ClassLoader.getSystemClassLoader();
+    if (loader == null) return null;
+    URL url = loader.getResource(path);
     if (url != null || !path.endsWith(".png")) return url;
-    url = aClass.getResource(path.substring(0, path.length() - 4) + ".svg");
+    url = loader.getResource(path.substring(0, path.length() - 4) + ".svg");
     if (url != null) LOG.info("replace '" + path + "' with '" + url + "'");
     return url;
   }
@@ -256,7 +258,7 @@ public final class IconLoader {
     if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
     if (!StringUtil.startsWithChar(path, '/')) return null;
 
-    final URL url = classLoader.getResource(path.substring(1));
+    final URL url = findURL(path.substring(1), classLoader);
     final Icon icon = findIcon(url);
     if (icon instanceof CachedImageIcon) {
       ((CachedImageIcon)icon).myOriginalPath = originalPath;
@@ -368,7 +370,7 @@ public final class IconLoader {
     return getTransparentIcon(icon, 0.5f);
   }
 
-  @NotNull 
+  @NotNull
   public static Icon getTransparentIcon(@NotNull final Icon icon, final float alpha) {
     return new RetrievableIcon() {
       @Override
@@ -518,7 +520,7 @@ public final class IconLoader {
           }
           if (myClassLoader != null && path != null && path.startsWith("/")) {
             path = path.substring(1);
-            final URL url = myClassLoader.getResource(path);
+            URL url = findURL(path, myClassLoader);
             if (url != null) {
               myUrl = url;
             }
