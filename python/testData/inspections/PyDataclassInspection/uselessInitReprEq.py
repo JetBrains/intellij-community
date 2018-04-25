@@ -24,8 +24,27 @@ class Base:
 class Derived(Base):
     d: int = 1
 
+
+@dataclasses.dataclass
+class B1:
+    b: int = 1
+
+    def __init__(self):
+        print("ok")
+
+
+@dataclasses.dataclass(<warning descr="'init' is ignored if the class already defines corresponding method">init=True</warning>)
+class B2:
+    b: int = 1
+
+    def __init__(self):
+        print("ok")
+
 print(repr(A()))
 print(A() == A())
 
 print(repr(Derived()))
 print(Derived() == Derived())
+
+B1()
+B2()

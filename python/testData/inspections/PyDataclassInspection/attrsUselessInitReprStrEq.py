@@ -30,6 +30,22 @@ class Base:
 class Derived(Base):
     d: int = 1
 
+
+@attr.dataclass
+class B1:
+    b: int = 1
+
+    def <warning descr="'__init__' is ignored if the class already defines 'init' parameter">__init__</warning>(self):
+        print("ok")
+
+
+@attr.dataclass(init=True)
+class B2:
+    b: int = 1
+
+    def <warning descr="'__init__' is ignored if the class already defines 'init' parameter">__init__</warning>(self):
+        print("ok")
+
 print(repr(A()))
 print(str(A()))
 print(A() == A())
@@ -37,3 +53,6 @@ print(A() == A())
 print(repr(Derived()))
 print(str(Derived()))
 print(Derived() == Derived())
+
+B1()
+B2()

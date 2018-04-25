@@ -117,7 +117,7 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-27398
-  public void testUselessReprEq() {
+  public void testUselessInitReprEq() {
     doTest();
   }
 
@@ -137,7 +137,7 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-26354
-  public void testAttrsUselessReprStrEq() {
+  public void testAttrsUselessInitReprStrEq() {
     doTest();
   }
 

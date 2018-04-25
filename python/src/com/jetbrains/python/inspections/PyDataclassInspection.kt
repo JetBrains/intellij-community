@@ -205,6 +205,7 @@ class PyDataclassInspection : PyInspection() {
         registerProblem(dataclassParameters.eqArgument, "'eq' must be true if 'order' is true", ProblemHighlightType.GENERIC_ERROR)
       }
 
+      var initMethodExists = false
       var reprMethodExists = false
       var eqMethodExists = false
       var orderMethodsExist = false
@@ -213,6 +214,7 @@ class PyDataclassInspection : PyInspection() {
 
       cls.methods.forEach {
         when (it.name) {
+          PyNames.INIT -> initMethodExists = true
           "__repr__" -> reprMethodExists = true
           "__eq__" -> eqMethodExists = true
           in ORDER_OPERATORS -> orderMethodsExist = true
@@ -222,6 +224,12 @@ class PyDataclassInspection : PyInspection() {
       }
 
       hashMethodExists = hashMethodExists || cls.findClassAttribute(PyNames.HASH, false, myTypeEvalContext) != null
+
+      if (dataclassParameters.init && initMethodExists) {
+        registerProblem(dataclassParameters.initArgument,
+                        "'init' is ignored if the class already defines corresponding method",
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+      }
 
       if (dataclassParameters.repr && reprMethodExists) {
         registerProblem(dataclassParameters.reprArgument,
@@ -255,6 +263,7 @@ class PyDataclassInspection : PyInspection() {
     }
 
     private fun processAttrsParameters(cls: PyClass, dataclassParameters: PyDataclassParameters) {
+      var initMethod: PyFunction? = null
       var reprMethod: PyFunction? = null
       var strMethod: PyFunction? = null
       val cmpMethods = mutableListOf<PyFunction>()
@@ -263,6 +272,7 @@ class PyDataclassInspection : PyInspection() {
 
       cls.methods.forEach {
         when (it.name) {
+          PyNames.INIT -> initMethod = it
           "__repr__" -> reprMethod = it
           "__str__" -> strMethod = it
           "__eq__",
@@ -276,6 +286,10 @@ class PyDataclassInspection : PyInspection() {
 
       // element to register problem and corresponding attr.s parameter
       val problems = mutableListOf<Pair<PsiNameIdentifierOwner?, String>>()
+
+      if (dataclassParameters.init && initMethod != null) {
+        problems.add(initMethod to "init")
+      }
 
       if (dataclassParameters.repr && reprMethod != null) {
         problems.add(reprMethod to "repr")
