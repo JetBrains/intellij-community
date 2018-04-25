@@ -27,7 +27,7 @@ public abstract class RunAnythingRunConfigurationGroup extends RunAnythingGroupB
                                @NotNull RunAnythingSearchListModel model,
                                @NotNull String pattern,
                                boolean isInsertionMode,
-                               @NotNull Runnable check) {
+                               @NotNull Runnable cancellationChecker) {
 
     final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
       ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
@@ -37,14 +37,14 @@ public abstract class RunAnythingRunConfigurationGroup extends RunAnythingGroupB
         }
       }, false);
 
-    check.run();
+    cancellationChecker.run();
     SearchResult result = new SearchResult();
     for (ChooseRunConfigurationPopup.ItemWrapper wrapper : wrappers) {
       if (!isTemporary(wrapper)) continue;
 
       RunAnythingRunConfigurationItem runConfigurationItem = new RunAnythingRunConfigurationItem(wrapper);
-      if (addToList(model, result, pattern, runConfigurationItem, runConfigurationItem.getText(), isInsertionMode)) break;
-      check.run();
+      if (addToList(model, result, pattern, runConfigurationItem.getText(), isInsertionMode, runConfigurationItem)) break;
+      cancellationChecker.run();
     }
 
     return result;

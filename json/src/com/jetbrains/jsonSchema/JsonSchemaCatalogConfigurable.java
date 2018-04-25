@@ -4,10 +4,11 @@ package com.jetbrains.jsonSchema;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,23 +25,24 @@ public class JsonSchemaCatalogConfigurable implements Configurable {
 
   public JsonSchemaCatalogConfigurable(@NotNull final Project project) {
     myProject = project;
-    myCheckBox = new JBCheckBox("Automatically fetch JSON schemas defined by schemastore.org catalog");
-    myCheckBox.setToolTipText("Automatically assign and download JSON schemas based on file mappings provided at http://schemastore.org/json/");
+    myCheckBox = new JBCheckBox("Use schemastore.org JSON Schema catalog");
   }
 
   @Nullable
   @Override
   public JComponent createComponent() {
     FormBuilder builder = FormBuilder.createFormBuilder();
-    builder.addComponent(new TitledSeparator("Default schema catalog"));
+    JLabel commentComponent =
+      ComponentPanelBuilder.createCommentComponent("Schemas will be downloaded and assigned using the <a href=\"http://schemastore.org/json/\">SchemaStore API</a>", true);
     builder.addComponent(myCheckBox);
+    commentComponent.setBorder(JBUI.Borders.emptyLeft(18));
+    builder.addComponent(commentComponent);
     return wrap(builder.getPanel());
   }
 
   private static JPanel wrap(JComponent panel) {
     JPanel wrapper = new JBPanel(new BorderLayout());
     wrapper.add(panel, BorderLayout.NORTH);
-
     return wrapper;
   }
 

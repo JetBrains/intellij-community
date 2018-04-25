@@ -55,7 +55,8 @@ public class DaemonStopAction extends DaemonAction {
           DaemonClientConnection connection = daemonConnector.maybeConnect(info);
           if (connection != null) {
             try {
-              connection.dispatch(new Stop(idGenerator.generateId(), token));
+              Stop stopCommand = createCommand(Stop.class, idGenerator.generateId(), token);
+              connection.dispatch(stopCommand);
             }
             finally {
               connection.stop();

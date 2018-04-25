@@ -1,16 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.idea.svn.BackgroundTaskGroup;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.BackgroundTaskGroup;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.history.SvnChangeList;

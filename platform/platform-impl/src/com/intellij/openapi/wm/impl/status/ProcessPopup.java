@@ -151,7 +151,7 @@ public class ProcessPopup  {
 
       int x = (int)(bounds.getMaxX() - width);
       int y = (int)(bounds.getMaxY() - height);
-      myPopup = builder.createPopup();
+      myPopup = builder.addUserData("SIMPLE_WINDOW").createPopup();
       myPopup.getContent().putClientProperty(AbstractPopup.FIRST_TIME_SIZE, new JBDimension(400, 0));
 
       StatusBarEx sb = (StatusBarEx)((IdeFrame)frame).getStatusBar();

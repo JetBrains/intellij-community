@@ -65,10 +65,9 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
     if (myMethodCall == null || !myMethodCall.isValid()) {
       return myExpression == null || !myExpression.isValid() ? null : myExpression;
     }
-    final PsiElement method = myMethodCall.resolveMethod();
+    final PsiMethod method = myMethodCall.resolveMethod();
     if (method != null) {
-      final PsiMethod psiMethod = (PsiMethod)method;
-      return checkMethod(element, psiMethod);
+      return checkMethod(element, method);
     } else if (myMethodCall instanceof PsiMethodCallExpression){
       final Collection<PsiElement> psiElements = TargetElementUtil.getInstance()
         .getTargetCandidates(((PsiMethodCallExpression)myMethodCall).getMethodExpression());

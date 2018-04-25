@@ -186,7 +186,8 @@ class MoveRegistrationQuickFix(private val myTargetModule: Module,
                                 }
                               }
 
-    val newTag = newParentTag.addSubTag(tag, false)
+    val anchor = newParentTag.subTags.lastOrNull { it.name == tag.name }
+    val newTag = anchor?.let { newParentTag.addAfter(tag, anchor) } ?: newParentTag.addSubTag(tag, false)
     tag.delete()
     (newTag as? Navigatable)?.navigate(true)
   }

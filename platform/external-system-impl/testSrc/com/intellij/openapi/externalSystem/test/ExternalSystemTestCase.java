@@ -564,7 +564,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   public static void deleteBuildSystemDirectory() {
-    Path buildSystemDirectory = BuildManager.getInstance().getBuildSystemDirectory();
+    BuildManager buildManager = BuildManager.getInstance();
+    if(buildManager == null) return;
+    Path buildSystemDirectory = buildManager.getBuildSystemDirectory();
     try {
       PathKt.delete(buildSystemDirectory);
       return;

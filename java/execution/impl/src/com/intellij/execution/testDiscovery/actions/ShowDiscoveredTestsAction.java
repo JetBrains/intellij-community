@@ -18,8 +18,8 @@ import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.lang.Language;
-import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -69,7 +69,6 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
@@ -316,48 +315,19 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
   @NotNull
   private static String methodSignature(@NotNull PsiMethod method) {
-    StringBuilder signature = new StringBuilder(method.getName());
-    signature.append(TestDiscoveryInstrumentationUtils.SEPARATOR);
-    signature.append("(");
-    for (JvmParameter param : method.getParameters()) {
-      formatType(signature, (PsiType)param.getType());
-    }
-    signature.append(")");
-    if (method.getReturnType() == null || "void".equals(method.getReturnType().getCanonicalText())) {
-      signature.append("V");
-    }
-    else {
-      formatType(signature, method.getReturnType());
-    }
-    return signature.toString();
-  }
-
-  private static void formatType(StringBuilder signature, PsiType type) {
-    signature.append("L");
-    String typeName = type.getCanonicalText();
-    if (type instanceof PsiClassType) {
-      PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass instanceof PsiTypeParameter) {
-        // type parameter
-        typeName = Optional.ofNullable(psiClass.getSuperClass())
-                           .map(PsiClass::getQualifiedName)
-                           .orElse(typeName);
-      }
-      else if (((PsiClassType)type).hasParameters()) {
-        // parametrized type
-        typeName = Optional.ofNullable(psiClass)
-                           .map(PsiClass::getQualifiedName)
-                           .orElse(typeName);
-      }
-    }
-    signature.append(typeName.replace(".", "/"));
-    signature.append(";");
+    return method.getName() +
+           TestDiscoveryInstrumentationUtils.SEPARATOR +
+           ClassUtil.getAsmMethodSignature(method);
   }
 
   private static String getName(PsiClass c) {
-    StringBuilder buf = new StringBuilder();
-    ClassUtil.formatClassName(c, buf);
-    return buf.toString();
+    if (c instanceof PsiAnonymousClass) {
+      PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);
+      if (containingClass != null) {
+        return ClassUtil.getJVMClassName(containingClass) + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)c);
+      }
+    }
+    return ClassUtil.getJVMClassName(c);
   }
 
   @Nullable

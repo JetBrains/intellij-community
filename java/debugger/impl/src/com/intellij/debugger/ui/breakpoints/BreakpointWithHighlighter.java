@@ -2,10 +2,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.*;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -24,7 +21,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -105,7 +101,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       updateUI();
-      updateGutter();
     }
 
     return this;
@@ -113,6 +108,12 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   private void updateCaches(@Nullable DebugProcessImpl debugProcess) {
     myIcon = calcIcon(debugProcess);
+    if (isVisible() && isValid() && debugProcess != null && myXBreakpoint instanceof XLineBreakpoint) {
+      JavaDebugProcess process = debugProcess.getXdebugProcess();
+      if (process != null) {
+        process.getSession().updateBreakpointPresentation(((XLineBreakpoint)myXBreakpoint), myIcon, myInvalidMessage);
+      }
+    }
     myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
     myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
   }
@@ -150,6 +151,16 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       return getVerifiedIcon(muted);
     }
 
+    return getValidatingIcon(muted);
+  }
+
+  protected Icon getValidatingIcon(boolean muted) {
+    if (myXBreakpoint != null) {
+      Icon icon = myXBreakpoint.getType().getPendingIcon();
+      if (icon != null) {
+        return icon;
+      }
+    }
     return getSetIcon(muted);
   }
 
@@ -277,7 +288,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       DebugProcessImpl debugProcess = context.getDebugProcess();
       if (debugProcess == null || !debugProcess.isAttached()) {
         updateCaches(null);
-        updateGutter();
       }
       else {
         debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
@@ -288,18 +298,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
                 updateCaches(debugProcess);
               }
             });
-            DebuggerInvocationUtil.swingInvokeLater(myProject, BreakpointWithHighlighter.this::updateGutter);
           }
         });
       }
     });
-  }
-
-  private void updateGutter() {
-    if (isVisible() && isValid()) {
-      XDebuggerManager.getInstance(myProject).getBreakpointManager()
-        .updateBreakpointPresentation((XLineBreakpoint)myXBreakpoint, getIcon(), myInvalidMessage);
-    }
   }
 
   public boolean isAt(@NotNull Document document, int offset) {

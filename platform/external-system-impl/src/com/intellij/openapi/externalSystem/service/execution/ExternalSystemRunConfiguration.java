@@ -63,7 +63,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
@@ -84,6 +83,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.List;
 
+import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_FORK_SOCKET_PARAM;
+import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_SETUP_PREFIX;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
 
@@ -95,7 +96,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                                                                                           SMRunnerConsolePropertiesProvider {
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
-  public static final String DEBUG_SETUP_PREFIX = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=";
 
   private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
@@ -282,10 +282,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
       if (myProject.isDisposed()) return null;
 
-      if (mySettings.getTaskNames().isEmpty()) {
-        throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
-      }
-
       String jvmAgentSetup = getJvmAgentSetup();
 
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -463,7 +459,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (myDebugPort > 0) {
         jvmAgentSetup = DEBUG_SETUP_PREFIX + myDebugPort;
         if (getForkSocket() != null) {
-          jvmAgentSetup += " -forkSocket" + getForkSocket().getLocalPort();
+          jvmAgentSetup += (" " + DEBUG_FORK_SOCKET_PARAM + getForkSocket().getLocalPort());
         }
       }
       else {

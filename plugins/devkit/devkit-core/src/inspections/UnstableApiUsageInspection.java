@@ -6,10 +6,12 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +26,10 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     "org.jetbrains.annotations.ApiStatus.Experimental",
     "com.google.common.annotations.Beta",
     "io.reactivex.annotations.Beta",
-    "io.reactivex.annotations.Experimental"
+    "io.reactivex.annotations.Experimental",
+    "rx.annotations.Experimental",
+    "rx.annotations.Beta",
+    "org.apache.http.annotation.Beta"
   );
 
   @Nullable
@@ -48,6 +53,10 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!isApplicable(holder.getProject())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     return new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -61,17 +70,17 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
         }
 
         for (PsiReference reference : element.getReferences()) {
-          PsiElement resolvedElement = resolvedConstructor != null ? resolvedConstructor : reference.resolve();
-          if (!(resolvedElement instanceof PsiModifierListOwner) || !isLibraryElement(resolvedElement)) {
+          PsiModifierListOwner modifierListOwner = getModifierListOwner(reference, resolvedConstructor);
+          if (modifierListOwner == null || !isLibraryElement(modifierListOwner)) {
             continue;
           }
 
-          PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolvedElement;
           for (String annotation : unstableApiAnnotations) {
             if (modifierListOwner.hasAnnotation(annotation)) {
               holder.registerProblem(reference,
                                      DevKitBundle.message("inspections.unstable.api.usage.description", getReferenceText(reference)),
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+              return;
             }
           }
         }
@@ -92,7 +101,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     if (containingVirtualFile == null) {
       return false;
     }
-    return ProjectFileIndex.getInstance(element.getProject()).isInLibrary(containingVirtualFile);
+    return ProjectFileIndex.getInstance(element.getProject()).isInLibraryClasses(containingVirtualFile);
   }
 
   @NotNull
@@ -105,5 +114,36 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     }
     // references are not PsiQualifiedReference for annotation attributes
     return StringUtil.getShortName(reference.getCanonicalText());
+  }
+
+  @Nullable
+  private static PsiModifierListOwner getModifierListOwner(@NotNull PsiReference reference, @Nullable PsiMethod resolvedConstructor) {
+    if (resolvedConstructor != null) {
+      return resolvedConstructor;
+    }
+
+    if (reference instanceof ResolvingHint) {
+      if (((ResolvingHint)reference).canResolveTo(PsiModifierListOwner.class)) {
+        return (PsiModifierListOwner)reference.resolve();
+      }
+      return null;
+    }
+
+    PsiElement resolvedElement = reference.resolve();
+    if (resolvedElement instanceof PsiModifierListOwner) {
+      return (PsiModifierListOwner)resolvedElement;
+    }
+    return null;
+  }
+
+  private boolean isApplicable(@NotNull Project project) {
+    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    for (String annotation : unstableApiAnnotations) {
+      if (javaPsiFacade.findClass(annotation, scope) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 }

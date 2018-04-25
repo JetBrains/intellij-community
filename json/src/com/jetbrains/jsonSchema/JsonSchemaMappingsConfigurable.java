@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
@@ -42,6 +43,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     }
     return o1.getName().compareToIgnoreCase(o2.getName());
   };
+  static final String STUB_SCHEMA_NAME = "New Schema";
   private String myError;
 
   @NotNull
@@ -50,6 +52,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     TREE_UPDATER.run();
     updateWarningText();
   };
+
+  private final Function<String, String> myNameCreator = s -> createUniqueName(s);
 
   public JsonSchemaMappingsConfigurable(@NotNull final Project project) {
     myProject = project;
@@ -80,9 +84,11 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     return result;
   }
 
-  private void addProjectSchema() {
-    addCreatedMappings(new UserDefinedJsonSchemaConfiguration(createUniqueName("new schema"),
-                                                              JsonSchemaVersion.SCHEMA_4, "", false, null));
+  public UserDefinedJsonSchemaConfiguration addProjectSchema() {
+    UserDefinedJsonSchemaConfiguration configuration = new UserDefinedJsonSchemaConfiguration(createUniqueName(STUB_SCHEMA_NAME),
+                                                                                     JsonSchemaVersion.SCHEMA_4, "", false, null);
+    addCreatedMappings(configuration);
+    return configuration;
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -118,8 +124,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   }
 
   private void addCreatedMappings(@NotNull final UserDefinedJsonSchemaConfiguration info) {
-    final JsonSchemaConfigurable configurable = new JsonSchemaConfigurable(myProject, "",
-                                                                     info, myTreeUpdater, true);
+    final JsonSchemaConfigurable configurable = new JsonSchemaConfigurable(myProject, "", info, myTreeUpdater, myNameCreator);
     configurable.setError(myError);
     final MyNode node = new MyNode(configurable, info.isApplicationLevel());
     addNode(node, myRoot);
@@ -136,7 +141,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       String pathToSchema = info.getRelativePathToSchema();
       final JsonSchemaConfigurable configurable =
         new JsonSchemaConfigurable(myProject, isHttpPath(pathToSchema) ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
-                                   info, myTreeUpdater, false);
+                                   info, myTreeUpdater, myNameCreator);
       configurable.setError(myError);
       myRoot.add(new MyNode(configurable, info.isApplicationLevel()));
     }

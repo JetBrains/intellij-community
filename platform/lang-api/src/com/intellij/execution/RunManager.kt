@@ -135,7 +135,7 @@ abstract class RunManager {
 
   /**
    * Creates a configuration settings object based on a specified [RunConfiguration]. Note that you need to call
-   * [.addConfiguration] if you want the configuration to be persisted in the project.
+   * [addConfiguration] if you want the configuration to be persisted in the project.
    * @param runConfiguration the run configuration
    * @param factory the factory instance.
    */
@@ -203,6 +203,8 @@ abstract class RunManager {
   abstract fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings?
 
   fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
+
+  fun findConfigurationByTypeAndName(type: ConfigurationType?, name: String) = type?.let { findConfigurationByTypeAndName(it.id, name) }
 
   abstract fun removeConfiguration(settings: RunnerAndConfigurationSettings?)
 

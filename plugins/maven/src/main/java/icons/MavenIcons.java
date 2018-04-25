@@ -40,6 +40,6 @@ public class MavenIcons {
   public static final Icon PhasesClosed = load("/images/phasesClosed.png"); // 16x16
   public static final Icon PluginGoal = load("/images/pluginGoal.png"); // 16x16
   public static final Icon ProfilesClosed = load("/images/profilesClosed.png"); // 16x16
-  public static final Icon ToolWindowMaven = load("/images/toolWindowMaven.png"); // 13x13
+  public static final Icon ToolWindowMaven = load("/images/toolWindowMaven.svg"); // 13x13
   public static final Icon UpdateFolders = load("/images/updateFolders.png"); // 16x16
 }

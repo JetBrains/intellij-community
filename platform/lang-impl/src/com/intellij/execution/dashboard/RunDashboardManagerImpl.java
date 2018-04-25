@@ -29,8 +29,8 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,12 +54,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @NotNull private final Project myProject;
   @NotNull private final ContentManager myContentManager;
   @NotNull private final ContentManagerListener myContentManagerListener;
-  @NotNull private final Set<String> myTypes = ContainerUtil.newHashSet();
+
+  @NotNull private State myState = new State();
+
   @NotNull private final List<RunDashboardGrouper> myGroupers;
   @NotNull private final Condition<Content> myReuseCondition;
   @NotNull private final AtomicBoolean myListenersInitialized = new AtomicBoolean();
   private boolean myShowConfigurations = true;
-  private float myContentProportion = DEFAULT_CONTENT_PROPORTION;
 
   private RunDashboardContent myDashboardContent;
   private Content myToolWindowContent;
@@ -207,7 +208,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> result = new ArrayList<>();
 
     List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
-      .filter(settings -> myTypes.contains(settings.getType().getId()))
+      .filter(settings -> myState.configurationTypes.contains(settings.getType().getId()))
       .collect(Collectors.toList());
 
     ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(myProject);
@@ -260,7 +261,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public float getContentProportion() {
-    return myContentProportion;
+    return myState.contentProportion;
   }
 
   @Override
@@ -272,7 +273,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {
-    if (myTypes.contains(runConfiguration.getType().getId())) {
+    if (myState.configurationTypes.contains(runConfiguration.getType().getId())) {
       RunDashboardContributor contributor = getContributor(runConfiguration.getType());
       return contributor == null || contributor.isShowInDashboard(runConfiguration);
     }
@@ -283,14 +284,14 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   @NotNull
   public Set<String> getTypes() {
-    return Collections.unmodifiableSet(myTypes);
+    return Collections.unmodifiableSet(myState.configurationTypes);
   }
 
   @Override
   public void setTypes(@NotNull Set<String> types) {
-    myTypes.clear();
-    myTypes.addAll(types);
-    if (!myTypes.isEmpty()) {
+    myState.configurationTypes.clear();
+    myState.configurationTypes.addAll(types);
+    if (!myState.configurationTypes.isEmpty()) {
       initToolWindowContentListeners();
     }
     updateDashboard(true);
@@ -349,7 +350,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         boolean available = hasContent();
         ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
         if (toolWindow == null) {
-          if (!myTypes.isEmpty() || available) {
+          if (!myState.configurationTypes.isEmpty() || available) {
             toolWindow = createToolWindow(toolWindowManager, available);
           }
           if (available) {
@@ -455,40 +456,38 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Nullable
   @Override
   public State getState() {
-    State state = new State();
-    state.configurationTypes.addAll(myTypes);
-    state.ruleStates = myGroupers.stream()
-      .filter(grouper -> !grouper.getRule().isAlwaysEnabled())
-      .map(grouper -> new RuleState(grouper.getRule().getName(), grouper.isEnabled()))
-      .collect(Collectors.toList());
-    if (myDashboardContent != null) {
-      myContentProportion = myDashboardContent.getContentProportion();
+    List<RuleState> ruleStates = myState.ruleStates;
+    ruleStates.clear();
+    for (RunDashboardGrouper grouper : myGroupers) {
+      if (!grouper.getRule().isAlwaysEnabled()) {
+        ruleStates.add(new RuleState(grouper.getRule().getName(), grouper.isEnabled()));
+      }
     }
-    state.contentProportion = myContentProportion;
-    return state;
+    if (myDashboardContent != null) {
+      myState.contentProportion = myDashboardContent.getContentProportion();
+    }
+    return myState;
   }
 
   @Override
   public void loadState(@NotNull State state) {
-    myTypes.clear();
-    myTypes.addAll(state.configurationTypes);
-    if (!myTypes.isEmpty()) {
+    myState = state;
+    if (!myState.configurationTypes.isEmpty()) {
       initToolWindowContentListeners();
     }
-    state.ruleStates.forEach(ruleState -> {
+    for (RuleState ruleState : state.ruleStates) {
       for (RunDashboardGrouper grouper : myGroupers) {
         if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {
           grouper.setEnabled(ruleState.enabled);
           return;
         }
       }
-    });
-    myContentProportion = state.contentProportion;
+    }
   }
 
   static class State {
-    public Set<String> configurationTypes = ContainerUtil.newHashSet();
-    public List<RuleState> ruleStates = new ArrayList<>();
+    public final Set<String> configurationTypes = new THashSet<>();
+    public final List<RuleState> ruleStates = new ArrayList<>();
     public float contentProportion = DEFAULT_CONTENT_PROPORTION;
   }
 

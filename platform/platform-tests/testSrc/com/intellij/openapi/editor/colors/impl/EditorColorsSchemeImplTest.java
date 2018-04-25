@@ -348,7 +348,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme parentScheme = (EditorColorsScheme)defaultScheme.clone();
     parentScheme.setName("DefaultTest");
-    EditorColorsScheme editorColorsScheme = new EditorColorsSchemeImpl(parentScheme);
+    AbstractColorsScheme editorColorsScheme = new EditorColorsSchemeImpl(parentScheme);
     editorColorsScheme.setName("test");
     TextAttributes defaultAttributes = new TextAttributes(null, null, Color.BLACK, EffectType.LINE_UNDERSCORE, Font.PLAIN);
     TextAttributesKey testKey = TextAttributesKey.createTextAttributesKey("TEST_KEY", DefaultLanguageHighlighterColors.PARAMETER);
@@ -356,14 +356,14 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     editorColorsScheme.setAttributes(testKey, INHERITED_ATTRS_MARKER);
     try {
       Element root = new Element("scheme");
-      ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
-      EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(parentScheme);
+      editorColorsScheme.writeExternal(root);
+      AbstractColorsScheme targetScheme = new EditorColorsSchemeImpl(parentScheme);
       for (final Element child : root.getChildren()) {
         if ("attributes".equals(child.getName())) {
-          ((EditorColorsSchemeImpl)targetScheme).readAttributes(child);
+          targetScheme.readAttributes(child);
         }
       }
-      TextAttributes targetAttributes = ((AbstractColorsScheme)targetScheme).getDirectlyDefinedAttributes(testKey);
+      TextAttributes targetAttributes = targetScheme.getDirectlyDefinedAttributes(testKey);
       assertTrue(targetAttributes != null && targetAttributes == INHERITED_ATTRS_MARKER);
     }
     finally {

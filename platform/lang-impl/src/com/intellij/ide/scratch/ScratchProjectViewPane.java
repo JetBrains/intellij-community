@@ -5,17 +5,15 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
-import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
-import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -25,11 +23,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,8 @@ import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 
 /**
  * @author gregsh
@@ -53,6 +56,17 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   public ScratchProjectViewPane(Project project) {
     super(project);
+    registerUpdaters(project, this, new Runnable() {
+      AbstractProjectViewPane updateTarget;
+      @Override
+      public void run() {
+        if (updateTarget == null) {
+          updateTarget = !isScratchesMergedIntoProjectTab() ? ScratchProjectViewPane.this :
+                         ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
+        }
+        if (updateTarget != null) updateTarget.updateFromRoot(true);
+      }
+    });
   }
 
   @Override
@@ -81,29 +95,25 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return 11;
   }
 
-  @NotNull
   @Override
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
-    ProjectTreeBuilder builder =
-      new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
-        @Override
-        protected ProjectViewPsiTreeChangeListener createPsiTreeChangeListener(Project project) {
-          return new ProjectTreeBuilderPsiListener(project) {
-            @Override
-            protected void childrenChanged(PsiElement parent, boolean stopProcessingForThisModificationCount) {
-              VirtualFile virtualFile = parent instanceof PsiFileSystemItem ? ((PsiFileSystemItem)parent).getVirtualFile() : null;
-              if (virtualFile != null && virtualFile.isValid() && ScratchFileService.getInstance().getRootType(virtualFile) != null) {
-                queueUpdateFrom(parent, true);
-              }
-            }
-          };
+    return null;
+  }
+
+  private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
+    project.getMessageBus().connect(disposable).subscribe(VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        boolean update = JBIterable.from(events).find(e -> ScratchUtil.isScratch(e.getFile())) != null;
+        if (update) {
+          onUpdate.run();
         }
-      };
+      }
+    });
     for (RootType rootId : RootType.getAllRootIds()) {
       if (rootId.isHidden()) continue;
-      rootId.registerTreeUpdater(myProject, builder, builder::queueUpdate);
+      rootId.registerTreeUpdater(project, disposable, onUpdate);
     }
-    return builder;
   }
 
   @Override
@@ -159,9 +169,24 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return !isScratchesMergedIntoProjectTab();
   }
 
-  @NotNull
-  public static AbstractTreeNode createRootNode(@NotNull Project project, @NotNull ViewSettings settings) {
-    return new MyProjectNode(project, settings);
+  public static class MyStructureProvider implements TreeStructureProvider {
+    @NotNull
+    @Override
+    public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
+                                               @NotNull Collection<AbstractTreeNode> children,
+                                               ViewSettings settings) {
+      Project project = parent instanceof ProjectViewProjectNode? parent.getProject() : null;
+      if (project != null && isScratchesMergedIntoProjectTab()) {
+        children.add(new MyProjectNode(project, settings));
+      }
+      return children;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
+      return null;
+    }
   }
 
   private static class MyTreeStructure extends ProjectTreeStructure {
@@ -172,7 +197,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     protected AbstractTreeNode createRoot(Project project, ViewSettings settings) {
-      return createRootNode(project, settings);
+      return new MyProjectNode(project, settings);
     }
 
     @Nullable

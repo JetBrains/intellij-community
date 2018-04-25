@@ -153,6 +153,8 @@ public class TouchBarGeneral extends TouchBarActionBase {
     if (!myButtonRun.isVisible())
       return;
 
+    if (myProject.isDisposed())
+      return;
 
     final ExecutionManager em = ExecutionManager.getInstance(myProject);
     final ProcessHandler[] allRunning = em.getRunningProcesses();

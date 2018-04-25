@@ -185,4 +185,26 @@ public class StreamInlining {
       System.out.println("possible");
     }
   }
+
+  // IDEA-190591
+  void testReduce() {
+    List<Double> input = new ArrayList<>();
+    input.add(0.0);
+    Optional<Double> result = input.stream().reduce((a, b) -> {
+      throw new IllegalStateException("Multiple entries found: " + a + " and " + b);
+    });
+    Double res = result.orElse(null);
+    if (res != null) {
+      System.out.println(res);
+    } else {
+      System.out.println("Huh?");
+    }
+  }
+
+  void testReduceNullness() {
+    Optional<String> res1 = Stream.of("foo", "bar", null).reduce((a, b) -> a); // a is never null - ok
+    Optional<String> res2 = Stream.of("foo", null, "bar").reduce((a, b) -> a); // wrong, but not supported yet
+    Optional<String> res3 = Stream.of("foo", "bar", null).reduce((a, b) -> <warning descr="Function may return null, but it's not allowed here">b</warning>);
+    Optional<String> res4 = Stream.of(null, "foo", "bar").reduce((a, b) -> b); // b is never null - ok
+  }
 }

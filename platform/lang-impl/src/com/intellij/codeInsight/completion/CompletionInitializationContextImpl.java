@@ -20,6 +20,7 @@ class CompletionInitializationContextImpl extends CompletionInitializationContex
     myHostOffsets = new OffsetsInFile(file, getOffsetMap()).toTopLevelFile();
   }
 
+  @NotNull
   OffsetsInFile getHostOffsets() {
     return myHostOffsets;
   }

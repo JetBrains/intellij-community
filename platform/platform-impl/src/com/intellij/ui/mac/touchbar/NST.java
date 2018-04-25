@@ -76,12 +76,10 @@ public class NST {
   }
 
   public static void releaseTouchBar(ID tbObj) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     ourNSTLibrary.releaseTouchBar(tbObj);
   }
 
   public static void setTouchBar(TouchBar tb) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     ourNSTLibrary.setTouchBar(tb == null ? ID.NIL : tb.getNativePeer());
   }
 

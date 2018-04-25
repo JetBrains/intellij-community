@@ -113,10 +113,16 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
     if (calcLength < length) {
       ImageIcon imageIcon = (ImageIcon)IconLoader.getIconSnapshot(icon);
       if (horizontal) {
-        UIUtil.drawImage(g, imageIcon.getImage(), lastValue, start2, length - calcLength, imageIcon.getIconHeight(), component);
+        UIUtil.drawImage(g, imageIcon.getImage(),
+                         new Rectangle(lastValue, start2, length - calcLength, imageIcon.getIconHeight()),
+                         new Rectangle(0, 0, length - calcLength, imageIcon.getIconHeight()),
+                         component);
       }
       else {
-        UIUtil.drawImage(g, imageIcon.getImage(), start2, lastValue, imageIcon.getIconWidth(), length - calcLength, component);
+        UIUtil.drawImage(g, imageIcon.getImage(),
+                         new Rectangle(start2, lastValue, imageIcon.getIconWidth(), length - calcLength),
+                         new Rectangle(0, 0, imageIcon.getIconWidth(), length - calcLength),
+                         component);
       }
     }
   }

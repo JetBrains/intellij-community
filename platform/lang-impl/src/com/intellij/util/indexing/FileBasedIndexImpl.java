@@ -564,8 +564,17 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
     }
     IndexingStamp.flushCache(inputId);
+    removeTransientFileDataFromIndices(affectedIndices, inputId);
     if (unexpectedError != null) {
       LOG.error(unexpectedError);
+    }
+  }
+
+  private void removeTransientFileDataFromIndices(Collection<ID<?, ?>> indices, int inputId) {
+    for (ID<?, ?> indexId : indices) {
+      final MapReduceIndex index = (MapReduceIndex)myState.getIndex(indexId);
+      assert index != null;
+      index.removeTransientDataForFile(inputId);
     }
   }
 

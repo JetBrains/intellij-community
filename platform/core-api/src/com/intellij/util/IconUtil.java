@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.presentation.VirtualFilePresentation;
@@ -25,6 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.awt.image.RGBImageFilter;
 
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
 import static java.lang.Math.round;
@@ -229,27 +231,27 @@ public class IconUtil {
 
   @NotNull
   public static Icon getAddIcon() {
-    return getToolbarDecoratorIcon("add.png");
+    return AllIcons.General.Add;
   }
 
   @NotNull
   public static Icon getRemoveIcon() {
-    return getToolbarDecoratorIcon("remove.png");
+    return AllIcons.General.Remove;
   }
 
   @NotNull
   public static Icon getMoveUpIcon() {
-    return getToolbarDecoratorIcon("moveUp.png");
+    return AllIcons.Actions.MoveUp;
   }
 
   @NotNull
   public static Icon getMoveDownIcon() {
-    return getToolbarDecoratorIcon("moveDown.png");
+    return AllIcons.Actions.MoveDown;
   }
 
   @NotNull
   public static Icon getEditIcon() {
-    return getToolbarDecoratorIcon("edit.png");
+    return AllIcons.Actions.Edit;
   }
 
   @NotNull
@@ -694,5 +696,13 @@ public class IconUtil {
     icon.setIcon(base, 0);
     icon.setIcon(textToIcon(text, new JLabel(), JBUI.scale(6f)), 1, SwingConstants.SOUTH_EAST);
     return icon;
+  }
+
+  /**
+   * Creates new icon with the filter applied.
+   */
+  @Nullable
+  public static Icon filterIcon(@NotNull Icon icon, RGBImageFilter filter, @Nullable Component ancestor) {
+    return IconLoader.filterIcon(icon, filter, ancestor);
   }
 }

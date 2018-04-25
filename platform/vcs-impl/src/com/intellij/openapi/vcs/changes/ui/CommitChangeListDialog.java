@@ -893,9 +893,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     private DefaultListCleaner() {
       int selectedSize = getIncludedChanges().size();
-      ChangeList selectedList = myBrowser.getSelectedChangeList();
+      LocalChangeList selectedList = myBrowser.getSelectedChangeList();
       int totalSize = selectedList.getChanges().size();
-      myToClean = totalSize == selectedSize && ((LocalChangeList)selectedList).hasDefaultName();
+      myToClean = totalSize == selectedSize && selectedList.hasDefaultName();
     }
 
     void clean() {

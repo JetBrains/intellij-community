@@ -1789,7 +1789,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
       final ArrayList<VirtualFile> files = new ArrayList<>();
       final List<VirtualFile> selected = Arrays.asList(FileEditorManager.getInstance(project).getSelectedFiles());
-      for (VirtualFile file : ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles())) {
+      for (VirtualFile file : ContainerUtil.reverse(EditorHistoryManager.getInstance(project).getFileList())) {
         if (StringUtil.isEmptyOrSpaces(pattern) || matcher.matches(file.getName())) {
           if (!files.contains(file) && !selected.contains(file)) {
             files.add(file);

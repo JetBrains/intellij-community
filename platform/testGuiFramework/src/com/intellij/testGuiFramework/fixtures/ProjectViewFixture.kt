@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
@@ -43,7 +42,6 @@ import org.fest.swing.core.MouseButton
 import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
-import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.junit.Assert.assertNotNull
 import java.awt.Point
@@ -321,7 +319,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
     private fun getNodeText(node: Any): String? {
       assert(node is PresentableNodeDescriptor<*>)
       val descriptor = node as PresentableNodeDescriptor<*>
-      descriptor.update()
+      runOnEdt { descriptor.update() }
       return descriptor.presentation.presentableText
     }
   }

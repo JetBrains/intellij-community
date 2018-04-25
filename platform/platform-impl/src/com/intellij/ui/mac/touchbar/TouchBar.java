@@ -19,15 +19,13 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   protected long myCounter = 0;
   protected final List<TBItem> myItems = new ArrayList<>();
 
-  private BarContainer myContainer = null;
-
   public TouchBar(@NotNull String touchbarName) {
     myName = touchbarName;
     myNativePeer = NST.createTouchBar(touchbarName, this);
   }
 
   @Override
-  public String toString() { return myName; }
+  public String toString() { return myName + "_" + myNativePeer; }
 
   @Override
   public ID createItem(@NotNull String uid) {
@@ -49,30 +47,6 @@ public class TouchBar implements NSTLibrary.ItemCreator {
 
     myItems.clear();
     myNativePeer = ID.NIL;
-  }
-
-  public void closeAndRelease() {
-    if (myContainer == null)
-      return;
-
-    TouchBarsManager.closeTouchBar(myContainer);
-    myContainer = null;
-    release();
-  }
-
-  public void show() {
-    if (myContainer != null)
-      return;
-
-    selectVisibleItemsToShow();
-    final TouchBar finalThis = this;
-    myContainer = new BarContainer() {
-      @Override
-      public TouchBar get() { return finalThis; }
-      @Override
-      public void release() { finalThis.release(); }
-    };
-    TouchBarsManager.showTouchBar(myContainer);
   }
 
   //

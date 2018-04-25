@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -107,19 +106,12 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final DataKey<AnActionEvent> RUN_ANYTHING_EVENT_KEY = DataKey.create("RUN_ANYTHING_EVENT_KEY");
   public static final DataKey<Component> FOCUS_COMPONENT_KEY_NAME = DataKey.create("FOCUS_COMPONENT_KEY_NAME");
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
-  static final String SHIFT_SHORTCUT_TEXT = KeymapUtil.getShortcutText(KeyboardShortcut.fromString(("SHIFT")));
-  public static final String AD_ACTION_TEXT = String.format("Press %s to run with default settings", SHIFT_SHORTCUT_TEXT);
-  public static final String AD_DEBUG_TEXT = String.format("%s to debug", SHIFT_SHORTCUT_TEXT);
-  public static final String AD_MODULE_CONTEXT =
-    String.format("Press %s to run in the current file context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
-  public static final String AD_REMOVE_COMMAND =
-    String.format("%s to delete recent command", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
+  static final String RUN_ANYTHING = "RunAnything";
 
   private static final int MAX_RUN_ANYTHING_HISTORY = 50;
   private static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(AllIcons.Actions.Run_anything, 16, 16);
-  static final String RUN_ANYTHING = "RunAnything";
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
   private JBPopup myPopup;
@@ -157,7 +149,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         Map<String, Icon> map = ContainerUtil.newHashMap();
         map.put(UNKNOWN_CONFIGURATION, UNDEFINED_COMMAND_ICON);
 
-        for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
+        for (RunAnythingRunConfigurationProvider provider : RunAnythingRunConfigurationProvider.EP_NAME.getExtensions()) {
           map.put(provider.getConfigurationFactory().getName(), provider.getConfigurationFactory().getIcon());
         }
 
@@ -396,13 +388,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       final RunAnythingSearchListModel model = getSearchingModel(myList);
       if (model != null) {
         if (isMoreItem(index)) {
-          RunAnythingGroup group = RunAnythingGroup.findRunAnythingGroup(index);
+          RunAnythingGroup group = RunAnythingGroup.findGroupByMoreIndex(index);
 
           if (group != null) {
             myCurrentWorker.doWhenProcessed(() -> {
               myCalcThread = new CalcThread(project, pattern, true);
               myPopupActualWidth = 0;
-              RunAnythingUtil.triggerMoreStatistics(group);
+              RunAnythingUtil.triggerMoreStatistics(project, group);
               myCurrentWorker = myCalcThread.insert(index, group);
             });
 
@@ -424,7 +416,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       return;
     }
 
-    RunAnythingUtil.triggerExecCategoryStatistics(index);
+    RunAnythingUtil.triggerExecCategoryStatistics(project, index);
 
     Runnable onDone = null;
     try {
@@ -432,13 +424,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         runOnFocusSettlesDown(project, (RunAnythingItem)value, focusManager);
         return;
       }
-      VirtualFile directory = getWorkDirectory(module);
-      DataContext dataContext = createDataContext(directory, null, null, module, project);
+      VirtualFile directory = getWorkDirectory(module, ALT_IS_PRESSED.get());
+      DataContext dataContext = createDataContext(myDataContext, directory, null, null);
       if (value instanceof RunAnythingCommandItem) {
         onDone = () -> ((RunAnythingCommandItem)value).run(dataContext);
       }
       else if (value == null) {
-        onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(myDataContext, pattern, directory);
+        onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(dataContext, pattern, directory);
         return;
       }
     }
@@ -459,16 +451,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       Component c = comp;
       if (c == null) c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
-      value.run(createDataContext(null, c, event, null, project));
+      value.run(createDataContext(myDataContext, null, c, event));
     });
   }
 
   @NotNull
-  private static DataContext createDataContext(@Nullable VirtualFile directory,
+  private static DataContext createDataContext(@NotNull DataContext parentDataContext,
+                                               @Nullable VirtualFile directory,
                                                @Nullable Component focusOwner,
-                                               @Nullable AnActionEvent event,
-                                               @Nullable Module module,
-                                               @NotNull Project project) {
+                                               @Nullable AnActionEvent event) {
     HashMap<String, Object> map = ContainerUtil.newHashMap();
     if (directory != null) {
       map.put(CommonDataKeys.VIRTUAL_FILE.getName(), directory);
@@ -484,13 +475,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       map.put(FOCUS_COMPONENT_KEY_NAME.getName(), focusOwner);
     }
 
-    if (module != null) {
-      map.put(LangDataKeys.MODULE.getName(), module);
-    }
-
-    map.put(CommonDataKeys.PROJECT.getName(), project);
-
-    return SimpleDataContext.getSimpleContext(map, DataContext.EMPTY_CONTEXT);
+    return SimpleDataContext.getSimpleContext(map, parentDataContext);
   }
 
   @NotNull
@@ -521,9 +506,16 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   @NotNull
-  private VirtualFile getWorkDirectory(@Nullable Module module) {
-    if (ALT_IS_PRESSED.get() && myVirtualFile != null) {
-      return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
+  private VirtualFile getWorkDirectory(@Nullable Module module, boolean isAltPressed) {
+    if (isAltPressed) {
+      if (myVirtualFile != null) {
+        return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
+      }
+
+      VirtualFile[] selectedFiles = FileEditorManager.getInstance(getProject()).getSelectedFiles();
+      if (selectedFiles.length > 0) {
+        return selectedFiles[0].getParent();
+      }
     }
 
     return getBaseDirectory(module);
@@ -656,36 +648,30 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myTextField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()) {
-          case KeyEvent.VK_SHIFT:
-            myTextFieldTitle.setText(IdeBundle.message("run.anything.run.debug.title"));
-            break;
-          case KeyEvent.VK_ALT:
-            updateByContextSwitch(IdeBundle.message("run.anything.run.in.context.title"), true);
-            break;
-        }
-
-        if (e.isShiftDown() && e.isAltDown()) {
-          myTextFieldTitle.setText(IdeBundle.message("run.anything.run.in.context.debug.title"));
-        }
+        updateByModifierKeysEvent(e);
       }
 
       @Override
       public void keyReleased(KeyEvent e) {
-        switch (e.getKeyCode()) {
-          case KeyEvent.VK_SHIFT:
-            myTextFieldTitle.setText(IdeBundle.message("run.anything.run.anything.title"));
-            break;
-          case KeyEvent.VK_ALT:
-            updateByContextSwitch(IdeBundle.message("run.anything.run.anything.title"), false);
-            break;
-        }
+        updateByModifierKeysEvent(e);
       }
 
-      private void updateByContextSwitch(@NotNull String message, boolean isAltPressed) {
-        ALT_IS_PRESSED.set(isAltPressed);
+      private void updateByModifierKeysEvent(@NotNull KeyEvent e) {
+        String message;
+        if (e.isShiftDown() && e.isAltDown()) {
+          message = IdeBundle.message("run.anything.run.in.context.debug.title");
+        }
+        else if (e.isShiftDown()) {
+          message = IdeBundle.message("run.anything.run.debug.title");
+        }
+        else if (e.isAltDown()) {
+          message = IdeBundle.message("run.anything.run.in.context.title");
+        }
+        else {
+          message = IdeBundle.message("run.anything.run.anything.title");
+        }
         myTextFieldTitle.setText(message);
-        updateMatchedRunConfigurationStuff();
+        updateMatchedRunConfigurationStuff(e.isAltDown());
       }
     });
 
@@ -741,7 +727,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     panel.add(topPanel, BorderLayout.NORTH);
     panel.setBorder(JBUI.Borders.empty(3, 5, 4, 5));
 
-    myAdComponent = HintUtil.createAdComponent(AD_MODULE_CONTEXT, JBUI.Borders.empty(1, 5), SwingConstants.LEFT);
+    myAdComponent = HintUtil.createAdComponent(RunAnythingUtil.AD_CONTEXT_TEXT, JBUI.Borders.empty(1, 5), SwingConstants.LEFT);
 
     panel.add(myAdComponent, BorderLayout.SOUTH);
 
@@ -814,16 +800,17 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myPopupField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        updateMatchedRunConfigurationStuff();
+        updateMatchedRunConfigurationStuff(ALT_IS_PRESSED.get());
       }
     });
   }
 
-  private void updateMatchedRunConfigurationStuff() {
+  private void updateMatchedRunConfigurationStuff(boolean isAltPressed) {
     JBTextField textField = myPopupField.getTextEditor();
     String pattern = textField.getText();
 
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule()));
+    RunAnythingRunConfigurationProvider provider =
+      RunAnythingRunConfigurationProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule(), isAltPressed));
     String name = provider != null ? provider.getConfigurationFactory().getName() : null;
 
     if (name != null) {
@@ -1322,7 +1309,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
               RunAnythingGroup.shiftIndexes(index, shift);
               if (!result.isNeedMore()) {
-                group.dropMoreIndex();
+                group.resetMoreIndex();
               }
 
               clearSelection();

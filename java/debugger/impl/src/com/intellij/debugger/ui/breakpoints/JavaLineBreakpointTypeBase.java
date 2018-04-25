@@ -2,6 +2,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -19,9 +20,12 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 import org.jetbrains.java.debugger.breakpoints.JavaBreakpointFiltersPanel;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
+
+import javax.swing.*;
 
 /**
  * Base class for java line-connected exceptions (line, method, field)
@@ -60,6 +64,12 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     }
   }
 
+  @Nullable
+  @Override
+  public Icon getPendingIcon() {
+    return AllIcons.Debugger.Db_validate_breakpoint;
+  }
+
   protected static boolean canPutAtElement(@NotNull final VirtualFile file,
                                            final int line,
                                            @NotNull Project project,
@@ -71,6 +81,11 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     }
 
     if (!StdFileTypes.CLASS.equals(psiFile.getFileType()) && !DebuggerUtils.isBreakpointAware(psiFile)) {
+      return false;
+    }
+
+    // workaround for KT-23886, remove after it is fixed
+    if ("kt".equals(psiFile.getFileType().getDefaultExtension())) {
       return false;
     }
 

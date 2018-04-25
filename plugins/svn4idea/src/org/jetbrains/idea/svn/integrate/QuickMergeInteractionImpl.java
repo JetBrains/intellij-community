@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.dialogs.IntersectingLocalChangesPanel;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
@@ -54,11 +55,11 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   }
 
   @Override
-  public boolean shouldReintegrate(@NotNull String targetUrl) {
+  public boolean shouldReintegrate(@NotNull Url targetUrl) {
     return prompt("<html><body>You are going to reintegrate changes.<br><br>This will make branch '" +
                   myMergeContext.getSourceUrl().toDecodedString() +
                   "' <b>no longer usable for further work</b>." +
-                  "<br>It will not be able to correctly absorb new trunk (" + targetUrl +
+                  "<br>It will not be able to correctly absorb new trunk (" + targetUrl.toDecodedString() +
                   ") changes,<br>nor can this branch be properly reintegrated to trunk again.<br><br>Are you sure?</body></html>");
   }
 

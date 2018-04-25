@@ -1035,7 +1035,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (link != null) return link;
     }
 
-    return "<a href='external_doc'>External documentation " + title + "<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
+    return "<a href='external_doc'>External documentation for `" + title + "`<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
   }
 
   private static String getLink(String title, String url) {
@@ -1047,8 +1047,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     result.append("<a href='");
     result.append(url);
-    result.append("'>");
-    result.append(title.substring(4)).append(" on ").append(hostname);
+    result.append("'>`");
+    result.append(title).append("` on ").append(hostname);
     result.append("</a>");
     return result.toString();
   }
@@ -1204,7 +1204,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       presentation.setEnabled(!myBackStack.isEmpty());
       if (!isToolbar(e)) {
         presentation.setVisible(presentation.isEnabled());
-        presentation.setIcon(AllIcons.Actions.Left);
       }
     }
   }
@@ -1225,7 +1224,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       presentation.setEnabled(!myForwardStack.isEmpty());
       if (!isToolbar(e)) {
         presentation.setVisible(presentation.isEnabled());
-        presentation.setIcon(AllIcons.Actions.Right);
       }
     }
   }
@@ -1236,15 +1234,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       super(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
       getTemplatePresentation().setText("Edit Source");
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      if (!isToolbar(e)) {
-        e.getPresentation().setIcon(AllIcons.General.Inline_edit);
-        e.getPresentation().setHoveredIcon(AllIcons.General.Inline_edit_hovered);
-      }
     }
 
     @Override
@@ -1275,7 +1264,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     private ExternalDocAction() {
-      super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.Browser_externalJavaDoc);
+      super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.PreviousOccurence);
       registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
     }
 

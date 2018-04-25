@@ -103,14 +103,18 @@ public class ScopesAndSeveritiesTable extends JBTable {
     getModel().setValueAt(severity, getSelectedRow(), SEVERITY_COLUMN);
   }
 
+  public List<ScopeToolState> getSelectedStates() {
+    return ((MyTableModel)getModel()).getScopeToolState(getSelectedRow()).getExistedStates();
+  }
+
   public abstract static class TableSettings {
-    private final List<InspectionConfigTreeNode.Tool> myNodes;
+    private final Collection<InspectionConfigTreeNode.Tool> myNodes;
     private final List<String> myKeyNames;
     private final List<HighlightDisplayKey> myKeys;
     private final InspectionProfileImpl myInspectionProfile;
     private final Project myProject;
 
-    protected TableSettings(final List<InspectionConfigTreeNode.Tool> nodes,
+    protected TableSettings(final Collection<InspectionConfigTreeNode.Tool> nodes,
                             final InspectionProfileImpl inspectionProfile,
                             final Project project) {
       myNodes = nodes;
@@ -134,7 +138,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       return myKeyNames;
     }
 
-    public List<InspectionConfigTreeNode.Tool> getNodes() {
+    public Collection<InspectionConfigTreeNode.Tool> getNodes() {
       return myNodes;
     }
 

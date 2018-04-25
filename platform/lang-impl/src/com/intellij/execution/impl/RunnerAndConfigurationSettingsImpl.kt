@@ -102,9 +102,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getFactory().createTemplateConfiguration(manager.project)
 
-  override fun createFactory() = Factory<RunnerAndConfigurationSettings> {
-    val configuration = configuration
-    RunnerAndConfigurationSettingsImpl(manager, configuration.factory.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration), false)
+  override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
+    return Factory {
+      val configuration = configuration
+      RunnerAndConfigurationSettingsImpl(manager, configuration.factory!!.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration))
+    }
   }
 
   override fun setName(name: String) {
@@ -115,7 +117,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun getName(): String {
     val configuration = configuration
     if (isTemplate) {
-      return "<template> of ${configuration.factory.id}"
+      return "<template> of ${factory.id}"
     }
     return configuration.name
   }
@@ -222,14 +224,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     runnerSettings.loadState(element)
     configurationPerRunnerSettings.loadState(element)
 
-    configuration.beforeRunTasks = element.getChild(METHOD)?.let { manager.readStepsBeforeRun(it, this) } ?: emptyList()
+    manager.readBeforeRunTasks(element.getChild(METHOD), this, configuration)
   }
 
   // do not call directly
   // cannot be private - used externally
   fun writeExternal(element: Element) {
     val configuration = configuration
-    val factory = configuration.factory
     if (configuration !is UnknownRunConfiguration) {
       if (isTemplate) {
         element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "true")
@@ -269,7 +270,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
 
     if (configuration !is UnknownRunConfiguration) {
-      manager.writeBeforeRunTasks(this, configuration)?.let {
+      manager.writeBeforeRunTasks(configuration)?.let {
         element.addContent(it)
       }
     }
@@ -335,15 +336,15 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getConfigurationSettings(runner: ProgramRunner<*>) = configurationPerRunnerSettings.getOrCreateSettings(runner)
 
-  override fun getType(): ConfigurationType = _configuration?.type ?: UnknownConfigurationType.INSTANCE
+  override fun getType(): ConfigurationType = factory.type
 
   public override fun clone(): RunnerAndConfigurationSettingsImpl {
-    val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone(), false)
+    val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone())
     copy.importRunnerAndConfigurationSettings(this)
     return copy
   }
 
-  fun importRunnerAndConfigurationSettings(template: RunnerAndConfigurationSettingsImpl) {
+  internal fun importRunnerAndConfigurationSettings(template: RunnerAndConfigurationSettingsImpl) {
     importFromTemplate(template.runnerSettings, runnerSettings)
     importFromTemplate(template.configurationPerRunnerSettings, configurationPerRunnerSettings)
 

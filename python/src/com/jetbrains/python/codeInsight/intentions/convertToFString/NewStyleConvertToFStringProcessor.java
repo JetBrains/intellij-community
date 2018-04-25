@@ -19,7 +19,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.inspections.PyNewStyleStringFormatParser;
 import com.jetbrains.python.inspections.PyNewStyleStringFormatParser.Field;
@@ -53,7 +52,7 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
   @NotNull
   @Override
   protected PySubstitutionChunkReference createReference(@NotNull Field field) {
-    return new PySubstitutionChunkReference(myPyString, field, ObjectUtils.chooseNotNull(field.getAutoPosition(), 0));
+    return new PySubstitutionChunkReference(myPyString, field);
   }
 
   @Override

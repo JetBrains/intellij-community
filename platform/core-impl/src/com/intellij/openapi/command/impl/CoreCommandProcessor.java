@@ -4,10 +4,7 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessorEx;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -23,7 +20,7 @@ import java.util.List;
 import java.util.Stack;
 
 public class CoreCommandProcessor extends CommandProcessorEx {
-  private static class CommandDescriptor {
+  private static class CommandDescriptor implements CommandToken {
     @NotNull
     public final Runnable myCommand;
     public final Project myProject;
@@ -48,6 +45,11 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       myUndoConfirmationPolicy = undoConfirmationPolicy;
       myShouldRecordActionForActiveDocument = shouldRecordActionForActiveDocument;
       myDocument = document;
+    }
+
+    @Override
+    public Project getProject() {
+      return myProject;
     }
 
     @Override
@@ -140,19 +142,19 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       throwable = th;
     }
     finally {
-      finishCommand(project, myCurrentCommand, throwable);
+      finishCommand(myCurrentCommand, throwable);
     }
   }
 
 
   @Override
   @Nullable
-  public Object startCommand(@NotNull final Project project,
-                             @Nls final String name,
-                             final Object groupId,
-                             @NotNull final UndoConfirmationPolicy undoConfirmationPolicy) {
+  public CommandToken startCommand(@Nullable final Project project,
+                                   @Nls final String name,
+                                   @Nullable final Object groupId,
+                                   @NotNull final UndoConfirmationPolicy undoConfirmationPolicy) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (project.isDisposed()) return null;
+    if (project != null && project.isDisposed()) return null;
 
     if (CommandLog.LOG.isDebugEnabled()) {
       CommandLog.LOG.debug("startCommand: name = " + name + ", groupId = " + groupId);
@@ -162,14 +164,18 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       return null;
     }
 
-    Document document = groupId instanceof Ref && ((Ref)groupId).get() instanceof Document ? (Document)((Ref)groupId).get() : null;
+    Document document = groupId instanceof Document
+                        ? (Document)groupId
+                        : (groupId instanceof Ref && ((Ref)groupId).get() instanceof Document
+                           ? (Document)((Ref)groupId).get()
+                           : null);
     myCurrentCommand = new CommandDescriptor(EmptyRunnable.INSTANCE, project, name, groupId, undoConfirmationPolicy, true, document);
     fireCommandStarted();
     return myCurrentCommand;
   }
 
   @Override
-  public void finishCommand(final Project project, final Object command, final Throwable throwable) {
+  public void finishCommand(@NotNull final CommandToken command, @Nullable Throwable throwable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
     fireCommandFinished();

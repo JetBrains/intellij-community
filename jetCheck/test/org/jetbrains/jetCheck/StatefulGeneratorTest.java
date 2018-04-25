@@ -5,6 +5,7 @@ package org.jetbrains.jetCheck;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -131,6 +132,26 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       sb.delete(start, end);
     };
   }
+
+  private ImperativeCommand heavyCommand() {
+    Object[] heavyObject = new Object[100_000];
+    heavyObject[42] = new Object();
+    return new ImperativeCommand() {
+      @Override
+      public void performCommand(@NotNull Environment env) {}
+
+      @Override
+      public String toString() {
+        return super.toString() + Arrays.toString(heavyObject);
+      }
+    };
+  }
+
+  public void testDontFailByOutOfMemoryDueToLeakingObjectsPassedIntoGenerators() {
+    PropertyChecker.customized().checkScenarios(() -> env -> 
+      env.executeCommands(from(data -> data.generate(sampledFrom(heavyCommand(), heavyCommand(), heavyCommand())))));
+  }
+
 }
 
 class InsertChar {

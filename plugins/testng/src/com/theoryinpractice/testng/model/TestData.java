@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.ExternalizablePath;
@@ -11,9 +9,11 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -28,7 +28,8 @@ public class TestData implements Cloneable
   public String METHOD_NAME;
   public String GROUP_NAME;
   public String TEST_OBJECT;
-  public String VM_PARAMETERS;
+  // should be private, but for now we use DefaultJDOMExternalizer, so, public
+  public String VM_PARAMETERS = "-ea";
   public String PARAMETERS;
   public String WORKING_DIRECTORY;
   public String OUTPUT_DIRECTORY;
@@ -81,8 +82,8 @@ public class TestData implements Cloneable
     return OUTPUT_DIRECTORY == null ? "" : OUTPUT_DIRECTORY;
   }
 
-  public void setVMParameters(String value) {
-    VM_PARAMETERS = value;
+  public void setVMParameters(@Nullable String value) {
+    VM_PARAMETERS = StringUtil.nullize(value);
   }
 
   public String getVMParameters() {

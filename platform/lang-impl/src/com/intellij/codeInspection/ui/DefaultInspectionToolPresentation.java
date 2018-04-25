@@ -34,6 +34,8 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import java.util.HashSet;
+
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -155,7 +157,9 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public boolean isExcluded(@NotNull RefEntity entity) {
-    return Comparing.equal(myExcludedElements.get(entity), myProblemElements.get(entity));
+    CommonProblemDescriptor[] excluded = myExcludedElements.get(entity);
+    CommonProblemDescriptor[] problems = myProblemElements.get(entity);
+    return excluded != null && problems != null && Comparing.equal(ContainerUtil.set(excluded), ContainerUtil.set(problems));
   }
 
   @Override

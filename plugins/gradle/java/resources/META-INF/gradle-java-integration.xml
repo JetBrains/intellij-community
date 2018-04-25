@@ -50,9 +50,11 @@
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
     <projectOpenProcessor id="java" implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaProjectOpenProcessor"/>
 
+    <!--Gradle Test Runner-->
+    <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
+
     <externalSystemExecutionConsoleManager
         implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager" id="gradleTest" order="before gradle"/>
-
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer"
                               order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer"

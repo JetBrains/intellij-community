@@ -974,6 +974,18 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-13750
+  public void testBuiltinRound() {
+    doTest("int", "expr = round(1)");
+    doTest("Union[float, int]", "expr = round(1, 1)");
+
+    doTest("int", "expr = round(1.1)");
+    doTest("Union[float, int]", "expr = round(1.1, 1)");
+
+    doTest("int", "expr = round(True)");
+    doTest("Union[float, int]", "expr = round(True, 1)");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

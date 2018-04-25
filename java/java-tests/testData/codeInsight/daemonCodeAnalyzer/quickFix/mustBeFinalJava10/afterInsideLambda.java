@@ -1,4 +1,4 @@
-// "Convert 'x' to field in anonymous class" "true"
+// "Move 'x' into anonymous object" "true"
 class Test {
     public void test() {
         var ref = new Object() {

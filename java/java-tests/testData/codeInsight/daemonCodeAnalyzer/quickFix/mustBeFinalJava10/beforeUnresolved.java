@@ -1,4 +1,4 @@
-// "Convert 'x' to field in anonymous class" "false"
+// "Move 'x' into anonymous object" "false"
 class Test {
     public void test() {
         Runnable r = () -> {

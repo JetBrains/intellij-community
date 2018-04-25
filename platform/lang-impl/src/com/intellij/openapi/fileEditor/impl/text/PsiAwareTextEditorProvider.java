@@ -23,6 +23,7 @@ import com.intellij.psi.PsiDocumentManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiAwareTextEditorProvider extends TextEditorProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider");
@@ -37,11 +38,11 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
 
   @Override
   @NotNull
-  public FileEditorState readState(@NotNull final Element element, @NotNull final Project project, @NotNull final VirtualFile file) {
+  public FileEditorState readState(@Nullable Element element, @NotNull final Project project, @NotNull final VirtualFile file) {
     final TextEditorState state = (TextEditorState)super.readState(element, project, file);
 
     // Foldings
-    Element child = element.getChild(FOLDING_ELEMENT);
+    Element child = element == null ? null : element.getChild(FOLDING_ELEMENT);
     if (child != null) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document == null) {

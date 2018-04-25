@@ -83,7 +83,7 @@ public class JBUI {
    * @see JBUI#isUsrHiDPI()
    * @see JBUI#isPixHiDPI(GraphicsConfiguration)
    * @see JBUI#isPixHiDPI(Graphics2D)
-   * @see UIUtil#drawImage(Graphics, Image, int, int, int, int, ImageObserver)
+   * @see UIUtil#drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
    * @see UIUtil#createImage(Graphics, int, int, int)
    * @see UIUtil#createImage(GraphicsConfiguration, int, int, int)
    * @see UIUtil#createImage(int, int, int)
@@ -1528,8 +1528,8 @@ public class JBUI {
                : JBColor.namedColor("Popup.Header.inactiveBackground", 0xededed);
       }
 
-      public static int headerHeight() {
-        return scale(24);
+      public static int headerHeight(boolean hasControls) {
+        return hasControls ? scale(28) : scale(24);
       }
 
       public static Color borderColor(boolean active) {

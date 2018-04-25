@@ -40,6 +40,12 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
 
   @NotNull
   @Override
+  public Icon getSuspendNoneIcon() {
+    return AllIcons.Debugger.Db_no_suspend_method_breakpoint;
+  }
+
+  @NotNull
+  @Override
   public Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_method_breakpoint;
   }
@@ -48,6 +54,12 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
   @Override
   public Icon getMutedDisabledIcon() {
     return AllIcons.Debugger.Db_muted_disabled_method_breakpoint;
+  }
+
+  @NotNull
+  @Override
+  public Icon getPendingIcon() {
+    return AllIcons.Debugger.Db_validate_method_breakpoint;
   }
 
   //@Override

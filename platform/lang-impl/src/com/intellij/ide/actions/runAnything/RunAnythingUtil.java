@@ -3,23 +3,26 @@ package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider;
+import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer;
+import com.intellij.ide.actions.runAnything.execution.RunAnythingRunProfile;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingCommandItem;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,12 +49,20 @@ import java.util.Objects;
 
 import static com.intellij.execution.actions.RunConfigurationsComboBoxAction.EMPTY_ICON;
 import static com.intellij.ide.actions.GotoActionAction.performAction;
-import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
+import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
 public class RunAnythingUtil {
+  public static final Logger LOG = Logger.getInstance(RunAnythingUtil.class);
+  static final String SHIFT_SHORTCUT_TEXT = KeymapUtil.getShortcutText(KeyboardShortcut.fromString(("SHIFT")));
+  public static final String AD_ACTION_TEXT = IdeBundle.message("run.anything.ad.run.action.with.default.settings", SHIFT_SHORTCUT_TEXT);
+  public static final String AD_DEBUG_TEXT = IdeBundle.message("run.anything.ad.run.with.debug", SHIFT_SHORTCUT_TEXT);
+  public static final String AD_CONTEXT_TEXT =
+    IdeBundle.message("run.anything.ad.run.in.context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
+  public static final String AD_DELETE_COMMAND_TEXT =
+    IdeBundle.message("run.anything.ad.command.delete", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
   private static final Key<Collection<Pair<String, String>>> RUN_ANYTHING_WRAPPED_COMMANDS = Key.create("RUN_ANYTHING_WRAPPED_COMMANDS");
   private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
   private static final String DEBUGGER_FEATURE_USAGE = RunAnythingAction.RUN_ANYTHING + " - " + "DEBUGGER";
@@ -146,21 +157,6 @@ public class RunAnythingUtil {
       popup.setSize(r.getSize());
       popup.setLocation(r.getLocation());
     }
-  }
-
-  @Nullable
-  public static Executor findExecutor(@NotNull RunnerAndConfigurationSettings settings) {
-    final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
-    final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
-
-    Executor executor = !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
-    RunConfiguration runConf = settings.getConfiguration();
-    if (executor == null) return null;
-    ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runConf);
-    if (runner == null) {
-      executor = runExecutor == executor ? debugExecutor : runExecutor;
-    }
-    return executor;
   }
 
   static void jumpNextGroup(boolean forward, JBList list) {
@@ -342,14 +338,15 @@ public class RunAnythingUtil {
                                           @NotNull String pattern,
                                           @NotNull VirtualFile workDirectory) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Executor executor = EXECUTOR_KEY.getData(dataContext);
 
     if (pattern.isEmpty()) return;
 
-    if (runMatchedConfiguration(Objects.requireNonNull(project), pattern, workDirectory)) return;
+    if (runMatchedConfiguration(dataContext, Objects.requireNonNull(project), pattern, workDirectory)) return;
 
     if (runMatchedActivity(dataContext, pattern)) return;
 
-    RunAnythingCommandItem.runCommand(workDirectory, StringUtil.trim(pattern), RunAnythingAction.getExecutor(), dataContext);
+    runCommand(workDirectory, StringUtil.trim(pattern), Objects.requireNonNull(executor), dataContext);
   }
 
   private static boolean runMatchedActivity(@NotNull DataContext dataContext, @NotNull String pattern) {
@@ -357,24 +354,29 @@ public class RunAnythingUtil {
     return activityProvider != null && activityProvider.runActivity(dataContext, pattern);
   }
 
-  private static boolean runMatchedConfiguration(@NotNull Project project, @NotNull String pattern, @NotNull VirtualFile workDirectory) {
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(project, pattern, workDirectory);
+  private static boolean runMatchedConfiguration(@NotNull DataContext dataContext,
+                                                 @NotNull Project project,
+                                                 @NotNull String pattern,
+                                                 @NotNull VirtualFile workDirectory) {
+    Executor executor = EXECUTOR_KEY.getData(dataContext);
+    RunAnythingRunConfigurationProvider provider = RunAnythingRunConfigurationProvider.findMatchedProvider(project, pattern, workDirectory);
     if (provider != null) {
-      triggerDebuggerStatistics();
-      runMatchedConfiguration(RunAnythingAction.getExecutor(), project, provider.createConfiguration(project, pattern, workDirectory));
+      triggerDebuggerStatistics(dataContext);
+      runMatchedConfiguration(dataContext, Objects.requireNonNull(executor), project, provider.createConfiguration(project, pattern, workDirectory));
       return true;
     }
     return false;
   }
 
 
-  private static void runMatchedConfiguration(@NotNull Executor executor,
+  private static void runMatchedConfiguration(@NotNull DataContext dataContext,
+                                              @NotNull Executor executor,
                                               @NotNull Project project,
                                               @NotNull RunnerAndConfigurationSettings settings) {
     RunManagerEx.getInstanceEx(project).setTemporaryConfiguration(settings);
     RunManager.getInstance(project).setSelectedConfiguration(settings);
 
-    triggerDebuggerStatistics();
+    triggerDebuggerStatistics(dataContext);
     ExecutionUtil.runConfiguration(settings, executor);
   }
 
@@ -395,22 +397,27 @@ public class RunAnythingUtil {
     return KeymapUtil.getShortcutsText(shortcuts);
   }
 
-  static void triggerExecCategoryStatistics(int index) {
+  static void triggerExecCategoryStatistics(@NotNull Project project, int index) {
     for (int i = index; i >= 0; i--) {
       String title = RunAnythingGroup.getTitle(i);
       if (title != null) {
-        UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - execution - " + title);
+        RunAnythingUsageCollector.Companion.trigger(project, RunAnythingAction.RUN_ANYTHING + " - execution - " + title);
         break;
       }
     }
   }
 
-  public static void triggerDebuggerStatistics() {
-    if (SHIFT_IS_PRESSED.get()) UsageTrigger.trigger(DEBUGGER_FEATURE_USAGE);
+  public static void triggerDebuggerStatistics(@NotNull DataContext dataContext) {
+    Project project = Objects.requireNonNull(CommonDataKeys.PROJECT.getData(dataContext));
+    Executor executor = Objects.requireNonNull(EXECUTOR_KEY.getData(dataContext));
+
+    if (ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG) == executor) {
+      RunAnythingUsageCollector.Companion.trigger(project, DEBUGGER_FEATURE_USAGE);
+    }
   }
 
-  static void triggerMoreStatistics(@NotNull RunAnythingGroup group) {
-    UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - more - " + group.getTitle());
+  static void triggerMoreStatistics(@NotNull Project project, @NotNull RunAnythingGroup group) {
+    RunAnythingUsageCollector.Companion.trigger(project, RunAnythingAction.RUN_ANYTHING + " - more - " + group.getTitle());
   }
 
   @NotNull
@@ -421,5 +428,32 @@ public class RunAnythingUtil {
       project.putUserData(RUN_ANYTHING_WRAPPED_COMMANDS, list);
     }
     return list;
+  }
+
+  public static void runCommand(@NotNull VirtualFile workDirectory,
+                                @NotNull String commandString,
+                                @NotNull Executor executor,
+                                @NotNull DataContext dataContext) {
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    LOG.assertTrue(project != null);
+
+    Collection<String> commands = RunAnythingCache.getInstance(project).getState().getCommands();
+    commands.remove(commandString);
+    commands.add(commandString);
+
+    dataContext = RunAnythingCommandCustomizer.customizeContext(dataContext);
+
+    GeneralCommandLine initialCommandLine =
+      new GeneralCommandLine(commandString).withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
+    GeneralCommandLine commandLine = RunAnythingCommandCustomizer.customizeCommandLine(dataContext, workDirectory, initialCommandLine);
+    try {
+      ExecutionEnvironmentBuilder.create(project, executor, new RunAnythingRunProfile(commandLine, commandString))
+                                 .dataContext(dataContext)
+                                 .buildAndExecute();
+    }
+    catch (ExecutionException e) {
+      LOG.warn(e);
+      Messages.showInfoMessage(project, e.getMessage(), IdeBundle.message("run.anything.console.error.title"));
+    }
   }
 }

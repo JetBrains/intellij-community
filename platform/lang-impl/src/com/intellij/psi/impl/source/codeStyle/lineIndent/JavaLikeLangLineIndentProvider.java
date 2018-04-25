@@ -287,6 +287,9 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         position.moveBeforeParentheses(ArrayOpeningBracket, ArrayClosingBracket);
         continue;
       }
+      else if (isStartOfStatementWithOptionalBlock(position)) {
+        return position.getStartOffset();
+      }
       else if (position.isAtAnyOf(Semicolon,
                                   BlockOpeningBrace, 
                                   BlockComment, 
@@ -294,7 +297,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
                                   LeftParenthesis,
                                   LanguageStartDelimiter) ||
                (position.getLanguage() != Language.ANY) && !position.isAtLanguage(currLanguage)) {
-        SemanticEditorPosition statementStart = getPosition(position.getEditor(), position.getStartOffset());
+        SemanticEditorPosition statementStart = position.copy();
         statementStart = statementStart.after().afterOptionalMix(Whitespace, LineComment);
         if (!isIndentProvider(statementStart, ignoreLabels)) {
           final SemanticEditorPosition maybeColon = statementStart.afterOptionalMix(Whitespace, BlockComment).after();
@@ -313,6 +316,27 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       position.moveBefore();
     }
     return 0;
+  }
+
+  /**
+   * Returns {@code true} if the {@code position} starts a statement that <i>can</i> have a code block and the statement
+   * is the first in the code line.
+   * In C-like languages it is one of {@code if, else, for, while, do, try}. 
+   * 
+   * @param position
+   */
+  protected boolean isStartOfStatementWithOptionalBlock(@NotNull SemanticEditorPosition position) {
+    return position.matchesRule(
+      self -> {
+        final SemanticEditorPosition before = self.before();
+        return before.isAt(Whitespace)
+               && before.isAtMultiline()
+               && self.isAtAnyOf(ElseKeyword,
+                                 IfKeyword,
+                                 ForKeyword,
+                                 TryKeyword,
+                                 DoKeyword);
+      });
   }
 
   private static boolean atBlockStartAndNeedBlockIndent(@NotNull SemanticEditorPosition position) {

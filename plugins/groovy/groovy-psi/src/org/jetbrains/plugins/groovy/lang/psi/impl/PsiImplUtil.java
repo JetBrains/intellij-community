@@ -162,8 +162,7 @@ public class PsiImplUtil {
       final GrStringInjection stringInjection = PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class);
       GrStringUtil.wrapInjection(stringInjection);
       assert stringInjection != null;
-      final PsiElement replaced = oldExpr.replaceWithExpression(newExpr, removeUnnecessaryParentheses);
-      return (GrExpression)replaced;
+      return oldExpr.replaceWithExpression(newExpr, removeUnnecessaryParentheses);
     }
 
     //check priorities    

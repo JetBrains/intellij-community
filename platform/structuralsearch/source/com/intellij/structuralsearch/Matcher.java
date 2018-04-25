@@ -37,7 +37,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.ref.SoftReference;
 import java.util.*;
 
 import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
@@ -78,7 +77,7 @@ public class Matcher {
 
     if (matchOptions != null) {
       matchContext.setOptions(matchOptions);
-      cacheCompiledPattern(matchOptions, PatternCompiler.compilePattern(project, matchOptions));
+      matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions));
     }
     myDumbService = DumbService.getInstance(project);
   }
@@ -112,25 +111,8 @@ public class Matcher {
     }
   }
 
-  static class LastMatchData {
-    CompiledPattern lastPattern;
-    MatchOptions lastOptions;
-  }
-  private static SoftReference<LastMatchData> lastMatchData;
-
-  private static final Object lastMatchDataLock = new Object();
-
   public static void validate(Project project, MatchOptions options) {
-    final CompiledPattern pattern = PatternCompiler.compilePattern(project, options);
-    synchronized (lastMatchDataLock) {
-      final LastMatchData data = new LastMatchData();
-      data.lastPattern = pattern;
-      data.lastOptions = options;
-      lastMatchData = new SoftReference<>(data);
-    }
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
-    assert profile != null;
-    profile.checkSearchPattern(pattern);
+    PatternCompiler.compilePattern(project, options);
   }
 
   public static boolean checkIfShouldAttemptToMatch(MatchContext context, NodeIterator matchedNodes) {
@@ -228,14 +210,14 @@ public class Matcher {
       final MatchOptions matchOptions = configuration.getMatchOptions();
       matchContext.setOptions(matchOptions);
 
-      ReadAction.run(() -> {
-        try {
-          final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
-          matchContext.setPattern(compiledPattern);
-          out.put(configuration, matchContext);
-        }
-        catch (StructuralSearchException ignored) {}
-      });
+      try {
+        matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions));
+        out.put(configuration, matchContext);
+      }
+      catch (StructuralSearchException e) {
+        LOG.warn("Malformed structural search inspection pattern \"" + configuration.getName() + '"', e);
+        out.put(configuration, null);
+      }
     }
   }
 
@@ -244,7 +226,7 @@ public class Matcher {
    */
   public void findMatches(MatchResultSink sink, MatchOptions options) throws MalformedPatternException, UnsupportedPatternException {
     CompiledPattern compiledPattern = prepareMatching(sink, options);
-    if (compiledPattern== null) {
+    if (compiledPattern == null) {
       return;
     }
 
@@ -319,43 +301,14 @@ public class Matcher {
   }
 
   private CompiledPattern prepareMatching(final MatchResultSink sink, final MatchOptions options) {
-    CompiledPattern savedPattern = null;
-
-    if (matchContext.getOptions() == options && matchContext.getPattern() != null &&
-        matchContext.getOptions().hashCode() == matchContext.getPattern().getOptionsHashStamp()) {
-      savedPattern = matchContext.getPattern();
-    }
-
     matchContext.clear();
     matchContext.setSink(new DuplicateFilteringResultSink(sink));
     matchContext.setOptions(options);
     matchContext.setMatcher(visitor);
+    matchContext.setPattern(PatternCompiler.compilePattern(project, options));
     visitor.setMatchContext(matchContext);
 
-    CompiledPattern compiledPattern = savedPattern;
-
-    if (compiledPattern == null) {
-
-      synchronized (lastMatchDataLock) {
-        final LastMatchData data = com.intellij.reference.SoftReference.dereference(lastMatchData);
-        if (data != null && options == data.lastOptions) {
-          compiledPattern = data.lastPattern;
-        }
-        lastMatchData = null;
-      }
-
-      if (compiledPattern==null) {
-        compiledPattern = ReadAction.compute(() -> PatternCompiler.compilePattern(project, options));
-      }
-    }
-
-    cacheCompiledPattern(options, compiledPattern);
-    return compiledPattern;
-  }
-
-  private void cacheCompiledPattern(final MatchOptions options, final CompiledPattern compiledPattern) {
-    matchContext.setPattern(compiledPattern);
-    compiledPattern.setOptionsHashStamp(options.hashCode());
+    return matchContext.getPattern();
   }
 
   /**

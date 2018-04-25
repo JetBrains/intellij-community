@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,7 +80,7 @@ abstract class UndoRedo {
 
   protected abstract void setBeforeState(EditorAndState state);
 
-  public boolean execute(boolean drop, boolean isInsideStartFinishGroup) {
+  public boolean execute(boolean drop, boolean disableConfirmation) {
     if (!myUndoableGroup.isUndoable()) {
       reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
                        myUndoableGroup.getAffectedDocuments());
@@ -93,7 +94,7 @@ abstract class UndoRedo {
     }
 
 
-    if (!isInsideStartFinishGroup && myUndoableGroup.shouldAskConfirmation(isRedo()) && !UndoManagerImpl.ourNeverAskUser) {
+    if (!disableConfirmation && myUndoableGroup.shouldAskConfirmation(isRedo()) && !UndoManagerImpl.ourNeverAskUser) {
       if (!askUser()) return false;
     }
     else {
@@ -194,6 +195,17 @@ abstract class UndoRedo {
     return isOk[0];
   }
 
+  boolean confirmSwitchTo(@NotNull UndoRedo other) {
+    final boolean[] isOk = new boolean[1];
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      String message = CommonBundle.message("undo.conflicting.change.confirmation.message") + "\n" +
+                       getActionName(other.myUndoableGroup.getCommandName()) + "?";
+      isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), message, getActionName(),
+                                            Messages.getQuestionIcon()) == Messages.OK;
+    });
+    return isOk[0];
+  }
+
   private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {
     // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
     if (pair == null || myEditor == null || !myEditor.isValid() || !pair.canBeAppliedTo(myEditor)) return false;
@@ -209,5 +221,10 @@ abstract class UndoRedo {
 
     myEditor.setState(pair.getState());
     return true;
+  }
+
+  public boolean isBlockedByOtherChanges() {
+    return myUndoableGroup.isGlobal() && myUndoableGroup.isUndoable() &&
+           !getStackHolder().collectClashingActions(myUndoableGroup).isEmpty();
   }
 }

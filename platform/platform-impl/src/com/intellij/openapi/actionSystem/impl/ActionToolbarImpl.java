@@ -842,8 +842,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<>();
-    calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
+    calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);//it doesn't take into account wrapping
     if (bounds.isEmpty()) return JBUI.emptySize();
+    int forcedHeight = 0;
+    if (getWidth() > 0 && getLayoutPolicy() == ActionToolbar.WRAP_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL) {
+      final ArrayList<Rectangle> limitedBounds = new ArrayList<>();
+      calculateBounds(new Dimension(getWidth(), Integer.MAX_VALUE), limitedBounds);
+      Rectangle union = null;
+      for (Rectangle bound : limitedBounds) {
+        if (union == null) {
+          union = bound;
+        } else {
+          union = union.union(bound);
+        }
+      }
+      forcedHeight = union != null ? union.height : 0;
+    }
     int xLeft = Integer.MAX_VALUE;
     int yTop = Integer.MAX_VALUE;
     int xRight = Integer.MIN_VALUE;
@@ -856,7 +870,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       xRight = Math.max(xRight, each.x + each.width);
       yBottom = Math.max(yBottom, each.y + each.height);
     }
-    final Dimension dimension = new Dimension(xRight - xLeft, yBottom - yTop);
+    final Dimension dimension = new Dimension(xRight - xLeft, Math.max(yBottom - yTop, forcedHeight));
 
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY && myReservePlaceAutoPopupIcon && !isInsideNavBar()) {
       if (myOrientation == SwingConstants.HORIZONTAL) {

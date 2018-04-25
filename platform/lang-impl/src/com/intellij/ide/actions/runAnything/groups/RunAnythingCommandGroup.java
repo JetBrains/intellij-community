@@ -36,13 +36,13 @@ public class RunAnythingCommandGroup extends RunAnythingGroupBase {
                                @NotNull RunAnythingSearchListModel model,
                                @NotNull String pattern,
                                boolean isInsertionMode,
-                               @NotNull Runnable check) {
+                               @NotNull Runnable cancellationChecker) {
     SearchResult result = new SearchResult();
 
-    check.run();
+    cancellationChecker.run();
     for (String command : ContainerUtil.iterateBackward(RunAnythingCache.getInstance(project).getState().getCommands())) {
-      if (addToList(model, result, pattern, new RunAnythingCommandItem(project, module, command), command, isInsertionMode)) break;
-      check.run();
+      if (addToList(model, result, pattern, command, isInsertionMode, new RunAnythingCommandItem(project, module, command))) break;
+      cancellationChecker.run();
     }
     return result;
   }

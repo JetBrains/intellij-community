@@ -523,6 +523,7 @@ public abstract class DialogWrapper {
       }
     }
 
+    myPeer.setTouchBarButtons(rightSideButtons);
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
   }
@@ -1793,16 +1794,16 @@ public abstract class DialogWrapper {
   }
 
   private void logCloseDialogEvent(int exitCode) {
-    final String title = getTitle();
-    if (StringUtil.isNotEmpty(title)) {
-      FeatureUsageUiEvents.INSTANCE.logCloseDialog(title, exitCode);
+    final String className = getClass().getName();
+    if (StringUtil.isNotEmpty(className)) {
+      FeatureUsageUiEvents.INSTANCE.logCloseDialog(className, exitCode);
     }
   }
 
   private void logShowDialogEvent() {
-    final String title = getTitle();
-    if (StringUtil.isNotEmpty(title)) {
-      FeatureUsageUiEvents.INSTANCE.logShowDialog(title);
+    final String className = getClass().getName();
+    if (StringUtil.isNotEmpty(className)) {
+      FeatureUsageUiEvents.INSTANCE.logShowDialog(className);
     }
   }
 
@@ -2377,7 +2378,7 @@ public abstract class DialogWrapper {
         }
       };
 
-      balloon.addListener(new JBPopupListener.Adapter() {
+      balloon.addListener(new JBPopupListener() {
         @Override public void onClosed(LightweightWindowEvent event) {
           JRootPane rootPane = getRootPane();
           if (rootPane != null) {

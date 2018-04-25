@@ -27,17 +27,6 @@ class IdeaEduProperties extends IdeaCommunityProperties {
     dependenciesPath = "$home/edu/dependencies"
   }
 
-
-  WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
-    return new WindowsDistributionCustomizer() {
-      {
-        icoPath = "$projectHome/platform/icons/src/idea_CE.ico"
-        installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
-        fileAssociations = [".java", ".groovy", ".kt", ".py"]
-      }
-    }
-  }
-
   @Override
   @CompileDynamic
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {

@@ -582,6 +582,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         }
       }
       DfaValue value = factory.createTypeValue(type, nullability);
+      if (!instruction.shouldFlushFields() && instruction.getContext() instanceof PsiNewExpression) {
+        value = factory.withFact(value, DfaFactType.LOCALITY, true);
+      }
       return factory.withFact(value, DfaFactType.MUTABILITY, mutable);
     }
     LongRangeSet range = LongRangeSet.fromType(type);

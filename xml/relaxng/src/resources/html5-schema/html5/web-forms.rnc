@@ -584,7 +584,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 			)?
 		)
 	fieldset.inner =
-		(	legend.elem? #REVISIT should this be required?
+		(	(	legend.elem
+			|	legend.elem.w3c
+		)?
 		,	common.inner.flow
 		)
 

@@ -60,11 +60,16 @@ public final class OffsetIcon extends CachingScalableJBIcon<OffsetIcon> {
   }
 
   public int hashCode() {
-    return myIcon.hashCode();
+    return myOffset + myIcon.hashCode();
   }
 
   public boolean equals(Object obj) {
-    return obj instanceof OffsetIcon && Objects.equals(((OffsetIcon)obj).myIcon, myIcon);
+    if (obj == this) return true;
+    if (obj instanceof OffsetIcon) {
+      OffsetIcon icon = (OffsetIcon)obj;
+      return icon.myOffset == myOffset && Objects.equals(icon.myIcon, myIcon);
+    }
+    return false;
   }
 
   @Override

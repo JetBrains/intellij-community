@@ -42,7 +42,7 @@ public class RunAnythingActionItem extends RunAnythingItem<AnAction> {
   @NotNull
   @Override
   public String getAdText() {
-    return RunAnythingAction.AD_ACTION_TEXT;
+    return RunAnythingUtil.AD_ACTION_TEXT;
   }
 
   @NotNull

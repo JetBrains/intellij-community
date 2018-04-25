@@ -21,7 +21,6 @@ import com.intellij.unscramble.ThreadState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.frame.XExecutionStack;
 import com.sun.jdi.ReferenceType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
@@ -177,9 +176,9 @@ class ReloadClassesWorker {
     DebuggerContextImpl context = myDebuggerSession.getContextManager().getContext();
     SuspendContextImpl suspendContext = context.getSuspendContext();
     if (suspendContext != null) {
-      XExecutionStack stack = suspendContext.getActiveExecutionStack();
+      JavaExecutionStack stack = suspendContext.getActiveExecutionStack();
       if (stack != null) {
-        ((JavaExecutionStack)stack).initTopFrame();
+        stack.initTopFrame();
       }
     }
 

@@ -790,7 +790,7 @@ public class HighlightClassUtil {
         if (resolve instanceof PsiClass) {
           final PsiClass base = (PsiClass)resolve;
           final PsiClass baseClass = base.getContainingClass();
-          if (baseClass != null && base.hasModifierProperty(PsiModifier.PRIVATE) && baseClass == containerClass) {
+          if (baseClass != null && base.hasModifierProperty(PsiModifier.PRIVATE) && baseClass == containerClass && baseClass.getContainingClass() == null) {
             String description = JavaErrorMessages.message("private.symbol",
                                                            HighlightUtil.formatClass(base),
                                                            HighlightUtil.formatClass(baseClass));

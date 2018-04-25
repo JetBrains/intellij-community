@@ -48,7 +48,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -334,9 +336,9 @@ public class EditorWindow {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getActiveMruEditorOnClose()) {
       // try to open last visited file
-      final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
-      for (int idx = histFiles.length - 1; idx >= 0; idx--) {
-        final VirtualFile histFile = histFiles[idx];
+      final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFileList();
+      for (int idx = histFiles.size() - 1; idx >= 0; idx--) {
+        final VirtualFile histFile = histFiles.get(idx);
         if (histFile.equals(fileBeingClosed)) {
           continue;
         }
@@ -499,12 +501,6 @@ public class EditorWindow {
     return myPanel.isShowing();
   }
 
-  public void setPaintBlocked(boolean blocked) {
-    if (myTabbedPane != null) {
-      myTabbedPane.setPaintBlocked(blocked);
-    }
-  }
-
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
     @NotNull final EditorWithProviderComposite myEditor;
     protected final EditorWindow myWindow;
@@ -527,7 +523,7 @@ public class EditorWindow {
             if (!hasFocus()) return;
             final JComponent focus = myEditor.getSelectedEditorWithProvider().getFirst().getPreferredFocusedComponent();
             if (focus != null && !focus.hasFocus()) {
-              IdeFocusManager.getGlobalInstance().requestFocus(focus, true);
+              getGlobalInstance().requestFocus(focus, true);
             }
           });
         }
@@ -1144,7 +1140,7 @@ public class EditorWindow {
 
   private LinkedHashSet<VirtualFile> getTabClosingOrder(boolean closeNonModifiedFilesFirst) {
     final VirtualFile[] allFiles = getFiles();
-    final Set<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileSet();
+    final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileList();
 
     LinkedHashSet<VirtualFile> closingOrder = ContainerUtil.newLinkedHashSet();
 

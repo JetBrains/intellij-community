@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="12" viewBox="0 0 12 12">
+  <defs>
+    <path id="db_obsolete_dark-a" d="M6,11 C3.23857625,11 1,8.76142375 1,6 C1,3.23857625 3.23857625,1 6,1 C8.76142375,1 11,3.23857625 11,6 C11,8.76142375 8.76142375,11 6,11 Z M5.25,2.5 L5.25,6.5 L6.75,6.5 L6.75,2.5 L5.25,2.5 Z M5.25,7.5 L5.25,9 L6.75,9 L6.75,7.5 L5.25,7.5 Z"/>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <use fill="#C44923" xlink:href="#db_obsolete_dark-a"/>
+  </g>
+</svg>

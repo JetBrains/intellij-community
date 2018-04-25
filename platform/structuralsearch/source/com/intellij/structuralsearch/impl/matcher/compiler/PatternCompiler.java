@@ -4,11 +4,9 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -16,9 +14,10 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.reference.SoftReference;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -45,16 +44,27 @@ import java.util.regex.Pattern;
  * Compiles the handlers for usability
  */
 public class PatternCompiler {
+  private static final Object LOCK = new Object();
+  private static SoftReference<CompiledPattern> ourLastCompiledPattern;
+  private static MatchOptions ourLastMatchOptions;
   private static CompileContext lastTestingContext;
 
   public static CompiledPattern compilePattern(final Project project, final MatchOptions options)
     throws MalformedPatternException, NoMatchFoundException, UnsupportedOperationException {
-    FileType fileType = options.getFileType();
-    assert fileType instanceof LanguageFileType;
-    Language language = ((LanguageFileType)fileType).getLanguage();
-    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
-    assert profile != null : "no profile found for " + fileType.getDescription();
-    CompiledPattern result = profile.createCompiledPattern();
+    final CompiledPattern lastPattern = getLastCompiledPattern(options);
+    if (lastPattern != null) {
+      return lastPattern;
+    }
+    return !ApplicationManager.getApplication().isDispatchThread()
+           ? ReadAction.compute(() -> doCompilePattern(project, options))
+           : doCompilePattern(project, options);
+  }
+
+  @NotNull
+  private static CompiledPattern doCompilePattern(Project project, MatchOptions options) {
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
+    assert profile != null : "no profile found for " + options.getFileType().getDescription();
+    final CompiledPattern result = profile.createCompiledPattern();
 
     final String[] prefixes = result.getTypedVarPrefixes();
     assert prefixes.length > 0;
@@ -63,35 +73,37 @@ public class PatternCompiler {
     if (ApplicationManager.getApplication().isUnitTestMode()) lastTestingContext = context;
 
     try {
-      List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
+      final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
 
       final CompiledPattern pattern = context.getPattern();
       checkForUnknownVariables(pattern, elements);
       pattern.setNodes(elements);
-
-      if (context.getSearchHelper().doOptimizing() && context.getSearchHelper().isScannedSomething()) {
-        final Set<PsiFile> set = context.getSearchHelper().getFilesSetToScan();
-        final List<PsiFile> filesToScan = new SmartList<>();
-        final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
-
-        for (final PsiFile file : set) {
-          if (!scope.contains(file.getVirtualFile())) {
-            continue;
-          }
-
-          filesToScan.add(file);
-        }
-
-        if (filesToScan.isEmpty()) {
-          throw new NoMatchFoundException(SSRBundle.message("ssr.will.not.find.anything", scope.getDisplayName()));
-        }
-        result.setScope(new LocalSearchScope(PsiUtilCore.toPsiElementArray(filesToScan)));
+      synchronized (LOCK) {
+        ourLastMatchOptions = options.copy();
+        ourLastCompiledPattern = new SoftReference<>(result);
       }
+      profile.checkSearchPattern(pattern);
+      optimizeScope(options, result, context);
+      return result;
     } finally {
       context.clear();
     }
+  }
 
-    return result;
+  private static void optimizeScope(MatchOptions options, CompiledPattern result, CompileContext context) {
+    final OptimizingSearchHelper searchHelper = context.getSearchHelper();
+    if (searchHelper.doOptimizing() && searchHelper.isScannedSomething()) {
+      final List<PsiFile> filesToScan = new SmartList<>();
+      final SearchScope scope = options.getScope();
+      for (final PsiFile file : searchHelper.getFilesSetToScan()) {
+        if (scope.contains(file.getVirtualFile())) filesToScan.add(file);
+      }
+
+      if (filesToScan.isEmpty()) {
+        throw new NoMatchFoundException(SSRBundle.message("ssr.will.not.find.anything", scope.getDisplayName()));
+      }
+      result.setScope(new LocalSearchScope(PsiUtilCore.toPsiElementArray(filesToScan)));
+    }
   }
 
   private static void checkForUnknownVariables(final CompiledPattern pattern, List<PsiElement> elements) {
@@ -122,6 +134,14 @@ public class PatternCompiler {
           }
         }
       });
+    }
+  }
+
+  @Nullable
+  public static CompiledPattern getLastCompiledPattern(MatchOptions options) {
+    synchronized (LOCK) {
+      final CompiledPattern lastCompiledPattern = ourLastCompiledPattern == null ? null : ourLastCompiledPattern.get();
+      return (lastCompiledPattern == null || !options.equals(ourLastMatchOptions)) ? null : lastCompiledPattern;
     }
   }
 

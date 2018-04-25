@@ -1,12 +1,14 @@
-// "Convert 'x' to field in anonymous class" "true"
+// "Move 'x' into anonymous object" "true"
 class Test {
     public void test() {
-        var ref = new Object() {
-            int x = 12;
+        var /*1*/ ref /*4*/ = new Object() {
+            int /*6*/ x = 12;//2
+            // 3
             int y = 23;
+            //5
         };
         Runnable r = () -> {
-            ref.x++;
+            ref.x/*7*/++;
             ref.y++;
         };
     }

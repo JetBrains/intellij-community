@@ -28,6 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
+import java.awt.image.RGBImageFilter;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -185,7 +186,7 @@ public final class IconLoader {
     }
     if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
-    URL myURL = aClass.getResource(path);
+    URL myURL = findURL(path, aClass);
     if (myURL == null) {
       if (strict) throw new RuntimeException("Can't find icon in '" + path + "' near " + aClass);
       return null;
@@ -203,6 +204,7 @@ public final class IconLoader {
     for (IconPathPatcher patcher : ourPatchers) {
       String newPath = patcher.patchPath(path);
       if (newPath != null) {
+        LOG.info("replace '" + path + "' with '" + newPath + "'");
         return Pair.create(newPath, patcher.getContextClass(path));
       }
     }
@@ -212,6 +214,15 @@ public final class IconLoader {
   private static boolean isReflectivePath(@NotNull String path) {
     List<String> paths = StringUtil.split(path, ".");
     return paths.size() > 1 && paths.get(0).endsWith("Icons");
+  }
+
+  @Nullable
+  private static URL findURL(@NotNull String path, @NotNull Class aClass) {
+    URL url = aClass.getResource(path);
+    if (url != null || !path.endsWith(".png")) return url;
+    url = aClass.getResource(path.substring(0, path.length() - 4) + ".svg");
+    if (url != null) LOG.info("replace '" + path + "' with '" + url + "'");
+    return url;
   }
 
   @Nullable
@@ -305,39 +316,51 @@ public final class IconLoader {
 
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
-      if (!isGoodSize(icon)) {
-        LOG.error(icon); // # 22481
-        return EMPTY_ICON;
-      }
-      if (icon instanceof CachedImageIcon) {
-        disabledIcon = ((CachedImageIcon)icon).asDisabledIcon();
-      } else {
-        final float scale;
-        if (icon instanceof JBUI.ScaleContextAware) {
-          scale = (float)((JBUI.ScaleContextAware)icon).getScale(SYS_SCALE);
-        }
-        else {
-          scale = UIUtil.isJreHiDPI() ? JBUI.sysScale() : 1f;  // [tav] todo: no screen available
-        }
-        @SuppressWarnings("UndesirableClassUsage")
-        BufferedImage image = new BufferedImage((int)(scale * icon.getIconWidth()), (int)(scale * icon.getIconHeight()), BufferedImage.TYPE_INT_ARGB);
-        final Graphics2D graphics = image.createGraphics();
-
-        graphics.setColor(UIUtil.TRANSPARENT_COLOR);
-        graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
-        graphics.scale(scale, scale);
-        icon.paintIcon(LabelHolder.ourFakeComponent, graphics, 0, 0);
-
-        graphics.dispose();
-
-        Image img = ImageUtil.filter(image, UIUtil.getGrayFilter());
-        if (UIUtil.isJreHiDPI()) img = RetinaImage.createFrom(img, scale, null);
-
-        disabledIcon = new JBImageIcon(img);
-      }
+      disabledIcon = filterIcon(icon, UIUtil.getGrayFilter(), null); // [tav] todo: lack ancestor
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;
+  }
+
+  /**
+   * Creates new icon with the filter applied.
+   */
+  @Nullable
+  public static Icon filterIcon(@NotNull Icon icon, RGBImageFilter filter, @Nullable Component ancestor) {
+    if (icon instanceof LazyIcon) icon = ((LazyIcon)icon).getOrComputeIcon();
+    if (icon == null) return null;
+
+    if (!isGoodSize(icon)) {
+      LOG.error(icon); // # 22481
+      return EMPTY_ICON;
+    }
+    if (icon instanceof CachedImageIcon) {
+      icon = ((CachedImageIcon)icon).createWithFilter(filter);
+    } else {
+      final float scale;
+      if (icon instanceof JBUI.ScaleContextAware) {
+        scale = (float)((JBUI.ScaleContextAware)icon).getScale(SYS_SCALE);
+      }
+      else {
+        scale = UIUtil.isJreHiDPI() ? JBUI.sysScale(ancestor) : 1f;
+      }
+      @SuppressWarnings("UndesirableClassUsage")
+      BufferedImage image = new BufferedImage((int)(scale * icon.getIconWidth()), (int)(scale * icon.getIconHeight()), BufferedImage.TYPE_INT_ARGB);
+      final Graphics2D graphics = image.createGraphics();
+
+      graphics.setColor(UIUtil.TRANSPARENT_COLOR);
+      graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
+      graphics.scale(scale, scale);
+      icon.paintIcon(LabelHolder.ourFakeComponent, graphics, 0, 0);
+
+      graphics.dispose();
+
+      Image img = ImageUtil.filter(image, filter);
+      if (UIUtil.isJreHiDPI()) img = RetinaImage.createFrom(img, scale, null);
+
+      icon = new JBImageIcon(img);
+    }
+    return icon;
   }
 
   @NotNull
@@ -565,9 +588,9 @@ public final class IconLoader {
     }
 
     @NotNull
-    private Icon asDisabledIcon() {
+    private Icon createWithFilter(@NotNull RGBImageFilter filter) {
       CachedImageIcon icon = new CachedImageIcon(this);
-      icon.myFilters = new ImageFilter[] {getGlobalFilter(), UIUtil.getGrayFilter()};
+      icon.myFilters = new ImageFilter[] {getGlobalFilter(), filter};
       return icon;
     }
 

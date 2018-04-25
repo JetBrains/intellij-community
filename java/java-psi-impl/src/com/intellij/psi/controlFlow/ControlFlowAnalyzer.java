@@ -1408,6 +1408,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         if (exprValue instanceof Boolean) {
           myCurrentFlow.setConstantConditionOccurred(true);
           rValue = shouldCalculateConstantExpression(expression) ? (Boolean)exprValue : null;
+        } else {
+          rValue = null;
         }
 
         BranchingInstruction.Role role = isAndAnd ? myEndJumpRoles.peek() : myStartJumpRoles.peek();
@@ -1436,13 +1438,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             if (lOperand != null) {
               myCurrentFlow.addInstruction(new GoToInstruction(0, role));
               addElementOffsetLater(gotoElement, gotoIsAtStart);
+              rValue = null;
             }
             break;
           case SKIP_CURRENT_OPERAND:
             break;
         }
-
-        if (shortcut == Shortcut.STOP_EXPRESSION) break;
       }
       generateLOperand(rOperand, i == operands.length - 1 ? null : operands[i + 1], signTokenType);
 

@@ -5,6 +5,7 @@ import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.execution.RunConfigurationConverter
+import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.diagnostic.logger
@@ -12,12 +13,13 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.attribute
+import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.function.Function
 
 private val LOG = logger<RunConfigurationSchemeManager>()
 
-internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
+internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val templateDifferenceHelper: TemplateDifferenceHelper, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
 
   private val converters by lazy {
@@ -111,13 +113,25 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     }
     else if (scheme.isTemplate) {
       val factory = scheme.factory
-      if (factory != UnknownConfigurationType.getFactory()) {
-        val templateSettings = manager.createTemplateSettings(factory)
-        if (JDOMUtil.areElementsEqual(result, templateSettings.writeScheme())) {
-          return null
-        }
+      if (factory != UnknownConfigurationType.getFactory() && !templateDifferenceHelper.isTemplateModified(result, factory)) {
+        return null
       }
     }
     return result
+  }
+}
+
+internal class TemplateDifferenceHelper(private val manager: RunManagerImpl) {
+  private val cachedSerializedTemplateIdToData = THashMap<ConfigurationFactory, Element>()
+
+  fun isTemplateModified(serialized: Element, factory: ConfigurationFactory): Boolean {
+    val originalTemplate = cachedSerializedTemplateIdToData.getOrPut(factory) {
+      JDOMUtil.internElement(manager.createTemplateSettings(factory).writeScheme())
+    }
+    return !JDOMUtil.areElementsEqual(serialized, originalTemplate)
+  }
+
+  fun clearCache() {
+    cachedSerializedTemplateIdToData.clear()
   }
 }

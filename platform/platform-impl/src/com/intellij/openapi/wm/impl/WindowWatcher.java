@@ -241,11 +241,6 @@ public final class WindowWatcher implements PropertyChangeListener{
       LOG.assertTrue(window.isShowing());
 
       while(window!=null){
-        // skip all windows until found forst dialog or frame
-        if(!(window instanceof Dialog)&&!(window instanceof Frame)){
-          window=window.getOwner();
-          continue;
-        }
         // skip not visible and disposed/not shown windows
         if(!window.isDisplayable()||!window.isShowing()){
           window = window.getOwner();

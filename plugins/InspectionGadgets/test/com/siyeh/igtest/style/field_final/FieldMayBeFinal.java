@@ -850,7 +850,7 @@ class T49 {
   }
 }
 class T50 {
-  private boolean <warning descr="Field 'b' may be 'final'">b</warning>; // may be final
+  private boolean b; // may not be final
   T50(int i) {
     if (false && (b = true)) {
 
@@ -902,7 +902,7 @@ class T55 {
   }
 }
 class T56 {
-  private boolean <warning descr="Field 'b' may be 'final'">b</warning>; // may be final
+  private boolean b; // may not be final
   {
     if (false && (b = false)) ;
     if (true && (b = false)) ;

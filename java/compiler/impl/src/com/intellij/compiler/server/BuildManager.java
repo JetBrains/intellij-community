@@ -157,6 +157,11 @@ public class BuildManager implements Disposable {
     protected void runTask() {
       runAutoMake();
     }
+
+    @Override
+    protected boolean shouldPostpone() {
+      return shouldPostponeAutomake();
+    }
   };
 
   private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask() {
@@ -528,28 +533,20 @@ public class BuildManager implements Disposable {
     if (project == null || !canStartAutoMake(project)) {
       return;
     }
-    if (shouldPostponeAutomake()) {
-      // the system cannot be considered idle. Re-schedule the automake in order not to interfere with the user's activity
-      scheduleAutoMake();
-    }
-    else {
-      // run automake
-      final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
-      final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
-      final TaskFuture future = scheduleBuild(
-        project, false, true, false, scopes, Collections.emptyList(), Collections.emptyMap(),
-        handler
-      );
-      if (future != null) {
-        myAutomakeFutures.put(future, project);
-        try {
-          future.waitFor();
-        }
-        finally {
-          myAutomakeFutures.remove(future);
-          if (handler.unprocessedFSChangesDetected()) {
-            scheduleAutoMake();
-          }
+    final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
+    final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
+    final TaskFuture future = scheduleBuild(
+      project, false, true, false, scopes, Collections.emptyList(), Collections.emptyMap(), handler
+    );
+    if (future != null) {
+      myAutomakeFutures.put(future, project);
+      try {
+        future.waitFor();
+      }
+      finally {
+        myAutomakeFutures.remove(future);
+        if (handler.unprocessedFSChangesDetected()) {
+          scheduleAutoMake();
         }
       }
     }
@@ -1449,13 +1446,17 @@ public class BuildManager implements Disposable {
       myAlarm.cancelAllRequests();
     }
 
+    protected boolean shouldPostpone() {
+      return false;
+    }
+
     protected abstract int getDelay();
 
     protected abstract void runTask();
 
     @Override
     public final void run() {
-      if (!HeavyProcessLatch.INSTANCE.isRunning() && myFileChangeCounter <= 0 && !myInProgress.getAndSet(true)) {
+      if (!HeavyProcessLatch.INSTANCE.isRunning() && myFileChangeCounter <= 0 && !shouldPostpone() && !myInProgress.getAndSet(true)) {
         try {
           ApplicationManager.getApplication().executeOnPooledThread(myTaskRunnable);
         }

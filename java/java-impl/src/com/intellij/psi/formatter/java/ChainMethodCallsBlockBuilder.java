@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.formatting.Alignment;
-import com.intellij.formatting.Block;
-import com.intellij.formatting.Indent;
-import com.intellij.formatting.Wrap;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiComment;
@@ -41,11 +38,14 @@ class ChainMethodCallsBlockBuilder {
   private final Alignment myBlockAlignment;
   private final Indent myBlockIndent;
 
+  private final FormattingMode myFormattingMode;
+
   public ChainMethodCallsBlockBuilder(Alignment alignment,
                                       Wrap wrap,
                                       Indent indent,
                                       CommonCodeStyleSettings settings,
-                                      JavaCodeStyleSettings javaSettings)
+                                      JavaCodeStyleSettings javaSettings,
+                                      @NotNull FormattingMode formattingMode)
   {
     myBlockWrap = wrap;
     myBlockAlignment = alignment;
@@ -53,6 +53,7 @@ class ChainMethodCallsBlockBuilder {
     mySettings = settings;
     myIndentSettings = settings.getIndentOptions();
     myJavaSettings = javaSettings;
+    myFormattingMode = formattingMode;
   }
 
   public Block build(List<ASTNode> nodes)  {
@@ -85,7 +86,7 @@ class ChainMethodCallsBlockBuilder {
         chainedCallsAlignment = null;
       }
 
-      CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings);
+      CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings, myFormattingMode);
       blocks.add(builder.create(currentCallChunk.nodes, wrap, chainedCallsAlignment));
     }
 

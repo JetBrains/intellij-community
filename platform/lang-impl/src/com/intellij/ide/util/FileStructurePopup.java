@@ -668,7 +668,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         DataManager dataManager = DataManager.getInstance();
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
           null, group, dataManager.getDataContext(label), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
-        popup.addListener(new JBPopupListener.Adapter() {
+        popup.addListener(new JBPopupListener() {
           @Override
           public void onClosed(LightweightWindowEvent event) {
             myCanClose = true;

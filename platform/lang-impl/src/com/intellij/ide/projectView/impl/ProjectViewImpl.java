@@ -66,6 +66,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -248,7 +249,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   @Override
   public String getName() {
-    return "Project";
+    return IdeUICustomization.getInstance().getProjectViewTitle();
   }
 
   @NotNull

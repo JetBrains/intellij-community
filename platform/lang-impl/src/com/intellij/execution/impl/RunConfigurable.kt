@@ -304,10 +304,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
         userObject = userObject.settings
       }
       if (userObject is RunnerAndConfigurationSettingsImpl) {
-        val runnerAndConfigurationSettings = userObject as RunnerAndConfigurationSettings
-        val configurationType = configuration.type
-        if (Comparing.strEqual(runnerAndConfigurationSettings.configuration.type.id, configurationType.id) && Comparing.strEqual(
-          runnerAndConfigurationSettings.configuration.name, configuration.name)) {
+        val otherConfiguration = (userObject as RunnerAndConfigurationSettings).configuration
+        if (otherConfiguration.factory?.type?.id == configuration.factory?.type?.id && otherConfiguration.name == configuration.name) {
           TreeUtil.selectInTree(node, true, tree)
           return true
         }
@@ -1003,21 +1001,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
     private fun getTypesToShow(showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
       if (showApplicableTypesOnly) {
-        val applicableTypes = allTypes.filter { isApplicable(it) }
+        val applicableTypes = allTypes.filter { it.configurationFactories.any { it.isApplicable(myProject) } }
         if (applicableTypes.size < (allTypes.size - 3)) {
           return applicableTypes
         }
       }
       return allTypes
-    }
-
-    private fun isApplicable(type: ConfigurationType): Boolean {
-      for (factory in type.configurationFactories) {
-        if (factory.isApplicable(myProject)) {
-          return true
-        }
-      }
-      return false
     }
   }
 

@@ -17,22 +17,24 @@ import static com.intellij.psi.CommonClassNames.*;
  */
 public final class JvmPrimitiveTypeKind {
 
-  public static final JvmPrimitiveTypeKind BOOLEAN = new JvmPrimitiveTypeKind("boolean", JAVA_LANG_BOOLEAN);
-  public static final JvmPrimitiveTypeKind BYTE = new JvmPrimitiveTypeKind("byte", JAVA_LANG_BYTE);
-  public static final JvmPrimitiveTypeKind CHAR = new JvmPrimitiveTypeKind("char", JAVA_LANG_CHARACTER);
-  public static final JvmPrimitiveTypeKind DOUBLE = new JvmPrimitiveTypeKind("double", JAVA_LANG_DOUBLE);
-  public static final JvmPrimitiveTypeKind FLOAT = new JvmPrimitiveTypeKind("float", JAVA_LANG_FLOAT);
-  public static final JvmPrimitiveTypeKind INT = new JvmPrimitiveTypeKind("int", JAVA_LANG_INTEGER);
-  public static final JvmPrimitiveTypeKind LONG = new JvmPrimitiveTypeKind("long", JAVA_LANG_LONG);
-  public static final JvmPrimitiveTypeKind SHORT = new JvmPrimitiveTypeKind("short", JAVA_LANG_SHORT);
-  public static final JvmPrimitiveTypeKind VOID = new JvmPrimitiveTypeKind("void", JAVA_LANG_VOID);
+  public static final JvmPrimitiveTypeKind BOOLEAN = new JvmPrimitiveTypeKind("boolean", JAVA_LANG_BOOLEAN, "Z");
+  public static final JvmPrimitiveTypeKind BYTE = new JvmPrimitiveTypeKind("byte", JAVA_LANG_BYTE, "B");
+  public static final JvmPrimitiveTypeKind CHAR = new JvmPrimitiveTypeKind("char", JAVA_LANG_CHARACTER, "C");
+  public static final JvmPrimitiveTypeKind DOUBLE = new JvmPrimitiveTypeKind("double", JAVA_LANG_DOUBLE, "D");
+  public static final JvmPrimitiveTypeKind FLOAT = new JvmPrimitiveTypeKind("float", JAVA_LANG_FLOAT, "F");
+  public static final JvmPrimitiveTypeKind INT = new JvmPrimitiveTypeKind("int", JAVA_LANG_INTEGER, "I");
+  public static final JvmPrimitiveTypeKind LONG = new JvmPrimitiveTypeKind("long", JAVA_LANG_LONG, "J");
+  public static final JvmPrimitiveTypeKind SHORT = new JvmPrimitiveTypeKind("short", JAVA_LANG_SHORT, "S");
+  public static final JvmPrimitiveTypeKind VOID = new JvmPrimitiveTypeKind("void", JAVA_LANG_VOID, "V");
 
   private final String myName;
   private final String myBoxedFqn;
+  private final String myBinaryName;
 
-  private JvmPrimitiveTypeKind(String name, String boxedFqn) {
+  private JvmPrimitiveTypeKind(String name, String boxedFqn, String binaryName) {
     myName = name;
     myBoxedFqn = boxedFqn;
+    myBinaryName = binaryName;
   }
 
   @Contract(pure = true)
@@ -45,6 +47,12 @@ public final class JvmPrimitiveTypeKind {
   @NotNull
   public String getBoxedFqn() {
     return myBoxedFqn;
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  public String getBinaryName() {
+    return myBinaryName;
   }
 
   private static final Map<String, JvmPrimitiveTypeKind> ourNameToKind;

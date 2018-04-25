@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -24,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
+import com.intellij.openapi.command.CommandToken;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -56,7 +43,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     if (editor == null || file == null) return;
     final Project project = file.getProject();
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessor.getInstance();
-    Object commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
+    CommandToken commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
     try {
       WriteAction.run(() -> {
         TextRange range = editor.getSelectionModel().hasSelection()
@@ -66,7 +53,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
       });
     }
     finally {
-      commandProcessor.finishCommand(project, commandToken, null);
+      commandProcessor.finishCommand(commandToken, null);
     }
   }
 

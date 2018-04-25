@@ -78,8 +78,7 @@ class CreateGradleProjectWithKotlinGuiTest : KotlinGuiTestCase() {
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false,
-      kotlinKind = kotlinKind,
-      projectName = *arrayOf(projectName)
+      kotlinKind = kotlinKind
     )
     gradleReimport()
     waitAMoment(extraTimeOut)

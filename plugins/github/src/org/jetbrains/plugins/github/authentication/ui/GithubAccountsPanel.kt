@@ -15,8 +15,6 @@ import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN
 import com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE
 import com.intellij.ui.components.JBList
-import com.intellij.util.Alarm
-import com.intellij.util.AlarmFactory
 import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -34,6 +32,7 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 private const val ACCOUNT_PICTURE_SIZE: Int = 40
+private const val LINK_TAG = "EDIT_LINK"
 
 internal class GithubAccountsPanel(private val project: Project, private val accountInformationProvider: GithubAccountInformationProvider)
   : BorderLayoutPanel(), Disposable {
@@ -91,7 +90,6 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
                   .createPanel())
 
     Disposer.register(this, progressManager)
-    Disposer.register(this, errorLinkHandler)
   }
 
   private fun addAccount() {
@@ -113,7 +111,8 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
                                    { _, _ -> true },
                                    this,
                                    host = decorator.account.server.toString(),
-                                   editableHost = false)
+                                   editableHost = false,
+                                   login = decorator.account.name)
     if (dialog.showAndGet()) {
       decorator.account.name = dialog.getLogin()
       newTokensMap[decorator.account] = dialog.getToken()
@@ -127,71 +126,62 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   /**
    * Manages link hover and click for [GithubAccountDecoratorRenderer.loadingError]
    * Sets the proper cursor and underlines the link on hover
-   * Mouse movement handling is performed with delay to reduce performance impact
    *
    * @see [GithubAccountDecorator.loadingError]
    * @see [GithubAccountDecorator.showLoginLink]
    * @see [GithubAccountDecorator.errorLinkPointedAt]
    */
-  private fun createLinkActivationListener() = object : MouseAdapter(), Disposable {
-    // Display refresh delay at 25 fps
-    private val DELAY_MS: Long = 40L
-    private var linkStylingAlarm = AlarmFactory.getInstance()
-      .create(Alarm.ThreadToUse.SWING_THREAD, this)
-      .apply { setActivationComponent(accountList) }
+  private fun createLinkActivationListener() = object : MouseAdapter() {
 
     override fun mouseMoved(e: MouseEvent) {
-      linkStylingAlarm.cancelAllRequests()
-      linkStylingAlarm.addComponentRequest(
-        {
-          for (item in accountListModel.items) {
-            item.errorLinkPointedAt = false
-          }
-          val (decorator, linkPointedAt) = findDecoratorWithLoginLinkAt(e.point)
-          if (decorator != null) {
-            UIUtil.setCursor(accountList,
-                             if (linkPointedAt) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor())
-            decorator.errorLinkPointedAt = linkPointedAt
-          }
-          else {
-            UIUtil.setCursor(accountList, Cursor.getDefaultCursor())
-          }
+      val decorator = findDecoratorWithLoginLinkAt(e.point)
+      if (decorator != null) {
+        UIUtil.setCursor(accountList, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      }
+      else {
+        UIUtil.setCursor(accountList, Cursor.getDefaultCursor())
+      }
 
-          accountListModel.allContentsChanged()
-        }, DELAY_MS)
+      var hasChanges = false
+      for (item in accountListModel.items) {
+        val isLinkPointedAt = item == decorator
+        hasChanges = hasChanges || isLinkPointedAt != item.errorLinkPointedAt
+        item.errorLinkPointedAt = isLinkPointedAt
+      }
+      if (hasChanges) accountListModel.allContentsChanged()
     }
 
     override fun mouseClicked(e: MouseEvent) {
-      val (decorator, linkPointedAt) = findDecoratorWithLoginLinkAt(e.point)
-      if (decorator != null && linkPointedAt) editAccount(decorator)
+      findDecoratorWithLoginLinkAt(e.point)?.run(::editAccount)
     }
 
     /**
-     * Finds component under mouse pointer and if it's a decorator - checks if pointer is on the error label link
+     * Checks if mouse is pointed at decorator error link
+     *
+     * @return decorator with error link under mouse pointer or null
      */
-    private fun findDecoratorWithLoginLinkAt(point: Point): Pair<GithubAccountDecorator?, Boolean> {
+    private fun findDecoratorWithLoginLinkAt(point: Point): GithubAccountDecorator? {
       val idx = accountList.locationToIndex(point)
-      if (idx < 0) return null to false
+      if (idx < 0) return null
 
       val cellBounds = accountList.getCellBounds(idx, idx)
-      if (!cellBounds.contains(point)) return null to false
+      if (!cellBounds.contains(point)) return null
 
       val decorator = accountListModel.getElementAt(idx)
-      if (decorator?.loadingError == null) return null to false
+      if (decorator?.loadingError == null) return null
 
       val rendererComponent = accountList.cellRenderer.getListCellRendererComponent(accountList, decorator, idx, true, true)
-      rendererComponent.setLocation(cellBounds.x, cellBounds.y)
-      rendererComponent.setSize(cellBounds.width, cellBounds.height)
+      rendererComponent.setBounds(cellBounds.x, cellBounds.y, cellBounds.width, cellBounds.height)
+      layoutRecursively(rendererComponent)
 
-      val rendererRelativePoint = Point(point.x - cellBounds.x, point.y - cellBounds.y)
-      val childComponent = UIUtil.getDeepestComponentAt(rendererComponent, rendererRelativePoint.x, rendererRelativePoint.y)
-      if (childComponent == null || childComponent !is SimpleColoredComponent) return decorator to false
+      val rendererRelativeX = point.x - cellBounds.x
+      val rendererRelativeY = point.y - cellBounds.y
+      val childComponent = UIUtil.getDeepestComponentAt(rendererComponent, rendererRelativeX, rendererRelativeY)
+      if (childComponent !is SimpleColoredComponent) return null
 
-      val childRelativeX = SwingUtilities.convertPoint(rendererComponent, rendererRelativePoint, childComponent).x
-      return if (childComponent.findFragmentAt(childRelativeX) == 2) decorator to true else decorator to false
+      val childRelativeX = rendererRelativeX - childComponent.parent.x - childComponent.x
+      return if (childComponent.getFragmentTagAt(childRelativeX) == LINK_TAG) decorator else null
     }
-
-    override fun dispose() {}
   }
 
   private fun setLinkHandlerEnabled(enabled: Boolean) {
@@ -234,6 +224,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
           fullName = data.first.name
           profilePicture = data.second
           loadingError = null
+          showLoginLink = false
         })
       }
 
@@ -273,6 +264,17 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   }
 
   override fun dispose() {}
+
+  companion object {
+    private fun layoutRecursively(component: Component) {
+      if (component is JComponent) {
+        component.doLayout()
+        for (child in component.components) {
+          layoutRecursively(child)
+        }
+      }
+    }
+  }
 }
 
 private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDecorator>, JPanel() {
@@ -285,6 +287,9 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
 
   private val loadingError = SimpleColoredComponent()
 
+  /**
+   * UPDATE [createLinkActivationListener] IF YOU CHANGE LAYOUT
+   */
   init {
     layout = FlowLayout(FlowLayout.LEFT, 0, 0)
     border = JBUI.Borders.empty(5, 8)
@@ -345,7 +350,8 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
         append(" ")
         if (value.showLoginLink) append("Log In",
                                         if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE, JBColor.link())
-                                        else SimpleTextAttributes(STYLE_PLAIN, JBColor.link()))
+                                        else SimpleTextAttributes(STYLE_PLAIN, JBColor.link()),
+                                        LINK_TAG)
       }
     }
     return this

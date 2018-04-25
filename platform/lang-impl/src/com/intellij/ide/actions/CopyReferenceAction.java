@@ -33,11 +33,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -300,7 +300,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       }
     }
 
-    Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+    Module module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false);
     if (module != null) {
       for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
         String relativePath = VfsUtilCore.getRelativePath(virtualFile, root);

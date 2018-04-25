@@ -85,7 +85,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   }
   public void testTextUsageInfoHandlesDocumentChange() {
     PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
-    Usage usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(),"xxx")));
+    UsageInfo2UsageAdapter usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(), "xxx")));
 
     UsageView usageView = createUsageView(new Usage[]{usage});
 
@@ -93,7 +93,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     Document document = documentManager.getDocument(psiFile);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "/* sdfsdfsd */"));
     documentManager.commitAllDocuments();
-    int navigationOffset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
+    int navigationOffset = usage.getUsageInfo().getNavigationOffset();
     assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);
   }
 

@@ -1392,8 +1392,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         return;
       }
       final PsiType otherType = other.getType();
-      final MatchingHandler handler = pattern.getHandler(classReference);
-      if (handler instanceof SubstitutionHandler && otherType != null) {
+      final MatchingHandler handler;
+      if (classReference != null && (handler = pattern.getHandler(classReference)) instanceof SubstitutionHandler && otherType != null) {
         final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
         final MatchPredicate predicate = substitutionHandler.getPredicate();
         if (predicate != null) {

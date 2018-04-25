@@ -1249,9 +1249,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     LookupManager.getInstance(getProject()).hideActiveLookup();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    for (VirtualFile file : EditorHistoryManager.getInstance(getProject()).getFiles()) {
-      EditorHistoryManager.getInstance(getProject()).removeFile(file);
-    }
+    EditorHistoryManager.getInstance(getProject()).removeAllFiles();
   }
 
   @NotNull
@@ -1295,7 +1293,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public PsiFile configureByText(@NotNull final String fileName, @NotNull final String text) {
     assertInitialized();
-    VirtualFile vFile = null;
+    VirtualFile vFile;
     try {
       vFile = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
         final VirtualFile file;

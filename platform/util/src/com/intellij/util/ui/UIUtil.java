@@ -200,12 +200,12 @@ public class UIUtil {
     drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
-  private static final RGBImageFilter DEFAULT_GRAY_FILTER = new MyGrayFilter(
+  private static final RGBImageFilter DEFAULT_GRAY_FILTER = new GrayFilter(
     Registry.get("ide.grayfilter.default.brightness").asInteger(),
     Registry.get("ide.grayfilter.default.contrast").asInteger(),
     Registry.get("ide.grayfilter.default.alpha").asInteger()
   );
-  private static final RGBImageFilter DARCULA_GRAY_FILTER = new MyGrayFilter(
+  private static final RGBImageFilter DARCULA_GRAY_FILTER = new GrayFilter(
     Registry.get("ide.grayfilter.darcula.brightness").asInteger(),
     Registry.get("ide.grayfilter.darcula.contrast").asInteger(),
     Registry.get("ide.grayfilter.darcula.alpha").asInteger()
@@ -217,7 +217,7 @@ public class UIUtil {
 
   @ApiStatus.Experimental
   public static void setGrayFilterProperty(String prop, int value) {
-    MyGrayFilter filter = (MyGrayFilter)getGrayFilter();
+    GrayFilter filter = (GrayFilter)getGrayFilter();
     if ("brightness".equals(prop)) {
       filter.setBrightness(value);
     }
@@ -236,7 +236,7 @@ public class UIUtil {
 
   @ApiStatus.Experimental
   public static int getGrayFilterProperty(String prop) {
-    MyGrayFilter filter = (MyGrayFilter)getGrayFilter();
+    GrayFilter filter = (GrayFilter)getGrayFilter();
     if ("brightness".equals(prop)) {
       return filter.getBrightness();
     }
@@ -249,7 +249,8 @@ public class UIUtil {
     throw new IllegalArgumentException("wrong property: " + prop);
   }
 
-  private static class MyGrayFilter extends RGBImageFilter {
+  @ApiStatus.Experimental
+  public static class GrayFilter extends RGBImageFilter {
     private float brightness;
     private float contrast;
     private int alpha;
@@ -262,10 +263,14 @@ public class UIUtil {
      * @param contrast in range [-100..100] where 0 has no effect
      * @param alpha in range [0..100] where 0 is transparent, 100 has no effect
      */
-    private MyGrayFilter(int brightness, int contrast, int alpha) {
+    public GrayFilter(int brightness, int contrast, int alpha) {
       setBrightness(brightness);
       setContrast(contrast);
       setAlpha(alpha);
+    }
+
+    public GrayFilter() {
+      this(0, 0, 100);
     }
 
     private void setBrightness(int brightness) {
@@ -273,7 +278,7 @@ public class UIUtil {
       this.brightness = (float)(Math.pow(origBrightness, 3) / (100f * 100f)); // cubic in [0..100]
     }
 
-    private int getBrightness() {
+    public int getBrightness() {
       return origBrightness;
     }
 
@@ -282,7 +287,7 @@ public class UIUtil {
       this.contrast = origContrast / 100f;
     }
 
-    private int getContrast() {
+    public int getContrast() {
       return origContrast;
     }
 
@@ -290,7 +295,7 @@ public class UIUtil {
       this.alpha = Math.max(0, Math.min(100, alpha));
     }
 
-    private int getAlpha() {
+    public int getAlpha() {
       return alpha;
     }
 
@@ -2181,7 +2186,7 @@ public class UIUtil {
   /**
    * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, ImageObserver)}.
    *
-   * @see #drawImage(Graphics, Image, int, int, int, int, ImageObserver)
+   * @see #drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
    */
   public static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, @Nullable ImageObserver observer) {
     drawImage(g, image, new Rectangle(x, y, -1, -1), null, null, observer);
@@ -2195,6 +2200,7 @@ public class UIUtil {
    * just fine for the general-purpose one-to-one drawing, however when the dst and src bounds need to be specific,
    * use {@link #drawImage(Graphics, Image, Rectangle, Rectangle, BufferedImageOp, ImageObserver)}.
    */
+  @Deprecated
   public static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable ImageObserver observer) {
     drawImage(g, image, x, y, width, height, null, observer);
   }

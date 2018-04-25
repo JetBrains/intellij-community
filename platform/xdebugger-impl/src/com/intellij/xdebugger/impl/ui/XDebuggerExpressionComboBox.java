@@ -161,7 +161,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
             setExpandable(editor);
           }
           foldNewLines(editor);
-          editor.getFilteredDocumentMarkupModel().addMarkupModelListener(((EditorImpl)editor).getDisposable(), new MarkupModelListener.Adapter() {
+          editor.getFilteredDocumentMarkupModel().addMarkupModelListener(((EditorImpl)editor).getDisposable(), new MarkupModelListener() {
             int errors = 0;
             @Override
             public void afterAdded(@NotNull RangeHighlighterEx highlighter) {

@@ -1,0 +1,2 @@
+deprecated: addContentEntry.png -> /general/add.svg
+deprecated: edit.png -> /actions/edit.svg

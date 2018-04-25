@@ -182,7 +182,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   @Override
   protected JComponent createCenterPanel() {
-    JBLabel commentLabel = new JBLabel(DiagnosticBundle.message("diagnostic.error.report.additional.info.label"));
+    JBLabel commentLabel = new JBLabel(DiagnosticBundle.message("error.dialog.comment.prompt"));
 
     myCommentArea = new JTextArea(5, 0);
     myCommentArea.setMargin(JBUI.insets(2));
@@ -193,7 +193,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     });
 
-    JBLabel attachmentsLabel = new JBLabel(DiagnosticBundle.message("diagnostic.error.report.attachments.label"));
+    JBLabel attachmentsLabel = new JBLabel(DiagnosticBundle.message("error.dialog.attachments.prompt"));
 
     myAttachmentsList = new AttachmentsList();
     myAttachmentsList.addListSelectionListener(e -> {
@@ -257,13 +257,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel commentPanel = new JPanel(new BorderLayout());
     commentPanel.setBorder(JBUI.Borders.emptyTop(5));
     commentPanel.add(commentLabel, BorderLayout.NORTH);
-    commentPanel.add(scrollPane(myCommentArea, 500, 150), BorderLayout.CENTER);
+    commentPanel.add(scrollPane(myCommentArea, 0, 0), BorderLayout.CENTER);
 
     JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUI.scale(5), 0));
     attachmentsPanel.setBorder(JBUI.Borders.emptyTop(5));
     attachmentsPanel.add(attachmentsLabel, BorderLayout.NORTH);
-    attachmentsPanel.add(scrollPane(myAttachmentsList, 100, 400), BorderLayout.WEST);
-    attachmentsPanel.add(scrollPane(myAttachmentArea, 400, 400), BorderLayout.CENTER);
+    attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 400), BorderLayout.WEST);
+    attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 400), BorderLayout.CENTER);
 
     JPanel bottomRow = new JPanel(new BorderLayout());
     if (myInternalMode) {
@@ -272,6 +272,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     bottomRow.add(myCredentialsLabel, BorderLayout.EAST);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
+    rootPanel.setPreferredSize(JBUI.size(600, 400));
     rootPanel.add(commentPanel, BorderLayout.NORTH);
     rootPanel.add(attachmentsPanel, BorderLayout.CENTER);
     rootPanel.add(bottomRow, BorderLayout.SOUTH);
@@ -280,7 +281,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private static JScrollPane scrollPane(JComponent component, int width, int height) {
     JScrollPane scrollPane = new JBScrollPane(component);
-    scrollPane.setMinimumSize(JBUI.size(width, height));
+    if (width > 0 && height > 0) {
+      scrollPane.setMinimumSize(JBUI.size(width, height));
+    }
     return scrollPane;
   }
 
@@ -479,10 +482,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myCredentialsLabel.setVisible(true);
       Credentials credentials = ErrorReportConfigurable.getCredentials();
       if (CredentialAttributesKt.isFulfilled(credentials)) {
-        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("diagnostic.error.report.submit.report.as", credentials.getUserName()));
+        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.named", credentials.getUserName()));
       }
       else {
-        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("diagnostic.error.report.submit.error.anonymously"));
+        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.anonymous"));
       }
     }
     else {

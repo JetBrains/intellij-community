@@ -66,12 +66,18 @@ public class ExtensionLocatorTest extends JavaCodeInsightFixtureTestCase {
 
   public void testByPsiClass() {
     myFixture.copyFileToProject("pluginXml_locateByPsiClass.xml");
+    myFixture.copyFileToProject("SomeClass.java");
+
     JavaPsiFacade javaPsiFacade = myFixture.getJavaFacade();
     PsiClass arrayListPsiClass = javaPsiFacade.findClass("java.util.ArrayList", GlobalSearchScope.allScope(getProject()));
     PsiClass linkedListPsiClass = javaPsiFacade.findClass("java.util.LinkedList", GlobalSearchScope.allScope(getProject()));
+    PsiClass myList1PsiClass = javaPsiFacade.findClass("SomeClass.MyList1", GlobalSearchScope.allScope(getProject()));
+    PsiClass myList2PsiClass = javaPsiFacade.findClass("SomeClass.MyList2", GlobalSearchScope.allScope(getProject()));
 
     verifyLocator(ExtensionLocator.byPsiClass(arrayListPsiClass), 2);
     verifyLocator(ExtensionLocator.byPsiClass(linkedListPsiClass), 1);
+    verifyLocator(ExtensionLocator.byPsiClass(myList1PsiClass), 1);
+    verifyLocator(ExtensionLocator.byPsiClass(myList2PsiClass), 0);
   }
 
 

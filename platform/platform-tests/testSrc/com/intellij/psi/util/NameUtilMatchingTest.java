@@ -412,6 +412,7 @@ public class NameUtilMatchingTest extends TestCase {
     assertDoesntMatch("Foo ", "Foox");
     assertDoesntMatch("Collections ", "CollectionSplitter");
     assertMatches("CollectionS ", "CollectionSplitter");
+    assertMatches("*run ", "in Runnable.run");
 
     assertDoesntMatch("*l ", "AppDelegate");
     assertDoesntMatch("*le ", "AppDelegate");

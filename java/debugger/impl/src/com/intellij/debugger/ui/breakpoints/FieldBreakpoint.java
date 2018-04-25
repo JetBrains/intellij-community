@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class FieldBreakpoint
@@ -76,12 +74,12 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   @Override
   protected Icon getInvalidIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_invalid_field_breakpoint : AllIcons.Debugger.Db_invalid_field_breakpoint;
+    return AllIcons.Debugger.Db_invalid_breakpoint;
   }
 
   @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_verified_field_breakpoint : AllIcons.Debugger.Db_verified_field_breakpoint;
+    return null; //isMuted? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint;
   }
 
   @Override

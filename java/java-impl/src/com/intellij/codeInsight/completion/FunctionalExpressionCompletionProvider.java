@@ -154,9 +154,11 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
     Consumer<PsiType> consumer = eachReturnType -> {
       PsiClass psiClass = PsiUtil.resolveClassInType(eachReturnType);
-      if (psiClass == null || !MethodReferenceResolver.canBeConstructed(psiClass)) return;
+      if (psiClass == null) return;
 
       if (eachReturnType.getArrayDimensions() == 0) {
+        if (!MethodReferenceResolver.canBeConstructed(psiClass)) return;
+        
         PsiMethod[] constructors = psiClass.getConstructors();
         for (PsiMethod psiMethod : constructors) {
           if (isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition)) {

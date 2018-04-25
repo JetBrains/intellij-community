@@ -29,10 +29,10 @@ public class ImagesIcons {
   }
 
   public static final Icon EditExternally = load("/org/intellij/images/icons/EditExternally.png"); // 16x16
-  public static final Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.png"); // 16x16
+  public static final Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.svg"); // 16x16
   public static final Icon ThumbnailBlank = load("/org/intellij/images/icons/ThumbnailBlank.png"); // 75x86
   public static final Icon ThumbnailDirectory = load("/org/intellij/images/icons/ThumbnailDirectory.png"); // 75x82
-  public static final Icon ThumbnailToolWindow = load("/org/intellij/images/icons/ThumbnailToolWindow.png"); // 13x13
+  public static final Icon ThumbnailToolWindow = load("/org/intellij/images/icons/ThumbnailToolWindow.svg"); // 13x13
   public static final Icon ToggleGrid = load("/org/intellij/images/icons/ToggleGrid.png"); // 16x16
   public static final Icon ToggleTransparencyChessboard = load("/org/intellij/images/icons/ToggleTransparencyChessboard.png"); // 18x18
 }

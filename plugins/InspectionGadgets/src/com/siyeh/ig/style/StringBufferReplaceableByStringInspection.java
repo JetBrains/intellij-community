@@ -17,6 +17,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,27 +32,25 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final String typeText = ((PsiType)infos[1]).getCanonicalText();
-    return new StringBufferReplaceableByStringFix(CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(typeText));
+    final String typeText = ((PsiType)infos[1]).getPresentableText();
+    return new StringBufferReplaceableByStringFix(typeText);
   }
 
   private static class StringBufferReplaceableByStringFix extends InspectionGadgetsFix {
 
-    private final boolean isStringBuilder;
     private final List<PsiComment> leadingComments = new SmartList<>();
     private final List<PsiComment> comments = new SmartList<>();
+    private final String myType;
     private int currentLine = -1;
 
-    StringBufferReplaceableByStringFix(boolean isStringBuilder) {
-      this.isStringBuilder = isStringBuilder;
+    StringBufferReplaceableByStringFix(String type) {
+      myType = type;
     }
 
     @NotNull
     @Override
     public String getName() {
-      return isStringBuilder
-             ? InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")
-             : InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.quickfix");
+      return InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix", myType);
     }
 
     @NotNull
@@ -66,7 +65,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiVariable)) {
         if (parent instanceof PsiNewExpression) {
-          final PsiExpression stringBuilderExpression = getCompleteExpression(parent);
+          final PsiExpression stringBuilderExpression = getCompleteExpression((PsiExpression)parent);
           collectComments(stringBuilderExpression);
           final StringBuilder stringExpression = buildStringExpression(stringBuilderExpression, new StringBuilder());
           if (stringExpression != null && stringBuilderExpression != null) {
@@ -104,7 +103,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
           return;
         }
         final PsiExpression[] arguments = argumentList.getExpressions();
-        if (arguments.length == 0) {
+        if (arguments.length == 0 || TypeUtils.typeEquals(STRING_JOINER, newExpression.getType())) {
           builder = new StringBuilder();
         }
         else {
@@ -191,7 +190,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
         }
         addCommentsBefore(argumentList, false, result);
         final PsiExpression[] arguments = argumentList.getExpressions();
-        if (arguments.length == 1) {
+        if (arguments.length == 1 && !TypeUtils.typeEquals(STRING_JOINER, newExpression.getType())) {
           final PsiExpression argument = arguments[0];
           final PsiType type = argument.getType();
           if (!PsiType.INT.equals(type)) {
@@ -227,7 +226,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
             result.append("\"\"");
           }
         }
-        else if ("append".equals(referenceName)){
+        else if ("append".equals(referenceName) || "add".equals(referenceName)){
           final PsiExpression[] arguments = argumentList.getExpressions();
           if (arguments.length == 0) {
             return null;
@@ -310,11 +309,10 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       }
       List<PsiComment> commentsToInsert = new SmartList<>();
       for (final Iterator<PsiComment> iterator = comments.iterator(); iterator.hasNext(); ) {
-        final PsiElement element = iterator.next();
-        if (element.getTextOffset() >= offset) {
+        final PsiComment comment = iterator.next();
+        if (comment.getTextOffset() >= offset) {
           break;
         }
-        final PsiComment comment = (PsiComment)element;
         if (out.length() == 0) {
           leadingComments.add(comment);
         }

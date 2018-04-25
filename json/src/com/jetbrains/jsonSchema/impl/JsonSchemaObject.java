@@ -102,8 +102,7 @@ public class JsonSchemaObject {
   // peer pointer is not merged!
   public void mergeValues(@NotNull JsonSchemaObject other) {
     // we do not copy id, schema
-
-    myProperties.putAll(other.myProperties);
+    mergeProperties(this, other);
     myDefinitionsMap = copyMap(myDefinitionsMap, other.myDefinitionsMap);
     final Map<String, JsonSchemaObject> map = copyMap(myPatternProperties == null ? null : myPatternProperties.mySchemasMap,
                                                       other.myPatternProperties == null ? null : other.myPatternProperties.mySchemasMap);
@@ -159,6 +158,20 @@ public class JsonSchemaObject {
     if (other.myThen != null) myThen = other.myThen;
     if (other.myElse != null) myElse = other.myElse;
     myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
+  }
+
+  private static void mergeProperties(@NotNull JsonSchemaObject thisObject, @NotNull JsonSchemaObject otherObject) {
+    for (Map.Entry<String, JsonSchemaObject> prop: otherObject.myProperties.entrySet()) {
+      String key = prop.getKey();
+      JsonSchemaObject otherProp = prop.getValue();
+      if (!thisObject.myProperties.containsKey(key)) {
+        thisObject.myProperties.put(key, otherProp);
+      }
+      else {
+        JsonSchemaObject existingProp = thisObject.myProperties.get(key);
+        thisObject.myProperties.put(key, JsonSchemaVariantsTreeBuilder.merge(existingProp, otherProp, otherProp));
+      }
+    }
   }
 
   public void shouldValidateAgainstJSType() {
