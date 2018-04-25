@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <g fill="none" fill-rule="evenodd">
-    <path fill="#C44923" d="M7.0999999,8.9000001 L10.2999997,8.9000001 L6.0999999,13.0999999 L1.9000001,8.9000001 L5.0999999,8.9000001 L5.0999999,2.9000001 L7.0999999,2.9000001 L7.0999999,8.9000001 Z" transform="matrix(0 1 1 0 -1.9 1.9)"/>
-    <path fill="#AEAEAE" d="M3,11 L5,11 L5,5 L3,5 L3,1 L15,1 L15,15 L3,15 L3,11 Z M5,3 L5,13 L13,13 L13,3 L5,3 Z"/>
+    <polygon fill="#C75450" fill-rule="nonzero" points="7.1 8.9 10.3 8.9 6.1 13.1 1.9 8.9 5.1 8.9 5.1 2.9 7.1 2.9" transform="matrix(0 1 1 0 -1.9 1.9)"/>
+    <path fill="#AFB1B3" d="M3,11 L5,11 L5,5 L3,5 L3,1 L15,1 L15,15 L3,15 L3,11 Z M5,3 L5,13 L13,13 L13,3 L5,3 Z"/>
   </g>
 </svg>
