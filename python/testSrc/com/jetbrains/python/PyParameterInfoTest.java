@@ -806,6 +806,23 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-26354
+  public void testAttrsReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadTest(6);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("inst: A, *, a: int=..., b: str=\"str\"", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("inst: A, *, a: int=..., b: str=\"str\"", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("inst: B, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("inst: B, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
+        feignCtrlP(marks.get("<arg6>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
+      }
+    );
+  }
+
   // EA-102450
   public void testKeywordOnlyWithFilledPositional() {
     runWithLanguageLevel(

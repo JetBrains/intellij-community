@@ -53,8 +53,14 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
     val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
     val resolvedCallee = PyUtil.multiResolveTopPriority(callee.getReference(resolveContext)).singleOrNull()
 
-    if (resolvedCallee is PyCallable && resolvedCallee.qualifiedName == "dataclasses.replace") {
-      val obj = call.getArgument(0, "obj", PyTypedElement::class.java) ?: return null
+    if (resolvedCallee is PyCallable) {
+      val instanceName = when (resolvedCallee.qualifiedName) {
+        "dataclasses.replace" -> "obj"
+        "attr.__init__.assoc", "attr.__init__.evolve" -> "inst"
+        else -> return null
+      }
+
+      val obj = call.getArgument(0, instanceName, PyTypedElement::class.java) ?: return null
       val objType = context.getType(obj) as? PyClassType ?: return null
       if (objType.isDefinition) return null
 
@@ -64,14 +70,11 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
       val parameters = mutableListOf<PyCallableParameter>()
       val elementGenerator = PyElementGenerator.getInstance(referenceExpression.project)
 
-      parameters.add(PyCallableParameterImpl.nonPsi("obj", objType))
+      parameters.add(PyCallableParameterImpl.nonPsi(instanceName, objType))
       parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
 
       val ellipsis = elementGenerator.createEllipsis()
-
-      dataclassParameters.forEach {
-        parameters.add(PyCallableParameterImpl.nonPsi(it.name, it.getType(context), it.defaultValue ?: ellipsis))
-      }
+      dataclassParameters.mapTo(parameters, { PyCallableParameterImpl.nonPsi(it.name, it.getType(context), it.defaultValue ?: ellipsis) })
 
       return PyCallableTypeImpl(parameters, dataclassType.getReturnType(context))
     }
