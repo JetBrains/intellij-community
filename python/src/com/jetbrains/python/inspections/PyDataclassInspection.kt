@@ -84,6 +84,8 @@ class PyDataclassInspection : PyInspection() {
             node
               .findMethodByName(DUNDER_ATTRS_POST_INIT, false, myTypeEvalContext)
               ?.also { processAttrsPostInitDefinition(it, dataclassParameters) }
+
+            processAttrsDefaultThroughDecorator(node)
           }
 
           PyNamedTupleInspection.inspectFieldsOrder(
@@ -262,6 +264,29 @@ class PyDataclassInspection : PyInspection() {
         registerProblem(value,
                         "Mutable default '${value?.text}' is not allowed. Use 'default_factory'",
                         ProblemHighlightType.GENERIC_ERROR)
+      }
+    }
+
+    private fun processAttrsDefaultThroughDecorator(cls: PyClass) {
+      cls.methods.forEach { method ->
+        val decorators = method.decoratorList?.decorators
+
+        if (decorators != null) {
+          decorators
+            .asSequence()
+            .mapNotNull { it.qualifiedName }
+            .filter { it.componentCount == 2 && it.endsWith("default") }
+            .mapNotNull { it.firstComponent }
+            .firstOrNull()
+            ?.also {
+              cls.findClassAttribute(it, false, myTypeEvalContext)
+                ?.let { PyDataclassFieldStubImpl.create(it) }
+                ?.takeIf { it.hasDefault() || it.hasDefaultFactory() }
+                ?.apply {
+                  registerProblem(method.nameIdentifier, "A default is set using 'attr.ib()'", ProblemHighlightType.GENERIC_ERROR)
+                }
+            }
+        }
       }
     }
 
