@@ -20,7 +20,6 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent.create
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Trinity
@@ -518,8 +517,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   }
 
   private fun defaultsSettingsChanged() {
-    isModified = !Comparing.equal(recentsLimit.text, recentsLimit.getClientProperty(INITIAL_VALUE_KEY)) ||
-                 !Comparing.equal(confirmation.isSelected, confirmation.getClientProperty(INITIAL_VALUE_KEY)) ||
+    isModified = recentsLimit.text != recentsLimit.getClientProperty(INITIAL_VALUE_KEY) ||
+                 confirmation.isSelected != confirmation.getClientProperty(INITIAL_VALUE_KEY) ||
                  runDashboardTypesPanel.isModified()
   }
 
@@ -741,7 +740,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     catch (e: ConfigurationException) {
       for (i in 0 until typeNode.childCount) {
         val node = typeNode.getChildAt(i) as DefaultMutableTreeNode
-        if (Comparing.equal(configurable, node.userObject)) {
+        if (configurable == node.userObject) {
           TreeUtil.selectNode(tree, node)
           break
         }
@@ -1242,16 +1241,14 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     return initialPosition - position
   }
 
-  private inner class MyMoveAction(text: String, description: String?, icon: Icon, private val myDirection: Int) : AnAction(text,
-                                                                                                                            description,
-                                                                                                                            icon), AnActionButtonRunnable, AnActionButtonUpdater {
-
+  private inner class MyMoveAction(text: String, description: String?, icon: Icon, private val direction: Int) :
+    AnAction(text, description, icon), AnActionButtonRunnable, AnActionButtonUpdater {
     override fun actionPerformed(e: AnActionEvent) {
       doMove()
     }
 
     private fun doMove() {
-      getAvailableDropPosition(myDirection)?.let {
+      getAvailableDropPosition(direction)?.let {
         treeModel.drop(it.first, it.second, it.third)
       }
     }
@@ -1264,22 +1261,21 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       e.presentation.isEnabled = isEnabled(e)
     }
 
-    override fun isEnabled(e: AnActionEvent) = getAvailableDropPosition(myDirection) != null
+    override fun isEnabled(e: AnActionEvent) = getAvailableDropPosition(direction) != null
   }
 
   private inner class MyEditTemplatesAction : AnAction(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.text"),
-                                                       ExecutionBundle.message(
-                                                        "run.configuration.edit.default.configuration.settings.description"),
+                                                       ExecutionBundle.message("run.configuration.edit.default.configuration.settings.description"),
                                                        AllIcons.General.Settings) {
     override fun actionPerformed(e: AnActionEvent) {
-      var defaults = TreeUtil.findNodeWithObject(TEMPLATES, tree.model, root) ?: return
+      var templates = TreeUtil.findNodeWithObject(TEMPLATES, tree.model, root) ?: return
       selectedConfigurationType?.let {
-        defaults = TreeUtil.findNodeWithObject(it, tree.model, defaults) ?: return
+        templates = TreeUtil.findNodeWithObject(it, tree.model, templates) ?: return
       }
-      val defaultsNode = defaults as DefaultMutableTreeNode? ?: return
-      val path = TreeUtil.getPath(root, defaultsNode)
+      val templatesNode = templates as DefaultMutableTreeNode? ?: return
+      val path = TreeUtil.getPath(root, templatesNode)
       tree.expandPath(path)
-      TreeUtil.selectInTree(defaultsNode, true, tree)
+      TreeUtil.selectInTree(templatesNode, true, tree)
       tree.scrollPathToVisible(path)
     }
 
@@ -1340,7 +1336,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
           selectedType = type
         }
         else {
-          if (!Comparing.equal(type, selectedType)) {
+          if (type != selectedType) {
             isEnabled = false
             break
           }
@@ -1361,7 +1357,6 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   private inner class MySortFolderAction : AnAction(ExecutionBundle.message("run.configuration.sort.folder.text"),
                                                     ExecutionBundle.message("run.configuration.sort.folder.description"),
                                                     AllIcons.ObjectBrowser.Sorted), Comparator<DefaultMutableTreeNode> {
-
     override fun compare(node1: DefaultMutableTreeNode, node2: DefaultMutableTreeNode): Int {
       val kind1 = getKind(node1)
       val kind2 = getKind(node2)
