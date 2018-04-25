@@ -1,1 +1,1 @@
-deprecated: export.png -> /actions/export.png
+deprecated: export.png -> /toolbarDecorator/export.svg

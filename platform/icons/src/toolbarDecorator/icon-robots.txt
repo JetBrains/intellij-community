@@ -1,6 +1,5 @@
 deprecated: add.png -> /general/add.svg
 deprecated: edit.png -> /actions/edit.svg
-deprecated: export.png -> /actions/export.png
 deprecated: moveDown.png -> /actions/moveDown.svg
 deprecated: moveUp.png -> /actions/moveUp.svg
 deprecated: remove.png -> /general/remove.svg

@@ -24,11 +24,6 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/edit.png", "AllIcons.Actions.Edit");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/mac/edit.svg", "AllIcons.Actions.Edit");
 
-    ourDeprecatedIconsReplacements.put("/graph/export.png", "AllIcons.Actions.Export");
-    ourDeprecatedIconsReplacements.put("/graph/export.svg", "AllIcons.Actions.Export");
-    ourDeprecatedIconsReplacements.put("/toolbarDecorator/export.png", "AllIcons.Actions.Export");
-    ourDeprecatedIconsReplacements.put("/toolbarDecorator/export.svg", "AllIcons.Actions.Export");
-
     ourDeprecatedIconsReplacements.put("/actions/findPlain.png", "AllIcons.Actions.Find");
     ourDeprecatedIconsReplacements.put("/actions/findPlain.svg", "AllIcons.Actions.Find");
     ourDeprecatedIconsReplacements.put("/actions/menu_find.png", "AllIcons.Actions.Find");
@@ -167,6 +162,12 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/nodes/treeClosed.svg", "AllIcons.Nodes.Folder");
     ourDeprecatedIconsReplacements.put("/nodes/treeOpen.png", "AllIcons.Nodes.Folder");
     ourDeprecatedIconsReplacements.put("/nodes/treeOpen.svg", "AllIcons.Nodes.Folder");
+
+
+    ourDeprecatedIconsReplacements.put("/actions/export.png", "AllIcons.ToolbarDecorator.Export");
+    ourDeprecatedIconsReplacements.put("/actions/export.svg", "AllIcons.ToolbarDecorator.Export");
+    ourDeprecatedIconsReplacements.put("/graph/export.png", "AllIcons.ToolbarDecorator.Export");
+    ourDeprecatedIconsReplacements.put("/graph/export.svg", "AllIcons.ToolbarDecorator.Export");
 
 
     ourDeprecatedIconsReplacements.put("/general/toolWindowChanges.png", "AllIcons.Toolwindows.ToolWindowChanges");

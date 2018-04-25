@@ -123,7 +123,7 @@
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
     </group>
 
-    <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.Actions.Export">
+    <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.ToolbarDecorator.Export">
       <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       <add-to-group group-id="XDebugger.Actions"/>
     </action>

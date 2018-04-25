@@ -278,7 +278,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         updateCountLabel();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.Actions.Export) {
+    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.ToolbarDecorator.Export) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {

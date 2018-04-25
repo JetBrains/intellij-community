@@ -1,5 +1,6 @@
 deprecated: browser-externalJavaDoc.png -> /actions/previousOccurence.svg
 deprecated: exclude.png -> /general/remove.svg
+deprecated: export.png -> /toolbarDecorator/export.svg
 deprecated: fileStatus.png
 deprecated: filter_small.png -> /general/filter.svg
 deprecated: findPlain.png -> /actions/find.svg

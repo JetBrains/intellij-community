@@ -65,7 +65,10 @@ public class AllIcons {
     public static final Icon Execute = IconLoader.getIcon("/actions/execute.svg"); // 16x16
     public static final Icon Exit = IconLoader.getIcon("/actions/exit.svg"); // 16x16
     public static final Icon Expandall = IconLoader.getIcon("/actions/expandall.png"); // 16x16
-    public static final Icon Export = IconLoader.getIcon("/actions/export.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Export = IconLoader.getIcon("/toolbarDecorator/export.svg"); // 16x16
     
     @SuppressWarnings("unused")
     @Deprecated
@@ -755,7 +758,7 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Export = IconLoader.getIcon("/actions/export.png"); // 16x16
+    public static final Icon Export = IconLoader.getIcon("/toolbarDecorator/export.svg"); // 16x16
     public static final Icon FitContent = IconLoader.getIcon("/graph/fitContent.png"); // 16x16
     public static final Icon Grid = IconLoader.getIcon("/graph/grid.png"); // 16x16
     public static final Icon Layout = IconLoader.getIcon("/graph/layout.png"); // 16x16
@@ -1450,11 +1453,8 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Edit = IconLoader.getIcon("/actions/edit.svg"); // 16x16
-
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Export = IconLoader.getIcon("/actions/export.png"); // 16x16
-    public static final Icon Import = IconLoader.getIcon("/toolbarDecorator/import.png"); // 16x16
+    public static final Icon Export = IconLoader.getIcon("/toolbarDecorator/export.svg"); // 16x16
+    public static final Icon Import = IconLoader.getIcon("/toolbarDecorator/import.svg"); // 16x16
     
     public static class Mac {
       
