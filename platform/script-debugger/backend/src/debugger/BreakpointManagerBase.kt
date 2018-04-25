@@ -80,7 +80,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
         promises.add(doClearBreakpoint(b))
       }
     }
-    return all(promises)
+    return promises.all()
   }
 
   protected abstract fun doClearBreakpoint(breakpoint: T): Promise<*>

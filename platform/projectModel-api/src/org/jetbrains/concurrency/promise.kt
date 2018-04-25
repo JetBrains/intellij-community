@@ -122,16 +122,16 @@ inline fun Promise<*>.onError(node: Obsolescent, crossinline handler: (Throwable
  * Merge results into one list.
  */
 @JvmOverloads
-fun <T> collectResults(promises: List<Promise<T>>, ignoreErrors: Boolean = false): Promise<List<T>> {
-  if (promises.isEmpty()) {
+fun <T> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = false): Promise<List<T>> {
+  if (isEmpty()) {
     return resolvedPromise(emptyList())
   }
 
-  val results: MutableList<T> = if (promises.size == 1) SmartList<T>() else ArrayList(promises.size)
-  for (promise in promises) {
+  val results: MutableList<T> = if (size == 1) SmartList<T>() else ArrayList(size)
+  for (promise in this) {
     promise.onSuccess { results.add(it) }
   }
-  return all(promises, results, ignoreErrors)
+  return all(results, ignoreErrors)
 }
 
 @JvmOverloads
@@ -197,19 +197,19 @@ fun Promise<Any?>.toActionCallback(): ActionCallback {
   return result
 }
 
-fun all(promises: Collection<Promise<*>>): Promise<*> = if (promises.size == 1) promises.first() else all(promises, null)
+fun Collection<Promise<*>>.all(): Promise<*> = if (size == 1) first() else all(null)
 
 /**
  * @see collectResults
  */
 @JvmOverloads
-fun <T: Any?> all(promises: Collection<Promise<*>>, totalResult: T, ignoreErrors: Boolean = false): Promise<T> {
-  if (promises.isEmpty()) {
+fun <T: Any?> Collection<Promise<*>>.all(totalResult: T, ignoreErrors: Boolean = false): Promise<T> {
+  if (isEmpty()) {
     return resolvedPromise()
   }
 
   val totalPromise = AsyncPromise<T>()
-  val done = CountDownConsumer(promises.size, totalPromise, totalResult)
+  val done = CountDownConsumer(size, totalPromise, totalResult)
   val rejected = if (ignoreErrors) {
     Consumer { done.accept(null) }
   }
@@ -217,7 +217,7 @@ fun <T: Any?> all(promises: Collection<Promise<*>>, totalResult: T, ignoreErrors
     Consumer<Throwable> { totalPromise.setError(it) }
   }
 
-  for (promise in promises) {
+  for (promise in this) {
     promise.onSuccess(done)
     promise.onError(rejected)
   }
