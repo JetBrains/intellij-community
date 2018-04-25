@@ -104,11 +104,11 @@ class PyDataclassInspection : PyInspection() {
         val leftClass = getInstancePyClass(node.leftExpression) ?: return
         val rightClass = getInstancePyClass(node.rightExpression) ?: return
 
-        val leftDataclassParameters = parseStdDataclassParameters(leftClass, myTypeEvalContext)
+        val leftDataclassParameters = parseDataclassParameters(leftClass, myTypeEvalContext)
 
         if (leftClass != rightClass &&
             leftDataclassParameters != null &&
-            parseStdDataclassParameters(rightClass, myTypeEvalContext) != null) {
+            parseDataclassParameters(rightClass, myTypeEvalContext) != null) {
           registerProblem(node.psiOperator,
                           "'${node.referencedName}' not supported between instances of '${leftClass.name}' and '${rightClass.name}'",
                           ProblemHighlightType.GENERIC_ERROR)
