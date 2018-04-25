@@ -53,16 +53,19 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.tree.*
 
-private val DEFAULTS = object : Any() {
-  override fun toString() = "Defaults"
+private const val TEMPLATE_GROUP_NODE_NAME = "Templates"
+
+private val TEMPLATES = object : Any() {
+  override fun toString() = TEMPLATE_GROUP_NODE_NAME
 }
+
 private const val INITIAL_VALUE_KEY = "initialValue"
 private val LOG = logger<RunConfigurable>()
 
 private fun getName(userObject: Any): String {
   return when {
     userObject is ConfigurationType -> userObject.displayName
-    userObject === DEFAULTS -> "Defaults"
+    userObject === TEMPLATES -> TEMPLATE_GROUP_NODE_NAME
     userObject is ConfigurationFactory -> userObject.name
     //Folder objects are strings
     else -> if (userObject is SingleConfigurationConfigurable<*>) userObject.nameText else (userObject as? RunnerAndConfigurationSettingsImpl)?.name ?: userObject.toString()
@@ -151,7 +154,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
             append(name, if ((value.parent as DefaultMutableTreeNode).isRoot) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
             icon = userObject.icon
           }
-          else if (userObject === DEFAULTS) {
+          else if (userObject === TEMPLATES) {
             append(name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
             icon = AllIcons.General.Settings
           }
@@ -218,20 +221,20 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       }
     }
 
-    // add defaults
-    val defaults = DefaultMutableTreeNode(DEFAULTS)
+    // add templates
+    val templates = DefaultMutableTreeNode(TEMPLATES)
     for (type in RunManagerImpl.getInstanceImpl(myProject).configurationFactoriesWithoutUnknown) {
       val configurationFactories = type.configurationFactories
       val typeNode = DefaultMutableTreeNode(type)
-      defaults.add(typeNode)
+      templates.add(typeNode)
       if (configurationFactories.size != 1) {
         for (factory in configurationFactories) {
           typeNode.add(DefaultMutableTreeNode(factory))
         }
       }
     }
-    if (defaults.childCount > 0) {
-      root.add(defaults)
+    if (templates.childCount > 0) {
+      root.add(templates)
     }
 
     tree.addTreeSelectionListener {
@@ -247,10 +250,10 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
           showFolderField(node, userObject)
         }
         else {
-          if (userObject is ConfigurationType || userObject === DEFAULTS) {
+          if (userObject is ConfigurationType || userObject === TEMPLATES) {
             val parent = node.parent as DefaultMutableTreeNode
             if (parent.isRoot) {
-              drawPressAddButtonMessage(if (userObject === DEFAULTS) null else userObject as ConfigurationType)
+              drawPressAddButtonMessage(if (userObject === TEMPLATES) null else userObject as ConfigurationType)
             }
             else {
               val factories = (userObject as ConfigurationType).configurationFactories
@@ -386,8 +389,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       val userObject2 = o2.userObject
       when {
         userObject1 is ConfigurationType && userObject2 is ConfigurationType -> (userObject1).displayName.compareTo(userObject2.displayName, true)
-        userObject1 === DEFAULTS && userObject2 is ConfigurationType -> 1
-        userObject2 === DEFAULTS && userObject1 is ConfigurationType -> - 1
+        userObject1 === TEMPLATES && userObject2 is ConfigurationType -> 1
+        userObject2 === TEMPLATES && userObject1 is ConfigurationType -> - 1
         else -> 0
       }
     }
@@ -498,7 +501,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       moveDownAction)
       .addExtraAction(AnActionButton.fromAction(MyCopyAction()))
       .addExtraAction(AnActionButton.fromAction(MySaveAction()))
-      .addExtraAction(AnActionButton.fromAction(MyEditDefaultsAction()))
+      .addExtraAction(AnActionButton.fromAction(MyEditTemplatesAction()))
       .addExtraAction(AnActionButton.fromAction(MyCreateFolderAction()))
       .addExtraAction(AnActionButton.fromAction(MySortFolderAction()))
       .setMinimumSize(JBDimension(200, 200))
@@ -1264,12 +1267,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     override fun isEnabled(e: AnActionEvent) = getAvailableDropPosition(myDirection) != null
   }
 
-  private inner class MyEditDefaultsAction : AnAction(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.text"),
-                                                      ExecutionBundle.message(
+  private inner class MyEditTemplatesAction : AnAction(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.text"),
+                                                       ExecutionBundle.message(
                                                         "run.configuration.edit.default.configuration.settings.description"),
-                                                      AllIcons.General.Settings) {
+                                                       AllIcons.General.Settings) {
     override fun actionPerformed(e: AnActionEvent) {
-      var defaults = TreeUtil.findNodeWithObject(DEFAULTS, tree.model, root) ?: return
+      var defaults = TreeUtil.findNodeWithObject(TEMPLATES, tree.model, root) ?: return
       selectedConfigurationType?.let {
         defaults = TreeUtil.findNodeWithObject(it, tree.model, defaults) ?: return
       }
@@ -1281,15 +1284,15 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     }
 
     override fun update(e: AnActionEvent) {
-      var isEnabled = TreeUtil.findNodeWithObject(DEFAULTS, tree.model, root) != null
+      var isEnabled = TreeUtil.findNodeWithObject(TEMPLATES, tree.model, root) != null
       val path = tree.selectionPath
       if (path != null) {
         var o = path.lastPathComponent
-        if (o is DefaultMutableTreeNode && o.userObject == DEFAULTS) {
+        if (o is DefaultMutableTreeNode && o.userObject == TEMPLATES) {
           isEnabled = false
         }
         o = path.parentPath.lastPathComponent
-        if (o is DefaultMutableTreeNode && o.userObject == DEFAULTS) {
+        if (o is DefaultMutableTreeNode && o.userObject == TEMPLATES) {
           isEnabled = false
         }
       }
