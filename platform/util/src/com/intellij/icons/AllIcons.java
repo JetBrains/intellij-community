@@ -94,6 +94,7 @@ public class AllIcons {
     public static final Icon GroupByPrefix = IconLoader.getIcon("/actions/GroupByPrefix.png"); // 16x16
     public static final Icon GroupByTestProduction = IconLoader.getIcon("/actions/groupByTestProduction.png"); // 16x16
     public static final Icon Help = IconLoader.getIcon("/actions/help.svg"); // 16x16
+    public static final Icon Highlighting = IconLoader.getIcon("/actions/highlighting.svg"); // 16x16
     public static final Icon Install = IconLoader.getIcon("/actions/install.png"); // 16x16
     public static final Icon IntentionBulb = IconLoader.getIcon("/actions/intentionBulb.png"); // 16x16
     public static final Icon Left = IconLoader.getIcon("/actions/left.png"); // 16x16
