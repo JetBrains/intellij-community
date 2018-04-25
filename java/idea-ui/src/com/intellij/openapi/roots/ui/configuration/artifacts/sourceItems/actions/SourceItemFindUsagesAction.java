@@ -54,6 +54,9 @@ public class SourceItemFindUsagesAction extends ArtifactEditorFindUsagesActionBa
     if (sourceItem instanceof ModuleOutputSourceItem) {
       return new ModuleProjectStructureElement(context, ((ModuleOutputSourceItem)sourceItem).getModule());
     }
+    else if (sourceItem instanceof ModuleSourceSourceItem) {
+      return new ModuleProjectStructureElement(context, ((ModuleSourceSourceItem)sourceItem).getModule());
+    }
     else if (sourceItem instanceof LibrarySourceItem) {
       return new LibraryProjectStructureElement(context, ((LibrarySourceItem)sourceItem).getLibrary());
     }

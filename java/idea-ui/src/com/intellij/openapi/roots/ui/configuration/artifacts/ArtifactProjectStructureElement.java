@@ -32,7 +32,7 @@ import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.FacetBasedPackagingElement;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
-import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
+import com.intellij.packaging.impl.elements.ModulePackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,8 +102,8 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   public static ProjectStructureElement getProjectStructureElementFor(PackagingElement<?> packagingElement,
                                                                        final StructureConfigurableContext context,
                                                                        final ArtifactsStructureConfigurableContext artifactsStructureContext) {
-    if (packagingElement instanceof ModuleOutputPackagingElement) {
-      final Module module = ((ModuleOutputPackagingElement)packagingElement).findModule(artifactsStructureContext);
+    if (packagingElement instanceof ModulePackagingElement) {
+      final Module module = ((ModulePackagingElement)packagingElement).findModule(artifactsStructureContext);
       if (module != null) {
         return new ModuleProjectStructureElement(context, module);
       }
