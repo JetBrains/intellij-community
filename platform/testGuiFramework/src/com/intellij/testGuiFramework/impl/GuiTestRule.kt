@@ -182,12 +182,24 @@ class GuiTestRule : TestRule {
     private fun checkForModalDialogs(): List<AssertionError> {
       val errors = ArrayList<AssertionError>()
       // We close all modal dialogs left over, because they block the AWT thread and could trigger a deadlock in the next test.
-      waitUntil("all modal dialogs will be closed", timeoutInSeconds = 60) {
-        val modalDialog: Dialog = getActiveModalDialog() ?: return@waitUntil true
-        robot().close(modalDialog)
-        errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
-        ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
-        false
+      val modalDialogsSet = Collections.newSetFromMap(WeakHashMap<Dialog, Boolean>());
+      try {
+        waitUntil("all modal dialogs will be closed", timeoutInSeconds = 10) {
+          val modalDialog: Dialog = getActiveModalDialog() ?: return@waitUntil true
+          if (modalDialogsSet.contains(modalDialog)) {
+            errors.add(AssertionError("Unable to close: ${modalDialog.javaClass.name} with title '${modalDialog.title}' by robot"))
+          }
+          else {
+            modalDialogsSet.add(modalDialog)
+            robot().close(modalDialog)
+            errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
+            ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
+            return@waitUntil false
+          }
+        }
+      }
+      catch (timeoutError: WaitTimedOutError) {
+        errors.add(AssertionError("Modal dialogs closing exceeded timeout: ${timeoutError.message}"))
       }
       return errors
     }
