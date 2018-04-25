@@ -225,21 +225,24 @@ class PyDataclassInspection : PyInspection() {
 
       hashMethodExists = hashMethodExists || cls.findClassAttribute(PyNames.HASH, false, myTypeEvalContext) != null
 
+      // argument to register problem, argument name and method name
+      val useless = mutableListOf<Triple<PyExpression?, String, String>>()
+
       if (dataclassParameters.init && initMethodExists) {
-        registerProblem(dataclassParameters.initArgument,
-                        "'init' is ignored if the class already defines corresponding method",
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        useless.add(Triple(dataclassParameters.initArgument, "init", PyNames.INIT))
       }
 
       if (dataclassParameters.repr && reprMethodExists) {
-        registerProblem(dataclassParameters.reprArgument,
-                        "'repr' is ignored if the class already defines corresponding method",
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        useless.add(Triple(dataclassParameters.reprArgument, "repr", "__repr__"))
       }
 
       if (dataclassParameters.eq && eqMethodExists) {
-        registerProblem(dataclassParameters.eqArgument,
-                        "'eq' is ignored if the class already defines corresponding method",
+        useless.add(Triple(dataclassParameters.eqArgument, "eq", "__eq__"))
+      }
+
+      useless.forEach {
+        registerProblem(it.first,
+                        "'${it.second}' is ignored if the class already defines '${it.third}' method",
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
 

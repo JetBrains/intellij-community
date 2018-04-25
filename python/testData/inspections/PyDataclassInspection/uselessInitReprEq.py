@@ -1,7 +1,7 @@
 import dataclasses
 
 
-@dataclasses.dataclass(<warning descr="'repr' is ignored if the class already defines corresponding method">repr=True</warning>, <warning descr="'eq' is ignored if the class already defines corresponding method">eq=True</warning>)
+@dataclasses.dataclass(<warning descr="'repr' is ignored if the class already defines '__repr__' method">repr=True</warning>, <warning descr="'eq' is ignored if the class already defines '__eq__' method">eq=True</warning>)
 class A:
     a: int = 1
 
@@ -33,7 +33,7 @@ class B1:
         print("ok")
 
 
-@dataclasses.dataclass(<warning descr="'init' is ignored if the class already defines corresponding method">init=True</warning>)
+@dataclasses.dataclass(<warning descr="'init' is ignored if the class already defines '__init__' method">init=True</warning>)
 class B2:
     b: int = 1
 
