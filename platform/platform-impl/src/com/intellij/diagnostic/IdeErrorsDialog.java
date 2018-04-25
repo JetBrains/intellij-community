@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -65,11 +66,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   public static final DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
 
+  private static final String ACCEPTED_NOTICES_KEY = "exception.accepted.notices";
+  private static final String ACCEPTED_NOTICES_SEPARATOR = ":";
   private static List<Developer> ourDevelopersList = Collections.emptyList();
 
   private final MessagePool myMessagePool;
   private final Project myProject;
   private final boolean myInternalMode;
+  private final Set<String> myAcceptedNotices;
   private final List<AbstractMessage> myRawMessages = new ArrayList<>();
   private final List<List<AbstractMessage>> myMergedMessages = new ArrayList<>();
   private int myIndex;
@@ -82,6 +86,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private AttachmentsList myAttachmentsList;
   private JTextArea myAttachmentArea;
   private JPanel myAssigneePanel;
+  private JPanel myNoticePanel;
+  private HideableDecorator myNoticeDecorator;
+  private JEditorPane myNoticeArea;
   private ComboBox<Developer> myAssigneeCombo;
   private HyperlinkLabel myCredentialsLabel;
 
@@ -99,6 +106,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (myInternalMode) {
       loadDevelopersList();
     }
+
+    String rawValue = PropertiesComponent.getInstance().getValue(ACCEPTED_NOTICES_KEY, "");
+    myAcceptedNotices = ContainerUtil.newLinkedHashSet(StringUtil.split(rawValue, ACCEPTED_NOTICES_SEPARATOR));
 
     updateMessages();
     selectMessage(defaultMessage);
@@ -250,9 +260,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myCredentialsLabel.addHyperlinkListener(e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         JetBrainsAccountDialogKt.showJetBrainsAccountDialog(getRootPane()).show();
-        updateCredentialsPanel(getSubmitter(selectedMessage().getThrowable()));
+        updateControls();
       }
     });
+
+    myNoticeArea = new JEditorPane();
+    myNoticeArea.setEditable(false);
+    myNoticeArea.setFocusable(false);
+    myNoticeArea.setBackground(UIUtil.getPanelBackground());
+    myNoticeArea.setEditorKit(UIUtil.getHTMLEditorKit());
+    myNoticeArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+
+    JPanel decoratorPanel = new JPanel(new BorderLayout());
+    myNoticeDecorator = new HideableDecorator(decoratorPanel, DiagnosticBundle.message("error.dialog.notice.label"), false);
+    myNoticeDecorator.setContentComponent(myNoticeArea);
 
     JPanel commentPanel = new JPanel(new BorderLayout());
     commentPanel.setBorder(JBUI.Borders.emptyTop(5));
@@ -265,11 +286,15 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 400), BorderLayout.WEST);
     attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 400), BorderLayout.CENTER);
 
+    JPanel accountRow = new JPanel(new BorderLayout());
+    if (myInternalMode) accountRow.add(myAssigneePanel, BorderLayout.WEST);
+    accountRow.add(myCredentialsLabel, BorderLayout.EAST);
+    myNoticePanel = new JPanel(new GridBagLayout());
+    myNoticePanel.add(new JBLabel(UIUtil.getBalloonWarningIcon()), new GridBagConstraints(0, 0, 1, 1, 0, 0, NORTH, NONE, JBUI.insets(7, 0, 0, 5), 0, 0));
+    myNoticePanel.add(decoratorPanel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     JPanel bottomRow = new JPanel(new BorderLayout());
-    if (myInternalMode) {
-      bottomRow.add(myAssigneePanel, BorderLayout.WEST);
-    }
-    bottomRow.add(myCredentialsLabel, BorderLayout.EAST);
+    bottomRow.add(accountRow, BorderLayout.NORTH);
+    bottomRow.add(myNoticePanel, BorderLayout.CENTER);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
     rootPanel.setPreferredSize(JBUI.size(600, 400));
@@ -417,10 +442,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     myDisableLink.setVisible(pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString()));
 
-    if (submitter != null || plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin)) {
-      myForeignPluginWarningLabel.setVisible(false);
-    }
-    else {
+    if (submitter == null && plugin != null && !PluginManagerMain.isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.setVisible(true);
       String vendor = plugin.getVendor();
       String contactUrl = plugin.getVendorUrl();
@@ -443,6 +465,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         myForeignPluginWarningLabel.setHyperlinkTarget(null);
       }
       myForeignPluginWarningLabel.setToolTipText(contactUrl);
+    }
+    else {
+      myForeignPluginWarningLabel.setVisible(false);
+    }
+
+    String notice = submitter != null ? submitter.getPrivacyNoticeText() : null;
+    if (notice != null) {
+      myNoticePanel.setVisible(true);
+      String hash = Integer.toHexString(StringUtil.stringHashCodeIgnoreWhitespaces(notice));
+      myNoticeDecorator.setOn(!myAcceptedNotices.contains(hash));
+      myNoticeArea.setText(notice);
+    }
+    else {
+      myNoticePanel.setVisible(false);
     }
   }
 
@@ -498,6 +534,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (submitter == null) return false;
 
     message.setSubmitting(true);
+
+    String notice = submitter.getPrivacyNoticeText();
+    if (notice != null) {
+      String hash = Integer.toHexString(StringUtil.stringHashCodeIgnoreWhitespaces(notice));
+      if (myAcceptedNotices.add(hash)) {
+        PropertiesComponent.getInstance().setValue(ACCEPTED_NOTICES_KEY, StringUtil.join(myAcceptedNotices, ACCEPTED_NOTICES_SEPARATOR));
+      }
+    }
 
     IdeaLoggingEvent[] events;
     if (message instanceof GroupedLogMessage) {

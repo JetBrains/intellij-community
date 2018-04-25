@@ -38,6 +38,13 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   public abstract String getReportActionText();
 
   /**
+   * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).
+   */
+  public String getPrivacyNoticeText() {
+    return null;
+  }
+
+  /**
    * This method is called whenever an exception in a plugin code had happened and a user decided to report a problem to the plugin vendor.
    *
    * @param events          a non-empty sequence of error descriptors.
