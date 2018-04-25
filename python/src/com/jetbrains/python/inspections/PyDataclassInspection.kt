@@ -52,29 +52,31 @@ class PyDataclassInspection : PyInspection() {
       super.visitPyClass(node)
 
       if (node != null) {
-        val dataclassParameters = parseStdDataclassParameters(node, myTypeEvalContext)
+        val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
 
         if (dataclassParameters != null) {
-          processDataclassParameters(node, dataclassParameters)
+          if (dataclassParameters.type == PyDataclassParameters.Type.STD) {
+            processDataclassParameters(node, dataclassParameters)
 
-          val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
-          val initVars = mutableListOf<PyTargetExpression>()
+            val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
+            val initVars = mutableListOf<PyTargetExpression>()
 
-          node.processClassLevelDeclarations { element, _ ->
-            if (element is PyTargetExpression) {
-              if (!PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
-                processDefaultFieldValue(element)
-                processAsInitVar(element, postInit)?.let { initVars.add(it) }
+            node.processClassLevelDeclarations { element, _ ->
+              if (element is PyTargetExpression) {
+                if (!PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
+                  processDefaultFieldValue(element)
+                  processAsInitVar(element, postInit)?.let { initVars.add(it) }
+                }
+
+                processFieldFunctionCall(element)
               }
 
-              processFieldFunctionCall(element)
+              true
             }
 
-            true
-          }
-
-          if (postInit != null) {
-            processPostInitDefinition(postInit, dataclassParameters, initVars)
+            if (postInit != null) {
+              processPostInitDefinition(postInit, dataclassParameters, initVars)
+            }
           }
 
           PyNamedTupleInspection.inspectFieldsOrder(

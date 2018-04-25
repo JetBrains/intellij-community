@@ -36,6 +36,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-26354
+  public void testAttrsFieldsOrder() {
+    doTest();
+  }
+
   // PY-27398
   public void testComparisonForOrdered() {
     doTest();
