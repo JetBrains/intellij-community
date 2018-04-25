@@ -67,6 +67,13 @@ public class TouchBar implements NSTLibrary.ItemCreator {
     return butt;
   }
 
+  public TBItemButton addButton(Icon icon, String text, NSTLibrary.Action action, int buttonFlags) {
+    final String uid = String.format("%s.button.%d", myName, myCounter++);
+    final TBItemButton butt = new TBItemButton(uid, icon, text, action, -1, buttonFlags);
+    myItems.add(butt);
+    return butt;
+  }
+
   public TBItemButton addButton(Icon icon, String text, String actionId) {
     final String uid = String.format("%s.button.%d", myName, myCounter++);
     final TBItemButton butt = new TBItemButton(uid, icon, text, new PlatformAction(actionId));

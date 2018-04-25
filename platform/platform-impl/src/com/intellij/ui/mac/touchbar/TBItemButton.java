@@ -17,18 +17,19 @@ public class TBItemButton extends TBItem {
 
   private int myUpdateOptions;
 
-  protected TBItemButton(@NotNull String uid) { this(uid, null, null, null, -1); }
+  protected TBItemButton(@NotNull String uid) { this(uid, null, null, null, -1, 0); }
 
-  TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action) {
-    this(uid, icon, text, action, -1);
-  }
+  TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action) { this(uid, icon, text, action, -1, 0); }
 
-  TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action, int buttWidth) {
+  TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action, int buttWidth) { this(uid, icon, text, action, buttWidth, 0); }
+
+  TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action, int buttWidth, int buttonFlags) {
     super(uid);
     myAction = action;
     myIcon = icon;
     myText = text;
     myWidth = buttWidth;
+    myFlags = buttonFlags;
   }
 
   void update(Icon icon, String text, NSTLibrary.Action action) { _update(icon, text, action, myWidth, myFlags); }
