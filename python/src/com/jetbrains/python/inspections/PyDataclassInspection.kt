@@ -22,6 +22,8 @@ class PyDataclassInspection : PyInspection() {
   companion object {
     private val ORDER_OPERATORS = setOf("__lt__", "__le__", "__gt__", "__ge__")
     private val DATACLASSES_HELPERS = setOf("dataclasses.fields", "dataclasses.asdict", "dataclasses.astuple", "dataclasses.replace")
+    private val ATTRS_HELPERS =
+      setOf("attr.__init__.fields", "attr.__init__.asdict", "attr.__init__.astuple", "attr.__init__.assoc", "attr.__init__.evolve")
   }
 
   override fun buildVisitor(holder: ProblemsHolder,
@@ -131,13 +133,24 @@ class PyDataclassInspection : PyInspection() {
         val callee = markedCallee?.element
         val calleeQName = callee?.qualifiedName
 
-        if (markedCallee != null && callee != null && DATACLASSES_HELPERS.contains(calleeQName)) {
+        if (markedCallee != null && callee != null) {
+          val dataclassType = when {
+            DATACLASSES_HELPERS.contains(calleeQName) -> PyDataclassParameters.Type.STD
+            ATTRS_HELPERS.contains(calleeQName) -> PyDataclassParameters.Type.ATTRS
+            else -> return
+          }
+
           val mapping = PyCallExpressionHelper.mapArguments(node, markedCallee, myTypeEvalContext)
 
           val dataclassParameter = callee.getParameters(myTypeEvalContext).firstOrNull()
           val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
 
-          processHelperDataclassArgument(dataclassArgument, calleeQName!!)
+          if (dataclassType == PyDataclassParameters.Type.STD) {
+            processHelperDataclassArgument(dataclassArgument, calleeQName!!)
+          }
+          else if (dataclassType == PyDataclassParameters.Type.ATTRS) {
+            processHelperAttrsArgument(dataclassArgument, calleeQName!!)
+          }
         }
       }
     }
@@ -306,8 +319,21 @@ class PyDataclassInspection : PyInspection() {
 
       val allowDefinition = calleeQName == "dataclasses.fields"
 
-      if (isNotDataclass(myTypeEvalContext.getType(argument), allowDefinition)) {
+      if (isNotExpectedDataclass(myTypeEvalContext.getType(argument), PyDataclassParameters.Type.STD, allowDefinition, true)) {
         val message = "'$calleeQName' method should be called on dataclass instances" + if (allowDefinition) " or types" else ""
+
+        registerProblem(argument, message)
+      }
+    }
+
+    private fun processHelperAttrsArgument(argument: PyExpression?, calleeQName: String) {
+      if (argument == null) return
+
+      val instance = calleeQName != "attr.__init__.fields"
+
+      if (isNotExpectedDataclass(myTypeEvalContext.getType(argument), PyDataclassParameters.Type.ATTRS, !instance, instance)) {
+        val presentableCalleeQName = calleeQName.replaceFirst(".__init__.", ".")
+        val message = "'$presentableCalleeQName' method should be called on attrs " + if (instance) "instances" else "types"
 
         registerProblem(argument, message)
       }
@@ -317,13 +343,17 @@ class PyDataclassInspection : PyInspection() {
       return (myTypeEvalContext.getType(field) as? PyClassType)?.classQName == DATACLASSES_INITVAR_TYPE
     }
 
-    private fun isNotDataclass(type: PyType?, allowDefinition: Boolean): Boolean {
+    private fun isNotExpectedDataclass(type: PyType?,
+                                       dataclassType: PyDataclassParameters.Type,
+                                       allowDefinition: Boolean,
+                                       allowInstance: Boolean): Boolean {
       if (type is PyStructuralType || PyTypeChecker.isUnknown(type, myTypeEvalContext)) return false
-      if (type is PyUnionType) return type.members.all { isNotDataclass(it, allowDefinition) }
+      if (type is PyUnionType) return type.members.all { isNotExpectedDataclass(it, dataclassType, allowDefinition, allowInstance) }
 
       return type !is PyClassType ||
              !allowDefinition && type.isDefinition ||
-             parseStdDataclassParameters(type.pyClass, myTypeEvalContext) == null
+             !allowInstance && !type.isDefinition ||
+             parseDataclassParameters(type.pyClass, myTypeEvalContext)?.type != dataclassType
     }
   }
 }

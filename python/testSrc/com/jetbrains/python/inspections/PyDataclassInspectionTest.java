@@ -76,6 +76,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-26354
+  public void testAttrsHelpersArgument() {
+    doTest();
+  }
+
   // PY-27398
   public void testAccessToInitVar() {
     doTest();
