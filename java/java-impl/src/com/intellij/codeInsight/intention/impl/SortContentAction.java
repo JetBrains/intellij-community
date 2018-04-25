@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.TIntArrayList;
 import one.util.streamex.StreamEx;
@@ -833,6 +834,11 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       }
       StringBuilder sb = new StringBuilder();
       sortableList.generate(sb);
+      SortableEntry lastItem = ContainerUtil.getLastItem(sortableList.myEntries);
+      assert lastItem != null;
+      if (!lastItem.myBeforeSeparator.isEmpty()) {
+        sb.append("\n");
+      }
       PsiElement elementToPreserve = lastElement.getNextSibling();
       while (elementToPreserve != null && elementToPreserve != rBrace) {
         sb.append(elementToPreserve.getText());
