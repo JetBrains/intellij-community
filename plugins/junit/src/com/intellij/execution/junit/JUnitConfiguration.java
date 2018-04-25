@@ -17,6 +17,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -441,7 +442,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
     final Data persistentData = getPersistentData();
     DefaultJDOMExternalizer.writeExternal(persistentData, element, new DifferenceFilter<>(persistentData, new Data()));
 
@@ -463,13 +464,16 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       element.addContent(categoryNameElement);
     }
 
-    final Element patternsElement = new Element(PATTERNS_EL_NAME);
-    for (String o : persistentData.getPatterns()) {
-      final Element patternElement = new Element(PATTERN_EL_NAME);
-      patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
-      patternsElement.addContent(patternElement);
+    if (!persistentData.getPatterns().isEmpty()) {
+      final Element patternsElement = new Element(PATTERNS_EL_NAME);
+      for (String o : persistentData.getPatterns()) {
+        final Element patternElement = new Element(PATTERN_EL_NAME);
+        patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
+        patternsElement.addContent(patternElement);
+      }
+      element.addContent(patternsElement);
     }
-    element.addContent(patternsElement);
+
     final String forkMode = getForkMode();
     if (!forkMode.equals("none")) {
       final Element forkModeElement = new Element("fork_mode");
