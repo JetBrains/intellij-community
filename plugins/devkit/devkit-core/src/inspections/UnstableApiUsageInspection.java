@@ -26,7 +26,10 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     "org.jetbrains.annotations.ApiStatus.Experimental",
     "com.google.common.annotations.Beta",
     "io.reactivex.annotations.Beta",
-    "io.reactivex.annotations.Experimental"
+    "io.reactivex.annotations.Experimental",
+    "rx.annotations.Experimental",
+    "rx.annotations.Beta",
+    "org.apache.http.annotation.Beta"
   );
 
   @Nullable
