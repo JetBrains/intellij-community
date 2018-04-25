@@ -16,6 +16,7 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -223,8 +224,13 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
   public void apply() throws ConfigurationException {
+    List<String> newUrls = ContainerUtil.map(myReposModel.getItems(), RemoteRepositoryDescription::getUrl);
+    List<String> oldUrls = ContainerUtil.map(RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories(), RemoteRepositoryDescription::getUrl);
     MavenRepositoryServicesManager.getInstance(myProject).setUrls(myServicesModel.getItems());
     RemoteRepositoriesConfiguration.getInstance(myProject).setRepositories(myReposModel.getItems());
+    if (!newUrls.containsAll(oldUrls)) {
+      RepositoryLibrariesReloaderKt.reloadAllRepositoryLibraries(myProject);
+    }
   }
 
   public void reset() {
