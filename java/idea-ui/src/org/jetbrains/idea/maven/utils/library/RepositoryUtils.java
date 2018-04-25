@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 public class RepositoryUtils {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.library.RepositoryUtils");
@@ -81,33 +80,6 @@ public class RepositoryUtils {
       counts.put(root, count != null ? count + 1 : 1);
     }
     return Collections.max(counts.entrySet(), Comparator.comparing(Map.Entry::getValue)).getKey();
-  }
-
-  /**
-   * Aether-based implementation understands version specification in terms of "LATEST" and "RELEASE"
-   */
-  @Deprecated
-  public static String resolveEffectiveVersion(@NotNull Project project, @NotNull RepositoryLibraryProperties properties) {
-    String version = properties.getVersion();
-    boolean isLatest = RepositoryLibraryDescription.LatestVersionId.equals(version);
-    boolean isRelease = RepositoryLibraryDescription.ReleaseVersionId.equals(version);
-    if (isLatest || isRelease) {
-      try {
-        final Collection<String> versions =  JarRepositoryManager.getAvailableVersions(
-          project, RepositoryLibraryDescription.findDescription(properties.getGroupId(), properties.getArtifactId())
-        ).get();
-        for (String ver : versions) {
-          if (!isRelease || !ver.endsWith(RepositoryLibraryDescription.SnapshotVersionSuffix)) {
-            version = ver;
-            break;
-          }
-        }
-      }
-      catch (InterruptedException | ExecutionException e) {
-        LOG.error("Got unexpected exception while resolving artifact versions", e);
-      }
-    }
-    return version;
   }
 
   public static void loadDependencies(@NotNull final Project project,
