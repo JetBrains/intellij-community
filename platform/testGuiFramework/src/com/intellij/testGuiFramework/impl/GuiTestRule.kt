@@ -66,11 +66,16 @@ class GuiTestRule : TestRule {
     .around(myFatalErrorsFlusher)
     .around(IdeHandling())
     .around(ScreenshotOnFailure())
-    .around(Timeout(20, TimeUnit.MINUTES))!!
+
+  private val timeoutRule = Timeout(20, TimeUnit.MINUTES)
 
   override fun apply(base: Statement?, description: Description?): Statement {
     myTestName = "${description!!.className}#${description.methodName}"
-    return myRuleChain.apply(base, description)
+    //do not apply timeout rule if it is already applied to a test class
+    return if (description.testClass.fields.any { it.type == Timeout::class.java })
+      myRuleChain.apply(base, description)
+    else
+      myRuleChain.around(timeoutRule).apply(base, description)
   }
 
   fun robot(): Robot = myRobotTestRule.getRobot()
@@ -148,9 +153,11 @@ class GuiTestRule : TestRule {
 
       fun isFirstStep(): Boolean {
         return try {
-          val actionLinkFixture = ActionLinkFixture.findActionLinkByName(CREATE_NEW_PROJECT_ACTION_NAME, robot(), welcomeFrameFixture.target(), tenSec)
+          val actionLinkFixture = ActionLinkFixture.findActionLinkByName(CREATE_NEW_PROJECT_ACTION_NAME, robot(),
+                                                                         welcomeFrameFixture.target(), tenSec)
           actionLinkFixture.target().isShowing
-        } catch (componentLookupException: ComponentLookupException) {
+        }
+        catch (componentLookupException: ComponentLookupException) {
           false
         }
       }
@@ -287,7 +294,7 @@ class GuiTestRule : TestRule {
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
-//TODO: add wait to open project
+    //TODO: add wait to open project
     return findIdeFrame(projectPath)
   }
 
