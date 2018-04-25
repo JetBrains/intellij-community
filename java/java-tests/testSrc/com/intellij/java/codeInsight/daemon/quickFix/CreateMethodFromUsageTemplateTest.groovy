@@ -282,7 +282,7 @@ public class InvalidClass {
 '''
   }
 
-  void 'test expected types'() {
+  void 'test deepest super methods are included in expected info when available'() {
     configureFromFileText 'a.java', '''\
 class A {
   {
