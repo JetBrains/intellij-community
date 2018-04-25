@@ -185,9 +185,9 @@ public class ContentUtilEx extends ContentsUtil {
   }
 
   @Nullable
-  private static JComponent findContentComponent(@NotNull TabbedContent tabbedContent, @NotNull String fullTabName) {
+  private static JComponent findContentComponent(@NotNull TabbedContent tabbedContent, @NotNull Condition<JComponent> condition) {
     for (Pair<String, JComponent> tab : tabbedContent.getTabs()) {
-      if (fullTabName.equals(getFullName(tabbedContent.getTitlePrefix(), tab.first))) {
+      if (condition.value(tab.second)) {
         return tab.second;
       }
     }
@@ -195,24 +195,23 @@ public class ContentUtilEx extends ContentsUtil {
   }
 
   /**
-   * Closes content with specified full tab name (ie name with prefix).
+   * Closes content with component that matches specified condition.
+   *
    * @return true if content was found and closed
    */
-  public static boolean closeContentTab(@NotNull ContentManager manager, @NotNull String fullTabName) {
+  public static boolean closeContentTab(@NotNull ContentManager manager, @NotNull Condition<JComponent> condition) {
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
         TabbedContent tabbedContent = (TabbedContent)content;
-        if (fullTabName.startsWith(getFullPrefix(tabbedContent.getTitlePrefix()))) {
-          JComponent component = findContentComponent(tabbedContent, fullTabName);
-          if (component != null) {
-            tabbedContent.removeContent(component);
-            dispose(component);
-            return true;
-          }
-          return false;
+        JComponent component = findContentComponent(tabbedContent, condition);
+        if (component != null) {
+          tabbedContent.removeContent(component);
+          dispose(component);
+          return true;
         }
+        return false;
       }
-      else if (content.getTabName().equals(fullTabName)) {
+      else if (condition.value(content.getComponent())) {
         manager.removeContent(content, true);
         return true;
       }

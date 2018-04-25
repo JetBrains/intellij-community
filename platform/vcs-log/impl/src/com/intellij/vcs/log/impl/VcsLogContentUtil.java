@@ -86,6 +86,13 @@ public class VcsLogContentUtil {
     return findAndSelectContent(project, AbstractVcsLogUi.class, u -> u.equals(ui));
   }
 
+  @Nullable
+  public static String getId(@NotNull Content content) {
+    AbstractVcsLogUi ui = getLogUi(content.getComponent());
+    if (ui == null) return null;
+    return ui.getId();
+  }
+
   @NotNull
   public static String generateTabId(@NotNull Project project) {
     Set<String> existingIds;
@@ -102,9 +109,7 @@ public class VcsLogContentUtil {
     else {
       existingIds = ContainerUtil.map2SetNotNull(Arrays.asList(contentManager.getContents()), content -> {
         if (!VcsLogContentProvider.TAB_NAME.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) return null;
-        AbstractVcsLogUi ui = getLogUi(content.getComponent());
-        if (ui == null) return null;
-        return ui.getId();
+        return getId(content);
       });
     }
 
@@ -119,13 +124,23 @@ public class VcsLogContentUtil {
   public static <U extends AbstractVcsLogUi> void openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
                                                              @NotNull String tabGroupName, @NotNull String shortName,
                                                              @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
-    U logUi = logManager.createLogUi(ContentUtilEx.getFullName(tabGroupName, shortName), factory);
+    U logUi = logManager.createLogUi(factory, true);
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(),
                                    new VcsLogPanel(logManager, logUi), tabGroupName, shortName, focus, logUi);
     if (focus) toolWindow.activate(null);
     logManager.scheduleInitialization();
+  }
+
+  public static boolean closeLogTab(@NotNull ContentManager manager, @NotNull String tabId) {
+    return ContentUtilEx.closeContentTab(manager, c -> {
+      AbstractVcsLogUi ui = getLogUi(c);
+      if (ui != null) {
+        return ui.getId().equals(tabId);
+      }
+      return false;
+    });
   }
 
   public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<VcsLogUiImpl> consumer) {

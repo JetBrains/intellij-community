@@ -98,8 +98,8 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName) {
-    return createLogUi(contentTabName, getMainLogUiFactory(logId));
+  public VcsLogUiImpl createLogUi(@NotNull String logId, boolean isToolWindowTab) {
+    return createLogUi(getMainLogUiFactory(logId), isToolWindowTab);
   }
 
   @NotNull
@@ -108,13 +108,12 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public <U extends AbstractVcsLogUi> U createLogUi(@Nullable String contentTabName,
-                                                    @NotNull VcsLogUiFactory<U> factory) {
+  public <U extends AbstractVcsLogUi> U createLogUi(@NotNull VcsLogUiFactory<U> factory, boolean isToolWindowTab) {
     U ui = factory.createLogUi(myProject, myLogData);
 
     Disposable disposable;
-    if (contentTabName != null) {
-      disposable = myTabsLogRefresher.addTabToWatch(contentTabName, ui.getRefresher());
+    if (isToolWindowTab) {
+      disposable = myTabsLogRefresher.addTabToWatch(ui.getId(), ui.getRefresher());
     }
     else {
       disposable = myPostponableRefresher.addLogWindow(ui.getRefresher());
