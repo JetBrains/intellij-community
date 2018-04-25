@@ -50,3 +50,14 @@ class C2:
     y = attr.attrib(default="0")
 
 C2(<arg6>)
+
+
+@attr.s
+class F1:
+    x = attr.ib()
+
+    @x.default
+    def __init_x__(self):
+        return 1
+
+F1(<arg7>)

@@ -780,7 +780,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> {
-        final Map<String, PsiElement> marks = loadTest(6);
+        final Map<String, PsiElement> marks = loadTest(7);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x, y, z: int=...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x, y, z: int=...", new String[]{"x, "});
@@ -788,6 +788,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x, y, z: list=...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x, y: int=...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x, y: str=...", new String[]{"x, "});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int=...", new String[]{"x: int=..."});
       }
     );
   }

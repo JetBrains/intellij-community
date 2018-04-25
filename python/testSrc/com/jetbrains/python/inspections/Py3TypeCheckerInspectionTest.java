@@ -303,12 +303,23 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                  "import typing\n" +
                  "\n" +
                  "@attr.s\n" +
-                 "class Weak:\n" +
+                 "class Weak1:\n" +
                  "    x = attr.ib()\n" +
                  "    y = attr.ib(default=0)\n" +
                  "    z = attr.ib(default=attr.Factory(list))\n" +
                  "    \n" +
-                 "Weak(1, \"str\", 2)\n" +
+                 "Weak1(1, \"str\", 2)\n" +
+                 "\n" +
+                 "\n" +
+                 "@attr.s\n" +
+                 "class Weak2:\n" +
+                 "    x = attr.ib()\n" +
+                 "    \n" +
+                 "    @x.default\n" +
+                 "    def __init_x__(self):\n" +
+                 "        return 1\n" +
+                 "    \n" +
+                 "Weak2(\"str\")\n" +
                  "\n" +
                  "\n" +
                  "@attr.s\n" +
