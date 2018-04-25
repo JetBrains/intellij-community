@@ -18,5 +18,5 @@ public class JsonLanguage extends Language {
     return true;
   }
 
-  public boolean acceptsStringNewlines() { return false; }
+  public boolean hasPermissiveStrings() { return false; }
 }

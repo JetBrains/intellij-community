@@ -45,7 +45,7 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     JsonValue literal = ObjectUtils.tryCast(psiAtOffset.getParent(), JsonValue.class);
-    if (literal != null && (!(literal instanceof JsonStringLiteral) || !((JsonLanguage)language).acceptsStringNewlines())) {
+    if (literal != null && (!(literal instanceof JsonStringLiteral) || !((JsonLanguage)language).hasPermissiveStrings())) {
       handleJsonValue(literal, editor, caretOffsetRef);
     }
 
