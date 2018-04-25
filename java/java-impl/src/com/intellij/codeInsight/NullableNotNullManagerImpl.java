@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerNotNullableSerializer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -87,15 +90,37 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
       List<PsiClass> result = new ArrayList<>();
       GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-      for (PsiClass tqNick : JavaPsiFacade.getInstance(myProject).findClasses(TYPE_QUALIFIER_NICKNAME, scope)) {
-        result.addAll(ContainerUtil.findAll(MetaAnnotationUtil.getChildren(tqNick, scope), candidate -> {
-          String qname = candidate.getQualifiedName();
-          if (qname == null || qname.startsWith("javax.annotation.")) return false;
-          return getNickNamedNullability(candidate) != Nullness.UNKNOWN;
-        }));
+      PsiClass[] nickDeclarations = JavaPsiFacade.getInstance(myProject).findClasses(TYPE_QUALIFIER_NICKNAME, scope);
+      for (PsiClass tqNick : nickDeclarations) {
+        result.addAll(ContainerUtil.findAll(MetaAnnotationUtil.getChildren(tqNick, scope), NullableNotNullManagerImpl::isNullabilityNickName));
+      }
+      if (nickDeclarations.length == 0) {
+        result.addAll(getUnresolvedNicknameUsages());
       }
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
+  }
+
+  // some frameworks use jsr305 annotations but don't have them in classpath
+  private List<PsiClass> getUnresolvedNicknameUsages() {
+    List<PsiClass> result = new ArrayList<>();
+    Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(TYPE_QUALIFIER_NICKNAME), myProject, GlobalSearchScope.allScope(myProject));
+    for (PsiAnnotation annotation : annotations) {
+      PsiElement context = annotation.getContext();
+      if (context instanceof PsiModifierList && context.getContext() instanceof PsiClass) {
+        PsiClass ownerClass = (PsiClass)context.getContext();
+        if (ownerClass.isAnnotationType() && isNullabilityNickName(ownerClass)) {
+          result.add(ownerClass);
+        }
+      }
+    }
+    return result;
+  }
+
+  private static boolean isNullabilityNickName(@NotNull PsiClass candidate) {
+    String qname = candidate.getQualifiedName();
+    if (qname == null || qname.startsWith("javax.annotation.")) return false;
+    return getNickNamedNullability(candidate) != Nullness.UNKNOWN;
   }
 
   private static Nullness getNickNamedNullability(@NotNull PsiClass psiClass) {
