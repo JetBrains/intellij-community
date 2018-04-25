@@ -98,7 +98,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     if (containingVirtualFile == null) {
       return false;
     }
-    return ProjectFileIndex.getInstance(element.getProject()).isInLibrary(containingVirtualFile);
+    return ProjectFileIndex.getInstance(element.getProject()).isInLibraryClasses(containingVirtualFile);
   }
 
   @NotNull
@@ -123,9 +123,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
       if (((ResolvingHint)reference).canResolveTo(PsiModifierListOwner.class)) {
         return (PsiModifierListOwner)reference.resolve();
       }
-      else {
-        return null;
-      }
+      return null;
     }
 
     PsiElement resolvedElement = reference.resolve();
