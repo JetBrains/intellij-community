@@ -66,7 +66,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       LibraryModel model = new LibraryModel(myModel);
       WriteAction.run(() -> {
         model.readExternal(element);
-        commit(model);
+        model.commit();
       });
     }
 
@@ -169,31 +169,23 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myFirstLoad = false;
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (!model.isChanged()) {
-      Disposer.dispose(model);
       return;
     }
 
     incrementModificationCount();
-    //todo[nik] remove LibraryImpl#equals method instead of using identity sets
-    Set<Library> addedLibraries = ContainerUtil.newIdentityTroveSet(model.myLibraries);
-    addedLibraries.removeAll(myModel.myLibraries);
-    Set<Library> removedLibraries = ContainerUtil.newIdentityTroveSet(myModel.myLibraries);
-    removedLibraries.removeAll(model.myLibraries);
-    model.myLibrariesToDispose.removeAll(model.myLibraries);
-    model.myLibrariesToDispose.removeAll(myModel.myLibraries);
+    Set<Library> removedLibraries = model.myRemovedLibraries;
     for (Library library : removedLibraries) {
       fireBeforeLibraryRemoved(library);
     }
 
-    myModel.copyFrom(model);
+    myModel.applyChanges(model);
     for (Library library : removedLibraries) {
       Disposer.dispose(library);
       fireAfterLibraryRemoved(library);
     }
-    for (Library library : addedLibraries) {
+    for (Library library : model.myAddedLibraries) {
       fireLibraryAdded(library);
     }
-    Disposer.dispose(model);
   }
 
   private void fireAfterLibraryRemoved(Library library) {
@@ -211,7 +203,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
   class LibraryModel implements ModifiableModel, JDOMExternalizable, Listener, Disposable {
     private final List<Library> myLibraries = new ArrayList<>();
-    private final Set<Library> myLibrariesToDispose = ContainerUtil.newIdentityTroveSet();
+    private final Set<Library> myAddedLibraries = ContainerUtil.newIdentityTroveSet();
+    private final Set<Library> myRemovedLibraries = ContainerUtil.newIdentityTroveSet();
     private volatile Map<String, Library> myLibraryByNameCache;
     private boolean myWritable;
 
@@ -229,13 +222,16 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     @Override
     public void commit() {
       LibraryTableBase.this.commit(this);
+      myAddedLibraries.clear();
+      myRemovedLibraries.clear();
+      Disposer.dispose(this);
       myWritable = false;
     }
 
     @Override
     public void dispose() {
       myDispatcher.removeListener(this);
-      for (Library library : myLibrariesToDispose) {
+      for (Library library : myAddedLibraries) {
         Disposer.dispose(library);
       }
     }
@@ -302,7 +298,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       final LibraryImpl library = new LibraryImpl(name, kind, LibraryTableBase.this, null, externalSource);
       myLibraries.add(library);
       if (myWritable) {
-        myLibrariesToDispose.add(library);
+        //myAddedLibraries is used only when the model is committed, so let's not populate it in the main model to save memory
+        myAddedLibraries.add(library);
       }
       myLibraryByNameCache = null;
       return library;
@@ -314,19 +311,29 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
       assertWritable();
       myLibraries.remove(library);
+      if (myWritable) {
+        //myRemovedLibraries are used only when the model is committed, so let's not populate it in the main model to save memory
+        if (!myAddedLibraries.remove(library)) {
+          myRemovedLibraries.add(library);
+        }
+        else {
+          Disposer.dispose(library);
+        }
+      }
       myLibraryByNameCache = null;
     }
 
     @Override
     public boolean isChanged() {
       if (!myWritable) return false;
-      Set<Library> thisLibraries = new HashSet<>(myLibraries);
-      Set<Library> thatLibraries = new HashSet<>(myModel.myLibraries);
-      return !thisLibraries.equals(thatLibraries);
+      return !myAddedLibraries.isEmpty() || !myRemovedLibraries.isEmpty();
     }
 
     @Override
     public void readExternal(Element element) {
+      if (myWritable) {
+        myRemovedLibraries.addAll(myLibraries);
+      }
       myLibraries.clear();
 
       final List<Element> libraryElements = element.getChildren(LibraryImpl.ELEMENT);
@@ -335,7 +342,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
         if (library.getName() != null) {
           myLibraries.add(library);
           if (myWritable) {
-            myLibrariesToDispose.add(library);
+            myAddedLibraries.add(library);
           }
           fireLibraryAdded(library);
         }
@@ -365,9 +372,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       }
     }
 
-    void copyFrom(LibraryModel model) {
-      myLibraries.clear();
-      myLibraries.addAll(model.myLibraries);
+    private void applyChanges(LibraryModel model) {
+      myLibraries.removeAll(model.myRemovedLibraries);
+      myLibraries.addAll(model.myAddedLibraries);
       myLibraryByNameCache = null;
     }
   }
