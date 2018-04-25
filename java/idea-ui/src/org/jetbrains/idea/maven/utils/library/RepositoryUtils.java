@@ -131,6 +131,7 @@ public class RepositoryUtils {
                 ), project) :
           () -> {
             if (!library.isDisposed()) {
+              LOG.debug("Loaded dependencies for '" + properties.getMavenId() + "' repository library");
               WriteAction.run(() -> {
                 final NewLibraryEditor editor = new NewLibraryEditor(null, properties);
                 editor.setKeepInvalidUrls(false);
