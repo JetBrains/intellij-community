@@ -609,4 +609,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
   public void testMergedInitializerAndConstructor() { doTest(); }
   public void testClassMethodsInlining() { doTest(); }
+  public void testObjectLocality() { doTest(); }
 }
