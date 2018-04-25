@@ -99,6 +99,7 @@ public class AllIcons {
     public static final Icon Left = IconLoader.getIcon("/actions/left.png"); // 16x16
     public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.png"); // 16x16
     public static final Icon ListChanges = IconLoader.getIcon("/actions/listChanges.png"); // 16x16
+    public static final Icon ListFiles = IconLoader.getIcon("/actions/listFiles.svg"); // 16x16
     public static final Icon Menu_cut = IconLoader.getIcon("/actions/menu-cut.svg"); // 16x16
     
     @SuppressWarnings("unused")
