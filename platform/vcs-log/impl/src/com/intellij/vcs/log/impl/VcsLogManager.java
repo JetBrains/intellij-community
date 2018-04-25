@@ -240,7 +240,7 @@ public class VcsLogManager implements Disposable {
                                      new VcsLogFilterer(logData.getLogProviders(), logData.getStorage(),
                                                         logData.getTopCommitsCache(),
                                                         logData.getCommitDetailsGetter(), logData.getIndex()));
-      return new VcsLogUiImpl(logData, myColorManager, properties, refresher);
+      return new VcsLogUiImpl(myLogId, logData, myColorManager, properties, refresher);
     }
   }
 }

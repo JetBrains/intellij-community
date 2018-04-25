@@ -30,11 +30,12 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final VcsLogUiPropertiesImpl.MainVcsLogUiPropertiesListener myPropertiesListener;
 
-  public VcsLogUiImpl(@NotNull VcsLogData logData,
+  public VcsLogUiImpl(@NotNull String id,
+                      @NotNull VcsLogData logData,
                       @NotNull VcsLogColorManager manager,
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VisiblePackRefresher refresher) {
-    super(logData, manager, refresher);
+    super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
     myMainFrame = new MainFrame(logData, this, uiProperties, myLog, myVisiblePack);
 

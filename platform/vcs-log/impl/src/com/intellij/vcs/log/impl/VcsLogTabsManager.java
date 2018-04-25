@@ -49,19 +49,16 @@ public class VcsLogTabsManager {
 
   private void openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus) {
     VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory =
-      new PersistentVcsLogUiFactory(tabId, manager.getMainLogUiFactory(tabId), manager.getUiProperties());
+      new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId), manager.getUiProperties());
     VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
   }
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
-    private final String myLogId;
     private final VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> myFactory;
     @NotNull private final VcsLogTabsProperties myUiProperties;
 
-    public PersistentVcsLogUiFactory(@NotNull String logId,
-                                     @NotNull VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory,
+    public PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory,
                                      @NotNull VcsLogTabsProperties properties) {
-      myLogId = logId;
       myFactory = factory;
       myUiProperties = properties;
     }
@@ -70,11 +67,11 @@ public class VcsLogTabsManager {
     public VcsLogUiImpl createLogUi(@NotNull Project project,
                                     @NotNull VcsLogData logData) {
       VcsLogUiImpl ui = myFactory.createLogUi(project, logData);
-      myUiProperties.addTab(myLogId);
+      myUiProperties.addTab(ui.getId());
       Disposer.register(ui, () -> {
         if (Disposer.isDisposing(myProject) || myIsLogDisposing) return; // need to restore the tab after project/log is recreated
 
-        myUiProperties.removeTab(myLogId); // tab is closed by a user
+        myUiProperties.removeTab(ui.getId()); // tab is closed by a user
       });
       return ui;
     }
