@@ -116,7 +116,7 @@ public class MethodCallInstruction extends Instruction {
       myArgRequiredNullability = EMPTY_NULLNESS_ARRAY;
     }
 
-    myShouldFlushFields = !(call instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0) && !isPureCall();
+    myShouldFlushFields = !(call instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0 || isPureCall());
     myPrecalculatedReturnValue = precalculatedReturnValue;
     myReturnNullability = call instanceof PsiNewExpression ? Nullness.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
   }
