@@ -163,7 +163,9 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   @NotNull
   @Override
   public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
-    return Arrays.asList(new JpsModuleOutputPackagingElementSerializer(), new JpsTestModuleOutputPackagingElementSerializer());
+    return Arrays.asList(new JpsModuleOutputPackagingElementSerializer(),
+                         new JpsTestModuleOutputPackagingElementSerializer(),
+                         new JpsModuleSourcePackagingElementSerializer());
   }
 
   @NotNull
@@ -277,6 +279,24 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
 
     @Override
     public void save(JpsProductionModuleOutputPackagingElement element, Element tag) {
+      tag.setAttribute("name", element.getModuleReference().getModuleName());
+    }
+  }
+
+  private static class JpsModuleSourcePackagingElementSerializer
+    extends JpsPackagingElementSerializer<JpsProductionModuleSourcePackagingElement> {
+    private JpsModuleSourcePackagingElementSerializer() {
+      super("module-source", JpsProductionModuleSourcePackagingElement.class);
+    }
+
+    @Override
+    public JpsProductionModuleSourcePackagingElement load(Element element) {
+      JpsModuleReference reference = JpsElementFactory.getInstance().createModuleReference(element.getAttributeValue("name"));
+      return getService().createProductionModuleSource(reference);
+    }
+
+    @Override
+    public void save(JpsProductionModuleSourcePackagingElement element, Element tag) {
       tag.setAttribute("name", element.getModuleReference().getModuleName());
     }
   }

@@ -437,9 +437,9 @@ public class ArtifactUtil {
             ContainerUtil.addIfNotNull(result, sourceRoot.findFileByRelativePath(path));
           }
         }
-        else if (element instanceof ModuleOutputPackagingElement) {
+        else if (element instanceof ModulePackagingElement) {
           final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(context.getProject());
-          for (VirtualFile sourceRoot : ((ModuleOutputPackagingElement)element).getSourceRoots(context)) {
+          for (VirtualFile sourceRoot : ((ModulePackagingElement)element).getSourceRoots(context)) {
             final VirtualFile sourceFile = sourceRoot.findFileByRelativePath(path);
             if (sourceFile != null && compilerConfiguration.isResourceFile(sourceFile)) {
               result.add(sourceFile);
