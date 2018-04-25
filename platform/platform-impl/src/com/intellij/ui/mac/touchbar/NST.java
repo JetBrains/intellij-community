@@ -90,12 +90,13 @@ public class NST {
 
   public static ID createButton(String uid,
                                 int buttWidth,
+                                int buttFlags,
                                 String text,
                                 byte[] raster4ByteRGBA,
                                 int w,
                                 int h,
                                 NSTLibrary.Action action) {
-    return ourNSTLibrary.createButton(uid, buttWidth, text, raster4ByteRGBA, w, h, action);
+    return ourNSTLibrary.createButton(uid, buttWidth, buttFlags, text, raster4ByteRGBA, w, h, action);
   }
 
   public static ID createPopover(String uid,
@@ -117,14 +118,16 @@ public class NST {
   }
 
   public static void updateButton(ID buttonObj,
+                                  int updateOptions,
                                   int buttWidth,
+                                  int buttonFlags,
                                   String text,
                                   byte[] raster4ByteRGBA,
                                   int w,
                                   int h,
                                   NSTLibrary.Action action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    ourNSTLibrary.updateButton(buttonObj, buttWidth, text, raster4ByteRGBA, w, h, action);
+    ourNSTLibrary.updateButton(buttonObj, updateOptions, buttWidth, buttonFlags, text, raster4ByteRGBA, w, h, action);
   }
 
   public static void updatePopover(ID popoverObj,

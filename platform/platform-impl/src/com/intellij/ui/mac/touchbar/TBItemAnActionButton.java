@@ -112,14 +112,12 @@ public class TBItemAnActionButton extends TBItemButton {
 
     final String text = myShowMode == SHOWMODE_IMAGE_ONLY ? null : presentation.getText();
 
-    // update native peer only when some of resources has been changed
-    if (
-      icon != myIcon ||
-      (text == null ? myText != null : !text.equals(myText))
-    ) {
-      // LOG.info(String.format("[%s:%s] updateView", myUid, myActionId));
-      update(icon, text);
+    boolean isSelected = false;
+    if (myAnAction instanceof ToggleAction) {
+      final Object selectedProp = presentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
+      isSelected = selectedProp != null && selectedProp == Boolean.TRUE;
     }
+    update(icon, text, isSelected, !presentation.isEnabled());
   }
 
   private void _performAction() {
