@@ -142,7 +142,7 @@ public class VcsLogTabsWatcher implements Disposable {
       }
     }
 
-    private void selectionChanged(String tabId) {
+    private void selectionChanged(@NotNull String tabId) {
       VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(),
                                                   window -> window instanceof VcsLogTab && ((VcsLogTab)window).myTabId.equals(tabId));
       if (logWindow != null) {
@@ -153,7 +153,10 @@ public class VcsLogTabsWatcher implements Disposable {
     @Override
     public void selectionChanged(ContentManagerEvent event) {
       if (ContentManagerEvent.ContentOperation.add.equals(event.getOperation())) {
-        selectionChanged(VcsLogContentUtil.getId(event.getContent()));
+        String tabId = VcsLogContentUtil.getId(event.getContent());
+        if (tabId != null) {
+          selectionChanged(tabId);
+        }
       }
     }
 
