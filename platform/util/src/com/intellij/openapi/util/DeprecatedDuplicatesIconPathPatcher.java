@@ -73,6 +73,9 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/vcs/refresh.png", "AllIcons.Actions.Refresh");
     ourDeprecatedIconsReplacements.put("/vcs/refresh.svg", "AllIcons.Actions.Refresh");
 
+    ourDeprecatedIconsReplacements.put("/actions/menu_replace.png", "AllIcons.Actions.Replace");
+    ourDeprecatedIconsReplacements.put("/actions/menu_replace.svg", "AllIcons.Actions.Replace");
+
     ourDeprecatedIconsReplacements.put("/actions/refreshUsages.png", "AllIcons.Actions.Rerun");
     ourDeprecatedIconsReplacements.put("/actions/refreshUsages.svg", "AllIcons.Actions.Rerun");
 
