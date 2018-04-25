@@ -225,8 +225,12 @@ public class TouchBarsManager {
         return;
       }
 
+      if (myCurrentBar != null)
+        myCurrentBar.onHide();
       myCurrentBar = myNextBar;
       NST.setTouchBar(myCurrentBar);
+      if (myCurrentBar != null)
+        myCurrentBar.onShow();
     }
   }
 

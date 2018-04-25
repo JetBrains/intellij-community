@@ -18,8 +18,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.awt.*;
+import java.util.List;
 
 public class TouchBarActionBase extends TouchBarProjectBase implements ExecutionListener {
   private static final Logger LOG = Logger.getInstance(TouchBarActionBase.class);
@@ -36,7 +36,6 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
       @Override
       public void run() { _updateActionItems(); }
     };
-    ActionManager.getInstance().addTransparentTimerListener(500, myTimerListener); // NOTE: delay param doesn't affect anything
 
     final MessageBus mb = project.getMessageBus();
     mb.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, this);
@@ -45,7 +44,14 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
   @Override
   public void release() {
     super.release();
-    ActionManager.getInstance().removeTimerListener(myTimerListener);
+    ActionManager.getInstance().removeTransparentTimerListener(myTimerListener);
+  }
+
+  public void onShow() {
+    ActionManager.getInstance().addTransparentTimerListener(500, myTimerListener); // NOTE: delay param doesn't affect anything
+  }
+  public void onHide() {
+    ActionManager.getInstance().removeTransparentTimerListener(myTimerListener);
   }
 
   TBItemAnActionButton addAnActionButton(String actId) {
