@@ -16,7 +16,7 @@ class Test {
 
         foo(this::m1);
         foo(this::m2);
-        <error descr="Unhandled exception: java.io.IOException">foo(this::m3);</error>
+        <error descr="Unhandled exception: java.io.IOException">foo</error>(this::m3);
     }
 
 }
