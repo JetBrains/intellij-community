@@ -686,6 +686,8 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/jps/javac-ref-scanner-8:intellij.java.jps.javacRefScanner8",
+        "//tools/idea/.idea/libraries:jgoodies-common",
+        "//tools/idea/.idea/libraries:commons-net",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",

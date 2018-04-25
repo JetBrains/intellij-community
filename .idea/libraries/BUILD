@@ -1235,3 +1235,19 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/jetifier/jetifier-core/0.0.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/jetifier/jetifier-core/0.0.1:jar"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "jgoodies-common",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/jgoodies/jgoodies-common/1.4.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jgoodies/jgoodies-common/1.4.0:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "commons-net",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/commons-net/commons-net/3.3:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-net/commons-net/3.3:jar"],
+)

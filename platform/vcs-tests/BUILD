@@ -38,5 +38,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/diff-impl:intellij.platform.diff.tests[module, test]",
+        "//tools/idea/.idea/libraries:mockito[test]",
     ],
 )
