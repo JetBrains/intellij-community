@@ -5,9 +5,11 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 public class TouchBarEditorCmd extends TouchBarActionBase {
-  TouchBarEditorCmd(@NotNull Project project) {
-    super("editor_cmd", project);
+  TouchBarEditorCmd(@NotNull Project project, Component component) {
+    super("editor_cmd", project, component);
 
     // Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages
     // Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages.

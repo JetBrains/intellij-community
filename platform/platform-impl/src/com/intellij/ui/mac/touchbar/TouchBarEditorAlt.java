@@ -5,9 +5,11 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 public class TouchBarEditorAlt extends TouchBarActionBase {
-  TouchBarEditorAlt(@NotNull Project project) {
-    super("editor_alt", project);
+  TouchBarEditorAlt(@NotNull Project project, Component component) {
+    super("editor_alt", project, component);
 
     addFlexibleSpacing();
     addAnActionButton(ActionManager.getInstance().getAction("Terminal.OpenInTerminal"), false, TBItemAnActionButton.SHOWMODE_IMAGE_TEXT);

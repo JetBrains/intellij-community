@@ -7,13 +7,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MultiBarContainer implements BarContainer {
-  private final @NotNull BarContainer myMain;
-  private final Map<Long, BarContainer> myKeyMask2Alt = new HashMap<>();
-  private BarContainer myCurrent;
+  private final @NotNull TouchBar myMain;
+  private final Map<Long, TouchBar> myKeyMask2Alt = new HashMap<>();
+  private TouchBar myCurrent;
 
-  MultiBarContainer(@NotNull BarContainer main) { myMain = main; }
+  MultiBarContainer(@NotNull TouchBar main) { myMain = main; }
 
-  void registerAltByKeyMask(long keyMask, @NotNull BarContainer altBar) { myKeyMask2Alt.put(keyMask, altBar); }
+  void registerAltByKeyMask(long keyMask, @NotNull TouchBar altBar) { myKeyMask2Alt.put(keyMask, altBar); }
 
   void selectBarByKeyMask(long keyMask) {
     if (keyMask == 0) {
@@ -21,8 +21,7 @@ public class MultiBarContainer implements BarContainer {
       return;
     }
 
-    // TODO: support composite masks
-    final BarContainer alt = myKeyMask2Alt.get(keyMask);
+    final TouchBar alt = myKeyMask2Alt.get(keyMask);
     if (alt != null)
       myCurrent = alt;
   }
@@ -31,7 +30,7 @@ public class MultiBarContainer implements BarContainer {
   public TouchBar get() {
     if (myCurrent == null)
       myCurrent = myMain;
-    return myCurrent.get();
+    return myCurrent;
   }
 
   @Override

@@ -26,10 +26,12 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
 
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
   private final TimerListener myTimerListener;
+  private final Component myComponent;
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project) {
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component) {
     super(touchbarName, project);
 
+    myComponent = component;
     myTimerListener = new TimerListener() {
       @Override
       public ModalityState getModalityState() { return ModalityState.current(); }
@@ -55,7 +57,7 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
   }
 
   TBItemAnActionButton addAnActionButton(String actId) {
-    return addAnActionButton(ActionManager.getInstance().getAction(actId), true, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, null, null);
+    return addAnActionButton(ActionManager.getInstance().getAction(actId), true, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
   }
 
   TBItemAnActionButton addAnActionButton(String actId, boolean hiddenWhenDisabled) {
@@ -64,11 +66,11 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
       LOG.error("can't find action by id: " + actId);
       return null;
     }
-    return addAnActionButton(act, hiddenWhenDisabled, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, null, null);
+    return addAnActionButton(act, hiddenWhenDisabled, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
   }
 
   TBItemAnActionButton addAnActionButton(AnAction act, boolean hiddenWhenDisabled, int showMode) {
-    return addAnActionButton(act, hiddenWhenDisabled, showMode, null, null);
+    return addAnActionButton(act, hiddenWhenDisabled, showMode, myComponent, null);
   }
 
   TBItemAnActionButton addAnActionButton(AnAction act, boolean hiddenWhenDisabled, int showMode, Component component, ModalityState modality) {
@@ -77,7 +79,7 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
       return null;
     }
 
-    final String uid = String.format("%s.anActionButton.%d", myName, myCounter++);
+    final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, ActionManager.getInstance().getId(act));
     final TBItemAnActionButton butt = new TBItemAnActionButton(uid, act, hiddenWhenDisabled, showMode, component, modality);
     myItems.add(butt);
     return butt;

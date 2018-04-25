@@ -6,9 +6,11 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 public class TouchBarDebugger extends TouchBarActionBase {
-  TouchBarDebugger(@NotNull Project project) {
-    super("debugger", project);
+  TouchBarDebugger(@NotNull Project project, Component component) {
+    super("debugger", project, component);
 
     addButton(AllIcons.Actions.Restart, null, new PlatformAction(IdeActions.ACTION_RERUN));
     addAnActionButton("Pause");

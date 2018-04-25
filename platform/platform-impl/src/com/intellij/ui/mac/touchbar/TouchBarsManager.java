@@ -50,7 +50,8 @@ public class TouchBarsManager {
       return;
 
     editor.addFocusListener(new FocusChangeListener() {
-      private BarContainer myEditorBar = ProjectBarsStorage.instance(proj).getBarContainer(ProjectBarsStorage.EDITOR);
+      private BarContainer myEditorBar = ProjectBarsStorage.instance(proj).createBarContainer(ProjectBarsStorage.EDITOR, editor.getContentComponent());
+
       @Override
       public void focusGained(Editor editor) {
         if (!hasTemporary())
@@ -97,23 +98,28 @@ public class TouchBarsManager {
     Foundation.invoke(app, "setAutomaticCustomizeTouchBarMenuItemEnabled:", true);
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      private BarContainer myGeneralBar;
       @Override
       public void projectOpened(Project project) {
         trace("opened project %s, set general touchbar", project);
-        showTouchBar(ProjectBarsStorage.instance(project).getBarContainer(ProjectBarsStorage.GENERAL));
+        myGeneralBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.GENERAL, null);
+        showTouchBar(myGeneralBar);
 
         final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
         twm.addToolWindowManagerListener(new ToolWindowManagerListener() {
-          private BarContainer myDebuggerBar = ProjectBarsStorage.instance(project).getBarContainer(ProjectBarsStorage.DEBUGGER);
+          private BarContainer myDebuggerBar;
 
           @Override
           public void toolWindowRegistered(@NotNull String id) {}
           @Override
           public void stateChanged() {
             final String activeId = twm.getActiveToolWindowId();
-            if (activeId != null && activeId.equals("Debug"))
+            if (activeId != null && activeId.equals("Debug")) {
+              if (myDebuggerBar == null) {
+                myDebuggerBar = ProjectBarsStorage.instance(project).createBarContainer(ProjectBarsStorage.DEBUGGER, twm.getToolWindow(activeId).getComponent());
+              }
               showTouchBar(myDebuggerBar);
-            else
+            } else
               closeTouchBar(myDebuggerBar);
           }
         });
@@ -121,7 +127,7 @@ public class TouchBarsManager {
       @Override
       public void projectClosed(Project project) {
         trace("closed project %s, hide touchbar", project);
-        closeTouchBar(ProjectBarsStorage.instance(project).getBarContainer(ProjectBarsStorage.GENERAL));
+        closeTouchBar(myGeneralBar);
         ProjectBarsStorage.instance(project).releaseAll();
       }
     });
@@ -180,8 +186,8 @@ public class TouchBarsManager {
     ourTouchBarChanger.updateTouchBar(bar.get());
   }
 
-  synchronized public static void closeTouchBar(@NotNull BarContainer tb) {
-    if (ourTouchBarStack.isEmpty())
+  synchronized public static void closeTouchBar(BarContainer tb) {
+    if (tb == null || ourTouchBarStack.isEmpty())
       return;
 
     BarContainer top = ourTouchBarStack.peek();
@@ -241,7 +247,7 @@ public class TouchBarsManager {
 
   private static TouchBar _createButtonsBar(List<JButton> jbuttons, Project project) {
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      TouchBarActionBase result = new TouchBarActionBase("dialog_buttons", project);
+      TouchBarActionBase result = new TouchBarActionBase("dialog_buttons", project, null);
       final ModalityState ms = LaterInvocator.getCurrentModalityState();
       for (JButton jb : jbuttons) {
         if (jb instanceof JBOptionButton) {
@@ -317,14 +323,8 @@ public class TouchBarsManager {
     }
   }
 
-  private static class TempBarContainer implements BarContainer {
-    private @NotNull TouchBar myTouchBar;
-
-    TempBarContainer(@NotNull TouchBar tb) { myTouchBar = tb; }
-    @Override
-    public TouchBar get() { return myTouchBar; }
-    @Override
-    public void release() { myTouchBar.release(); }
+  private static class TempBarContainer extends SingleBarContainer {
+    TempBarContainer(@NotNull TouchBar tb) { super(tb); }
     @Override
     public boolean isTemporary() { return true; }
   }

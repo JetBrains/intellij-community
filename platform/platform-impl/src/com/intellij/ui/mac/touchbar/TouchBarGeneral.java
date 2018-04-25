@@ -12,6 +12,7 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,8 +28,8 @@ public class TouchBarGeneral extends TouchBarActionBase {
   private TBItemAnActionButton    myButtonDebug;
   private TBItemAnActionButton    myButtonStop;
 
-  TouchBarGeneral(@NotNull Project project) {
-    super("general", project);
+  TouchBarGeneral(@NotNull Project project, Component component, String desc) {
+    super("general_"+desc, project, component);
 
     addAnActionButton("CompileDirty", false); // NOTE: IdeActions.ACTION_COMPILE doesn't work
 
@@ -81,8 +82,6 @@ public class TouchBarGeneral extends TouchBarActionBase {
       }
     });
   }
-
-  public TouchBar getPopoverRunConfExpandTB() { return myPopoverRunConfExpandTB; }
 
   @Override
   public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
