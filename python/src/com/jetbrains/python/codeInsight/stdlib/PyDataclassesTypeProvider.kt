@@ -108,6 +108,10 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
                                context: TypeEvalContext): PyCallableParameter? {
     val stub = field.stub
     val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(field) else stub.getCustomStub(PyDataclassFieldStub::class.java)
+    val name =
+      field.name?.let {
+        if (dataclassType == PyDataclassParameters.Type.ATTRS && PyUtil.getInitialUnderscores(it) == 1) it.substring(1) else it
+      }
 
     return if (fieldStub == null) {
       val value = when {
@@ -116,14 +120,14 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
         else -> null
       }
 
-      PyCallableParameterImpl.nonPsi(field.name, getTypeForParameter(field, dataclassType, context), value)
+      PyCallableParameterImpl.nonPsi(name, getTypeForParameter(field, dataclassType, context), value)
     }
     else if (!fieldStub.initValue()) {
       null
     }
     else {
       val value = if (fieldStub.hasDefault() || fieldStub.hasDefaultFactory()) ellipsis else null
-      PyCallableParameterImpl.nonPsi(field.name, getTypeForParameter(field, dataclassType, context), value)
+      PyCallableParameterImpl.nonPsi(name, getTypeForParameter(field, dataclassType, context), value)
     }
   }
 

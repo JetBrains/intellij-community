@@ -56,3 +56,10 @@ class D1:
     y: str = "0"
 
 D1(<arg6>)
+
+
+@attr.dataclass
+class E1:
+    _x: int
+
+E1(<arg7>)

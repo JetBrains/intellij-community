@@ -27,3 +27,12 @@ class C:
 
 assoc(C(), <arg5>)
 evolve(C(), <arg6>)
+
+
+@s(auto_attribs=True)
+class D:
+    _a: int
+
+
+assoc(D(1), <arg7>)
+evolve(D(1), <arg8>)

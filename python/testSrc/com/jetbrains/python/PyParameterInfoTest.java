@@ -756,7 +756,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> {
-        final Map<String, PsiElement> marks = loadTest(6);
+        final Map<String, PsiElement> marks = loadTest(7);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
@@ -770,6 +770,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("self: B2, x: int", new String[]{"x: int"}, new String[]{"self: B2, "});
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("b: int", new String[]{"b: int"});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x: int, y: str=\"0\"", new String[]{"x: int, "});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int", new String[]{"x: int"});
       }
     );
   }
@@ -811,7 +812,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadTest(6);
+        final Map<String, PsiElement> marks = loadTest(8);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("inst: A, *, a: int=..., b: str=\"str\"", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("inst: A, *, a: int=..., b: str=\"str\"", ArrayUtil.EMPTY_STRING_ARRAY);
@@ -819,6 +820,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("inst: B, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("inst: D, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg8>").getTextOffset()).check("inst: D, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
       }
     );
   }
