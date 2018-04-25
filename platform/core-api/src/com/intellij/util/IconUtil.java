@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.presentation.VirtualFilePresentation;
@@ -230,27 +231,27 @@ public class IconUtil {
 
   @NotNull
   public static Icon getAddIcon() {
-    return getToolbarDecoratorIcon("add.png");
+    return AllIcons.General.Add;
   }
 
   @NotNull
   public static Icon getRemoveIcon() {
-    return getToolbarDecoratorIcon("remove.png");
+    return AllIcons.General.Remove;
   }
 
   @NotNull
   public static Icon getMoveUpIcon() {
-    return getToolbarDecoratorIcon("moveUp.png");
+    return AllIcons.Actions.MoveUp;
   }
 
   @NotNull
   public static Icon getMoveDownIcon() {
-    return getToolbarDecoratorIcon("moveDown.png");
+    return AllIcons.Actions.MoveDown;
   }
 
   @NotNull
   public static Icon getEditIcon() {
-    return getToolbarDecoratorIcon("edit.png");
+    return AllIcons.Actions.Edit;
   }
 
   @NotNull
