@@ -377,16 +377,16 @@ public class AllIcons {
     public static final Icon Db_no_suspend_field_breakpoint = IconLoader.getIcon("/debugger/db_no_suspend_field_breakpoint.svg"); // 12x12
     public static final Icon Db_no_suspend_method_breakpoint = IconLoader.getIcon("/debugger/db_no_suspend_method_breakpoint.svg"); // 12x12
     public static final Icon Db_obsolete = IconLoader.getIcon("/debugger/db_obsolete.svg"); // 12x12
+    public static final Icon Db_pending_breakpoint = IconLoader.getIcon("/debugger/db_pending_breakpoint.svg"); // 12x12
+    public static final Icon Db_pending_field_breakpoint = IconLoader.getIcon("/debugger/db_pending_field_breakpoint.svg"); // 12x12
+    public static final Icon Db_pending_method_breakpoint = IconLoader.getIcon("/debugger/db_pending_method_breakpoint.svg"); // 12x12
     public static final Icon Db_primitive = IconLoader.getIcon("/debugger/db_primitive.png"); // 16x16
     public static final Icon Db_set_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.svg"); // 12x12
     
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Db_temporary_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.svg"); // 12x12
-    public static final Icon Db_validate_breakpoint = IconLoader.getIcon("/debugger/db_validate_breakpoint.svg"); // 12x12
-    public static final Icon Db_validate_field_breakpoint = IconLoader.getIcon("/debugger/db_validate_field_breakpoint.svg"); // 12x12
-    public static final Icon Db_validate_method_breakpoint = IconLoader.getIcon("/debugger/db_validate_method_breakpoint.svg"); // 12x12
-    
+
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Db_verified_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.svg"); // 12x12
