@@ -9,10 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.stdlib.DATACLASSES_INITVAR_TYPE
-import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassParameters
-import com.jetbrains.python.codeInsight.stdlib.parseStdDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.*
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
@@ -167,7 +164,7 @@ class PyDataclassInspection : PyInspection() {
 
     private fun checkMutatingFrozenAttribute(expression: PyQualifiedExpression) {
       val cls = getInstancePyClass(expression.qualifier) ?: return
-      if (parseStdDataclassParameters(cls, myTypeEvalContext)?.frozen == true) {
+      if (parseDataclassParameters(cls, myTypeEvalContext)?.frozen == true) {
         registerProblem(expression, "'${cls.name}' object attribute '${expression.name}' is read-only", ProblemHighlightType.GENERIC_ERROR)
       }
     }
