@@ -25,6 +25,10 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.JavaCompilingVisitor;
+import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.FormalArgTypePredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
@@ -215,6 +219,34 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   public CompiledPattern createCompiledPattern() {
     return new JavaCompiledPattern();
+  }
+
+  @Override
+  public List<MatchPredicate> getCustomPredicates(MatchVariableConstraint constraint, String name, MatchOptions options) {
+    final List<MatchPredicate> result = new ArrayList<>(2);
+
+    if (!StringUtil.isEmptyOrSpaces(constraint.getNameOfExprType())) {
+      final MatchPredicate predicate = new ExprTypePredicate(
+        constraint.getNameOfExprType(),
+        name,
+        constraint.isExprTypeWithinHierarchy(),
+        options.isCaseSensitiveMatch(),
+        constraint.isPartOfSearchResults()
+      );
+      result.add(constraint.isInvertExprType() ? new NotPredicate(predicate) : predicate);
+    }
+
+    if (!StringUtil.isEmptyOrSpaces(constraint.getNameOfFormalArgType())) {
+      final MatchPredicate predicate = new FormalArgTypePredicate(
+        constraint.getNameOfFormalArgType(),
+        name,
+        constraint.isFormalArgTypeWithinHierarchy(),
+        options.isCaseSensitiveMatch(),
+        constraint.isPartOfSearchResults()
+      );
+      result.add(constraint.isInvertFormalType() ? new NotPredicate(predicate) : predicate);
+    }
+    return result;
   }
 
   @Override
