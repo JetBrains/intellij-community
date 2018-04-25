@@ -39,10 +39,10 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     Graphics2D g = (Graphics2D)g2d;
     Dimension size = c.getSize();
 
-    Rectangle viewRect = new Rectangle(size);
+    AbstractButton b = (AbstractButton) c;
+    Rectangle viewRect = updateViewRect(b, new Rectangle(size));
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
-    AbstractButton b = (AbstractButton) c;
 
     Font f = c.getFont();
     g.setFont(f);
@@ -62,6 +62,10 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
     paintIcon(c, g, viewRect, iconRect);
     drawText(b, g, text, textRect, fm);
+  }
+
+  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
+    return viewRect;
   }
 
   protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
@@ -89,7 +93,10 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    Dimension size = super.getPreferredSize(c);
+    return updatePreferredSize(c, super.getPreferredSize(c));
+  }
+
+  protected Dimension updatePreferredSize(JComponent c, Dimension size) {
     JBInsets.removeFrom(size, c.getInsets());
     return size;
   }

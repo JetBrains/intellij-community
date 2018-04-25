@@ -155,7 +155,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
         margin.right += holder.bounds.width + gap;
       }
-      int top = (bounds.height - holder.bounds.height) / 2 + margin.top;
+      int top = (bounds.height - holder.bounds.height) / 2;
       if (top > gap) {
         JTextComponent component = getComponent();
         boolean multiline = component != null && !Boolean.TRUE.equals(component.getDocument().getProperty("filterNewlines"));

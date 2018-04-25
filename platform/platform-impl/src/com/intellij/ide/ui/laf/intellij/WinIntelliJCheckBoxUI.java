@@ -2,10 +2,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IconCache;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -25,6 +22,17 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   }
 
   @Override
+  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
+    JBInsets.removeFrom(viewRect, b.getInsets());
+    return viewRect;
+  }
+
+  @Override
+  protected Dimension updatePreferredSize(JComponent c, Dimension size) {
+    return size;
+  }
+
+  @Override
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
     ButtonModel bm = b.getModel();
     boolean focused = c.hasFocus() || bm.isRollover() || isCellRollover(b);
@@ -32,10 +40,7 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
 
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
     Icon icon = IconCache.getIcon(iconName, selected || isIndeterminate(b), focused, enabled, false, pressed);
-
-    if (icon != null) {
-      icon.paintIcon(c, g, iconRect.x, iconRect.y);
-    }
+    icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 
   private static boolean isCellRollover(AbstractButton checkBox) {

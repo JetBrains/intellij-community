@@ -123,13 +123,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
                     arrowButton.getWidth() - i.right: arrowButton.getWidth() - i.left;
     }
 
-    return (comboBox.getComponentOrientation().isLeftToRight()) ?
-      new Rectangle(i.left, i.top,
-                           w - (i.left + i.right + buttonWidth),
-                           h - (i.top + i.bottom)) :
-      new Rectangle(i.left + buttonWidth, i.top,
-                           w - (i.left + i.right + buttonWidth),
-                           h - (i.top + i.bottom));
+    Rectangle rect = (comboBox.getComponentOrientation().isLeftToRight()) ?
+      new Rectangle(i.left, i.top, w - (i.left + i.right + buttonWidth), h - (i.top + i.bottom)) :
+      new Rectangle(i.left + buttonWidth, i.top, w - (i.left + i.right + buttonWidth), h - (i.top + i.bottom));
+
+    JBInsets.removeFrom(rect, padding);
+    rect.width += !comboBox.isEditable() ? padding.right : 0;
+    return rect;
   }
 
 
@@ -438,11 +438,15 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   protected Dimension  getSizeWithButton(Dimension d) {
     ARROW_BUTTON_SIZE.update();
+
     Insets i = getInsets();
-    int width = ARROW_BUTTON_SIZE.width + i.left;
-    int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
-    return new Dimension(Math.max(d.width + JBUI.scale(5), width),
-                         Math.max(editorHeight, Math.max(ARROW_BUTTON_SIZE.height, d.height)));
+
+    Dimension ePrefSize = editor != null ? editor.getPreferredSize() : null;
+    int editorHeight = ePrefSize != null ? ePrefSize.height + i.top + i.bottom + padding.top + padding.bottom: 0;
+    int editorWidth = ePrefSize != null ? ePrefSize.width + i.left + padding.left + padding.right : 0;
+
+    return new Dimension(Math.max(d.width, editorWidth + ARROW_BUTTON_SIZE.width),
+                         Math.max(ARROW_BUTTON_SIZE.height, editorHeight));
   }
 
   @Override
@@ -450,16 +454,16 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     return new ComboBoxLayoutManager() {
       @Override
       public void layoutContainer(Container parent) {
-        JComboBox cb = (JComboBox)parent;
+      JComboBox cb = (JComboBox)parent;
 
-        if (arrowButton != null) {
-          if (cb.getComponentOrientation().isLeftToRight()) {
-            arrowButton.setBounds(cb.getWidth() - ARROW_BUTTON_SIZE.width, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
-          } else {
-            arrowButton.setBounds(0, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
-          }
+      if (arrowButton != null) {
+        if (cb.getComponentOrientation().isLeftToRight()) {
+          arrowButton.setBounds(cb.getWidth() - ARROW_BUTTON_SIZE.width, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
+        } else {
+          arrowButton.setBounds(0, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
         }
-        layoutEditor();
+      }
+      layoutEditor();
       }
     };
   }

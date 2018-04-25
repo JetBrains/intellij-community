@@ -194,6 +194,10 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     }
   }
 
+  protected void layoutEditor() {
+
+  }
+
   protected void paintArrowButton(Graphics g,
                                   BasicArrowButton button,
                                   @MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction) {

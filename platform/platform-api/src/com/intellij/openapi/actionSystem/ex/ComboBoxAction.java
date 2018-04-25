@@ -161,8 +161,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setHorizontalAlignment(LEFT);
       setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", ComboBoxAction.this);
-      Insets margins = getMargin();
-      setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
+      setMargin(JBUI.insets(0, 5, 0, 2));
       if (isSmallVariant() && !UIUtil.isUnderGTKLookAndFeel()) {
         setFont(JBUI.Fonts.label(11));
       }
@@ -332,10 +331,15 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Dimension getPreferredSize() {
       Dimension prefSize = super.getPreferredSize();
-      int width = prefSize.width + getArrowIcon(isEnabled()).getIconWidth() + JBUI.scale(5);
-      width += UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(10) :
-               UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(5) : 0;
-      return new Dimension(width, isSmallVariant() ? JBUI.scale(24) : Math.max(JBUI.scale(24), prefSize.height));
+      Insets i = getInsets();
+      int width = prefSize.width + getArrowIcon(isEnabled()).getIconWidth()
+                  + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0)
+                  + (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(6) : 0)
+                  - (isSmallVariant() ? i.left + i.right : 0);
+
+      Dimension size = new Dimension(width, isSmallVariant() ? JBUI.scale(24) : Math.max(JBUI.scale(24), prefSize.height));
+      JBInsets.addTo(size, getMargin());
+      return size;
     }
 
     @Override
@@ -411,19 +415,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       }
 
-      Insets insets = getInsets();
       Icon icon = getArrowIcon(isEnabled());
-
-      int x = size.width - icon.getIconWidth() - insets.right;
-      if (UIUtil.isUnderWin10LookAndFeel()) {
-        x -= JBUI.scale(5);
-      } else if (isSmallVariant()) {
-          if (UIUtil.isUnderDefaultMacTheme()) {
-            x -= JBUI.scale(3);
-          }
-      } else {
-        x += JBUI.scale(2);
-      }
+      int x = size.width - icon.getIconWidth() - getInsets().right - getMargin().right -
+              (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(3) : 0); // Different icons correction
 
       icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
       g.setPaintMode();

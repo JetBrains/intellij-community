@@ -68,6 +68,16 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof AbstractButton && c.getClientProperty("styleCombo") != null;
   }
 
+  @Override
+  public void installDefaults(AbstractButton b) {
+    super.installDefaults(b);
+    b.setIconTextGap(textIconGap());
+  }
+
+  protected int textIconGap() {
+    return JBUI.scale(4);
+  }
+
   /**
    * Paints additional buttons decorations
    * @param g Graphics
@@ -200,17 +210,23 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
-    if (isComboButton(c)) {
-      return prefSize;
-    } else {
-      Insets i = c.getInsets();
+    Insets i = c.getInsets();
+    if (UIUtil.isHelpButton(c) || isSquare(c)) {
       int helpDiam = HELP_BUTTON_DIAMETER.get();
-      return UIUtil.isHelpButton(c) ?
-             new Dimension(Math.max(prefSize.width, helpDiam + i.left + i.right),
-                           Math.max(prefSize.height, helpDiam + i.top + i.bottom)):
-             new Dimension(Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
-                           Math.max(prefSize.height, MINIMUM_HEIGHT.get() + i.top + i.bottom));
+      return new Dimension(Math.max(prefSize.width, helpDiam + i.left + i.right),
+                           Math.max(prefSize.height, helpDiam + i.top + i.bottom));
+    } else {
+      int width = isComboButton(c) ?
+                  prefSize.width:
+                  Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right);
+      int height = Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom);
+
+      return new Dimension(width, height);
     }
+  }
+
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
   }
 
   @Override
@@ -268,5 +284,6 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   protected void modifyViewRect(AbstractButton b, Rectangle rect) {
     JBInsets.removeFrom(rect, b.getInsets());
+    JBInsets.removeFrom(rect, b.getMargin());
   }
 }

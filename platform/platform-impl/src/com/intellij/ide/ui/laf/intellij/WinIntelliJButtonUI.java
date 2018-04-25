@@ -26,6 +26,8 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextBorder.MINIMUM_HEIGHT;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -108,18 +110,8 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   }
 
   @Override
-  protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
-    Insets i = c.getInsets();
-    if (isComboButton(c)) {
-      return prefSize;
-    } else if (UIUtil.isHelpButton(c) || isSquare(c)) {
-      Dimension size = JBUI.size(22);
-      JBInsets.addTo(size, i);
-      return size;
-    } else {
-      return new Dimension(Math.max(JBUI.scale(28) + prefSize.width, JBUI.scale(72) + i.left + i.right),
-                           Math.max(prefSize.height, JBUI.scale(22) + i.top + i.bottom));
-    }
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
   }
 
   @Override

@@ -12,7 +12,8 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.*;
+import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.ARC;
+import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.LW;
 
 /**
  * @author Konstantin Bulenkov
@@ -106,15 +107,15 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
-    if (isComboButton(c)) {
-      return prefSize;
-    } else if (UIUtil.isHelpButton(c)) {
+    if (UIUtil.isHelpButton(c)) {
       Icon icon = IconCache.getIcon("helpButton");
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     } else {
       Insets i = c.getInsets();
-      return new Dimension(Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
-                           Math.max(prefSize.height, MINIMUM_HEIGHT.get() + i.top + i.bottom));
+      return new Dimension(isComboButton(c) ?
+                           prefSize.width:
+                           Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
+                           Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom));
     }
   }
 
