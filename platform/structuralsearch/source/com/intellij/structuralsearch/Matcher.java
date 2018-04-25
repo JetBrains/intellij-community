@@ -176,8 +176,6 @@ public class Matcher {
                                 PsiElement psiFile,
                                 final PairProcessor<MatchResult, Configuration> processor) {
     if (psiFile == null) return;
-    LocalSearchScope scope = new LocalSearchScope(psiFile);
-
     matchContext.clear();
     matchContext.setMatcher(visitor);
 
@@ -197,7 +195,6 @@ public class Matcher {
         }
       )
     );
-    options.setScope(scope);
   }
 
   public void precompileOptions(List<Configuration> configurations, Map<Configuration, MatchContext> out) {
