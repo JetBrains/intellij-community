@@ -148,18 +148,19 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       if (valueAttribute == null) continue;
       values.put(nameAttribute.getValue(), valueAttribute.getValue());
     }
-    useRighthandTypeAsWeakestTypeInAssignments = readOrDefault(values, "useRighthandTypeAsWeakestTypeInAssignments");
-    useParameterizedTypeForCollectionMethods = readOrDefault(values, "useParameterizedTypeForCollectionMethods");
-    doNotWeakenToJavaLangObject = readOrDefault(values, "doNotWeakenToJavaLangObject");
-    onlyWeakentoInterface = readOrDefault(values, "onlyWeakentoInterface");
-    doNotWeakenReturnType = readOrDefault(values, "doNotWeakenReturnType");
-    doNotWeakenInferredVariableType = readOrDefault(values, "doNotWeakenInferredVariableType");
+    useRighthandTypeAsWeakestTypeInAssignments = readOrDefault(values, "useRighthandTypeAsWeakestTypeInAssignments", useRighthandTypeAsWeakestTypeInAssignments);
+    useParameterizedTypeForCollectionMethods = readOrDefault(values, "useParameterizedTypeForCollectionMethods", useParameterizedTypeForCollectionMethods);
+    doNotWeakenToJavaLangObject = readOrDefault(values, "doNotWeakenToJavaLangObject", doNotWeakenToJavaLangObject);
+    onlyWeakentoInterface = readOrDefault(values, "onlyWeakentoInterface", onlyWeakentoInterface);
+    doNotWeakenReturnType = readOrDefault(values, "doNotWeakenReturnType", doNotWeakenReturnType);
+    doNotWeakenInferredVariableType = readOrDefault(values, "doNotWeakenInferredVariableType", doNotWeakenInferredVariableType);
     readStopClasses(node);
   }
 
-  private static boolean readOrDefault(@NotNull Map<String, String> options, @NotNull String name) {
+  private static boolean readOrDefault(@NotNull Map<String, String> options, @NotNull String name, boolean defaultValue) {
     String value = options.get(name);
-    return value == null || Boolean.parseBoolean(value);
+    if (value == null) return defaultValue;
+    return Boolean.parseBoolean(value);
   }
 
   private void readStopClasses(@NotNull Element node) {
@@ -412,7 +413,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
           return;
         }
       }
-      if (doNotWeakenInferredVariableType) {
+      if (!doNotWeakenInferredVariableType) {
         PsiTypeElement typeElement = variable.getTypeElement();
         if (typeElement != null && typeElement.isInferredType()) {
           return;
