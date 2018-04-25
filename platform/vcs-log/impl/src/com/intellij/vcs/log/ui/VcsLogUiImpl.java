@@ -156,6 +156,9 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
         myMainFrame.showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
       }
+      else if (CommonUiProperties.SHOW_DIFF_PREVIEW.equals(property)) {
+        myMainFrame.showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
+      }
       else if (MainVcsLogUiProperties.SHOW_LONG_EDGES.equals(property)) {
         onShowLongEdgesChanged();
       }

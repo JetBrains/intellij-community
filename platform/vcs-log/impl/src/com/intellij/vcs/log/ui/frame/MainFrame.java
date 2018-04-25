@@ -7,14 +7,11 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponent;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.PopupHandler;
@@ -68,7 +65,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLog myLog;
   @NotNull private final VcsLogClassicFilterUi myFilterUi;
-  @NotNull private final VcsConfiguration myVcsConfiguration;
 
   @NotNull private final JBLoadingPanel myChangesLoadingPane;
   @NotNull private final VcsLogGraphTable myGraphTable;
@@ -93,9 +89,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myLog = log;
     myUiProperties = uiProperties;
 
-    Project project = logData.getProject();
-    myVcsConfiguration = VcsConfiguration.getInstance(project);
-
     myFilterUi = new VcsLogClassicFilterUi(ui, logData, myUiProperties, initialDataPack);
 
     // initialize components
@@ -110,12 +103,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
     };
 
-    myChangesBrowser = new VcsLogChangesBrowser(project, myUiProperties, (commitId) -> {
+    myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
       return myLogData.getMiniDetailsGetter().getCommitData(index, Collections.singleton(index));
     }, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
-    myChangesBrowser.addToolbarAction(new MyToggleDetailsAction());
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
@@ -124,9 +116,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     setupDetailsSplitter(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
 
 
-    VcsLogChangeProcessor changeProcessor = new VcsLogChangeProcessor(project, myChangesBrowser, this);
+    VcsLogChangeProcessor changeProcessor = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, this);
     myPreviewDiffSplitter = new PreviewDiffSplitterComponent(myDetailsSplitter, changeProcessor, PREVIEW_DIFF_SPLITTER_PROPORTION,
-                                                             myVcsConfiguration.VCS_LOG_DETAILS_PREVIEW_SHOWN);
+                                                             myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
 
     Runnable changesListener = () -> {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -288,6 +280,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
 
+  public void showDiffPreview(boolean state) {
+    myPreviewDiffSplitter.setDetailsOn(state);
+  }
+
   @Override
   public void dispose() {
     myGraphTable.getSelectionModel().removeListSelectionListener(mySelectionListenerForDiff);
@@ -368,19 +364,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       else {
         statusText.setText(CHANGES_LOG_TEXT);
       }
-    }
-  }
-
-  private class MyToggleDetailsAction extends ShowDiffPreviewAction {
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myPreviewDiffSplitter.setDetailsOn(state);
-      myVcsConfiguration.VCS_LOG_DETAILS_PREVIEW_SHOWN = state;
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myVcsConfiguration.VCS_LOG_DETAILS_PREVIEW_SHOWN;
     }
   }
 }
