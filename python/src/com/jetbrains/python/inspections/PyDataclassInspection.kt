@@ -80,6 +80,11 @@ class PyDataclassInspection : PyInspection() {
               processPostInitDefinition(postInit, dataclassParameters, initVars)
             }
           }
+          else if (dataclassParameters.type == PyDataclassParameters.Type.ATTRS) {
+            node
+              .findMethodByName(DUNDER_ATTRS_POST_INIT, false, myTypeEvalContext)
+              ?.also { processAttrsPostInitDefinition(it, dataclassParameters) }
+          }
 
           PyNamedTupleInspection.inspectFieldsOrder(
             node,
@@ -311,6 +316,20 @@ class PyDataclassInspection : PyInspection() {
           .zip(initVars.asSequence())
           .all { it.first.name == it.second.name }
           .also { if (!it) registerProblem(postInit.parameterList, message) }
+      }
+    }
+
+    private fun processAttrsPostInitDefinition(postInit: PyFunction, dataclassParameters: PyDataclassParameters) {
+      if (!dataclassParameters.init) {
+        registerProblem(postInit.nameIdentifier,
+                        "'$DUNDER_ATTRS_POST_INIT' would not be called until 'init' parameter is set to True",
+                        ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+      }
+
+      if (postInit.getParameters(myTypeEvalContext).size != 1) {
+        registerProblem(postInit.parameterList,
+                        "'$DUNDER_ATTRS_POST_INIT' should not take any parameters except '${PyNames.CANONICAL_SELF}'",
+                        ProblemHighlightType.GENERIC_ERROR)
       }
     }
 
