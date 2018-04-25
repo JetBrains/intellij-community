@@ -28,6 +28,7 @@ import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
 import org.jetbrains.idea.devkit.util.PsiUtil
+import org.jetbrains.jps.model.serialization.PathMacroUtil
 
 fun checkProperModule(extensionPoint: ExtensionPoint, holder: DomElementAnnotationHolder) {
   if (checkProperXmlFileForClass(extensionPoint, holder, extensionPoint.`interface`.value)) {
@@ -132,7 +133,7 @@ fun isIdeaPlatformModule(module: Module?): Boolean {
     if (parent.name == "plugins") {
       return false
     }
-    if (parent.findChild(".idea") != null) {
+    if (parent.findChild(PathMacroUtil.DIRECTORY_STORE_NAME) != null) {
       return true
     }
     parent = parent.parent
