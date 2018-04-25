@@ -101,6 +101,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private PyReferrersLoader myReferrersProvider;
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean isCythonWarningShown = false;
+  @Nullable private XCompositeNode myCurrentRootNode;
 
   public PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull ServerSocket serverSocket,
@@ -451,7 +452,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     super.registerAdditionalActions(leftToolbar, topToolbar, settings);
     settings.add(new WatchReturnValuesAction(this));
     settings.add(new PyVariableViewSettings.SimplifiedView(this));
-    settings.add(new PyVariableViewSettings.AsyncView());
+    settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
   }
 
   private static class WatchReturnValuesAction extends ToggleAction {
@@ -747,7 +748,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           XValueNode node = value.getLastNode();
           if (node != null && !node.isObsolete()) {
             if (e.getMessage().startsWith("Timeout")) {
-              value.updateNodeValueAfterLoading(node, " ", "Timeout Exceeded");
+              value.updateNodeValueAfterLoading(node, " ", "", PyVariableViewSettings.LOADING_TIMED_OUT);
+              PyVariableViewSettings.showWarningMessage(getCurrentRootNode());
             }
             else {
               LOG.error(e);
@@ -828,6 +830,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public boolean canSaveToTemp(String name) {
     final Project project = getSession().getProject();
     return PyDebugSupportUtils.canSaveToTemp(project, name);
+  }
+
+  @Override
+  public void setCurrentRootNode(@Nullable XCompositeNode currentRootNode) {
+    myCurrentRootNode = currentRootNode;
+  }
+
+  @Nullable
+  @Override
+  public XCompositeNode getCurrentRootNode() {
+    return myCurrentRootNode;
   }
 
   @NotNull
