@@ -18,6 +18,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
@@ -1518,6 +1519,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
           return clickInfo;
         }
+      }
+      if (component instanceof ActionToolbarImpl) {
+        clickInfo.add(new PropertyBean("Toolbar Place", ((ActionToolbarImpl)component).getPlace(), true));
+        clickInfo.add(new PropertyBean("Toolbar Group", ((ActionToolbarImpl)component).getGroupId(), true));
+        return clickInfo;
       }
       return null;
     }
