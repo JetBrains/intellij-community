@@ -253,7 +253,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     val configuration = factory.createTemplateConfiguration(project, this)
     val template = RunnerAndConfigurationSettingsImpl(this, configuration,
                                                       isTemplate = true,
-                                                      singleton = factory.isConfigurationSingletonByDefault)
+                                                      isSingleton = factory.isConfigurationSingletonByDefault)
     if (configuration is UnknownRunConfiguration) {
       configuration.isDoNotStore = true
     }
@@ -847,6 +847,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       return null
     }
     return allSettings.firstOrNull { it.name == name }
+  }
+
+  override fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings? {
+    return allSettings.firstOrNull { it.configuration === configuration } ?: findConfigurationByName(configuration.name)
   }
 
   override fun <T : BeforeRunTask<*>> getBeforeRunTasks(settings: RunConfiguration, taskProviderId: Key<T>): List<T> {

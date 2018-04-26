@@ -43,10 +43,12 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     myRenamedOutputFileName = outputFileName;
   }
 
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new FileCopyPresentation(myFilePath, getOutputFileName());
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,

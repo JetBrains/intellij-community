@@ -24,7 +24,7 @@ import static com.intellij.testFramework.PlatformTestUtil.assertTiming;
 
 public class GradleImportPerformanceTest extends GradleImportingTestCase {
 
-  public static final String TEST_DATA_PATH = System.getProperty("gradle.performance.test.data.path");
+  public static final String TEST_DATA_PATH = System.getenv("gradle.performance.test.data.path");
 
   @Override
   protected void collectAllowedRoots(List<String> roots) {

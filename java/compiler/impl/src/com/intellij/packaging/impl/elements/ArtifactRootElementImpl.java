@@ -26,6 +26,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     super(PackagingElementFactoryImpl.ARTIFACT_ROOT_ELEMENT_TYPE);
   }
 
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new PackagingElementPresentation() {
       @Override
@@ -62,6 +63,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   public void rename(@NotNull String newName) {
   }
 
+  @NotNull
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,
                                                           @NotNull ArtifactType artifactType) {

@@ -4,7 +4,6 @@ package com.intellij.java.codeInsight.navigation;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.sm.runner.ui.TestStackTraceParser;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -39,14 +38,14 @@ public class FailedLineTest extends LightCodeInsightFixtureTestCase {
 
   private void configure() {
     String url = "java:test://MainTest.testFoo";
-    Pair<Integer, String> pair = TestStackTraceParser.findFailLine("\tat junit.framework.Assert.fail(Assert.java:47)\n" +
-                                                                   "\tat MainTest.assertEquals(Assert.java:207)\n" +
-                                                                   "\tat MainTest.testFoo(MainTest.java:3)", url);
-    assertEquals(3, pair.first.intValue());
-    assertEquals("assertEquals", pair.second);
+    TestStackTraceParser pair = new TestStackTraceParser(url, "\tat junit.framework.Assert.fail(Assert.java:47)\n" +
+                                                              "\tat MainTest.assertEquals(Assert.java:207)\n" +
+                                                              "\tat MainTest.testFoo(MainTest.java:3)", "oops");
+    assertEquals(3, pair.getFailedLine());
+    assertEquals("assertEquals", pair.getFailedMethodName());
     TestStateStorage.getInstance(getProject())
                     .writeState(url, new TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_INDEX.getValue(), new Date(),
-                                                                 0, pair.first, pair.second, "oops"));
+                                                                 0, pair.getFailedLine(), pair.getFailedMethodName(), pair.getErrorMessage()));
 
     myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MainTest.java", "  public class MainTest extends junit.framework.TestCase {\n" +

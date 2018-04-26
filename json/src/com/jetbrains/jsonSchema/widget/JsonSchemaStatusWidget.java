@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider;
@@ -141,6 +142,11 @@ public class JsonSchemaStatusWidget {
       VirtualFile schemaFile = schemaFiles.iterator().next();
       JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
       if (provider != null) {
+        if (!isValidSchemaFile(schemaFile)) {
+          MyWidgetState state = new MyWidgetState("File is not a schema", "JSON schema error", true);
+          state.setWarning(true);
+          return state;
+        }
         String providerName = provider.getPresentableName();
         String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
         String name = shortName.startsWith("JSON Schema") ? shortName : (JSON_SCHEMA_BAR + shortName);
@@ -183,13 +189,57 @@ public class JsonSchemaStatusWidget {
         }
       }
 
-      if (!myService.isSchemaFile(schemaFile)) {
+      if (!isValidSchemaFile(schemaFile)) {
         MyWidgetState state = new MyWidgetState("File is not a schema", "JSON schema error", true);
         state.setWarning(true);
         return state;
       }
 
-      return new MyWidgetState(JSON_SCHEMA_TOOLTIP + getSchemaFileDesc(schemaFile), JSON_SCHEMA_BAR + schemaFile.getNameWithoutExtension(), true);
+      return new MyWidgetState(JSON_SCHEMA_TOOLTIP + getSchemaFileDesc(schemaFile), JSON_SCHEMA_BAR + getPresentableNameForFile(schemaFile), true);
+    }
+
+    private boolean isValidSchemaFile(VirtualFile schemaFile) {
+      if (schemaFile == null || !myService.isSchemaFile(schemaFile)) return false;
+      FileType type = schemaFile.getFileType();
+      return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof JsonLanguage;
+    }
+
+    @Nullable
+    private String extractNpmPackageName(@Nullable String path) {
+      if (path == null) return null;
+      int idx = path.indexOf("node_modules");
+      if (idx != -1) {
+        int trimIndex = idx + "node_modules".length() + 1;
+        if (trimIndex < path.length()) {
+          path = path.substring(trimIndex);
+          idx = StringUtil.indexOfAny(path, "\\/");
+          if (idx != -1) {
+            if (path.startsWith("@")) {
+              idx = StringUtil.indexOfAny(path, "\\/", idx + 1, path.length());
+            }
+          }
+
+          if (idx != -1) {
+            return path.substring(0, idx);
+          }
+        }
+      }
+      return null;
+    }
+
+    @NotNull
+    private String getPresentableNameForFile(@NotNull VirtualFile schemaFile) {
+      if (schemaFile instanceof HttpVirtualFile) {
+        return new JsonSchemaInfo(schemaFile.getUrl()).getDescription();
+      }
+
+      String nameWithoutExtension = schemaFile.getNameWithoutExtension();
+      if (!JsonSchemaInfo.isVeryDumbName(nameWithoutExtension)) return nameWithoutExtension;
+
+      String path = schemaFile.getPath();
+
+      String npmPackageName = extractNpmPackageName(path);
+      return npmPackageName != null ? npmPackageName : schemaFile.getName();
     }
 
     @NotNull
@@ -205,11 +255,13 @@ public class JsonSchemaStatusWidget {
     }
 
     @NotNull
-    private String getSchemaFileDesc(VirtualFile schemaFile) {
+    private String getSchemaFileDesc(@NotNull VirtualFile schemaFile) {
       if (schemaFile instanceof HttpVirtualFile) {
         return schemaFile.getPresentableUrl();
       }
-      return schemaFile.getName();
+
+      String npmPackageName = extractNpmPackageName(schemaFile.getPath());
+      return schemaFile.getName() + (npmPackageName == null ? "" : (" (Package: " + npmPackageName + ")"));
     }
 
     @Nullable
@@ -219,11 +271,12 @@ public class JsonSchemaStatusWidget {
       if (virtualFile == null) return null;
 
       Project project = getProject();
+      if (project == null) return null;
       return doCreatePopup(virtualFile, project, ((MyWidgetState)getWidgetState(virtualFile)).isWarning());
     }
 
     @NotNull
-    private ListPopup doCreatePopup(VirtualFile virtualFile, Project project, boolean showOnlyEdit) {
+    private ListPopup doCreatePopup(@NotNull VirtualFile virtualFile, @NotNull Project project, boolean showOnlyEdit) {
       return JsonSchemaStatusPopup.createPopup(myService, project, virtualFile, showOnlyEdit);
     }
 

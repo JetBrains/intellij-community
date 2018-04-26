@@ -202,6 +202,8 @@ abstract class RunManager {
 
   abstract fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings?
 
+  abstract fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings?
+
   fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
 
   fun findConfigurationByTypeAndName(type: ConfigurationType?, name: String) = type?.let { findConfigurationByTypeAndName(it.id, name) }

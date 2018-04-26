@@ -110,6 +110,15 @@ public interface RunConfiguration extends RunProfile, Cloneable {
     return System.identityHashCode(this);
   }
 
+  /**
+   * Returns the unique identifier of the run configuration. Return null if not applicable.
+   * Used only for non-managed RC type.
+   */
+  @Nullable
+  default String getId() {
+    return null;
+  }
+
   @NotNull
   @Transient
   default String getPresentableType() {

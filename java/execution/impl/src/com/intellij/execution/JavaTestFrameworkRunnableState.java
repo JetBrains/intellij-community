@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.ExtensionPoints;
@@ -216,7 +202,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
     javaParameters.setJdk(jdk);
-    
+
     final String parameters = getConfiguration().getProgramParameters();
     getConfiguration().setProgramParameters(null);
     try {
@@ -302,8 +288,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
         ShortenCommandLine shortenCommandLine = getConfiguration().getShortenCommandLine();
-        boolean useDynamicClasspathForForkMode = shortenCommandLine == null 
-                                                 ? JdkUtil.useDynamicClasspath(getConfiguration().getProject()) 
+        boolean useDynamicClasspathForForkMode = shortenCommandLine == null
+                                                 ? JdkUtil.useDynamicClasspath(getConfiguration().getProject())
                                                  : shortenCommandLine != ShortenCommandLine.NONE;
         if (useDynamicClasspathForForkMode && forkPerModule()) {
           writer.println("use classpath jar");
@@ -311,7 +297,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
         else {
           writer.println("");
         }
-  
+
         writer.println(((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk));
         for (String vmParameter : javaParameters.getVMParametersList().getList()) {
           writer.println(vmParameter);
@@ -402,8 +388,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
    */
   protected boolean forkPerModule() {
     final String workingDirectory = getConfiguration().getWorkingDirectory();
+    //noinspection deprecation
     return getScope() != TestSearchScope.SINGLE_MODULE &&
-           (("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory) || ProgramParametersConfigurator.MODULE_WORKING_DIR.equals(workingDirectory)) &&
+           (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory) ||
+            PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory) ||
+            ProgramParametersConfigurator.MODULE_WORKING_DIR.equals(workingDirectory)) &&
            spansMultipleModules(getConfiguration().getPackage());
   }
 
@@ -411,7 +400,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     try {
       myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp", true);
       javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
-      
+
       myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp", true);
       passTempFile(javaParameters.getProgramParametersList(), myTempFile.getAbsolutePath());
     }
@@ -463,7 +452,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     if (myTempFile != null) {
       FileUtil.delete(myTempFile);
     }
-    
+
     if (myWorkingDirsFile != null) {
       FileUtil.delete(myWorkingDirsFile);
     }

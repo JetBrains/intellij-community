@@ -69,7 +69,7 @@ public class JsonSchemaInfo {
     return possibleName;
   }
 
-  private static boolean isVeryDumbName(String possibleName) {
+  public static boolean isVeryDumbName(String possibleName) {
     return "schema".equals(possibleName) || "config".equals(possibleName);
   }
 

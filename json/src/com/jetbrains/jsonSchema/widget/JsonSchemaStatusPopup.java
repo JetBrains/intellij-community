@@ -49,10 +49,13 @@ public class JsonSchemaStatusPopup {
 
   @NotNull
   static JsonSchemaInfoPopupStep createPopupStep(@NotNull JsonSchemaService service,
-                                                         @NotNull Project project,
-                                                         @NotNull VirtualFile virtualFile, boolean showOnlyEdit) {
+                                                 @NotNull Project project,
+                                                 @NotNull VirtualFile virtualFile,
+                                                 boolean showOnlyEdit) {
     List<JsonSchemaInfo> allSchemas;
-    if (!showOnlyEdit) {
+    JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
+    UserDefinedJsonSchemaConfiguration mapping = configuration.findMappingForFile(virtualFile);
+    if (!showOnlyEdit || mapping == null) {
       List<JsonSchemaInfo> infos = service.getAllUserVisibleSchemas();
       Comparator<JsonSchemaInfo> comparator = Comparator.comparing(JsonSchemaInfo::getDescription, String::compareTo);
       Stream<JsonSchemaInfo> registered = infos.stream().filter(i -> i.getProvider() != null).sorted(comparator);
@@ -61,8 +64,6 @@ public class JsonSchemaStatusPopup {
         otherList = ContainerUtil.createMaybeSingletonList(LOAD_REMOTE);
       }
       allSchemas = Stream.concat(registered, otherList.stream()).collect(Collectors.toList());
-      JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
-      UserDefinedJsonSchemaConfiguration mapping = configuration.findMappingForFile(virtualFile);
       allSchemas.add(0, mapping == null ? ADD_MAPPING : EDIT_MAPPINGS);
     }
     else {

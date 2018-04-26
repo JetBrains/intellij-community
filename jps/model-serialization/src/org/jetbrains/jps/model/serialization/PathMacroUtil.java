@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
@@ -34,7 +20,11 @@ import static com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName;
  */
 public class PathMacroUtil {
   @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
+
   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+  public static final String DEPRECATED_MODULE_DIR = "$" + MODULE_DIR_MACRO_NAME + "$";
+  public static final String MODULE_WORKING_DIR = "$MODULE_WORKING_DIR$";
+
   @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
   @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
   @NonNls public static final String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";

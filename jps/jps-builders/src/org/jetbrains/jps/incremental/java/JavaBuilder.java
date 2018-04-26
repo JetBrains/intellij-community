@@ -86,7 +86,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
   private static final List<String> COMPILABLE_EXTENSIONS = Collections.singletonList(JAVA_EXTENSION);
-  private static final String MODULE_DIR_MACRO_TEMPLATE = "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$";
 
   private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
     "-target"
@@ -473,7 +472,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final ConcurrentMap<String, Collection<String>> map = COMPILER_USAGE_STATISTICS.get(context);
     Collection<String> names = map.get(compilerName);
     if (names == null) {
-      names = Collections.synchronizedSet(new HashSet<String>());
+      names = Collections.synchronizedSet(new HashSet<>());
       final Collection<String> prev = map.putIfAbsent(compilerName, names);
       if (prev != null) {
         names = prev;
@@ -774,7 +773,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
         // -properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs
         final String moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.getAbsolutePath());
-        appender = (strings, option) -> strings.add(StringUtil.replace(option, MODULE_DIR_MACRO_TEMPLATE, moduleDirPath));
+        appender = (strings, option) -> strings.add(StringUtil.replace(option, PathMacroUtil.DEPRECATED_MODULE_DIR, moduleDirPath));
       }
 
       boolean skip = false;
