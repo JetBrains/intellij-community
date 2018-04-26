@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.CancellablePromise;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
 /**
@@ -73,5 +75,17 @@ public interface AppUIExecutor extends Executor {
   @NotNull
   @Contract(pure=true)
   AppUIExecutor expireWith(@NotNull Disposable parentDisposable);
+
+  /**
+   * Schedule the given task's execution and return a Promise that allows to get the result when the task is complete,
+   * or cancel the task if it's no longer needed.
+   */
+  <T> CancellablePromise<T> submit(Callable<T> task);
+
+  /**
+   * Schedule the given task's execution and return a Promise that allows to check if the task is complete,
+   * or cancel the task if it's no longer needed.
+   */
+  CancellablePromise<?> submit(Runnable task);
   
 }
