@@ -627,7 +627,11 @@ public class AllIcons {
     public static final Icon ComboBoxButtonArrow = IconLoader.getIcon("/general/comboBoxButtonArrow.png"); // 16x16
     public static final Icon ComboUpPassive = IconLoader.getIcon("/general/comboUpPassive.png"); // 16x16
     public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png"); // 32x32
-    public static final Icon Configure = IconLoader.getIcon("/general/Configure.png"); // 32x32
+
+    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Configure = IconLoader.getIcon("/general/settings.svg"); // 16x16
     public static final Icon ContextHelp = IconLoader.getIcon("/general/contextHelp.png"); // 16x16
     public static final Icon CopyHovered = IconLoader.getIcon("/general/copyHovered.png"); // 16x16
     public static final Icon CreateNewProject = IconLoader.getIcon("/general/createNewProject.png"); // 32x32
@@ -744,7 +748,11 @@ public class AllIcons {
     public static final Icon ProjectStructure = IconLoader.getIcon("/general/projectStructure.svg"); // 16x16
     public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.svg"); // 16x16
     public static final Icon QuestionDialog = IconLoader.getIcon("/general/questionDialog.png"); // 32x32
-    public static final Icon ReadHelp = IconLoader.getIcon("/general/readHelp.png"); // 32x32
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Help */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ReadHelp = IconLoader.getIcon("/actions/help.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree */
     @SuppressWarnings("unused")

@@ -34,6 +34,8 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
     ourDeprecatedIconsReplacements.put("/actions/menu_help.png", "AllIcons.Actions.Help");
     ourDeprecatedIconsReplacements.put("/actions/menu_help.svg", "AllIcons.Actions.Help");
+    ourDeprecatedIconsReplacements.put("/debugger/readHelp.png", "AllIcons.Actions.Help");
+    ourDeprecatedIconsReplacements.put("/debugger/readHelp.svg", "AllIcons.Actions.Help");
 
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.png", "AllIcons.Actions.Menu_saveall");
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.svg", "AllIcons.Actions.Menu_saveall");
@@ -148,6 +150,8 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
 
     ourDeprecatedIconsReplacements.put("/general/applicationSettings.png", "AllIcons.General.Settings");
     ourDeprecatedIconsReplacements.put("/general/applicationSettings.svg", "AllIcons.General.Settings");
+    ourDeprecatedIconsReplacements.put("/general/Configure.png", "AllIcons.General.Settings");
+    ourDeprecatedIconsReplacements.put("/general/Configure.svg", "AllIcons.General.Settings");
     ourDeprecatedIconsReplacements.put("/general/ideOptions.png", "AllIcons.General.Settings");
     ourDeprecatedIconsReplacements.put("/general/ideOptions.svg", "AllIcons.General.Settings");
     ourDeprecatedIconsReplacements.put("/vcs/customizeView.png", "AllIcons.General.Settings");
