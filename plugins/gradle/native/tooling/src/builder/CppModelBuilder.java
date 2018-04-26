@@ -20,14 +20,14 @@ import org.gradle.language.cpp.CppStaticLibrary;
 import org.gradle.language.cpp.plugins.CppBasePlugin;
 import org.gradle.language.cpp.tasks.CppCompile;
 import org.gradle.language.nativeplatform.ComponentWithExecutable;
+import org.gradle.language.nativeplatform.internal.ConfigurableComponentWithExecutable;
 import org.gradle.nativeplatform.tasks.LinkExecutable;
-import org.gradle.nativeplatform.toolchain.Clang;
-import org.gradle.nativeplatform.toolchain.Gcc;
-import org.gradle.nativeplatform.toolchain.NativeToolChain;
-import org.gradle.nativeplatform.toolchain.VisualCpp;
+import org.gradle.nativeplatform.toolchain.*;
+import org.gradle.nativeplatform.toolchain.internal.PlatformToolProvider;
 import org.gradle.nativeplatform.toolchain.internal.ToolType;
 import org.gradle.nativeplatform.toolchain.internal.tools.CommandLineToolSearchResult;
 import org.gradle.nativeplatform.toolchain.internal.tools.ToolSearchPath;
+import org.gradle.platform.base.internal.toolchain.ToolSearchResult;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +69,7 @@ public class CppModelBuilder implements ModelBuilderService {
         CppComponent cppComponent = (CppComponent)component;
         for (CppBinary cppBinary : cppComponent.getBinaries().get()) {
           if (cppCompilerExecutable == null) {
+            NativeToolChainRegistry nativeToolChains = project.getExtensions().getByType(NativeToolChainRegistry.class);
             cppCompilerExecutable = findCppCompilerExecutable(cppBinary);
           }
 
@@ -178,6 +179,14 @@ public class CppModelBuilder implements ModelBuilderService {
 
   @Nullable
   private static File findCppCompilerExecutable(CppBinary cppBinary) {
+    if (cppBinary instanceof ConfigurableComponentWithExecutable) {
+      PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
+      ToolSearchResult toolSearchResult = toolProvider.isToolAvailable(ToolType.CPP_COMPILER);
+      if (toolSearchResult.isAvailable() && toolSearchResult instanceof CommandLineToolSearchResult) {
+        return ((CommandLineToolSearchResult)toolSearchResult).getTool();
+      }
+    }
+
     NativeToolChain toolChain = cppBinary.getToolChain();
     String exeName;
     if (toolChain instanceof Gcc) {
