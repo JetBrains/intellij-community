@@ -64,7 +64,7 @@ public class ImageInfoReader {
     try {
       Couple<Integer> couple = SVGLoader.loadInfo(null, new ByteArrayInputStream(data), 1.0f);
       return new Info(couple.first, couple.second, 32);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       return null;
     }
   }
