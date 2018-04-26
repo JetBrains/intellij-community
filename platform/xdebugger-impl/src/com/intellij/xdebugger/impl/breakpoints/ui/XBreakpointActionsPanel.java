@@ -34,7 +34,6 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   private JPanel myExpressionPanel;
   private JPanel myLanguageChooserPanel;
   private JCheckBox myLogStack;
-  private JLabel myLogToConsoleLabel;
   private XDebuggerExpressionComboBox myLogExpressionComboBox;
 
   public void init(Project project, XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
