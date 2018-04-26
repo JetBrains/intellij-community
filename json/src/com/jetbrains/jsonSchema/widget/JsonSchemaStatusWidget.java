@@ -162,6 +162,20 @@ public class JsonSchemaStatusWidget {
                   myWidget.update();
                 }
               }
+
+              @Override
+              public void errorOccurred(@NotNull String errorMessage) {
+                if (myWidget != null) {
+                  myWidget.update();
+                }
+              }
+
+              @Override
+              public void downloadingCancelled() {
+                if (myWidget != null) {
+                  myWidget.update();
+                }
+              }
             });
             return new MyWidgetState("Download is scheduled or in progress", "Downloading JSON schema", false);
           case ERROR_OCCURRED:

@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,12 @@ public class JsonFileResolver {
 
     if (schemaUrl != null) {
       VirtualFile virtualFile = urlToFile(schemaUrl);
+      // validate the URL before returning the file
+      if (virtualFile instanceof HttpVirtualFile) {
+        String url = virtualFile.getUrl();
+        Url parse = Urls.parse(url, false);
+        if (parse == null || StringUtil.isEmpty(parse.getAuthority()) || StringUtil.isEmpty(parse.getPath())) return null;
+      }
       if (virtualFile != null) return virtualFile;
     }
 
