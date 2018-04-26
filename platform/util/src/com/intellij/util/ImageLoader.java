@@ -187,6 +187,10 @@ public class ImageLoader implements Serializable {
         }
       }
 
+      void add(ImageDesc.Type type) {
+        list.add(new ImageDesc(name + "." + ext, cls, 1.0, type, true));
+      }
+
       ImageDescList build() {
         return list;
       }
@@ -232,9 +236,9 @@ public class ImageLoader implements Serializable {
                                  cls,
                                  Registry.is("ide.svg.icon"),
                                  adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
+
       if (path.contains("://") && !path.startsWith("file:")) {
-        ImageDesc.Type type = StringUtil.endsWithIgnoreCase(path, ".svg") ? SVG : IMG;
-        list.list.add(new ImageDesc(path, cls, 1.0, type, true));
+        list.add(StringUtil.endsWithIgnoreCase(path, ".svg") ? SVG : IMG);
       }
       else if (retina && dark) {
         list.add(true, true);
