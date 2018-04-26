@@ -73,8 +73,7 @@ fun KotlinGuiTestCase.createGradleProject(
       val list: JListFixture = jList("Gradle")
       checkKotlinInstalled()
       list.clickItem("Gradle")
-      if (isKotlinDslUsed)
-        checkbox("Kotlin DSL build script").click()
+      checkbox("Kotlin DSL build script").isSelected = isKotlinDslUsed
       if (framework.isNotEmpty()) {
         checkboxTree(framework).clickCheckbox(framework)
         if (!isJavaUsed)
@@ -151,7 +150,7 @@ fun KotlinGuiTestCase.createMavenProject(
       if (archetype.isNotEmpty()) {
         logUIStep("Select archetype `$archetype`")
         val archetypeCheckbox = checkbox("Create from archetype")
-        archetypeCheckbox.click()
+        archetypeCheckbox.isSelected = true
         Pause.pause(1000L)
         if (!archetypeCheckbox.isSelected) {
           logUIStep("Archetype `$archetype` not selected, so next attempt")
