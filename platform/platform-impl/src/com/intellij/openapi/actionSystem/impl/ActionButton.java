@@ -204,6 +204,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myPresentation.removePropertyChangeListener(myPresentationListener);
       myPresentationListener = null;
     }
+    myRollover = false;
+    myMouseDown = false;
     super.removeNotify();
   }
 
