@@ -64,7 +64,10 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -148,11 +151,11 @@ public class JarRepositoryManager {
       repoPath = new File(expanded);
       if (repoPath.exists()) {
         try {
-          ourLocalRepositoryPath = repoPath.getCanonicalFile();
+          repoPath = repoPath.getCanonicalFile();
         }
-        catch (IOException e) {
-          ourLocalRepositoryPath = repoPath;
+        catch (IOException ignored) {
         }
+        ourLocalRepositoryPath = repoPath;
         return repoPath;
       }
     }

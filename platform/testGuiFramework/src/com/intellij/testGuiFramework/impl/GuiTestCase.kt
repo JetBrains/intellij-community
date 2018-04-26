@@ -683,7 +683,7 @@ open class GuiTestCase {
     if (screenshotFilePath.isFile) {
       val format = SimpleDateFormat("MM-dd-yyyy.HH.mm.ss")
       val now = format.format(GregorianCalendar().time)
-      screenshotFilePath = File(fileWithTestFolder, screenshotName + "." + now + extension)
+      screenshotFilePath = File(fileWithTestFolder, "$screenshotName.$now$extension")
     }
     ScreenshotTaker().saveComponentAsPng(component, screenshotFilePath.path)
     println(message = "Screenshot for a component \"$component\" taken and stored at ${screenshotFilePath.path}")

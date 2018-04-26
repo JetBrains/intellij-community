@@ -59,6 +59,7 @@ class GuiTestRule : TestRule {
   private var myProjectPath: File? = null
     set
   private var myTestName: String = "undefined"
+  private var myTestShortName: String = "undefined"
   private var currentTestDateStart: Date = Date()
 
   private val myRuleChain = RuleChain.emptyRuleChain()
@@ -71,6 +72,7 @@ class GuiTestRule : TestRule {
 
   override fun apply(base: Statement?, description: Description?): Statement {
     myTestName = "${description!!.className}#${description.methodName}"
+    myTestShortName = "${description.testClass.simpleName}#${description.methodName}"
     //do not apply timeout rule if it is already applied to a test class
     return if (description.testClass.fields.any { it.type == Timeout::class.java })
       myRuleChain.apply(base, description)
@@ -191,9 +193,9 @@ class GuiTestRule : TestRule {
           }
           else {
             modalDialogsSet.add(modalDialog)
+            ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
             robot().close(modalDialog)
             errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
-            ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
             return@waitUntil false
           }
         }

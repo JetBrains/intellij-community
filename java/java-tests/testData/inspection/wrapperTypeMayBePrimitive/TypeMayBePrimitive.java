@@ -68,4 +68,21 @@ class TypeMayBePrimitive {
       this.i = i;
     }
   }
+
+  void synchronize() {
+    Integer i = 12;
+    synchronized (i) {
+
+    }
+  }
+
+  void binop() {
+    Integer i = 12;
+    if (i == new Integer(12)) {
+    }
+
+    <warning descr="Type may be primitive">Integer</warning> i2 = 12;
+    if (i2 == 43) {
+    }
+  }
 }

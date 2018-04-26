@@ -2572,10 +2572,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  // The caller should also request repainting of caret region
   void updateCaretCursor() {
     myUpdateCursor = true;
     myCaretCursor.myIsShown = true;
-    myCaretCursor.repaint();
   }
 
   private void setCursorPosition() {
