@@ -256,7 +256,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     final Enumeration children = myRoot.children();
     while (children.hasMoreElements()) {
       final MyNode node = (MyNode)children.nextElement();
-      if (((JsonSchemaConfigurable) node.getConfigurable()).getUiSchema() == configuration) {
+      JsonSchemaConfigurable configurable = (JsonSchemaConfigurable)node.getConfigurable();
+      if (Objects.equals(configurable.getUiSchema(), configuration)) {
         selectNodeInTree(node);
       }
     }

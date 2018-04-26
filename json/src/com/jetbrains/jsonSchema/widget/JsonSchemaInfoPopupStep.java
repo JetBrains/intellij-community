@@ -85,21 +85,7 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
   public PopupStep onChosen(JsonSchemaInfo selectedValue, boolean finalChoice) {
     if (finalChoice) {
       if (selectedValue == EDIT_MAPPINGS || selectedValue == ADD_MAPPING) {
-        return doFinalStep(() -> {
-          JsonSchemaMappingsConfigurable configurable = new JsonSchemaMappingsConfigurable(myProject);
-          ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable, () -> {
-            JsonSchemaMappingsProjectConfiguration mappingsConf = JsonSchemaMappingsProjectConfiguration.getInstance(myProject);
-            UserDefinedJsonSchemaConfiguration mappingForFile = mappingsConf.findMappingForFile(myVirtualFile);
-            if (mappingForFile == null) {
-              UserDefinedJsonSchemaConfiguration configuration = configurable.addProjectSchema();
-              configuration.patterns.add(new UserDefinedJsonSchemaConfiguration.Item(
-                VfsUtilCore.getRelativePath(myVirtualFile, myProject.getBaseDir()), false, false));
-            }
-            else {
-              configurable.selectInTree(mappingForFile);
-            }
-          });
-        });
+        return doFinalStep(() -> runSchemaEditorForCurrentFile());
       }
       else if (selectedValue == LOAD_REMOTE) {
         return doFinalStep(() -> myService.triggerUpdateRemote());
@@ -110,6 +96,23 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
       }
     }
     return PopupStep.FINAL_CHOICE;
+  }
+
+  private void runSchemaEditorForCurrentFile() {
+    JsonSchemaMappingsConfigurable configurable = new JsonSchemaMappingsConfigurable(myProject);
+    JsonSchemaMappingsProjectConfiguration mappingsConf = JsonSchemaMappingsProjectConfiguration.getInstance(myProject);
+
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable, () -> {
+      UserDefinedJsonSchemaConfiguration mappingForFile = mappingsConf.findMappingForFile(myVirtualFile);
+      if (mappingForFile == null) {
+        UserDefinedJsonSchemaConfiguration configuration = configurable.addProjectSchema();
+        configuration.patterns.add(new UserDefinedJsonSchemaConfiguration.Item(
+          VfsUtilCore.getRelativePath(myVirtualFile, myProject.getBaseDir()), false, false));
+        mappingForFile = configuration;
+      }
+
+      configurable.selectInTree(mappingForFile);
+    });
   }
 
   @Override
