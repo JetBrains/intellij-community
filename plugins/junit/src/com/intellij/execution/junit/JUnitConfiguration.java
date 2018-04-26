@@ -35,6 +35,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 
@@ -104,7 +105,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       restoreOriginalModule(originalModule);
     }
   };
-  
+
   final RefactoringListeners.Accessor<PsiClass> myCategory = new RefactoringListeners.Accessor<PsiClass>() {
     @Override
     public void setName(@NotNull final String qualifiedName) {
@@ -579,7 +580,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     public String TEST_OBJECT = TEST_CLASS;
     public String VM_PARAMETERS = "-ea";
     public String PARAMETERS;
-    public String WORKING_DIRECTORY = "%MODULE_WORKING_DIR%";
+    public String WORKING_DIRECTORY = PathMacroUtil.MODULE_WORKING_DIR;
     public boolean PASS_PARENT_ENVS = true;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
     private String DIR_NAME;

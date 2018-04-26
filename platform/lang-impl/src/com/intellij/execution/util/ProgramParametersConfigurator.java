@@ -29,8 +29,9 @@ import java.util.Map;
 public class ProgramParametersConfigurator {
   private static final ExtensionPointName<WorkingDirectoryProvider> WORKING_DIRECTORY_PROVIDER_EP_NAME= ExtensionPointName
     .create("com.intellij.module.workingDirectoryProvider");
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final String MODULE_WORKING_DIR = "%MODULE_WORKING_DIR%";
-  private static final String DEPRECATED_MODULE_DIR = "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$";
 
   public void configureConfiguration(SimpleProgramParameters parameters, CommonProgramRunConfigurationParameters configuration) {
     Project project = configuration.getProject();
@@ -45,7 +46,7 @@ public class ProgramParametersConfigurator {
     for (Map.Entry<String, String> each : envs.entrySet()) {
       each.setValue(expandPath(each.getValue(), module, project));
     }
-    
+
     parameters.setEnv(envs);
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
@@ -62,11 +63,16 @@ public class ProgramParametersConfigurator {
     }
     workingDirectory = expandPath(workingDirectory, module, project);
     if (!FileUtil.isAbsolute(workingDirectory) && defaultWorkingDir != null) {
-      if (DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
+      if (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
         return defaultWorkingDir;
       }
 
+      //noinspection deprecation
       if (MODULE_WORKING_DIR.equals(workingDirectory)) {
+        workingDirectory = PathMacroUtil.MODULE_WORKING_DIR;
+      }
+
+      if (PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory)) {
         if (module == null) {
           return defaultWorkingDir;
         }
@@ -116,7 +122,7 @@ public class ProgramParametersConfigurator {
   protected String expandPath(@Nullable String path, Module module, Project project) {
     // https://youtrack.jetbrains.com/issue/IDEA-190100
     // if old macro is used (because stored in the default project and applied for a new imported project) and module file stored under .idea, use new module macro instead
-    if (module != null && DEPRECATED_MODULE_DIR.equals(path) &&
+    if (module != null && PathMacroUtil.DEPRECATED_MODULE_DIR.equals(path) &&
         module.getModuleFilePath().contains("/" + Project.DIRECTORY_STORE_FOLDER + "/") &&
         ExternalProjectSystemRegistry.getInstance().getExternalSource(module) != null /* not really required but to reduce possible impact */) {
       return getDefaultWorkingDir(module);
