@@ -27,6 +27,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -84,7 +85,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   @Override
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_field_warning_breakpoint : AllIcons.Debugger.Db_field_warning_breakpoint;
+    return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint,
+                           AllIcons.General.WarningDecorator);
   }
 
   @Override
