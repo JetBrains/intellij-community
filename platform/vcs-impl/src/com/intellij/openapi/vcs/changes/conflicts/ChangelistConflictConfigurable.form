@@ -26,7 +26,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Show conflict resolving &amp;dialog "/>
+          <text resource-bundle="messages/VcsBundle" key="settings.show.conflict.resolve.dialog.checkbox"/>
         </properties>
       </component>
       <component id="644ea" class="javax.swing.JCheckBox" binding="myHighlightConflictsCheckBox">
@@ -34,7 +34,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Highlight files with conflicts"/>
+          <text resource-bundle="messages/VcsBundle" key="settings.highlight.files.with.conflicts.checkbox"/>
         </properties>
       </component>
       <component id="6b1a6" class="javax.swing.JCheckBox" binding="myHighlightNonActiveCheckBox">
@@ -42,7 +42,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Highlight files from &amp;non-active changelists"/>
+          <text resource-bundle="messages/VcsBundle" key="settings.highlight.files.from.non.active.changelist.checkbox"/>
         </properties>
       </component>
       <grid id="722" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -54,7 +54,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="Files with ignored conflicts"/>
+        <border type="none" title-resource-bundle="messages/VcsBundle" title-key="settings.files.with.ignored.conflicts.list.title"/>
         <children>
           <scrollpane id="66692" class="com.intellij.ui.components.JBScrollPane">
             <constraints>
