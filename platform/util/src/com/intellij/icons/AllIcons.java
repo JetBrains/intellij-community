@@ -638,7 +638,11 @@ public class AllIcons {
     public static final Icon Configure = IconLoader.getIcon("/general/settings.svg"); // 16x16
     public static final Icon ContextHelp = IconLoader.getIcon("/general/contextHelp.png"); // 16x16
     public static final Icon CopyHovered = IconLoader.getIcon("/general/copyHovered.svg"); // 16x16
-    public static final Icon CreateNewProject = IconLoader.getIcon("/general/createNewProject.png"); // 32x32
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Welcome.CreateNewProject */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon CreateNewProject = IconLoader.getIcon("/welcome/createNewProject.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import */
     @SuppressWarnings("unused")
