@@ -51,7 +51,6 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -843,11 +842,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
           String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
           if (url != null) {
             String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
-            Pair<Integer, String> pair = TestStackTraceParser.findFailLine(proxy.getStacktrace(), proxy.getLocationUrl());
+            TestStackTraceParser info = new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage());
             storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
                                                                 configurationName == null ? 0 : configurationName.hashCode(),
-                                                                pair == null ? -1 : pair.first, pair == null ? "" : pair.second,
-                                                                TestStackTraceParser.getErrorMessage(proxy)));
+                                                                info.getFailedLine(), info.getFailedMethodName(),
+                                                                info.getErrorMessage()));
           }
         }
       });
