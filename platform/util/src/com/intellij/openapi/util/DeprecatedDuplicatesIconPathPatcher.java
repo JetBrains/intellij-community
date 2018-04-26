@@ -178,8 +178,12 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/graph/export.png", "AllIcons.ToolbarDecorator.Export");
     ourDeprecatedIconsReplacements.put("/graph/export.svg", "AllIcons.ToolbarDecorator.Export");
 
+    ourDeprecatedIconsReplacements.put("/general/CreateNewProjectfromExistingFiles.png", "AllIcons.ToolbarDecorator.Import");
+    ourDeprecatedIconsReplacements.put("/general/CreateNewProjectfromExistingFiles.svg", "AllIcons.ToolbarDecorator.Import");
     ourDeprecatedIconsReplacements.put("/general/importProject.png", "AllIcons.ToolbarDecorator.Import");
     ourDeprecatedIconsReplacements.put("/general/importProject.svg", "AllIcons.ToolbarDecorator.Import");
+    ourDeprecatedIconsReplacements.put("/welcome/CreateNewProjectfromExistingFiles.png", "AllIcons.ToolbarDecorator.Import");
+    ourDeprecatedIconsReplacements.put("/welcome/CreateNewProjectfromExistingFiles.svg", "AllIcons.ToolbarDecorator.Import");
     ourDeprecatedIconsReplacements.put("/welcome/importProject.png", "AllIcons.ToolbarDecorator.Import");
     ourDeprecatedIconsReplacements.put("/welcome/importProject.svg", "AllIcons.ToolbarDecorator.Import");
 
