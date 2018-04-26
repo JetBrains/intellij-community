@@ -56,7 +56,7 @@ import java.util.function.ObjIntConsumer;
 
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
-public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeData>, VcsIndexableDetails> {
+public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeKind>, VcsIndexableDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
   public static final String PATHS = "paths";
   public static final String INDEX_PATHS_IDS = "paths-ids";
@@ -69,7 +69,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
                           @NotNull VcsLogStorage storage, @NotNull FatalErrorHandler fatalErrorHandler,
                           @NotNull Disposable disposableParent) throws IOException {
     super(storageId, PATHS, new PathsIndexer(storage, createPathsEnumerator(storageId), createRenamesMap(storageId), roots),
-          new ChangeDataListKeyDescriptor(), fatalErrorHandler, disposableParent);
+          new ChangeKindListKeyDescriptor(), fatalErrorHandler, disposableParent);
 
     myPathsIndexer = (PathsIndexer)myIndexer;
     myPathsIndexer.setFatalErrorConsumer(e -> fatalErrorHandler.consume(this, e));
@@ -77,7 +77,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull
   @Override
-  protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeData>> createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeData>, VcsIndexableDetails> extension)
+  protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeKind>> createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeKind>, VcsIndexableDetails> extension)
     throws IOException {
     if (!VcsLogIndexService.isPathsForwardIndexRequired()) return super.createForwardIndex(extension);
     return new VcsLogPathsForwardIndex(extension) {
@@ -125,20 +125,13 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull
   public TIntHashSet getCommitsForPaths(@NotNull Collection<FilePath> paths) throws IOException, StorageException {
-    Set<Integer> allPathIds = getPathIds(paths);
-
     TIntHashSet result = new TIntHashSet();
-    Set<Integer> renames = allPathIds;
-    while (!renames.isEmpty()) {
-      Set<Integer> newRenames = ContainerUtil.newHashSet();
-      for (Integer key : renames) {
-        iterateCommitIdsAndValues(key, (value, commit) -> {
-          result.add(commit);
-          newRenames.addAll(ContainerUtil.filter(getOtherNames(value), r -> !allPathIds.contains(r)));
-        });
-      }
-      renames = newRenames;
-      allPathIds.addAll(renames);
+
+    Set<Integer> allPathIds = getPathIds(paths);
+    for (Integer key : allPathIds) {
+      iterateCommitIdsAndValues(key, (value, commit) -> {
+        result.add(commit);
+      });
     }
     // todo add renames
 
@@ -169,72 +162,13 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     return allPathIds;
   }
 
-  @NotNull
-  public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) throws IOException, StorageException {
-    int startId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(path));
-
-    Set<Integer> startIds = ContainerUtil.newHashSet();
-    startIds.add(startId);
-    Set<Integer> allIds = ContainerUtil.newHashSet(startIds);
-    Set<Integer> newIds = ContainerUtil.newHashSet();
-
-    Set<Integer> resultIds = ContainerUtil.newHashSet();
-
-    outer:
-    while (!startIds.isEmpty()) {
-      for (int currentPathId : startIds) {
-        boolean foundCommit = !iterateCommitIdsAndValues(currentPathId, (changesList, commitId) -> {
-          Set<Integer> otherNames = getOtherNames(changesList);
-          if (commitId == commit) {
-            resultIds.add(currentPathId);
-            resultIds.addAll(otherNames);
-            return false;
-          }
-          for (Integer otherPath : otherNames) {
-            if (!allIds.contains(otherPath)) {
-              newIds.add(otherPath);
-            }
-          }
-          return true;
-        });
-        if (foundCommit) break outer;
-      }
-      startIds = ContainerUtil.newHashSet(newIds);
-      allIds.addAll(startIds);
-      newIds.clear();
-    }
-
-    Set<FilePath> result = ContainerUtil.newHashSet();
-    for (Integer id : resultIds) {
-      result.add(toFilePath(myPathsIndexer.myPathsEnumerator.valueOf(id)));
-    }
-    return result;
-  }
-
-  public void iterateCommits(@NotNull FilePath path, @NotNull ObjIntConsumer<Pair<FilePath, List<ChangeData>>> consumer)
+  public void iterateCommits(@NotNull FilePath path, @NotNull ObjIntConsumer<Pair<FilePath, List<ChangeKind>>> consumer)
     throws IOException, StorageException {
 
-    Set<Integer> startIds = getPathIds(Collections.singleton(path));
-    Set<Integer> allIds = ContainerUtil.newHashSet(startIds);
-    Set<Integer> newIds = ContainerUtil.newHashSet();
-    while (!startIds.isEmpty()) {
-      for (int currentPathId : startIds) {
-        FilePath currentPath = toFilePath(myPathsIndexer.myPathsEnumerator.valueOf(currentPathId));
-        iterateCommitIdsAndValues(currentPathId, (changesList, commitId) -> {
-          Set<Integer> otherNames = getOtherNames(changesList);
-          for (int renamed : otherNames) {
-            if (!allIds.contains(renamed)) {
-              newIds.add(renamed);
-            }
-          }
-
-          consumer.accept(Pair.create(currentPath, changesList), commitId);
-        });
-      }
-      startIds = ContainerUtil.newHashSet(newIds);
-      allIds.addAll(startIds);
-      newIds.clear();
-    }
+    int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(path));
+    iterateCommitIdsAndValues(pathId, (changesList, commitId) -> {
+      consumer.accept(Pair.create(path, changesList), commitId);
+    });
   }
 
   @Override
@@ -256,18 +190,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     return VcsUtil.getFilePath(lightFilePath.getPath(), lightFilePath.isDirectory());
   }
 
-  @NotNull
-  private static Set<Integer> getOtherNames(@NotNull List<ChangeData> changesList) {
-    Set<Integer> otherNames = ContainerUtil.newHashSet();
-    for (ChangeData data : changesList) {
-      if (data != null && data.otherPath != -1) {
-        otherNames.add(data.otherPath);
-      }
-    }
-    return otherNames;
-  }
-
-  private static class PathsIndexer implements DataIndexer<Integer, List<ChangeData>, VcsIndexableDetails> {
+  private static class PathsIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsIndexableDetails> {
     @NotNull private final VcsLogStorage myStorage;
     @NotNull private final PersistentEnumeratorBase<LightFilePath> myPathsEnumerator;
     @NotNull private final PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> myRenamesMap;
@@ -292,8 +215,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
     @NotNull
     @Override
-    public Map<Integer, List<ChangeData>> map(@NotNull VcsIndexableDetails inputData) {
-      Map<Integer, List<ChangeData>> result = new THashMap<>();
+    public Map<Integer, List<ChangeKind>> map(@NotNull VcsIndexableDetails inputData) {
+      Map<Integer, List<ChangeKind>> result = new THashMap<>();
 
       // its not exactly parents count since it is very convenient to assume that initial commit has one parent
       int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
@@ -305,8 +228,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
             int beforeId = myPathsEnumerator.enumerate(new LightFilePath(renamedPath.first, false));
             int afterId = myPathsEnumerator.enumerate(new LightFilePath(renamedPath.second, false));
             if (beforeId == afterId && !SystemInfo.isFileSystemCaseSensitive) {
-              List<ChangeData> changeDataList = getOrCreateChangeDataListForPath(result, afterId, parentsCount);
-              addChange(changeDataList, parentIndex, ChangeData.MODIFIED);
+              getOrCreateChangeKindList(result, afterId, parentsCount).set(parentIndex, ChangeKind.MODIFIED);
             }
             else {
               renames.add(Couple.of(beforeId, afterId));
@@ -324,8 +246,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
           }
 
           for (Map.Entry<String, Change.Type> modifiedPath : inputData.getModifiedPaths(parentIndex).entrySet()) {
-            addChangeToResult(result, parentIndex, parentsCount, new LightFilePath(modifiedPath.getKey(), false),
-                              createChangeData(modifiedPath.getValue()));
+            getOrCreateChangeKindList(result, new LightFilePath(modifiedPath.getKey(), false), parentsCount)
+              .set(parentIndex, createChangeData(modifiedPath.getValue()));
             addParentsToResult(result, parentIndex, parentsCount, modifiedPath.getKey(), inputData.getRoot(), processedParents);
           }
         }
@@ -337,15 +259,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       return result;
     }
 
-    private void addChangeToResult(@NotNull Map<Integer, List<ChangeData>> commitChangesMap, int parent,
-                                   int parentsCount, @NotNull LightFilePath path, @NotNull ChangeData changeData)
-      throws IOException {
-      int afterId = myPathsEnumerator.enumerate(path);
-      List<ChangeData> changeDataList = getOrCreateChangeDataListForPath(commitChangesMap, afterId, parentsCount);
-      addChange(changeDataList, parent, changeData);
-    }
-
-    private void addParentsToResult(@NotNull Map<Integer, List<ChangeData>> result,
+    private void addParentsToResult(@NotNull Map<Integer, List<ChangeKind>> result,
                                     int parent,
                                     int parentsCount,
                                     @NotNull String path,
@@ -356,46 +270,41 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
         if (FileUtil.PATH_HASHING_STRATEGY.equals(root.getPath(), parentPath)) break;
 
         processedParents.add(parentPath);
-        addChangeToResult(result, parent, parentsCount, new LightFilePath(parentPath, true), ChangeData.MODIFIED);
+        getOrCreateChangeKindList(result, new LightFilePath(parentPath, true), parentsCount).set(parent, ChangeKind.MODIFIED);
         parentPath = PathUtil.getParentPath(parentPath);
       }
     }
 
     @NotNull
-    private static List<ChangeData> getOrCreateChangeDataListForPath(@NotNull Map<Integer, List<ChangeData>> pathIdToChangeDataListsMap,
-                                                                     int pathId, int parentsCount) {
-      List<ChangeData> changeDataList = pathIdToChangeDataListsMap.get(pathId);
+    private List<ChangeKind> getOrCreateChangeKindList(@NotNull Map<Integer, List<ChangeKind>> pathIdToChangeDataListsMap,
+                                                       @NotNull LightFilePath path, int parentsCount) throws IOException {
+      int pathId = myPathsEnumerator.enumerate(path);
+      return getOrCreateChangeKindList(pathIdToChangeDataListsMap, pathId, parentsCount);
+    }
+
+    @NotNull
+    private static List<ChangeKind> getOrCreateChangeKindList(@NotNull Map<Integer, List<ChangeKind>> pathIdToChangeDataListsMap,
+                                                              int pathId, int parentsCount) {
+      List<ChangeKind> changeDataList = pathIdToChangeDataListsMap.get(pathId);
       if (changeDataList == null) {
         changeDataList = ContainerUtil.newSmartList();
         for (int i = 0; i < parentsCount; i++) {
-          changeDataList.add(ChangeData.NOT_CHANGED);
+          changeDataList.add(ChangeKind.NOT_CHANGED);
         }
         pathIdToChangeDataListsMap.put(pathId, changeDataList);
       }
       return changeDataList;
     }
 
-    private static void addChange(@NotNull List<ChangeData> changeDataList, int parentIndex, @NotNull ChangeData change) {
-      ChangeData existingChange = changeDataList.get(parentIndex);
-      // most of the time, existing change is ChangeData.NOT_CHANGED
-      // but in case insensitive fs it is possible to have several changes for one file
-      // example two changes: R: abc -> AAA, D: aaa
-      // in this case we keep rename information
-      if (ChangeData.NOT_CHANGED.equals(existingChange) ||
-          (existingChange.kind != ChangeKind.RENAMED_FROM && existingChange.kind != ChangeKind.RENAMED_TO)) {
-        changeDataList.set(parentIndex, change);
-      }
-    }
-
     @NotNull
-    private static ChangeData createChangeData(@NotNull Change.Type type) {
+    private static ChangeKind createChangeData(@NotNull Change.Type type) {
       switch (type) {
         case NEW:
-          return ChangeData.ADDED;
+          return ChangeKind.ADDED;
         case DELETED:
-          return ChangeData.REMOVED;
+          return ChangeKind.REMOVED;
         default:
-          return ChangeData.MODIFIED;
+          return ChangeKind.MODIFIED;
       }
     }
 
@@ -405,79 +314,33 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     }
   }
 
-  private static class ChangeDataListKeyDescriptor implements DataExternalizer<List<ChangeData>> {
+  private static class ChangeKindListKeyDescriptor implements DataExternalizer<List<ChangeKind>> {
     @Override
-    public void save(@NotNull DataOutput out, List<ChangeData> value) throws IOException {
+    public void save(@NotNull DataOutput out, List<ChangeKind> value) throws IOException {
       DataInputOutputUtil.writeINT(out, value.size());
-      for (ChangeData data : value) {
-        out.writeByte(data.kind.id);
-        if (data.kind == ChangeKind.RENAMED_TO || data.kind == ChangeKind.RENAMED_FROM) {
-          out.writeInt(data.otherPath);
-        }
+      for (ChangeKind data : value) {
+        out.writeByte(data.id);
       }
     }
 
     @Override
-    public List<ChangeData> read(@NotNull DataInput in) throws IOException {
-      List<ChangeData> value = ContainerUtil.newSmartList();
+    public List<ChangeKind> read(@NotNull DataInput in) throws IOException {
+      List<ChangeKind> value = ContainerUtil.newSmartList();
 
       int size = DataInputOutputUtil.readINT(in);
       for (int i = 0; i < size; i++) {
-        ChangeKind kind = ChangeKind.getChangeKindById(in.readByte());
-        int otherPath;
-        if (kind == ChangeKind.RENAMED_TO || kind == ChangeKind.RENAMED_FROM) {
-          otherPath = in.readInt();
-        }
-        else {
-          otherPath = -1;
-        }
-        value.add(new ChangeData(kind, otherPath));
+        value.add(ChangeKind.getChangeKindById(in.readByte()));
       }
 
       return value;
     }
   }
 
-  public static class ChangeData {
-    public static final ChangeData NOT_CHANGED = new ChangeData(ChangeKind.NOT_CHANGED, -1);
-    public static final ChangeData MODIFIED = new ChangeData(ChangeKind.MODIFIED, -1);
-    public static final ChangeData ADDED = new ChangeData(ChangeKind.ADDED, -1);
-    public static final ChangeData REMOVED = new ChangeData(ChangeKind.REMOVED, -1);
-
-    @NotNull public final ChangeKind kind;
-    public final int otherPath;
-
-    public ChangeData(@NotNull ChangeKind kind, int otherPath) {
-      this.kind = kind;
-      this.otherPath = otherPath;
-    }
-
-    public boolean isRename() {
-      return kind.equals(ChangeKind.RENAMED_FROM) || kind.equals(ChangeKind.RENAMED_TO);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ChangeData data = (ChangeData)o;
-      return otherPath == data.otherPath &&
-             kind == data.kind;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(kind, otherPath);
-    }
-  }
-
   public enum ChangeKind {
     MODIFIED((byte)0),
-    RENAMED_FROM((byte)1),
-    RENAMED_TO((byte)2),
-    NOT_CHANGED((byte)3), // we do not want to have nulls in lists
-    ADDED((byte)4),
-    REMOVED((byte)5);
+    NOT_CHANGED((byte)1), // we do not want to have nulls in lists
+    ADDED((byte)2),
+    REMOVED((byte)3);
 
     public final byte id;
 

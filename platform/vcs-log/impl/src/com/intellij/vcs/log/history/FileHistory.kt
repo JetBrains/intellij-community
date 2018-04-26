@@ -195,7 +195,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 }
 
 abstract class FileNamesData {
-  private val commitToPathAndChanges = TIntObjectHashMap<MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData>>>()
+  private val commitToPathAndChanges = TIntObjectHashMap<MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeKind>>>()
 
   val commits: Set<Int>
     get() = commitToPathAndChanges.keys().toSet()
@@ -208,29 +208,19 @@ abstract class FileNamesData {
 
   fun add(commit: Int,
           path: FilePath,
-          changes: List<VcsLogPathsIndex.ChangeData>,
+          changes: List<VcsLogPathsIndex.ChangeKind>,
           parents: List<Int>) {
-    var pathToChanges: MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData>>? = commitToPathAndChanges.get(commit)
+    var pathToChanges: MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeKind>>? = commitToPathAndChanges.get(commit)
     if (pathToChanges == null) {
-      pathToChanges = ContainerUtil.newHashMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData>>()
+      pathToChanges = ContainerUtil.newHashMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeKind>>()
       commitToPathAndChanges.put(commit, pathToChanges)
     }
 
-    hasRenames = hasRenames || changes.find { it.isRename } != null
-
-    val parentToChangesMap: MutableMap<Int, VcsLogPathsIndex.ChangeData> = pathToChanges[path]
-                                                                           ?: ContainerUtil.newHashMap<Int, VcsLogPathsIndex.ChangeData>()
+    val parentToChangesMap: MutableMap<Int, VcsLogPathsIndex.ChangeKind> = pathToChanges[path]
+                                                                           ?: ContainerUtil.newHashMap<Int, VcsLogPathsIndex.ChangeKind>()
     if (!parents.isEmpty()) {
       LOG.assertTrue(parents.size == changes.size)
       for (i in changes.indices) {
-        val existing = parentToChangesMap[parents[i]]
-        if (existing != null) {
-          // since we occasionally reindex commits with different rename limit
-          // it can happen that we have several change data for a file in a commit
-          // one with rename, other without
-          // we want to keep a renamed-one, so throwing the other one out
-          if (existing.isRename) continue
-        }
         parentToChangesMap[parents[i]] = changes[i]
       }
     }
@@ -247,14 +237,8 @@ abstract class FileNamesData {
     LOG.assertTrue(filesToChangesMap != null, "Missing commit $commit")
     val changes = filesToChangesMap!![childPath] ?: return childPath
 
-    val change = changes[parent]
-    return when (change?.kind) {
-      VcsLogPathsIndex.ChangeKind.RENAMED_FROM -> null
-      VcsLogPathsIndex.ChangeKind.RENAMED_TO -> getPathById(change.otherPath)
-      null -> {
-        LOG.assertTrue(changes.size > 1)
-        childPath
-      }
+    return when (changes[parent]) {
+      VcsLogPathsIndex.ChangeKind.ADDED -> null
       else -> childPath
     }
   }
@@ -264,10 +248,8 @@ abstract class FileNamesData {
     LOG.assertTrue(filesToChangesMap != null, "Missing commit $commit")
     val changes = filesToChangesMap!![parentPath] ?: return parentPath
 
-    val change = changes[parentIndex]
-    return when (change?.kind) {
-      VcsLogPathsIndex.ChangeKind.RENAMED_TO -> null
-      VcsLogPathsIndex.ChangeKind.RENAMED_FROM -> getPathById(change.otherPath)
+    return when (changes[parentIndex]) {
+      VcsLogPathsIndex.ChangeKind.REMOVED -> null
       else -> parentPath
     }
   }
@@ -285,10 +267,7 @@ abstract class FileNamesData {
       }
       else {
         for ((key, value) in filesToChanges) {
-          val changeData = value.values.find { ch ->
-            ch != VcsLogPathsIndex.ChangeData.NOT_CHANGED &&
-            ch.kind != VcsLogPathsIndex.ChangeKind.RENAMED_FROM
-          }
+          val changeData = value.values.find { ch -> !setOf(VcsLogPathsIndex.ChangeKind.REMOVED, VcsLogPathsIndex.ChangeKind.NOT_CHANGED).contains(ch) }
           if (changeData != null) {
             result[commit] = key
             break
@@ -309,7 +288,7 @@ abstract class FileNamesData {
     // some merges have just reverted changes in one of the branches
     // they need to be displayed
     // but we skip them instead
-    return data != null && data.size > 1 && data.containsValue(VcsLogPathsIndex.ChangeData.NOT_CHANGED)
+    return data != null && data.size > 1 && data.containsValue(VcsLogPathsIndex.ChangeKind.NOT_CHANGED)
   }
 
   companion object {

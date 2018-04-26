@@ -271,7 +271,7 @@ public class IndexDataGetter {
   public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
     VirtualFile root = VcsLogUtil.getActualRoot(myProject, path);
     if (myRoots.contains(root)) {
-      return executeAndCatch(() -> myIndexStorage.paths.getFileNames(path, commit), Collections.emptySet());
+      return Collections.singleton(path);
     }
 
     return Collections.emptySet();
