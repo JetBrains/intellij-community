@@ -61,7 +61,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myExcludedElements = createBidiMap();
 
-  protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
+  protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<>(1)); // keys can be null
 
   private DescriptorComposer myComposer;
   private volatile boolean isDisposed;
@@ -281,7 +281,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     @NonNls final String ext = ".xml";
     final String fileName = myContext.getOutputPath() + File.separator + myToolWrapper.getShortName() + ext;
     final PathMacroManager pathMacroManager = PathMacroManager.getInstance(getContext().getProject());
-    PrintWriter printWriter = null;
     try {
       FileUtil.createDirectory(new File(myContext.getOutputPath()));
       final File file = new File(fileName);
@@ -294,17 +293,14 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
         pathMacroManager.collapsePaths(element);
         JDOMUtil.writeElement(element, writer, "\n");
       }
-      printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), CharsetToolkit.UTF8_CHARSET)));
-      printWriter.append("\n");
-      printWriter.append(writer.toString());
+
+      try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), CharsetToolkit.UTF8_CHARSET)))) {
+        printWriter.append("\n");
+        printWriter.append(writer.toString());
+      }
     }
     catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-      if (printWriter != null) {
-        printWriter.close();
-      }
     }
   }
 
@@ -520,6 +516,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
       @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+        //noinspection unchecked
         fix.applyFix(project, problemDescriptor); //todo check type consistency
       }
 
