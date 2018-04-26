@@ -82,6 +82,7 @@ public interface RunnerAndConfigurationSettings {
   @NotNull
   String getName();
 
+  @NotNull
   String getUniqueID();
 
   /**
@@ -127,11 +128,11 @@ public interface RunnerAndConfigurationSettings {
   void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException;
 
   /**
-   * @deprecated 
+   * @deprecated
    * @see ExecutionTargetManager#canRun(com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.execution.ExecutionTarget)
    */
   @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
-  default boolean canRunOn(@NotNull ExecutionTarget target) { return true; }  
+  default boolean canRunOn(@NotNull ExecutionTarget target) { return true; }
 
   /**
    * Returns a factory object which can be used to create a copy of this configuration.

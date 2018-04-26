@@ -57,9 +57,14 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
                                                                    private var isSingleton: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
   companion object {
-    @Suppress("DEPRECATION")
     @JvmStatic
     fun getUniqueIdFor(configuration: RunConfiguration): String {
+      if (!configuration.type.isManaged) {
+        configuration.uniqueId?.let {
+          return it
+        }
+      }
+      @Suppress("DEPRECATION")
       return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
     }
   }

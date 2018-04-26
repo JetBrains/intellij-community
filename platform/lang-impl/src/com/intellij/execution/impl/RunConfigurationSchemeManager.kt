@@ -28,7 +28,19 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
 
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
     // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
-    return if (isShared) scheme.name else "${scheme.type.id}-${scheme.name}"
+    return when {
+      isShared -> {
+        if (scheme.type.isManaged) {
+          scheme.name
+        }
+        else {
+          // do not use name as scheme key for Unknown RC or for Rider (some Rider RC types can use RC with not unique names)
+          // using isManaged not strictly correct but separate API will be overkill for now
+          scheme.uniqueID
+        }
+      }
+      else -> "${scheme.type.id}-${scheme.name}"
+    }
   }
 
   override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
