@@ -37,6 +37,11 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/debugger/readHelp.png", "AllIcons.Actions.Help");
     ourDeprecatedIconsReplacements.put("/debugger/readHelp.svg", "AllIcons.Actions.Help");
 
+    ourDeprecatedIconsReplacements.put("/general/openProject.png", "AllIcons.Actions.Menu_open");
+    ourDeprecatedIconsReplacements.put("/general/openProject.svg", "AllIcons.Actions.Menu_open");
+    ourDeprecatedIconsReplacements.put("/welcome/openProject.png", "AllIcons.Actions.Menu_open");
+    ourDeprecatedIconsReplacements.put("/welcome/openProject.svg", "AllIcons.Actions.Menu_open");
+
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.png", "AllIcons.Actions.Menu_saveall");
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.svg", "AllIcons.Actions.Menu_saveall");
 

@@ -755,7 +755,11 @@ public class AllIcons {
     public static final Icon NotificationWarning = IconLoader.getIcon("/general/notificationWarning.png"); // 24x24
     public static final Icon OpenDisk = IconLoader.getIcon("/general/openDisk.svg"); // 16x16
     public static final Icon OpenDiskHover = IconLoader.getIcon("/general/openDiskHover.svg"); // 16x16
-    public static final Icon OpenProject = IconLoader.getIcon("/general/openProject.png"); // 32x32
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_open */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon OpenProject = IconLoader.getIcon("/actions/menu-open.svg"); // 16x16
     public static final Icon OverridenMethod = IconLoader.getIcon("/general/overridenMethod.png"); // 10x14
     public static final Icon OverridingMethod = IconLoader.getIcon("/general/overridingMethod.png"); // 10x14
 
@@ -1695,7 +1699,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ImportProject = IconLoader.getIcon("/toolbarDecorator/import.svg"); // 16x16
-    public static final Icon OpenProject = IconLoader.getIcon("/welcome/openProject.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_open */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon OpenProject = IconLoader.getIcon("/actions/menu-open.svg"); // 16x16
 
     public static class Project {
       public static final Icon Remove_hover = IconLoader.getIcon("/welcome/project/remove-hover.png"); // 10x10

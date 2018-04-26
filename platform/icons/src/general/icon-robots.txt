@@ -8,6 +8,7 @@ deprecated: ijLogo.png; to be removed in IDEA 2020
 deprecated: importProject.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import
 deprecated: jdk.png; to be removed in IDEA 2020
 deprecated: keymap.png; to be removed in IDEA 2020
+deprecated: openProject.png -> /actions/menu-open.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Menu_open
 deprecated: packagesTab.png -> /nodes/copyOfFolder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.CopyOfFolder
 deprecated: progress.png; to be removed in IDEA 2020
 deprecated: projectSettings.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
