@@ -17,6 +17,7 @@ public class ProblemsViewPanel extends NewErrorTreeViewPanel {
   @Override
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
     super.fillRightToolbarGroup(group);
+    group.addSeparator();
     group.add(new CompilerPropertiesAction());
   }
 

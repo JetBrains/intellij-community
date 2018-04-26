@@ -35,6 +35,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
     super.fillRightToolbarGroup(group);
+    group.addSeparator();
     group.add(new CompilerPropertiesAction());
   }
 
