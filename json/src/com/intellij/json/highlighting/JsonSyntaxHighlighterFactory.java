@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.highlighting;
 
 import com.intellij.json.JsonElementTypes;
@@ -71,6 +72,8 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
   private class MyHighlighter extends SyntaxHighlighterBase {
     private final Map<IElementType, TextAttributesKey> ourAttributes = new HashMap<>();
+
+    @Nullable
     private final VirtualFile myFile;
 
     {
@@ -93,7 +96,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       fillMap(ourAttributes, JSON_INVALID_ESCAPE, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
     }
 
-    public MyHighlighter(VirtualFile file) {
+    public MyHighlighter(@Nullable VirtualFile file) {
       myFile = file;
     }
 
@@ -134,7 +137,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     }
 
     private boolean isPermissiveDialect() {
-      FileType fileType = myFile.getFileType();
+      FileType fileType = myFile == null ? null : myFile.getFileType();
       boolean isPermissiveDialect = false;
       if (fileType instanceof JsonFileType) {
         Language language = ((JsonFileType)fileType).getLanguage();
