@@ -657,7 +657,11 @@ public class AllIcons {
     public static final Icon ExpandComponent = IconLoader.getIcon("/general/expandComponent.svg"); // 12x12
     public static final Icon ExpandComponentHover = IconLoader.getIcon("/general/expandComponentHover.svg"); // 12x12
     public static final Icon ExportSettings = IconLoader.getIcon("/general/ExportSettings.png"); // 32x32
-    public static final Icon ExternalTools = IconLoader.getIcon("/general/externalTools.png"); // 32x32
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ExternalToolsSmall */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ExternalTools = IconLoader.getIcon("/general/externalToolsSmall.png"); // 16x16
     public static final Icon ExternalToolsSmall = IconLoader.getIcon("/general/externalToolsSmall.png"); // 16x16
     public static final Icon Filter = IconLoader.getIcon("/general/filter.svg"); // 16x16
     public static final Icon FitContent = IconLoader.getIcon("/general/fitContent.svg"); // 16x16
