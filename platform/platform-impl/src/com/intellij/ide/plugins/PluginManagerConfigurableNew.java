@@ -521,12 +521,13 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  private static JComponent createScrollPane(JComponent panel) {
+  private static JComponent createScrollPane(@NotNull PluginsGroupComponent panel) {
     JBScrollPane pane = new JBScrollPane(panel);
     pane.setBorder(JBUI.Borders.empty());
     ApplicationManager.getApplication().invokeLater(() -> {
       pane.getHorizontalScrollBar().setValue(0);
       pane.getVerticalScrollBar().setValue(0);
+      panel.initialSelection();
     });
     return pane;
   }
@@ -896,15 +897,23 @@ public class PluginManagerConfigurableNew
         CellPluginComponent pluginComponent = myFunction.fun(descriptor);
         uiGroup.plugins.add(pluginComponent);
         add(pluginComponent);
+        myEventHandler.addCell(pluginComponent);
         pluginComponent.setListeners(myListener, myEventHandler);
       }
+    }
+
+    public void initialSelection() {
+      myEventHandler.initialSelection();
     }
   }
 
   private static class EventHandler {
     public static final EventHandler EMPTY = new EventHandler();
 
-    public void connect(@NotNull Container container) {
+    public void connect(@NotNull PluginsGroupComponent container) {
+    }
+
+    public void addCell(@NotNull CellPluginComponent component) {
     }
 
     public void add(@NotNull Component component) {
@@ -913,34 +922,64 @@ public class PluginManagerConfigurableNew
     public void addAll(@NotNull Component component) {
     }
 
+    public void initialSelection() {
+    }
+
     public void clear() {
     }
   }
 
   private static class MultiSelectionEventHandler extends EventHandler {
-    private Container myContainer;
+    private PluginsGroupComponent myContainer;
+    private PluginsListLayout myLayout;
+    private List<CellPluginComponent> myComponents;
 
     private CellPluginComponent myHoverComponent;
-    private CellPluginComponent mySelectionComponent;
+    private int myHoverIndex;
+
+    private int mySelectionIndex;
+    private int mySelectionLength;
 
     private final MouseAdapter myMouseHandler;
     private final KeyListener myKeyListener;
     private final FocusListener myFocusListener;
 
+    private final ShortcutSet mySelectAllKeys;
+    private boolean myAllSelected;
+
     public MultiSelectionEventHandler() {
+      clear();
+
       myMouseHandler = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent event) {
           if (SwingUtilities.isLeftMouseButton(event)) {
-            CellPluginComponent component = CellPluginComponent.get(event);
-            if (component != mySelectionComponent) {
-              changeSelection(component);
+            if (event.isShiftDown()) {
+              // XXX
+            }
+            else {
+              CellPluginComponent component = CellPluginComponent.get(event);
+              int index = getIndex(component);
+              clearSelectionWithout(index);
+              singleSelection(component, index);
             }
           }
           else if (SwingUtilities.isRightMouseButton(event)) {
             CellPluginComponent component = CellPluginComponent.get(event);
+
+            if (mySelectionLength == 0 || mySelectionLength == 1) {
+              int index = getIndex(component);
+              if (mySelectionLength == 0 || mySelectionIndex != index) {
+                clearSelectionWithout(index);
+                singleSelection(component, index);
+              }
+            }
+
             DefaultActionGroup group = new DefaultActionGroup();
-            component.createPopupMenu(group);
+            component.createPopupMenu(group, mySelectionLength == 1 ? Collections.emptyList() : getSelection());
+            if (group.getChildrenCount() == 0) {
+              return;
+            }
 
             ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
             popupMenu.setTargetComponent(component);
@@ -954,6 +993,7 @@ public class PluginManagerConfigurableNew
           if (myHoverComponent != null) {
             myHoverComponent.setSelection(SelectionType.NONE);
             myHoverComponent = null;
+            myHoverIndex = -1;
           }
         }
 
@@ -963,42 +1003,63 @@ public class PluginManagerConfigurableNew
             CellPluginComponent component = CellPluginComponent.get(event);
             if (component.getSelection() == SelectionType.NONE) {
               myHoverComponent = component;
+              myHoverIndex = getIndex(component);
               component.setSelection(SelectionType.HOVER);
             }
           }
         }
       };
 
+      mySelectAllKeys = getShortcuts(IdeActions.ACTION_SELECT_ALL);
+
       myKeyListener = new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent event) {
           int code = event.getKeyCode();
-          if (code == KeyEvent.VK_HOME || code == KeyEvent.VK_END) {
-            CellPluginComponent component = CellPluginComponent.get(event);
+          int modifiers = event.getModifiers();
+          KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(code, modifiers), null);
+
+          if (check(shortcut, mySelectAllKeys)) {
             event.consume();
-            assert component == mySelectionComponent : component + " : " + mySelectionComponent;
-            CellPluginComponent sibling = getLast(code == KeyEvent.VK_HOME);
-            if (sibling != null) {
-              changeSelection(sibling);
+            selectAll();
+            return;
+          }
+
+          if (code == KeyEvent.VK_HOME || code == KeyEvent.VK_END) {
+            if (myComponents.isEmpty()) {
+              return;
+            }
+            event.consume();
+            if (event.isShiftDown()) {
+              moveOrResizeSelection(code == KeyEvent.VK_HOME, false, 2 * myComponents.size());
+            }
+            else {
+              int index = code == KeyEvent.VK_HOME ? 0 : myComponents.size() - 1;
+              clearSelectionWithout(index);
+              singleSelection(index);
             }
           }
           else if (code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN) {
-            CellPluginComponent component = CellPluginComponent.get(event);
             event.consume();
-            assert component == mySelectionComponent : component + " : " + mySelectionComponent;
-            CellPluginComponent sibling = getSibling(component, code == KeyEvent.VK_DOWN);
-            if (sibling != null) {
-              changeSelection(sibling);
+            if (modifiers == 0) {
+              moveOrResizeSelection(code == KeyEvent.VK_UP, true, 1);
+            }
+            else if (modifiers == Event.SHIFT_MASK) {
+              moveOrResizeSelection(code == KeyEvent.VK_UP, false, 1);
             }
           }
           else if (code == KeyEvent.VK_PAGE_UP || code == KeyEvent.VK_PAGE_DOWN) {
-            // TODO
+            if (myComponents.isEmpty()) {
+              return;
+            }
+
+            event.consume();
+            int pageCount = myContainer.getVisibleRect().height / myLayout.myLineHeight;
+            moveOrResizeSelection(code == KeyEvent.VK_PAGE_UP, !event.isShiftDown(), pageCount);
           }
           else if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER || code == KeyEvent.VK_BACK_SPACE) {
-            CellPluginComponent component = CellPluginComponent.get(event);
-            event.consume();
-            assert component == mySelectionComponent : component + " : " + mySelectionComponent;
-            component.handleKeyAction(code);
+            assert mySelectionLength != 0;
+            myComponents.get(mySelectionIndex).handleKeyAction(code, mySelectionLength == 1 ? Collections.emptyList() : getSelection());
           }
         }
       };
@@ -1006,87 +1067,231 @@ public class PluginManagerConfigurableNew
       myFocusListener = new FocusAdapter() {
         @Override
         public void focusGained(FocusEvent event) {
-          CellPluginComponent component = CellPluginComponent.get(event);
-          if (component != mySelectionComponent) {
-            changeSelection(component);
+          if (mySelectionIndex >= 0 && mySelectionLength == 1) {
+            CellPluginComponent component = CellPluginComponent.get(event);
+            int index = getIndex(component);
+            if (mySelectionIndex != index) {
+              clearSelectionWithout(index);
+              singleSelection(component, index);
+            }
           }
         }
       };
     }
 
+    @Nullable
+    private static ShortcutSet getShortcuts(@NotNull String id) {
+      AnAction action = ActionManager.getInstance().getAction(id);
+      return action == null ? null : action.getShortcutSet();
+    }
+
+    private static boolean check(@NotNull KeyboardShortcut shortcut, @Nullable ShortcutSet set) {
+      if (set != null) {
+        for (Shortcut test : set.getShortcuts()) {
+          if (test.isKeyboard() && shortcut.startsWith(test)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     @Override
-    public void connect(@NotNull Container container) {
+    public void connect(@NotNull PluginsGroupComponent container) {
       myContainer = container;
+      myLayout = (PluginsListLayout)container.getLayout();
+    }
+
+    @Override
+    public void addCell(@NotNull CellPluginComponent component) {
+      myComponents.add(component);
+    }
+
+    @Override
+    public void initialSelection() {
+      if (!myComponents.isEmpty()) {
+        singleSelection(0);
+      }
+    }
+
+    @NotNull
+    private List<CellPluginComponent> getSelection() {
+      List<CellPluginComponent> selection = new ArrayList<>();
+
+      for (CellPluginComponent component : myComponents) {
+        if (component.getSelection() == SelectionType.SELECTION) {
+          selection.add(component);
+        }
+      }
+
+      return selection;
     }
 
     @Override
     public void clear() {
-      myHoverComponent = mySelectionComponent = null;
+      myComponents = new ArrayList<>();
+      myHoverComponent = null;
+      myHoverIndex = -1;
+      mySelectionIndex = -1;
+      mySelectionLength = 0;
     }
 
-    @Nullable
-    private CellPluginComponent getLast(boolean first) {
-      int count = myContainer.getComponentCount();
+    private void selectAll() {
+      if (myAllSelected) {
+        return;
+      }
 
-      if (first) {
-        for (int i = 0; i < count; i++) {
-          Component component = myContainer.getComponent(i);
-          if (component instanceof CellPluginComponent) {
-            return (CellPluginComponent)component;
+      myAllSelected = true;
+      myHoverComponent = null;
+      myHoverIndex = -1;
+
+      for (CellPluginComponent component : myComponents) {
+        if (component.getSelection() != SelectionType.SELECTION) {
+          component.setSelection(SelectionType.SELECTION, false);
+        }
+      }
+    }
+
+    private void moveOrResizeSelection(boolean up, boolean singleSelection, int count) {
+      if (singleSelection) {
+        assert mySelectionLength != 0;
+        int index;
+        if (mySelectionLength > 0) {
+          index = up
+                  ? Math.max(mySelectionIndex + mySelectionLength - 1 - count, 0)
+                  : Math.min(mySelectionIndex + mySelectionLength - 1 + count, myComponents.size() - 1);
+        }
+        else {
+          index = up
+                  ? Math.max(mySelectionIndex + mySelectionLength + 1 - count, 0)
+                  : Math.min(mySelectionIndex + mySelectionLength + 1 + count, myComponents.size() - 1);
+        }
+        clearSelectionWithout(index);
+        singleSelection(index);
+      }
+      // multi selection
+      else if (up) {
+        if (mySelectionLength > 0) {
+          if (mySelectionIndex + mySelectionLength - 1 > 0) {
+            clearAllSelection();
+            for (int i = 0; i < count && mySelectionIndex + mySelectionLength - 1 > 0; i++) {
+              mySelectionLength--;
+              if (mySelectionLength > 0) {
+                myComponents.get(mySelectionIndex + mySelectionLength).setSelection(SelectionType.NONE);
+              }
+              if (mySelectionLength == 0) {
+                myComponents.get(mySelectionIndex - 1).setSelection(SelectionType.SELECTION);
+                mySelectionLength = -2;
+                int newCount = count - i - 1;
+                if (newCount > 0) {
+                  moveOrResizeSelection(true, false, newCount);
+                }
+                return;
+              }
+            }
+          }
+        }
+        else if (mySelectionIndex + mySelectionLength + 1 > 0) {
+          clearAllSelection();
+          for (int i = 0, index = mySelectionIndex + mySelectionLength + 1; i < count && index > 0; i++, index--) {
+            mySelectionLength--;
+            myComponents.get(index - 1).setSelection(SelectionType.SELECTION);
+          }
+        }
+      }
+      // down
+      else if (mySelectionLength > 0) {
+        if (mySelectionIndex + mySelectionLength < myComponents.size()) {
+          clearAllSelection();
+          for (int i = 0, index = mySelectionIndex + mySelectionLength, size = myComponents.size();
+               i < count && index < size;
+               i++, index++) {
+            myComponents.get(index).setSelection(SelectionType.SELECTION);
+            mySelectionLength++;
           }
         }
       }
       else {
-        for (int i = count - 1; i >= 0; i--) {
-          Component component = myContainer.getComponent(i);
-          if (component instanceof CellPluginComponent) {
-            return (CellPluginComponent)component;
+        clearAllSelection();
+        for (int i = 0; i < count; i++) {
+          mySelectionLength++;
+          myComponents.get(mySelectionIndex + mySelectionLength).setSelection(SelectionType.NONE);
+          if (mySelectionLength == -1) {
+            mySelectionLength = 1;
+            int newCount = count - i - 1;
+            if (newCount > 0) {
+              moveOrResizeSelection(false, false, newCount);
+            }
+            return;
           }
         }
       }
-
-      return null;
     }
 
-    @Nullable
-    private CellPluginComponent getSibling(@NotNull CellPluginComponent component, boolean next) {
-      int count = myContainer.getComponentCount();
+    private int getIndex(@NotNull CellPluginComponent component) {
+      int index = myComponents.indexOf(component);
+      assert index >= 0 : component;
+      return index;
+    }
 
-      for (int i = 0; i < count; i++) {
-        if (myContainer.getComponent(i) == component) {
-          if (next) {
-            for (int j = i + 1; j < count; j++) {
-              Component nextComponent = myContainer.getComponent(j);
-              if (nextComponent instanceof CellPluginComponent) {
-                return (CellPluginComponent)nextComponent;
-              }
-            }
-          }
-          else {
-            for (int j = i - 1; j >= 0; j--) {
-              Component nextComponent = myContainer.getComponent(j);
-              if (nextComponent instanceof CellPluginComponent) {
-                return (CellPluginComponent)nextComponent;
-              }
-            }
-          }
-          return null;
+    private void clearAllSelection() {
+      if (!myAllSelected) {
+        return;
+      }
+      myAllSelected = false;
+
+      int first;
+      int last;
+
+      if (mySelectionLength > 0) {
+        first = mySelectionIndex;
+        last = mySelectionIndex + mySelectionLength;
+      }
+      else {
+        first = mySelectionIndex + mySelectionLength + 1;
+        last = mySelectionIndex + 1;
+      }
+
+      for (int i = 0; i < first; i++) {
+        CellPluginComponent component = myComponents.get(i);
+        if (component.getSelection() == SelectionType.SELECTION) {
+          component.setSelection(SelectionType.NONE);
         }
       }
-
-      return null;
+      for (int i = last, size = myComponents.size(); i < size; i++) {
+        CellPluginComponent component = myComponents.get(i);
+        if (component.getSelection() == SelectionType.SELECTION) {
+          component.setSelection(SelectionType.NONE);
+        }
+      }
     }
 
-    private void changeSelection(@NotNull CellPluginComponent component) {
-      if (mySelectionComponent != null) {
-        mySelectionComponent.setSelection(SelectionType.NONE);
+    private void clearSelectionWithout(int withoutIndex) {
+      myAllSelected = false;
+      for (int i = 0, size = myComponents.size(); i < size; i++) {
+        if (i != withoutIndex) {
+          CellPluginComponent component = myComponents.get(i);
+          if (component.getSelection() == SelectionType.SELECTION) {
+            component.setSelection(SelectionType.NONE);
+          }
+        }
       }
-      if (component == myHoverComponent) {
+    }
+
+    private void singleSelection(int index) {
+      singleSelection(myComponents.get(index), index);
+    }
+
+    private void singleSelection(@NotNull CellPluginComponent component, int index) {
+      mySelectionIndex = index;
+      mySelectionLength = 1;
+      if (myHoverIndex == index) {
         myHoverComponent = null;
+        myHoverIndex = -1;
       }
-
-      mySelectionComponent = component;
-      component.setSelection(SelectionType.SELECTION);
+      if (component.getSelection() != SelectionType.SELECTION) {
+        component.setSelection(SelectionType.SELECTION);
+      }
     }
 
     @Override
@@ -1400,16 +1605,22 @@ public class PluginManagerConfigurableNew
     private static final Color GRAY_COLOR = new JBColor(Gray._130, Gray._120);
 
     public void setSelection(@NotNull SelectionType type) {
+      setSelection(type, type == SelectionType.SELECTION);
+    }
+
+    public void setSelection(@NotNull SelectionType type, boolean scrollAndFocus) {
       mySelection = type;
 
-      JComponent parent = (JComponent)getParent();
-      if (parent != null && type == SelectionType.SELECTION) {
-        Rectangle bounds = getBounds();
-        if (!parent.getVisibleRect().contains(bounds)) {
-          parent.scrollRectToVisible(bounds);
-        }
+      if (scrollAndFocus) {
+        JComponent parent = (JComponent)getParent();
+        if (parent != null && type == SelectionType.SELECTION) {
+          Rectangle bounds = getBounds();
+          if (!parent.getVisibleRect().contains(bounds)) {
+            parent.scrollRectToVisible(bounds);
+          }
 
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
+        }
       }
 
       updateColors(GRAY_COLOR, type == SelectionType.NONE ? MAIN_BG_COLOR : HOVER_COLOR);
@@ -1444,10 +1655,10 @@ public class PluginManagerConfigurableNew
       myIconLabel.addMouseListener(myHoverNameListener);
     }
 
-    public void createPopupMenu(@NotNull DefaultActionGroup group) {
+    public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
     }
 
-    public void handleKeyAction(int keyCode) {
+    public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
     }
 
     @NotNull
@@ -1738,7 +1949,10 @@ public class PluginManagerConfigurableNew
     }
 
     @Override
-    public void createPopupMenu(@NotNull DefaultActionGroup group) {
+    public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
+      if (!selection.isEmpty()) {
+        return; // XXX
+      }
       if (myRestartButton != null) {
         group.add(new ButtonAnAction(myRestartButton));
       }
@@ -1766,7 +1980,10 @@ public class PluginManagerConfigurableNew
     }
 
     @Override
-    public void handleKeyAction(int keyCode) {
+    public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
+      if (!selection.isEmpty()) {
+        return; // XXX
+      }
       if (keyCode == KeyEvent.VK_SPACE && !myUninstalled) {
         myPluginsModel.changeEnableDisable(myPlugin);
       }
