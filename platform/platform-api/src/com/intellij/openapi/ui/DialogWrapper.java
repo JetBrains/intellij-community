@@ -141,7 +141,6 @@ public abstract class DialogWrapper {
    */
   private int myButtonAlignment = SwingConstants.RIGHT;
   private boolean myCrossClosesWindow = true;
-  private Insets myButtonMargins = JBUI.insets(2, 16);
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -749,7 +748,6 @@ public abstract class DialogWrapper {
       myNoAction = action;
     }
 
-    setMargin(button);
     if (action.getValue(DEFAULT_ACTION) != null) {
       if (!myPeer.isHeadless()) {
         getRootPane().setDefaultButton(button);
@@ -800,17 +798,6 @@ public abstract class DialogWrapper {
       plainText.append(ch);
     }
     return Pair.create(mnemonic, plainText.toString());
-  }
-
-  private void setMargin(@NotNull JButton button) {
-    // Aqua LnF does a good job of setting proper margin between buttons. Setting them specifically causes them be 'square' style instead of
-    // 'rounded', which is expected by apple users.
-    if (!SystemInfo.isMac) {
-      if (myButtonMargins == null) {
-        return;
-      }
-      button.setMargin(myButtonMargins);
-    }
   }
 
   @NotNull
@@ -1453,11 +1440,11 @@ public abstract class DialogWrapper {
   /**
    * Sets margin for command buttons ("OK", "Cancel", "Help").
    *
+   * @Deprecated Button margins aren't used anymore. Button style is standardized.
    * @param insets buttons margin
    */
-  public final void setButtonsMargin(@Nullable Insets insets) {
-    myButtonMargins = insets;
-  }
+  @Deprecated
+  public final void setButtonsMargin(@Nullable Insets insets) {}
 
   public final void setCrossClosesWindow(boolean crossClosesWindow) {
     myCrossClosesWindow = crossClosesWindow;

@@ -32,6 +32,7 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicButtonUI;
+import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 import java.awt.*;
@@ -78,6 +79,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   public void installDefaults(AbstractButton b) {
     super.installDefaults(b);
     b.setIconTextGap(textIconGap());
+    b.setMargin(JBUI.emptyInsets());
   }
 
   protected int textIconGap() {
@@ -238,7 +240,10 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   @Override
   public final Dimension getPreferredSize(JComponent c) {
-    return getDarculaButtonSize(c, super.getPreferredSize(c));
+    AbstractButton b = (AbstractButton)c;
+    int textIconGap = StringUtil.isEmpty(b.getText()) || b.getIcon() == null ? 0 : b.getIconTextGap();
+    Dimension size = BasicGraphicsUtils.getPreferredButtonSize(b, textIconGap);
+    return getDarculaButtonSize(c, size);
   }
 
   @Override
