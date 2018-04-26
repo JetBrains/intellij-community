@@ -17,7 +17,10 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.Callable;
 
 public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   /**
@@ -53,4 +56,26 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
     return ApplicationManager.getApplication().runReadAction(action);
   }
+
+  /**
+   * Create an {@link NonBlockingReadAction} builder to run the given Runnable in non-blocking read action on a background thread.
+   */
+  @NotNull
+  @Contract(pure=true)
+  public static NonBlockingReadAction<Void> nonBlocking(@NotNull Runnable task) {
+    return nonBlocking(() -> {
+      task.run();
+      return null;
+    });
+  }
+
+  /**
+   * Create an {@link NonBlockingReadAction} builder to run the given Callable in a non-blocking read action on a background thread.
+   */
+  @NotNull
+  @Contract(pure=true)
+  public static <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<T> task) {
+    return AsyncExecutionService.getService().buildNonBlockingReadAction(task);
+  }
+
 }

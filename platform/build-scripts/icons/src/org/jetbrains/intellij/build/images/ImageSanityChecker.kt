@@ -24,6 +24,8 @@ import java.io.File
 import java.util.*
 
 abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: Boolean) {
+  private val STUB_PNG_MD5 = "5a87124746c39b00aad480e92672eca0" // /actions/stub.svg - 16x16
+
   fun check(module: JpsModule) {
     val allImages = ImageCollector(projectHome, false, ignoreSkipTag).collect(module)
 
@@ -34,7 +36,8 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     checkHaveCompleteIconSet(images, module)
     checkHaveValidSize(images, module)
     checkAreNotAmbiguous(images, module)
-    checkSvgIconsFallbackVersions(images, module)
+    checkSvgFallbackVersionsAreStubIcons(images, module)
+    checkOverridingFallbackVersionsAreStubIcons(images, module)
   }
 
   private fun checkHaveRetinaVersion(images: List<ImagePaths>, module: JpsModule) {
@@ -83,13 +86,34 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     }
   }
 
-  private fun checkSvgIconsFallbackVersions(images: List<ImagePaths>, module: JpsModule) {
-    process(images, WARNING, "svg image with non-fallback legacy version", module) { image ->
-      val extensions = image.files.map { ImageExtension.fromFile(it) }
-      if (SVG !in extensions) return@process true
-      return@process image.files.filter { ImageExtension.fromFile(it) != SVG }.filter { ImageType.fromFile(it) != BASIC }.isEmpty()
+  private fun checkSvgFallbackVersionsAreStubIcons(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "SVG icons should use stub.png as fallback", module) { image ->
+      if (image.files.none { ImageExtension.fromFile(it) == SVG }) return@process true
+
+      val legacyFiles = image.files.filter { ImageExtension.fromFile(it) != SVG }
+      return@process isStubFallbackVersion(legacyFiles)
     }
   }
+
+  private fun checkOverridingFallbackVersionsAreStubIcons(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "Overridden icons should be replaced with stub.png as fallback", module) { image ->
+      if (image.deprecationReplacement == null) return@process true
+
+      return@process isStubFallbackVersion(image.files)
+    }
+  }
+
+  private fun isStubFallbackVersion(files: List<File>): Boolean {
+    if (files.isEmpty()) return true
+    if (files.size > 1) return false
+
+    val file = files.single()
+    if (ImageType.fromFile(file) != BASIC) return false
+
+    val md5 = md5(file)
+    return md5 == STUB_PNG_MD5
+  }
+
 
   private fun process(images: List<ImagePaths>, severity: Severity, message: String, module: JpsModule,
                       processor: (ImagePaths) -> Boolean) {

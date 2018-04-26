@@ -20,6 +20,8 @@ import com.intellij.util.SVGLoader
 import java.awt.Dimension
 import java.awt.Image
 import java.io.File
+import java.math.BigInteger
+import java.security.MessageDigest
 import javax.imageio.ImageIO
 
 internal val File.children: List<File> get() = if (isDirectory) listFiles().toList() else emptyList()
@@ -61,6 +63,13 @@ internal fun loadImage(file: File): Image? {
     e.printStackTrace()
     return null
   }
+}
+
+internal fun md5(file: File): String {
+  val md5 = MessageDigest.getInstance("MD5")
+  val bytes = file.inputStream().readBytes()
+  val hash = md5.digest(bytes)
+  return BigInteger(hash).abs().toString(16)
 }
 
 internal enum class ImageType(private val suffix: String) {

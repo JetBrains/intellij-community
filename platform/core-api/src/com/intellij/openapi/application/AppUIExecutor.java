@@ -25,7 +25,7 @@ public interface AppUIExecutor extends Executor {
    */
   @NotNull
   static AppUIExecutor onUiThread(@NotNull ModalityState modality) {
-    return ApplicationManager.getApplication().createUIExecutor(modality);
+    return AsyncExecutionService.getService().createUIExecutor(modality);
   }
 
   /**

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import org.jetbrains.org.objectweb.asm.Type;
 
@@ -33,13 +34,23 @@ enum Value implements Result {
     return Stream.empty();
   }
 
+  ContractReturnValue toReturnValue() {
+    switch (this) {
+      case False: return ContractReturnValue.returnFalse();
+      case True: return ContractReturnValue.returnTrue();
+      case NotNull: return ContractReturnValue.returnNotNull();
+      case Null: return ContractReturnValue.returnNull();
+      case Fail: return ContractReturnValue.fail();
+      default: return ContractReturnValue.returnAny();
+    }
+  }
+
   MethodContract.ValueConstraint toValueConstraint() {
     switch (this) {
       case False: return MethodContract.ValueConstraint.FALSE_VALUE;
       case True: return MethodContract.ValueConstraint.TRUE_VALUE;
       case NotNull: return MethodContract.ValueConstraint.NOT_NULL_VALUE;
       case Null: return MethodContract.ValueConstraint.NULL_VALUE;
-      case Fail: return MethodContract.ValueConstraint.THROW_EXCEPTION;
       default: return MethodContract.ValueConstraint.ANY_VALUE;
     }
   }

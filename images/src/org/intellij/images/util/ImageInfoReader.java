@@ -16,6 +16,7 @@
 package org.intellij.images.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,12 +25,8 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.File;
 import java.util.Iterator;
 
 /**
@@ -43,30 +40,37 @@ public class ImageInfoReader {
 
   @Nullable
   public static Info getInfo(@NotNull String file) {
-    try (FileInputStream fis = new FileInputStream(file)) {
-      return read(fis);
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
-    return null;
+    return read(new File(file));
   }
 
   @Nullable
   public static Info getInfo(@NotNull byte[] data) {
+    for (int i = 0; i < Math.min(data.length, 100); i++) {
+      byte b = data[i];
+      if (b == '<') {
+        Info info = tryReadSvg(data);
+        if (info != null) {
+          return info;
+        }
+      }
+      if (!Character.isWhitespace(b)) {
+        break;
+      }
+    }
     return read(new ByteArrayInputStream(data));
   }
 
-  @Nullable
-  private static Info read(@NotNull InputStream input) {
+  private static Info tryReadSvg(byte[] data) {
     try {
-      Image load = SVGLoader.load(input, 1.0f);
-      int bpp = -1;
-      if (load instanceof BufferedImage) {
-        bpp = ImageTypeSpecifier.createFromRenderedImage((BufferedImage)load).getColorModel().getPixelSize();
-      }
-      return new Info(load.getWidth(null), load.getHeight(null), bpp);
-    } catch (IOException ignored) {}
+      Couple<Integer> couple = SVGLoader.loadInfo(null, new ByteArrayInputStream(data), 1.0f);
+      return new Info(couple.first, couple.second, 32);
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  private static Info read(@NotNull Object input) {
     try (ImageInputStream iis = ImageIO.createImageInputStream(input)) {
       Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
       ImageReader reader = it.hasNext() ? it.next() : null;

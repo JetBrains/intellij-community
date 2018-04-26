@@ -20,11 +20,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,32 +56,24 @@ import java.util.stream.Collectors;
  * @author Vladislav.Soroka
  * @since 10/29/13
  */
-public class ImportMavenRepositoriesTask extends ReadTask {
+class ImportMavenRepositoriesTask {
 
   @NotNull
   private final MavenRemoteRepository mavenCentralRemoteRepository;
 
   private final Project myProject;
-  private final DumbService myDumbService;
 
-  public ImportMavenRepositoriesTask(Project project) {
+  ImportMavenRepositoriesTask(Project project) {
     myProject = project;
-    myDumbService = DumbService.getInstance(myProject);
     mavenCentralRemoteRepository = new MavenRemoteRepository("central", null, "https://repo1.maven.org/maven2/", null, null, null);
   }
 
-  @Override
-  public Continuation runBackgroundProcess(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-    return myDumbService.runReadActionInSmartMode(() -> {
-      performTask();
-      return null;
-    });
+  void schedule() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    ReadAction.nonBlocking(this::performTask).inSmartMode(myProject).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private void performTask() {
-    if(myProject.isDisposed()) return;
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final List<PsiFile> psiFileList = ContainerUtil.newArrayList();
 
@@ -144,13 +132,6 @@ public class ImportMavenRepositoriesTask extends ReadTask {
         .collect(Collectors.toList());
       MavenRepositoriesHolder.getInstance(myProject).updateNotIndexedUrls(repositoriesWithEmptyIndex);
     });
-  }
-
-  @Override
-  public void onCanceled(@NotNull ProgressIndicator indicator) {
-    if (!myProject.isDisposed()) {
-      ProgressIndicatorUtils.scheduleWithWriteActionPriority(this);
-    }
   }
 
   @NotNull

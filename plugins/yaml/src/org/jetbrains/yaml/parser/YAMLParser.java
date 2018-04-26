@@ -215,8 +215,6 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
   @NotNull
   private IElementType parseMultiLineScalar(final IElementType tokenType) {
-    int indent = -1;
-
     assert tokenType == getTokenType();
     // Accept header token: '|' or '>'
     advanceLexer();
@@ -227,26 +225,36 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       advanceLexer();
       err.error(YAMLBundle.message("YAMLParser.invalid.header.symbols"));
     }
+
+    if (getTokenType() == EOL) {
+      advanceLexer();
+    }
     PsiBuilder.Marker endOfValue = myBuilder.mark();
 
     IElementType type = getTokenType();
-    while (type == tokenType || type == INDENT || type == EOL) {
-      int length = getCurrentTokenLength();
-      if (indent == -1 && type == INDENT) {
-        indent = length;
-      }
-
+    // Lexer ensures such input token structure: ( ( INDENT tokenType? )? SCALAR_EOL )*
+    // endOfValue marker is needed to exclude INDENT after last SCALAR_EOL
+    while (type == tokenType || type == INDENT || type == SCALAR_EOL) {
       advanceLexer();
-      if (type == tokenType || type == INDENT && length > indent) {
-        endOfValue.drop();
+      if (type == tokenType) {
+        if (endOfValue != null) {
+          // this 'if' should be always true because of input token structure
+          endOfValue.drop();
+        }
+        endOfValue = null;
+      }
+      if (type == SCALAR_EOL) {
+        if (endOfValue != null) {
+          endOfValue.drop();
+        }
         endOfValue = myBuilder.mark();
       }
 
       type = getTokenType();
     }
-
-    dropEolMarker();
-    endOfValue.rollbackTo();
+    if (endOfValue != null) {
+      endOfValue.rollbackTo();
+    }
 
     return tokenType == SCALAR_LIST ? YAMLElementTypes.SCALAR_LIST_VALUE : YAMLElementTypes.SCALAR_TEXT_VALUE;
   }
@@ -437,8 +445,9 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       return;
     }
     final IElementType type = myBuilder.getTokenType();
-    eolSeen = eolSeen || type == EOL;
-    if (type == EOL) {
+    boolean eolElement = YAMLElementTypes.EOL_ELEMENTS.contains(type);
+    eolSeen = eolSeen || eolElement;
+    if (eolElement) {
       // Drop and create new eolMarker
       myAfterLastEolMarker = mark();
       myIndent = 0;

@@ -54,9 +54,9 @@
             use-shortcut-of="Find"
             text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsLogQuickSettingsActions" id="Vcs.Log.QuickSettings"
-            icon="VcsLogIcons.GearWithDropDown" text="Quick Settings" description="Quick Settings"/>
+            text="Quick Settings" description="Quick Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsLogTextFilterSettingsActions" id="Vcs.Log.QuickTextFilterSettings"
-            icon="VcsLogIcons.GearWithDropDown" text="Text Filter Settings" description="Text Filter Settings"/>
+            text="Text Filter Settings" description="Text Filter Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>

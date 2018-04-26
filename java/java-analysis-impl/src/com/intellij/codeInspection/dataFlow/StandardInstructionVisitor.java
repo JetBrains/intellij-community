@@ -274,7 +274,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     LinkedHashSet<DfaMemoryState> currentStates = ContainerUtil.newLinkedHashSet(state.createClosureState());
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
     for (MethodContract contract : contracts) {
-      DfaValue result = contract.getDfaReturnValue(factory, defaultResult);
+      DfaValue result = contract.getReturnValue().toDfaValue(factory, defaultResult);
       currentStates = addContractResults(callArguments, contract, currentStates, factory, finalStates, result);
     }
     return StreamEx.of(finalStates).map(DfaMemoryState::peek)
@@ -316,7 +316,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaValue resultValue = getMethodResultValue(instruction, callArguments.myQualifier, memState, runner.getFactory());
       if (callArguments.myArguments != null) {
         for (MethodContract contract : instruction.getContracts()) {
-          DfaValue returnValue = contract.getDfaReturnValue(runner.getFactory(), resultValue);
+          DfaValue returnValue = contract.getReturnValue().toDfaValue(runner.getFactory(), resultValue);
           currentStates = addContractResults(callArguments, contract, currentStates, runner.getFactory(), finalStates, returnValue);
           if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
             if (LOG.isDebugEnabled()) {

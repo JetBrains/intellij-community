@@ -71,7 +71,7 @@ class ContractChecker extends DataFlowRunner {
     if (instruction instanceof CheckReturnValueInstruction) {
       PsiElement anchor = ((CheckReturnValueInstruction)instruction).getReturn();
       DfaValue retValue = memState.pop();
-      if (breaksContract(retValue, myContract.returnValue, memState)) {
+      if (!myContract.getReturnValue().isValueCompatible(memState, retValue)) {
         myViolations.add(anchor);
       } else {
         myNonViolations.add(anchor);
@@ -81,14 +81,14 @@ class ContractChecker extends DataFlowRunner {
     }
 
     if (instruction instanceof ReturnInstruction) {
-      if (((ReturnInstruction)instruction).isViaException() && myContract.returnValue != MethodContract.ValueConstraint.NOT_NULL_VALUE) {
+      if (((ReturnInstruction)instruction).isViaException() && !myContract.getReturnValue().isNotNull()) {
         ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
       }
     }
 
     if (instruction instanceof MethodCallInstruction &&
         ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL) {
-      if (myContract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION) {
+      if (myContract.getReturnValue().isFail()) {
         ContainerUtil.addIfNotNull(myFailures, ((MethodCallInstruction)instruction).getCallExpression());
         return DfaInstructionState.EMPTY_ARRAY;
       }
@@ -123,9 +123,10 @@ class ContractChecker extends DataFlowRunner {
       }
     }
 
-    if (myContract.returnValue != MethodContract.ValueConstraint.THROW_EXCEPTION) {
+    if (!myContract.getReturnValue().isFail()) {
       for (PsiElement element : myFailures) {
-        errors.put(element, "Contract clause '" + myContract + "' is violated: exception might be thrown instead of returning " + myContract.returnValue);
+        errors.put(element, "Contract clause '" + myContract + "' is violated: exception might be thrown instead of returning " +
+                            myContract.getReturnValue());
       }
     } else if (myFailures.isEmpty() && errors.isEmpty()) {
       PsiIdentifier nameIdentifier = myMethod.getNameIdentifier();
@@ -135,20 +136,4 @@ class ContractChecker extends DataFlowRunner {
 
     return errors;
   }
-
-  private boolean breaksContract(DfaValue retValue, MethodContract.ValueConstraint constraint, DfaMemoryState state) {
-    switch (constraint) {
-      case NULL_VALUE: return state.isNotNull(retValue);
-      case NOT_NULL_VALUE: return state.isNull(retValue);
-      case TRUE_VALUE: return isEquivalentTo(retValue, getFactory().getConstFactory().getFalse(), state);
-      case FALSE_VALUE: return isEquivalentTo(retValue, getFactory().getConstFactory().getTrue(), state);
-      case THROW_EXCEPTION: return true;
-      default: return false;
-    }
-  }
-
-  private static boolean isEquivalentTo(DfaValue val, DfaConstValue constValue, DfaMemoryState state) {
-    return val == constValue || val instanceof DfaVariableValue && constValue == state.getConstantValue((DfaVariableValue)val);
-  }
-
 }

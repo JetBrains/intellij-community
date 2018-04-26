@@ -784,7 +784,24 @@ public final class TreeUtil {
   }
 
   public static void expandAll(@NotNull JTree tree) {
-    promiseExpandAll(tree);
+    if (AbstractTreeBuilder.getBuilderFor(tree) != null) {
+      Object root = tree.getModel().getRoot();
+      if (root == null) return;
+      tree.expandPath(new TreePath(root));
+      int oldRowCount = 0;
+      do {
+        int rowCount = tree.getRowCount();
+        if (rowCount == oldRowCount) break;
+        oldRowCount = rowCount;
+        for (int i = 0; i < rowCount; i++) {
+          tree.expandRow(i);
+        }
+      }
+      while (true);
+    }
+    else {
+      promiseExpandAll(tree);
+    }
   }
 
   /**

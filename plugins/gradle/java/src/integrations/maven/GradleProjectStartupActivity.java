@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.integrations.maven;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +27,6 @@ public class GradleProjectStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ImportMavenRepositoriesTask(project));
+    new ImportMavenRepositoriesTask(project).schedule();
   }
 }
