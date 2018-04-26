@@ -83,9 +83,4 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
 
     return resultTextRange;
   }
-
-  @Override
-  public boolean changesWhitespacesOnly() {
-    return true;
-  }
 }
