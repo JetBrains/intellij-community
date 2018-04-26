@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Key
 import javax.swing.Icon
 
 class MockRunManager : RunManagerEx() {
+  override fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings? = null
+
   override fun getConfigurationType(typeName: String) = TODO("not implemented")
 
   override fun hasSettings(settings: RunnerAndConfigurationSettings) = false
