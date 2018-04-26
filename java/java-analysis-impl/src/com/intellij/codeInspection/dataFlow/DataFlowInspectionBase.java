@@ -839,7 +839,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           if (method != null) {
             List<StandardMethodContract> contracts = ControlFlowAnalyzer.getMethodContracts(method);
             return contracts.stream().anyMatch(
-              smc -> smc.getReturnValue() == ValueConstraint.THROW_EXCEPTION &&
+              smc -> smc.getReturnValue().isFail() &&
                      IntStreamEx.ofIndices(smc.arguments)
                                 .allMatch(idx -> smc.arguments[idx] == (idx == index ? wantedConstraint : ValueConstraint.ANY_VALUE)));
           }

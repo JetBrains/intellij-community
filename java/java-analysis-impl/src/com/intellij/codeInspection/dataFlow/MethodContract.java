@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -40,29 +38,7 @@ public abstract class MethodContract {
   /**
    * @return a value the method will return if the contract conditions fulfill
    */
-  public abstract ValueConstraint getReturnValue();
-
-  /**
-   * Returns DfaValue describing the return value of this contract
-   *
-   * @param factory factory to create values
-   * @param defaultResult default result value for the called method
-   * @return a DfaValue describing the return value of this contract
-   */
-  @NotNull
-  DfaValue getDfaReturnValue(DfaValueFactory factory, DfaValue defaultResult) {
-    switch (getReturnValue()) {
-      case NULL_VALUE: return factory.getConstFactory().getNull();
-      case NOT_NULL_VALUE:
-        return defaultResult instanceof DfaFactMapValue
-               ? ((DfaFactMapValue)defaultResult).withFact(DfaFactType.CAN_BE_NULL, false)
-               : DfaUnknownValue.getInstance();
-      case TRUE_VALUE: return factory.getConstFactory().getTrue();
-      case FALSE_VALUE: return factory.getConstFactory().getFalse();
-      case THROW_EXCEPTION: return factory.getConstFactory().getContractFail();
-      default: return defaultResult;
-    }
-  }
+  public abstract ContractReturnValue getReturnValue();
 
   /**
    * @return true if this contract result does not depend on arguments
@@ -80,10 +56,10 @@ public abstract class MethodContract {
     return getArgumentsPresentation() + " -> " + getReturnValue();
   }
 
-  public static MethodContract trivialContract(ValueConstraint value) {
+  public static MethodContract trivialContract(ContractReturnValue value) {
     return new MethodContract() {
       @Override
-      public ValueConstraint getReturnValue() {
+      public ContractReturnValue getReturnValue() {
         return value;
       }
 
@@ -102,11 +78,11 @@ public abstract class MethodContract {
   public static MethodContract singleConditionContract(ContractValue left,
                                                        RelationType relationType,
                                                        ContractValue right,
-                                                       ValueConstraint returnValue) {
+                                                       ContractReturnValue returnValue) {
     ContractValue condition = ContractValue.condition(left, relationType, right);
     return new MethodContract() {
       @Override
-      public ValueConstraint getReturnValue() {
+      public ContractReturnValue getReturnValue() {
         return returnValue;
       }
 
@@ -123,11 +99,22 @@ public abstract class MethodContract {
   }
 
   public enum ValueConstraint {
-    ANY_VALUE("_"), NULL_VALUE("null"), NOT_NULL_VALUE("!null"), TRUE_VALUE("true"), FALSE_VALUE("false"), THROW_EXCEPTION("fail");
-    private final String myPresentableName;
+    ANY_VALUE("_", ContractReturnValue.returnAny()),
+    NULL_VALUE("null", ContractReturnValue.returnNull()),
+    NOT_NULL_VALUE("!null", ContractReturnValue.returnNotNull()),
+    TRUE_VALUE("true", ContractReturnValue.returnTrue()),
+    FALSE_VALUE("false", ContractReturnValue.returnFalse());
 
-    ValueConstraint(String presentableName) {
+    private final String myPresentableName;
+    private final ContractReturnValue myCorrespondingReturnValue;
+
+    ValueConstraint(String presentableName, ContractReturnValue correspondingReturnValue) {
       myPresentableName = presentableName;
+      myCorrespondingReturnValue = correspondingReturnValue;
+    }
+
+    public ContractReturnValue asReturnValue() {
+      return myCorrespondingReturnValue;
     }
 
     @Nullable
@@ -166,7 +153,7 @@ public abstract class MethodContract {
      * @see #negate()
      */
     public boolean canBeNegated() {
-      return this != ANY_VALUE && this != THROW_EXCEPTION;
+      return this != ANY_VALUE;
     }
 
     /**
@@ -190,19 +177,5 @@ public abstract class MethodContract {
       return myPresentableName;
     }
 
-    public boolean isReturnTypeCompatible(@Nullable PsiType returnType) {
-      if (this == ANY_VALUE || this == THROW_EXCEPTION) {
-        return true;
-      }
-      if (PsiType.VOID.equals(returnType)) return false;
-
-      if (PsiType.BOOLEAN.equals(returnType)) {
-        return this == TRUE_VALUE || this == FALSE_VALUE;
-      }
-
-      if (returnType instanceof PsiPrimitiveType) return false;
-
-      return this == NULL_VALUE || this == NOT_NULL_VALUE;
-    }
   }
 }

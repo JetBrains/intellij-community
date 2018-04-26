@@ -18,6 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
@@ -267,7 +268,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
       List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
       if (contracts.isEmpty()) return null;
       StandardMethodContract contract = tryCast(contracts.get(0), StandardMethodContract.class);
-      if (contract == null || contract.getReturnValue() != MethodContract.ValueConstraint.FALSE_VALUE) return null;
+      if (contract == null || !contract.getReturnValue().equals(ContractReturnValue.returnFalse())) return null;
       MethodContract.ValueConstraint[] arguments = contract.arguments;
       int idx = -1;
       for (int i = 0; i < arguments.length; i++) {

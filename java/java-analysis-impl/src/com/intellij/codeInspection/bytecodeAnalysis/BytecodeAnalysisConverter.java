@@ -283,14 +283,14 @@ public class BytecodeAnalysisConverter {
     // no contract clauses for @NotNull methods
     if (!notNulls.contains(methodKey) && !contractClauses.isEmpty()) {
       Map<Boolean, List<StandardMethodContract>> partition =
-        StreamEx.of(contractClauses).partitioningBy(c -> c.getReturnValue() == ValueConstraint.THROW_EXCEPTION);
+        StreamEx.of(contractClauses).partitioningBy(c -> c.getReturnValue().isFail());
       List<StandardMethodContract> failingContracts = squashContracts(partition.get(true));
       List<StandardMethodContract> nonFailingContracts = squashContracts(partition.get(false));
       // Sometimes "null,_->!null;!null,_->!null" contracts are inferred for some reason
       // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
       if(nonFailingContracts.size() == 1) {
         StandardMethodContract contract = nonFailingContracts.get(0);
-        if(contract.getReturnValue() == ValueConstraint.NOT_NULL_VALUE && contract.isTrivial()) {
+        if(contract.getReturnValue().isNotNull() && contract.isTrivial()) {
           nonFailingContracts = Collections.emptyList();
           notNulls.add(methodKey);
         }
@@ -354,6 +354,6 @@ public class BytecodeAnalysisConverter {
     final ValueConstraint[] constraints = new ValueConstraint[arity];
     Arrays.fill(constraints, ValueConstraint.ANY_VALUE);
     constraints[inOut.paramIndex] = inOut.inValue.toValueConstraint();
-    return new StandardMethodContract(constraints, value.toValueConstraint());
+    return new StandardMethodContract(constraints, value.toReturnValue());
   }
 }

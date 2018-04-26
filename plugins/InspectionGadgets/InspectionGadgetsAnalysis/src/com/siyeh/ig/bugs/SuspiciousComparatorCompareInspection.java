@@ -104,7 +104,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
           List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, soleCall);
           if (contracts.size() == 1) {
             MethodContract contract = contracts.get(0);
-            if (contract.isTrivial() && contract.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION) {
+            if (contract.isTrivial() && contract.getReturnValue().isFail()) {
               return;
             }
           }

@@ -86,7 +86,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
       if (contracts.size() != 1) return null;
       StandardMethodContract contract = ObjectUtils.tryCast(contracts.get(0), StandardMethodContract.class);
-      if (contract == null || contract.getReturnValue() != MethodContract.ValueConstraint.THROW_EXCEPTION) return null;
+      if (contract == null || !contract.getReturnValue().isFail()) return null;
       MethodContract.ValueConstraint[] arguments = contract.arguments;
       Integer nullIndex = null;
       boolean isNull = false;

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference;
 
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.lang.LighterAST;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
 import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
 import static com.intellij.psi.impl.source.JavaLightTreeUtil.findExpressionChild;
 import static com.intellij.psi.impl.source.JavaLightTreeUtil.getExpressionChildren;
@@ -117,8 +119,8 @@ class ContractInferenceInterpreter {
 
       List<PreContract> conditionResults = visitExpression(states, children.get(0));
       return ContainerUtil.concat(
-        visitExpression(antecedentsReturning(conditionResults, TRUE_VALUE), children.get(1)),
-        visitExpression(antecedentsReturning(conditionResults, FALSE_VALUE), children.get(2)));
+        visitExpression(antecedentsReturning(conditionResults, returnTrue()), children.get(1)),
+        visitExpression(antecedentsReturning(conditionResults, returnFalse()), children.get(2)));
     }
 
 
@@ -136,12 +138,12 @@ class ContractInferenceInterpreter {
     if (type == INSTANCE_OF_EXPRESSION) {
       final int parameter = resolveParameter(findExpressionChild(myTree, expr));
       if (parameter >= 0) {
-        return asPreContracts(ContainerUtil.mapNotNull(states, state -> contractWithConstraint(state, parameter, NULL_VALUE, FALSE_VALUE)));
+        return asPreContracts(ContainerUtil.mapNotNull(states, state -> contractWithConstraint(state, parameter, NULL_VALUE, returnFalse())));
       }
     }
 
     if (type == NEW_EXPRESSION || type == THIS_EXPRESSION) {
-      return asPreContracts(toContracts(states, NOT_NULL_VALUE));
+      return asPreContracts(toContracts(states, returnNotNull()));
     }
     if (type == METHOD_CALL_EXPRESSION) {
       return singletonList(new MethodCallContract(ExpressionRange.create(expr, myBody.getStartOffset()),
@@ -150,7 +152,7 @@ class ContractInferenceInterpreter {
 
     final ValueConstraint constraint = getLiteralConstraint(expr);
     if (constraint != null) {
-      return asPreContracts(toContracts(states, constraint));
+      return asPreContracts(toContracts(states, constraint.asReturnValue()));
     }
 
     int paramIndex = resolveParameter(expr);
@@ -159,11 +161,11 @@ class ContractInferenceInterpreter {
       for (ValueConstraint[] state : states) {
         if (state[paramIndex] != ANY_VALUE) {
           // the second 'o' reference in cases like: if (o != null) return o;
-          result.add(new StandardMethodContract(state, state[paramIndex]));
+          result.add(new StandardMethodContract(state, state[paramIndex].asReturnValue()));
         } else if (JavaTokenType.BOOLEAN_KEYWORD == getPrimitiveParameterType(paramIndex)) {
           // if (boolValue) ...
-          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, TRUE_VALUE, TRUE_VALUE));
-          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, FALSE_VALUE, FALSE_VALUE));
+          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, TRUE_VALUE, returnTrue()));
+          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, paramIndex, FALSE_VALUE, returnFalse()));
         }
       }
       return asPreContracts(result);
@@ -175,7 +177,7 @@ class ContractInferenceInterpreter {
   @NotNull
   private List<PreContract> visitPolyadic(List<ValueConstraint[]> states, @NotNull LighterASTNode expr) {
     if (firstChildOfType(myTree, expr, JavaTokenType.PLUS) != null) {
-      return asPreContracts(ContainerUtil.map(states, s -> new StandardMethodContract(s, NOT_NULL_VALUE)));
+      return asPreContracts(ContainerUtil.map(states, s -> new StandardMethodContract(s, returnNotNull())));
     }
 
     List<LighterASTNode> operands = getExpressionChildren(myTree, expr);
@@ -200,7 +202,7 @@ class ContractInferenceInterpreter {
   @Nullable
   private static StandardMethodContract contractWithConstraint(ValueConstraint[] state,
                                                                int parameter, ValueConstraint paramConstraint,
-                                                               ValueConstraint returnValue) {
+                                                               ContractReturnValue returnValue) {
     ValueConstraint[] newState = withConstraint(state, parameter, paramConstraint);
     return newState == null ? null : new StandardMethodContract(newState, returnValue);
   }
@@ -220,12 +222,11 @@ class ContractInferenceInterpreter {
       for (ValueConstraint[] state : states) {
         if (constraint == NOT_NULL_VALUE) {
           if (getPrimitiveParameterType(parameter) == null) {
-            ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, NULL_VALUE, equality ? FALSE_VALUE : TRUE_VALUE));
+            ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, NULL_VALUE, returnBoolean(!equality)));
           }
         } else {
-          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, constraint, equality ? TRUE_VALUE : FALSE_VALUE));
-          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, constraint.negate(),
-                                                                    equality ? FALSE_VALUE : TRUE_VALUE));
+          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, constraint, returnBoolean(equality)));
+          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, constraint.negate(), returnBoolean(!equality)));
         }
       }
       return result;
@@ -240,16 +241,16 @@ class ContractInferenceInterpreter {
     return primitive == null ? null : primitive.getTokenType();
   }
 
-  static List<StandardMethodContract> toContracts(List<ValueConstraint[]> states, ValueConstraint constraint) {
+  static List<StandardMethodContract> toContracts(List<ValueConstraint[]> states, ContractReturnValue constraint) {
     return ContainerUtil.map(states, state -> new StandardMethodContract(state, constraint));
   }
 
   private List<StandardMethodContract> visitLogicalOperation(List<LighterASTNode> operands, boolean conjunction, List<ValueConstraint[]> states) {
-    ValueConstraint breakValue = conjunction ? FALSE_VALUE : TRUE_VALUE;
+    BooleanReturnValue breakValue = returnBoolean(!conjunction);
     List<StandardMethodContract> finalStates = ContainerUtil.newArrayList();
     for (LighterASTNode operand : operands) {
       List<PreContract> opResults = visitExpression(states, operand);
-      finalStates.addAll(ContainerUtil.filter(knownContracts(opResults), contract -> contract.returnValue == breakValue));
+      finalStates.addAll(ContainerUtil.filter(knownContracts(opResults), contract -> contract.getReturnValue() == breakValue));
       states = antecedentsReturning(opResults, breakValue.negate());
     }
     finalStates.addAll(toContracts(states, breakValue.negate()));
@@ -260,8 +261,8 @@ class ContractInferenceInterpreter {
     return ContainerUtil.mapNotNull(values, pc -> pc instanceof KnownContract ? ((KnownContract)pc).getContract() : null);
   }
 
-  private static List<ValueConstraint[]> antecedentsReturning(List<PreContract> values, ValueConstraint result) {
-    return ContainerUtil.mapNotNull(knownContracts(values), contract -> contract.returnValue == result ? contract.arguments : null);
+  private static List<ValueConstraint[]> antecedentsReturning(List<PreContract> values, ContractReturnValue result) {
+    return ContainerUtil.mapNotNull(knownContracts(values), contract -> contract.getReturnValue().equals(result) ? contract.arguments : null);
   }
 
   private static class CodeBlockContracts {
@@ -301,10 +302,10 @@ class ContractInferenceInterpreter {
 
         List<LighterASTNode> thenElse = getStatements(statement, myTree);
         if (thenElse.size() > 0) {
-          result.addAll(visitStatements(antecedentsReturning(conditionResults, TRUE_VALUE), singletonList(thenElse.get(0))));
+          result.addAll(visitStatements(antecedentsReturning(conditionResults, returnTrue()), singletonList(thenElse.get(0))));
         }
 
-        List<ValueConstraint[]> falseStates = antecedentsReturning(conditionResults, FALSE_VALUE);
+        List<ValueConstraint[]> falseStates = antecedentsReturning(conditionResults, returnFalse());
         if (thenElse.size() > 1) {
           result.addAll(visitStatements(falseStates, singletonList(thenElse.get(1))));
         } else {
@@ -313,18 +314,18 @@ class ContractInferenceInterpreter {
         }
       }
       else if (type == WHILE_STATEMENT) {
-        states = antecedentsReturning(visitExpression(states, findExpressionChild(myTree, statement)), FALSE_VALUE);
+        states = antecedentsReturning(visitExpression(states, findExpressionChild(myTree, statement)), returnFalse());
         continue;
       }
       else if (type == THROW_STATEMENT) {
-        result.addAll(asPreContracts(toContracts(states, THROW_EXCEPTION)));
+        result.addAll(asPreContracts(toContracts(states, fail())));
       }
       else if (type == RETURN_STATEMENT) {
         result.addAll(visitExpression(states, findExpressionChild(myTree, statement)));
       }
       else if (type == ASSERT_STATEMENT) {
         List<PreContract> conditionResults = visitExpression(states, findExpressionChild(myTree, statement));
-        result.addAll(asPreContracts(toContracts(antecedentsReturning(conditionResults, FALSE_VALUE), THROW_EXCEPTION)));
+        result.addAll(asPreContracts(toContracts(antecedentsReturning(conditionResults, returnFalse()), fail())));
       }
       else if (type == DECLARATION_STATEMENT) {
         result.registerDeclaration(statement, myTree, myBody.getStartOffset());
