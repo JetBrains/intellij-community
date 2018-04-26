@@ -32,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.formatting.templateLanguages.BlockUtil.buildChildWrappers;
-import static com.intellij.formatting.templateLanguages.BlockUtil.filterBlocksByRange;
 
 /**
  * @author Alexey Chmutov
@@ -61,12 +59,13 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
       }
       if (builder != null) {
         final FormattingModel model = builder.createModel(viewProvider.getPsi(dataLanguage), settings);
-        List<DataLanguageBlockWrapper> childWrappers = buildChildWrappers(model.getRootBlock());
+        TemplateLanguageBlockUtil blockUtil = TemplateLanguageBlockUtil.INSTANCE;
+        List<DataLanguageBlockWrapper> childWrappers = blockUtil.buildChildWrappers(model.getRootBlock());
         if (childWrappers.size() == 1) {
-          childWrappers = buildChildWrappers(childWrappers.get(0).getOriginal());
+          childWrappers = blockUtil.buildChildWrappers(childWrappers.get(0).getOriginal());
         }
         return createTemplateLanguageBlock(node, Wrap.createWrap(WrapType.NONE, false), null,
-                                           filterBlocksByRange(childWrappers, node.getTextRange()), settings);
+                                           blockUtil.filterBlocksByRange(childWrappers, node.getTextRange()), settings);
       }
     }
     return createTemplateLanguageBlock(node, Wrap.createWrap(WrapType.NONE, false), null, Collections.emptyList(), settings);

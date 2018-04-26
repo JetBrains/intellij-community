@@ -60,12 +60,10 @@ public abstract class InjectedLanguageBlockBuilder {
   public boolean addInjectedBlocks(List<Block> result, final ASTNode injectionHost, Wrap wrap, Alignment alignment, Indent indent) {
     final PsiFile[] injectedFile = new PsiFile[1];
     final Ref<TextRange> injectedRangeInsideHost = new Ref<>();
-    final Ref<Integer> prefixLength = new Ref<>();
-    final Ref<Integer> suffixLength = new Ref<>();
-    final Ref<ASTNode> injectionHostToUse = new Ref<>(injectionHost);
+    final Ref<List<PsiLanguageInjectionHost.Shred>> placesRef = new Ref<>();
 
     final PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = (injectedPsi, places) -> {
-      if (places.size() != 1) {
+      if (places.size() != 1 && !supportsMultipleShreds(places)) {
         return;
       }
       final PsiLanguageInjectionHost.Shred shred = places.get(0);
@@ -100,8 +98,7 @@ public abstract class InjectedLanguageBlockBuilder {
             canProcessFragment(childText.substring(textRange.getEndOffset()), injectionHost)) {
           injectedFile[0] = injectedPsi;
           injectedRangeInsideHost.set(textRange);
-          prefixLength.set(shred.getPrefix().length());
-          suffixLength.set(shred.getSuffix().length());
+          placesRef.set(places);
         }
     };
     final PsiElement injectionHostPsi = injectionHost.getPsi();
@@ -113,26 +110,46 @@ public abstract class InjectedLanguageBlockBuilder {
       final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, injectionHostPsi);
 
       if (builder != null) {
-        final int startOffset = injectedRangeInsideHost.get().getStartOffset();
-        final int endOffset = injectedRangeInsideHost.get().getEndOffset();
-        TextRange range = injectionHostToUse.get().getTextRange();
-
-        int childOffset = range.getStartOffset();
-        if (startOffset != 0) {
-          final ASTNode leaf = injectionHostToUse.get().findLeafElementAt(startOffset - 1);
-          result.add(createBlockBeforeInjection(leaf, wrap, alignment, indent, new TextRange(childOffset, childOffset + startOffset)));
-        }
-
-        addInjectedLanguageBlockWrapper(result, injectedFile[0].getNode(), indent, childOffset + startOffset,
-                                        new TextRange(prefixLength.get(), injectedFile[0].getTextLength() - suffixLength.get()));
-
-        if (endOffset != injectionHostToUse.get().getTextLength()) {
-          final ASTNode leaf = injectionHostToUse.get().findLeafElementAt(endOffset);
-          result.add(createBlockAfterInjection(leaf, wrap, alignment, indent, new TextRange(childOffset + endOffset, range.getEndOffset())));
-        }
+        addInjectedBlocksForShreds(result, injectedFile[0], injectionHost, injectedRangeInsideHost.get(), placesRef.get(),
+                                   wrap, alignment, indent);
         return true;
       }
     }
+    return false;
+  }
+
+  protected void addInjectedBlocksForShreds(@NotNull List<Block> result, @NotNull PsiFile injectedFile,
+                                            ASTNode injectionHostToUse,
+                                            @NotNull TextRange injectedRangeInsideHost,
+                                            @NotNull List<PsiLanguageInjectionHost.Shred> shreds,
+                                            Wrap wrap,
+                                            Alignment alignment,
+                                            Indent indent) {
+    if (shreds.size() != 1) {
+      return;
+    }
+    final int startOffset = injectedRangeInsideHost.getStartOffset();
+    final int endOffset = injectedRangeInsideHost.getEndOffset();
+    TextRange range = injectionHostToUse.getTextRange();
+
+    int childOffset = range.getStartOffset();
+    if (startOffset != 0) {
+      final ASTNode leaf = injectionHostToUse.findLeafElementAt(startOffset - 1);
+      result.add(createBlockBeforeInjection(leaf, wrap, alignment, indent, new TextRange(childOffset, childOffset + startOffset)));
+    }
+    PsiLanguageInjectionHost.Shred shred = shreds.get(0);
+    int prefixLength = shred.getPrefix().length();
+    int suffixLength = shred.getSuffix().length();
+    addInjectedLanguageBlockWrapper(result, injectedFile.getNode(), indent, childOffset + startOffset,
+                                    new TextRange(prefixLength, injectedFile.getTextLength() - suffixLength));
+
+    if (endOffset != injectionHostToUse.getTextLength()) {
+      final ASTNode leaf = injectionHostToUse.findLeafElementAt(endOffset);
+      result.add(createBlockAfterInjection(leaf, wrap, alignment, indent, new TextRange(childOffset + endOffset, range.getEndOffset())));
+    }
+  }
+  
+  protected boolean supportsMultipleShreds(List<PsiLanguageInjectionHost.Shred> shreds) {
     return false;
   }
 

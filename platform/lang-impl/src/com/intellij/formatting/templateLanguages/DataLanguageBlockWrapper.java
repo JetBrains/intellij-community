@@ -34,8 +34,8 @@ import java.util.Map;
 /**
  * @author Alexey Chmutov
  */
-public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithParent {
-  private final Block myOriginal;
+public class DataLanguageBlockWrapper implements ASTBlock, IDataBlock {
+  @NotNull private final Block myOriginal;
   @Nullable private final Language myLanguage;
   private List<Block> myBlocks;
   private List<TemplateLanguageBlock> myTlBlocks;
@@ -44,7 +44,7 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
   private Spacing mySpacing;
   private Map<Pair<Block, Block>, Spacing> myChildDataBorderSpacings;
 
-  private DataLanguageBlockWrapper(@NotNull final Block original) {
+  public DataLanguageBlockWrapper(@NotNull final Block original) {
     assert !(original instanceof DataLanguageBlockWrapper) && !(original instanceof TemplateLanguageBlock);
     myOriginal = original;
 
@@ -117,20 +117,18 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
     if (isLeaf()) {
       return AbstractBlock.EMPTY;
     }
-    final List<DataLanguageBlockWrapper> subWrappers = BlockUtil.buildChildWrappers(myOriginal);
+    final List<DataLanguageBlockWrapper> subWrappers = TemplateLanguageBlockUtil.INSTANCE.buildChildWrappers(myOriginal);
     final List<Block> children;
     if (myTlBlocks == null) {
       children = new ArrayList<>(subWrappers);
     }
     else if (subWrappers.size() == 0) {
-      //noinspection unchecked
-      children = (List<Block>)(subWrappers.size() > 0 ? myTlBlocks : BlockUtil.splitBlockIntoFragments(myOriginal, myTlBlocks));
+      children = TemplateLanguageBlockUtil.INSTANCE.splitBlockIntoFragments(this, myTlBlocks);
     }
     else {
-      children = BlockUtil.mergeBlocks(myTlBlocks, subWrappers);
+      children = TemplateLanguageBlockUtil.INSTANCE.mergeBlocks(myTlBlocks, subWrappers);
     }
-    //BlockUtil.printBlocks(getTextRange(), children);
-    return BlockUtil.setParent(children, this);
+    return AbstractBlockUtil.setParent(children, this);
   }
 
   @Override
@@ -180,15 +178,18 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
     return myTlBlocks == null && myOriginal.isLeaf();
   }
 
-  void addTlChild(TemplateLanguageBlock tlBlock) {
+  @Override
+  public void addTlChild(@NotNull ITemplateBlock tlBlock) {
     assert myBlocks == null;
     if (myTlBlocks == null) {
       myTlBlocks = new ArrayList<>(5);
     }
-    myTlBlocks.add(tlBlock);
+    myTlBlocks.add((TemplateLanguageBlock)tlBlock);
     tlBlock.setParent(this);
   }
 
+  @Override
+  @NotNull
   public Block getOriginal() {
     return myOriginal;
   }
@@ -200,7 +201,7 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
   }
 
   @Nullable
-  public static DataLanguageBlockWrapper create(@NotNull final Block original, @Nullable final Indent indent) {
+  public static DataLanguageBlockWrapper create(@NotNull final Block original) {
     final boolean doesntNeedWrapper = original instanceof ASTBlock && ((ASTBlock)original).getNode() instanceof OuterLanguageElement;
     return doesntNeedWrapper ? null : new DataLanguageBlockWrapper(original);
   }
@@ -217,12 +218,13 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
   }
 
   @Override
-  public void setParent(BlockWithParent parent) {
+  public void setParent(@NotNull BlockWithParent parent) {
     myParent = parent;
   }
 
-  public void setRightHandSpacing(DataLanguageBlockWrapper rightHandWrapper, Spacing spacing) {
-    myRightHandWrapper = rightHandWrapper;
+  @Override
+  public void setRightHandSpacing(@NotNull IDataBlock rightHandWrapper, Spacing spacing) {
+    myRightHandWrapper = (DataLanguageBlockWrapper)rightHandWrapper;
     mySpacing = spacing;
   }
 
