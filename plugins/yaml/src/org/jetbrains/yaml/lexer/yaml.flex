@@ -13,6 +13,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 %implements FlexLexer, YAMLTokenTypes
 %unicode
 %public
+%column
 
 %function advance
 %type IElementType
@@ -27,6 +28,8 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   private int braceCount = 0;
   private IElementType valueTokenType = null;
   private int previousState = YYINITIAL;
+
+  protected int yycolumn = 0;
 
   public boolean isCleanState() {
     return yystate() == YYINITIAL
@@ -105,6 +108,14 @@ import org.jetbrains.yaml.YAMLTokenTypes;
       return DOCUMENT_END;
     }
     return tokenType;
+  }
+
+  // The compact notation may be used when the entry is itself a nested block collection.
+  // In this case, both the “-” indicator and the following spaces are considered to be part of the indentation of the nested collection.
+  // See 8.2.1. Block Sequences http://www.yaml.org/spec/1.2/spec.html#id2797382
+  private IElementType getScalarKeyAndUpdateIndent() {
+    currentLineIndent = yycolumn;
+    return SCALAR_KEY;
   }
 %}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -244,11 +255,11 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
 
 
 {STRING_SINGLE_LINE} ":" {
-  return SCALAR_KEY;
+  return getScalarKeyAndUpdateIndent();
 }
 
 {DSTRING_SINGLE_LINE} ":" {
-  return SCALAR_KEY;
+  return getScalarKeyAndUpdateIndent();
 }
 
 
@@ -265,7 +276,7 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
 <YYINITIAL, VALUE_OR_KEY> {
 {KEY_block} / !(!{ANY_CHAR}|{NS_PLAIN_SAFE_block}) {
   yyBegin(VALUE);
-  return SCALAR_KEY;
+  return getScalarKeyAndUpdateIndent();
 }
 }
 

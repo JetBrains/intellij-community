@@ -448,6 +448,8 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
   private IElementType valueTokenType = null;
   private int previousState = YYINITIAL;
 
+  protected int yycolumn = 0;
+
   public boolean isCleanState() {
     return yystate() == YYINITIAL
       && currentLineIndent == 0
@@ -525,6 +527,14 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
       return DOCUMENT_END;
     }
     return tokenType;
+  }
+
+  // The compact notation may be used when the entry is itself a nested block collection.
+  // In this case, both the “-” indicator and the following spaces are considered to be part of the indentation of the nested collection.
+  // See 8.2.1. Block Sequences http://www.yaml.org/spec/1.2/spec.html#id2797382
+  private IElementType getScalarKeyAndUpdateIndent() {
+    currentLineIndent = yycolumn;
+    return SCALAR_KEY;
   }
 
 
@@ -705,6 +715,40 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
 
     while (true) {
       zzMarkedPosL = zzMarkedPos;
+
+      boolean zzR = false;
+      int zzCh;
+      int zzCharCount;
+      for (zzCurrentPosL = zzStartRead  ;
+           zzCurrentPosL < zzMarkedPosL ;
+           zzCurrentPosL += zzCharCount ) {
+        zzCh = Character.codePointAt(zzBufferL, zzCurrentPosL/*, zzMarkedPosL*/);
+        zzCharCount = Character.charCount(zzCh);
+        switch (zzCh) {
+        case '\u000B':  // fall though
+        case '\u000C':  // fall though
+        case '\u0085':  // fall though
+        case '\u2028':  // fall though
+        case '\u2029':
+          yycolumn = 0;
+          zzR = false;
+          break;
+        case '\r':
+          yycolumn = 0;
+          zzR = true;
+          break;
+        case '\n':
+          if (zzR)
+            zzR = false;
+          else {
+            yycolumn = 0;
+          }
+          break;
+        default:
+          zzR = false;
+          yycolumn += zzCharCount;
+        }
+      }
 
       zzAction = -1;
 
@@ -1015,12 +1059,12 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
               zzMarkedPos = zzFPos;
             }
             { yyBegin(VALUE);
-  return SCALAR_KEY;
+  return getScalarKeyAndUpdateIndent();
             } 
             // fall through
           case 52: break;
           case 26: 
-            { return SCALAR_KEY;
+            { return getScalarKeyAndUpdateIndent();
             } 
             // fall through
           case 53: break;
