@@ -245,10 +245,6 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return getDisplayText(breakpoint);
   }
 
-  public String getLogMessageLabelText() {
-    return XDebuggerBundle.message("xbreakpoints.log.message.label");
-  }
-
   public interface XBreakpointCreator<P extends XBreakpointProperties> {
     @NotNull
     XBreakpoint<P> createBreakpoint(@Nullable P properties);
