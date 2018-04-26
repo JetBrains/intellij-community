@@ -138,7 +138,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
-    super(layout.myUi, true);
+    super(layout.myUi, false);
     myLayout = layout;
     myContent = content;
 

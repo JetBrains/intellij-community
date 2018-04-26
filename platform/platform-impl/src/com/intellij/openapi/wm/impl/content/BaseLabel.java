@@ -50,7 +50,7 @@ public class BaseLabel extends JLabel {
 
   @Override
   public Font getFont() {
-    Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
+    Font font = getLabelFont();
     if (myBold) {
       font = font.deriveFont(Font.BOLD);
     }
@@ -59,8 +59,7 @@ public class BaseLabel extends JLabel {
   }
 
   public static Font getLabelFont() {
-    Font f = UIUtil.getLabelFont();
-    return f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 2));
+    return JBUI.CurrentTheme.ToolWindow.headerFont();
   }
 
   public void setActiveFg(final Color fg) {
