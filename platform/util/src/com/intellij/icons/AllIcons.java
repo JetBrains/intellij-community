@@ -626,6 +626,10 @@ public class AllIcons {
     public static final Icon ComboArrowRightPassive = IconLoader.getIcon("/general/comboArrowRightPassive.png"); // 5x9
     public static final Icon ComboBoxButtonArrow = IconLoader.getIcon("/general/comboBoxButtonArrow.png"); // 16x16
     public static final Icon ComboUpPassive = IconLoader.getIcon("/general/comboUpPassive.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png"); // 32x32
 
     /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
@@ -641,6 +645,10 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Debug = IconLoader.getIcon("/actions/startDebugger.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png"); // 32x32
     public static final Icon Divider = IconLoader.getIcon("/general/divider.png"); // 2x19
     public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png"); // 16x16
@@ -687,6 +695,10 @@ public class AllIcons {
     public static final Icon HideToolWindow = IconLoader.getIcon("/general/hideToolWindow.png"); // 14x14
     public static final Icon HideToolWindowInactive = IconLoader.getIcon("/general/hideToolWindowInactive.png"); // 14x14
     public static final Icon HideWarnings = IconLoader.getIcon("/general/hideWarnings.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon IjLogo = IconLoader.getIcon("/general/ijLogo.png"); // 16x16
     public static final Icon ImplementingMethod = IconLoader.getIcon("/general/implementingMethod.png"); // 10x14
     public static final Icon ImportProject = IconLoader.getIcon("/general/importProject.png"); // 32x32
@@ -703,8 +715,16 @@ public class AllIcons {
     public static final Icon InspectionsPause = IconLoader.getIcon("/general/inspectionsPause.png"); // 14x14
     public static final Icon InspectionsTrafficOff = IconLoader.getIcon("/general/inspectionsTrafficOff.png"); // 14x14
     public static final Icon InspectionsTypos = IconLoader.getIcon("/general/inspectionsTypos.png"); // 14x14
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Jdk = IconLoader.getIcon("/general/jdk.png"); // 16x16
     public static final Icon KeyboardShortcut = IconLoader.getIcon("/general/keyboardShortcut.png"); // 13x13
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png"); // 32x32
     public static final Icon Layout = IconLoader.getIcon("/general/layout.svg"); // 16x16
     public static final Icon LayoutEditorOnly = IconLoader.getIcon("/general/layoutEditorOnly.png"); // 16x16
@@ -740,6 +760,10 @@ public class AllIcons {
     public static final Icon Pin_tab = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
     public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png"); // 32x32
     public static final Icon Print = IconLoader.getIcon("/general/print.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Progress = IconLoader.getIcon("/general/progress.png"); // 8x10
     public static final Icon ProjectConfigurable = IconLoader.getIcon("/general/projectConfigurable.png"); // 9x9
     public static final Icon ProjectConfigurableBanner = IconLoader.getIcon("/general/projectConfigurableBanner.png"); // 9x9
@@ -802,6 +826,10 @@ public class AllIcons {
     public static final Icon TodoDefault = IconLoader.getIcon("/general/todoDefault.png"); // 12x12
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.png"); // 12x12
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.png"); // 12x12
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon UninstallPlugin = IconLoader.getIcon("/general/uninstallPlugin.png"); // 16x16
     public static final Icon Warning = IconLoader.getIcon("/general/warning.svg"); // 16x16
     public static final Icon WarningDecorator = IconLoader.getIcon("/general/warningDecorator.png"); // 16x16
