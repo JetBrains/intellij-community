@@ -16,7 +16,6 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -27,15 +26,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -45,8 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Path2D;
-import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -151,7 +144,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private final Presentation myPresentation;
     private boolean myForcePressed = false;
     private PropertyChangeListener myButtonSynchronizer;
-    private boolean myMouseInside = false;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
@@ -179,18 +171,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       //noinspection HardCodedStringLiteral
       addMouseListener(new MouseAdapter() {
         @Override
-        public void mouseEntered(MouseEvent e) {
-          myMouseInside = true;
-          repaint();
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-          myMouseInside = false;
-          repaint();
-        }
-
-        @Override
         public void mousePressed(final MouseEvent e) {
           if (SwingUtilities.isLeftMouseButton(e)) {
             e.consume();
@@ -210,10 +190,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       });
     }
-
-    //public void setForceTransparent(boolean transparent) {
-    //  myForceTransparent = transparent;
-    //}
 
     @NotNull
     private Runnable setForcePressed() {
@@ -331,11 +307,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Dimension getPreferredSize() {
       Dimension prefSize = super.getPreferredSize();
-      Insets i = getInsets();
       int width = prefSize.width + getArrowIcon(isEnabled()).getIconWidth()
                   + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0)
-                  + (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(6) : 0)
-                  - (isSmallVariant() ? i.left + i.right : 0);
+                  + (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(6) : 0);
 
       Dimension size = new Dimension(width, isSmallVariant() ? JBUI.scale(24) : Math.max(JBUI.scale(24), prefSize.height));
       JBInsets.addTo(size, getMargin());
@@ -359,84 +333,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public void paint(Graphics g) {
-      Dimension size = getSize();
-
-      if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()) {
-        super.paint(g);
-      } else {
-        Graphics2D g2 = (Graphics2D)g.create();
-        try {
-          UISettings.setupAntialiasing(g2);
-          GraphicsUtil.setupRoundedBorderAntialiasing(g2);
-
-          Color textColor = isEnabled() ? UIManager.getColor("Panel.foreground") : UIUtil.getInactiveTextColor();
-
-          //if (myForceTransparent) {
-          //  paintIconAndText(size, g2, textColor);
-          //} else
-          if (isSmallVariant()) {
-            g2.setColor(UIUtil.getControlColor());
-
-            int w = getWidth();
-            int h = getHeight();
-
-            if (getModel().isArmed() && getModel().isPressed()) {
-              g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getControlColor(), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.8)));
-            } else if (UIUtil.isUnderDarcula()) {
-              g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h,
-                                                  ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
-            } else {
-              g2.setPaint(UIUtil.getGradientPaint(0, 0, new JBColor(SystemInfo.isMac ? Gray._226 : Gray._245, Gray._131), 0, h,
-                                                        new JBColor(SystemInfo.isMac ? Gray._198 : Gray._208, Gray._128)));
-            }
-
-            Rectangle r = new Rectangle(w, h);
-            JBInsets.removeFrom(r, JBUI.insets(1));
-
-            float arc = JBUI.scale(3.0f);
-            Shape outerShape = new RoundRectangle2D.Float(r.x, r.y, r.width, r.height, arc, arc);
-            g2.fill(outerShape);
-
-            Color borderColor = myMouseInside ? new JBColor(Gray._111, Gray._118) : new JBColor(Gray._151, Gray._95);
-            g2.setPaint(borderColor);
-
-            float lw = JBUI.scale(1.0f);
-            Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-            outline.append(outerShape, false);
-            outline.append(new RoundRectangle2D.Float(r.x + lw, r.y + lw, r.width - lw*2, r.height - lw*2, arc - lw, arc - lw), false);
-            g2.fill(outline);
-
-            paintIconAndText(size, g2, textColor);
-          } else {
-            super.paint(g);
-          }
-        } finally {
-          g2.dispose();
-        }
-      }
+      super.paint(g);
 
       Icon icon = getArrowIcon(isEnabled());
-      int x = size.width - icon.getIconWidth() - getInsets().right - getMargin().right -
+      int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right -
               (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(3) : 0); // Different icons correction
 
-      icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
-      g.setPaintMode();
-    }
-
-    private void paintIconAndText(Dimension size, Graphics2D g2, Color textColor) {
-      Icon icon = getIcon();
-      int x = JBUI.scale(7);
-      if (icon != null) {
-        icon.paintIcon(this, g2, x, (size.height - icon.getIconHeight()) / 2);
-        x += icon.getIconWidth() + JBUI.scale(3);
-      }
-
-      if (!StringUtil.isEmpty(getText())) {
-        Font font = getFont();
-        g2.setFont(font);
-        g2.setColor(textColor);
-        UIUtil.drawCenteredString(g2, new Rectangle(x, 0, Integer.MAX_VALUE, size.height), getText(), false, true);
-      }
+      icon.paintIcon(null, g, x, (getHeight() - icon.getIconHeight()) / 2);
     }
 
     @Override public void updateUI() {

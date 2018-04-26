@@ -101,11 +101,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   }
 
   @Override protected void modifyViewRect(AbstractButton b, Rectangle rect) {
-    if (isComboButton(b)) {
-      JBInsets.removeFrom(rect, JBUI.insetsLeft(6));
-    } else {
-      JBInsets.removeFrom(rect, b.getInsets());
-    }
+    super.modifyViewRect(b, rect);
     rect.y -= JBUI.scale(1); // Move one pixel up
   }
 

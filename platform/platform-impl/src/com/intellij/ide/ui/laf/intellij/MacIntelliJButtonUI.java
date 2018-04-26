@@ -3,7 +3,9 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.IconCache;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -26,7 +28,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (!(c.getBorder() instanceof MacIntelliJButtonBorder) && !isComboButton(c)) {
+    if (!(c.getBorder() instanceof MacIntelliJButtonBorder)) {
       super.paint(g, c);
       return;
     }
@@ -112,7 +114,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     } else {
       Insets i = c.getInsets();
-      return new Dimension(isComboButton(c) ?
+      return new Dimension(getComboAction(c) != null ?
                            prefSize.width:
                            Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
                            Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom));
@@ -129,12 +131,5 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       g.setColor(UIManager.getColor("Button.disabledText"));
     }
     SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1, x, y);
-  }
-
-  @Override protected void modifyViewRect(AbstractButton b, Rectangle rect) {
-    JBInsets.removeFrom(rect, b.getInsets());
-    if (isComboButton(b)) {
-      JBInsets.removeFrom(rect, JBUI.insetsLeft(5));
-    }
   }
 }

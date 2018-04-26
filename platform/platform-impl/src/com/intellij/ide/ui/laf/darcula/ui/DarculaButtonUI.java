@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBOptionButton;
@@ -64,8 +65,13 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof JButton && ((JButton)c).isDefaultButton();
   }
 
-  public static boolean isComboButton(JComponent c) {
-    return c instanceof AbstractButton && c.getClientProperty("styleCombo") != null;
+  public static boolean isSmallComboButton(Component c) {
+    ComboBoxAction a = getComboAction(c);
+    return a != null && a.isSmallVariant();
+  }
+
+  public static ComboBoxAction getComboAction(Component c) {
+    return c instanceof AbstractButton ? (ComboBoxAction)((JComponent)c).getClientProperty("styleCombo") : null;
   }
 
   @Override
@@ -108,7 +114,7 @@ public class DarculaButtonUI extends BasicButtonUI {
         g2.translate(r.x, r.y);
 
         float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
-        float bw = DarculaUIUtil.BW.getFloat();
+        float bw = isSmallComboButton(c) ? 0 : DarculaUIUtil.BW.getFloat();
 
         if (c.isEnabled()) {
           g2.setPaint(getBackground(c, r));
@@ -125,6 +131,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     Color backgroundColor = (Color)c.getClientProperty("JButton.backgroundColor");
 
     return backgroundColor != null ? backgroundColor :
+      isSmallComboButton(c) ? UIUtil.getPanelBackground() :
       isDefaultButton(c) ?
         UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd()) :
         UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd());
@@ -216,7 +223,7 @@ public class DarculaButtonUI extends BasicButtonUI {
       return new Dimension(Math.max(prefSize.width, helpDiam + i.left + i.right),
                            Math.max(prefSize.height, helpDiam + i.top + i.bottom));
     } else {
-      int width = isComboButton(c) ?
+      int width = getComboAction(c) != null ?
                   prefSize.width:
                   Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right);
       int height = Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom);
