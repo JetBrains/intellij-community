@@ -933,6 +933,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledListedToolsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.service.fus.collectors.KeymapUsageCollector" />
     <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.ide.actions.runAnything.RunAnythingUsageCollector"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
