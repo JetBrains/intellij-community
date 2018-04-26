@@ -159,6 +159,10 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
            color.getBlue() + "m";
   }
 
+  public void setAutoNewLineMode(boolean enabled) {
+    myKeyEncoder.setAutoNewLine(enabled);
+  }
+
   public void addMessageFilter(Project project, Filter filter) {
     myTerminalWidget.addMessageFilter(project, filter);
   }
