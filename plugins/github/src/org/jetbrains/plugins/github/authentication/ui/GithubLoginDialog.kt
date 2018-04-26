@@ -210,7 +210,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project,
         //language=CSS
         (editorKit as HTMLEditorKit).styleSheet.addRule("a {color: rgb(${linkColor.red}, ${linkColor.green}, ${linkColor.blue})}")
         //language=HTML
-        text = "<html>Login and Password are not saved and used only to <br>acquire Github token. <a href=''>Enter token</a></html>"
+        text = "<html>Password is not saved and used only to <br>acquire Github token. <a href=''>Enter token</a></html>"
         addHyperlinkListener { e ->
           if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
             applyUi(tokenUi)
