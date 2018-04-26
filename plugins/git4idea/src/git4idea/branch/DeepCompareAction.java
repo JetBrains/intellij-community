@@ -21,6 +21,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
@@ -108,8 +110,18 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     super.update(e);
     Project project = e.getData(CommonDataKeys.PROJECT);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabledAndVisible(project != null && ui != null &&
-                                             hasGitRoots(project, VcsLogUtil.getVisibleRoots(ui)));
+    if (project == null || ui == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+    else {
+      Set<VirtualFile> visibleRoots = VcsLogUtil.getVisibleRoots(ui);
+      Set<VirtualFile> allRoots = visibleRoots;
+      if (allRoots.isEmpty()) {
+        allRoots = ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots(), VcsRoot::getPath);
+      }
+      e.getPresentation().setEnabled(hasGitRoots(project, allRoots));
+      e.getPresentation().setVisible(hasGitRoots(project, visibleRoots));
+    }
   }
 
   @NotNull
