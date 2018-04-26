@@ -89,8 +89,6 @@ public class SVGLoader {
         catch (NumberFormatException ignored) {
         }
       }
-      LOG.warn("SVG file " + ObjectUtils.notNull(document.getBaseURI(), "") +
-               " size expected in format: '<" + sizeName + ">px");
       return null;
     }
 
