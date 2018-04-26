@@ -41,6 +41,7 @@ public abstract class ModuleOutputPackagingElementBase extends PackagingElement<
     myProject = project;
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,

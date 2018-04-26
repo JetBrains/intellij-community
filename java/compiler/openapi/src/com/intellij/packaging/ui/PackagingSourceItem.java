@@ -46,6 +46,7 @@ public abstract class PackagingSourceItem {
   @Override
   public abstract int hashCode();
 
+  @NotNull
   public abstract SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context);
 
   @NotNull
