@@ -77,18 +77,21 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
   private fun checkHaveValidSize(images: List<ImagePaths>, module: JpsModule) {
     process(images, WARNING, "icon with suspicious size", module) { image ->
       if (!isIcon(image.file!!)) return@process true
-      val basicSizes = image.getFiles(BASIC, DARCULA).mapNotNull { imageSize(it) }.toSet()
-      val retinaSizes = image.getFiles(RETINA, RETINA_DARCULA).mapNotNull { imageSize(it) }.toSet()
 
-      if (basicSizes.size > 1) return@process false
-      if (retinaSizes.size > 1) return@process false
-      if (basicSizes.size == 1 && retinaSizes.size == 1) {
-        val sizeBasic = basicSizes.single()
-        val sizeRetina = retinaSizes.single()
-        val sizeBasicTwice = Dimension(sizeBasic.width * 2, sizeBasic.height * 2)
-        return@process sizeBasicTwice == sizeRetina
+      return@process image.files.groupBy { ImageExtension.fromFile(it) }.all { (_, files) ->
+        val basicSizes = files.filter { ImageType.fromFile(it) in setOf(BASIC, DARCULA) }.mapNotNull { imageSize(it) }.toSet()
+        val retinaSizes = files.filter { ImageType.fromFile(it) in setOf(RETINA, RETINA_DARCULA) }.mapNotNull { imageSize(it) }.toSet()
+
+        if (basicSizes.size > 1) return@all false
+        if (retinaSizes.size > 1) return@all false
+        if (basicSizes.size == 1 && retinaSizes.size == 1) {
+          val sizeBasic = basicSizes.single()
+          val sizeRetina = retinaSizes.single()
+          val sizeBasicTwice = Dimension(sizeBasic.width * 2, sizeBasic.height * 2)
+          return@all sizeBasicTwice == sizeRetina
+        }
+        return@all true
       }
-      return@process true
     }
   }
 
