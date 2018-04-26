@@ -59,6 +59,9 @@ public class MergeApplication extends DiffApplicationBase {
     List<VirtualFile> contents = ContainerUtil.list(files.get(0), files.get(2), files.get(1)); // left, base, right
     VirtualFile outputFile = files.get(files.size() - 1);
 
+    if (outputFile == null) throw new Exception("Can't find output file: " + ContainerUtil.getLastItem(filePaths));
+    contents = replaceNullsWithEmptyFile(contents);
+
     MergeRequest request = DiffRequestFactory.getInstance().createMergeRequestFromFiles(project, outputFile, contents, null);
 
     DiffManagerEx.getInstance().showMergeBuiltin(project, request);
