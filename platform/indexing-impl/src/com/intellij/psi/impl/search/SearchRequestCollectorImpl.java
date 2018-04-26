@@ -68,7 +68,7 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
         searchParams(referenceSearchQuery.getParameters(), referencePreprocessor);
       }
       else {
-        myQueryRequests.add(new SearchQueryRequest<>(subQuery, Preprocessor.compose(myPreprocessor, preprocessor)));
+        myQueryRequests.add(new SearchQueryRequest<>(subQuery, Preprocessor.andThen(myPreprocessor, preprocessor)));
       }
     }
   }
@@ -82,7 +82,7 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
   void searchParams(@NotNull ModelReferenceSearchParameters parameters,
                     @NotNull Preprocessor<ModelReference, ModelReference> preprocessor) {
     synchronized (lock) {
-      myParamsRequests.add(new SearchParamsRequest(parameters, Preprocessor.compose(myPreprocessor, preprocessor)));
+      myParamsRequests.add(new SearchParamsRequest(parameters, Preprocessor.andThen(myPreprocessor, preprocessor)));
     }
   }
 

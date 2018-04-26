@@ -7,7 +7,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * {@code Processor<R> -> Processor<B>}
+ * {@code Processor<Result> -> Processor<Base>}
  */
 public interface Preprocessor<Result, Base> extends Function<Processor<? super Result>, Processor<? super Base>> {
 
@@ -29,14 +29,14 @@ public interface Preprocessor<Result, Base> extends Function<Processor<? super R
   }
 
   /**
-   * {@code (Processor<I> -> Processor<R>) -> (Processor<R> -> Processor<I>) -> (Processor<R> -> Processor<B>)}
+   * {@code (Processor<R> -> Processor<I>) -> (Processor<I> -> Processor<B>) -> (Processor<R> -> Processor<B>)}
    *
    * @param <R> result type
    * @param <I> intermediate type
    * @param <B> base type
    */
   @NotNull
-  static <R, I, B> Preprocessor<R, B> compose(@NotNull Preprocessor<? extends R, ? super I> before,
+  static <R, I, B> Preprocessor<R, B> andThen(@NotNull Preprocessor<? extends R, ? super I> before,
                                               @NotNull Preprocessor<? extends I, ? super B> after) {
     Preprocessor<?, ?> id = id();
     if (before == id) {
