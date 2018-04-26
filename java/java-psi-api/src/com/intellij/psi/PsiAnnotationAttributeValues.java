@@ -30,19 +30,6 @@ abstract class PsiAnnotationAttributeValue<T extends PsiAnnotationMemberValue> i
   public boolean isValid() {
     return myElement.isValid();
   }
-
-  @Override
-  public void navigate(boolean requestFocus) {}
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
-  }
 }
 
 class PsiAnnotationConstantValue extends PsiAnnotationAttributeValue<PsiExpression> implements JvmAnnotationConstantValue {
