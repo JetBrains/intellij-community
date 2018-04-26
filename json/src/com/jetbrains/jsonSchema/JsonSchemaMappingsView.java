@@ -98,7 +98,6 @@ public class JsonSchemaMappingsView implements Disposable {
     });
 
     JBTextField schemaFieldBacking = new JBTextField();
-    schemaFieldBacking.getEmptyText().setText("Please specify schema file or URL here");
     mySchemaField = new TextFieldWithBrowseButton(schemaFieldBacking);
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());

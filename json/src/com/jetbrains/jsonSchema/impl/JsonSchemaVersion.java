@@ -21,11 +21,11 @@ public enum JsonSchemaVersion {
   public String toString() {
     switch (this) {
       case SCHEMA_4:
-        return "JSON Schema Version 4";
+        return "JSON schema version 4";
       case SCHEMA_6:
-        return "JSON Schema Version 6";
+        return "JSON schema version 6";
       case SCHEMA_7:
-        return "JSON Schema Version 7";
+        return "JSON schema version 7";
     }
 
     throw new NotImplementedError("Unknown version: " + this);

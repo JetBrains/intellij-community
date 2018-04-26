@@ -109,11 +109,11 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     public String getPresentableName() {
       switch (myFileName) {
         case SCHEMA_JSON_FILE_NAME:
-          return "JSON Schema V4";
+          return "JSON schema v4";
         case SCHEMA06_JSON_FILE_NAME:
-          return "JSON Schema V6";
+          return "JSON schema v6";
         case SCHEMA07_JSON_FILE_NAME:
-          return "JSON Schema V7";
+          return "JSON schema v7";
       }
       return getName();
     }
