@@ -142,6 +142,11 @@ public class JsonSchemaStatusWidget {
       VirtualFile schemaFile = schemaFiles.iterator().next();
       JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
       if (provider != null) {
+        if (!isValidSchemaFile(schemaFile)) {
+          MyWidgetState state = new MyWidgetState("File is not a schema", "JSON schema error", true);
+          state.setWarning(true);
+          return state;
+        }
         String providerName = provider.getPresentableName();
         String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
         String name = shortName.startsWith("JSON Schema") ? shortName : (JSON_SCHEMA_BAR + shortName);
@@ -184,13 +189,19 @@ public class JsonSchemaStatusWidget {
         }
       }
 
-      if (!myService.isSchemaFile(schemaFile)) {
+      if (!isValidSchemaFile(schemaFile)) {
         MyWidgetState state = new MyWidgetState("File is not a schema", "JSON schema error", true);
         state.setWarning(true);
         return state;
       }
 
       return new MyWidgetState(JSON_SCHEMA_TOOLTIP + getSchemaFileDesc(schemaFile), JSON_SCHEMA_BAR + getPresentableNameForFile(schemaFile), true);
+    }
+
+    private boolean isValidSchemaFile(VirtualFile schemaFile) {
+      if (schemaFile == null || !myService.isSchemaFile(schemaFile)) return false;
+      FileType type = schemaFile.getFileType();
+      return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof JsonLanguage;
     }
 
     @Nullable
