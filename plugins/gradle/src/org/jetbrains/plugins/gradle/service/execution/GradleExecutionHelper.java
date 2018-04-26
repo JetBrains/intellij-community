@@ -123,7 +123,7 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet")) {
+      if (!settings.getArguments().contains("--quiet") && !settings.getArguments().contains("--debug")) {
         settings.withArgument("--info");
       }
       settings.withArgument("--recompile-scripts");
@@ -151,8 +151,10 @@ public class GradleExecutionHelper {
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     operation.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
-    operation.setStandardOutput(standardOutput);
-    operation.setStandardError(standardError);
+    if (application != null && application.isUnitTestMode()) {
+      operation.setStandardOutput(System.out);
+      operation.setStandardError(System.err);
+    }
     InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
     if (inputStream != null) {
       operation.setStandardInput(inputStream);
