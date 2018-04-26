@@ -48,8 +48,8 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
         kotlinVersion,
         expectedJars
       )
-      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName(0)", "${projectName}_main", "Kotlin")
-      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName(0)", "${projectName}_test", "Kotlin")
+      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName", "${projectName}_main", "Kotlin")
+      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName", "${projectName}_test", "Kotlin")
       if (setOfMPPModules.contains(KotlinKind.JS)) {
         checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_main", "Kotlin")
         checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_test", "Kotlin")

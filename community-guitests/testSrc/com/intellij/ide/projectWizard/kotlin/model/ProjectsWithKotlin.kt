@@ -73,8 +73,7 @@ fun KotlinGuiTestCase.createGradleProject(
       val list: JListFixture = jList("Gradle")
       checkKotlinInstalled()
       list.clickItem("Gradle")
-      if (isKotlinDslUsed)
-        checkbox("Kotlin DSL build script").click()
+      checkbox("Kotlin DSL build script").isSelected = isKotlinDslUsed
       if (framework.isNotEmpty()) {
         checkboxTree(framework).clickCheckbox(framework)
         if (!isJavaUsed)
@@ -151,7 +150,7 @@ fun KotlinGuiTestCase.createMavenProject(
       if (archetype.isNotEmpty()) {
         logUIStep("Select archetype `$archetype`")
         val archetypeCheckbox = checkbox("Create from archetype")
-        archetypeCheckbox.click()
+        archetypeCheckbox.isSelected = true
         Pause.pause(1000L)
         if (!archetypeCheckbox.isSelected) {
           logUIStep("Archetype `$archetype` not selected, so next attempt")
@@ -272,17 +271,51 @@ fun KotlinGuiTestCase.configureKotlinJs(libInPlugin: Boolean) {
 }
 
 /**
+ * As list of kotlin versions shown in the configure dialog is filled up from the internet
+ * sometimes it's not loaded. In such cases another attempt is performed.
+ * @param logText - logged text
+ * @param menuTitle - invoked menu ID
+ * @param dialogTitle - title of the configuring dialog (all dialogs are the same, but titles)
+ * @param kotlinVersion - kotlin version as it should be added to build.gradle/pom.xml
+ * @param module - if empty - all modules should be configured
+ *                 else a single module with the specified name should be configured
+ * */
+fun KotlinGuiTestCase.configureKotlinFromGradleMaven(logText: String,
+                                                     menuTitle: String,
+                                                     dialogTitle: String,
+                                                     kotlinVersion: String,
+                                                     module: String) {
+  var result: Boolean = false
+  val maxAttempts = 3
+  ideFrame {
+    var counter = 0
+    do {
+      logTestStep("$logText. Attempt #${counter + 1}")
+      invokeMainMenu(menuTitle)
+      result = configureKotlinFromGradleMavenSelectValues(dialogTitle, kotlinVersion, module)
+      counter++
+      waitAMoment()
+    }
+    while (!result && counter < maxAttempts)
+  }
+  assert(result) {"Version $kotlinVersion not found after $maxAttempts attempts"}
+}
+
+/**
  * Configure Kotlin JVM in a project based on gradle/maven
  * @param dialogTitle - title of the configuring dialog (all dialogs are the same, but titles)
  * @param kotlinVersion - kotlin version as it should be added to build.gradle/pom.xml
  * @param module - if empty - all modules should be configured
  *                 else a single module with the specified name should be configured
+ *  @return true if configuration passed correctly, false in case of any errors, for example
+ *  if required [kotlinVersion] is absent in the versions list.
  * TODO: add setting of specified module name and kotlin version
  * */
-fun KotlinGuiTestCase.configureKotlinFromGradleMaven(
+fun KotlinGuiTestCase.configureKotlinFromGradleMavenSelectValues(
   dialogTitle: String,
   kotlinVersion: String,
-  module: String = "") {
+  module: String = "") : Boolean {
+  var result = false
   dialog(dialogTitle) {
     if (module.isEmpty()) {
       logUIStep("Select `All modules` option")
@@ -294,72 +327,68 @@ fun KotlinGuiTestCase.configureKotlinFromGradleMaven(
     }
     waitUntil { button("OK").isEnabled }
     val cmb = combobox("Kotlin compiler and runtime version:")
-    logTestStep("Select kotlin version `$kotlinVersion`")
-    if (cmb.selectedItem() != kotlinVersion) {
-      cmb
-        .expand()
-        .selectItem(kotlinVersion)
-      logInfo("Combobox `Kotlin compiler and runtime version`: current selected is ${cmb.selectedItem()} ")
+    if (cmb.listItems().contains(kotlinVersion)) {
+      logTestStep("Select kotlin version `$kotlinVersion`")
+      if (cmb.selectedItem() != kotlinVersion) {
+        cmb
+          .expand()
+          .selectItem(kotlinVersion)
+        logInfo("Combobox `Kotlin compiler and runtime version`: current selected is ${cmb.selectedItem()} ")
+      }
+      logUIStep("Close Configure Kotlin dialog with OK")
+      button("OK").click()
+      result = true
     }
-    logUIStep("Close Configure Kotlin dialog with OK")
-    button("OK").click()
+    else {
+      logUIStep("Close Configure Kotlin dialog with Cancel")
+      button("Cancel").click()
+    }
   }
+  return result
 }
 
 fun KotlinGuiTestCase.configureKotlinJvmFromGradle(
   kotlinVersion: String,
   module: String = "") {
-  ideFrame {
-    waitAMoment(3000)
-    logTestStep("Open `Configure Kotlin with Gradle` dialog")
-    invokeMainMenu("ConfigureKotlinInProject")
-    // in 1.1.3 the dialog title will be changed
-    configureKotlinFromGradleMaven("Configure Kotlin with Gradle", kotlinVersion, module)
-    // 1.1.2
-//    configureKotlinFromGradleMaven("Configure Kotlin in Project", kotlinVersion, module)
-  }
+    configureKotlinFromGradleMaven(
+      logText = "Open `Configure Kotlin with Gradle` dialog",
+      menuTitle = "ConfigureKotlinInProject",
+      dialogTitle =  "Configure Kotlin with Gradle",
+      kotlinVersion = kotlinVersion,
+      module = module)
 }
 
 fun KotlinGuiTestCase.configureKotlinJsFromGradle(
   kotlinVersion: String,
   module: String = "") {
-  ideFrame {
-    waitAMoment(3000)
-    logTestStep("Open `Configure Kotlin JavaScript with Gradle` dialog")
-    invokeMainMenu("ConfigureKotlinJsInProject")
-    // in 1.1.3 the dialog title will be changed
-    configureKotlinFromGradleMaven("Configure Kotlin with Gradle (JavaScript)", kotlinVersion, module)
-    // 1.1.2
-//    configureKotlinFromGradleMaven("Configure Kotlin in Project", kotlinVersion, module)
-  }
+  configureKotlinFromGradleMaven(
+    logText = "Open `Configure Kotlin JavaScript with Gradle` dialog",
+    menuTitle = "ConfigureKotlinJsInProject",
+    dialogTitle = "Configure Kotlin with Gradle (JavaScript)",
+    kotlinVersion = kotlinVersion,
+    module = module)
 }
 
 fun KotlinGuiTestCase.configureKotlinJvmFromMaven(
   kotlinVersion: String,
   module: String = "") {
-  ideFrame {
-    waitAMoment(3000)
-    logTestStep("Open `Configure Kotlin with Maven` dialog")
-    invokeMainMenu("ConfigureKotlinInProject")
-    // in 1.1.3 the dialog title will be changed
-    configureKotlinFromGradleMaven("Configure Kotlin with Maven", kotlinVersion, module)
-    // 1.1.2
-//    configureKotlinFromGradleMaven("Configure Kotlin in Project", kotlinVersion, module)
-  }
+  configureKotlinFromGradleMaven(
+    logText = "Open `Configure Kotlin with Maven` dialog",
+    menuTitle = "ConfigureKotlinInProject",
+    dialogTitle = "Configure Kotlin with Maven",
+    kotlinVersion = kotlinVersion,
+    module = module)
 }
 
 fun KotlinGuiTestCase.configureKotlinJsFromMaven(
   kotlinVersion: String,
   module: String = "") {
-  ideFrame {
-    waitAMoment(3000)
-    logTestStep("Open `Configure Kotlin with Maven (JavaScript)` dialog")
-    invokeMainMenu("ConfigureKotlinJsInProject")
-    // in 1.1.3 the dialog title will be changed
-    configureKotlinFromGradleMaven("Configure Kotlin with Maven (JavaScript)", kotlinVersion, module)
-    // 1.1.2
-//    configureKotlinFromGradleMaven("Configure Kotlin in Project", kotlinVersion, module)
-  }
+  configureKotlinFromGradleMaven(
+    logText = "Open `Configure Kotlin JavaScript with Maven` dialog",
+    menuTitle = "ConfigureKotlinJsInProject",
+    dialogTitle = "Configure Kotlin with Maven (JavaScript)",
+    kotlinVersion = kotlinVersion,
+    module = module)
 }
 
 /**
@@ -889,11 +918,11 @@ fun KotlinGuiTestCase.checkInProjectStructureGradleExplicitModuleGroups(
     )
     checkFacetInOneModule(
       expectedFacet,
-      "$projectName(0)", "${projectName}_main", "Kotlin"
+      "$projectName", "${projectName}_main", "Kotlin"
     )
     checkFacetInOneModule(
       expectedFacet,
-      "$projectName(0)", "${projectName}_test", "Kotlin"
+      "$projectName", "${projectName}_test", "Kotlin"
     )
   }
 }

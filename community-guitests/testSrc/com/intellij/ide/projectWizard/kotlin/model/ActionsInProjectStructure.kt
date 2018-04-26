@@ -24,13 +24,19 @@ fun KotlinGuiTestCase.checkFacetInOneModule(expectedFacet: FacetStructure, varar
 }
 
 fun ExtendedTreeFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
+  fun currentValue(): String {
+    val selectedRow = target().selectionRows.first()
+    return valueAt(selectedRow) ?: throw IllegalStateException("Nothing is selected in the tree")
+  }
   click()
   testCase.shortcut(Key.HOME) // select the top row
-  for (step in 0 until path.size) {
-    val regex = Regex("""(.*)\(\d+\)""")
-    val clearedPathStep = if (regex.matches(path[step])) regex.matchEntire(path[step])!!.groups[1]?.value ?: path[step] else path[step]
-    testCase.typeText(clearedPathStep)
-    testCase.shortcut(Key.RIGHT)
+  for((index, step) in path.withIndex()){
+    if(currentValue() != step) {
+      testCase.typeText(step)
+      while (currentValue() != step)
+        testCase.shortcut(Key.DOWN)
+    }
+    if(index < path.size -1) testCase.shortcut(Key.RIGHT)
   }
 }
 

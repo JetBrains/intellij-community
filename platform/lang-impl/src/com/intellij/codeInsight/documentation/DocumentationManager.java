@@ -1214,7 +1214,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                       type == ArchiveFileType.INSTANCE ? "Archive" :
                       type.getName();
     String languageName = type.isBinary() ? "" : psiFile.getLanguage().getDisplayName();
-    return (withUrl ? file.getPresentableUrl() : "") +
+    return (withUrl ? DocumentationMarkup.DEFINITION_START + file.getPresentableUrl() + DocumentationMarkup.DEFINITION_END + DocumentationMarkup.CONTENT_START : "") +
          "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
          "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
          "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +

@@ -297,16 +297,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.startBatchFilesProcessingMode();
     try {
       final AtomicInteger counter = new AtomicInteger(alreadyProcessedFiles);
-      final AtomicBoolean canceled = new AtomicBoolean(false);
+      final AtomicBoolean stopped = new AtomicBoolean(false);
 
-      return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, canceled, vfile -> {
+      return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, stopped, vfile -> {
         TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
-        processVirtualFile(vfile, localProcessor, canceled);
+        processVirtualFile(vfile, localProcessor, stopped);
         if (progress.isRunning()) {
           double fraction = (double)counter.incrementAndGet() / totalSize;
           progress.setFraction(fraction);
         }
-        return !canceled.get();
+        return !stopped.get();
       });
     }
     finally {
@@ -320,7 +320,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public static boolean processFilesConcurrentlyDespiteWriteActions(@NotNull Project project,
                                                                     @NotNull List<VirtualFile> files,
                                                                     @NotNull final ProgressIndicator progress,
-                                                                    @NotNull AtomicBoolean canceled,
+                                                                    @NotNull AtomicBoolean stopped,
                                                                     @NotNull final Processor<VirtualFile> localProcessor) {
     ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
@@ -339,7 +339,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
             app.executeByImpatientReader(() -> {
               if (!localProcessor.process(vfile)) {
-                canceled.set(true);
+                stopped.set(true);
               }
             });
           }
@@ -352,7 +352,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           // and 2nd: bail out of fork/join task as soon as possible
           failedFiles.add(vfile);
         }
-        return !canceled.get();
+        return !stopped.get();
       };
       boolean completed;
       if (app.isWriteAccessAllowed() || app.isReadAccessAllowed() && app.isWriteActionPending()) {
@@ -384,7 +384,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private void processVirtualFile(@NotNull final VirtualFile vfile,
                                   @NotNull final Processor<? super PsiFile> localProcessor,
-                                  @NotNull final AtomicBoolean canceled) throws ApplicationUtil.CannotRunReadActionException {
+                                  @NotNull final AtomicBoolean stopped) throws ApplicationUtil.CannotRunReadActionException {
     final PsiFile file = ApplicationUtil.tryRunReadAction(() -> vfile.isValid() ? myManager.findFile(vfile) : null);
     if (file != null && !(file instanceof PsiBinaryFile)) {
       // load contents outside read action
@@ -413,7 +413,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
 
           if (!localProcessor.process(psiRoot)) {
-            canceled.set(true);
+            stopped.set(true);
             break;
           }
         }
@@ -490,7 +490,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final StringSearcher searcher = new StringSearcher(qName, true, true, false);
 
     progress.pushState();
-    final Ref<Boolean> cancelled = Ref.create(Boolean.FALSE);
+    final Ref<Boolean> stopped = Ref.create(Boolean.FALSE);
     try {
       progress.setText(PsiBundle.message("psi.search.in.non.java.files.progress"));
 
@@ -510,13 +510,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             return referenceAt == null || useScope == null || !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile);
           });
           if (isReferenceOK && !processor.process(psiFile, index, index + patternLength)) {
-            cancelled.set(Boolean.TRUE);
+            stopped.set(Boolean.TRUE);
             return false;
           }
 
           return true;
         });
-        if (cancelled.get()) break;
+        if (stopped.get()) break;
         progress.setFraction((double)(i + 1) / files.length);
       }
     }
@@ -524,7 +524,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.popState();
     }
 
-    return !cancelled.get();
+    return !stopped.get();
   }
 
   @Override
@@ -589,33 +589,39 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     collectors.put(collector, processor);
 
     ProgressIndicator progress = getOrCreateIndicator();
-    appendCollectorsFromQueryRequests(collectors);
-    boolean result;
+    if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
+      return false;
+    }
     do {
       MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<>();
       final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
       final Set<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
       Map<RequestWithProcessor, Processor<PsiElement>> localProcessors = new THashMap<>();
       distributePrimitives(collectors, locals, globals, customs, localProcessors, progress);
-      result = processGlobalRequestsOptimized(globals, progress, localProcessors);
-      if (result) {
-        for (RequestWithProcessor local : locals) {
-          ProgressManager.checkCanceled();
-          result = processSingleRequest(local.request, local.refProcessor);
-          if (!result) break;
+      if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
+        return false;
+      }
+      for (RequestWithProcessor local : locals) {
+        progress.checkCanceled();
+        if (!processSingleRequest(local.request, local.refProcessor)) {
+          return false;
         }
-        if (result) {
-          for (Computable<Boolean> custom : customs) {
-            ProgressManager.checkCanceled();
-            result = custom.compute();
-            if (!result) break;
-          }
+      }
+      for (Computable<Boolean> custom : customs) {
+        progress.checkCanceled();
+        if (!custom.compute()) {
+          return false;
         }
-        if (!result) break;
+      }
+      final QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
+      if (result == QueryRequestsRunResult.STOPPED) {
+        return false;
+      }
+      else if (result == QueryRequestsRunResult.UNCHANGED) {
+        return true;
       }
     }
-    while(appendCollectorsFromQueryRequests(collectors));
-    return result;
+    while (true);
   }
 
   @NotNull
@@ -624,21 +630,32 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return AsyncUtil.wrapBoolean(processRequests(collector, processor));
   }
 
-  private static boolean appendCollectorsFromQueryRequests(@NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors) {
+  private enum QueryRequestsRunResult {
+    STOPPED,
+    UNCHANGED,
+    CHANGED,
+  }
+
+  @NotNull
+  private static QueryRequestsRunResult appendCollectorsFromQueryRequests(@NotNull ProgressIndicator progress,
+                                                                          @NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors) {
     boolean changed = false;
     Deque<SearchRequestCollector> queue = new LinkedList<>(collectors.keySet());
     while (!queue.isEmpty()) {
+      progress.checkCanceled();
       final SearchRequestCollector each = queue.removeFirst();
       for (QuerySearchRequest request : each.takeQueryRequests()) {
-        ProgressManager.checkCanceled();
-        request.runQuery();
+        progress.checkCanceled();
+        if (!request.runQuery()) {
+          return QueryRequestsRunResult.STOPPED;
+        }
         assert !collectors.containsKey(request.collector) || collectors.get(request.collector) == request.processor;
         collectors.put(request.collector, request.processor);
         queue.addLast(request.collector);
         changed = true;
       }
     }
-    return changed;
+    return changed ? QueryRequestsRunResult.CHANGED : QueryRequestsRunResult.UNCHANGED;
   }
 
   private boolean processGlobalRequestsOptimized(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,

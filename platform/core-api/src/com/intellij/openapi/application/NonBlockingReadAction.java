@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 
 /**
  * An utility for running non-blocking read actions in background thread.
- * "Interruptible" means to prevent UI freezes, when a write action is about to occur, a read action can be interrupted by a
+ * "Non-blocking" means to prevent UI freezes, when a write action is about to occur, a read action can be interrupted by a
  * {@link com.intellij.openapi.progress.ProcessCanceledException} and then restarted.
  */
 public interface NonBlockingReadAction<T> {

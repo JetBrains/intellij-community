@@ -23,12 +23,16 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
@@ -436,33 +440,50 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(myProject, getExternalSystemId());
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
     projectSettings.setExternalProjectPath(getProjectPath());
+    //noinspection unchecked
     Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
     projects.remove(projectSettings);
     projects.add(projectSettings);
+    //noinspection unchecked
     systemSettings.setLinkedProjectsSettings(projects);
 
     final Ref<Couple<String>> error = Ref.create();
-    ExternalSystemUtil.refreshProjects(
-      new ImportSpecBuilder(myProject, getExternalSystemId())
-        .use(ProgressExecutionMode.MODAL_SYNC)
-        .callback(new ExternalProjectRefreshCallback() {
-          @Override
-          public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
-            if (externalProject == null) {
-              System.err.println("Got null External project after import");
-              return;
-            }
-            ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myProject, true);
-            System.out.println("External project was successfully imported");
+    ImportSpec importSpec = createImportSpec();
+    if (importSpec.getCallback() == null) {
+      importSpec = new ImportSpecBuilder(importSpec).callback(new ExternalProjectRefreshCallback() {
+        @Override
+        public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+          if (externalProject == null) {
+            System.err.println("Got null External project after import");
+            return;
           }
+          ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myProject, true);
+          System.out.println("External project was successfully imported");
+        }
 
-          @Override
-          public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-            error.set(Couple.of(errorMessage, errorDetails));
-          }
-        })
-        .forceWhenUptodate()
-    );
+        @Override
+        public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+          error.set(Couple.of(errorMessage, errorDetails));
+        }
+      }).build();
+    }
+
+    ExternalSystemProgressNotificationManager notificationManager =
+      ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+    ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
+      @Override
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        if (StringUtil.isEmptyOrSpaces(text)) return;
+        (stdOut ? System.out : System.err).print(text);
+      }
+    };
+    notificationManager.addNotificationListener(listener);
+    try {
+      ExternalSystemUtil.refreshProjects(importSpec);
+    }
+    finally {
+      notificationManager.removeNotificationListener(listener);
+    }
 
     if (!error.isNull()) {
       String failureMsg = "Import failed: " + error.get().first;
@@ -471,6 +492,13 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
       }
       fail(failureMsg);
     }
+  }
+
+  protected ImportSpec createImportSpec() {
+    ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(myProject, getExternalSystemId())
+      .use(ProgressExecutionMode.MODAL_SYNC)
+      .forceWhenUptodate();
+    return importSpecBuilder.build();
   }
 
   protected abstract ExternalProjectSettings getCurrentExternalProjectSettings();
