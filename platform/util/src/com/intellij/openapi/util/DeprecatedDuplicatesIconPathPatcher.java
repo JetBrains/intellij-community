@@ -80,6 +80,8 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/actions/reset.png", "AllIcons.Actions.Rollback");
     ourDeprecatedIconsReplacements.put("/actions/reset.svg", "AllIcons.Actions.Rollback");
 
+    ourDeprecatedIconsReplacements.put("/general/recursive.png", "AllIcons.Actions.ShowAsTree");
+    ourDeprecatedIconsReplacements.put("/general/recursive.svg", "AllIcons.Actions.ShowAsTree");
     ourDeprecatedIconsReplacements.put("/vcs/mergeSourcesTree.png", "AllIcons.Actions.ShowAsTree");
     ourDeprecatedIconsReplacements.put("/vcs/mergeSourcesTree.svg", "AllIcons.Actions.ShowAsTree");
 

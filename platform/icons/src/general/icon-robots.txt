@@ -1,4 +1,5 @@
 deprecated: debug.png -> /actions/startDebugger.svg; to be removed in IDEA 2020 - use AllIcons.Actions.StartDebugger
 deprecated: packagesTab.png -> /nodes/copyOfFolder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.CopyOfFolder
 deprecated: projectSettings.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
+deprecated: recursive.png -> /actions/showAsTree.svg; to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree
 deprecated: secondaryGroup.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain

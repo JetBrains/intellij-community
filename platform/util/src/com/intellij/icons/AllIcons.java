@@ -745,7 +745,11 @@ public class AllIcons {
     public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.svg"); // 16x16
     public static final Icon QuestionDialog = IconLoader.getIcon("/general/questionDialog.png"); // 32x32
     public static final Icon ReadHelp = IconLoader.getIcon("/general/readHelp.png"); // 32x32
-    public static final Icon Recursive = IconLoader.getIcon("/general/recursive.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Recursive = IconLoader.getIcon("/actions/showAsTree.svg"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/general/remove.svg"); // 16x16
     public static final Icon Reset = IconLoader.getIcon("/general/reset.svg"); // 16x16
     public static final Icon Run = IconLoader.getIcon("/general/run.png"); // 7x10
