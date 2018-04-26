@@ -19,7 +19,7 @@ public class VcsLogIcons {
   public static final Icon ExpandBranches = load("/icons/ExpandBranches.png"); // 16x16
   public static final Icon ExpandMerges = load("/icons/ExpandMerges.png"); // 16x16
   public static final Icon IntelliSort = load("/icons/IntelliSort.png"); // 16x16
-  
+
   public static class Process {
     public static final Icon Dots_1 = load("/icons/process/dots_1.png"); // 16x16
     public static final Icon Dots_2 = load("/icons/process/dots_2.png"); // 16x16
