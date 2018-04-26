@@ -69,6 +69,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
@@ -96,8 +99,8 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
@@ -1487,7 +1490,7 @@ public class DiffUtil {
    */
   private static boolean closeWindow(@NotNull Window window, boolean modalOnly) {
     if (window instanceof IdeFrameImpl) return false;
-    if (modalOnly && window instanceof Frame) return false;
+    if (modalOnly && canBeHiddenBehind(window)) return false;
 
     if (window instanceof DialogWrapperDialog) {
       ((DialogWrapperDialog)window).getDialogWrapper().doCancelAction();
@@ -1496,6 +1499,21 @@ public class DiffUtil {
 
     window.setVisible(false);
     window.dispose();
+    return true;
+  }
+
+  private static boolean canBeHiddenBehind(@NotNull Window window) {
+    if (!(window instanceof Frame)) return false;
+    if (SystemInfo.isMac) {
+      if (window instanceof IdeFrame) {
+        // we can't move focus to full-screen main frame, as it will be hidden behind other frame windows
+        Project project = ((IdeFrame)window).getProject();
+        IdeFrame projectFrame = WindowManager.getInstance().getIdeFrame(project);
+        if (projectFrame instanceof IdeFrameEx) {
+          return !((IdeFrameEx)projectFrame).isInFullScreen();
+        }
+      }
+    }
     return true;
   }
 
