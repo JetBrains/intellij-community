@@ -395,6 +395,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     addExtraPopupMenuActions(group);
+    group.addSeparator();
+    group.add(new ExportToTextFileToolbarAction(myExporterToTextFile));
 
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMPILER_MESSAGES_POPUP, group);
     menu.getComponent().show(component, x, y);
