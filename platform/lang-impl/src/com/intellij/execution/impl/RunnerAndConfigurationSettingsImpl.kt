@@ -54,7 +54,7 @@ enum class RunConfigurationLevel {
 class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val manager: RunManagerImpl,
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
-                                                                   private var singleton: Boolean = false,
+                                                                   private var isSingleton: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
   companion object {
     @Suppress("DEPRECATION")
@@ -134,26 +134,26 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     return result
   }
 
-  override fun setEditBeforeRun(b: Boolean) {
-    isEditBeforeRun = b
+  override fun setEditBeforeRun(value: Boolean) {
+    isEditBeforeRun = value
   }
 
   override fun isEditBeforeRun() = isEditBeforeRun
 
-  override fun setActivateToolWindowBeforeRun(activate: Boolean) {
-    isActivateToolWindowBeforeRun = activate
+  override fun setActivateToolWindowBeforeRun(value: Boolean) {
+    isActivateToolWindowBeforeRun = value
   }
 
   override fun isActivateToolWindowBeforeRun() = isActivateToolWindowBeforeRun
 
-  override fun setSingleton(singleton: Boolean) {
-    this.singleton = singleton
+  override fun setSingleton(value: Boolean) {
+    isSingleton = value
   }
 
-  override fun isSingleton() = singleton
+  override fun isSingleton() = isSingleton
 
-  override fun setFolderName(folderName: String?) {
-    this.folderName = folderName
+  override fun setFolderName(value: String?) {
+    folderName = value
   }
 
   override fun getFolderName() = folderName
@@ -177,16 +177,16 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
     wasSingletonSpecifiedExplicitly = false
     if (isTemplate) {
-      singleton = factory.isConfigurationSingletonByDefault
+      isSingleton = factory.isConfigurationSingletonByDefault
     }
     else {
       val singletonStr = element.getAttributeValue(SINGLETON)
       if (singletonStr.isNullOrEmpty()) {
-        singleton = factory.isConfigurationSingletonByDefault
+        isSingleton = factory.isConfigurationSingletonByDefault
       }
       else {
         wasSingletonSpecifiedExplicitly = true
-        singleton = singletonStr!!.toBoolean()
+        isSingleton = singletonStr!!.toBoolean()
       }
     }
 
@@ -254,8 +254,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       if (!isActivateToolWindowBeforeRun) {
         element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false")
       }
-      if (wasSingletonSpecifiedExplicitly || singleton != factory.isConfigurationSingletonByDefault) {
-        element.setAttribute(SINGLETON, singleton.toString())
+      if (wasSingletonSpecifiedExplicitly || isSingleton != factory.isConfigurationSingletonByDefault) {
+        element.setAttribute(SINGLETON, isSingleton.toString())
       }
       if (isTemporary) {
         element.setAttribute(TEMPORARY_ATTRIBUTE, "true")
@@ -507,5 +507,5 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 }
 
 // always write method element for shared settings for now due to preserve backward compatibility
-val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
+private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
   get() = ApplicationManager.getApplication().isUnitTestMode || !isShared

@@ -253,7 +253,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     val configuration = factory.createTemplateConfiguration(project, this)
     val template = RunnerAndConfigurationSettingsImpl(this, configuration,
                                                       isTemplate = true,
-                                                      singleton = factory.isConfigurationSingletonByDefault)
+                                                      isSingleton = factory.isConfigurationSingletonByDefault)
     if (configuration is UnknownRunConfiguration) {
       configuration.isDoNotStore = true
     }
