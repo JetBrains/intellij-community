@@ -15,6 +15,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +28,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -51,14 +53,14 @@ import java.beans.PropertyChangeListener;
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static Icon myIcon = null;
   private static Icon myDisabledIcon = null;
-  private static Icon myWin10ComboDropTriagleIcon = null;
+  private static Icon myWin10ComboDropTriangleIcon = null;
 
   public static Icon getArrowIcon(boolean enabled) {
     if (UIUtil.isUnderWin10LookAndFeel()) {
-      if (myWin10ComboDropTriagleIcon == null) {
-        myWin10ComboDropTriagleIcon = IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
+      if (myWin10ComboDropTriangleIcon == null) {
+        myWin10ComboDropTriangleIcon = IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
       }
-      return myWin10ComboDropTriagleIcon;
+      return myWin10ComboDropTriangleIcon;
     }
     Icon icon = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
     if (myIcon != icon) {
@@ -127,6 +129,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
 
+  @SuppressWarnings("unused")
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(JComponent button, @NotNull  DataContext dataContext) {
     return createPopupActionGroup(button);
@@ -149,8 +152,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private boolean myForcePressed = false;
     private PropertyChangeListener myButtonSynchronizer;
     private boolean myMouseInside = false;
-    private JBPopup myPopup;
-    private boolean myForceTransparent = false;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
@@ -197,13 +198,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
             doClick();
           }
         }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          dispatchEventToPopup(e);
-        }
       });
-      addMouseMotionListener(new MouseMotionListener() {
+      addMouseMotionListener(new MouseMotionAdapter() {
         @Override
         public void mouseDragged(MouseEvent e) {
           mouseMoved(MouseEventAdapter.convert(e, e.getComponent(),
@@ -213,35 +209,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
                                                e.getX(),
                                                e.getY()));
         }
-
-        @Override
-        public void mouseMoved(MouseEvent e) {
-          dispatchEventToPopup(e);
-        }
       });
     }
-    // Event forwarding. We need it if user does press-and-drag gesture for opening popup and choosing item there.
-    // It works in JComboBox, here we provide the same behavior
-    private void dispatchEventToPopup(MouseEvent e) {
-      if (myPopup != null && myPopup.isVisible()) {
-        JComponent content = myPopup.getContent();
-        Rectangle rectangle = content.getBounds();
-        Point location = rectangle.getLocation();
-        SwingUtilities.convertPointToScreen(location, content);
-        Point eventPoint = e.getLocationOnScreen();
-        rectangle.setLocation(location);
-        if (rectangle.contains(eventPoint)) {
-          MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, myPopup.getContent());
-          Component component = SwingUtilities.getDeepestComponentAt(content, event.getX(), event.getY());
-          if (component != null)
-            component.dispatchEvent(event);
-        }
-      }
-    }
 
-    public void setForceTransparent(boolean transparent) {
-      myForceTransparent = transparent;
-    }
+    //public void setForceTransparent(boolean transparent) {
+    //  myForceTransparent = transparent;
+    //}
 
     @NotNull
     private Runnable setForcePressed() {
@@ -252,7 +225,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         // give the button a chance to handle action listener
         ApplicationManager.getApplication().invokeLater(() -> {
           myForcePressed = false;
-          myPopup = null;
           repaint();
         }, ModalityState.any());
         repaint();
@@ -263,11 +235,16 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Nullable
     @Override
     public String getToolTipText() {
-      return myForcePressed ? null : super.getToolTipText();
+      return myForcePressed || Registry.is("ide.helptooltip.enabled") ? null : super.getToolTipText();
     }
 
     public void showPopup() {
-      createPopup(setForcePressed()).showUnderneathOf(this);
+      JBPopup popup = createPopup(setForcePressed());
+      if (Registry.is("ide.helptooltip.enabled")) {
+        HelpTooltip.setMasterPopup(this, popup);
+      }
+
+      popup.showUnderneathOf(this);
     }
 
     protected JBPopup createPopup(Runnable onDispose) {
@@ -306,7 +283,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     private void updateTooltipText(String description) {
       String tooltip = KeymapUtil.createTooltipText(description, ComboBoxAction.this);
-      setToolTipText(!tooltip.isEmpty() ? tooltip : null);
+      if (Registry.is("ide.helptooltip.enabled")) {
+        HelpTooltip.dispose(this);
+        new HelpTooltip().setDescription(tooltip).setLocation(HelpTooltip.Alignment.BOTTOM).installOn(this);
+      } else {
+        setToolTipText(!tooltip.isEmpty() ? tooltip : null);
+      }
     }
 
     protected class MyButtonModel extends DefaultButtonModel {
@@ -385,9 +367,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
           Color textColor = isEnabled() ? UIManager.getColor("Panel.foreground") : UIUtil.getInactiveTextColor();
 
-          if (myForceTransparent) {
-            paintIconAndText(size, g2, textColor);
-          } else if (isSmallVariant()) {
+          //if (myForceTransparent) {
+          //  paintIconAndText(size, g2, textColor);
+          //} else
+          if (isSmallVariant()) {
             g2.setColor(UIUtil.getControlColor());
 
             int w = getWidth();

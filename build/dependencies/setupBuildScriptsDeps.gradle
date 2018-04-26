@@ -1,14 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+import java.nio.file.Files
+import java.nio.file.Paths
+
 repositories {
   mavenCentral()
   if (project.ext.inJetBrainsNetwork) {
     maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
   }
   maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
+  maven { url "https://jetbrains.bintray.com/test-discovery" }
+  jcenter()
 }
 
 configurations {
   buildScriptsDeps
+  testDiscoveryDeps
 }
 
 List<String> projectLibraries = [
@@ -48,8 +54,23 @@ task setupBuildScriptsDeps(dependsOn: configurations.buildScriptsDeps, type: Syn
   into "${project.buildDir}/build-scripts-deps"
 }
 
-private Tuple2<String, Boolean> loadProjectLibraryProperties(String libraryName) {
-  File file = new File(project.rootDir, "../../.idea/libraries/${libraryName.replace('-', '_')}.xml")
+task setupTestDiscoveryDeps {
+  doFirst {
+    def dir = "${project.buildDir}/test-discovery-deps"
+    def testDiscoveryDeps = file(dir)
+    testDiscoveryDeps.deleteDir()
+    testDiscoveryDeps.mkdirs()
+    configurations.detachedConfiguration(
+      dependencies.create(loadProjectLibraryProperties('test-discovery-plugin-base', '../../..').first)
+    ).files.each { from ->
+      def into = Paths.get("$dir/$from.name")
+      Files.copy(from.toPath(), into)
+    }
+  }
+}
+
+private Tuple2<String, Boolean> loadProjectLibraryProperties(String libraryName, String idea = '../..') {
+  File file = new File(project.rootDir, "$idea/.idea/libraries/${libraryName.replace('-', '_')}.xml")
   if (!file.exists()) {
     throw new GradleException("Cannot find $libraryName project library: $file doesn't exist")
   }
@@ -69,7 +90,7 @@ private List<Tuple2<String, Boolean>> loadModuleLibraryProperties(String moduleF
   }
 
   def root = new XmlParser().parse(file)
-  def rootManager = root.component?.find { it.@name == 'NewModuleRootManager'}
+  def rootManager = root.component?.find { it.@name == 'NewModuleRootManager' }
   if (rootManager == null) {
     throw new GradleException("Cannot find 'NewModuleRootManager' component in $file")
   }

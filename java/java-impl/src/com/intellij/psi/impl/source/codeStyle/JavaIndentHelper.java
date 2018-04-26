@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaIndentHelper extends IndentHelperImpl {
   @Override
   protected int getIndentInner(@NotNull PsiFile file,
-                               final ASTNode element,
+                               @NotNull final ASTNode element,
                                final boolean includeNonSpace,
                                final int recursionLevel) {
     if (recursionLevel > TOO_BIG_WALK_THRESHOLD) return 0;

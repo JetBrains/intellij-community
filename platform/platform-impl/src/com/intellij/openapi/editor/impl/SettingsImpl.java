@@ -3,7 +3,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -212,8 +211,10 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public int getRightMargin(Project project) {
-    return myRightMargin != null ? myRightMargin.intValue() :
-           CodeStyleFacade.getInstance(project).getRightMargin(myLanguage);
+    if (myRightMargin != null) return myRightMargin.intValue();
+    return myEditor != null
+           ? CodeStyle.getSettings(myEditor).getRightMargin(myLanguage)
+           : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(myLanguage);
   }
 
   @Nullable

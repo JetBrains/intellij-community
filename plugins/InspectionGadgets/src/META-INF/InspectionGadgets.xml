@@ -1813,7 +1813,7 @@
                      implementationClass="com.siyeh.ig.numeric.ImplicitNumericConversionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IntegerDivisionInFloatingPointContext" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="integer.division.in.floating.point.context.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.IntegerDivisionInFloatingPointContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IntegerMultiplicationImplicitCastToLong" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="integer.multiplication.implicit.cast.to.long.display.name" groupBundle="messages.InspectionsBundle"
@@ -2045,6 +2045,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="BoxingBoxedValue" bundle="com.siyeh.InspectionGadgetsBundle" key="boxing.boxed.value.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.BoxingBoxedValueInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ListRemoveInLoop" bundle="com.siyeh.InspectionGadgetsBundle" key="inspection.list.remove.in.loop.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.siyeh.ig.performance.ListRemoveInLoopInspection"/>
 
     <!--group.names.portability.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="HardcodedFileSeparator" shortName="HardcodedFileSeparators" bundle="com.siyeh.InspectionGadgetsBundle"

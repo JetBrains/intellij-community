@@ -164,9 +164,9 @@ public class ActionStepBuilder extends PresentationFactory {
           icon =  AllIcons.Actions.QuickList;
         }
         else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
-          icon = IconCache.getIcon("checkmark", false, false, true);
-          selectedIcon = IconCache.getIcon("checkmark", true, false, true);
-          disabledIcon = IconCache.getIcon("checkmark", false, false, false);
+          icon = IconCache.getIcon("checkmark");
+          selectedIcon = IconCache.getSelectedIcon("checkmark");
+          disabledIcon = IconCache.getDisabledIcon("checkmark");
         }
       }
       if (!enabled) {

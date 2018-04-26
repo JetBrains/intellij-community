@@ -1,0 +1,64 @@
+YAML file
+  YAML document
+    YAML sequence
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace('  ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('key11:')
+            PsiWhiteSpace(' ')
+            YAML scalar list
+              PsiElement(scalar list)('|')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('    ')
+              PsiElement(scalar list)('firstValue')
+              PsiElement(block scalar EOL)('\n')
+          PsiElement(indent)('   ')
+          YAML key value
+            PsiElement(scalar key)('key12:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('secondValue')
+      PsiElement(Eol)('\n')
+      PsiElement(Eol)('\n')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace('  ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)(''key21':')
+            PsiWhiteSpace(' ')
+            YAML scalar list
+              PsiElement(scalar list)('|')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('    ')
+              PsiElement(scalar list)('firstValue')
+              PsiElement(block scalar EOL)('\n')
+          PsiElement(indent)('   ')
+          YAML key value
+            PsiElement(scalar key)('key22:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('secondValue')
+      PsiElement(Eol)('\n')
+      PsiElement(Eol)('\n')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace('  ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('"key31":')
+            PsiWhiteSpace(' ')
+            YAML scalar list
+              PsiElement(scalar list)('|')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('    ')
+              PsiElement(scalar list)('firstValue')
+              PsiElement(block scalar EOL)('\n')
+          PsiElement(indent)('   ')
+          YAML key value
+            PsiElement(scalar key)('key32:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('secondValue')

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.UriUtil;
 import com.intellij.util.Urls;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
@@ -33,18 +34,21 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @NotNull private final String mySchemaFilePath;
   @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
   @Nullable private final Runnable myTreeUpdater;
+  @NotNull private final Function<String, String> myNameCreator;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
   private String myError;
 
   public JsonSchemaConfigurable(Project project,
                                 @NotNull String schemaFilePath, @NotNull UserDefinedJsonSchemaConfiguration schema,
-                                @Nullable Runnable updateTree) {
+                                @Nullable Runnable updateTree,
+                                @NotNull Function<String, String> nameCreator) {
     super(true, updateTree);
     myProject = project;
     mySchemaFilePath = schemaFilePath;
     mySchema = schema;
     myTreeUpdater = updateTree;
+    myNameCreator = nameCreator;
     myDisplayName = mySchema.getName();
   }
 
@@ -71,7 +75,20 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @Override
   public JComponent createOptionsPanel() {
     if (myView == null) {
-      myView = new JsonSchemaMappingsView(myProject, myTreeUpdater);
+      myView = new JsonSchemaMappingsView(myProject, myTreeUpdater, s -> {
+        if (myDisplayName.startsWith(JsonSchemaMappingsConfigurable.STUB_SCHEMA_NAME)) {
+          int lastSlash = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
+          if (lastSlash > 0) {
+            String substring = s.substring(lastSlash + 1);
+            int dot = substring.lastIndexOf('.');
+            if (dot != -1) {
+              substring = substring.substring(0, dot);
+            }
+            setDisplayName(myNameCreator.fun(substring));
+            updateName();
+          }
+        }
+      });
       myView.setError(myError);
     }
     return myView.getComponent();
@@ -92,7 +109,8 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @Override
   public boolean isModified() {
     if (myView == null) return false;
-    if (!FileUtil.toSystemDependentName(mySchema.getRelativePathToSchema()).equals(myView.getSchemaSubPath())) return false;
+    if (!FileUtil.toSystemDependentName(mySchema.getRelativePathToSchema()).equals(myView.getSchemaSubPath())) return true;
+    if (mySchema.getSchemaVersion() != myView.getSchemaVersion()) return true;
     return !Comparing.equal(myView.getData(), mySchema.getPatterns());
   }
 
@@ -101,6 +119,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     if (myView == null) return;
     doValidation();
     mySchema.setName(myDisplayName);
+    mySchema.setSchemaVersion(myView.getSchemaVersion());
     mySchema.setPatterns(myView.getData());
     mySchema.setRelativePathToSchema(myView.getSchemaSubPath());
   }
@@ -110,12 +129,16 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     return couple.first.startsWith("http");
   }
 
-  private static boolean isValidURL(@NotNull final String url) {
+  public static boolean isValidURL(@NotNull final String url) {
     return isHttpPath(url) && Urls.parse(url, false) != null;
   }
 
   private void doValidation() throws ConfigurationException {
     String schemaSubPath = myView.getSchemaSubPath();
+
+    if (StringUtil.isEmptyOrSpaces(schemaSubPath)) {
+      throw new ConfigurationException((!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Schema path is empty");
+    }
 
     VirtualFile vFile;
     String filename;
@@ -144,7 +167,6 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     }
 
     if (StringUtil.isEmptyOrSpaces(myDisplayName)) throw new ConfigurationException(filename + ": Schema name is empty");
-    if (StringUtil.isEmptyOrSpaces(schemaSubPath)) throw new ConfigurationException(filename + ": Schema path is empty");
 
     // we don't validate remote schemas while in options dialog
     if (vFile instanceof HttpVirtualFile) return;
@@ -163,7 +185,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @Override
   public void reset() {
     if (myView == null) return;
-    myView.setItems(mySchemaFilePath, mySchema.getPatterns());
+    myView.setItems(mySchemaFilePath, mySchema.getSchemaVersion(), mySchema.getPatterns());
     setDisplayName(mySchema.getName());
   }
 
@@ -172,10 +194,12 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     info.setApplicationLevel(mySchema.isApplicationLevel());
     if (myView != null && myView.isInitialized()) {
       info.setName(getDisplayName());
+      info.setSchemaVersion(myView.getSchemaVersion());
       info.setPatterns(myView.getData());
       info.setRelativePathToSchema(myView.getSchemaSubPath());
     } else {
       info.setName(mySchema.getName());
+      info.setSchemaVersion(mySchema.getSchemaVersion());
       info.setPatterns(mySchema.getPatterns());
       info.setRelativePathToSchema(mySchema.getRelativePathToSchema());
     }

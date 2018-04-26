@@ -31,7 +31,6 @@ import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyImportedModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,14 +69,17 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
     return myImportedPrefix;
   }
 
+  @Override
   public String getText() {
     return "import " + myImportedPrefix;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitElement(this);
   }
 
+  @Override
   public PsiElement copy() {
     return new PyImportedModule(myImportElement, myContainingFile, myImportedPrefix);
   }
@@ -97,6 +99,11 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
       }
     }
     return super.getNavigationElement();
+  }
+
+  @Override
+  public boolean isValid() {
+    return (myImportElement == null || myImportElement.isValid()) && myContainingFile.isValid();
   }
 
   @Nullable
@@ -149,7 +156,7 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    PyImportedModule module = (PyImportedModule)o;
+    final PyImportedModule module = (PyImportedModule)o;
     return Objects.equals(myImportElement, module.myImportElement) &&
            Objects.equals(myContainingFile, module.myContainingFile) &&
            Objects.equals(myImportedPrefix, module.myImportedPrefix);
@@ -157,7 +164,6 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
 
   @Override
   public int hashCode() {
-
     return Objects.hash(myImportElement, myContainingFile, myImportedPrefix);
   }
 }

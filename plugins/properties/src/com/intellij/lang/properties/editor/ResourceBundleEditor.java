@@ -439,7 +439,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
       String title = propertiesFile.getName();
       title += PropertiesUtil.getPresentableLocale(propertiesFile.getLocale());
-      JComponent comp = new JPanel(new BorderLayout()) {
+      JPanel comp = new JPanel(new BorderLayout()) {
         @Override
         public Dimension getPreferredSize() {
           Insets insets = getBorder().getBorderInsets(this);
@@ -448,7 +448,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       };
       comp.add(editor.getComponent(), BorderLayout.CENTER);
       comp.setBorder(IdeBorderFactory.createTitledBorder(title, false));
-      myTitledPanels.put(propertiesFile.getVirtualFile(), (JPanel)comp);
+      myTitledPanels.put(propertiesFile.getVirtualFile(), comp);
 
       valuesPanelComponent.add(comp, gc);
     }

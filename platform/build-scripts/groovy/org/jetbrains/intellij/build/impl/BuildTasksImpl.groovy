@@ -48,6 +48,7 @@ class BuildTasksImpl extends BuildTasks {
       }
       buildContext.notifyArtifactBuilt(targetFile)
     }
+    logFreeDiskSpace("after building sources archive")
   }
 
   @Override
@@ -123,7 +124,7 @@ class BuildTasksImpl extends BuildTasks {
     String configPath = "$tempDir/config"
   
     def ideClasspath = new LinkedHashSet<String>()
-    modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findModule(it), false) }
+    modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(it), false) }
 
     String classpathFile = "$tempDir/classpath.txt"
     new File(classpathFile).text = ideClasspath.join("\n")
@@ -299,7 +300,9 @@ idea.fatal.error.notification=disabled
     copyDependenciesFile()
 
     def patchedApplicationInfo = patchApplicationInfo()
+    logFreeDiskSpace("before compilation")
     def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    logFreeDiskSpace("after compilation")
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty()) {
       buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
@@ -324,7 +327,9 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
+      logFreeDiskSpace("before downloading JREs")
       buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS")
+      logFreeDiskSpace("after downloading JREs")
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
@@ -354,7 +359,13 @@ idea.fatal.error.notification=disabled
         }
       }
     }
+    logFreeDiskSpace("after building distributions")
   }
+
+  private void logFreeDiskSpace(String phase) {
+    CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
+  }
+
 
   private def copyDependenciesFile() {
     if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
@@ -390,6 +401,10 @@ idea.fatal.error.notification=disabled
     checkPaths([properties.yourkitAgentBinariesDirectoryPath], "productProperties.yourkitAgentBinariesDirectoryPath")
     checkPaths(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
 
+    checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile")
+    checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests")
+    checkModules(properties.additionalModulesRequiredForScrambling, "productProperties.additionalModulesRequiredForScrambling")
+
     def winCustomizer = buildContext.windowsDistributionCustomizer
     checkPaths([winCustomizer?.icoPath], "productProperties.windowsCustomizer.icoPath")
     checkPaths([winCustomizer?.installerImagesPath], "productProperties.windowsCustomizer.installerImagesPath")
@@ -406,6 +421,7 @@ idea.fatal.error.notification=disabled
     }
 
     checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules")
+    checkModules(buildContext.proprietaryBuildTools.scrambleTool?.namesOfModulesRequiredToBeScrambled, "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled")
   }
 
   private void checkProductLayout() {
@@ -457,9 +473,11 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkModules(Collection<String> modules, String fieldName) {
-    def unknownModules = modules.findAll {buildContext.findModule(it) == null}
-    if (!unknownModules.empty) {
-      buildContext.messages.error("The following modules from $fieldName aren't found in the project: $unknownModules")
+    if (modules != null) {
+      def unknownModules = modules.findAll {buildContext.findModule(it) == null}
+      if (!unknownModules.empty) {
+        buildContext.messages.error("The following modules from $fieldName aren't found in the project: $unknownModules")
+      }
     }
   }
 

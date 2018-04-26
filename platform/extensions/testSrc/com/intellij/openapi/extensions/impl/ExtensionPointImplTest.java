@@ -204,7 +204,7 @@ public class ExtensionPointImplTest {
   public void testListenerNotifications() {
     ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
     final List<String> extensions = ContainerUtil.newArrayList();
-    extensionPoint.addExtensionPointListener(new ExtensionPointListener.Adapter<String>() {
+    extensionPoint.addExtensionPointListener(new ExtensionPointListener<String>() {
       @Override
       public void extensionAdded(@NotNull String extension, @Nullable PluginDescriptor pluginDescriptor) {
         extensions.add(extension);

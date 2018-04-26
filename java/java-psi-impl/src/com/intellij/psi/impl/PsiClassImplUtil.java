@@ -28,7 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.ElementClassHint;
@@ -998,7 +997,7 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
     }
-    PsiType upperBound = InferenceSession.getUpperBound(psiClass);
+    PsiType upperBound = TypeConversionUtil.getUpperBound(psiClass);
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
       upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
@@ -1041,7 +1040,7 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(baseClass.getQualifiedName());
     }
-    PsiType upperBound = InferenceSession.getUpperBound(psiClass);
+    PsiType upperBound = TypeConversionUtil.getUpperBound(psiClass);
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
       upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
@@ -1073,15 +1072,12 @@ public class PsiClassImplUtil {
         PsiClassReferenceListStub classStub = (PsiClassReferenceListStub)stub;
         String[] names = classStub.getReferencedNames();
         for (int i = 0; i < names.length; i++) {
-          String name = names[i];
-          int typeParam = name.indexOf('<');
-          if (typeParam != -1) {
-            name = name.substring(0, typeParam);
-          }
+          String name = PsiNameHelper.getShortClassName(names[i]);
           // baseName=="ArrayList" classStub.getReferenceNames()[i]=="java.util.ArrayList"
           if (name.endsWith(baseName)) {
             PsiClassType[] referencedTypes = classStub.getReferencedTypes();
-            PsiClass resolved = i>=referencedTypes.length ? null : referencedTypes[i].resolve();
+            PsiClassType type = i >= referencedTypes.length ? null : referencedTypes[i];
+            PsiClass resolved = type == null ? null : type.resolve();
             if (manager.areElementsEquivalent(baseClass, resolved)) return true;
           }
         }

@@ -43,3 +43,6 @@ fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modi
     it.createChangeModifierActions(target, request)
   }
 }
+
+fun createAddFieldActions(target: JvmClass, request: CreateFieldRequest): List<IntentionAction> =
+  createActions { it.createAddFieldActions(target, request) }

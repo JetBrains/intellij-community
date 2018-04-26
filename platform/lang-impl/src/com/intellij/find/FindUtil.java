@@ -83,7 +83,7 @@ public class FindUtil {
     return file != null ? file.getVirtualFile() : null;
   }
 
-  public static void initStringToFindWithSelection(FindModel findModel, Editor editor) {
+  public static void initStringToFindWithSelection(FindModel findModel, @Nullable Editor editor) {
     if (editor != null) {
       String s = editor.getSelectionModel().getSelectedText();
       if (s != null && s.length() < 10000) {

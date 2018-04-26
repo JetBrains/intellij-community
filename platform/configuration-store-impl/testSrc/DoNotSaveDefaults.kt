@@ -114,7 +114,7 @@ class DoNotSaveDefaultsTest {
       "databaseSettings.xml"
     ))
     println(directoryTree)
-    assertThat(directoryTree).toMatchSnapshot(testData.resolve("DoNotSaveDefaults.snap.txt"))
+    assertThat(directoryTree).isEmpty()
   }
 }
 

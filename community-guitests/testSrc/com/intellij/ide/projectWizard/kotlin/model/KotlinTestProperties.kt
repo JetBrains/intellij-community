@@ -27,7 +27,7 @@ object KotlinTestProperties {
    * in the variable `kotlin_version`
    */
   private val art_version_from_env = getPropertyValue(
-    "kotlin.artifact.version")
+    "kotlin.artifact.version", kotlin_plugin_version_main)
   private var art_version_from_test: String? = null
   var kotlin_artifact_version: String
     set(value) {
@@ -47,13 +47,6 @@ object KotlinTestProperties {
   val isArtifactPresentInConfigureDialog: Boolean
     get() = getPropertyValue("kotlin.artifact.isPresentInConfigureDialog",
                                                                                               "true").toBoolean()
-
-  /**
-   * @return true - if artifact with version specified by kotlin_artifact_version is present in the `Configure Kotlin` dialog
-   */
-  val isArtifactConfiguredManually: Boolean
-    get() = getPropertyValue("kotlin.artifact.isConfiguredManually",
-                                                                                              "false").toBoolean()
 
   /**
    * @return true - if artifact with version specified by kotlin_artifact_version is uploaded to the bintray, so no additional repositories are required

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -754,11 +754,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           return qName.equals(getCanonicalText(false, null, containingFile));
         }
         if (element instanceof PsiClass) {
-          final PsiIdentifier nameIdentifier = ((PsiClass)element).getNameIdentifier();
-          if (nameIdentifier == null) return false;
-          PsiElement nameElement = getReferenceNameElement();
-          return nameElement != null && nameElement.textMatches(nameIdentifier) &&
-                 containingFile.getManager().areElementsEquivalent(resolve(), element);
+          final PsiElement nameElement = getReferenceNameElement();
+          if (nameElement == null) return false;
+          final String name = ((PsiClass)element).getName();
+          if (name == null) return false;
+          return nameElement.textMatches(name) && containingFile.getManager().areElementsEquivalent(resolve(), element);
         }
         return false;
 

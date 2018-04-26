@@ -289,11 +289,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
         if (plugin != null) {
           Vendor vendor = plugin.getVendor();
+          LocalQuickFix fix = new RemoveDomElementQuickFix(extension);
           if (DomUtil.hasXml(vendor) && PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
-            LocalQuickFix fix = new RemoveDomElementQuickFix(extension);
             holder.createProblem(extension, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),
                                  null, fix).highlightWholeElement();
+          }
+          else {
+            Module module = plugin.getModule();
+            boolean inPlatformCode = module != null && module.getName().startsWith("intellij.platform.");
+            if (!inPlatformCode) {
+              holder.createProblem(extension, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                   DevKitBundle.message("inspections.plugin.xml.third.party.plugins.must.not.use.itnReporter"),
+                                   null, fix).highlightWholeElement();
+            }
           }
         }
       }

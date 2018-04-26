@@ -14,12 +14,20 @@ import java.util.Map;
 
 public class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
+  private static final String ourRegistryKeyTouchbar = "ide.mac.touchbar.use";
+  private static final String ourRegistryKeyDoCheckEnv = "ide.mac.touchbar.check.env";
   private static final NSTLibrary ourNSTLibrary; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
 
   static {
     final boolean isSystemSupportTouchbar = SystemInfo.isMac && SystemInfo.isOsVersionAtLeast("10.12.2");
+    final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false);
+    final boolean doCheckEnv = Registry.is(ourRegistryKeyDoCheckEnv, true);
     NSTLibrary lib = null;
-    if (isSystemSupportTouchbar && Registry.is("ide.mac.touchbar.use", false) && SystemSettingsTouchBar.isTouchBarServerRunning()) {
+    if (
+      isSystemSupportTouchbar
+      && isRegistryKeyEnabled
+      && (!doCheckEnv || SystemSettingsTouchBar.isTouchBarServerRunning())
+    ) {
       try {
         UrlClassLoader.loadPlatformLibrary("nst");
 
@@ -30,10 +38,33 @@ public class NST {
 
         final Map<String, Object> nstOptions = new HashMap<>();
         lib = Native.loadLibrary("nst", NSTLibrary.class, nstOptions);
-      } catch (Throwable e) {
+      } catch (RuntimeException e) {
         LOG.error("Failed to load nst library for touchbar: ", e);
       }
-    }
+
+      if (lib != null) {
+        // small check that loaded library works
+        try {
+          final ID test = lib.createTouchBar("test", (uid) -> { return ID.NIL; });
+          if (test == null || test == ID.NIL) {
+            LOG.error("Failed to create native touchbar object, result is null");
+          } else {
+            lib.releaseTouchBar(test);
+            LOG.info("nst library works properly, successfully created and released native touchbar object");
+          }
+        } catch (RuntimeException e) {
+          LOG.error("nst library was loaded, but can't be used: ", e);
+        }
+      } else {
+        LOG.error("nst library wasn't loaded");
+      }
+    } else if (!isSystemSupportTouchbar)
+      LOG.info("OS doesn't support touchbar, skip nst loading");
+    else if (!isRegistryKeyEnabled)
+      LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
+    else
+      LOG.warn("touchbar-server isn't running, skip nst loading");
+
     ourNSTLibrary = lib;
   }
 
@@ -45,12 +76,10 @@ public class NST {
   }
 
   public static void releaseTouchBar(ID tbObj) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     ourNSTLibrary.releaseTouchBar(tbObj);
   }
 
   public static void setTouchBar(TouchBar tb) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     ourNSTLibrary.setTouchBar(tb == null ? ID.NIL : tb.getNativePeer());
   }
 
@@ -61,12 +90,13 @@ public class NST {
 
   public static ID createButton(String uid,
                                 int buttWidth,
+                                int buttFlags,
                                 String text,
                                 byte[] raster4ByteRGBA,
                                 int w,
                                 int h,
                                 NSTLibrary.Action action) {
-    return ourNSTLibrary.createButton(uid, buttWidth, text, raster4ByteRGBA, w, h, action);
+    return ourNSTLibrary.createButton(uid, buttWidth, buttFlags, text, raster4ByteRGBA, w, h, action);
   }
 
   public static ID createPopover(String uid,
@@ -88,14 +118,16 @@ public class NST {
   }
 
   public static void updateButton(ID buttonObj,
+                                  int updateOptions,
                                   int buttWidth,
+                                  int buttonFlags,
                                   String text,
                                   byte[] raster4ByteRGBA,
                                   int w,
                                   int h,
                                   NSTLibrary.Action action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    ourNSTLibrary.updateButton(buttonObj, buttWidth, text, raster4ByteRGBA, w, h, action);
+    ourNSTLibrary.updateButton(buttonObj, updateOptions, buttWidth, buttonFlags, text, raster4ByteRGBA, w, h, action);
   }
 
   public static void updatePopover(ID popoverObj,

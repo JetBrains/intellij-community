@@ -16,15 +16,14 @@
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,26 +42,21 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
         TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
         if (framework != null && framework.isTestClass(element)) {
           String url = "java:suite://" + ClassUtil.getJVMClassName((PsiClass)element);
-          return getInfo(url, e.getProject(), true);
+          TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
+          return getInfo(state, true);
         }
       }
       if (element instanceof PsiMethod) {
-        PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-        if (psiClass != null) {
-          TestFramework framework = TestFrameworks.detectFramework(psiClass);
-          if (framework != null && framework.isTestMethod(element)) {
-            String url = "java:test://" + ClassUtil.getJVMClassName(psiClass) + "." + ((PsiMethod)element).getName();
-            return getInfo(url, e.getProject(), false);
-          }
-        }
+        TestFailedLineManager.TestInfo testInfo = TestFailedLineManager.getInstance(e.getProject()).getTestInfo((PsiMethod)element);
+        return testInfo == null ? null : getInfo(testInfo.myRecord, false);
       }
     }
     return null;
   }
 
   @NotNull
-  private static Info getInfo(String url, Project project, boolean isClass) {
-    Icon icon = getTestStateIcon(url, project, isClass);
+  private static Info getInfo(TestStateStorage.Record state, boolean isClass) {
+    Icon icon = getTestStateIcon(state, isClass);
     return new Info(icon, ExecutorAction.getActions(1), RunLineMarkerContributor.RUN_TEST_TOOLTIP_PROVIDER);
   }
 

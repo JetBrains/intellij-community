@@ -55,10 +55,11 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
 
   @Override
   public void saveContent(@NotNull final Url url, @NotNull final File file, @NotNull final DownloadingCallback callback) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> downloadContent(url, file, callback));
+    Throwable startTrace = ApplicationManager.getApplication().isUnitTestMode() ? new Throwable() : null;
+    ApplicationManager.getApplication().executeOnPooledThread(() -> downloadContent(url, file, callback, startTrace));
   }
 
-  private void downloadContent(@NotNull final Url url, @NotNull final File file, @NotNull final DownloadingCallback callback) {
+  private void downloadContent(@NotNull Url url, @NotNull File file, @NotNull DownloadingCallback callback, @Nullable Throwable startTrace) {
     LOG.debug("Downloading started: " + url);
     final String presentableUrl = StringUtil.trimMiddle(url.trimParameters().toDecodedForm(), 40);
     callback.setProgressText(VfsBundle.message("download.progress.connecting", presentableUrl), true);
@@ -85,7 +86,10 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
 
             fileType = adjustFileType(fileType, url);
 
-            LOG.debug("Downloading finished, " + size + " bytes downloaded");
+            LOG.debug("Downloading from " + url + " finished, " + size + " bytes downloaded");
+            if (startTrace != null) {
+              LOG.debug("Start trace:", startTrace);
+            }
             callback.finished(fileType);
             return null;
           });

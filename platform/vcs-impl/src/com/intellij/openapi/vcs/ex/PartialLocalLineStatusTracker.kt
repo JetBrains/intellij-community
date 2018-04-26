@@ -17,6 +17,8 @@ package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ModalityState
@@ -31,6 +33,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -517,7 +521,10 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
-    override fun createAdditionalInfoPanel(editor: Editor, range: Range, mousePosition: Point?): JComponent? {
+    override fun createAdditionalInfoPanel(editor: Editor,
+                                           range: Range,
+                                           mousePosition: Point?,
+                                           disposable: Disposable): JComponent? {
       if (range !is LocalRange) return null
 
       val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
@@ -535,6 +542,18 @@ class PartialLocalLineStatusTracker(project: Project,
 
 
       val link = ActionGroupLink(rangeList.name, null, group)
+
+      val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
+      object : DumbAwareAction() {
+        override fun actionPerformed(e: AnActionEvent?) {
+          link.linkLabel.doClick()
+        }
+      }.registerCustomShortcutSet(moveChangesShortcutSet, editor.component, disposable)
+
+      val shortcuts = moveChangesShortcutSet.shortcuts
+      if (shortcuts.isNotEmpty()) {
+        link.linkLabel.toolTipText = "Move lines to another changelist (${KeymapUtil.getShortcutText(shortcuts.first())})"
+      }
 
       val panel = JPanel(BorderLayout())
       panel.add(link, BorderLayout.CENTER)

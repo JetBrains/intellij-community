@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull final MethodReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull final MethodReferencesSearch.SearchParameters p, @NotNull final Processor<? super PsiReference> consumer) {
     final PsiMethod method = p.getMethod();
     final boolean[] isConstructor = new boolean[1];
     final PsiManager[] psiManager = new PsiManager[1];

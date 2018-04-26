@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,7 +59,7 @@ public class InferenceFromSourceUtil {
     if (method.getParameterList().isEmpty()) return false;
 
     for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
-      if (contract.returnValue == MethodContract.ValueConstraint.NULL_VALUE) {
+      if (contract.getReturnValue().isNull()) {
         return true;
       }
     }

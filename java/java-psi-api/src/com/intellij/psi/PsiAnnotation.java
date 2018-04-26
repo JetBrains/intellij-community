@@ -2,11 +2,15 @@
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmAnnotation;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Represents a Java annotation.
@@ -102,5 +106,11 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, J
   @Override
   default PsiElement getSourceElement() {
     return this;
+  }
+
+  @NotNull
+  @Override
+  default List<JvmAnnotationAttribute> getAttributes() {
+    return Arrays.asList(getParameterList().getAttributes());
   }
 }

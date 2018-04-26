@@ -18,6 +18,9 @@ static const int g_interItemSpacings = 5;
 @end
 
 @interface NSScrubberContainer : NSCustomTouchBarItem<NSScrubberDataSource, NSScrubberDelegate, NSScrubberFlowLayoutDelegate>
+{
+    ScrubberItemView * _lastSelected;
+}
 @property (retain, nonatomic) NSMutableArray * items;
 @end
 
@@ -80,6 +83,15 @@ static NSMutableArray * _convertItems(ScrubberItemData * items, int count) {
         return;
     }
 
+    NSScrubberItemView * view = [scrubber itemViewForItemAtIndex:selectedIndex];
+    if (view != nil) {
+        if (_lastSelected != nil)
+            [_lastSelected setBackgroundSelected:false];
+
+        _lastSelected = (ScrubberItemView *) view;
+        [_lastSelected setBackgroundSelected:true];
+    }
+
     nstrace(@"scrubber [%@]: perform action of scrubber item at %d", self.identifier, selectedIndex);
     (*itemData.jaction)();
 }
@@ -102,7 +114,7 @@ id createScrubber(const char* uid, int itemWidth, ScrubberItemData * items, int 
     [scrubber registerClass:[ScrubberItemView class] forItemIdentifier:g_scrubberItemIdentifier];
 
     scrubber.showsAdditionalContentIndicators = NO;// For the image scrubber, we want the control to draw a fade effect to indicate that there is additional unscrolled content.
-    scrubber.selectedIndex = 0;
+    scrubber.selectedIndex = -1;
 
     NSScrubberFlowLayout *scrubberLayout = [[[NSScrubberFlowLayout alloc] init] autorelease];
     scrubberLayout.itemSpacing = g_interItemSpacings;

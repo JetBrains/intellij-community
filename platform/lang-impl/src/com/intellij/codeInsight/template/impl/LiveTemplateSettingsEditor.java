@@ -81,8 +81,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myNodeChanged = nodeChanged;
     myDefaultShortcutItem = CodeInsightBundle.message("dialog.edit.template.shortcut.default", defaultShortcut);
 
-    myKeyField=new JTextField();
-    myDescription=new JTextField();
+    myKeyField = new JTextField(20);
+    myDescription = new JTextField(100);
     myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
     myTemplate.setId(null);
 
@@ -422,6 +422,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
         }
       }
     });
+    TreeUtil.expand(checkboxTree, 2);
 
     panel.add(ScrollPaneFactory.createScrollPane(checkboxTree));
     final Dimension size = checkboxTree.getPreferredSize();

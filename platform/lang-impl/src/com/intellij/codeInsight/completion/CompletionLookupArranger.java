@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -17,7 +18,20 @@ public interface CompletionLookupArranger {
    * Adds an element to be arranged.
    * @param presentation The presentation of the element (rendered with {@link LookupElement#renderElement(LookupElementPresentation)}
    */
-  void addElement(LookupElement element, LookupElementPresentation presentation);
+  void addElement(@NotNull LookupElement element,
+                  @NotNull CompletionSorter sorter,
+                  @NotNull PrefixMatcher prefixMatcher,
+                  @NotNull LookupElementPresentation presentation);
+
+  /**
+   * Adds an element to be arranged, along with its prefix matcher.
+   */
+  void addElement(@NotNull CompletionResult result);
+
+  /**
+   * Returns the prefix matcher registered for the specified element.
+   */
+  PrefixMatcher itemMatcher(@NotNull LookupElement item);
 
   /**
    * Returns the items in the appropriate order and the initial selection.

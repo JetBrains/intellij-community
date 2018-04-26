@@ -18,6 +18,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
@@ -29,6 +30,7 @@ import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -79,6 +81,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static final String CLICK_INFO = "CLICK_INFO";
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
+  private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
   private UiInspector myInspector;
 
   public UiInspectorAction() {
@@ -382,6 +385,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           }
         }
         append(getComponentName(component));
+        Pair<Class, String> class2field = getClassAndFieldName(component);
+        if (class2field!= null) {
+          append("(" + class2field.second + "@" + class2field.first.getSimpleName() + ")");
+        }
+
         append(": " + RectangleRenderer.toString(component.getBounds()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         if (component.isOpaque()) {
           append(", opaque", SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -412,25 +420,21 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     if (StringUtil.isNotEmpty(componentName)) {
       name += " \"" + componentName + "\"";
     }
-    String fieldName = getFieldName(component);
-    if (fieldName != null) {
-      name += "(" + fieldName+")";
-    }
     return name;
   }
 
-  private static String getFieldName(Component component) {
+  @Nullable
+  private static Pair<Class, String> getClassAndFieldName(Component component) {
     Container parent = component.getParent();
     int deepness = 1;
-    while(parent != null && deepness <= 3) {
+    while(parent != null && deepness <= MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME) {
       Class<? extends Container> aClass = parent.getClass();
       Field[] fields = aClass.getDeclaredFields();
       for (Field field : fields) {
         try {
           field.setAccessible(true);
           if (field.get(parent) == component) {
-            String simpleName = parent.getClass().getSimpleName();
-            return field.getName() + (/*deepness > 1 &&*/ !StringUtil.isEmpty(simpleName) ? "@" + simpleName : "");
+            return Pair.create(parent.getClass(), field.getName());
           }
         }
         catch (IllegalAccessException e) {
@@ -465,6 +469,19 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (((JComponent)c).getClientProperty(CLICK_INFO) != null) {
         SwingUtilities.invokeLater(() -> getSelectionModel().setSelectionPath(getPathForRow(getLeadSelectionRow() + 1)));
       }
+    }
+
+    @Override
+    public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+      if (value instanceof ComponentNode) {
+        Pair<Class, String> pair = getClassAndFieldName(((HierarchyTree.ComponentNode)value).myComponent);
+        if (pair != null) {
+          return pair.first.getSimpleName() + '.' + pair.second;
+        } else {
+          return myComponent.getClass().getName();
+        }
+      }
+      return super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);//todo
     }
 
     public void expandPath() {
@@ -1502,6 +1519,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
           return clickInfo;
         }
+      }
+      if (component instanceof ActionToolbarImpl) {
+        clickInfo.add(new PropertyBean("Toolbar Place", ((ActionToolbarImpl)component).getPlace(), true));
+        clickInfo.add(new PropertyBean("Toolbar Group", ((ActionToolbarImpl)component).getGroupId(), true));
+        return clickInfo;
       }
       return null;
     }

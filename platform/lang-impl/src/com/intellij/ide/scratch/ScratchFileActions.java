@@ -69,13 +69,15 @@ public class ScratchFileActions {
     public void update(@NotNull AnActionEvent e) {
       getTemplatePresentation().setText(myActionText);
 
+      Project project = e.getProject();
       String place = e.getPlace();
-      boolean enabled = e.getProject() != null &&
-                        (ActionPlaces.isMainMenuOrActionSearch(place) || ActionPlaces.isPopupPlace(place));
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabledAndVisible(enabled);
+      boolean enabled = project != null && (
+        e.isFromActionToolbar() ||
+        ActionPlaces.isMainMenuOrActionSearch(place) ||
+        ActionPlaces.isPopupPlace(place) && e.getData(LangDataKeys.IDE_VIEW) != null);
 
-      updatePresentationTextAndIcon(e, presentation);
+      e.getPresentation().setEnabledAndVisible(enabled);
+      updatePresentationTextAndIcon(e, e.getPresentation());
     }
 
     @Override

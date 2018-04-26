@@ -3,16 +3,15 @@ package com.jetbrains.python.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils
-import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
-import com.jetbrains.python.psi.types.PyModuleType
 
 /**
  * Add completion variants for modules and packages.
@@ -35,8 +34,8 @@ class PyModulePackageCompletionContributor : PyExtendedCompletionContributor() {
     val resolveContext = fromFoothold(targetFile)
     val builders = modulesFromIndex.asSequence()
       .flatMap { resolve(it, resolveContext) }
-      .filter { PythonImportUtils.isImportableModule(targetFile, it) }
-      .mapNotNull { PyModuleType.buildFileLookupElement(it, null) }
+      .filter { PythonImportUtils.isImportable(targetFile, it) }
+      .mapNotNull { createLookupElementBuilder(targetFile, it) }
       .map { it.withInsertHandler(
             if (inStringLiteral) stringLiteralInsertHandler else importingInsertHandler)
       }
@@ -44,7 +43,7 @@ class PyModulePackageCompletionContributor : PyExtendedCompletionContributor() {
     builders.forEach { result.addElement(it) }
   }
 
-  private fun resolve(module: PyFile, resolveContext: PyQualifiedNameResolveContext): Sequence<PsiFileSystemItem> {
+  private fun resolve(module: PsiFile, resolveContext: PyQualifiedNameResolveContext): Sequence<PsiFileSystemItem> {
     val qualifiedName = QualifiedNameFinder.findCanonicalImportPath(module, null) ?: return emptySequence()
     return resolveQualifiedName(qualifiedName, resolveContext).asSequence()
       .filterIsInstance<PsiFileSystemItem>()

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.generation;
 
@@ -41,8 +27,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.util.PsiUtilBase;
@@ -60,14 +44,12 @@ import java.util.List;
 import java.util.Map;
 
 public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHandler {
-  private Project                                         myProject;
 
   private final List<Block> myBlocks = new ArrayList<>();
 
   @Override
   // first pass - adjacent carets are grouped into blocks
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
-    myProject = project;
     file = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
 
     PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
@@ -149,8 +131,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   public void postInvoke() {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.line");
 
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(myProject);
-
     // second pass - determining whether we need to comment or to uncomment
     boolean allLinesCommented = true;
     for (Block block : myBlocks) {
@@ -172,7 +152,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
 
       block.blockSuitableCommenter = getBlockSuitableCommenter(psiFile, offset, endOffset);
       Language lineStartLanguage = getLineStartLanguage(block.editor, psiFile, startLine);
-      CommonCodeStyleSettings languageSettings = codeStyleSettings.getCommonSettings(lineStartLanguage);
+      CommonCodeStyleSettings languageSettings = CodeStyle.getLanguageSettings(psiFile, lineStartLanguage);
       block.commentWithIndent = !languageSettings.LINE_COMMENT_AT_FIRST_COLUMN;
       block.addSpace = languageSettings.LINE_COMMENT_ADD_SPACE;
 
@@ -530,6 +510,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   private static boolean doUncommentLine(int line, Document document, Commenter commenter, int startOffset, int endOffset, boolean removeSpace) {
     String prefix = commenter.getLineCommentPrefix();
     if (prefix != null) {
+      int originalPrefixLength = prefix.length();
       if (removeSpace) prefix += ' ';
       CharSequence chars = document.getCharsSequence();
 
@@ -543,18 +524,16 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
           theEnd--;
         }
 
-
-        String lineText = document.getText(new TextRange(startOffset, theEnd));
-        if (lineText.indexOf(suffix) != -1) {
-          int start = startOffset + lineText.indexOf(suffix);
-          document.deleteString(start, start + suffix.length());
+        int suffixPos = CharArrayUtil.indexOf(chars, suffix, startOffset + originalPrefixLength, theEnd);
+        if (suffixPos != -1) {
+          document.deleteString(suffixPos, suffixPos + suffix.length());
         }
       }
 
       boolean matchesTrimmed = false;
       boolean commented = CharArrayUtil.regionMatches(chars, startOffset, prefix) ||
                           (matchesTrimmed = prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, startOffset, prefix.trim()));
-      assert commented;
+      assert commented : "Commenter: " + commenter;
 
       int charsToDelete = matchesTrimmed ? prefix.trim().length() : prefix.length();
       document.deleteString(startOffset, startOffset + charsToDelete);

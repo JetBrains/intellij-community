@@ -9,7 +9,6 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -167,19 +166,16 @@ public class SearchDialog extends DialogWrapper {
   void initiateValidation() {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
-      final boolean valid = ReadAction.compute(() -> {
-        try {
-          return Boolean.valueOf(isValid());
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (RuntimeException e) {
-          Logger.getInstance(SearchDialog.class).error(e);
-        }
-        return Boolean.FALSE;
-      }).booleanValue();
-      ApplicationManager.getApplication().invokeLater(() -> getOKAction().setEnabled(valid));
+      try {
+        final boolean valid = isValid();
+        ApplicationManager.getApplication().invokeLater(() -> getOKAction().setEnabled(valid));
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (RuntimeException e) {
+        Logger.getInstance(SearchDialog.class).error(e);
+      }
     }, 250);
   }
 
@@ -216,12 +212,7 @@ public class SearchDialog extends DialogWrapper {
     dialects.setRenderer(new ListCellRendererWrapper<Language>() {
       @Override
       public void customize(JList list, Language value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) {
-          setText("None");
-        }
-        else {
-          setText(value.getDisplayName());
-        }
+        setText((value == null) ? "None" : value.getDisplayName());
       }
     });
     dialects.addItemListener(new ItemListener() {
@@ -235,20 +226,7 @@ public class SearchDialog extends DialogWrapper {
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.context.label"));
     final JLabel jLabel3 = new JLabel(SSRBundle.message("search.dialog.file.dialect.label"));
-    searchOptions.add(
-      UIUtil.createOptionLine(
-        new JComponent[]{
-          jLabel,
-          fileTypes,
-          (JComponent)Box.createHorizontalStrut(8),
-          jLabel2,
-          contexts,
-          (JComponent)Box.createHorizontalStrut(8),
-          jLabel3,
-          dialects,
-        }
-      )
-    );
+    searchOptions.add(UIUtil.createOptionLine(jLabel, fileTypes, jLabel2, contexts, jLabel3, dialects));
 
     jLabel.setLabelFor(fileTypes);
     jLabel2.setLabelFor(contexts);
@@ -708,9 +686,6 @@ public class SearchDialog extends DialogWrapper {
     return myConfiguration;
   }
 
-  /**
-   * Needs to be called on the event thread or while holding a read lock.
-   */
   protected boolean isValid() {
     try {
       Matcher.validate(searchContext.getProject(), getConfiguration().getMatchOptions());

@@ -15,14 +15,12 @@
  */
 package com.intellij.find.impl;
 
-import com.intellij.find.FindBundle;
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindSettings;
+import com.intellij.find.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -78,6 +76,7 @@ public class FindUIHelper implements Disposable {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ui.saveSettings();
+        FindUtil.initStringToFindWithSelection(myModel, e.getData(CommonDataKeys.EDITOR));
         myModel.setReplaceState(replace);
         ui.initByModel();
       }

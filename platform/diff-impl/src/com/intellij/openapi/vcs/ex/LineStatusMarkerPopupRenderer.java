@@ -97,7 +97,10 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
   @Nullable
-  protected JComponent createAdditionalInfoPanel(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
+  protected JComponent createAdditionalInfoPanel(@NotNull Editor editor,
+                                                 @NotNull Range range,
+                                                 @Nullable Point mousePosition,
+                                                 @NotNull Disposable disposable) {
     return null;
   }
 
@@ -142,7 +145,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
     toolbar.setReservePlaceAutoPopupIcon(false);
 
-    JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition);
+    JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable);
 
     PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
 
@@ -550,7 +553,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     public ToggleByWordDiffAction(@NotNull Editor editor,
                                   @NotNull Range range,
                                   @Nullable Point position) {
-      super("Show Detailed Differences", null, AllIcons.Actions.PreviewDetails);
+      super("Show Detailed Differences", null, AllIcons.Actions.Highlighting);
       myEditor = editor;
       myRange = range;
       myMousePosition = position;

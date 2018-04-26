@@ -261,7 +261,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   private Pair<GitHttpAuthDataProvider, AuthData> findBestAuthData(@NotNull String url) {
     Pair<GitHttpAuthDataProvider, AuthData> candidate = null;
     for (GitHttpAuthDataProvider provider : getProviders()) {
-      AuthData data = provider.getAuthData(url);
+      AuthData data = provider.getAuthData(myProject, url);
       if (data != null) {
         Pair<GitHttpAuthDataProvider, AuthData> pair = Pair.create(provider, data);
         if (data.getPassword() != null) {

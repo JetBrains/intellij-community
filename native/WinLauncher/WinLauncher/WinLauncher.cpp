@@ -1,5 +1,5 @@
 /*
-* Copyright 2000-2017 JetBrains s.r.o.
+* Copyright 2000-2018 JetBrains s.r.o.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
 volatile bool terminating = false;
 
-//tools.jar doesn't exist in jdk 9 and later. So check it only for jdk 1.8 only.
+//tools.jar doesn't exist in jdk 9 and later. So check it for jdk 1.8 only.
 bool toolsArchiveExists = true;
 
 HANDLE hFileMapping;
@@ -83,8 +83,10 @@ bool IsValidJRE(const char* path)
 bool Is64BitJRE(const char* path)
 {
   std::string cfgPath(path);
+  std::string cfgJava9Path(path);
   cfgPath += "\\lib\\amd64\\jvm.cfg";
-  return FileExists(cfgPath);
+  cfgJava9Path += "\\lib\\jvm.cfg";
+  return FileExists(cfgPath) || FileExists(cfgJava9Path);
 }
 
 bool FindValidJVM(const char* path)
@@ -649,6 +651,16 @@ void SetProcessDPIAwareProperty()
     }
 }
 
+std::string getErrorMessage(int errorCode)
+{
+  std::string errorMessage = "";
+  if (errorCode == -6)
+  {
+      errorMessage = "MaxJavaStackTraceDepth=-1 is outside the allowed range [ 0 ... 1073741823 ].\nImproperly specified VM option 'MaxJavaStackTraceDepth=-1'\n";
+  }
+  return errorMessage;
+}
+
 bool CreateJVM()
 {
   JavaVMInitArgs initArgs;
@@ -669,11 +681,15 @@ bool CreateJVM()
   if (result != JNI_OK)
   {
     std::stringstream buf;
+    std::string jvmError = getErrorMessage(result);
+    if (jvmError == "") {
+        jvmError = "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in \n";
+        jvmError += "Computer > System Properties > System Settings > Environment Variables.\n";
+    }
 
-    buf << "Failed to create JVM: error code " << result << ".\n";
-    buf << "JVM Path: " << jvmPath << "\n";
-    buf << "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in \n";
-    buf << "Computer > System Properties > System Settings > Environment Variables.";
+    buf << jvmError;
+    buf << "\nFailed to create JVM. ";
+    buf << "JVM Path: " << jvmPath;
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
     MessageBoxA(NULL, buf.str().c_str(), error.c_str(), MB_OK);
   }

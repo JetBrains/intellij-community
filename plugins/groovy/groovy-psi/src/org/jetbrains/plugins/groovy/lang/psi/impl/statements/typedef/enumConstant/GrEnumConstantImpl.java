@@ -152,7 +152,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @Override
   @Nullable
   public GrEnumConstantInitializer getInitializingClass() {
-    return findChildByClass(GrEnumConstantInitializer.class);
+    return getStubOrPsiChild(GroovyElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
 
   @NotNull

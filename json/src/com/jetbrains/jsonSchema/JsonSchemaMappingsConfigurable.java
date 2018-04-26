@@ -2,30 +2,23 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +43,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     }
     return o1.getName().compareToIgnoreCase(o2.getName());
   };
-  public static final String READ_JSON_SCHEMA = "Read JSON Schema";
-  public static final String ADD_PROJECT_SCHEMA = "Add Project Schema";
+  static final String STUB_SCHEMA_NAME = "New Schema";
   private String myError;
 
   @NotNull
@@ -60,6 +52,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     TREE_UPDATER.run();
     updateWarningText();
   };
+
+  private final Function<String, String> myNameCreator = s -> createUniqueName(s);
 
   public JsonSchemaMappingsConfigurable(@NotNull final Project project) {
     myProject = project;
@@ -90,30 +84,47 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     return result;
   }
 
-  private void addProjectSchema() {
-    final VirtualFile file =
-      FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(
-        JsonBundle.message("json.schema.add.schema.chooser.title")), myProject, null);
-    if (file != null) {
-      final String relativePath = VfsUtilCore.getRelativePath(file, myProject.getBaseDir());
-      if (relativePath == null) {
-        Messages.showErrorDialog(myProject, "Please select file under project root.", ADD_PROJECT_SCHEMA);
-        return;
-      }
-      final String error = JsonSchemaReader.checkIfValidJsonSchema(myProject, file);
-      if (error != null) {
-        JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.ERROR).notify(myProject);
-        Messages.showErrorDialog(myProject, error, READ_JSON_SCHEMA);
-        return;
-      }
+  public UserDefinedJsonSchemaConfiguration addProjectSchema() {
+    UserDefinedJsonSchemaConfiguration configuration = new UserDefinedJsonSchemaConfiguration(createUniqueName(STUB_SCHEMA_NAME),
+                                                                                     JsonSchemaVersion.SCHEMA_4, "", false, null);
+    addCreatedMappings(configuration);
+    return configuration;
+  }
 
-      addCreatedMappings(file, new UserDefinedJsonSchemaConfiguration(file.getNameWithoutExtension(), relativePath, false, null));
+  @SuppressWarnings("SameParameterValue")
+  @NotNull
+  private String createUniqueName(@NotNull String s) {
+    int max = -1;
+    Enumeration children = myRoot.children();
+    while (children.hasMoreElements()) {
+      Object element = children.nextElement();
+      if (!(element instanceof MyNode)) continue;
+      String displayName = ((MyNode)element).getDisplayName();
+      if (displayName.startsWith(s)) {
+        String lastPart = displayName.substring(s.length()).trim();
+        if (lastPart.length() == 0 && max == -1) {
+          max = 1;
+          continue;
+        }
+        int i = tryParseInt(lastPart);
+        if (i == -1) continue;
+        max = i > max ? i : max;
+      }
+    }
+    return max == -1 ? s : (s + " " + (max + 1));
+  }
+
+  private static int tryParseInt(@NotNull String s) {
+    try {
+      return Integer.parseInt(s);
+    }
+    catch (NumberFormatException e) {
+      return -1;
     }
   }
 
-  private void addCreatedMappings(@NotNull VirtualFile schemaFile, @NotNull final UserDefinedJsonSchemaConfiguration info) {
-    final JsonSchemaConfigurable configurable = new JsonSchemaConfigurable(myProject, FileUtil.toSystemDependentName(schemaFile.getPath()),
-                                                                     info, myTreeUpdater);
+  private void addCreatedMappings(@NotNull final UserDefinedJsonSchemaConfiguration info) {
+    final JsonSchemaConfigurable configurable = new JsonSchemaConfigurable(myProject, "", info, myTreeUpdater, myNameCreator);
     configurable.setError(myError);
     final MyNode node = new MyNode(configurable, info.isApplicationLevel());
     addNode(node, myRoot);
@@ -130,7 +141,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       String pathToSchema = info.getRelativePathToSchema();
       final JsonSchemaConfigurable configurable =
         new JsonSchemaConfigurable(myProject, isHttpPath(pathToSchema) ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
-                                   info, myTreeUpdater);
+                                   info, myTreeUpdater, myNameCreator);
       configurable.setError(myError);
       myRoot.add(new MyNode(configurable, info.isApplicationLevel()));
     }
@@ -237,6 +248,17 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       Object o = children.nextElement();
       if (o instanceof MyNode && ((MyNode)o).getConfigurable() instanceof JsonSchemaConfigurable) {
         ((JsonSchemaConfigurable) ((MyNode)o).getConfigurable()).setError(myError);
+      }
+    }
+  }
+
+  public void selectInTree(UserDefinedJsonSchemaConfiguration configuration) {
+    final Enumeration children = myRoot.children();
+    while (children.hasMoreElements()) {
+      final MyNode node = (MyNode)children.nextElement();
+      JsonSchemaConfigurable configurable = (JsonSchemaConfigurable)node.getConfigurable();
+      if (Objects.equals(configurable.getUiSchema(), configuration)) {
+        selectNodeInTree(node);
       }
     }
   }

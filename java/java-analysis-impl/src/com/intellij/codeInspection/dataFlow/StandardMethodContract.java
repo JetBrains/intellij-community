@@ -31,16 +31,16 @@ import java.util.List;
  */
 public final class StandardMethodContract extends MethodContract {
   public final ValueConstraint[] arguments;
-  public final ValueConstraint returnValue;
+  private final ContractReturnValue myReturnValue;
 
-  public StandardMethodContract(@NotNull ValueConstraint[] arguments, @NotNull ValueConstraint returnValue) {
+  public StandardMethodContract(@NotNull ValueConstraint[] arguments, @NotNull ContractReturnValue returnValue) {
     this.arguments = arguments;
-    this.returnValue = returnValue;
+    myReturnValue = returnValue;
   }
 
   @Override
-  public ValueConstraint getReturnValue() {
-    return returnValue;
+  public ContractReturnValue getReturnValue() {
+    return myReturnValue;
   }
 
   @NotNull
@@ -60,7 +60,7 @@ public final class StandardMethodContract extends MethodContract {
     StandardMethodContract contract = (StandardMethodContract)o;
 
     if (!Arrays.equals(arguments, contract.arguments)) return false;
-    if (returnValue != contract.returnValue) return false;
+    if (myReturnValue != contract.myReturnValue) return false;
 
     return true;
   }
@@ -71,7 +71,7 @@ public final class StandardMethodContract extends MethodContract {
     for (ValueConstraint argument : arguments) {
       result = 31 * result + argument.ordinal();
     }
-    result = 31 * result + returnValue.ordinal();
+    result = 31 * result + myReturnValue.hashCode();
     return result;
   }
 
@@ -106,9 +106,18 @@ public final class StandardMethodContract extends MethodContract {
       } else {
         args = new ValueConstraint[0];
       }
-      result.add(new StandardMethodContract(args, parseConstraint(clause.substring(arrowIndex + arrow.length()))));
+      result.add(new StandardMethodContract(args, parseReturnValue(clause.substring(arrowIndex + arrow.length()))));
     }
     return result;
+  }
+
+  @NotNull
+  private static ContractReturnValue parseReturnValue(String returnValueString) throws ParseException {
+    ContractReturnValue returnValue = ContractReturnValue.valueOf(returnValueString);
+    if (returnValue == null) {
+      throw new ParseException("Return value should be one of: null, !null, true, false, fail, _. Found: " + returnValueString);
+    }
+    return returnValue;
   }
 
   private static ValueConstraint parseConstraint(String name) throws ParseException {
@@ -116,7 +125,7 @@ public final class StandardMethodContract extends MethodContract {
     for (ValueConstraint constraint : ValueConstraint.values()) {
       if (constraint.toString().equals(name)) return constraint;
     }
-    throw new ParseException("Constraint should be one of: null, !null, true, false, fail, _. Found: " + name);
+    throw new ParseException("Constraint should be one of: null, !null, true, false, _. Found: " + name);
   }
 
   public static class ParseException extends Exception {

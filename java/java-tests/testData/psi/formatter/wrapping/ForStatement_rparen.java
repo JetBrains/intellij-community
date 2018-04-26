@@ -7,7 +7,7 @@ public class Foo {
         for (int thisShouldBeWrapped = 0;
              thisShouldBeWrapped < 10;
              thisShouldBeWrapped++
-                ) {
+        ) {
         }
     }
 }

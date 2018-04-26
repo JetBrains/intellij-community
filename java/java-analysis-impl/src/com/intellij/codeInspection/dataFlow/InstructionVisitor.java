@@ -16,12 +16,10 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -97,6 +95,16 @@ public abstract class InstructionVisitor {
     memState.pop();
     memState.push(DfaUnknownValue.getInstance());
     return nextInstruction(instruction, runner, memState);
+  }
+
+  public DfaInstructionState[] visitObjectOfInstruction(ObjectOfInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    DfaValue value = state.pop();
+    DfaConstValue constant = value instanceof DfaConstValue ? (DfaConstValue)value :
+                             value instanceof DfaVariableValue ? state.getConstantValue((DfaVariableValue)value) :
+                             null;
+    PsiType type = constant == null ? null : ObjectUtils.tryCast(constant.getValue(), PsiType.class);
+    state.push(runner.getFactory().createTypeValue(type, Nullness.NOT_NULL));
+    return nextInstruction(instruction, runner, state);
   }
 
   public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

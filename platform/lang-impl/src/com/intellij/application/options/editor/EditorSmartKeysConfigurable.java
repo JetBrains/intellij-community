@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.editor;
 
@@ -23,6 +9,7 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -71,6 +58,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   private JCheckBox myCbReformatBlockOnTypingRBrace;
   private JComboBox mySmartBackspaceCombo;
   private JCheckBox myCbEnableAddingCaretsOnDoubleCtrlArrows;
+  private JCheckBox myCbTabExistsBracketsAndQuotes;
   private boolean myAddonsInitialized = false;
 
   private static final String NO_REFORMAT = ApplicationBundle.message("combobox.paste.reformat.none");
@@ -180,7 +168,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     myCbCamelWords.setSelected(editorSettings.isCamelWords());
 
     myCbSurroundSelectionOnTyping.setSelected(codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
-    
+    myCbTabExistsBracketsAndQuotes.setSelected(codeInsightSettings.TAB_EXITS_BRACKETS_AND_QUOTES);
     myCbEnableAddingCaretsOnDoubleCtrlArrows.setSelected(editorSettings.addCaretsOnDoubleCtrl());
 
     SmartBackspaceMode backspaceMode = codeInsightSettings.getBackspaceMode();
@@ -215,12 +203,14 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     codeInsightSettings.AUTOINSERT_PAIR_QUOTE = myCbInsertPairQuote.isSelected();
     codeInsightSettings.REFORMAT_BLOCK_ON_RBRACE = myCbReformatBlockOnTypingRBrace.isSelected();
     codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED = myCbSurroundSelectionOnTyping.isSelected();
+    codeInsightSettings.TAB_EXITS_BRACKETS_AND_QUOTES = myCbTabExistsBracketsAndQuotes.isSelected();
     editorSettings.setCamelWords(myCbCamelWords.isSelected());
     codeInsightSettings.REFORMAT_ON_PASTE = getReformatPastedBlockValue();
     codeInsightSettings.setBackspaceMode(getSmartBackspaceModeValue());
     editorSettings.setAddCaretsOnDoubleCtrl(myCbEnableAddingCaretsOnDoubleCtrlArrows.isSelected());
     
     super.apply();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.SMART_KEYS_CONFIGURABLE_TOPIC).changesApplied();
   }
 
   @Override
@@ -247,6 +237,8 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     isModified |= isModified(myCbEnableAddingCaretsOnDoubleCtrlArrows, editorSettings.addCaretsOnDoubleCtrl());
 
     isModified |= (getSmartBackspaceModeValue() != codeInsightSettings.getBackspaceMode());
+
+    isModified |= isModified(myCbTabExistsBracketsAndQuotes, codeInsightSettings.TAB_EXITS_BRACKETS_AND_QUOTES);
 
     return isModified;
 

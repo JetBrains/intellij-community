@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 
 final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor");
-  private static final Object ANY_VALUE = new Object();
+  private static final Object ANY_VALUE = ObjectUtils.sentinel("ANY_VALUE");
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
   private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
@@ -267,16 +267,14 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private static boolean hasNonTrivialFailingContracts(MethodCallInstruction instruction) {
     List<MethodContract> contracts = instruction.getContracts();
     return !contracts.isEmpty() && contracts.stream().anyMatch(
-      contract -> contract.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION && !contract.isTrivial());
+      contract -> contract.getReturnValue().isFail() && !contract.isTrivial());
   }
 
   private static boolean hasNonTrivialBooleanContracts(MethodCallInstruction instruction) {
     if (CustomMethodHandlers.find(instruction) != null) return true;
     List<MethodContract> contracts = instruction.getContracts();
     return !contracts.isEmpty() && contracts.stream().anyMatch(
-      contract -> (contract.getReturnValue() == MethodContract.ValueConstraint.FALSE_VALUE ||
-                   contract.getReturnValue() == MethodContract.ValueConstraint.TRUE_VALUE)
-                  && !contract.isTrivial());
+      contract -> contract.getReturnValue().isBoolean() && !contract.isTrivial());
   }
 
   @Override

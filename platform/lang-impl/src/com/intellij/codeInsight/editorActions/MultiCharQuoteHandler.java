@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,9 +24,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface MultiCharQuoteHandler extends QuoteHandler {
   /**
-   * returns closing quote by opening quote which is placed immediately before offset. If there is no quote or the quote is equivalent
-   * to opening quote the method should return null
+   * returns closing quote by opening quote which is placed immediately before offset. If there is no quote the method should return null
    */
   @Nullable
   CharSequence getClosingQuote(HighlighterIterator iterator, int offset);
+
+  /**
+   * Should insert <code>closingQuote</code> returned from {@link #getClosingQuote(HighlighterIterator, int)} in the document. 
+   */
+  default void insertClosingQuote(Editor editor, int offset, CharSequence closingQuote) {
+    editor.getDocument().insertString(offset, closingQuote);
+  }
 }

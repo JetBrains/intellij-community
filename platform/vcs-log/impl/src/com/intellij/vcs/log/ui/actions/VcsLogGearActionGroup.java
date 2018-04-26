@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.icons.AllIcons.General;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
@@ -31,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class VcsLogGearActionGroup extends DumbAwareAction {
+  public static final LayeredIcon GearWithDropDown = new LayeredIcon(General.GearPlain, General.Dropdown);
+
   @NotNull
   private final String myActionGroup;
 
@@ -58,6 +62,7 @@ public class VcsLogGearActionGroup extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    e.getPresentation().setIcon(GearWithDropDown);
     e.getPresentation().setEnabledAndVisible(project != null && logUi != null);
   }
 }

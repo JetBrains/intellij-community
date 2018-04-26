@@ -479,7 +479,7 @@ class PassExecutorService implements Disposable {
                                               @NotNull final AtomicInteger threadsToStartCountdown,
                                               @NotNull Runnable callbackOnApplied) {
     ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
-      if (isDisposed() || myProject.isDisposed()) {
+      if (isDisposed() || myProject.isDisposed() || !fileEditor.isValid()) {
         updateProgress.cancel();
       }
       if (updateProgress.isCanceled()) {

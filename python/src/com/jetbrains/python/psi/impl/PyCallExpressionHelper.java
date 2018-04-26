@@ -517,9 +517,9 @@ public class PyCallExpressionHelper {
   @Nullable
   private static Ref<? extends PyType> getCallTargetReturnType(@NotNull PyCallExpression call, @NotNull PsiElement target,
                                                                @NotNull TypeEvalContext context) {
-    final PyType providedOverridingType = PyReferenceExpressionImpl.getReferenceTypeFromOverridingProviders(target, context, call);
-    if (providedOverridingType instanceof PyCallableType) {
-      return Ref.create(((PyCallableType)providedOverridingType).getCallType(context, call));
+    final Ref<PyType> providedOverridingType = PyReferenceExpressionImpl.getReferenceTypeFromOverridingProviders(target, context, call);
+    if (providedOverridingType != null && providedOverridingType.get() instanceof PyCallableType) {
+      return Ref.create(((PyCallableType)providedOverridingType.get()).getCallType(context, call));
     }
 
     PyClass cls = null;
@@ -565,9 +565,9 @@ public class PyCallExpressionHelper {
     if (cls != null) {
       return Ref.create(new PyClassTypeImpl(cls, false));
     }
-    final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
-    if (providedType instanceof PyCallableType) {
-      return Ref.create(((PyCallableType)providedType).getCallType(context, call));
+    final Ref<PyType> providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
+    if (providedType != null && providedType.get() instanceof PyCallableType) {
+      return Ref.create(((PyCallableType)providedType.get()).getCallType(context, call));
     }
     final Ref<PyType> propertyCallType = getPropertyCallType(call, target, context);
     if (propertyCallType != null) {

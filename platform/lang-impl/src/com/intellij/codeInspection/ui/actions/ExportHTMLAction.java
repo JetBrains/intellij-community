@@ -52,7 +52,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   @NonNls private static final String XML = "XML";
 
   public ExportHTMLAction(final InspectionResultsView view) {
-    super(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.Actions.Export);
+    super(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.ToolbarDecorator.Export);
     myView = view;
   }
 

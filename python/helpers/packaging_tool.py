@@ -56,25 +56,23 @@ def do_list():
 
 
 def do_install(pkgs):
-    return pip_main(['install'] + pkgs)
+    run_pip(['install'] + pkgs)
 
 
 def do_uninstall(pkgs):
-    return pip_main(['uninstall', '-y'] + pkgs)
+    run_pip(['uninstall', '-y'] + pkgs)
 
 
-def pip_main(args):
+def run_pip(args):
+    import runpy
+    sys.argv[1:] = args
+    # pip.__main__ has been around since 2010 but support for executing it automatically
+    # was added in runpy.run_module only in Python 2.7/3.1
+    module_name = 'pip.__main__' if sys.version_info < (2, 7) else 'pip'
     try:
-        import pip
+        runpy.run_module(module_name, run_name='__main__', alter_sys=True)
     except ImportError:
         error_no_pip()
-
-    try:
-        func = pip.main
-    except AttributeError:
-        from pip._internal import main as func
-
-    func(args)
 
 
 def do_pyvenv(path, system_site_packages):
@@ -103,7 +101,6 @@ def do_untar(name):
 
     sys.stdout.write(directory_name+chr(10))
     sys.stdout.flush()
-    return 0
 
 
 def mkdtemp_ifneeded():
@@ -129,7 +126,6 @@ def main():
     except ValueError:
         pass
 
-    retcode = 0
     try:
         if len(sys.argv) < 2:
             usage()
@@ -138,10 +134,6 @@ def main():
             if len(sys.argv) != 2:
                 usage()
             do_list()
-        elif cmd == 'latestVersion':
-            if len(sys.argv) < 4:
-                usage()
-            do_get_latest_version(sys.argv[3:], sys.argv[2])
         elif cmd == 'install':
             if len(sys.argv) < 2:
                 usage()
@@ -149,23 +141,23 @@ def main():
             rmdir = mkdtemp_ifneeded()
 
             pkgs = sys.argv[2:]
-            retcode = do_install(pkgs)
-
-            if rmdir is not None:
-                import shutil
-                shutil.rmtree(rmdir)
-
+            try:
+                do_install(pkgs)
+            finally:
+                if rmdir is not None:
+                    import shutil
+                    shutil.rmtree(rmdir)
 
         elif cmd == 'untar':
             if len(sys.argv) < 2:
                 usage()
             name = sys.argv[2]
-            retcode = do_untar(name)
+            do_untar(name)
         elif cmd == 'uninstall':
             if len(sys.argv) < 2:
                 usage()
             pkgs = sys.argv[2:]
-            retcode = do_uninstall(pkgs)
+            do_uninstall(pkgs)
         elif cmd == 'pyvenv':
             opts, args = getopt.getopt(sys.argv[2:], '', ['system-site-packages'])
             if len(args) != 1:
@@ -181,7 +173,7 @@ def main():
     except Exception:
         traceback.print_exc()
         exit(ERROR_EXCEPTION)
-    exit(retcode)
+
 
 if __name__ == '__main__':
     main()

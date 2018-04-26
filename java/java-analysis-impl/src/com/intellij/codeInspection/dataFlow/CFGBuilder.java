@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +42,16 @@ import java.util.function.Consumer;
 @SuppressWarnings("UnusedReturnValue")
 public class CFGBuilder {
   private final ControlFlowAnalyzer myAnalyzer;
-  private final Deque<JumpInstruction> myBranches = new ArrayDeque<>();
+  private final Deque<Runnable> myBranches = new ArrayDeque<>();
   private final Map<PsiExpression, DfaVariableValue> myMethodRefQualifiers = new HashMap<>();
 
   CFGBuilder(ControlFlowAnalyzer analyzer) {
     myAnalyzer = analyzer;
+  }
+
+  private CFGBuilder add(Instruction instruction) {
+    myAnalyzer.addInstruction(instruction);
+    return this;
   }
 
   /**
@@ -72,8 +78,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder pushNull() {
-    myAnalyzer.addInstruction(new PushInstruction(getFactory().getConstFactory().getNull(), null));
-    return this;
+    return add(new PushInstruction(getFactory().getConstFactory().getNull(), null));
   }
 
   /**
@@ -102,8 +107,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder pushForWrite(DfaVariableValue variable) {
-    myAnalyzer.addInstruction(new PushInstruction(variable, null, true));
-    return this;
+    return add(new PushInstruction(variable, null, true));
   }
 
   /**
@@ -117,8 +121,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder push(DfaValue value) {
-    myAnalyzer.addInstruction(new PushInstruction(value, null));
-    return this;
+    return add(new PushInstruction(value, null));
   }
 
   /**
@@ -131,8 +134,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder pop() {
-    myAnalyzer.addInstruction(new PopInstruction());
-    return this;
+    return add(new PopInstruction());
   }
 
   /**
@@ -145,8 +147,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder dup() {
-    myAnalyzer.addInstruction(new DupInstruction());
-    return this;
+    return add(new DupInstruction());
   }
 
   /**
@@ -161,8 +162,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder splice(int count, int... replacement) {
-    myAnalyzer.addInstruction(new SpliceInstruction(count, replacement));
-    return this;
+    return add(new SpliceInstruction(count, replacement));
   }
 
   /**
@@ -175,8 +175,34 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder swap() {
-    myAnalyzer.addInstruction(new SwapInstruction());
-    return this;
+    return add(new SwapInstruction());
+  }
+
+  /**
+   * Generate instructions to replace class value on top of stack with the corresponding object value
+   * <p>
+   * Stack before: ... class_value
+   * <p>
+   * Stack after: ... object_value
+   *
+   * @return this builder
+   */
+  public CFGBuilder objectOf() {
+    return add(new ObjectOfInstruction());
+  }
+
+  /**
+   * Generate instructions to perform an Class.isInstance operation
+   * <p>
+   * Stack before: ... object class_object
+   * <p>
+   * Stack after: ... result
+   *
+   * @param anchor element to bind this instruction to
+   * @return this builder
+   */
+  public CFGBuilder isInstance(PsiMethodCallExpression anchor) {
+    return add(new InstanceofInstruction(anchor));
   }
 
   /**
@@ -209,9 +235,8 @@ public class CFGBuilder {
    * @param relation relation to use for comparison
    * @return this builder
    */
-  private CFGBuilder compare(IElementType relation) {
-    myAnalyzer.addInstruction(new BinopInstruction(relation, null, PsiType.BOOLEAN));
-    return this;
+  CFGBuilder compare(IElementType relation) {
+    return add(new BinopInstruction(relation, null, PsiType.BOOLEAN));
   }
 
   /**
@@ -221,7 +246,7 @@ public class CFGBuilder {
    * <p>
    * Stack after: ...
    * <p>
-   * The conditional block must end with {@link #endIf()} and may contain one {@link #elseBranch()} inside.
+   * The conditional block must end with {@link #end()} and may contain one {@link #elseBranch()} inside.
    * Nested conditional blocks are acceptable.
    *
    * @param value a value condition must have to visit conditional block
@@ -229,9 +254,8 @@ public class CFGBuilder {
    */
   public CFGBuilder ifConditionIs(boolean value) {
     ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, value, null);
-    myBranches.add(gotoInstruction);
-    myAnalyzer.addInstruction(gotoInstruction);
-    return this;
+    myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));
+    return add(gotoInstruction);
   }
 
   /**
@@ -242,7 +266,7 @@ public class CFGBuilder {
    * <p>
    * Stack after: ...
    * <p>
-   * The conditional block must end with {@link #endIf()} and may contain one {@link #elseBranch()} inside.
+   * The conditional block must end with {@link #end()} and may contain one {@link #elseBranch()} inside.
    * Nested conditional blocks are acceptable.
    *
    * @param relation a relation to use to compare two stack values. Conditional block will be executed if "val1 relation val2" is true.
@@ -259,7 +283,7 @@ public class CFGBuilder {
    * <p>
    * Stack after: ...
    * <p>
-   * The conditional block must end with {@link #endIf()} and may contain one {@link #elseBranch()} inside.
+   * The conditional block must end with {@link #end()} and may contain one {@link #elseBranch()} inside.
    * Nested conditional blocks are acceptable.
    *
    * @return this builder
@@ -275,7 +299,7 @@ public class CFGBuilder {
    * <p>
    * Stack after: ...
    * <p>
-   * The conditional block must end with {@link #endIf()} and may contain one {@link #elseBranch()} inside.
+   * The conditional block must end with {@link #end()} and may contain one {@link #elseBranch()} inside.
    * Nested conditional blocks are acceptable.
    *
    * @return this builder
@@ -285,13 +309,12 @@ public class CFGBuilder {
   }
 
   /**
-   * Generate instructions to finish a conditional block started with {@link #ifCondition(IElementType)}, {@link #ifConditionIs(boolean)},
-   * {@link #ifNull()} or {@link #ifNotNull()}. Stack is unchanged.
+   * Generate instructions to finish a conditional block or a loop. Stack is unchanged.
    *
    * @return this builder
    */
-  public CFGBuilder endIf() {
-    myBranches.removeLast().setOffset(myAnalyzer.getInstructionCount());
+  public CFGBuilder end() {
+    myBranches.removeLast().run();
     return this;
   }
 
@@ -304,33 +327,21 @@ public class CFGBuilder {
    */
   public CFGBuilder elseBranch() {
     GotoInstruction gotoInstruction = new GotoInstruction(null);
-    myAnalyzer.addInstruction(gotoInstruction);
-    endIf();
-    myBranches.add(gotoInstruction);
+    add(gotoInstruction).end();
+    myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));
     return this;
   }
 
   /**
-   * Generate instructions to start a loop. Stack is unchanged. Loop must be terminated via {@link #endWhileUnknown()}.
+   * Generate instructions to start a loop. Stack is unchanged. Loop must be terminated via {@link #end()}.
    * Nested loops are acceptable.
    *
    * @return this builder
    */
-  public CFGBuilder doWhile() {
+  public CFGBuilder doWhileUnknown() {
     ConditionalGotoInstruction jump = new ConditionalGotoInstruction(null, false, null);
     jump.setOffset(myAnalyzer.getInstructionCount());
-    myBranches.add(jump);
-    return this;
-  }
-
-  /**
-   * Generate instructions to end a loop started via {@link #doWhile()} by unknown condition. Stack is unchanged.
-   *
-   * @return this builder
-   */
-  public CFGBuilder endWhileUnknown() {
-    pushUnknown();
-    myAnalyzer.addInstruction((ConditionalGotoInstruction)myBranches.removeLast());
+    myBranches.add(() -> pushUnknown().add(jump));
     return this;
   }
 
@@ -375,8 +386,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder flushFields() {
-    myAnalyzer.addInstruction(new FlushFieldsInstruction());
-    return this;
+    return add(new FlushFieldsInstruction());
   }
 
   /**
@@ -388,8 +398,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public <T extends PsiElement> CFGBuilder checkNotNull(T expression, NullabilityProblemKind<T> kind) {
-    myAnalyzer.addInstruction(new CheckNotNullInstruction(kind.problem(expression)));
-    return this;
+    return add(new CheckNotNullInstruction(kind.problem(expression)));
   }
 
   /**
@@ -403,7 +412,49 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder assign() {
-    myAnalyzer.addInstruction(new AssignInstruction(null, null));
+    return add(new AssignInstruction(null, null));
+  }
+
+  /**
+   * Generate instructions to assign given source value to the given target value. Stack remains unchanged.
+   * May skip generating instructions if target is not writable (e.g. not a variable)
+   *
+   * @param target target to write
+   * @param source source value
+   * @return this builder
+   */
+  public CFGBuilder assignAndPop(DfaValue target, DfaValue source) {
+    if (target instanceof DfaVariableValue) {
+      if (source == DfaUnknownValue.getInstance()) {
+        add(new FlushVariableInstruction((DfaVariableValue)target));
+      } else {
+        pushForWrite((DfaVariableValue)target).push(source).assign().pop();
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Generate instructions to assign given source value to the given target value and leave the result on stack.
+   * <p>
+   * Stack before: ...
+   * <p>
+   * Stack after: ... target
+   *
+   * @param target target to write
+   * @param source source value
+   * @return this builder
+   */
+  public CFGBuilder assign(DfaValue target, DfaValue source) {
+    if (target instanceof DfaVariableValue) {
+      if (source == DfaUnknownValue.getInstance()) {
+        add(new FlushVariableInstruction((DfaVariableValue)target)).push(target);
+      } else {
+        pushForWrite((DfaVariableValue)target).push(source).assign();
+      }
+    } else {
+      push(source);
+    }
     return this;
   }
 
@@ -567,7 +618,7 @@ public class CFGBuilder {
     if (qualifier == null) return false;
     PsiType type = qualifier.getOperand().getType();
     push(getFactory().createTypeValue(type, Nullness.NOT_NULL));
-    myAnalyzer.addInstruction(new InstanceofInstruction(methodRef, null, type));
+    add(new InstanceofInstruction(methodRef, null, type));
     return true;
   }
 
@@ -616,6 +667,39 @@ public class CFGBuilder {
       push(variable);
     } else {
       pushUnknown();
+    }
+    return this;
+  }
+
+  public CFGBuilder loopOver(PsiExpression[] expressions, DfaVariableValue targetVariable) {
+    DfaValueFactory factory = getFactory();
+    if (expressions.length > ControlFlowAnalyzer.MAX_UNROLL_SIZE) {
+      for (PsiExpression expression : expressions) {
+        pushExpression(expression);
+        pop();
+      }
+      ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
+      condGoto.setOffset(myAnalyzer.getInstructionCount());
+      myBranches.add(() -> pushUnknown().add(condGoto));
+      assign(targetVariable, factory.createCommonValue(expressions));
+    } else {
+      push(factory.getConstFactory().getSentinel());
+      for (PsiExpression expression : expressions) {
+        pushExpression(expression);
+      }
+      // Revert order
+      add(new SpliceInstruction(expressions.length, IntStreamEx.ofIndices(expressions).toArray()));
+      GotoInstruction gotoInstruction = new GotoInstruction(null);
+      gotoInstruction.setOffset(myAnalyzer.getInstructionCount());
+      dup().push(factory.getConstFactory().getSentinel()).compare(JavaTokenType.EQEQ);
+      ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
+      add(condGoto);
+      assignTo(targetVariable);
+      myBranches.add(() -> {
+        add(gotoInstruction);
+        condGoto.setOffset(myAnalyzer.getInstructionCount());
+        pop();
+      });
     }
     return this;
   }

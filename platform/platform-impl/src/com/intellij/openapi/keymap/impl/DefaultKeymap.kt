@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.loadElement
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -57,7 +56,7 @@ open class DefaultKeymap {
 
             override fun updateDigest(data: Element?) {
             }
-          }, FileUtilRt.getNameWithoutExtension(key))
+          }, provider.getKeyFromFileName(fileName))
         }
       }
     }

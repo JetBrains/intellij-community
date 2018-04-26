@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
@@ -99,22 +100,22 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   @NotNull
   private Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     boolean hasExplicitUnversioned = !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY));
 
     return hasExplicitUnversioned
            ? e.getRequiredData(ChangesListView.UNVERSIONED_FILES_DATA_KEY)
            : checkVirtualFiles(e)
-             ? notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, fileStatusManager))
+             ? notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, changeListManager))
              : Stream.empty();
   }
 
   private boolean isFileUnversioned(@NotNull VirtualFile file,
                                     @NotNull ProjectLevelVcsManager vcsManager,
-                                    @NotNull FileStatusManager fileStatusManager) {
+                                    @NotNull ChangeListManager changeListManager) {
     AbstractVcs vcs = vcsManager.getVcsFor(file);
     return vcs != null && !vcs.areDirectoriesVersionedItems() && file.isDirectory() ||
-           isStatusForAddition(fileStatusManager.getStatus(file));
+           isStatusForAddition(changeListManager.getStatus(file));
   }
 
   protected boolean isStatusForAddition(FileStatus status) {

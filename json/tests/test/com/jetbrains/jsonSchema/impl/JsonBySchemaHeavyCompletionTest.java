@@ -164,7 +164,7 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
         final String moduleDir = getModuleDir(getProject());
 
         final UserDefinedJsonSchemaConfiguration base =
-          new UserDefinedJsonSchemaConfiguration("base", moduleDir + "/Schema.json", false,
+          new UserDefinedJsonSchemaConfiguration("base", JsonSchemaVersion.SCHEMA_4, moduleDir + "/Schema.json", false,
                                                  Collections.singletonList(new UserDefinedJsonSchemaConfiguration.Item(testFile + ".json", true, false))
           );
         addSchema(base);

@@ -16,12 +16,11 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageFilter;
@@ -43,10 +41,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.util.ImageLoader.ImageDesc.Type.PNG;
+import static com.intellij.util.ImageLoader.ImageDesc.Type.IMG;
 import static com.intellij.util.ImageLoader.ImageDesc.Type.SVG;
 import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
@@ -64,56 +61,23 @@ public class ImageLoader implements Serializable {
    * For internal usage.
    */
   public interface LoadFunction {
-    Image load(@Nullable LoadFunction delegate, @Nullable ImageDesc.Type type) throws IOException;
+    Image load(@Nullable LoadFunction delegate, @NotNull ImageDesc.Type type) throws IOException;
   }
 
   public static class ImageDesc {
-    public enum Type {
-      PNG,
-
-      SVG {
-        @Override
-        public Image load(final URL url, final InputStream is, final double scale) throws IOException {
-          LoadFunction f = new LoadFunction() {
-            @Override
-            public Image load(LoadFunction delegate, Type type) throws IOException {
-              return SVGLoader.load(url, is, scale);
-            }
-          };
-          if (measureLoad != null) {
-            return measureLoad.load(f, SVG);
-          }
-          return f.load(null, null);
-        }
-      },
-
-      UNDEFINED;
-
-      public Image load(final URL url, final InputStream is, final double scale) throws IOException {
-        LoadFunction f = new LoadFunction() {
-          @Override
-          public Image load(LoadFunction delegate, Type type) {
-            return ImageLoader.load(is, scale);
-          }
-        };
-        if (measureLoad != null) {
-          return measureLoad.load(f, PNG);
-        }
-        return f.load(null, null);
-      }
-    }
+    public enum Type {IMG, SVG}
 
     public final String path;
-    public final @Nullable Class cls; // resource class if present
+    public final Class cls; // resource class if present
     public final double scale; // initial scale factor
     public final Type type;
     public final boolean original; // path is not altered
 
-    public ImageDesc(String path, Class cls, double scale, Type type) {
+    public ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type) {
       this(path, cls, scale, type, false);
     }
 
-    public ImageDesc(String path, Class cls, double scale, Type type, boolean original) {
+    public ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type, boolean original) {
       this.path = path;
       this.cls = cls;
       this.scale = scale;
@@ -123,7 +87,7 @@ public class ImageLoader implements Serializable {
 
     @Nullable
     public Image load() throws IOException {
-      return  load(true);
+      return load(true);
     }
 
     @Nullable
@@ -150,13 +114,32 @@ public class ImageLoader implements Serializable {
         }
         stream = connection.getInputStream();
       }
-      Image image = type.load(url, stream, scale);
+      Image image = loadImpl(url, stream, scale);
       if (image != null && cacheKey != null &&
           image.getWidth(null) * image.getHeight(null) * 4 <= CACHED_IMAGE_MAX_SIZE)
       {
         ourCache.put(cacheKey, image);
       }
       return image;
+    }
+
+    Image loadImpl(final URL url, final InputStream stream, final double scale) throws IOException {
+      LoadFunction f = new LoadFunction() {
+        @Override
+        public Image load(@Nullable LoadFunction delegate, @NotNull Type type) throws IOException {
+          switch (type) {
+            case SVG:
+              return SVGLoader.load(url, stream, ImageDesc.this.scale);
+            case IMG:
+              return ImageLoader.load(stream, scale);
+          }
+          return null;
+        }
+      };
+      if (measureLoad != null) {
+        return measureLoad.load(f, type);
+      }
+      return f.load(null, type);
     }
 
     @Override
@@ -186,7 +169,7 @@ public class ImageLoader implements Serializable {
 
       void add(boolean retina, boolean dark) {
         if (svg) add(retina, dark, SVG);
-        add(retina, dark, PNG);
+        add(retina, dark, IMG);
       }
 
       void add(boolean retina, boolean dark, ImageDesc.Type type) {
@@ -202,6 +185,10 @@ public class ImageLoader implements Serializable {
           // a fallback to 1x icon
           list.add(new ImageDesc(name + (dark ? "_dark" : "") + "." + _ext, cls, (SVG == type ? scale : 1), type));
         }
+      }
+
+      void add(ImageDesc.Type type) {
+        list.add(new ImageDesc(name + "." + ext, cls, 1.0, type, true));
       }
 
       ImageDescList build() {
@@ -234,37 +221,38 @@ public class ImageLoader implements Serializable {
       return null;
     }
 
-    public static ImageDescList create(@NotNull String file,
+    public static ImageDescList create(@NotNull String path,
                                        @Nullable Class cls,
                                        boolean dark,
                                        boolean allowFloatScaling,
                                        ScaleContext ctx)
     {
       // Prefer retina images for HiDPI scale, because downscaling
-      // retina images provides a better result than upscaling non-retina images.
+      // retina images provides a better result than up-scaling non-retina images.
       boolean retina = JBUI.isHiDPI(ctx.getScale(PIX_SCALE));
 
-      Builder list = new Builder(FileUtil.getNameWithoutExtension(file),
-                                 FileUtilRt.getExtension(file),
+      Builder list = new Builder(FileUtil.getNameWithoutExtension(path),
+                                 FileUtilRt.getExtension(path),
                                  cls,
                                  Registry.is("ide.svg.icon"),
                                  adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
 
-      if (retina && dark) {
+      if (path.contains("://") && !path.startsWith("file:")) {
+        list.add(StringUtil.endsWithIgnoreCase(path, ".svg") ? SVG : IMG);
+      }
+      else if (retina && dark) {
         list.add(true, true);
+        list.add(true, false); // fallback to non-dark
       }
       else if (dark) {
         list.add(false, true);
+        list.add(false, false); // fallback to non-dark
       }
       else if (retina) {
         list.add(true, false);
       }
       else {
         list.add(false, false);
-      }
-
-      if (dark) {
-        list.add(false, false); // a fallback to non-dark
       }
 
       return list.build();
@@ -351,7 +339,7 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling) {
-    return loadFromUrl(url, allowFloatScaling, (ImageFilter)null);
+    return loadFromUrl(url, allowFloatScaling, null);
   }
 
   @Nullable
@@ -433,7 +421,7 @@ public class ImageLoader implements Serializable {
 
   public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale, ImageFilter filter) {
     Image image = load(inputStream, scale);
-    ImageDesc desc = new ImageDesc("", null, scale, ImageDesc.Type.UNDEFINED);
+    ImageDesc desc = new ImageDesc("", null, scale, IMG);
     return ImageConverterChain.create().withFilter(filter).withHiDPI(ScaleContext.create()).convert(image, desc);
   }
 
@@ -464,24 +452,5 @@ public class ImageLoader implements Serializable {
     }
 
     return null;
-  }
-
-  public static boolean isGoodSize(final Icon icon) {
-    return IconLoader.isGoodSize(icon);
-  }
-
-  /**
-   * @deprecated use {@link ImageDescList}
-   */
-  public static List<Pair<String, Integer>> getFileNames(@NotNull String file) {
-    return getFileNames(file, false, false);
-  }
-
-  /**
-   * @deprecated use {@link ImageDescList}
-   */
-  public static List<Pair<String, Integer>> getFileNames(@NotNull String file, boolean dark, boolean retina) {
-    new UnsupportedOperationException("unsupported method").printStackTrace();
-    return new ArrayList<Pair<String, Integer>>();
   }
 }

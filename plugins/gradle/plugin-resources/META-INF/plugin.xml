@@ -21,6 +21,9 @@
   </description>
 
   <depends>com.intellij.modules.lang</depends>
+  <xi:include href="/META-INF/ExternalBuildSystemsSupport.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/gradle-java-integration.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
@@ -59,8 +62,6 @@
     <stacktrace.fold substring="at org.jetbrains.plugins.gradle."/>
     <stacktrace.fold substring="at com.intellij.openapi.externalSystem."/>
 
-    <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
-
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
                                            id="gradle"/>
 
@@ -84,6 +85,7 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.CompositeBuildDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.PerformanceTraceDataService"/>
     <externalSystemViewContributor implementation="org.jetbrains.plugins.gradle.service.project.view.GradleViewContributor"/>
     <externalProjectStructureCustomizer implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectStructureCustomizer"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>

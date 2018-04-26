@@ -316,7 +316,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     window.addWindowFocusListener(windowFocusListener);
     Disposer.register(myPopup, () -> window.removeWindowFocusListener(windowFocusListener));
 
-    rebuildAndSelect(false, myInitialElement).processed(path -> UIUtil.invokeLaterIfNeeded(() -> {
+    rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
       myTreeHasBuilt.setDone();
       installUpdater();
@@ -341,7 +341,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         if (!filter.equals(prefix)) {
           boolean isBackspace = prefix.length() < filter.length();
           filter = prefix;
-          rebuild(true).processed(ignore -> UIUtil.invokeLaterIfNeeded(() -> {
+          rebuild(true).onProcessed(ignore -> UIUtil.invokeLaterIfNeeded(() -> {
             if (isDisposed()) return;
             TreeUtil.promiseExpandAll(myTree);
             if (isBackspace && handleBackspace(filter)) {
@@ -453,7 +453,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };
-    rebuild(false).processed(ignore1 -> myAsyncTreeModel.accept(visitor).processed(ignore2 -> result.setResult(null)));
+    rebuild(false).onProcessed(ignore1 -> myAsyncTreeModel.accept(visitor).onProcessed(ignore2 -> result.setResult(null)));
     return result;
   }
 
@@ -516,6 +516,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     JPanel panel = new JPanel(new BorderLayout());
     JPanel chkPanel = new JPanel(new GridLayout(0, checkBoxCount > 0 && checkBoxCount % 4 == 0 ? checkBoxCount / 2 : 3,
       JBUI.scale(UIUtil.DEFAULT_HGAP), 0));
+    chkPanel.setOpaque(false);
 
     Shortcut[] F4 = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet().getShortcuts();
     Shortcut[] ENTER = CustomShortcutSet.fromString("ENTER").getShortcuts();
@@ -562,11 +563,16 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     topPanel.add(chkPanel, BorderLayout.WEST);
 
     topPanel.add(createSettingsButton(), BorderLayout.EAST);
+
+    topPanel.setBackground(JBUI.CurrentTheme.Popup.toolbarPanelColor());
+    Dimension prefSize = topPanel.getPreferredSize();
+    prefSize.height = JBUI.CurrentTheme.Popup.toolbarHeight();
+    topPanel.setPreferredSize(prefSize);
     topPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
 
     panel.add(topPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
+    scrollPane.setBorder(IdeBorderFactory.createBorder(JBUI.CurrentTheme.Popup.toolbarBorderColor(), SideBorder.TOP | SideBorder.BOTTOM));
     panel.add(scrollPane, BorderLayout.CENTER);
     //panel.add(createSouthPanel(), BorderLayout.SOUTH);
     DataManager.registerDataProvider(panel, new DataProvider() {
@@ -627,8 +633,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   @NotNull
   protected JComponent createSettingsButton() {
-    JLabel label = new JLabel(AllIcons.General.SecondaryGroup);
-    label.setBorder(JBUI.Borders.empty(0, 2));
+    JLabel label = new JLabel(AllIcons.General.GearPlain);
+    label.setBorder(JBUI.Borders.empty(0, 4));
     label.setHorizontalAlignment(SwingConstants.RIGHT);
     label.setVerticalAlignment(SwingConstants.CENTER);
 
@@ -662,7 +668,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         DataManager dataManager = DataManager.getInstance();
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
           null, group, dataManager.getDataContext(label), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
-        popup.addListener(new JBPopupListener.Adapter() {
+        popup.addListener(new JBPopupListener() {
           @Override
           public void onClosed(LightweightWindowEvent event) {
             myCanClose = true;
@@ -729,7 +735,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       boolean actionState = TreeModelWrapper.shouldRevert(myAction) ? !state : state;
       myTreeActionsOwner.setActionIncluded(myAction, actionState);
       saveState(myAction, state);
-      rebuild(false).processed(ignore -> {
+      rebuild(false).onProcessed(ignore -> {
         if (mySpeedSearch.isPopupActive()) {
           mySpeedSearch.refreshSelection();
         }
@@ -786,6 +792,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
 
     JBCheckBox checkBox = new JBCheckBox();
+    checkBox.setOpaque(false);
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, checkBox);
 
     boolean selected = getDefaultValue(action);
@@ -800,7 +807,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           saveState(action, state);
         }
         myTreeActionsOwner.setActionIncluded(action, isRevertedStructureFilter != state);
-        rebuild(false).processed(ignore -> {
+        rebuild(false).onProcessed(ignore -> {
           if (mySpeedSearch.isPopupActive()) {
             mySpeedSearch.refreshSelection();
           }
@@ -836,7 +843,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         myStructureTreeModel.invalidate(
           () ->
             (selection == null ? myAsyncTreeModel.accept(o -> TreeVisitor.Action.CONTINUE) : select(selection))
-              .rejected(ignore2 -> result.setError("rejected"))
+              .onError(ignore2 -> result.setError("rejected"))
               .onSuccess(p -> UIUtil.invokeLaterIfNeeded(
                 () -> {
                   TreeUtil.expand(getTree(), myTreeModel instanceof StructureViewCompositeModel ? 3 : 2);
@@ -1027,7 +1034,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       super(treeModel);
       setRootVisible(false);
       setShowsRootHandles(true);
-      setHorizontalAutoScrollingEnabled(false);
 
       HintUpdateSupply.installHintUpdateSupply(this, o -> {
         Object value = unwrapValue(o);

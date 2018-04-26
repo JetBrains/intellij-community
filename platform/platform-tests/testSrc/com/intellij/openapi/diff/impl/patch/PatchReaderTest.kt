@@ -5,10 +5,13 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataFile
+import com.intellij.testFramework.TestDataPath
 import com.intellij.vcs.log.impl.VcsUserImpl
 import junit.framework.TestCase
 import java.io.File
 
+@TestDataPath("\$CONTENT_ROOT/testData/diff/patchReader/")
 class PatchReaderTest : PlatformTestCase() {
   private val author = VcsUserImpl("D D", "aaaa@gmail.com")
   private val doubleSurname = VcsUserImpl("D D-D", "aaaa@gmail.com")
@@ -18,71 +21,81 @@ class PatchReaderTest : PlatformTestCase() {
 
   @Throws(Exception::class)
   fun testPatchWithFileModeChangedOnly() {
-    TestCase.assertEquals(1, read().allPatches.size)
+    doTestPatchCount(1)
   }
 
   @Throws(Exception::class)
   fun testPatchWithFileModeAndOther() {
-    TestCase.assertEquals(2, read().allPatches.size)
+    doTestPatchCount(2)
   }
 
   @Throws(Exception::class)
   fun testPatchHeader() {
-    TestCase.assertEquals(PatchFileHeaderInfo(subjectLine, author, baseRevision), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo(subjectLine, author, baseRevision))
   }
 
   @Throws(Exception::class)
   fun testPatchHeaderWithMultiLineMessage() {
-    TestCase.assertEquals(PatchFileHeaderInfo("$subjectLine\n\n* another line", author, baseRevision), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo("$subjectLine\n\n* another line", author, baseRevision))
   }
 
   @Throws(Exception::class)
   fun testPatchHeaderMessageWithNoPatchPart() {
-    TestCase.assertEquals(PatchFileHeaderInfo(subjectLine, author, baseRevision), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo(subjectLine, author, baseRevision))
   }
 
   @Throws(Exception::class)
   fun testPatchHeaderWithoutBase() {
-    TestCase.assertEquals(PatchFileHeaderInfo(subjectLine, author, null), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo(subjectLine, author, null))
   }
 
   @Throws(Exception::class)
   fun testPatchHeaderWithoutAuthor() {
-    TestCase.assertEquals(PatchFileHeaderInfo(subjectLine, null, baseRevision), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo(subjectLine, null, baseRevision))
   }
 
   @Throws(Exception::class)
   fun testPatchHeaderWithoutMessage() {
-    TestCase.assertEquals(PatchFileHeaderInfo("", author, baseRevision), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo("", author, baseRevision))
   }
 
   @Throws(Exception::class)
   fun testPatchHeaderWithoutAdditionalInfo() {
-    TestCase.assertEquals(PatchFileHeaderInfo("", null, null), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo("", null, null))
   }
 
   @Throws(Exception::class)
   fun testPatchHeaderAdditionalInfoInWrongPlace() {
-    TestCase.assertEquals(PatchFileHeaderInfo("", null, null), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo("", null, null))
   }
 
   @Throws(Exception::class)
   fun testPatchHeaderWithNoStateInfo() {
-    TestCase.assertEquals(PatchFileHeaderInfo(subjectLine, author, baseRevision), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo(subjectLine, author, baseRevision))
   }
 
   @Throws(Exception::class)
   fun testPatchHeaderWithDoubleSurname() {
-    TestCase.assertEquals(PatchFileHeaderInfo(subjectLine, doubleSurname, baseRevision), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo(subjectLine, doubleSurname, baseRevision))
   }
 
   @Throws(Exception::class)
   fun testPatchHeaderWithLongName() {
-    TestCase.assertEquals(PatchFileHeaderInfo(subjectLine, longName, baseRevision), read().patchFileInfo)
+    doTest(PatchFileHeaderInfo(subjectLine, longName, baseRevision))
+  }
+
+  private fun doTestPatchCount(expected: Int) {
+    val actual = read().allPatches.size
+    TestCase.assertEquals(expected, actual)
+  }
+
+  private fun doTest(expected: PatchFileHeaderInfo) {
+    val actual = read().patchFileInfo
+    TestCase.assertEquals(expected, actual)
   }
 
   private fun read(): PatchReader {
-    val testDataPath = PlatformTestUtil.getPlatformTestDataPath() + "diff/patchReader/" + getTestName(true)
+    val testDataPath = getTestDir(getTestName(true))
     createTestProjectStructure(testDataPath)
     val patchPath = "$testDataPath/test.patch"
     val patchFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))
@@ -92,5 +105,9 @@ class PatchReaderTest : PlatformTestCase() {
     val patchReader = PatchReader(patchText.toString())
     patchReader.parseAllPatches()
     return patchReader
+  }
+
+  private fun getTestDir(@TestDataFile dirName: String): String {
+    return PlatformTestUtil.getPlatformTestDataPath() + "diff/patchReader/" + dirName
   }
 }

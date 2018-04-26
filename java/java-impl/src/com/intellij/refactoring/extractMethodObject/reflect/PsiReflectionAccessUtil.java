@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -24,6 +26,9 @@ class PsiReflectionAccessUtil {
   @Contract("null -> false")
   public static boolean isAccessible(@Nullable PsiClass psiClass) {
     if (psiClass == null) return false;
+
+    // currently, we use dummy psi class "_Array_" to represent arrays which is an inner of package-private _Dummy_ class.
+    if (isArrayClass(psiClass)) return true;
     while (psiClass != null) {
       if (!psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
         return false;
@@ -94,5 +99,11 @@ class PsiReflectionAccessUtil {
     while (psiClass.findMethodsByName(name, false).length != 0);
 
     return name;
+  }
+
+  private static boolean isArrayClass(@NotNull PsiClass psiClass) {
+    Project project = psiClass.getProject();
+    PsiClass arrayClass = JavaPsiFacade.getElementFactory(project).getArrayClass(PsiUtil.getLanguageLevel(psiClass));
+    return PsiEquivalenceUtil.areElementsEquivalent(psiClass, arrayClass);
   }
 }

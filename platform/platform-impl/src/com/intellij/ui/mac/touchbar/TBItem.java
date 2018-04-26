@@ -3,6 +3,7 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,6 +43,14 @@ abstract class TBItem {
   protected abstract ID _createNativePeer();    // called from AppKit
 
   protected void _releaseChildBars() {}         // called from EDT
+
+  static Icon scaleForTouchBar(Icon src) {
+    if (src == null)
+      return null;
+    if (src.getIconWidth() == 20)
+      return src;
+    return IconUtil.scale(src, null, 20.f/src.getIconWidth());
+  }
 
   static byte[] getRaster(Icon icon) {
     if (icon == null)

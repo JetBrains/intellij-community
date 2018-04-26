@@ -789,8 +789,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean applyRelationCondition(@NotNull DfaRelationValue dfaRelation) {
     DfaValue dfaLeft = dfaRelation.getLeftOperand();
     DfaValue dfaRight = dfaRelation.getRightOperand();
-    if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
     RelationType relationType = dfaRelation.getRelation();
+
+    DfaConstValue sentinel = getFactory().getConstFactory().getSentinel();
+    if (dfaLeft == sentinel || dfaRight == sentinel) {
+      assert relationType == RelationType.EQ || relationType == RelationType.NE;
+      return (dfaLeft == dfaRight) == (relationType == RelationType.EQ);
+    }
+    if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
 
     LongRangeSet left = getValueFact(dfaLeft, DfaFactType.RANGE);
     LongRangeSet right = getValueFact(dfaRight, DfaFactType.RANGE);
@@ -892,10 +898,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    final boolean containsCalls = dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls();
-
     if (dfaLeft == dfaRight) {
-      return containsCalls || !isNegated;
+      return !isNegated || (dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls());
     }
 
     if (isNull(dfaLeft) && isNotNull(dfaRight) || isNull(dfaRight) && isNotNull(dfaLeft)) {
@@ -1111,7 +1115,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public <T> void forceVariableFact(@NotNull DfaVariableValue var, @NotNull DfaFactType<T> factType, @Nullable T value) {
     if (isUnknownState(var)) return;
     DfaVariableState state = getVariableState(var);
-    flushVariable(var);
+    removeEquivalenceRelations(var);
     setVariableState(var, state.withFact(factType, value));
     updateEqClassesByState(var);
   }

@@ -142,6 +142,13 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
         node.addChildren(children, true);
       }
+
+      @Override
+      protected void commandCancelled() {
+        if (!node.isObsolete()) {
+          node.addChildren(XValueChildrenList.EMPTY, true);
+        }
+      }
     });
   }
 

@@ -407,7 +407,7 @@ public class StartupUtil {
       }
     }
 
-    log.info("JNU charset: " + System.getProperty("sun.jnu.encoding"));
+    log.info("charsets: JNU=" + System.getProperty("sun.jnu.encoding") + " file=" + System.getProperty("file.encoding"));
   }
 
   private static void installPluginUpdates() {

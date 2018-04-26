@@ -436,7 +436,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public boolean isOneLine() {
-      return false;
+      return true;
     }
   }
 

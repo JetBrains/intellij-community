@@ -6,7 +6,6 @@ import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
-// https://jetbrains.github.io/ui/controls/input_field/#spacing
 @PublishedApi
 internal fun createLayoutBuilder(): LayoutBuilder {
   return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
@@ -14,6 +13,10 @@ internal fun createLayoutBuilder(): LayoutBuilder {
 
 interface LayoutBuilderImpl {
   fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false): Row
+
+  // backward compatibility
+  @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
+  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, indented: Boolean = false) = newRow(label, buttonGroup, separated)
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 

@@ -155,15 +155,11 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    if (!settings.isPlatformUpdateEnabled) {
-      return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
-    }
-
     val updateInfo: UpdatesInfo?
     try {
       var updateUrl = Urls.newFromEncoded(updateUrl)
       if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
-        updateUrl = prepareUpdateCheckArgs(updateUrl)
+        updateUrl = prepareUpdateCheckArgs(updateUrl, settings.packageManagerName)
       }
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
@@ -171,7 +167,10 @@ object UpdateChecker {
           .forceHttps(settings.canUseSecureConnection())
           .connect {
             try {
-              UpdatesInfo(loadElement(it.reader))
+              if (settings.isPlatformUpdateEnabled)
+                UpdatesInfo(loadElement(it.reader))
+              else
+                null
             }
             catch (e: JDOMException) {
               // corrupted content, don't bother telling user
@@ -446,10 +445,13 @@ object UpdateChecker {
     ourAdditionalRequestOptions[name] = value
   }
 
-  private fun prepareUpdateCheckArgs(url: Url): Url {
+  private fun prepareUpdateCheckArgs(url: Url, packageManagerName: String?): Url {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
     addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
+    if (packageManagerName != null) {
+      addUpdateRequestParameter(packageManagerName, "")
+    }
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
     }

@@ -235,13 +235,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private final Map<Object, Runnable> actionsWhenAllDocumentsAreCommitted = new LinkedHashMap<>(); //accessed from EDT only
-  private static final Object PERFORM_ALWAYS_KEY = new Object() {
-    @Override
-    @NonNls
-    public String toString() {
-      return "PERFORM_ALWAYS";
-    }
-  };
+  private static final Object PERFORM_ALWAYS_KEY = ObjectUtils.sentinel("PERFORM_ALWAYS");
 
   /**
    * Cancel previously registered action and schedules (new) action to be executed when all documents are committed.

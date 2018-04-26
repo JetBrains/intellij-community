@@ -2,15 +2,19 @@
 package com.intellij.util.ui.paint;
 
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TestScaleHelper;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.paint.ImageComparator.AASmootherComparator;
+import org.junit.ClassRule;
+import org.junit.rules.ExternalResource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.function.Function;
 
+import static com.intellij.util.ui.TestScaleHelper.loadImage;
+import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 import static java.lang.Math.ceil;
 
 /**
@@ -18,7 +22,10 @@ import static java.lang.Math.ceil;
  *
  * @author tav
  */
-public abstract class AbstractPainter2DTest extends TestScaleHelper {
+public abstract class AbstractPainter2DTest {
+  @ClassRule
+  public static final ExternalResource manageState = new RestoreScaleRule();
+
   public void testGoldenImages() {
     ImageComparator comparator = new ImageComparator(
       new AASmootherComparator(0.15, 0.5, Color.BLACK));

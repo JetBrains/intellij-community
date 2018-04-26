@@ -1,6 +1,6 @@
 # Stubs for socketserver
 
-from typing import Any, BinaryIO, Optional, Tuple
+from typing import Any, BinaryIO, Optional, Tuple, Type
 from socket import SocketType
 import sys
 import types
@@ -35,8 +35,8 @@ class BaseServer:
                        client_address: Tuple[str, int]) -> bool: ...
     if sys.version_info >= (3, 6):
         def __enter__(self) -> 'BaseServer': ...
-        def __exit__(self, exc_type: Optional[type],
-                     exc_val: Optional[Exception],
+        def __exit__(self, exc_type: Optional[Type[BaseException]],
+                     exc_val: Optional[BaseException],
                      exc_tb: Optional[types.TracebackType]) -> bool: ...
     if sys.version_info >= (3, 3):
         def service_actions(self) -> None: ...

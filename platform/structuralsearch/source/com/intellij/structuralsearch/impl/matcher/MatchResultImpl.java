@@ -74,6 +74,12 @@ public final class MatchResultImpl extends MatchResult {
   }
 
   @Override
+  public int size() {
+    if (!myMultipleMatch) return (getMatch() != null) ? 1 : 0;
+    return myChildren.size();
+  }
+
+  @Override
   public boolean isScopeMatch() {
     return myScopeMatch;
   }

@@ -350,4 +350,28 @@ class OptionalGet {
     // Non-empty stream: get() is fine
     return Stream.of("foo", "bar", "baz").map(String::toUpperCase).max(Comparator.naturalOrder()).get();
   }
+
+  void testStreamOfUnrolling(Optional<String> optionalOne, Optional<String> optionalTwo, Optional<String> optionalThree) {
+    if (Stream.of(optionalOne, optionalTwo).allMatch(Optional::isPresent)) {
+      System.out.println(optionalOne.get());
+      System.out.println(optionalTwo.get());
+      System.out.println(optionalThree.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
+    }
+  }
+}
+
+class CtorTest {
+  Optional<String> test = Optional.of("foo");
+
+  CtorTest() {
+    System.out.println(test.get());
+    something();
+    System.out.println(test.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
+  }
+
+  <error descr="Missing method body, or declare abstract">CtorTest(String noBody);</error>
+
+  void something() {
+    test = Optional.empty();
+  }
 }

@@ -16,6 +16,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ui.TextAccessor;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.TextUI;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -52,6 +54,16 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   private void init() {
     UIUtil.addUndoRedoActions(this);
     myEmptyText = new TextComponentEmptyText(this) {
+      @Override
+      protected boolean isStatusVisible() {
+        Object function = getClientProperty("StatusVisibleFunction");
+        if (function instanceof BooleanFunction) {
+          //noinspection unchecked
+          return ((BooleanFunction<JTextComponent>)function).fun(JBTextField.this);
+        }
+        return super.isStatusVisible();
+      }
+
       @Override
       protected Rectangle getTextComponentBound() {
         return getEmptyTextComponentBounds(super.getTextComponentBound());

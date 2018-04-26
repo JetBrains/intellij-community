@@ -64,7 +64,7 @@ public class StatusBarUpdater implements Disposable {
     });
   }
 
-  private void updateLater() {
+  public void updateLater() {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       myUpdateStatusRunnable.run();

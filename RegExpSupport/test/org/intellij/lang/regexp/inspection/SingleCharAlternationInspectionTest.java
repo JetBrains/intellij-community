@@ -32,6 +32,10 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
     highlightTest("a|b|cc|d");
   }
 
+  public void testNoWarnNoException() {
+    highlightTest("(?i)x|y");
+  }
+
   public void testQuickfix() {
     quickfixTest("<warning descr=\"Single character alternation in RegExp\">x|y|z</warning>", "[xyz]", "Replace with '[xyz]'");
   }

@@ -87,6 +87,7 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-3996
+  // PY-27435
   public void testUnderscorePrefixed() {
     doTest();
   }
@@ -99,6 +100,13 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
   // PY-28017
   public void testModuleGetAttr() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+  }
+
+  // PY-27435
+  public void testVariableStartingWithUnderscore() {
+    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    inspection.ignoreVariablesStartingWithUnderscore = false;
+    doTest(inspection);
   }
 
   @NotNull

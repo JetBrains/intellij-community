@@ -577,7 +577,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   static String getTitle(@NotNull final PsiElement element, final boolean _short) {
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
-    return _short ? "for `" + (title != null ? title : element.getText()) + "`": CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
+    return _short ? title != null ? title : element.getText() : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
   }
 
   public static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
@@ -736,6 +736,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       component.setData(element, myPrecalculatedDocumentation, clearHistory,
                         provider.getEffectiveExternalUrl(), provider.getRef());
       callback.setDone();
+      myPrecalculatedDocumentation = null;
       return callback;
     }
     boolean wasEmpty = component.isEmpty();
@@ -1207,18 +1208,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     catch (Exception ignored) { }
     if (attr == null) return null;
-    FileType type = psiFile.getFileType();
+    FileType type = file.getFileType();
     String typeName = type == UnknownFileType.INSTANCE ? "Unknown" :
                       type == PlainTextFileType.INSTANCE ? "Text" :
                       type == ArchiveFileType.INSTANCE ? "Archive" :
                       type.getName();
-    String text =
-      (withUrl ? file.getPresentableUrl() : "") +
-      "\n" +
-      "\n" + StringUtil.formatFileSize(attr.size()) + ", " + typeName + (type.isBinary() ? "" : " (" + psiFile.getLanguage().getDisplayName() + ")") +
-      "\nModified on " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
-      "\nCreated on " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) +
-      "\n";
-    return StringUtil.replace(StringUtil.escapeXml(text) + "&nbsp;", "\n", "<p>");
+    String languageName = type.isBinary() ? "" : psiFile.getLanguage().getDisplayName();
+    return (withUrl ? DocumentationMarkup.DEFINITION_START + file.getPresentableUrl() + DocumentationMarkup.DEFINITION_END + DocumentationMarkup.CONTENT_START : "") +
+         "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
+         "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
+         "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
+         "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis());
   }
 }

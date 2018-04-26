@@ -4,6 +4,7 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
@@ -53,9 +54,10 @@ final class Banner extends SimpleBanner {
     }
     else {
       myProjectIcon.setVisible(true);
-      myProjectIcon.setText(OptionsBundle.message(project.isDefault()
-                                                  ? "configurable.default.project.tooltip"
-                                                  : "configurable.current.project.tooltip"));
+      String projectConceptName = IdeUICustomization.getInstance().getProjectConceptName();
+      myProjectIcon.setText(project.isDefault()
+                            ? OptionsBundle.message("configurable.default.project.tooltip", projectConceptName)
+                            : OptionsBundle.message("configurable.current.project.tooltip", projectConceptName));
     }
   }
 

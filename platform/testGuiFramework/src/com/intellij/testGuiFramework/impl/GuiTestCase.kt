@@ -101,7 +101,8 @@ open class GuiTestCase {
   var defaultTimeout = 120L
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
-  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+//  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+  val defaultSettingsTitle: String = if (isMac()) "Preferences for New Projects" else "Settings for New Projects"
   val slash: String = File.separator
 
 
@@ -682,7 +683,7 @@ open class GuiTestCase {
     if (screenshotFilePath.isFile) {
       val format = SimpleDateFormat("MM-dd-yyyy.HH.mm.ss")
       val now = format.format(GregorianCalendar().time)
-      screenshotFilePath = File(fileWithTestFolder, screenshotName + "." + now + extension)
+      screenshotFilePath = File(fileWithTestFolder, "$screenshotName.$now$extension")
     }
     ScreenshotTaker().saveComponentAsPng(component, screenshotFilePath.path)
     println(message = "Screenshot for a component \"$component\" taken and stored at ${screenshotFilePath.path}")

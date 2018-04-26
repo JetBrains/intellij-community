@@ -15,9 +15,12 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.batik.anim.dom.*;
 import org.apache.batik.dom.AbstractDocument;
+import org.apache.batik.transcoder.SVGAbstractTranscoder;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
@@ -41,76 +44,88 @@ import java.util.List;
  * @author tav
  */
 public class SVGLoader {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.SVGLoader");
+
   private final TranscoderInput input;
+  private final Size size;
   private BufferedImage img;
-  private final double width;
-  private final double height;
 
-  private enum SizeAttr {
-    width,
-    height;
+  private static class Size {
+    final float width;
+    final float height;
 
-    static final int FALLBACK_VALUE = 16;
+    static final int FALLBACK_SIZE = 16;
 
-    public float value(@NotNull Document document) {
-      String value = document.getDocumentElement().getAttribute(name());
-      if (value.endsWith("px")) {
-        try {
-          return Float.parseFloat(value.substring(0, value.length() - 2));
-        }
-        catch (NumberFormatException ex) {
-          ex.printStackTrace();
-        }
-      }
-      try {
-        ViewBox viewBox = ViewBox.fromString(document.getDocumentElement().getAttribute("viewBox"));
-        return this == width ? viewBox.width : viewBox.height;
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
-      return FALLBACK_VALUE;
-    }
-  }
-
-  private static class ViewBox {
-    private final float x;
-    private final float y;
-    private final float width;
-    private final float height;
-
-    public ViewBox(float x, float y, float width, float height) {
-      this.x = x;
-      this.y = y;
+    Size(float width, float height) {
       this.width = width;
       this.height = height;
     }
 
-    public static ViewBox fromString(String s) {
+    Size scale(double scale) {
+      return new Size((float)(width * scale), (float)(height * scale));
+    }
+
+    @NotNull
+    public static Size parse(@NotNull Document document) {
+      Float width = parseSize(document, "width");
+      Float height = parseSize(document, "height");
+      if (width != null && height != null) {
+        return new Size(width, height);
+      }
+      Size viewBox = parseViewBox(document);
+      if (viewBox != null) {
+        return viewBox;
+      }
+      return new Size(FALLBACK_SIZE, FALLBACK_SIZE);
+    }
+
+    @Nullable
+    private static Float parseSize(@NotNull Document document, @NotNull String sizeName) {
+      String value = document.getDocumentElement().getAttribute(sizeName);
+      if (value.endsWith("px")) {
+        try {
+          return Float.parseFloat(value.substring(0, value.length() - 2));
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static Size parseViewBox(@NotNull Document document) {
+      String value = document.getDocumentElement().getAttribute("viewBox");
+      if (value == null || value.isEmpty()) {
+        return null;
+      }
       List<String> values = new ArrayList<String>(4);
-      for (String token : StringUtil.tokenize(s, ", ")) {
+      for (String token : StringUtil.tokenize(value, ", ")) {
         values.add(token);
       }
 
       if (values.size() == 4) {
-        return new ViewBox(Float.parseFloat(values.get(0)),
-                           Float.parseFloat(values.get(1)),
-                           Float.parseFloat(values.get(2)),
-                           Float.parseFloat(values.get(3)));
+        try {
+          return new Size(Float.parseFloat(values.get(2)),
+                          Float.parseFloat(values.get(3)));
+        }
+        catch (NumberFormatException ignored) {
+        }
       }
-
-      throw new IllegalArgumentException("String should be formatted like 'x y width height' or 'x, y, width, height'");
+      LOG.warn("SVG file " + ObjectUtils.notNull(document.getBaseURI(), "") +
+               " 'viewBox' expected in format: 'x y width height' or 'x, y, width, height'");
+      return null;
     }
   }
 
   private class MyTranscoder extends ImageTranscoder {
     @Override
     public BufferedImage createImage(int w, int h) {
+      //noinspection UndesirableClassUsage
       return new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
     }
 
     @Override
-    public void writeImage(BufferedImage img, TranscoderOutput output) throws TranscoderException {
+    public void writeImage(BufferedImage img, TranscoderOutput output) {
       SVGLoader.this.img = img;
     }
   }
@@ -132,8 +147,13 @@ public class SVGLoader {
     }
   }
 
+  public static Couple<Integer> loadInfo(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
+    SVGLoader loader = new SVGLoader(url, stream, scale);
+    return Couple.of((int)loader.size.width, (int)loader.size.height);
+  }
+
   private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
-    Document document = null;
+    Document document;
     String uri = null;
     try {
       uri = url != null ? url.toURI().toString() : null;
@@ -146,15 +166,13 @@ public class SVGLoader {
       throw new IOException("document not created");
     }
     input = new TranscoderInput(document);
-
-    width = SizeAttr.width.value(document) * scale;
-    height = SizeAttr.height.value(document) * scale;
+    size = Size.parse(document).scale(scale);
   }
 
   private BufferedImage createImage() throws TranscoderException {
     MyTranscoder r = new MyTranscoder();
-    r.addTranscodingHint(ImageTranscoder.KEY_WIDTH, new Float(width));
-    r.addTranscodingHint(ImageTranscoder.KEY_HEIGHT, new Float(height));
+    r.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(size.width));
+    r.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(size.height));
     r.transcode(input, null);
     return img;
   }

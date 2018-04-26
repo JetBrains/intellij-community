@@ -1,9 +1,7 @@
 package com.siyeh.igtest.abstraction.overly_strong_type_cast;
 
 import java.lang.reflect.Array;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 interface TestInter{}
@@ -107,4 +105,9 @@ interface IndexerFunction<K, V> {
             return getNumberKey(value);
         }
     }
+}
+class Varargs {
+  void m(Object value) {
+    Arrays.asList((Object[]) value); 
+  }
 }

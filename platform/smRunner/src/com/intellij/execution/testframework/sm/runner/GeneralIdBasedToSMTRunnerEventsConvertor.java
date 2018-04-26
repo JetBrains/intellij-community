@@ -209,19 +209,23 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         }
         testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
         testProxy.setFinished();
-        if (node.getState() != State.FAILED) {
-          LOG.debug("onTestFinished: node.getState() != State.FAILED");
-
-          // Don't count the same test twice if 'testFailed' message is followed by 'testFinished' message
-          // which may happen if generated TeamCity messages adhere rules from
-          //   https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity
-          // Anyway, this id-based converter already breaks TeamCity protocol by expecting messages with
-          // non-standard TeamCity attributes: 'nodeId'/'parentNodeId' instead of 'name'.
-          fireOnTestFinished(testProxy);
-        }
+        fireOnTestFinishedIfNeeded(testProxy, node);
         terminateNode(node, State.FINISHED);
       }
     });
+  }
+
+  private void fireOnTestFinishedIfNeeded(@NotNull SMTestProxy testProxy, @NotNull Node node) {
+    // allow clients to omit sending 'testFinished' messages after 'testFailed'/'testIgnored' messages
+    if (node.getState() != State.FINISHED && node.getState() != State.FAILED && node.getState() != State.IGNORED) {
+      LOG.debug("onTestFinished: state != FINISHED && state != FAILED && state != IGNORED");
+      // Don't count the same test twice if 'testFailed' or 'testIgnored' message is followed by 'testFinished' message
+      // which may happen if generated TeamCity messages adhere rules from
+      //   https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity
+      // Anyway, this id-based converter already breaks TeamCity protocol by expecting messages with
+      // non-standard TeamCity attributes: 'nodeId'/'parentNodeId' instead of 'name'.
+      fireOnTestFinished(testProxy);
+    }
   }
 
   public void onSuiteFinished(@NotNull final TestSuiteFinishedEvent suiteFinishedEvent) {
@@ -328,10 +332,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       if (duration >= 0) {
         testProxy.setDuration(duration);
       }
-      fireOnTestFinished(testProxy);
 
-      // fire event
       fireOnTestFailed(testProxy);
+      fireOnTestFinishedIfNeeded(testProxy, node);
 
       terminateNode(node, State.FAILED);
     });
@@ -349,8 +352,10 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         }
         SMTestProxy testProxy = node.getProxy();
         testProxy.setTestIgnored(testIgnoredEvent.getIgnoreComment(), testIgnoredEvent.getStacktrace());
-        // fire event
+
         fireOnTestIgnored(testProxy);
+        fireOnTestFinishedIfNeeded(testProxy, node);
+
         terminateNode(node, State.IGNORED);
       }
     });

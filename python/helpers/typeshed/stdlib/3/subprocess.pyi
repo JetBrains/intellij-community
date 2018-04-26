@@ -371,4 +371,34 @@ def getoutput(cmd: _TXT) -> str: ...
 
 def list2cmdline(seq: Sequence[str]) -> str: ...  # undocumented
 
-# Windows-only: STARTUPINFO etc.
+if sys.platform == 'win32':
+    class STARTUPINFO:
+        if sys.version_info >= (3, 7):
+            def __init__(self, *, dwFlags: int = ..., hStdInput: Optional[Any] = ..., hStdOutput: Optional[Any] = ..., hStdError: Optional[Any] = ..., wShowWindow: int = ..., lpAttributeList: Optional[Mapping[str, Any]] = ...) -> None: ...
+        dwFlags: int
+        hStdInput: Optional[Any]
+        hStdOutput: Optional[Any]
+        hStdError: Optional[Any]
+        wShowWindow: int
+        if sys.version_info >= (3, 7):
+            lpAttributeList: Mapping[str, Any]
+
+    STD_INPUT_HANDLE: Any
+    STD_OUTPUT_HANDLE: Any
+    STD_ERROR_HANDLE: Any
+    SW_HIDE: int
+    STARTF_USESTDHANDLES: int
+    STARTF_USESHOWWINDOW: int
+    CREATE_NEW_CONSOLE: int
+    CREATE_NEW_PROCESS_GROUP: int
+    if sys.version_info >= (3, 7):
+        ABOVE_NORMAL_PRIORITY_CLASS: int
+        BELOW_NORMAL_PRIORITY_CLASS: int
+        HIGH_PRIORITY_CLASS: int
+        IDLE_PRIORITY_CLASS: int
+        NORMAL_PRIORITY_CLASS: int
+        REALTIME_PRIORITY_CLASS: int
+        CREATE_NO_WINDOW: int
+        DETACHED_PROCESS: int
+        CREATE_DEFAULT_ERROR_MODE: int
+        CREATE_BREAKAWAY_FROM_JOB: int

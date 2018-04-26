@@ -1335,6 +1335,25 @@ public class PythonCompletionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::assertSingleVariantInExtendedCompletion);
   }
 
+  // PY-28341
+  public void testCompletionForUsedAttribute() {
+    doMultiFileTest();
+  }
+
+  // PY-28103
+  public void testPrintFunctionWithoutFuture() {
+    final List<String> suggested = doTestByText("pr<caret>");
+    assertNotNull(suggested);
+    assertSameElements(suggested, "print", "property", "repr");
+  }
+
+  // PY-28103
+  public void testPrintFunctionWithFuture() {
+    final List<String> suggested = doTestByText("from __future__ import print_function\npr<caret>");
+    assertNotNull(suggested);
+    assertSameElements(suggested, "print", "print", "print_function", "property", "repr");
+  }
+
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");

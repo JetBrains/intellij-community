@@ -355,7 +355,7 @@ public class GrClassImplUtil {
   private static boolean shouldProcessInstanceMembers(@NotNull GrTypeDefinition grType, @Nullable PsiElement lastParent) {
     if (lastParent != null) {
       final GrModifierList modifierList = grType.getModifierList();
-      if (modifierList != null && modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_CATEGORY) != null) {
+      if (modifierList != null && modifierList.hasAnnotation(GroovyCommonClassNames.GROOVY_LANG_CATEGORY)) {
         return false;
       }
     }
@@ -382,6 +382,9 @@ public class GrClassImplUtil {
     while (place != null) {
       if (place == element) return true;
       place = place.getParent();
+      if (element instanceof GrField && ((GrField)element).getInitializerGroovy() == place) {
+        return false;
+      }
       if (place instanceof GrClosableBlock) return false;
       if (place instanceof GrEnumConstantInitializer) return false;
     }

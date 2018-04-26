@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="JSON Schemas Update" default="update_schemas">
+  <property name="idea.project.home" value="${basedir}/../../../../"/>
+
+  <macrodef name="get_schema">
+    <attribute name="fromUrl" />
+    <attribute name="toFile" />
+
+    <sequential>
+      <get src="@{fromUrl}"
+           dest="@{toFile}" />
+      <local name="baseUrl"/>
+      <property name="baseUrl" value="@{fromUrl}" />
+      <script language="javascript"><![CDATA[
+        var url = new java.net.URL(project.getProperty("baseUrl"));
+        var connection = url.openConnection();
+        var etag = connection.getHeaderField("ETag");
+        project.setProperty("etag", etag);
+      ]]></script>
+      <echo message="${etag}" file="@{toFile}.ETAG" />
+    </sequential>
+  </macrodef>
+
+  <target name="prettier">
+    <get_schema fromUrl="http://json.schemastore.org/prettierrc-1.8.2"
+                toFile="${idea.project.home}/contrib/prettierJS/resources/prettierrc-schema.json" />
+    <!-- Add schema ID manually -->
+    <replaceregexp file="${idea.project.home}/contrib/prettierJS/resources/prettierrc-schema.json"
+                   match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/prettierrc-1.8.2&quot;,${line.separator}  &quot;definitions&quot;" />
+  </target>
+
+  <target name="tslint">
+    <get_schema fromUrl="http://json.schemastore.org/tslint"
+                toFile="${idea.project.home}/contrib/tslint/resources/tslintJsonSchema/tslint-schema.json" />
+  </target>
+
+  <target name="nodejs">
+    <get_schema fromUrl="http://json.schemastore.org/package"
+                toFile="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json" />
+
+    <!-- add custom properties for eslint, prettier, styleling, jest, jshint, hscs -->
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
+                   replace="&quot;eslintConfig&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/eslintrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
+                   replace="&quot;prettier&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/prettierrc-1.8.2#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
+                   replace="&quot;stylelint&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/stylelintrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
+                   replace="&quot;jest&quot; : {&quot;type&quot;: &quot;object&quot;, &quot;$ref&quot;: &quot;https://facebook.github.io/jest/docs/configuration.html#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
+                   replace="&quot;jshintConfig&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/jshintrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
+                   replace="&quot;jscsConfig&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/jscsrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+  </target>
+
+  <target name="js_schemas">
+    <get_schema fromUrl="http://json.schemastore.org/babelrc"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.babelrc-schema.json" />
+    <!-- stylelint schema is buggy - we modified it manually to get better results -->
+    <!--<get_schema fromUrl="http://json.schemastore.org/stylelintrc"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.stylelintrc-schema.json" />-->
+    <get_schema fromUrl="http://json.schemastore.org/jsconfig"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/jsconfig-schema.json" />
+    <get_schema fromUrl="http://json.schemastore.org/tsconfig"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/tsconfig-schema.json" />
+    <get_schema fromUrl="http://json.schemastore.org/tsd"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/tsd-schema.json" />
+    <get_schema fromUrl="http://json.schemastore.org/typings"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/typings-schema.json" />
+
+    <!-- eslintrc schema is buggy - only manual updates -->
+    <!--<get_schema fromUrl="http://json.schemastore.org/eslintrc"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.eslintrc-schema.json" />
+    <replaceregexp file="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.eslintrc-schema.json"
+                   match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/eslintrc&quot;,${line.separator}  &quot;definitions&quot;" />-->
+  </target>
+
+  <target name="ALL">
+    <antcall target="js_schemas" />
+    <antcall target="prettier" />
+    <antcall target="tslint" />
+    <antcall target="nodejs" />
+  </target>
+</project>

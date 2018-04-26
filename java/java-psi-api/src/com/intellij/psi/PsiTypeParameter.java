@@ -5,6 +5,7 @@ import com.intellij.lang.jvm.JvmElementVisitor;
 import com.intellij.lang.jvm.JvmTypeParameter;
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +51,11 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeP
   @Override
   default PsiAnnotation[] getAnnotations() {
     return PsiClass.super.getAnnotations();
+  }
+
+  @Override
+  default boolean hasAnnotation(@NotNull @NonNls String fqn) {
+    return PsiClass.super.hasAnnotation(fqn);
   }
 
   @NotNull

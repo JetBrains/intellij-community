@@ -34,10 +34,11 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       return;
     }
 
+    QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
     registrar.register(new ImportClassFix(ref));
     registrar.register(new StaticImportConstantFix(ref));
     registrar.register(new QualifyStaticConstantFix(ref));
-    registrar.register(QuickFixFactory.getInstance().createSetupJDKFix());
+    registrar.register(quickFixFactory.createSetupJDKFix());
 
     OrderEntryFix.registerFixes(registrar, ref);
 
@@ -61,6 +62,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
+      registrar.register(new CreateTypeParameterFromUsageFix(ref));
     }
 
     PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
@@ -75,6 +77,8 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
       registrar.register(new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
     }
+
+    SurroundWithQuotesAnnotationParameterValueFix.register(registrar, ref);
   }
 
   @NotNull

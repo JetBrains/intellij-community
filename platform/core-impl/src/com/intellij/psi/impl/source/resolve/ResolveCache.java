@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -257,7 +258,7 @@ public class ResolveCache {
     return (incompleteCode ? 0 : 1)*2 + (isPoly ? 0 : 1);
   }
 
-  private static final Object NULL_RESULT = new Object();
+  private static final Object NULL_RESULT = ObjectUtils.sentinel("ResolveCache.NULL_RESULT");
   private static <TRef extends PsiReference, TResult> void cache(@NotNull TRef ref,
                                                                  @NotNull ConcurrentMap<TRef, TResult> map,
                                                                  TResult result) {

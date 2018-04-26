@@ -44,16 +44,13 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
         }
       }
     });
+  }
 
-    addActionListener(e -> {
-      LanguageLevel selectedLevel = getSelectedLevel();
-      if (selectedLevel != null) {
-        LanguageLevel level = AcceptedLanguageLevelsSettings.checkAccepted(this, selectedLevel);
-        if (level == null) {
-          setSelectedItem(AcceptedLanguageLevelsSettings.getHighestAcceptedLevel());
-        }
-      }
-    });
+  private void checkAcceptedLevel(LanguageLevel selectedLevel) {
+    LanguageLevel level = AcceptedLanguageLevelsSettings.checkAccepted(this, selectedLevel);
+    if (level == null) {
+      setSelectedItem(AcceptedLanguageLevelsSettings.getHighestAcceptedLevel());
+    }
   }
 
   public void reset(@NotNull Project project) {
@@ -84,6 +81,9 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
       }
     }
     updateDefaultLevel(newLevel, isDefaultProject);
+    if (getSelectedItem() == myDefaultItem) {
+      checkAcceptedLevel(newLevel);
+    }
   }
 
   private void updateDefaultLevel(LanguageLevel newLevel, boolean isDefaultProject) {
@@ -126,5 +126,6 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
   @Override
   public void setSelectedItem(Object anObject) {
     super.setSelectedItem(anObject == null ? myDefaultItem : anObject);
+    checkAcceptedLevel(getSelectedLevel());
   }
 }

@@ -18,6 +18,7 @@ package com.jetbrains.jsonSchema;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 
 import java.util.Collections;
 
@@ -40,7 +41,7 @@ public class JsonSchemaSelfHighligthingTest extends JsonSchemaHeavyAbstractTest 
         final String moduleDir = getModuleDir(getProject());
 
         final UserDefinedJsonSchemaConfiguration pattern =
-          new UserDefinedJsonSchemaConfiguration("pattern", moduleDir + "/patternSchema.json", false, Collections.emptyList());
+          new UserDefinedJsonSchemaConfiguration("pattern", JsonSchemaVersion.SCHEMA_4, moduleDir + "/patternSchema.json", false, Collections.emptyList());
         addSchema(pattern);
         myDoCompletion = false;
       }

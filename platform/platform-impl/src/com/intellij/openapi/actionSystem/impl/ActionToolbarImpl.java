@@ -34,6 +34,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -176,7 +177,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
-    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
+    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);
 
     myUpdater.updateActions(updateActionsNow, false);
@@ -250,6 +251,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   protected Graphics getComponentGraphics(Graphics graphics) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Nullable
+  public String getGroupId() {
+    return myActionManager.getId(myActionGroup);
   }
 
   @Override
@@ -842,8 +848,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<>();
-    calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
+    calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);//it doesn't take into account wrapping
     if (bounds.isEmpty()) return JBUI.emptySize();
+    int forcedHeight = 0;
+    if (getWidth() > 0 && getLayoutPolicy() == ActionToolbar.WRAP_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL) {
+      final ArrayList<Rectangle> limitedBounds = new ArrayList<>();
+      calculateBounds(new Dimension(getWidth(), Integer.MAX_VALUE), limitedBounds);
+      Rectangle union = null;
+      for (Rectangle bound : limitedBounds) {
+        if (union == null) {
+          union = bound;
+        } else {
+          union = union.union(bound);
+        }
+      }
+      forcedHeight = union != null ? union.height : 0;
+    }
     int xLeft = Integer.MAX_VALUE;
     int yTop = Integer.MAX_VALUE;
     int xRight = Integer.MIN_VALUE;
@@ -856,7 +876,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       xRight = Math.max(xRight, each.x + each.width);
       yBottom = Math.max(yBottom, each.y + each.height);
     }
-    final Dimension dimension = new Dimension(xRight - xLeft, yBottom - yTop);
+    final Dimension dimension = new Dimension(xRight - xLeft, Math.max(yBottom - yTop, forcedHeight));
 
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY && myReservePlaceAutoPopupIcon && !isInsideNavBar()) {
       if (myOrientation == SwingConstants.HORIZONTAL) {

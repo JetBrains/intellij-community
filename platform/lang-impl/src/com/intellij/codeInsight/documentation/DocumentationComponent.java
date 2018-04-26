@@ -43,7 +43,10 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,12 +64,10 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +106,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
   private static final JBDimension MAX_DEFAULT = new JBDimension(650, 500);
-  private static final JBDimension MIN_DEFAULT = new JBDimension(300, 59);
+  private static final JBDimension MIN_DEFAULT = new JBDimension(300, 20);
   private final ExternalDocAction myExternalDocAction;
 
   private DocumentationManager myManager;
@@ -146,7 +147,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           LOG.warn(e);
         }
       }
-      return Toolkit.getDefaultToolkit().createImage(url);
+      Image image = ImageLoader.loadFromUrl(url);
+      return image != null ? ImageUtil.toBufferedImage(image) : Toolkit.getDefaultToolkit().createImage(url);
     }
   };
   private Runnable myToolwindowCallback;
@@ -570,13 +572,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
-    // override ul {margin-left-ltr: 50; margin-right-rtl: 50} from javax/swing/text/html/default.css
-    editorKit.getStyleSheet().addRule("ul { padding: 5px 9px 0 7px; margin-left-ltr: 10px; margin-right-rtl: 10px; }");
+    editorKit.getStyleSheet().addRule("ul { padding: 5px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule("li { padding: 1px 0 2px 0; }");
-    String liImgUrl = getLiImgUrl();
-    if (liImgUrl != null) {
-      editorKit.getStyleSheet().addRule("ul {list-style-image:url('" + liImgUrl + "');}");
-    }
     editorKit.getStyleSheet().addRule(".grayed { color: #909090; display: inline;}");
     editorKit.getStyleSheet().addRule(".centered { text-align: center}");
 
@@ -585,13 +582,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("tr { margin: 0 0 0 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule("td { margin: 2px 0 3.5px 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule(".section { color: #909090; padding-right: 4px}");
-  }
-
-  @Nullable
-  private static String getLiImgUrl() {
-    String liImg = IdeTooltipManager.getInstance().getUlImg(false);
-    URL url = liImg != null ? SystemInfo.class.getResource(liImg) : null;
-    return url != null ? StringUtil.escapeCharCharacters(url.toExternalForm()) : null;
   }
 
   private static Color getLinkColor() {
@@ -1044,7 +1034,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (link != null) return link;
     }
 
-    return "<a href='external_doc'>External documentation " + title + "<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
+    return "<a href='external_doc'>External documentation for `" + title + "`<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
   }
 
   private static String getLink(String title, String url) {
@@ -1056,8 +1046,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     result.append("<a href='");
     result.append(url);
-    result.append("'>");
-    result.append(title.substring(4)).append(" on ").append(hostname);
+    result.append("'>`");
+    result.append(title).append("` on ").append(hostname);
     result.append("</a>");
     return result.toString();
   }
@@ -1213,7 +1203,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       presentation.setEnabled(!myBackStack.isEmpty());
       if (!isToolbar(e)) {
         presentation.setVisible(presentation.isEnabled());
-        presentation.setIcon(AllIcons.Actions.Left);
       }
     }
   }
@@ -1234,7 +1223,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       presentation.setEnabled(!myForwardStack.isEmpty());
       if (!isToolbar(e)) {
         presentation.setVisible(presentation.isEnabled());
-        presentation.setIcon(AllIcons.Actions.Right);
       }
     }
   }
@@ -1245,15 +1233,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       super(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
       getTemplatePresentation().setText("Edit Source");
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      if (!isToolbar(e)) {
-        e.getPresentation().setIcon(AllIcons.General.Inline_edit);
-        e.getPresentation().setHoveredIcon(AllIcons.General.Inline_edit_hovered);
-      }
     }
 
     @Override
@@ -1284,7 +1263,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     private ExternalDocAction() {
-      super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.Browser_externalJavaDoc);
+      super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.PreviousOccurence);
       registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
     }
 
@@ -1494,7 +1473,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     private MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
       super(action, presentation, place, minimumSize);
-      myPresentation.setIcon(AllIcons.General.SecondaryGroup);
+      myPresentation.setIcon(AllIcons.General.GearPlain);
     }
   }
 

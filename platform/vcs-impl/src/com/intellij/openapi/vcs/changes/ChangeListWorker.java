@@ -445,7 +445,7 @@ public class ChangeListWorker {
 
   public boolean setReadOnly(@NotNull String name, boolean value) {
     ListData list = getDataByName(name);
-    if (list == null || list.isReadOnly) return false;
+    if (list == null) return false;
 
     list.isReadOnly = value;
 

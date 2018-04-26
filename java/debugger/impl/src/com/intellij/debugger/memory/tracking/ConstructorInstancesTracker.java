@@ -10,9 +10,9 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.memory.component.InstancesTracker;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
-import com.intellij.debugger.memory.event.InstancesTrackerListener;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.event.InstancesTrackerListener;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
@@ -207,8 +207,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
 
     @Override
-    public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event)
-      throws EventProcessingException {
+    public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) {
       if (myIsDeleted) {
         event.request().disable();
       }

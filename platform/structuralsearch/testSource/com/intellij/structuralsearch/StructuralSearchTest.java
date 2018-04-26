@@ -1366,9 +1366,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s115 = "class B {} public class C {}";
     assertEquals("public modifier for class", 1, findMatchesCount(s115, "public class '_ {}"));
 
-    final String s117 = "class A { int b; void c() { int e; b=1; this.b=1; e=5; " +
-                        "System.out.println(e); " +
-                        "System.out.println(b); System.out.println(this.b);} }";
+    final String s117 = "class A {" +
+                        "  int b;" +
+                        "  void c() {" +
+                        "    int e;" +
+                        "    b=1;" +
+                        "    this.b=1;" +
+                        "    e=5;" +
+                        "    System.out.println(e);" +
+                        "    System.out.println(b);" +
+                        "    System.out.println(this.b);" +
+                        "  }" +
+                        "}";
     assertEquals("fields of class", 4, findMatchesCount(s117, "this.'Field"));
 
     final String s119 = "class X {{ try { a.b(); } catch(IOException e) { c(); } catch(Exception ex) { d(); }}}";
@@ -1489,7 +1498,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("char constants in pattern", 1, findMatchesCount(s99, " char 'var = '\\u1111'; "));
     assertEquals("char constants in pattern 2", 1, findMatchesCount(s99, " char 'var = '\\n'; "));
 
-    assertEquals("class predicate match (from definition)", 3, findMatchesCount(s97, "'_:[ref( \"class '_A{}\" )] '_;"));
+    assertEquals("class predicate match (from definition)", 3, findMatchesCount(s97, "'_:[ref( \"class '_A {}\" )] '_;"));
 
     String s107 = "class A {\n" +
                   "  /* */\n" +
@@ -2673,6 +2682,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}}";
     assertEquals("find diamond new expressions", 3, findMatchesCount(source, "new A<>()"));
     assertEquals("find parameterized new expressions", 2, findMatchesCount(source, "new A<Integer, String>()"));
+    assertEquals("find non-diamond", 1, findMatchesCount(source, "new A<'_p{1,100}>()"));
   }
 
   public void testFindSuperCall() {
@@ -2896,24 +2906,28 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "    outer: for (int i = 0; i < 10; i++) {" +
                      "      if (i == 1) break outer;" +
                      "      if (i == 2) break;" +
+                     "      if (i == 3) break nowhere;" +
                      "    }" +
                      "  }" +
                      "}";
-    assertEquals("Find break statements", 2, findMatchesCount(s, "break;"));
-    assertEquals("Find labeled break statements", 1, findMatchesCount(s, "break '_label;"));
+    assertEquals("Find break statements", 3, findMatchesCount(s, "break;"));
+    assertEquals("Find labeled break statements", 2, findMatchesCount(s, "break '_label;"));
     assertEquals("Find outer break statement", 1, findMatchesCount(s, "break outer;"));
+    assertEquals("Find break statements without label", 1, findMatchesCount(s, "break '_label{0,0};"));
 
     final String s2 = "class X {" +
                      "  void m() {" +
                      "    outer: for (int i = 0; i < 10; i++) {" +
                      "      if (i == 3) continue outer;" +
                      "      if (i == 4) continue;" +
+                     "      if (i == 5) continue nowhere;" +
                      "    }" +
                      "  }" +
                      "}";
-    assertEquals("Find continue statements", 2, findMatchesCount(s2, "continue;"));
-    assertEquals("Find continue break statements", 1, findMatchesCount(s2, "continue '_label;"));
+    assertEquals("Find continue statements", 3, findMatchesCount(s2, "continue;"));
+    assertEquals("Find labeled continue statements", 2, findMatchesCount(s2, "continue '_label;"));
     assertEquals("Find outer continue statement", 1, findMatchesCount(s2, "continue outer;"));
+    assertEquals("Find continue statements without label", 1, findMatchesCount(s2, "continue '_label{0,0};"));
   }
 
   public void testFindVarStatement() {
@@ -2926,5 +2940,32 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find var statement", 1, findMatchesCount(s, "var '_x;"));
     assertEquals("find String variables", 2, findMatchesCount(s, "String '_x;"));
     assertEquals("find String variables 2", 2, findMatchesCount(s, "var '_x = \"'_y\";"));
+  }
+
+  public void testFindReturn() {
+    final String s = "class X {" +
+                     "  void a() {" +
+                     "    return;" +
+                     "  }" +
+                     "  int b() {" +
+                     "    return 1;" +
+                     "  }" +
+                     "  Object c() {" +
+                     "    return new Object();" +
+                     "  }" +
+                     "}";
+    assertEquals("find return without value", 1, findMatchesCount(s, "return '_x{0,0};"));
+    assertEquals("find return with value", 2, findMatchesCount(s, "return '_x;"));
+    assertEquals("find returns", 3, findMatchesCount(s, "return;"));
+  }
+
+  public void testMatchInAnyOrderWithMultipleVars() {
+    final String s = "class X {" +
+                     "  void m() throws RuntimeException, IllegalStateException, IllegalArgumentException {}" +
+                     "  void n() throws RuntimeException {}" +
+                     "  void o() throws RuntimeException {}" +
+                     "}";
+    assertEquals("find method throwing only RuntimeException", 2, findMatchesCount(s, "'_T '_m() throws '_RE:RuntimeException , '_Other{0,0};"));
+    assertEquals("find method throwing RuntimeException and others", 1, findMatchesCount(s, "'_T '_m() throws '_RE:RuntimeException , '_Other{1,100};"));
   }
 }

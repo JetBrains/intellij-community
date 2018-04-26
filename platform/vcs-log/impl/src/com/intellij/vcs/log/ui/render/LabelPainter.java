@@ -42,6 +42,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogRefManager;
@@ -61,12 +63,13 @@ import java.util.Map;
 import static com.intellij.vcs.log.ui.render.RectanglePainter.LABEL_ARC;
 
 public class LabelPainter {
-  public static final int TOP_TEXT_PADDING = JBUI.scale(1);
-  public static final int BOTTOM_TEXT_PADDING = JBUI.scale(2);
-  public static final int RIGHT_PADDING = JBUI.scale(4);
-  public static final int LEFT_PADDING = JBUI.scale(4);
-  public static final int COMPACT_MIDDLE_PADDING = JBUI.scale(2);
-  public static final int MIDDLE_PADDING = JBUI.scale(12);
+  private static final JBValueGroup JBVG = new JBValueGroup();
+  public static final JBValue TOP_TEXT_PADDING = JBVG.value(1);
+  public static final JBValue BOTTOM_TEXT_PADDING = JBVG.value(2);
+  public static final JBValue RIGHT_PADDING = JBVG.value(4);
+  public static final JBValue LEFT_PADDING = JBVG.value(4);
+  public static final JBValue COMPACT_MIDDLE_PADDING = JBVG.value(2);
+  public static final JBValue MIDDLE_PADDING = JBVG.value(12);
   private static final int MAX_LENGTH = 22;
   private static final String THREE_DOTS = "...";
   private static final String TWO_DOTS = "..";
@@ -121,7 +124,7 @@ public class LabelPainter {
     myForeground = isSelected ? foreground : TEXT_COLOR;
 
     FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
-    myHeight = metrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING;
+    myHeight = metrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get();
 
     VcsLogRefManager manager = getRefManager(myLogData, references);
     List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references, myCompact, myShowTagNames);
@@ -141,7 +144,7 @@ public class LabelPainter {
                                                                              @NotNull Color background,
                                                                              int availableWidth,
                                                                              boolean compact) {
-    int width = LEFT_PADDING + RIGHT_PADDING;
+    int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
     List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
@@ -156,7 +159,7 @@ public class LabelPainter {
                                                                                     @NotNull FontMetrics fontMetrics,
                                                                                     @NotNull Color background,
                                                                                     int availableWidth) {
-    int width = LEFT_PADDING + RIGHT_PADDING;
+    int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
     List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
@@ -164,7 +167,7 @@ public class LabelPainter {
     for (RefGroup group : refGroups) {
       List<Color> colors = group.getColors();
       LabelIcon labelIcon = getIcon(fontMetrics.getHeight(), background, colors);
-      int newWidth = width + labelIcon.getIconWidth() + (group != ContainerUtil.getLastItem(refGroups) ? COMPACT_MIDDLE_PADDING : 0);
+      int newWidth = width + labelIcon.getIconWidth() + (group != ContainerUtil.getLastItem(refGroups) ? COMPACT_MIDDLE_PADDING.get() : 0);
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
       newWidth += fontMetrics.stringWidth(text);
@@ -181,7 +184,7 @@ public class LabelPainter {
                                                                                  @NotNull FontMetrics fontMetrics,
                                                                                  @NotNull Color background,
                                                                                  int availableWidth) {
-    int width = LEFT_PADDING + RIGHT_PADDING;
+    int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
     List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
@@ -198,7 +201,7 @@ public class LabelPainter {
 
       List<Color> colors = group.getColors();
       LabelIcon labelIcon = getIcon(height, background, colors);
-      int newWidth = width + labelIcon.getIconWidth() + (i != refGroups.size() - 1 ? MIDDLE_PADDING : 0);
+      int newWidth = width + labelIcon.getIconWidth() + (i != refGroups.size() - 1 ? MIDDLE_PADDING.get() : 0);
 
       String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
       newWidth += fontMetrics.stringWidth(text);
@@ -338,12 +341,12 @@ public class LabelPainter {
 
     if (myGreyBackground != null && myCompact) {
       g2.setColor(myGreyBackground);
-      g2.fillRect(x, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING,
+      g2.fillRect(x, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING.get(),
                   myWidth,
-                  fontMetrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING);
+                  fontMetrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get());
     }
 
-    x += LEFT_PADDING;
+    x += LEFT_PADDING.get();
 
     for (Pair<String, LabelIcon> label : myLabels) {
       LabelIcon icon = label.second;
@@ -351,9 +354,9 @@ public class LabelPainter {
 
       if (myGreyBackground != null && !myCompact) {
         g2.setColor(myGreyBackground);
-        g2.fill(new RoundRectangle2D.Double(x - MIDDLE_PADDING / 3, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING,
-                                            icon.getIconWidth() + fontMetrics.stringWidth(text) + 2 * MIDDLE_PADDING / 3,
-                                            fontMetrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING, LABEL_ARC, LABEL_ARC));
+        g2.fill(new RoundRectangle2D.Double(x - MIDDLE_PADDING.get() / 3, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING.get(),
+                                            icon.getIconWidth() + fontMetrics.stringWidth(text) + 2 * MIDDLE_PADDING.get() / 3,
+                                            fontMetrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get(), LABEL_ARC.get(), LABEL_ARC.get()));
       }
 
       icon.paintIcon(null, g2, x, y + (height - icon.getIconHeight()) / 2);
@@ -361,7 +364,7 @@ public class LabelPainter {
 
       g2.setColor(myForeground);
       g2.drawString(text, x, y + baseLine);
-      x += fontMetrics.stringWidth(text) + (myCompact ? COMPACT_MIDDLE_PADDING : MIDDLE_PADDING);
+      x += fontMetrics.stringWidth(text) + (myCompact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get());
     }
 
     config.restore();

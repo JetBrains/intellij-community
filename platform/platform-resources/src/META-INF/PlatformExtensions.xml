@@ -294,6 +294,8 @@
 
     <postStartupActivity implementation="com.intellij.internal.IconsLoadTime$StartupLoadTime"/>
 
+    <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization"/>
+
     <!-- General -->
     <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general"
                              instance="com.intellij.ide.GeneralSettingsConfigurable"/>
@@ -477,6 +479,9 @@
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.application.AsyncExecutionService"
+                        serviceImplementation="com.intellij.openapi.application.impl.AsyncExecutionServiceImpl"/>
 
     <preloadingActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
     <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>

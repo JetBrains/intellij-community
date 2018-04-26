@@ -90,7 +90,7 @@ class CommunityStandaloneJpsBuilder {
 
         [
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
-          "Netty", "Snappy-Java", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava"
+          "Netty", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava"
         ].each {
           projectLibrary(it)
         }

@@ -3,6 +3,7 @@ package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
 import com.intellij.credentialStore.hasOnlyUserName
+import com.intellij.credentialStore.isFulfilled
 import com.intellij.errorreport.bean.ErrorBean
 import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.NoSuchEAPUserException
@@ -31,6 +32,10 @@ private var previousExceptionThreadId = 0
 
 open class ITNReporter : ErrorReportSubmitter() {
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")
+
+  override fun getPrivacyNoticeText(): String =
+    if (ErrorReportConfigurable.getCredentials().isFulfilled()) DiagnosticBundle.message("error.dialog.notice.named")
+    else DiagnosticBundle.message("error.dialog.notice.anonymous")
 
   override fun submit(events: Array<IdeaLoggingEvent>,
                       additionalInfo: String?,

@@ -142,7 +142,7 @@ public class JUnitUtil {
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
     if (checkClass) {
-      PsiClass testCaseClass = getTestCaseClassOrNull(location);
+      PsiClass testCaseClass = getTestCaseClassOrNull(aClass);
       if (testCaseClass == null || !psiMethod.getContainingClass().isInheritor(testCaseClass, true)) return false;
     }
     return PsiType.VOID.equals(psiMethod.getReturnType());
@@ -150,8 +150,7 @@ public class JUnitUtil {
 
   public static boolean isTestCaseInheritor(final PsiClass aClass) {
     if (!aClass.isValid()) return false;
-    Location<PsiClass> location = PsiLocation.fromPsiElement(aClass);
-    PsiClass testCaseClass = getTestCaseClassOrNull(location);
+    PsiClass testCaseClass = getTestCaseClassOrNull(aClass);
     return testCaseClass != null && aClass.isInheritor(testCaseClass, true);
   }
 
@@ -167,11 +166,17 @@ public class JUnitUtil {
     
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
     
-    final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(psiClass, PsiClass.class);
+    final PsiClass topLevelClass = getTopmostClass(psiClass);
     if (topLevelClass != null) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(topLevelClass, Collections.singleton(RUN_WITH));
-      if (annotation != null && !isInheritorOrSelfRunner(annotation, RUNNERS_UNAWARE_OF_INNER_CLASSES)) {
-        return true;
+      if (annotation != null) {
+        if (topLevelClass == psiClass) {
+          return true;
+        }
+
+        if (!isInheritorOrSelfRunner(annotation, RUNNERS_UNAWARE_OF_INNER_CLASSES)) {
+          return true;
+        }
       }
     }
 
@@ -211,7 +216,9 @@ public class JUnitUtil {
   public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null || JavaExecutionUtil.findModule(psiClass) == null) return false;
-    final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(modifierList, PsiClass.class);
+    if (psiClass.getQualifiedName() == null) return false; //skip local and anonymous classes
+    PsiClass topLevelClass = getTopmostClass(psiClass);
+
     if (topLevelClass != null) {
       if (AnnotationUtil.isAnnotated(topLevelClass, RUN_WITH, CHECK_HIERARCHY)) {
         PsiAnnotation annotation = getRunWithAnnotation(topLevelClass);
@@ -234,6 +241,14 @@ public class JUnitUtil {
     }
 
     return false;
+  }
+
+  private static PsiClass getTopmostClass(PsiClass psiClass) {
+    PsiClass topLevelClass = psiClass;
+    while (topLevelClass != null && topLevelClass.getContainingClass() != null) {
+      topLevelClass = topLevelClass.getContainingClass();
+    }
+    return topLevelClass;
   }
 
   public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
@@ -307,11 +322,8 @@ public class JUnitUtil {
 
 
   @Nullable
-  private static PsiClass getTestCaseClassOrNull(final Location<?> location) {
-    final Location<PsiClass> ancestorOrSelf = location.getAncestorOrSelf(PsiClass.class);
-    if (ancestorOrSelf == null) return null;
-    final PsiClass aClass = ancestorOrSelf.getPsiElement();
-    Module module = JavaExecutionUtil.findModule(aClass);
+  private static PsiClass getTestCaseClassOrNull(final PsiClass psiClass) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (module == null) return null;
     GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(module, true);
     return getTestCaseClassOrNull(scope, module.getProject());

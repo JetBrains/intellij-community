@@ -52,7 +52,10 @@ _VT = TypeVar('_VT')
 
 
 # namedtuple is special-cased in the type checker; the initializer is ignored.
-if sys.version_info >= (3, 6):
+if sys.version_info >= (3, 7):
+    def namedtuple(typename: str, field_names: Union[str, Iterable[str]], *,
+                   rename: bool = ..., module: Optional[str] = ...) -> Type[tuple]: ...
+elif sys.version_info >= (3, 6):
     def namedtuple(typename: str, field_names: Union[str, Iterable[str]], *,
                    verbose: bool = ..., rename: bool = ..., module: Optional[str] = ...) -> Type[tuple]: ...
 else:

@@ -5,7 +5,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.facet.Facet;
@@ -33,7 +32,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -95,6 +93,7 @@ public class DaemonListeners implements Disposable {
   private final FileStatusManager myFileStatusManager;
   @NotNull private final ActionManager myActionManager;
   private final TooltipController myTooltipController;
+  private final ErrorStripeUpdateManager myErrorStripeUpdateManager;
 
   private boolean myEscPressed;
 
@@ -130,7 +129,8 @@ public class DaemonListeners implements Disposable {
                          @NotNull UndoManager undoManager,
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
-                         @NotNull FileStatusManager fileStatusManager) {
+                         @NotNull FileStatusManager fileStatusManager,
+                         @NotNull ErrorStripeUpdateManager stripeUpdateManager) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
     myPsiDocumentManager = psiDocumentManager;
@@ -141,6 +141,7 @@ public class DaemonListeners implements Disposable {
     myFileStatusManager = fileStatusManager;
     myActionManager = actionManagerEx;
     myTooltipController = tooltipController;
+    myErrorStripeUpdateManager = stripeUpdateManager;
 
     boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE);
     if (!replaced) {
@@ -210,7 +211,7 @@ public class DaemonListeners implements Disposable {
           myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
         }
         for (Editor editor : activeEditors) {
-          repaintErrorStripeRenderer(editor, myProject);
+          myErrorStripeUpdateManager.repaintErrorStripePanel(editor);
         }
       }
     };
@@ -231,7 +232,7 @@ public class DaemonListeners implements Disposable {
                     showing + "; project is open and file is mine: " + worthBothering);
           return;
         }
-        repaintErrorStripeRenderer(editor, myProject);
+        myErrorStripeUpdateManager.repaintErrorStripePanel(editor);
       }
 
       @Override
@@ -621,18 +622,5 @@ public class DaemonListeners implements Disposable {
     if (myDaemonCodeAnalyzer.doRestart()) {
       myDaemonEventPublisher.daemonCancelEventOccurred(reason);
     }
-  }
-
-  // needed for Rider
-  public static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!project.isInitialized()) return;
-    final Document document = editor.getDocument();
-    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    final EditorMarkupModel markup = (EditorMarkupModel)editor.getMarkupModel();
-    markup.setErrorPanelPopupHandler(new DaemonEditorPopup(psiFile));
-    markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(project));
-    markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
-    TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markup, project, document, psiFile);
   }
 }

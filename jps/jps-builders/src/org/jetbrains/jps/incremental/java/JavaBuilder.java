@@ -86,7 +86,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
   private static final List<String> COMPILABLE_EXTENSIONS = Collections.singletonList(JAVA_EXTENSION);
-  private static final String MODULE_DIR_MACRO_TEMPLATE = "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$";
 
   private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
     "-target"
@@ -249,7 +248,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     catch (Exception e) {
       LOG.info(e);
       String message = e.getMessage();
-      if (message == null) message = "Internal error: \n" + ExceptionUtil.getThrowableText(e);
+      if (message == null || message.trim().isEmpty()) {
+        message = "Internal error: \n" + ExceptionUtil.getThrowableText(e);
+      }
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
       throw new StopBuildException();
     }
@@ -297,7 +298,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
         context.processMessage(new ProgressMessage("Parsing java... [" + chunk.getPresentableShortName() + "]"));
 
         final int filesCount = files.size();
-        boolean compiledOk = true;
         if (filesCount > 0) {
           LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.containsTests() ? " (tests)" : ""));
           if (LOG.isDebugEnabled()) {
@@ -313,29 +313,25 @@ public class JavaBuilder extends ModuleLevelBuilder {
               LOG.debug("  " + file.getAbsolutePath());
             }
           }
+          boolean compiledOk = false;
           try {
             compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink, compilingTool, hasModules);
           }
           finally {
             filesWithErrors = diagnosticSink.getFilesWithErrors();
-            // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
-            //for (File file : filesWithErrors) {
-            //  if (!file.exists()) {
-            //    FSOperations.markDeleted(context, file);
-            //  }
-            //}
+            if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
+              // unexpected exception occurred or compiler did not output any errors for some reason
+              diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
+            }
+            if (diagnosticSink.getErrorCount() > 0) {
+              diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
+            }
           }
         }
 
         context.checkCanceled();
 
-        if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
-        }
         if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
-          if (!compiledOk) {
-            diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
-          }
           throw new StopBuildException(
             "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
           );
@@ -379,7 +375,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final String message = validateCycle(context, chunk);
       if (message != null) {
         diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
-        return true;
+        return false;
       }
     }
 
@@ -395,7 +391,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (forkSdk == null) {
           String text = "Cannot start javac process for " + chunk.getName() + ": unknown JDK home path.\nPlease check project configuration.";
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, text));
-          return true;
+          return false;
         }
       }
 
@@ -418,7 +414,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                       " differs from javac's platform (" + System.getProperty("java.version") + ")\n" +
                       "Compilation profiles are not supported for such configuration";
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, text));
-        return true;
+        return false;
       }
 
       Collection<File> classPath = originalClassPath;
@@ -476,7 +472,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final ConcurrentMap<String, Collection<String>> map = COMPILER_USAGE_STATISTICS.get(context);
     Collection<String> names = map.get(compilerName);
     if (names == null) {
-      names = Collections.synchronizedSet(new HashSet<String>());
+      names = Collections.synchronizedSet(new HashSet<>());
       final Collection<String> prev = map.putIfAbsent(compilerName, names);
       if (prev != null) {
         names = prev;
@@ -777,7 +773,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
         // -properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs
         final String moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.getAbsolutePath());
-        appender = (strings, option) -> strings.add(StringUtil.replace(option, MODULE_DIR_MACRO_TEMPLATE, moduleDirPath));
+        appender = (strings, option) -> strings.add(StringUtil.replace(option, PathMacroUtil.DEPRECATED_MODULE_DIR, moduleDirPath));
       }
 
       boolean skip = false;
@@ -846,6 +842,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     addCrossCompilationOptions(compilerSdkVersion, options, context, chunk);
+
+    if (!options.contains("--enable-preview")) {
+      LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(chunk.representativeTarget().getModule());
+      if (level != null && level.isPreview()) {
+        options.add("--enable-preview");
+      }
+    }
 
     if (addAnnotationProcessingOptions(options, profile)) {
       final File srcOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(

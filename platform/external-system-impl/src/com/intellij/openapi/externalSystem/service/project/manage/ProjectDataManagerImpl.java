@@ -125,6 +125,17 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
     List<Runnable> onSuccessImportTasks = ContainerUtil.newSmartList();
     List<Runnable> onFailureImportTasks = ContainerUtil.newSmartList();
+    final Collection<DataNode<?>> traceNodes = grouped.get(PerformanceTrace.TRACE_NODE_KEY);
+
+    final PerformanceTrace trace;
+    if (traceNodes.size() > 0) {
+      trace = (PerformanceTrace)traceNodes.iterator().next().getData();
+    } else {
+      trace = new PerformanceTrace();
+      grouped.putValue(PerformanceTrace.TRACE_NODE_KEY, new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, trace, null));
+    }
+
+    long allStartTime = System.currentTimeMillis();
     try {
       final Set<Map.Entry<Key<?>, Collection<DataNode<?>>>> entries = grouped.entrySet();
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -142,8 +153,10 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
           indicator.setText(message);
           indicator.setFraction((double)count++ / size);
         }
+        long startTime = System.currentTimeMillis();
         doImportData(entry.getKey(), entry.getValue(), projectData, project, modelsProvider,
                      postImportTasks, onSuccessImportTasks, onFailureImportTasks);
+        trace.logPerformance("Data import by " + entry.getKey().toString(), System.currentTimeMillis() - startTime);
       }
 
       for (Runnable postImportTask : postImportTasks) {
@@ -157,6 +170,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
       project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
         .onImportFinished(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
+      trace.logPerformance("Data import total", System.currentTimeMillis() - allStartTime);
     }
     catch (Throwable t) {
       runFinalTasks(synchronous, onFailureImportTasks);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -224,8 +210,7 @@ public class GenerateMembersUtil {
     if (member instanceof PsiMethod) {
       if (!aClass.isInterface()) {
         final PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
-        final boolean generateFinals = CodeStyleSettingsManager.getSettings(aClass.getProject())
-          .getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS;
+        final boolean generateFinals = JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).GENERATE_FINAL_PARAMETERS;
         for (final PsiParameter parameter : parameters) {
           PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, generateFinals);
         }
@@ -600,7 +585,7 @@ public class GenerateMembersUtil {
   public static void copyAnnotations(@NotNull PsiModifierList source, @NotNull PsiModifierList target, String... skipAnnotations) {
     for (PsiAnnotation annotation : source.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
-      if (qualifiedName == null || ArrayUtil.contains(qualifiedName, skipAnnotations) || target.findAnnotation(qualifiedName) != null) {
+      if (qualifiedName == null || ArrayUtil.contains(qualifiedName, skipAnnotations) || target.hasAnnotation(qualifiedName)) {
         continue;
       }
       AddAnnotationPsiFix.addPhysicalAnnotation(qualifiedName, annotation.getParameterList().getAttributes(), target);
@@ -712,7 +697,7 @@ public class GenerateMembersUtil {
   public static PsiMethod setVisibility(PsiMember member, PsiMethod prototype) {
     if (prototype == null) return null;
 
-    String visibility = CodeStyleSettingsManager.getSettings(member.getProject()).getCustomSettings(JavaCodeStyleSettings.class).VISIBILITY;
+    String visibility = JavaCodeStyleSettings.getInstance(member.getContainingFile()).VISIBILITY;
 
     @PsiModifier.ModifierConstant String newVisibility;
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) {
@@ -732,9 +717,9 @@ public class GenerateMembersUtil {
   public static PsiMethod annotateOnOverrideImplement(@Nullable PsiClass targetClass, @Nullable PsiMethod generated) {
     if (generated == null || targetClass == null) return generated;
 
-    if (CodeStyleSettingsManager.getSettings(targetClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION) {
+    if (JavaCodeStyleSettings.getInstance(targetClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {
       PsiMethod superMethod = targetClass.findMethodBySignature(generated, true);
-      if (superMethod != null && superMethod.getContainingClass() != targetClass) {
+      if (superMethod != null && superMethod.getContainingClass() != targetClass && PsiUtil.isAccessible(superMethod, targetClass, null)) {
         OverrideImplementUtil.annotateOnOverrideImplement(generated, targetClass, superMethod, true);
       }
     }

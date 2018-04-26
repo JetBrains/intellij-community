@@ -140,8 +140,21 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Override
   @CalledInAwt
-  public void refresh() {
+  public void refresh(boolean fromModelRefresh) {
     List<Wrapper> selectedChanges = getSelectedChanges();
+
+    Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
+    if (fromModelRefresh &&
+        selectedChange == null &&
+        myCurrentChange != null &&
+        getContext().isWindowFocused() &&
+        getContext().isFocusedInWindow()) {
+      // Do not automatically switch focused viewer
+      if (selectedChanges.size() == 1 && getAllChanges().contains(myCurrentChange)) {
+        selectChange(myCurrentChange); // Restore selection if necessary
+      }
+      return;
+    }
 
     if (selectedChanges.isEmpty()) {
       myCurrentChange = null;
@@ -149,15 +162,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       return;
     }
 
-    Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
     if (selectedChange == null) {
-      if (myCurrentChange != null && getContext().isWindowFocused() && getContext().isFocusedInWindow()) { // Do not automatically switch file if focused
-        if (selectedChanges.size() == 1 && getAllChanges().contains(myCurrentChange)) {
-          selectChange(myCurrentChange); // Restore selection if necessary
-        }
-        return;
-      }
-
       myCurrentChange = selectedChanges.get(0);
       updateRequest();
       return;

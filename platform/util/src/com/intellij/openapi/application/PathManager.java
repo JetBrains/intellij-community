@@ -17,7 +17,6 @@ import net.jpountz.lz4.LZ4Factory;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.intellij.lang.annotations.Flow;
-import org.iq80.snappy.Snappy;
 import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -511,7 +510,6 @@ public class PathManager {
       TypeMapper.class,             // JNA
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,         // OROMatcher
-      Snappy.class,                 // Snappy
       LZ4Factory.class,             // lz4-java
     };
 

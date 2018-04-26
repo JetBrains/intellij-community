@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -39,6 +40,12 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
 
   @NotNull
   @Override
+  public Icon getSuspendNoneIcon() {
+    return AllIcons.Debugger.Db_no_suspend_method_breakpoint;
+  }
+
+  @NotNull
+  @Override
   public Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_method_breakpoint;
   }
@@ -47,6 +54,12 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
   @Override
   public Icon getMutedDisabledIcon() {
     return AllIcons.Debugger.Db_muted_disabled_method_breakpoint;
+  }
+
+  @NotNull
+  @Override
+  public Icon getPendingIcon() {
+    return AllIcons.Debugger.Db_pending_method_breakpoint;
   }
 
   //@Override
@@ -116,5 +129,10 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
   @Override
   public boolean canBeHitInOtherPlaces() {
     return true;
+  }
+
+  @Override
+  public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
+    return canPutAtElement(file, line, project, (element, document) -> element instanceof PsiMethod);
   }
 }

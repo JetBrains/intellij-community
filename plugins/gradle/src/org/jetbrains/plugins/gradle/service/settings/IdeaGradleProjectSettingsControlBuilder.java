@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.settings;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -360,7 +361,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public boolean validate(GradleProjectSettings settings) throws ConfigurationException {
-    if(myGradleJdkComboBox != null) {
+    if(myGradleJdkComboBox != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       Sdk selectedJdk = myGradleJdkComboBox.getSelectedJdk();
       if(selectedJdk == null) {
         throw new ConfigurationException(GradleBundle.message("gradle.jvm.undefined"));

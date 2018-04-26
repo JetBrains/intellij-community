@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author yole
@@ -265,11 +266,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                                                                    @Nullable PsiElement realContext,
                                                                    @Nullable PsiElement resolveRoof) {
     boolean unreachableLocalDeclaration = false;
-    boolean resolveInParentScope = false;
+    Supplier<ScopeOwner> resolveInParentScope = null;
     final ResolveResultList resultList = new ResolveResultList();
     final ScopeOwner referenceOwner = ScopeUtil.getScopeOwner(realContext);
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
-    ScopeOwner resolvedOwner = processor.getOwner();
+    final ScopeOwner resolvedOwner = processor.getOwner();
 
     final Collection<PsiElement> resolvedElements = processor.getElements();
     if (resolvedOwner != null && !resolvedElements.isEmpty() && !ControlFlowCache.getScope(resolvedOwner).isGlobal(referencedName)) {
@@ -290,8 +291,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
           return latestDefs;
         }
-        else if (resolvedOwner instanceof PyClass || instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
-          resolveInParentScope = true;
+        else if (resolvedOwner instanceof PyClass) {
+          resolveInParentScope = () -> PyUtil.as(resolvedOwner.getContainingFile(), PyFile.class);
+        }
+        else if (instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
+          resolveInParentScope = () -> ScopeUtil.getScopeOwner(resolvedOwner);
         }
         else {
           unreachableLocalDeclaration = true;
@@ -319,11 +323,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // TODO: Try resolve to latest defs for outer scopes starting from the last element in CFG (=> no need for a special rate for globals)
 
     if (!unreachableLocalDeclaration) {
-      if (resolveInParentScope) {
+      if (resolveInParentScope != null) {
         processor = new PyResolveProcessor(referencedName);
-        resolvedOwner = ScopeUtil.getScopeOwner(resolvedOwner);
-        if (resolvedOwner != null) {
-          PyResolveUtil.scopeCrawlUp(processor, resolvedOwner, referencedName, resolveRoof);
+        final ScopeOwner parentScope = resolveInParentScope.get();
+        if (parentScope != null) {
+          PyResolveUtil.scopeCrawlUp(processor, parentScope, referencedName, resolveRoof);
         }
       }
 
@@ -675,17 +679,24 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
 
-    // include our own names
-    final int underscores = PyUtil.getInitialUnderscores(element.getName());
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
+    final LanguageLevel languageLevel = LanguageLevel.forElement(myElement);
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(element, e -> {
       if (builtinCache.isBuiltin(e)) {
-        final String name = e instanceof PyElement ? ((PyElement)e).getName() : null;
         if (e instanceof PyImportElement) {
           return false;
         }
-        if (name != null && PyUtil.getInitialUnderscores(name) == 1) {
+
+        final String name = e instanceof PyElement ? ((PyElement)e).getName() : null;
+        if (PyUtil.getInitialUnderscores(name) == 1) {
           return false;
+        }
+
+        if (languageLevel.isPython2() && PyNames.PRINT.equals(name)) {
+          final PyFile file = PyUtil.as(myElement.getContainingFile(), PyFile.class);
+          if (file != null && !file.hasImportFromFuture(FutureFeature.PRINT_FUNCTION)) {
+            return false;
+          }
         }
       }
       return true;
@@ -705,7 +716,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       PyResolveUtil.scopeCrawlUp(processor, builtinsFile, null, null);
     }
 
-    if (underscores >= 2) {
+    if (PyUtil.getInitialUnderscores(element.getName()) >= 2) {
       // if we're a normal module, add module's attrs
       if (realContext.getContainingFile() instanceof PyFile) {
         for (String name : PyModuleType.getPossibleInstanceMembers()) {
@@ -714,7 +725,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
 
       // if we're inside method, add implicit __class__
-      if (!LanguageLevel.forElement(myElement).isPython2()) {
+      if (!languageLevel.isPython2()) {
         Optional
           .ofNullable(PsiTreeUtil.getParentOfType(myElement, PyFunction.class))
           .map(PyFunction::getContainingClass)

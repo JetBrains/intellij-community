@@ -450,22 +450,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static <T extends Value> T computeAndKeep(EvaluatingComputable<T> computable, EvaluationContext context) throws EvaluateException {
-    T res;
     int retries = 10;
-    do {
-      res = computable.compute();
+    while (true) {
+      T res = computable.compute();
       try {
         keep(res, context);
+        return res;
       }
       catch (ObjectCollectedException oce) {
         if (--retries < 0) {
           throw oce;
         }
-        res = null; // collected already
       }
     }
-    while (res == null);
-    return res;
   }
 
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
@@ -863,8 +860,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
+      return intersectWithLine(SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition), mySourcePosition.getFile(), getLine());
     }
+  }
+
+  @Nullable
+  public static TextRange intersectWithLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
+    if (range != null && file != null) {
+      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      if (document != null) {
+        range = range.intersection(DocumentUtil.getLineTextRange(document, line));
+      }
+    }
+    return range;
   }
 
   @Nullable

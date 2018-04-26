@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.project.data;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -25,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,12 +50,9 @@ public class ExternalProjectDataCache {
     return ServiceManager.getService(project, ExternalProjectDataCache.class);
   }
 
-  @NotNull private final Project myProject;
-
   @NotNull private final Map<Pair<ProjectSystemId, File>, ExternalProject> myExternalRootProjects;
 
-  public ExternalProjectDataCache(@NotNull Project project) {
-    myProject = project;
+  public ExternalProjectDataCache() {
     myExternalRootProjects = ConcurrentFactoryMap.createMap(key->
       new ExternalProjectSerializer().load(key.first, key.second),
 

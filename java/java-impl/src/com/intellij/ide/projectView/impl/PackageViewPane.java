@@ -45,8 +45,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-import static com.intellij.openapi.application.Experiments.isFeatureEnabled;
-
 public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
@@ -62,7 +60,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   public Icon getIcon() {
-    return AllIcons.General.PackagesTab;
+    return AllIcons.Nodes.CopyOfFolder;
   }
 
   @Override

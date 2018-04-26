@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -31,11 +32,13 @@ import java.util.Map;
 
 public class DfaConstValue extends DfaValue {
   private static final Throwable ourThrowable = new Throwable();
+  private static final Object SENTINEL = ObjectUtils.sentinel("SENTINEL");
   public static class Factory {
     private final DfaConstValue dfaNull;
     private final DfaConstValue dfaFalse;
     private final DfaConstValue dfaTrue;
     private final DfaConstValue dfaFail;
+    private final DfaConstValue dfaSentinel;
     private final DfaValueFactory myFactory;
     private final Map<Object, DfaConstValue> myValues = ContainerUtil.newHashMap();
 
@@ -45,6 +48,7 @@ public class DfaConstValue extends DfaValue {
       dfaFalse = new DfaConstValue(Boolean.FALSE, PsiType.BOOLEAN, factory, null);
       dfaTrue = new DfaConstValue(Boolean.TRUE, PsiType.BOOLEAN, factory, null);
       dfaFail = new DfaConstValue(ourThrowable, PsiType.VOID, factory, null);
+      dfaSentinel = new DfaConstValue(SENTINEL, PsiType.VOID, factory, null);
     }
 
     @Nullable
@@ -138,6 +142,14 @@ public class DfaConstValue extends DfaValue {
 
     public DfaConstValue getNull() {
       return dfaNull;
+    }
+
+    /**
+     * Sentinel value is special value used internally by dataflow. It cannot be stored to any variable, and equals to itself only
+     * @return sentinel value
+     */
+    public DfaConstValue getSentinel() {
+      return dfaSentinel;
     }
   }
 

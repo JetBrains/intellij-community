@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -35,20 +36,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CodeStyleFacadeImpl extends CodeStyleFacade {
-  private final Project myProject;
+  private final @Nullable Project myProject;
 
   public CodeStyleFacadeImpl() {
     this(null);
   }
 
-  public CodeStyleFacadeImpl(final Project project) {
+  public CodeStyleFacadeImpl(final @Nullable Project project) {
     myProject = project;
   }
 
   @Override
   @Deprecated
   public int getIndentSize(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).getIndentSize(fileType);
+    return CodeStyle.getProjectOrDefaultSettings(myProject).getIndentSize(fileType);
   }
 
   @Override
@@ -74,7 +75,7 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
 
   @Override
   public String getLineSeparator() {
-    return CodeStyleSettingsManager.getSettings(myProject).getLineSeparator();
+    return CodeStyle.getProjectOrDefaultSettings(myProject).getLineSeparator();
   }
 
   @Override
@@ -89,21 +90,21 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
 
   @Override
   public int getRightMargin(Language language) {
-    return CodeStyleSettingsManager.getSettings(myProject).getRightMargin(language);
+    return CodeStyle.getProjectOrDefaultSettings(myProject).getRightMargin(language);
   }
 
   @Override
   public int getTabSize(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).getTabSize(fileType);
+    return CodeStyle.getProjectOrDefaultSettings(myProject).getTabSize(fileType);
   }
 
   @Override
   public boolean isSmartTabs(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).isSmartTabs(fileType);
+    return CodeStyle.getProjectOrDefaultSettings(myProject).isSmartTabs(fileType);
   }
 
   @Override
   public boolean useTabCharacter(final FileType fileType) {
-    return CodeStyleSettingsManager.getSettings(myProject).useTabCharacter(fileType);
+    return CodeStyle.getProjectOrDefaultSettings(myProject).useTabCharacter(fileType);
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -128,26 +129,38 @@ public class XBreakpointUtil {
 
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XLineBreakpointType<?>[] lineTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
-    XLineBreakpointType<?> typeWinner = null;
+    List<XLineBreakpointType> typeWinner = new SmartList<>();
     int lineWinner = -1;
-    for (int line = lineStart; line <= linesEnd; line++) {
-      int maxPriority = 0;
-      for (XLineBreakpointType<?> type : lineTypes) {
-        maxPriority = Math.max(maxPriority, type.getPriority());
-        XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
-        if ((type.canPutAt(file, line, project) || breakpoint != null) &&
-            (typeWinner == null || type.getPriority() > typeWinner.getPriority())) {
-          typeWinner = type;
-          lineWinner = line;
+    if (linesEnd != lineStart) { // folding mode
+      for (int line = lineStart; line <= linesEnd; line++) {
+        int maxPriority = 0;
+        for (XLineBreakpointType<?> type : lineTypes) {
+          maxPriority = Math.max(maxPriority, type.getPriority());
+          XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+          if ((type.canPutAt(file, line, project) || breakpoint != null) &&
+              (typeWinner.isEmpty() || type.getPriority() > typeWinner.get(0).getPriority())) {
+            typeWinner.clear();
+            typeWinner.add(type);
+            lineWinner = line;
+          }
+        }
+        // already found max priority type - stop
+        if (!typeWinner.isEmpty() && typeWinner.get(0).getPriority() == maxPriority) {
+          break;
         }
       }
-      // already found max priority type - stop
-      if (typeWinner != null && typeWinner.getPriority() == maxPriority) {
-        break;
+    }
+    else {
+      for (XLineBreakpointType<?> type : lineTypes) {
+        XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, lineStart);
+        if ((type.canPutAt(file, lineStart, project) || breakpoint != null)) {
+          typeWinner.add(type);
+          lineWinner = lineStart;
+        }
       }
     }
 
-    if (typeWinner == null) {
+    if (typeWinner.isEmpty()) {
       return rejectedPromise(new RuntimeException("Cannot find appropriate type"));
     }
 

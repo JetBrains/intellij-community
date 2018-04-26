@@ -162,12 +162,29 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
     try {
       return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(calculateScopeWithoutReferences(element),
-                                                                                        PsiModificationTracker.MODIFICATION_COUNT,
-                                                                                        this));
+                                                () -> CachedValueProvider.Result.create(buildScopeWithoutReferences(getReferentFileIds(element)),
+                                                  PsiModificationTracker.MODIFICATION_COUNT,
+                                                  this));
     }
-    catch (RuntimeException e) {
-      return onException(e, "scope without code references");
+    catch (RuntimeException e1) {
+      return onException(e1, "scope without code references");
+    }
+  }
+
+  @Nullable
+  @Override
+  public GlobalSearchScope getScopeWithoutImplicitToStringCodeReferences(@NotNull PsiElement aClass) {
+    if (!isServiceEnabledFor(aClass)) return null;
+
+    try {
+      return CachedValuesManager.getCachedValue(aClass,
+                                                () -> CachedValueProvider.Result.create(
+                                                  buildScopeWithoutReferences(getReferentFileIdsViaImplicitToString(aClass)),
+                                                  PsiModificationTracker.MODIFICATION_COUNT,
+                                                  this));
+    }
+    catch (RuntimeException e1) {
+      return onException(e1, "scope without implicit toString references");
     }
   }
 
@@ -516,8 +533,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   }
 
   @Nullable
-  private GlobalSearchScope calculateScopeWithoutReferences(@NotNull PsiElement element) {
-    TIntHashSet referentFileIds = getReferentFileIds(element);
+  private GlobalSearchScope buildScopeWithoutReferences(@Nullable TIntHashSet referentFileIds) {
     if (referentFileIds == null) return null;
 
     return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds, myProjectFileIndex).intersectWith(notScope(
@@ -527,7 +543,19 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @Nullable
   private TIntHashSet getReferentFileIds(@NotNull PsiElement element) {
-    final CompilerElementInfo compilerElementInfo = asCompilerElements(element, true, true);
+    return getReferentFileIds(element, true, (ref, elementPlace) -> myReader.findReferentFileIds(ref, elementPlace == ElementPlace.SRC));
+  }
+
+  @Nullable
+  private TIntHashSet getReferentFileIdsViaImplicitToString(@NotNull PsiElement element) {
+    return getReferentFileIds(element, false, (ref, elementPlace) -> myReader.findFileIdsWithImplicitToString(ref));
+  }
+
+  @Nullable
+  private TIntHashSet getReferentFileIds(@NotNull PsiElement element,
+                                         boolean buildHierarchyForLibraryElements,
+                                         @NotNull ReferentFileSearcher referentFileSearcher) {
+    final CompilerElementInfo compilerElementInfo = asCompilerElements(element, buildHierarchyForLibraryElements, true);
     if (compilerElementInfo == null) return null;
 
     if (!myReadDataLock.tryLock()) return null;
@@ -536,14 +564,14 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
       TIntHashSet referentFileIds = new TIntHashSet();
       for (LightRef ref : compilerElementInfo.searchElements) {
         try {
-          final TIntHashSet referents = myReader.findReferentFileIds(ref, compilerElementInfo.place == ElementPlace.SRC);
+          final TIntHashSet referents = referentFileSearcher.findReferentFiles(ref, compilerElementInfo.place);
           if (referents == null) return null;
           referentFileIds.addAll(referents.toArray());
         }
         catch (StorageException e) {
           throw new RuntimeException(e);
         }
-         }
+      }
       return referentFileIds;
 
     } finally {
@@ -844,5 +872,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   private enum IndexOpenReason {
     COMPILATION_FINISHED,
     UP_TO_DATE_CACHE
+  }
+
+  @FunctionalInterface
+  private interface ReferentFileSearcher {
+    @Nullable
+    TIntHashSet findReferentFiles(@NotNull LightRef ref, @NotNull ElementPlace place) throws StorageException;
   }
 }

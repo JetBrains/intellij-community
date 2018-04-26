@@ -1,2 +1,2 @@
-deprecated: TreeClosed.png
-deprecated: TreeOpen.png
+deprecated: TreeClosed.png -> /nodes/folder.svg
+deprecated: TreeOpen.png -> /nodes/folder.svg

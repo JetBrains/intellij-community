@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -278,6 +279,14 @@ public class DfaUtil {
   static boolean isEffectivelyUnqualified(DfaVariableValue variableValue) {
     return variableValue.getQualifier() == null ||
      variableValue.getQualifier().getSource() instanceof DfaExpressionFactory.ThisSource;
+  }
+
+  public static boolean hasImplicitImpureSuperCall(PsiClass aClass, PsiMethod constructor) {
+    PsiClass superClass = aClass.getSuperClass();
+    if (superClass == null) return false;
+    PsiElement superCtor = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(constructor, constructor.getProject(), superClass);
+    if (!(superCtor instanceof PsiMethod)) return false;
+    return !ControlFlowAnalyzer.isPure((PsiMethod)superCtor);
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

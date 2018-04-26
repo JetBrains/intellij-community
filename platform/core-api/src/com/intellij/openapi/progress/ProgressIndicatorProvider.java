@@ -37,7 +37,7 @@ public abstract class ProgressIndicatorProvider {
 
   @NotNull
   @Deprecated // use ProgressManager.executeNonCancelableSection() instead
-  public abstract NonCancelableSection startNonCancelableSection();
+  protected abstract NonCancelableSection startNonCancelableSection();
 
   @NotNull
   @Deprecated // use ProgressManager.executeNonCancelableSection() instead

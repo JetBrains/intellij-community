@@ -62,12 +62,6 @@ public class Sandbox implements ValidatableSdkAdditionalData {
     return mySandboxHome;
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
-  @Override
-  public Object clone() throws CloneNotSupportedException {
-    return new Sandbox(mySandboxHome, getJavaSdk(), myCurrentJdk);
-  }
-
   @Override
   public void checkValid(SdkModel sdkModel) throws ConfigurationException {
     if (StringUtil.isEmpty(mySandboxHome)) {

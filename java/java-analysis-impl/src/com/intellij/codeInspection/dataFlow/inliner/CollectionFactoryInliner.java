@@ -104,13 +104,10 @@ public class CollectionFactoryInliner implements CallInliner {
       builder.push(result);
     } else {
       DfaVariableValue variableValue = builder.createTempVariable(call.getType());
-      builder.pushForWrite(variableValue) // tmpVar = <Value of collection type>
-        .push(result)
-        .assign() // leave tmpVar on stack: it's result of method call
-        .push(factoryInfo.mySizeField.createValue(factory, variableValue)) // tmpVar.size = <size>
-        .push(factory.getInt(factoryInfo.mySize))
-        .assign()
-        .pop();
+      // tmpVar = <Value of collection type>; leave tmpVar on stack: it's result of method call
+      builder.assign(variableValue, result);
+      // tmpVar.size = <size>
+      builder.assignAndPop(factoryInfo.mySizeField.createValue(factory, variableValue), factory.getInt(factoryInfo.mySize));
     }
     return true;
   }

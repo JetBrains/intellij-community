@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,8 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.addAll;
-import static org.jetbrains.idea.svn.SvnUtil.append;
-import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
+import static org.jetbrains.idea.svn.SvnUtil.*;
 
 public class BranchInfo {
 
@@ -108,11 +107,11 @@ public class BranchInfo {
   @NotNull
   private SvnMergeInfoCache.MergeCheckResult checkAlive(@NotNull SvnChangeList list, @NotNull String branchPath) {
     final Info info = myVcs.getInfo(new File(branchPath));
-    if (info == null || info.getURL() == null || !Url.isAncestor(myBranch.getUrl(), info.getURL().toString())) {
+    if (info == null || info.getURL() == null || !isAncestor(myBranch.getUrl(), info.getURL())) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
 
-    final String subPathUnderBranch = Url.getRelative(myBranch.getUrl(), info.getURL().toString());
+    final String subPathUnderBranch = getRelativeUrl(myBranch.getUrl(), info.getURL());
     MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = checkPaths(list, branchPath, subPathUnderBranch);
 
     if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
@@ -130,7 +129,7 @@ public class BranchInfo {
                                                                           @NotNull String branchPath,
                                                                           final String subPathUnderBranch) {
     MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = MultiMap.create();
-    String myTrunkPathCorrespondingToLocalBranchPath = Url.append(myInfo.getCurrentBranch().getUrl(), subPathUnderBranch);
+    String myTrunkPathCorrespondingToLocalBranchPath = Url.append(myInfo.getCurrentBranch().getUrl().toDecodedString(), subPathUnderBranch);
 
     for (String path : list.getAffectedPaths()) {
       String absoluteInTrunkPath = Url.append(myInfo.getRepoUrl().toString(), path);

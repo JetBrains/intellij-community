@@ -179,6 +179,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   override fun requestTrackerFor(document: Document, requester: Any) {
+    application.assertIsDispatchThread()
     synchronized(LOCK) {
       val multiset = forcedDocuments.computeIfAbsent(document) { HashMultiset.create<Any>() }
       multiset.add(requester)
@@ -192,6 +193,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   override fun releaseTrackerFor(document: Document, requester: Any) {
+    application.assertIsDispatchThread()
     synchronized(LOCK) {
       val multiset = forcedDocuments[document]
       if (multiset == null || !multiset.contains(requester)) {
@@ -254,6 +256,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   private fun onEverythingChanged() {
+    application.assertIsDispatchThread()
     synchronized(LOCK) {
       if (isDisposed) return
       log("onEverythingChanged", null)
@@ -404,6 +407,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   private fun doInstallTracker(virtualFile: VirtualFile, document: Document): LineStatusTracker<*>? {
+    application.assertIsDispatchThread()
     synchronized(LOCK) {
       if (isDisposed) return null
       if (trackers[document] != null) return null
@@ -433,6 +437,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   private fun releaseTracker(document: Document) {
+    application.assertIsDispatchThread()
     synchronized(LOCK) {
       if (isDisposed) return
       val data = trackers.remove(document) ?: return
@@ -855,6 +860,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   fun resetExcludedFromCommitMarkers() {
+    application.assertIsDispatchThread()
     synchronized(LOCK) {
       val documents = mutableListOf<Document>()
 
@@ -875,6 +881,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   internal fun collectPartiallyChangedFilesStates(): List<PartialLocalLineStatusTracker.FullState> {
+    application.assertIsDispatchThread()
     val result = mutableListOf<PartialLocalLineStatusTracker.FullState>()
     synchronized(LOCK) {
       for (data in trackers.values) {
@@ -962,6 +969,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   internal fun notifyInactiveRangesDamaged(virtualFile: VirtualFile) {
+    application.assertIsDispatchThread()
     if (filesWithDamagedInactiveRanges.contains(virtualFile)) return
     if (virtualFile == fileEditorManager.currentFile) return
     filesWithDamagedInactiveRanges.add(virtualFile)

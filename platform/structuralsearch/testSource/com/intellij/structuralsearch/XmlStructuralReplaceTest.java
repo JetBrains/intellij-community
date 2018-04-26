@@ -101,6 +101,12 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     String expected = "<input class=\"other\">";
 
     assertEquals(expected, Replacer.testReplace(in, what, by, options, getProject()));
+
+    String in2 = "<img src=\"foobar.jpg\" alt=\"alt\" width=\"108\" height=\"71\" style=\"display:block\" >";
+    String what2 = "<img alt '_other*>";
+    String by2 = "<img $other$>";
+    assertEquals("<img src=\"foobar.jpg\" width=\"108\" height=\"71\" style=\"display:block\">",
+                 Replacer.testReplace(in2, what2, by2, options, getProject()));
   }
 
   public void testRemoveTag() {

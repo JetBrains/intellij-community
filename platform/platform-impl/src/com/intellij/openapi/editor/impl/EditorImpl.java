@@ -2548,7 +2548,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void run() {
-      if (myEditor != null) {
+      if (myEditor != null && !myEditor.myUpdateCursor) {
         CaretCursor activeCursor = myEditor.myCaretCursor;
 
         long time = System.currentTimeMillis();
@@ -2572,8 +2572,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  // The caller should also request repainting of caret region
   void updateCaretCursor() {
     myUpdateCursor = true;
+    myCaretCursor.myIsShown = true;
   }
 
   private void setCursorPosition() {
@@ -2715,7 +2717,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void setPositions(CaretRectangle[] locations) {
       myStartTime = System.currentTimeMillis();
       myLocations = locations;
-      myIsShown = true;
     }
 
     private void repaint() {
@@ -4382,8 +4383,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean canImport(@NotNull JComponent comp, @NotNull DataFlavor[] transferFlavors) {
-      Editor editor = getEditor(comp);
-      final EditorDropHandler dropHandler = ((EditorImpl)editor).getDropHandler();
+      EditorImpl editor = getEditor(comp);
+      final EditorDropHandler dropHandler = editor.getDropHandler();
       if (dropHandler != null && dropHandler.canHandleDrop(transferFlavors)) {
         return true;
       }

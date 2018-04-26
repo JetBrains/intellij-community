@@ -6,20 +6,21 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.ui.IconCache
+import gnu.trove.THashMap
 import org.apache.batik.anim.dom.SVGDOMImplementation
 import org.apache.batik.dom.GenericDOMImplementation
-import org.apache.batik.svggen.ImageHandlerBase64Encoder
-import org.apache.batik.svggen.SVGGeneratorContext
-import org.apache.batik.svggen.SVGGraphics2D
-import org.apache.batik.svggen.SVGSyntax
+import org.apache.batik.svggen.*
 import org.w3c.dom.Element
 import java.awt.Component
 import java.awt.GraphicsConfiguration
 import java.awt.Image
+import java.awt.image.BufferedImage
 import java.io.StringWriter
 import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.Icon
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
@@ -41,44 +42,66 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
 
     context.imageHandler = object : ImageHandlerBase64Encoder() {
       override fun handleImage(image: Image, imageElement: Element, generatorContext: SVGGeneratorContext) {
-        val url = findImagePath(image)
-        if (url == null) {
-          throw RuntimeException("unknown image")
-        }
-
-        imageElement.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", url)
+        imageElement.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", findImagePath(image))
       }
 
-      private fun findImagePath(image: Image): String? {
+      private fun findImagePath(image: Image): String {
+        fun isImage(iconWrapper: Icon): Boolean {
+          val thatImage = (iconWrapper as IconLoader.CachedImageIcon).doGetRealIcon()?.image
+          if (thatImage is BufferedImage) {
+            throw RuntimeException("BufferedImage - it seems it is scaled icon and so, cannot be matched, please investigate why scaled")
+          }
+          return thatImage === image
+        }
+
         for (name in arrayOf("checkBox", "radio", "gear", "spinnerRight")) {
           val iconWrapper = when (name) {
                               "gear" -> IconLoader.getIcon("/general/gear.png")
-                              else -> IconCache.getIcon(name)
-                            } as? IconLoader.CachedImageIcon ?: continue
-          if (iconWrapper.doGetRealIcon()?.image == image) {
-            return getIconRelativePath(iconWrapper)
+                              else -> IconCache.getIcon(name, findIfNotInCache = false)
+                            } ?: continue
+          if (isImage(iconWrapper)) {
+            return getIconRelativePath(iconWrapper.toString())
           }
         }
         for (name in arrayOf("checkBox", "radio")) {
-          val iconWrapper = IconCache.getIcon(name, true, false) as IconLoader.CachedImageIcon
-          if (iconWrapper.doGetRealIcon()?.image == image) {
-            return getIconRelativePath(iconWrapper)
+          val iconWrapper = IconCache.getIcon(name, selected = true, findIfNotInCache = false) ?: continue
+          if (isImage(iconWrapper)) {
+            return getIconRelativePath(iconWrapper.toString())
           }
         }
-        return null
+
+        throw RuntimeException("unknown image")
+      }
+    }
+
+    context.errorHandler = object: ErrorHandler {
+      override fun handleError(error: SVGGraphics2DIOException) = throw error
+
+      override fun handleError(error: SVGGraphics2DRuntimeException) = throw error
+    }
+
+    class PrefixInfo() {
+      var currentId = 0
+    }
+
+    context.idGenerator = object : SVGIDGenerator() {
+      private val prefixMap = THashMap<String, PrefixInfo>()
+
+      override fun generateID(prefix: String): String {
+        val info = prefixMap.getOrPut(prefix) { PrefixInfo() }
+        return "${if (prefix == "clipPath") "" else prefix}${info.currentId++}"
       }
     }
   }
 
-  private fun getIconRelativePath(iconWrapper: IconLoader.CachedImageIcon): String {
-    val outputPath = iconWrapper.toString()
-    for ((moduleName, relativePath) in mapOf("intellij.platform.icons" to "platform/icons",
+  private fun getIconRelativePath(outputPath: String): String {
+    for ((moduleName, relativePath) in mapOf("intellij.platform.icons" to "platform/icons/src",
                                              "intellij.platform.ide.impl" to "platform/platform-impl/src")) {
       val index = outputPath.indexOf(moduleName)
       if (index > 0) {
-        return FileUtilRt.toSystemIndependentName(svgFileDir
-                                                    .relativize(Paths.get(PathManagerEx.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */)))
-                                                    .toString())
+        val iconPath = Paths.get(PathManagerEx.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */))
+        assertThat(iconPath).exists()
+        return FileUtilRt.toSystemIndependentName(svgFileDir.relativize(iconPath).toString())
       }
     }
 

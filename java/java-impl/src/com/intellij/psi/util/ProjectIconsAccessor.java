@@ -54,7 +54,7 @@ public class ProjectIconsAccessor {
   private static final int ICON_MAX_HEIGHT = 16;
   private static final int ICON_MAX_SIZE = 2 * 1024 * 1024; // 2Kb
 
-  private static final List<String> ICON_EXTENSIONS = ContainerUtil.immutableList("png", "ico", "bmp", "gif", "jpg");
+  private static final List<String> ICON_EXTENSIONS = ContainerUtil.immutableList("png", "ico", "bmp", "gif", "jpg", "svg");
 
   private final Project myProject;
 

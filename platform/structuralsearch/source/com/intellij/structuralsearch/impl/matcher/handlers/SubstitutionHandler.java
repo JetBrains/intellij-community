@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
@@ -21,9 +20,7 @@ import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Matching handler that manages substitutions matching
@@ -60,6 +57,8 @@ public class SubstitutionHandler extends MatchingHandler {
   };
 
   public SubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+    if (minOccurs < 0) throw new IllegalArgumentException("minOccurs must be greater or equal to 0");
+    if (minOccurs > maxOccurs) throw new IllegalArgumentException("maxOccurs must be greater equal to minOccurs");
     this.name = name;
     this.maxOccurs = maxOccurs;
     this.minOccurs = minOccurs;
@@ -133,11 +132,6 @@ public class SubstitutionHandler extends MatchingHandler {
       return false;
     }
 
-    if (maxOccurs==0) {
-      totalMatchedOccurs++;
-      return false;
-    }
-
     MatchResult result = context.hasResult() ? context.getResult().findChild(name) : null;
 
     if (result == null && context.getPreviousResult() != null) {
@@ -202,7 +196,6 @@ public class SubstitutionHandler extends MatchingHandler {
           );
 
           substitution.setMatchRef(new SmartPsiPointer(match));
-
           substitution.setMultipleMatch(true);
 
           if (substitution.isScopeMatch()) {
@@ -267,17 +260,10 @@ public class SubstitutionHandler extends MatchingHandler {
     return result;
   }
 
-  boolean validate(MatchContext context, Class elementContext) {
-    final MatchResult substitution = context.hasResult() ? context.getResult().findChild(name) : null;
-
-    if (minOccurs >= 1 &&
-        (substitution == null || StructuralSearchUtil.getElementContextByPsi(substitution.getMatch()) != elementContext)) {
-      return false;
-    } else if (maxOccurs <= 1 && substitution != null && substitution.hasChildren()) {
-      return false;
-    } else if (maxOccurs==0 && totalMatchedOccurs!=-1) {
-      return false;
-    }
+  @Override
+  boolean validate(MatchContext context, int matchedOccurs) {
+    if (minOccurs > matchedOccurs) return false;
+    if (maxOccurs < matchedOccurs) return false;
     return true;
   }
 
@@ -314,85 +300,6 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   @Override
-  public boolean matchInAnyOrder(NodeIterator patternNodes, NodeIterator matchedNodes, final MatchContext context) {
-    final MatchResultImpl saveResult = context.hasResult() ? context.getResult() : null;
-    context.setResult(null);
-
-    try {
-
-      if (patternNodes.hasNext() && !matchedNodes.hasNext()) {
-        return validateSatisfactionOfHandlers(patternNodes, context);
-      }
-
-      Set<PsiElement> matchedElements = null;
-
-      for(; patternNodes.hasNext(); patternNodes.advance()) {
-        int matchedOccurs = 0;
-        final PsiElement patternNode = patternNodes.current();
-        final CompiledPattern pattern = context.getPattern();
-        final MatchingHandler handler = pattern.getHandler(patternNode);
-
-        final PsiElement startMatching = matchedNodes.current();
-        do {
-          final PsiElement element = handler.getPinnedNode();
-          final PsiElement matchedNode = (element != null) ? element : matchedNodes.current();
-
-          if (element == null) matchedNodes.advance();
-          if (!matchedNodes.hasNext()) matchedNodes.reset();
-
-          if (matchedOccurs <= maxOccurs &&
-              (matchedElements == null || !matchedElements.contains(matchedNode))) {
-
-            if (handler.match(patternNode, matchedNode, context)) {
-              ++matchedOccurs;
-              if (matchedElements == null) matchedElements = new HashSet<>();
-              matchedElements.add(matchedNode);
-              if (handler.shouldAdvanceThePatternFor(patternNode, matchedNode)) {
-                break;
-              }
-            } else if (element != null) {
-              return false;
-            }
-
-            // clear state of dependent objects
-            clearingVisitor.clearState(pattern, patternNode);
-          }
-
-          // passed of elements and does not found the match
-          if (startMatching == matchedNodes.current()) {
-            final boolean result = validateSatisfactionOfHandlers(patternNodes, context) &&
-                                   matchedOccurs >= minOccurs && matchedOccurs <= maxOccurs;
-            if (result && matchedElements != null) {
-              context.notifyMatchedElements(matchedElements);
-            }
-            return result;
-          }
-        } while(true);
-
-        if (!handler.shouldAdvanceThePatternFor(patternNode, null)) {
-          patternNodes.rewind();
-        }
-      }
-
-      final boolean result = validateSatisfactionOfHandlers(patternNodes, context);
-      if (result && matchedElements != null) {
-        context.notifyMatchedElements(matchedElements);
-      }
-      return result;
-    } finally {
-      if (saveResult!=null) {
-        if (context.hasResult()) {
-          final List<MatchResult> children = context.getResult().getChildren();
-          for (MatchResult child : children) {
-            saveResult.addChild(child);
-          }
-        }
-        context.setResult(saveResult);
-      }
-    }
-  }
-
-  @Override
   public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
     return doMatchSequentially(patternNodes, matchNodes, context);
   }
@@ -422,7 +329,7 @@ public class SubstitutionHandler extends MatchingHandler {
           break;
         }
         fNodes.advance();
-        flag = true;;
+        flag = true;
       }
 
       if (matchedOccurs != minOccurs) {

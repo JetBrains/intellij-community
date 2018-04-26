@@ -55,25 +55,27 @@ public class JsonSchemaReadTest extends CompletionTestCase {
   public void testMainSchemaHighlighting() {
     final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
     final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(myProject);
-    Assert.assertEquals(1, providers.size());
-    final VirtualFile mainSchema = providers.get(0).getSchemaFile();
-    assertNotNull(mainSchema);
-    assertTrue(service.isSchemaFile(mainSchema));
+    Assert.assertEquals(JsonSchemaProjectSelfProviderFactory.TOTAL_PROVIDERS, providers.size());
+    for (JsonSchemaFileProvider provider: providers) {
+      final VirtualFile mainSchema = provider.getSchemaFile();
+      assertNotNull(mainSchema);
+      assertTrue(service.isSchemaFile(mainSchema));
 
-    enableInspectionTool(new JsonSchemaComplianceInspection());
-    Disposer.register(getTestRootDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        JsonSchemaTestServiceImpl.setProvider(null);
-      }
-    });
+      enableInspectionTool(new JsonSchemaComplianceInspection());
+      Disposer.register(getTestRootDisposable(), new Disposable() {
+        @Override
+        public void dispose() {
+          JsonSchemaTestServiceImpl.setProvider(null);
+        }
+      });
 
-    configureByExistingFile(mainSchema);
-    final List<HighlightInfo> infos = doHighlighting();
-    for (HighlightInfo info : infos) {
-      if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
-        fail(String.format("%s in: %s", info.getDescription(),
-                           myEditor.getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))));
+      configureByExistingFile(mainSchema);
+      final List<HighlightInfo> infos = doHighlighting();
+      for (HighlightInfo info : infos) {
+        if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
+          fail(String.format("%s in: %s", info.getDescription(),
+                             myEditor.getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))));
+        }
       }
     }
   }

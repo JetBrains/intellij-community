@@ -23,13 +23,15 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.VcsCachingHistory;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
@@ -70,7 +72,6 @@ class FileHistoryFilterer extends VcsLogFilterer {
   @Nullable private final Hash myHash;
   @NotNull private final IndexDataGetter myIndexDataGetter;
   @NotNull private final VirtualFile myRoot;
-  @NotNull private final VcsHistoryCache myVcsHistoryCache;
 
   public FileHistoryFilterer(@NotNull VcsLogData logData, @NotNull FilePath filePath, @Nullable Hash hash, @NotNull VirtualFile root) {
     super(logData.getLogProviders(), logData.getStorage(), logData.getTopCommitsCache(), logData.getCommitDetailsGetter(),
@@ -80,7 +81,6 @@ class FileHistoryFilterer extends VcsLogFilterer {
     myHash = hash;
     myRoot = root;
     myIndexDataGetter = ObjectUtils.assertNotNull(myIndex.getDataGetter());
-    myVcsHistoryCache = ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache();
   }
 
   @NotNull
@@ -105,22 +105,19 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
 
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(myRoot);
-    if (vcs != null) {
-      VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
-      if (provider != null) {
-        try {
-          VisiblePack visiblePack = filterWithProvider(vcs, provider, dataPack, sortType, filters);
-          LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
-                    " for computing history for " +
-                    myFilePath +
-                    " with history provider");
-          checkNotEmpty(dataPack, visiblePack, false);
-          return Pair.create(visiblePack, commitCount);
-        }
-        catch (VcsException e) {
-          LOG.error(e);
-          return super.filter(dataPack, sortType, filters, commitCount);
-        }
+    if (vcs != null && vcs.getVcsHistoryProvider() != null) {
+      try {
+        VisiblePack visiblePack = filterWithProvider(vcs, dataPack, sortType, filters);
+        LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
+                  " for computing history for " +
+                  myFilePath +
+                  " with history provider");
+        checkNotEmpty(dataPack, visiblePack, false);
+        return Pair.create(visiblePack, commitCount);
+      }
+      catch (VcsException e) {
+        LOG.error(e);
+        return super.filter(dataPack, sortType, filters, commitCount);
       }
     }
 
@@ -144,31 +141,13 @@ class FileHistoryFilterer extends VcsLogFilterer {
   }
 
   @NotNull
-  private VisiblePack filterWithProvider(@NotNull AbstractVcs vcs, @NotNull VcsHistoryProvider provider,
+  private VisiblePack filterWithProvider(@NotNull AbstractVcs vcs,
                                          @NotNull DataPack dataPack,
                                          @NotNull PermanentGraph.SortType sortType,
                                          @NotNull VcsLogFilterCollection filters) throws VcsException {
-    VcsAbstractHistorySession session = null;
-    if (provider instanceof VcsCacheableHistorySessionFactory && myHash == null) {
-      session = myVcsHistoryCache.getFull(myFilePath, vcs.getKeyInstanceMethod(), (VcsCacheableHistorySessionFactory)provider);
-    }
+    VcsRevisionNumber revisionNumber = myHash != null ? VcsLogUtil.convertToRevisionNumber(myHash) : null;
+    List<VcsFileRevision> revisions = VcsCachingHistory.collect(vcs, myFilePath, revisionNumber);
 
-    if (session == null || session.getRevisionList().isEmpty() || session.shouldBeRefreshed()) {
-      VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter();
-      if (provider instanceof VcsHistoryProviderEx && myHash != null) {
-        ((VcsHistoryProviderEx)provider).reportAppendableHistory(myFilePath, VcsLogUtil.convertToRevisionNumber(myHash), partner);
-      }
-      else {
-        provider.reportAppendableHistory(myFilePath, partner);
-      }
-      session = partner.getSession();
-
-      if (provider instanceof VcsCacheableHistorySessionFactory && myHash == null) {
-        myVcsHistoryCache.put(myFilePath, null, vcs.getKeyInstanceMethod(), session, (VcsCacheableHistorySessionFactory)provider, true);
-      }
-    }
-
-    List<VcsFileRevision> revisions = session.getRevisionList();
     if (revisions.isEmpty()) return VisiblePack.EMPTY;
 
     Map<Integer, FilePath> pathsMap = ContainerUtil.newHashMap();

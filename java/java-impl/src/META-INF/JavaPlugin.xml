@@ -199,6 +199,12 @@
     <callHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.call.JavaCallHierarchyProvider"/>
     <runLineMarkerContributor language="JAVA" order="after applicationRunLineMarkerProvider"
                               implementationClass="com.intellij.testIntegration.TestRunLineMarkerProvider"/>
+    <projectService serviceImplementation="com.intellij.testIntegration.TestFailedLineManager"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="TestFailedLine"
+                     enabledByDefault="true" level="ERROR"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
+                     displayName="Highlight problem line in test"
+                     implementationClass="com.intellij.testIntegration.TestFailedLineInspection"/>
     <testGenerator language="JAVA" implementationClass="com.intellij.testIntegration.createTest.JavaTestGenerator" />
     <testCreator language="JAVA" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
@@ -220,6 +226,7 @@
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaMethodGroupRuleProvider"/>
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.NonJavaFileGroupRuleProvider"/>
     <qualifiedNameProvider implementation="com.intellij.ide.actions.JavaQualifiedNameProvider"/>
+    <virtualFileQualifiedNameProvider implementation="com.intellij.ide.actions.JavaVirtualFileQualifiedNameProvider"/>
     <referenceImporter implementation="com.intellij.codeInsight.daemon.impl.JavaReferenceImporter"/>
     <elementDescriptionProvider implementation="com.intellij.ide.util.JavaDeleteTypeDescriptionProvider"/>
     <elementDescriptionProvider implementation="com.intellij.usageView.JavaUsageViewDescriptionProvider"/>
@@ -341,6 +348,7 @@
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.JavadocCopyPastePreProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
+    <customPasteProvider implementation="com.intellij.codeInsight.editorActions.RawStringLiteralPasteProcessor"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ArrayVariableMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.VariableOfTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ComponentTypeOfMacro"/>
@@ -404,7 +412,10 @@
              order="before explicitlyImported"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ReferenceListWeigher" id="referenceList"
              order="before samePsiMember"/>
+    <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.NestedIfJoinLinesHandler"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.BlockJoinLinesHandler"/>
+    <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.ChainCallJoinLinesHandler"/>
+    <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.AssignmentSequenceJoinLinesHandler"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.LiteralJoinLinesHandler"/>
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider"
@@ -548,6 +559,11 @@
                      bundle="messages.InspectionsBundle"
                      key="inspection.redundant.explicit.close"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="WrapperTypeMayBePrimitive"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     displayName="Wrapper type may be primitive"
+                     implementationClass="com.intellij.codeInspection.WrapperTypeMayBePrimitiveInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantLambdaParameterType"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="INFORMATION"
@@ -763,6 +779,11 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.undeclared.service.usage.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.java19api.Java9UndeclaredServiceUsageInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CastCanBeRemovedNarrowingVariableType"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.cast.can.be.removed.narrowing.variable.type.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.redundantCast.CastCanBeRemovedNarrowingVariableTypeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantComparatorComparing"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING"
@@ -773,6 +794,11 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.suspicious.list.remove.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.SuspiciousListRemoveInLoopInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ClassGetClass"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.class.getclass.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.ClassGetClassInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="FoldExpressionIntoStream"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
                      enabledByDefault="true" level="INFORMATION"
@@ -907,15 +933,12 @@
                         serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
-    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
     <projectService serviceImplementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager"/>
+    <diff.DiffExtension implementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodDiffViewerCustomizer"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
     <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
-
-    <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 
     <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
     <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>
@@ -941,6 +964,14 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
+      <category>Java/Strings</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertRawToStringLiteralAction</className>
+      <category>Java/Strings</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertStringLiteralToRawAction</className>
       <category>Java/Strings</category>
     </intentionAction>
     <intentionAction>
@@ -1164,5 +1195,8 @@
       <className>com.intellij.codeInsight.intention.impl.SplitFilterAction</className>
       <category>Java/Streams</category>
     </intentionAction>
+    <java.error.fix errorCode="lambda.variable.must.be.final"
+                    implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"
+    />
   </extensions>
 </idea-plugin>

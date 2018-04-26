@@ -62,7 +62,7 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
       int endLine = getLineNumber(document, end.getTextRange().getEndOffset()) + 1;
       String lineText = startLine == endLine ? Integer.toString(startLine) : startLine + ".." + endLine;
       EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-      return new TextChunk(colorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), lineText + " ");
+      return new TextChunk(colorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), lineText + "  ");
     }
     return null;
   }

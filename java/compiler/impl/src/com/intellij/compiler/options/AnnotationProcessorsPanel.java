@@ -76,7 +76,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     myTree = new Tree(new MyTreeModel());
     myTree.setRootVisible(false);
         final JPanel treePanel =
-          ToolbarDecorator.createDecorator(myTree).addExtraAction(new AnActionButton("Move to", AllIcons.Actions.Nextfile) {
+          ToolbarDecorator.createDecorator(myTree).addExtraAction(new AnActionButton("Move to", AllIcons.Actions.Forward) {
             @Override
             public void actionPerformed(AnActionEvent e) {
               final MyModuleNode node = (MyModuleNode)myTree.getSelectionPath().getLastPathComponent();

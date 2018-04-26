@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.schemeManager.SchemeFileTracker
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
@@ -12,6 +13,7 @@ import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
@@ -26,7 +28,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open val componentManager: ComponentManager? = null
 
-  protected open val useVfs = true
+  protected open fun createFileChangeSubscriber(): ((schemeManager: SchemeManagerImpl<*, *>) -> Unit)? = null
 
   override final fun <T : Any, MutableT : T> create(directoryName: String,
                                                     processor: SchemeProcessor<T, MutableT>,
@@ -35,7 +37,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                     schemeNameToFileName: SchemeNameToFileName,
                                                     streamProvider: StreamProvider?,
                                                     directoryPath: Path?,
-                                                    autoSave: Boolean): SchemeManager<T> {
+                                                    isAutoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
                                     processor,
@@ -44,9 +46,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     roamingType,
                                     presentableName,
                                     schemeNameToFileName,
-                                    componentManager?.messageBus,
-                                    useVfs)
-    if (autoSave) {
+                                    if (streamProvider != null && streamProvider.isApplicable(path, roamingType)) null else createFileChangeSubscriber())
+    if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
     }
@@ -98,8 +99,6 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   @Suppress("unused")
   private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
-    override val useVfs = false
-
     override val componentManager: ComponentManager
       get() = ApplicationManager.getApplication()
 
@@ -119,6 +118,13 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   @Suppress("unused")
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
+
+    override fun createFileChangeSubscriber(): ((schemeManager: SchemeManagerImpl<*, *>) -> Unit)? {
+      return { schemeManager ->
+        @Suppress("UNCHECKED_CAST")
+        project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, project))
+      }
+    }
 
     override fun pathToFile(path: String): Path {
       val projectFileDir = (project.stateStore as? IProjectStore)?.projectConfigDir

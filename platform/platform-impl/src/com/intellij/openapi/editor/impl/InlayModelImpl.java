@@ -125,7 +125,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   @Override
   public void dispose() {
-    myInlayTree.dispose();
+    myInlayTree.dispose(myEditor.getDocument());
   }
 
   @Nullable

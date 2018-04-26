@@ -210,6 +210,13 @@ public class CommandMerger {
 
     boolean isInsideStartFinishGroup = false;
     while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
+      if (editor != null && undoRedo.isBlockedByOtherChanges()) {
+        UndoRedo blockingChange = createUndoOrRedo(null, isUndo);
+        if (blockingChange != null && blockingChange.myUndoableGroup != undoRedo.myUndoableGroup) {
+          if (undoRedo.confirmSwitchTo(blockingChange)) blockingChange.execute(false, true);
+          break;
+        }
+      }
       if (!undoRedo.execute(false, isInsideStartFinishGroup)) return;
       isInsideStartFinishGroup = undoRedo.myUndoableGroup.isInsideStartFinishGroup(isUndo, isInsideStartFinishGroup);
       if (isInsideStartFinishGroup) continue;

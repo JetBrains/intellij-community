@@ -650,4 +650,24 @@ public class Foo {
     importClass()
     myFixture.checkResult textAfter
   }
+
+  void "test incomplete method returning its type parameter"() {
+    myFixture.addClass('package foo; public class Context {}')
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  <Context> java.util.ArrayList<Contex<caret>t> abc
+}  
+'''
+    assert myFixture.filterAvailableIntentions("Import class").empty
+  }
+
+  void "test even more incomplete method returning its type parameter"() {
+    myFixture.addClass('package foo; public class Context {}')
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  <Context> Contex<caret>t
+}  
+'''
+    assert myFixture.filterAvailableIntentions("Import class").empty
+  }
 }

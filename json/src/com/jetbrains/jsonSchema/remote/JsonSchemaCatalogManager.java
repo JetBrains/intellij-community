@@ -5,7 +5,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.FileDownloadingAdapter;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.JsonCachedValues;
@@ -14,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -25,7 +28,7 @@ public class JsonSchemaCatalogManager {
   @NotNull private final ConcurrentMap<String, String> myResolvedMappings = ContainerUtil.newConcurrentMap();
   private static final String NO_CACHE = "$_$_WS_NO_CACHE_$_$";
   private static final String EMPTY = "$_$_WS_EMPTY_$_$";
-  private static final AtomicBoolean myIsEnabled = new AtomicBoolean(!ApplicationManager.getApplication().isUnitTestMode());
+  private static final AtomicBoolean myIsEnabled = new AtomicBoolean(true);
 
   public JsonSchemaCatalogManager(@NotNull Project project) {
     myProject = project;
@@ -37,6 +40,8 @@ public class JsonSchemaCatalogManager {
   }
 
   public void startUpdates() {
+    // ignore schema catalog in tests
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     RemoteFileManager instance = RemoteFileManager.getInstance();
     instance.addRemoteContentProvider(myRemoteContentProvider);
     myCatalog = JsonFileResolver.urlToFile(DEFAULT_CATALOG);
@@ -61,6 +66,52 @@ public class JsonSchemaCatalogManager {
     }
 
     return null;
+  }
+
+  public List<String> getAllCatalogSchemas() {
+    if (myCatalog != null) {
+      List<Pair<Collection<String>, String>> catalog = JsonCachedValues.getSchemaCatalog(myCatalog, myProject);
+      if (catalog == null) return ContainerUtil.emptyList();
+      List<String> results = ContainerUtil.newArrayListWithCapacity(catalog.size());
+      for (Pair<Collection<String>, String> item: catalog) {
+        results.add(item.second);
+      }
+      return results;
+    }
+
+    return ContainerUtil.emptyList();
+  }
+
+  private final Map<Runnable, FileDownloadingAdapter> myDownloadingAdapters = ContainerUtil.createConcurrentWeakMap();
+  public void registerCatalogUpdateCallback(Runnable callback) {
+    if (myCatalog instanceof HttpVirtualFile) {
+      RemoteFileInfo info = ((HttpVirtualFile)myCatalog).getFileInfo();
+      if (info != null) {
+        FileDownloadingAdapter adapter = new FileDownloadingAdapter() {
+          @Override
+          public void fileDownloaded(VirtualFile localFile) {
+            callback.run();
+          }
+        };
+        myDownloadingAdapters.put(callback, adapter);
+        info.addDownloadingListener(adapter);
+      }
+    }
+  }
+
+  public void unregisterCatalogUpdateCallback(Runnable callback) {
+    if (!myDownloadingAdapters.containsKey(callback)) return;
+
+    if (myCatalog instanceof HttpVirtualFile) {
+      RemoteFileInfo info = ((HttpVirtualFile)myCatalog).getFileInfo();
+      if (info != null) {
+        info.removeDownloadingListener(myDownloadingAdapters.get(callback));
+      }
+    }
+  }
+
+  public void triggerUpdateCatalog() {
+    JsonFileResolver.startFetchingHttpFileIfNeeded(myCatalog);
   }
 
   @Nullable

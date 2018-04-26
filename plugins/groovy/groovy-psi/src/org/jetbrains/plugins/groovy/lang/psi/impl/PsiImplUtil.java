@@ -162,8 +162,7 @@ public class PsiImplUtil {
       final GrStringInjection stringInjection = PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class);
       GrStringUtil.wrapInjection(stringInjection);
       assert stringInjection != null;
-      final PsiElement replaced = oldExpr.replaceWithExpression(newExpr, removeUnnecessaryParentheses);
-      return (GrExpression)replaced;
+      return oldExpr.replaceWithExpression(newExpr, removeUnnecessaryParentheses);
     }
 
     //check priorities    
@@ -757,8 +756,8 @@ public class PsiImplUtil {
   }
 
   public static boolean hasImmutableAnnotation(PsiModifierList modifierList) {
-    return modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE) != null ||
-           modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE) != null;
+    return modifierList.hasAnnotation(GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE) ||
+           modifierList.hasAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE);
   }
 
   public static boolean isWhiteSpaceOrNls(@Nullable PsiElement sibling) {

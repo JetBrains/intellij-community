@@ -124,7 +124,7 @@
       </action>
       <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction" icon="AllIcons.Actions.Properties"/>
       <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
-              icon="AllIcons.Actions.Exclude"/>
+              icon="AllIcons.General.Remove"/>
       <action id="ChangesView.Edit" class="com.intellij.openapi.vcs.changes.actions.EditAction"/>
       <separator/>
       <reference ref="ChangesView.NewChangeList"/>
@@ -178,7 +178,7 @@
       <reference ref="ShelvedChanges.ShowHideDeleted" />
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
      <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"
-              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.SecondaryGroup"/>
+              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.GearPlain"/>
     </group>
 
     <!--a group for plugins to add their actions-->
@@ -256,9 +256,9 @@
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
 
     <action id="Diff.PrevChange" class="com.intellij.openapi.actionSystem.EmptyAction"
-            icon="AllIcons.Actions.Prevfile" use-shortcut-of="PreviousTab"/>
+            icon="AllIcons.Actions.Back" use-shortcut-of="PreviousTab"/>
     <action id="Diff.NextChange" class="com.intellij.openapi.actionSystem.EmptyAction"
-            icon="AllIcons.Actions.Nextfile" use-shortcut-of="NextTab"/>
+            icon="AllIcons.Actions.Forward" use-shortcut-of="NextTab"/>
 
     <group id="EditorGutterVcsPopupMenu">
       <reference ref="Annotate"/>

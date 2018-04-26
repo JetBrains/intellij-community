@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.kotlin.model
 
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.util.*
 
 // Attention: it's supposed that Project Structure dialog is open both before the function
@@ -11,15 +13,30 @@ fun KotlinGuiTestCase.checkFacetInOneModule(expectedFacet: FacetStructure, varar
     jList("Modules").clickItem("Modules")
 
     try {
-      for(step in 0 until path.size){
-        jTree(path[0]).doubleClickXPath(*path.copyOfRange(0, step + 1))
-      }
+      jTree(path[0]).selectWithKeyboard(this@checkFacetInOneModule, *path)
       logUIStep("Check facet for module `${path.joinToString(" -> ")}`")
       checkFacetState(expectedFacet)
     }
     catch (e: Exception) {
       logError("Kotlin facet for module `${path.joinToString(" -> ")}` not found")
     }
+  }
+}
+
+fun ExtendedTreeFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
+  fun currentValue(): String {
+    val selectedRow = target().selectionRows.first()
+    return valueAt(selectedRow) ?: throw IllegalStateException("Nothing is selected in the tree")
+  }
+  click()
+  testCase.shortcut(Key.HOME) // select the top row
+  for((index, step) in path.withIndex()){
+    if(currentValue() != step) {
+      testCase.typeText(step)
+      while (currentValue() != step)
+        testCase.shortcut(Key.DOWN)
+    }
+    if(index < path.size -1) testCase.shortcut(Key.RIGHT)
   }
 }
 

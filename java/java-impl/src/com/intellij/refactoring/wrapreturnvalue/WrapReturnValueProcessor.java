@@ -282,6 +282,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     final Project project = myMethod.getProject();
     final ReturnValueBeanBuilder beanClassBuilder = new ReturnValueBeanBuilder();
     beanClassBuilder.setProject(project);
+    beanClassBuilder.setFile(myMethod.getContainingFile());
     beanClassBuilder.setTypeArguments(myTypeParameters);
     beanClassBuilder.setClassName(myClassName);
     beanClassBuilder.setPackageName(myPackageName);

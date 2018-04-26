@@ -914,7 +914,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       Evaluator incrementImpl = createBinaryEvaluator(
         operandEvaluator, operandType,
-        new LiteralEvaluator(Integer.valueOf(1), "int"), PsiType.INT,
+        new LiteralEvaluator(1, "int"), PsiType.INT,
         operation == JavaTokenType.PLUSPLUS ? JavaTokenType.PLUS : JavaTokenType.MINUS,
         unboxedOperandType!= null? unboxedOperandType : operandType
       );
@@ -1368,8 +1368,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Nullable
     private PsiClass getContainingClass(@NotNull PsiVariable variable) {
-      PsiElement element = PsiTreeUtil.getParentOfType(variable.getParent(), PsiClass.class, false);
-      return element == null ? myContextPsiClass : (PsiClass)element;
+      PsiClass element = PsiTreeUtil.getParentOfType(variable.getParent(), PsiClass.class, false);
+      return element == null ? myContextPsiClass : element;
     }
 
     @Nullable

@@ -15,18 +15,10 @@
  */
 package com.intellij.java.find;
 
-import com.intellij.find.EditorSearchSession;
-import com.intellij.find.editorHeaderActions.*;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
-import javax.swing.text.JTextComponent;
-
-public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureTestCase {
+public class FindInEditorMultiCaretTest extends AbstractFindInEditorTest {
   public void testBasic() {
     init("abc\n" +
          "abc\n" +
@@ -154,90 +146,5 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
     setTextToFind("e");
     allOccurrences();
     checkResultByText("som<selection>e<caret></selection> t<selection>e<caret></selection>xt");
-  }
-
-  private void setTextToFind(String text) {
-    EditorSearchSession editorSearchSession = getEditorSearchComponent();
-    assertNotNull(editorSearchSession);
-    JTextComponent searchField = editorSearchSession.getComponent().getSearchTextComponent();
-    assertNotNull(searchField);
-    for (int i = 0; i <= text.length(); i++) {
-      searchField.setText(text.substring(0, i)); // emulate typing chars one by one
-      IdeEventQueue.getInstance().flushQueue();
-    }
-  }
-
-  private void nextOccurrence() {
-    executeHeaderAction(new NextOccurrenceAction());
-  }
-
-  private void prevOccurrence() {
-    executeHeaderAction(new PrevOccurrenceAction());
-  }
-
-  private void addOccurrence() {
-    executeHeaderAction(new AddOccurrenceAction());
-  }
-
-  private void removeOccurrence() {
-    executeHeaderAction(new RemoveOccurrenceAction());
-  }
-
-  private void allOccurrences() {
-    executeHeaderAction(new SelectAllAction());
-  }
-
-  private void nextOccurrenceFromEditor() {
-    myFixture.performEditorAction(IdeActions.ACTION_FIND_NEXT);
-  }
-
-  private void prevOccurrenceFromEditor() {
-    myFixture.performEditorAction(IdeActions.ACTION_FIND_PREVIOUS);
-  }
-
-  private void addOccurrenceFromEditor() {
-    myFixture.performEditorAction(IdeActions.ACTION_SELECT_NEXT_OCCURENCE);
-  }
-
-  private void removeOccurrenceFromEditor() {
-    myFixture.performEditorAction(IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE);
-  }
-
-  private void allOccurrencesFromEditor() {
-    myFixture.performEditorAction(IdeActions.ACTION_SELECT_ALL_OCCURRENCES);
-  }
-
-  private void closeFind() {
-    EditorSearchSession editorSearchSession = getEditorSearchComponent();
-    editorSearchSession.close();
-  }
-
-  private void executeHeaderAction(AnAction action) {
-    DataContext context = new DataManagerImpl.MyDataContext(getEditorSearchComponent().getComponent());
-    AnActionEvent e = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_TOOLBAR, null, context);
-    action.beforeActionPerformedUpdate(e);
-    if (e.getPresentation().isEnabled() && e.getPresentation().isVisible()) {
-      action.actionPerformed(e);
-    }
-  }
-
-  private void initFind() {
-    myFixture.performEditorAction(IdeActions.ACTION_FIND);
-  }
-
-  private void initReplace() {
-    myFixture.performEditorAction(IdeActions.ACTION_REPLACE);
-  }
-
-  private EditorSearchSession getEditorSearchComponent() {
-    return EditorSearchSession.get(myFixture.getEditor());
-  }
-  
-  private void init(String text) {
-    myFixture.configureByText(getTestName(false) + ".txt", text);
-  }
-
-  private void checkResultByText(String text) {
-    myFixture.checkResult(text);
   }
 }

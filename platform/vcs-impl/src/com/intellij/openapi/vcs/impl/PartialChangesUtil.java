@@ -123,7 +123,7 @@ public class PartialChangesUtil {
       return task.compute();
     }
 
-    clm.setDefaultChangeList(targetChangeList, true);
+    switchChangeList(clm, targetChangeList, oldDefaultList);
     try {
       return task.compute();
     }
@@ -143,7 +143,7 @@ public class PartialChangesUtil {
       return task.compute();
     }
 
-    clm.setDefaultChangeList(targetChangeList, true);
+    switchChangeList(clm, targetChangeList, oldDefaultList);
     try {
       return task.compute();
     }
@@ -155,11 +155,19 @@ public class PartialChangesUtil {
     }
   }
 
+  private static void switchChangeList(@NotNull ChangeListManagerEx clm,
+                                       @NotNull LocalChangeList targetChangeList,
+                                       @NotNull LocalChangeList oldDefaultList) {
+    clm.setDefaultChangeList(targetChangeList, true);
+    LOG.debug(String.format("Active changelist changed: %s -> %s", oldDefaultList.getName(), targetChangeList.getName()));
+  }
+
   private static void restoreChangeList(@NotNull ChangeListManagerEx clm,
                                         @NotNull LocalChangeList targetChangeList,
                                         @NotNull LocalChangeList oldDefaultList) {
     if (Comparing.equal(clm.getDefaultChangeList().getId(), targetChangeList.getId())) {
       clm.setDefaultChangeList(oldDefaultList, true);
+      LOG.debug(String.format("Active changelist restored: %s -> %s", targetChangeList.getName(), oldDefaultList.getName()));
     }
     else {
       LOG.warn(new Throwable("Active changelist was changed during the operation"));

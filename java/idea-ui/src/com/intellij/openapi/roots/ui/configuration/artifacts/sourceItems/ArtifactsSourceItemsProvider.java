@@ -67,6 +67,7 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
       return 0;
     }
 
+    @NotNull
     @Override
     public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
       return new ArtifactsGroupPresentation();

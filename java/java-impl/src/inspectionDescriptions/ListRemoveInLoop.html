@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports <b>List.remove(index)</b> called in the loop which could be replaced with <b>List.subList().clear()</b>. The replacement
+could be much more performant for most of List implementations if many elements are to be deleted.
+<p>
+  Quick-fix adds a range-check automatically to prevent possible <b>IndexOutOfBoundsException</b> when minimal value is bigger than maximal value.
+  It can be removed if such situation is impossible in your code.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2018.2</small></p>
+</body>
+</html>

@@ -303,6 +303,10 @@ public class GenericsUtil {
   @Contract("null, _ -> null")
   public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type, final boolean openCaptured) {
     if (type == null) return null;
+    PsiClass refClass = PsiUtil.resolveClassInType(type);
+    if (refClass instanceof PsiAnonymousClass) {
+      type = ((PsiAnonymousClass)refClass).getBaseClassType();
+    }
     if (type instanceof PsiCapturedWildcardType) {
       type = ((PsiCapturedWildcardType)type).getUpperBound();
     }

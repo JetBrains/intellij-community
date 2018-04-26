@@ -3,13 +3,20 @@ package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.ui.mac.touchbar.NSAutoreleaseLock;
+import com.intellij.ui.mac.touchbar.NSTLibrary;
+import com.intellij.ui.mac.touchbar.TouchBar;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +144,10 @@ class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
+    final TouchBar tb = createModalMsgDlgTouchBar(buttons, defaultButton);
+    TouchBarsManager.showTempTouchBar(tb);
     myWindow.setVisible(true);
+    TouchBarsManager.closeTempTouchBar(tb);
     LaterInvocator.leaveModal(myWindow);
 
     Component focusCandidate = beforeShowFocusOwner.get();
@@ -159,6 +169,21 @@ class SheetMessage implements Disposable {
   public void dispose() {
     DialogWrapper.cleanupRootPane(myWindow.getRootPane());
     myWindow.dispose();
+  }
+
+  private TouchBar createModalMsgDlgTouchBar(String[] buttons, String defaultButton) {
+    if (!TouchBarsManager.isTouchBarAvailable())
+      return null;
+
+    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+      TouchBar result = new TouchBar("message_dlg_bar");
+      final ModalityState ms = LaterInvocator.getCurrentModalityState();
+      for (String sb: buttons) {
+        final NSTLibrary.Action act = () -> ApplicationManager.getApplication().invokeLater(()->myController.setResultAndStartClose(sb), ms);
+        result.addButton(null, sb, act, Comparing.equal(sb, defaultButton) ? NSTLibrary.BUTTON_FLAG_COLORED : 0);
+      }
+      return result;
+    }
   }
 
   private static void maximizeIfNeeded(final Window owner) {

@@ -74,14 +74,14 @@ public class AbstractMethodWithMissingImplementationsInspection
       }
       final InheritorFinder inheritorFinder = new InheritorFinder(containingClass);
       for (final PsiClass inheritor : inheritorFinder.getInheritors()) {
-        if (hasMatchingImplementation(inheritor, method)) {
+        if (hasMatchingImplementation(inheritor, method, containingClass)) {
           continue;
         }
         if (inheritor.isEnum()) {
           final List<PsiEnumConstant> enumConstants = PsiTreeUtil.getChildrenOfTypeAsList(inheritor, PsiEnumConstant.class);
           for (PsiEnumConstant enumConstant : enumConstants) {
             final PsiEnumConstantInitializer initializingClass = enumConstant.getInitializingClass();
-            if (initializingClass == null || !hasMatchingImplementation(initializingClass, method)) {
+            if (initializingClass == null || !hasMatchingImplementation(initializingClass, method, containingClass)) {
               registerMethodError(method);
               return;
             }
@@ -93,11 +93,11 @@ public class AbstractMethodWithMissingImplementationsInspection
       }
     }
 
-    private static boolean hasMatchingImplementation(@NotNull PsiClass aClass, @NotNull PsiMethod method) {
-      if (aClass.isInterface() || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    private static boolean hasMatchingImplementation(@NotNull PsiClass aClass, @NotNull PsiMethod method, @NotNull PsiClass superClass) {
+      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || !aClass.isInheritor(superClass, true)) {
         return true;
       }
-      final PsiMethod overridingMethod = findOverridingMethod(aClass, method);
+      final PsiMethod overridingMethod = findOverridingMethod(aClass, method, superClass);
       if (overridingMethod == null ||
           overridingMethod.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
@@ -105,7 +105,6 @@ public class AbstractMethodWithMissingImplementationsInspection
       if (!method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         return true;
       }
-      final PsiClass superClass = method.getContainingClass();
       final PsiManager manager = overridingMethod.getManager();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       return facade.arePackagesTheSame(superClass, aClass);
@@ -113,15 +112,12 @@ public class AbstractMethodWithMissingImplementationsInspection
 
     /**
      * @param method the method of which to find an override.
+     * @param superClass
      * @param aClass subclass to find the method in.
      * @return the overriding method.
      */
     @Nullable
-    private static PsiMethod findOverridingMethod(PsiClass aClass, @NotNull PsiMethod method) {
-      final PsiClass superClass = method.getContainingClass();
-      if (aClass.equals(superClass)) {
-        return null;
-      }
+    private static PsiMethod findOverridingMethod(PsiClass aClass, @NotNull PsiMethod method, @NotNull PsiClass superClass) {
       final PsiSubstitutor substitutor =
         TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       final MethodSignature signature = method.getSignature(substitutor);

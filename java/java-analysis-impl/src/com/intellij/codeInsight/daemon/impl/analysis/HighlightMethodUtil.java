@@ -369,7 +369,7 @@ public class HighlightMethodUtil {
     if (resolved instanceof PsiMethod && resolveResult.isValidResult()) {
       PsiElement nameElement = referenceToMethod.getReferenceNameElement();
       TextRange fixRange = getFixRange(methodCall);
-      highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, nameElement != null ? new TextRange(nameElement.getTextOffset(), fixRange.getEndOffset()) : fixRange);
+      highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, nameElement != null ? nameElement.getTextRange() : fixRange);
 
       if (highlightInfo == null && ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = ((PsiMethod)resolved).getContainingClass();

@@ -19,9 +19,9 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.HelpID;
@@ -40,6 +40,7 @@ import java.awt.event.ItemListener;
 
 class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariableSettings {
   private final Project myProject;
+  private final PsiFile myFile;
   private final PsiExpression myExpression;
   private final int myOccurrencesCount;
   private final boolean myAnyLValueOccurences;
@@ -71,6 +72,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myDeclareFinalIfAll = declareFinalIfAll;
     myTypeSelectorManager = typeSelectorManager;
     myValidator = validator;
+    myFile = expression.getContainingFile();
 
     setTitle(REFACTORING_NAME);
     init();
@@ -208,7 +210,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myCbFinal.setText(RefactoringBundle.message("declare.final"));
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     myCbFinalState = createFinals == null ?
-                     CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS :
+                     JavaCodeStyleSettings.getInstance(myFile).GENERATE_FINAL_LOCALS :
                      createFinals.booleanValue();
 
     gbConstraints.insets = JBUI.emptyInsets();

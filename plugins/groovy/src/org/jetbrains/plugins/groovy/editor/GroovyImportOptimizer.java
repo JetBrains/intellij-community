@@ -22,9 +22,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -143,8 +141,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                                         final Map<String, String> annotations,
                                         Set<GrImportStatement> unresolvedOnDemandImports) {
       final Project project = myFile.getProject();
-      final GroovyCodeStyleSettings settings =
-        CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
+      final GroovyCodeStyleSettings settings = GroovyCodeStyleSettings.getInstance(myFile);
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
       TObjectIntHashMap<String> packageCountMap = new TObjectIntHashMap<>();

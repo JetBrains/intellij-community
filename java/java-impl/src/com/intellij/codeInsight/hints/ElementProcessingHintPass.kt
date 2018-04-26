@@ -2,30 +2,46 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
+import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.util.DocumentUtil
+import com.intellij.util.SmartList
+import gnu.trove.TIntObjectHashMap
 
 abstract class ElementProcessingHintPass(
-  val rootElement: PsiElement,
-  val editor: Editor
+  private val rootElement: PsiElement,
+  editor: Editor,
+  private val modificationStampHolder: ModificationStampHolder
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
   private val traverser: SyntaxTraverser<PsiElement> = SyntaxTraverser.psiTraverser(rootElement)
+  private val hints = TIntObjectHashMap<SmartList<String>>()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     assert(myDocument != null)
-    clearCollected()
+    hints.clear()
 
     val virtualFile = rootElement.containingFile?.originalFile?.virtualFile ?: return
 
     if (isAvailable(virtualFile)) {
-      traverser.forEach { collectElementHints(it) }
+      traverser.forEach { collectElementHints(it,
+                                              { offset, hint ->
+                                                var hintList = hints.get(offset)
+                                                if (hintList == null) {
+                                                  hintList = SmartList()
+                                                  hints.put(offset, hintList)
+                                                }
+                                                hintList.add(hint)
+                                              })
+      }
     }
   }
 
@@ -49,19 +65,45 @@ abstract class ElementProcessingHintPass(
   /**
    * For current [element] collect hints information if it is possible
    */
-  abstract fun collectElementHints(element: PsiElement)
-
-  abstract fun applyHintsToEditor()
+  abstract fun collectElementHints(element: PsiElement, collector: (offset: Int, hint : String) -> Unit)
 
   /**
-   * Clear collected hint information
+   * Returns key marking inlay as created by this pass
    */
-  abstract fun clearCollected()
+  abstract fun getHintKey(): Key<Boolean>
 
-  abstract val modificationStampHolder: ModificationStampHolder
+  /**
+   * Creates inlay renderer for hints created by this pass
+   */
+  abstract fun createRenderer(text: String): HintRenderer
+
+  private fun applyHintsToEditor() {
+    val inlayModel = myEditor.inlayModel
+
+    val toRemove = inlayModel.getInlineElementsInRange(rootElement.textRange.startOffset + 1, rootElement.textRange.endOffset - 1)
+      .filter {
+        if (getHintKey().isIn(it)) {
+          val hintsList = hints.get(it.offset)
+          hintsList == null || !hintsList.removeAll { hintText: String -> hintText == (it.renderer as HintRenderer).text }
+        }
+        else false
+      }
+
+    DocumentUtil.executeInBulk(myEditor.document, toRemove.size + hints.values.flatMap { it as SmartList<*> }.count() > 1000) {
+      toRemove.forEach { Disposer.dispose(it) }
+
+      hints.forEachEntry { offset, hintTexts ->
+        hintTexts.forEach {
+          val inlay = inlayModel.addInlineElement(offset, createRenderer(it))
+          inlay?.putUserData(getHintKey(), true)
+        }
+        true
+      }
+    }
+  }
 }
 
-class ModificationStampHolder (private val key: Key<Long>) {
+class ModificationStampHolder(private val key: Key<Long>) {
   fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
     editor.putUserData<Long>(key, ParameterHintsPassFactory.getCurrentModificationStamp(file))
   }

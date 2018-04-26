@@ -260,15 +260,15 @@ public class DataFlowRunner {
     }
   }
 
-  public RunnerResult analyzeMethodRecursively(PsiElement block, StandardInstructionVisitor visitor) {
+  public RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, StandardInstructionVisitor visitor) {
     Collection<DfaMemoryState> states = createInitialStates(block, visitor, false);
     if (states == null) return RunnerResult.NOT_APPLICABLE;
     return analyzeBlockRecursively(block, states, visitor);
   }
 
-  private RunnerResult analyzeBlockRecursively(PsiElement block,
-                                               Collection<? extends DfaMemoryState> states,
-                                               StandardInstructionVisitor visitor) {
+  public RunnerResult analyzeBlockRecursively(@NotNull PsiElement block,
+                                              Collection<? extends DfaMemoryState> states,
+                                              StandardInstructionVisitor visitor) {
     RunnerResult result = analyzeMethod(block, visitor, false, states);
     if (result != RunnerResult.OK) return result;
 

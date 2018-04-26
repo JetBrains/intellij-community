@@ -8,23 +8,15 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class TouchBarGeneral extends TouchBar {
-  private static final Map<Project, TouchBarGeneral> ourInstances = new HashMap<>();
-
-  private final Project   myProject;
-
+public class TouchBarGeneral extends TouchBarActionBase {
   private TBItemButton    myButtonAddRunConf;
 
   private TBItemPopover   myPopoverRunConf;
@@ -32,57 +24,48 @@ public class TouchBarGeneral extends TouchBar {
   private TBItemButton    myPopoverRunConfTapAndHold;
   private TBItemScrubber  myScrubberRunConf;
 
-  private TBItemButton    myButtonRun;
-  private TBItemButton    myButtonDebug;
-  private TBItemButton    myButtonStop;
+  private TBItemButton            myButtonRun;
+  private TBItemAnActionButton    myButtonDebug;
+  private TBItemAnActionButton    myButtonStop;
 
-  private TBItemButton    myButtonVcsCheckOut;
-  private TBItemButton    myButtonVcsCommit;
+  TouchBarGeneral(@NotNull Project project, Component component, String desc) {
+    super("general_"+desc, project, component);
 
-  private TouchBarGeneral(Project project) {
-    super("general");
-    myProject = project;
-
-    addButton(AllIcons.Toolwindows.ToolWindowBuild, null, "CompileDirty"); // NOTE: IdeActions.ACTION_COMPILE doesn't work
+    addAnActionButton("CompileDirty", false); // NOTE: IdeActions.ACTION_COMPILE doesn't work
 
     myButtonAddRunConf = addButton(AllIcons.General.Add, "Add Configuration", IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
 
-    final TouchBar tapHoldTB = new TouchBar("run_configs_popover_tap_and_hold");
-    tapHoldTB.addFlexibleSpacing();
-    myPopoverRunConfTapAndHold = tapHoldTB.addButton(null, null, (NSTLibrary.Action)null);
-    tapHoldTB.selectAllItemsToShow();
+    {
+      final TouchBar tapHoldTB = new TouchBar("run_configs_popover_tap_and_hold");
+      tapHoldTB.addFlexibleSpacing();
+      myPopoverRunConfTapAndHold = tapHoldTB.addButton(null, null, (NSTLibrary.Action)null);
+      tapHoldTB.selectVisibleItemsToShow();
 
-    myPopoverRunConfExpandTB = new TouchBar("run_configs_popover_expand");
-    myPopoverRunConfExpandTB.addButton(AllIcons.Actions.EditSource, null, IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
-    myScrubberRunConf = myPopoverRunConfExpandTB.addScrubber(500);
-    myPopoverRunConfExpandTB.addFlexibleSpacing();
-    myPopoverRunConfExpandTB.selectAllItemsToShow();
+      myPopoverRunConfExpandTB = new TouchBar("run_configs_popover_expand");
+      myPopoverRunConfExpandTB.addButton(AllIcons.Actions.EditSource, null, IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
+      myScrubberRunConf = myPopoverRunConfExpandTB.addScrubber(500);
+      myPopoverRunConfExpandTB.addFlexibleSpacing();
+      myPopoverRunConfExpandTB.selectVisibleItemsToShow();
 
-    myPopoverRunConf = addPopover(null, null, 143, myPopoverRunConfExpandTB, tapHoldTB);
+      myPopoverRunConf = addPopover(null, null, 143, myPopoverRunConfExpandTB, tapHoldTB);
+    }
 
-    myButtonRun = addButton(AllIcons.Toolwindows.ToolWindowRun, null, IdeActions.ACTION_DEFAULT_RUNNER);
-    myButtonDebug = addButton(AllIcons.Toolwindows.ToolWindowDebugger, null, IdeActions.ACTION_DEFAULT_DEBUGGER);
-    myButtonStop = addButton(IconLoader.getDisabledIcon(AllIcons.Actions.Suspend), null, (NSTLibrary.Action)null);
+    {
+      myButtonRun = addButton();
+      myButtonDebug = addAnActionButton(IdeActions.ACTION_DEFAULT_DEBUGGER);
+      myButtonDebug.setAutoVisibility(false);
+      myButtonStop = addAnActionButton(IdeActions.ACTION_STOP_PROGRAM);
+      myButtonStop.setAutoVisibility(false);
+    }
 
     addSpacing(true);
-    myButtonVcsCheckOut = addButton(AllIcons.Actions.CheckOut, null, "Vcs.UpdateProject");  // NOTE: IdeActions.ACTION_CVS_CHECKOUT doesn't works
-    myButtonVcsCommit = addButton(AllIcons.Actions.Commit, null, "CheckinProject");         // NOTE: IdeActions.ACTION_CVS_COMMIT doesn't works
+    addAnActionButton("Vcs.UpdateProject", false);  // NOTE: IdeActions.ACTION_CVS_CHECKOUT doesn't works
+    addAnActionButton("CheckinProject", false);     // NOTE: IdeActions.ACTION_CVS_COMMIT doesn't works
 
     _updateRunConfigs();
+    _updateRunButtons();
 
     final MessageBus mb = myProject.getMessageBus();
-    mb.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
-      @Override
-      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
-        _updateRunButtons();
-      }
-      @Override
-      public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
-        ApplicationManager.getApplication().invokeLater(()->{
-          _updateRunButtons();
-        });
-      }
-    });
 
     mb.connect().subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
@@ -100,28 +83,15 @@ public class TouchBarGeneral extends TouchBar {
     });
   }
 
-  public TouchBar getPopoverRunConfExpandTB() { return myPopoverRunConfExpandTB; }
-
-  public static @NotNull TouchBarGeneral instance(@NotNull Project project) {
-    // NOTE: called from EDT only
-    TouchBarGeneral result = ourInstances.get(project);
-    if (result == null) {
-      final ID pool = Foundation.invoke("NSAutoreleasePool", "new");
-      try {
-        result = new TouchBarGeneral(project);
-        ourInstances.put(project, result);
-      } finally {
-        Foundation.invoke(pool, "release");
-      }
-    }
-    return result;
+  @Override
+  public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
+    super.processStarted(executorId, env, handler);
+    _updateRunButtons();
   }
-
-  public static void release(@NotNull Project project) {
-    // NOTE: called from EDT only
-    TouchBarGeneral result = ourInstances.remove(project);
-    if (result != null)
-      result.release();
+  @Override
+  public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
+    super.processTerminated(executorId, env, handler, exitCode);
+    ApplicationManager.getApplication().invokeLater(()->_updateRunButtons());
   }
 
   private void _updateSelectedConf() {
@@ -170,23 +140,32 @@ public class TouchBarGeneral extends TouchBar {
       }
       myScrubberRunConf.setItems(scrubberItems);
     }
-    selectAllItemsToShow();
+    selectVisibleItemsToShow();
+  }
+
+  private static boolean _canBeStopped(ProcessHandler ph) {
+    return ph != null && !ph.isProcessTerminated()
+           && (!ph.isProcessTerminating() || ph instanceof KillableProcess && ((KillableProcess)ph).canKillProcess());
   }
 
   private void _updateRunButtons() {
+    if (!myButtonRun.isVisible())
+      return;
+
+    if (myProject.isDisposed())
+      return;
+
     final ExecutionManager em = ExecutionManager.getInstance(myProject);
     final ProcessHandler[] allRunning = em.getRunningProcesses();
+
     int runningCount = 0;
-    for (ProcessHandler ph: allRunning)
-      if (!ph.isProcessTerminated() && !ph.isProcessTerminating())
+    for (ProcessHandler ph : allRunning)
+      if (_canBeStopped(ph))
         ++runningCount;
 
-    if (runningCount == 0) {
-      myButtonStop.update(IconLoader.getDisabledIcon(AllIcons.Actions.Suspend), null, (NSTLibrary.Action)null);
-      myButtonRun.update(AllIcons.Toolwindows.ToolWindowRun, null, new PlatformAction(IdeActions.ACTION_DEFAULT_RUNNER));
-    } else {
-      myButtonStop.update(AllIcons.Actions.Suspend, null, new PlatformAction("Stop"));
-      myButtonRun.update(AllIcons.Actions.Rerun, null, new PlatformAction("Rerun"));
-    }
+    if (runningCount == 0)
+      myButtonRun.update(AllIcons.Actions.Execute, null, new PlatformAction(IdeActions.ACTION_DEFAULT_RUNNER));
+    else
+      myButtonRun.update(AllIcons.Actions.Restart, null, new PlatformAction(IdeActions.ACTION_RERUN));
   }
 }

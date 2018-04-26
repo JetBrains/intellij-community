@@ -23,15 +23,16 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.JList
 
-abstract class RemoteVmConnection : VmConnection<Vm>() {
+abstract class RemoteVmConnection<VmT : Vm> : VmConnection<VmT>() {
+
   var address: InetSocketAddress? = null
 
   private val connectCancelHandler = AtomicReference<() -> Unit>()
 
-  abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
+  abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<VmT>): Bootstrap
 
   @JvmOverloads
-  fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null): Promise<Vm> {
+  fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null): Promise<VmT> {
     if (address.isUnresolved) {
       val error = "Host ${address.hostString} is unresolved"
       setState(ConnectionStatus.CONNECTION_FAILED, error)
@@ -41,12 +42,12 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
     this.address = address
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostString}:${address.port}")
 
-    val result = AsyncPromise<Vm>()
+    val result = AsyncPromise<VmT>()
     result
       .onSuccess {
         connectionSucceeded(it, address)
       }
-      .rejected {
+      .onError {
         if (it !is ConnectException) {
           LOG.errorIfNotMessage(it)
         }
@@ -76,13 +77,13 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
     return result
   }
 
-  protected fun connectionSucceeded(it: Vm, address: InetSocketAddress) {
+  protected fun connectionSucceeded(it: VmT, address: InetSocketAddress) {
     vm = it
     setState(ConnectionStatus.CONNECTED, "Connected to ${connectedAddressToPresentation(address, it)}")
     startProcessing()
   }
 
-  protected open fun doOpen(result: AsyncPromise<Vm>, address: InetSocketAddress, stopCondition: Condition<Void>?) {
+  protected open fun doOpen(result: AsyncPromise<VmT>, address: InetSocketAddress, stopCondition: Condition<Void>?) {
     val maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1
     val connectResult = createBootstrap(address, result).connectRetrying(address, maxAttemptCount, stopCondition)
     connectResult.handleError(Consumer { result.setError(it) })
@@ -114,7 +115,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
   }
 }
 
-fun RemoteVmConnection.open(address: InetSocketAddress, processHandler: ProcessHandler) = open(address, Condition<java.lang.Void> { processHandler.isProcessTerminating || processHandler.isProcessTerminated })
+fun RemoteVmConnection<*>.open(address: InetSocketAddress, processHandler: ProcessHandler) = open(address, Condition<java.lang.Void> { processHandler.isProcessTerminating || processHandler.isProcessTerminated })
 
 fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T, ColoredListCellRenderer<*>) -> Unit): Promise<T> {
   if (targets.size == 1) {
@@ -151,7 +152,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
 }
 
 @Throws(ExecutionException::class)
-fun initRemoteVmConnectionSync(connection: RemoteVmConnection, debugPort: Int): Vm {
+fun initRemoteVmConnectionSync(connection: RemoteVmConnection<*>, debugPort: Int): Vm {
   val address = InetSocketAddress(InetAddress.getLoopbackAddress(), debugPort)
   val vmPromise = connection.open(address)
   val vm: Vm

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
@@ -194,7 +192,6 @@ public class UsageViewImpl implements UsageViewEx {
           myTree = new Tree(myModel) {
             {
               ToolTipManager.sharedInstance().registerComponent(this);
-              setHorizontalAutoScrollingEnabled(false);
             }
 
             @Override
@@ -849,7 +846,7 @@ public class UsageViewImpl implements UsageViewEx {
     if (description == null) {
       description = "Show find usages settings dialog";
     }
-    return new AnAction("Settings...", description, AllIcons.General.ProjectSettings) {
+    return new AnAction("Settings...", description, AllIcons.General.GearPlain) {
       {
         KeyboardShortcut shortcut = configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
         if (shortcut != null) {

@@ -431,9 +431,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                  @NotNull TypeEvalContext context,
                                                  @NotNull PyReferenceExpression anchor) {
     if (!(target instanceof PyTargetExpression)) {  // PyTargetExpression will ask about its type itself
-      final PyType pyType = getReferenceTypeFromProviders(target, context, anchor);
+      final Ref<PyType> pyType = getReferenceTypeFromProviders(target, context, anchor);
       if (pyType != null) {
-        return pyType;
+        return pyType.get();
       }
     }
     if (target instanceof PyTargetExpression) {
@@ -530,9 +530,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  public static PyType getReferenceTypeFromOverridingProviders(@NotNull PsiElement target,
-                                                               @NotNull TypeEvalContext context,
-                                                               @Nullable PsiElement anchor) {
+  public static Ref<PyType> getReferenceTypeFromOverridingProviders(@NotNull PsiElement target,
+                                                                    @NotNull TypeEvalContext context,
+                                                                    @Nullable PsiElement anchor) {
     return StreamEx
       .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
       .select(PyOverridingTypeProvider.class)
@@ -542,11 +542,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  public static PyType getReferenceTypeFromProviders(@NotNull PsiElement target,
-                                                     @NotNull TypeEvalContext context,
-                                                     @Nullable PsiElement anchor) {
+  public static Ref<PyType> getReferenceTypeFromProviders(@NotNull PsiElement target,
+                                                          @NotNull TypeEvalContext context,
+                                                          @Nullable PsiElement anchor) {
     for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      final PyType result = provider.getReferenceType(target, context, anchor);
+      final Ref<PyType> result = provider.getReferenceType(target, context, anchor);
       if (result != null) {
         return result;
       }

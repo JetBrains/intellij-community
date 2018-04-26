@@ -319,4 +319,13 @@ class A {
     PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", text))
   }
 
+  void "test incomplete static import does not cause CCE"() {
+    def file = myFixture.addFileToProject('a.java', 'import static foo.bar.') as PsiJavaFile
+    assert ((PsiFileImpl)file).stub
+    assert file.node
+    def staticImport = ((PsiJavaFile)file).importList.importStaticStatements[0]
+    assert staticImport.referenceName == null
+    assert !staticImport.resolveTargetClass()
+  }
+
 }

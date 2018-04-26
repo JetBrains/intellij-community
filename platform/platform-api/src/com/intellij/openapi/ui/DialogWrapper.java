@@ -372,7 +372,7 @@ public abstract class DialogWrapper {
         if (myDisposed) return;
         setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(info.isEmpty());
+        getOKAction().setEnabled(info.isEmpty() || info.stream().noneMatch(info1 -> info1.disableOk));
       });
     }
   }
@@ -523,6 +523,7 @@ public abstract class DialogWrapper {
       }
     }
 
+    myPeer.setTouchBarButtons(rightSideButtons);
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
   }
@@ -1793,16 +1794,16 @@ public abstract class DialogWrapper {
   }
 
   private void logCloseDialogEvent(int exitCode) {
-    final String title = getTitle();
-    if (StringUtil.isNotEmpty(title)) {
-      FeatureUsageUiEvents.INSTANCE.logCloseDialog(title, exitCode);
+    final String className = getClass().getName();
+    if (StringUtil.isNotEmpty(className)) {
+      FeatureUsageUiEvents.INSTANCE.logCloseDialog(className, exitCode);
     }
   }
 
   private void logShowDialogEvent() {
-    final String title = getTitle();
-    if (StringUtil.isNotEmpty(title)) {
-      FeatureUsageUiEvents.INSTANCE.logShowDialog(title);
+    final String className = getClass().getName();
+    if (StringUtil.isNotEmpty(className)) {
+      FeatureUsageUiEvents.INSTANCE.logShowDialog(className);
     }
   }
 
@@ -1867,7 +1868,7 @@ public abstract class DialogWrapper {
         }
 
         startTrackingValidation();
-        return;
+        if(infoList.stream().anyMatch(info1 -> info1.disableOk)) return;
       }
       doOKAction();
     }
@@ -1878,7 +1879,7 @@ public abstract class DialogWrapper {
   }
 
   private void recordAction(String name, AWTEvent event) {
-    if (event instanceof KeyEvent) {
+    if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
       String shortcut = getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event));
       ActionsCollector.getInstance().record(name + " " + shortcut);
     }
@@ -2377,7 +2378,7 @@ public abstract class DialogWrapper {
         }
       };
 
-      balloon.addListener(new JBPopupListener.Adapter() {
+      balloon.addListener(new JBPopupListener() {
         @Override public void onClosed(LightweightWindowEvent event) {
           JRootPane rootPane = getRootPane();
           if (rootPane != null) {

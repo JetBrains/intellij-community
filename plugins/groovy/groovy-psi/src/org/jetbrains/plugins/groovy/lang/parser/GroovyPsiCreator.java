@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
@@ -10,7 +10,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrImportAliasImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyASTPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
@@ -193,7 +192,6 @@ public class GroovyPsiCreator {
     if (elem == GroovyElementTypes.RELATIONAL_EXPRESSION) return new GrRelationalExpressionImpl(node);
     if (elem == GroovyElementTypes.SHIFT_EXPRESSION) return new GrShiftExpressionImpl(node);
     if (elem == GroovyElementTypes.RANGE_EXPRESSION) return new GrRangeExpressionImpl(node);
-    if (TokenSets.SHIFT_SIGNS.contains(elem)) return new GrOperationSignImpl(node);
     if (elem == GroovyElementTypes.ADDITIVE_EXPRESSION) return new GrAdditiveExpressionImpl(node);
     if (elem == GroovyElementTypes.MULTIPLICATIVE_EXPRESSION) return new GrMultiplicativeExpressionImpl(node);
     if (elem == GroovyElementTypes.POWER_EXPRESSION) return new GrPowerExpressionImpl(node);

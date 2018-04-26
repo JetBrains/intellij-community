@@ -139,7 +139,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
       private boolean myIsFavorite;
 
       public BranchFilterAction(@NotNull String value, @NotNull Collection<VcsRef> references) {
-        super(value, false);
+        super(value, true);
         myReferences = references;
         myIcon = new LayeredIcon(AllIcons.Vcs.Favorite, EmptyIcon.ICON_16);
         myHoveredIcon = new LayeredIcon(AllIcons.Vcs.FavoriteOnHover, AllIcons.Vcs.NotFavoriteOnHover);

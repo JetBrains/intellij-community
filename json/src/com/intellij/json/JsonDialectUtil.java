@@ -5,10 +5,11 @@ import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JsonDialectUtil {
   public static boolean isStandardJson(@NotNull PsiElement element) {
-    return getLanguage(element) == JsonLanguage.INSTANCE;
+    return isStandardJson(getLanguage(element));
   }
 
   public static Language getLanguage(@NotNull PsiElement element) {
@@ -16,5 +17,9 @@ public class JsonDialectUtil {
     if (file == null) return JsonLanguage.INSTANCE;
     Language language = file.getLanguage();
     return language instanceof JsonLanguage ? language : JsonLanguage.INSTANCE;
+  }
+
+  public static boolean isStandardJson(@Nullable Language language) {
+    return language == JsonLanguage.INSTANCE;
   }
 }

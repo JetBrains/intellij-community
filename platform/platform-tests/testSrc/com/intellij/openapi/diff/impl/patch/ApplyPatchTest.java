@@ -13,11 +13,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@TestDataPath("$CONTENT_ROOT/testData/diff/applyPatch/")
 public class ApplyPatchTest extends PlatformTestCase {
   public void testAddLine() throws Exception {
     doTest(1, ApplyPatchStatus.SUCCESS, null);
@@ -180,7 +184,7 @@ public class ApplyPatchTest extends PlatformTestCase {
     ApplicationManager.getApplication()
       .runWriteAction(() -> FileTypeManager.getInstance().associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("old")));
 
-    String testDataPath = PlatformTestUtil.getPlatformTestDataPath() + "diff/applyPatch/" + getTestName(true);
+    String testDataPath = getTestDir(getTestName(true));
     String beforePath = testDataPath + "/before";
     String afterPath = testDataPath + "/after";
     VirtualFile afterDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterPath.replace(File.separatorChar, '/'));
@@ -200,5 +204,10 @@ public class ApplyPatchTest extends PlatformTestCase {
     assertEquals(expectedStatus, applyStatus);
 
     PlatformTestUtil.assertDirectoriesEqual(patchedDir, afterDir, fileFilter);
+  }
+
+  @NotNull
+  private static String getTestDir(@TestDataFile String dirName) {
+    return PlatformTestUtil.getPlatformTestDataPath() + "diff/applyPatch/" + dirName;
   }
 }

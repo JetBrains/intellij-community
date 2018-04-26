@@ -137,6 +137,23 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   }
 
   @Override
+  public void addElement(@NotNull LookupElement element,
+                         @NotNull CompletionSorter sorter,
+                         @NotNull PrefixMatcher prefixMatcher,
+                         @NotNull LookupElementPresentation presentation) {
+    registerMatcher(element, prefixMatcher);
+    associateSorter(element, (CompletionSorterImpl)sorter);
+    addElement(element, presentation);
+  }
+
+  @Override
+  public void addElement(@NotNull CompletionResult result) {
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    result.getLookupElement().renderElement(presentation);
+    addElement(result.getLookupElement(), result.getSorter(), result.getPrefixMatcher(), presentation);
+  }
+
+  @Override
   public void addElement(LookupElement element, LookupElementPresentation presentation) {
     StatisticsWeigher.clearBaseStatisticsInfo(element);
 

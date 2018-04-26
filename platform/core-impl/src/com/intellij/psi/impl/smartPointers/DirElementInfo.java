@@ -26,7 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class DirElementInfo extends SmartPointerElementInfo {
+  @NotNull
   private final VirtualFile myVirtualFile;
+  @NotNull
   private final Project myProject;
 
 
@@ -56,6 +58,7 @@ class DirElementInfo extends SmartPointerElementInfo {
     return other instanceof DirElementInfo && Comparing.equal(myVirtualFile, ((DirElementInfo)other).myVirtualFile);
   }
 
+  @NotNull
   @Override
   VirtualFile getVirtualFile() {
     return myVirtualFile;

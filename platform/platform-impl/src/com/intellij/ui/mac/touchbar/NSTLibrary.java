@@ -41,13 +41,24 @@ public interface NSTLibrary extends Library {
 
   // all creators are called from AppKit (when TB becomes visible and asks delegate to create objects) => autorelease objects are owned by default NSAutoReleasePool (of AppKit-thread)
   // creator returns non-autorelease obj to be owned by java-wrapper
-  ID createButton(String uid, int buttWidth, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
+  ID createButton(String uid, int buttWidth, int buttonFlags, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
   ID createPopover(String uid, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
   ID createScrubber(String uid, int itemWidth, ScrubberItemData[] items, int count);
 
-  // all updaters are called from EDT (when update UI)
+  int BUTTON_UPDATE_WIDTH   = 1;
+  int BUTTON_UPDATE_FLAGS   = 1 << 1;
+  int BUTTON_UPDATE_TEXT    = 1 << 2;
+  int BUTTON_UPDATE_IMG     = 1 << 3;
+  int BUTTON_UPDATE_ACTION  = 1 << 4;
+  int BUTTON_UPDATE_ALL     = ~0;
+
+  int BUTTON_FLAG_DISABLED  = 1;
+  int BUTTON_FLAG_SELECTED  = 1 << 1;
+  int BUTTON_FLAG_COLORED   = 1 << 2;
+
+  // all updaters are called from EDT (when update UI, or from all another threads except AppKit)
   // C-implementation creates NSAutoReleasePool internally
-  void updateButton(ID buttonObj, int buttWidth, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
+  void updateButton(ID buttonObj, int updateOptions, int buttWidth, int buttonFlags, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
   void updatePopover(ID popoverObj, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
   void updateScrubber(ID scrubObj, int itemWidth, ScrubberItemData[] items, int count);
 }
