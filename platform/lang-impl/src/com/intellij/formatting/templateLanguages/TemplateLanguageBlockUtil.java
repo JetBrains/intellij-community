@@ -2,6 +2,7 @@
 package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,7 @@ public class TemplateLanguageBlockUtil extends AbstractBlockUtil<DataLanguageBlo
 
   @Nullable
   @Override
-  protected DataLanguageBlockWrapper createBlockWrapper(@NotNull Block block) {
+  protected DataLanguageBlockWrapper createBlockWrapper(@NotNull Block block, Indent indent) {
     return DataLanguageBlockWrapper.create(block);
   }
 

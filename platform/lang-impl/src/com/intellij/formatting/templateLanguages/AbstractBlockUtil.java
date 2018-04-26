@@ -16,6 +16,7 @@
 package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
 import com.intellij.formatting.Spacing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -36,12 +37,16 @@ public abstract class AbstractBlockUtil<TDataBlock extends IDataBlock, TTemplate
   }
 
   public final List<TDataBlock> buildChildWrappers(@NotNull final Block parent) {
+    return buildChildWrappers(parent, null);
+  }
+
+  public final List<TDataBlock> buildChildWrappers(@NotNull final Block parent, @Nullable Indent indent) {
     List<Block> children = parent.getSubBlocks();
     if (children.size() == 0) return Collections.emptyList();
     ArrayList<TDataBlock> result = new ArrayList<>(children.size());
     TDataBlock prevWrapper = null;
     for (Block child : children) {
-      TDataBlock currWrapper = createBlockWrapper(child);
+      TDataBlock currWrapper = createBlockWrapper(child, indent);
       ContainerUtil.addIfNotNull(result, currWrapper);
       if(currWrapper != null && prevWrapper != null) {
         Spacing spacing = parent.getSpacing(prevWrapper.getOriginal(), currWrapper.getOriginal());
@@ -52,7 +57,7 @@ public abstract class AbstractBlockUtil<TDataBlock extends IDataBlock, TTemplate
     return result;
   }
 
-  public final Pair<List<TDataBlock>, List<TDataBlock>> splitBlocksByRightBound(@NotNull Block parent, @NotNull TextRange bounds) {
+  private Pair<List<TDataBlock>, List<TDataBlock>> splitBlocksByRightBound(@NotNull Block parent, @NotNull TextRange bounds) {
     final List<Block> subBlocks = parent.getSubBlocks();
     if (subBlocks.size() == 0) return Pair
       .create(Collections.emptyList(), Collections.emptyList());
@@ -69,10 +74,10 @@ public abstract class AbstractBlockUtil<TDataBlock extends IDataBlock, TTemplate
     for (Block block : blocks) {
       final TextRange textRange = block.getTextRange();
       if (bounds.contains(textRange)) {
-        ContainerUtil.addIfNotNull(before, createBlockWrapper(block));
+        ContainerUtil.addIfNotNull(before, createBlockWrapper(block, null));
       }
       else if (bounds.getEndOffset() <= textRange.getStartOffset()) {
-        ContainerUtil.addIfNotNull(after, createBlockWrapper(block));
+        ContainerUtil.addIfNotNull(after, createBlockWrapper(block, null));
       }
       else {
         //assert block.getSubBlocks().size() != 0 : "Block " + block.getTextRange() + " doesn't contain subblocks!";
@@ -82,7 +87,7 @@ public abstract class AbstractBlockUtil<TDataBlock extends IDataBlock, TTemplate
   }
 
   @Nullable
-  protected abstract TDataBlock createBlockWrapper(@NotNull Block block);
+  protected abstract TDataBlock createBlockWrapper(@NotNull Block block, Indent indent);
 
   @NotNull
   protected abstract Block createBlockFragmentWrapper(@NotNull Block block, @NotNull TextRange dataBlockTextRange);
