@@ -197,6 +197,10 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/general/toolWindowChanges.svg", "AllIcons.Toolwindows.ToolWindowChanges");
     ourDeprecatedIconsReplacements.put("/general/toolWindowDebugger.png", "AllIcons.Toolwindows.ToolWindowDebugger");
     ourDeprecatedIconsReplacements.put("/general/toolWindowDebugger.svg", "AllIcons.Toolwindows.ToolWindowDebugger");
+
+
+    ourDeprecatedIconsReplacements.put("/general/getProjectfromVCS.png", "AllIcons.Welcome.FromVCS");
+    ourDeprecatedIconsReplacements.put("/general/getProjectfromVCS.svg", "AllIcons.Welcome.FromVCS");
   }
 
   @Nullable

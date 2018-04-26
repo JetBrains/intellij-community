@@ -681,7 +681,11 @@ public class AllIcons {
     public static final Icon Gear = IconLoader.getIcon("/general/gear.png"); // 21x16
     public static final Icon GearHover = IconLoader.getIcon("/general/gearHover.png"); // 21x16
     public static final Icon GearPlain = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
-    public static final Icon GetProjectfromVCS = IconLoader.getIcon("/general/getProjectfromVCS.png"); // 32x32
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Welcome.FromVCS */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon GetProjectfromVCS = IconLoader.getIcon("/welcome/fromVCS.svg"); // 16x16
     public static final Icon Help = IconLoader.getIcon("/general/help.png"); // 10x10
     public static final Icon Help_small = IconLoader.getIcon("/general/help_small.png"); // 16x16
     public static final Icon HideDown = IconLoader.getIcon("/general/hideDown.png"); // 16x16
