@@ -54,7 +54,7 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
     }
 
     if (value == EDIT_MAPPINGS) {
-      return AllIcons.General.EditItemInSection;
+      return AllIcons.Actions.Edit;
     }
 
     if (value == LOAD_REMOTE) {

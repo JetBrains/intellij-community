@@ -19,21 +19,21 @@ public class JsonSchemaStatusPopup {
   static final JsonSchemaInfo ADD_SCHEMA = new JsonSchemaInfo("") {
     @Override
     public String getDescription() {
-      return "Add new schema";
+      return "Add New Schema…";
     }
   };
 
   static final JsonSchemaInfo EDIT_MAPPINGS = new JsonSchemaInfo("") {
     @Override
     public String getDescription() {
-      return "Edit schema mappings";
+      return "Edit Schema Mappings…";
     }
   };
 
   static final JsonSchemaInfo LOAD_REMOTE = new JsonSchemaInfo("") {
     @Override
     public String getDescription() {
-      return "Load SchemaStore mappings";
+      return "Load SchemaStore Mappings";
     }
   };
 
