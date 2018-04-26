@@ -15,14 +15,14 @@ public class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
   }
 
   @Override
-  protected boolean processResults(@NotNull Processor<R> consumer) {
-    return myBaseQuery.forEach((Processor<B>)myPreprocessor.apply(consumer)::process);
+  protected boolean processResults(@NotNull Processor<? super R> consumer) {
+    return myBaseQuery.forEach(myPreprocessor.apply(consumer));
   }
 
   @NotNull
   @Override
-  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<R> consumer) {
-    return myBaseQuery.forEachAsync(myPreprocessor.apply(consumer)::process);
+  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<? super R> consumer) {
+    return myBaseQuery.forEachAsync(myPreprocessor.apply(consumer));
   }
 
   @Override

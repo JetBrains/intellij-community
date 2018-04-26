@@ -22,7 +22,7 @@ import com.intellij.util.Processor
  */
 class ModelToPsiReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(false) {
 
-  override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<PsiReference>) {
+  override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     if (queryParameters is PsiToModelSearchRequestor.ModelToPsiParameters) {
       // search started from ModelReferenceSearch
       // -> PsiToModelSearchRequestor queries ReferenceSearch with ModelToPsiParameters

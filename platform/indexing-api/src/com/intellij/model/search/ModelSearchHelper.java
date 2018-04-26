@@ -14,5 +14,5 @@ public interface ModelSearchHelper {
     return ServiceManager.getService(project, ModelSearchHelper.class);
   }
 
-  boolean runSearch(@NotNull ModelReferenceSearchParameters parameters, @NotNull Processor<ModelReference> processor);
+  boolean runSearch(@NotNull ModelReferenceSearchParameters parameters, @NotNull Processor<? super ModelReference> processor);
 }

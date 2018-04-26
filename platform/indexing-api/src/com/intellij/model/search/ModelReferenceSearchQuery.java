@@ -19,7 +19,7 @@ public final class ModelReferenceSearchQuery extends AbstractQuery<ModelReferenc
   }
 
   @Override
-  protected boolean processResults(@NotNull Processor<ModelReference> consumer) {
+  protected boolean processResults(@NotNull Processor<? super ModelReference> consumer) {
     return myBaseQuery.forEach(consumer) &&
            ModelSearchHelper.getInstance(myParameters.getProject()).runSearch(myParameters, consumer);
   }
