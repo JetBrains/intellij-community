@@ -80,6 +80,12 @@ class BuildOptions {
   boolean buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
+   * Image for snap package creation. Default is "snapcore/snapcraft:stable", but can be modified mostly due to problems
+   * with new versions of snapcraft.
+   */
+  String snapDockerImage = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable")
+
+  /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
    */
   String pathToCompiledClassesArchive = System.getProperty("intellij.build.compiled.classes.archive")
