@@ -16,6 +16,8 @@
 package org.intellij.images.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
+import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +45,28 @@ public class ImageInfoReader {
 
   @Nullable
   public static Info getInfo(@NotNull byte[] data) {
+    for (int i = 0; i < Math.min(data.length, 100); i++) {
+      byte b = data[i];
+      if (b == '<') {
+        Info info = tryReadSvg(data);
+        if (info != null) {
+          return info;
+        }
+      }
+      if (!Character.isWhitespace(b)) {
+        break;
+      }
+    }
     return read(new ByteArrayInputStream(data));
+  }
+
+  private static Info tryReadSvg(byte[] data) {
+    try {
+      Couple<Integer> couple = SVGLoader.loadInfo(null, new ByteArrayInputStream(data), 1.0f);
+      return new Info(couple.first, couple.second, 32);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   @Nullable

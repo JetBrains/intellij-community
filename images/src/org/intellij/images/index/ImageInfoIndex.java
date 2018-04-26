@@ -97,7 +97,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
 
   @Override
   public int getVersion() {
-    return 7;
+    return 8;
   }
 
   public static class ImageInfo {

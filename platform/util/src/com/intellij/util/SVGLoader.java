@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.batik.anim.dom.*;
 import org.apache.batik.dom.AbstractDocument;
@@ -130,6 +131,11 @@ public class SVGLoader {
     catch (TranscoderException ex) {
       throw new IOException(ex);
     }
+  }
+
+  public static Couple<Integer> loadInfo(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
+    SVGLoader loader = new SVGLoader(url, stream, scale);
+    return Couple.of((int)loader.width, (int)loader.height);
   }
 
   private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
