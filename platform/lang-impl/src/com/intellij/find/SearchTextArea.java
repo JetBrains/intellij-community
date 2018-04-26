@@ -516,8 +516,6 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   }
 
   private class DefaultLafHelper extends LafHelper {
-    private final JBValue i = new JBValue.Float(3);
-
     @Override
     Border getBorder() {
       return JBUI.Borders.empty(1);
@@ -525,7 +523,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     String getLayoutConstraints() {
-      return "flowx, ins " + i.get() + " " + i.get() + " " + i.get() + " " + i.get() + ", gapx " + i.get();
+      int i = (int)JBUI.scale(1.5f);
+      return "flowx, ins " + i + " " + i + " " + i + " " + i + ", gapx " + JBUI.scale(3);
     }
 
     @Override
