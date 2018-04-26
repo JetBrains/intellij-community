@@ -24,6 +24,7 @@ import org.gradle.nativeplatform.tasks.LinkExecutable;
 import org.gradle.nativeplatform.toolchain.Clang;
 import org.gradle.nativeplatform.toolchain.Gcc;
 import org.gradle.nativeplatform.toolchain.NativeToolChain;
+import org.gradle.nativeplatform.toolchain.VisualCpp;
 import org.gradle.nativeplatform.toolchain.internal.ToolType;
 import org.gradle.nativeplatform.toolchain.internal.tools.CommandLineToolSearchResult;
 import org.gradle.nativeplatform.toolchain.internal.tools.ToolSearchPath;
@@ -185,12 +186,21 @@ public class CppModelBuilder implements ModelBuilderService {
     else if (toolChain instanceof Clang) {
       exeName = "clang++";
     }
-    else {
-      return null;
+    else if (toolChain instanceof VisualCpp) {
+      exeName = "cl";
     }
-    ToolSearchPath toolSearchPath = new ToolSearchPath(OperatingSystem.current());
-    CommandLineToolSearchResult searchResult = toolSearchPath.locate(ToolType.CPP_COMPILER, exeName);
-    return searchResult.isAvailable() ? searchResult.getTool() : null;
+    else {
+      exeName = null;
+    }
+
+    if (exeName != null) {
+      ToolSearchPath toolSearchPath = new ToolSearchPath(OperatingSystem.current());
+      CommandLineToolSearchResult searchResult = toolSearchPath.locate(ToolType.CPP_COMPILER, exeName);
+      if (searchResult.isAvailable()) {
+        return searchResult.getTool();
+      }
+    }
+    return null;
   }
 
   @NotNull
