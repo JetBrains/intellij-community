@@ -307,7 +307,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   @Override
   @NotNull
   public String getHelpTopic() {
-    return " reference.idesettings.debugger.dataviews";
+    return "Debugger_Data_Views_Java";
   }
 
   @Override
