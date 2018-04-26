@@ -701,7 +701,11 @@ public class AllIcons {
     @Deprecated
     public static final Icon IjLogo = IconLoader.getIcon("/general/ijLogo.png"); // 16x16
     public static final Icon ImplementingMethod = IconLoader.getIcon("/general/implementingMethod.png"); // 10x14
-    public static final Icon ImportProject = IconLoader.getIcon("/general/importProject.png"); // 32x32
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ImportProject = IconLoader.getIcon("/toolbarDecorator/import.svg"); // 16x16
     public static final Icon ImportSettings = IconLoader.getIcon("/general/ImportSettings.png"); // 32x32
     public static final Icon Information = IconLoader.getIcon("/general/information.svg"); // 16x16
     public static final Icon InformationDialog = IconLoader.getIcon("/general/informationDialog.png"); // 32x32
@@ -1678,7 +1682,11 @@ public class AllIcons {
     public static final Icon CreateNewProject = IconLoader.getIcon("/welcome/createNewProject.svg"); // 16x16
     public static final Icon CreateNewProjectfromExistingFiles = IconLoader.getIcon("/welcome/CreateNewProjectfromExistingFiles.png"); // 16x16
     public static final Icon FromVCS = IconLoader.getIcon("/welcome/fromVCS.svg"); // 16x16
-    public static final Icon ImportProject = IconLoader.getIcon("/welcome/importProject.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ImportProject = IconLoader.getIcon("/toolbarDecorator/import.svg"); // 16x16
     public static final Icon OpenProject = IconLoader.getIcon("/welcome/openProject.png"); // 16x16
 
     public static class Project {
