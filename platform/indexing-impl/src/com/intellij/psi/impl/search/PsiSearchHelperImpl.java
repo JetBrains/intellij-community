@@ -297,16 +297,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.startBatchFilesProcessingMode();
     try {
       final AtomicInteger counter = new AtomicInteger(alreadyProcessedFiles);
-      final AtomicBoolean canceled = new AtomicBoolean(false);
+      final AtomicBoolean stopped = new AtomicBoolean(false);
 
-      return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, canceled, vfile -> {
+      return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, stopped, vfile -> {
         TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
-        processVirtualFile(vfile, localProcessor, canceled);
+        processVirtualFile(vfile, localProcessor, stopped);
         if (progress.isRunning()) {
           double fraction = (double)counter.incrementAndGet() / totalSize;
           progress.setFraction(fraction);
         }
-        return !canceled.get();
+        return !stopped.get();
       });
     }
     finally {
@@ -320,7 +320,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public static boolean processFilesConcurrentlyDespiteWriteActions(@NotNull Project project,
                                                                     @NotNull List<VirtualFile> files,
                                                                     @NotNull final ProgressIndicator progress,
-                                                                    @NotNull AtomicBoolean canceled,
+                                                                    @NotNull AtomicBoolean stopped,
                                                                     @NotNull final Processor<VirtualFile> localProcessor) {
     ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
@@ -339,7 +339,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
             app.executeByImpatientReader(() -> {
               if (!localProcessor.process(vfile)) {
-                canceled.set(true);
+                stopped.set(true);
               }
             });
           }
@@ -352,7 +352,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           // and 2nd: bail out of fork/join task as soon as possible
           failedFiles.add(vfile);
         }
-        return !canceled.get();
+        return !stopped.get();
       };
       boolean completed;
       if (app.isWriteAccessAllowed() || app.isReadAccessAllowed() && app.isWriteActionPending()) {
@@ -384,7 +384,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private void processVirtualFile(@NotNull final VirtualFile vfile,
                                   @NotNull final Processor<? super PsiFile> localProcessor,
-                                  @NotNull final AtomicBoolean canceled) throws ApplicationUtil.CannotRunReadActionException {
+                                  @NotNull final AtomicBoolean stopped) throws ApplicationUtil.CannotRunReadActionException {
     final PsiFile file = ApplicationUtil.tryRunReadAction(() -> vfile.isValid() ? myManager.findFile(vfile) : null);
     if (file != null && !(file instanceof PsiBinaryFile)) {
       // load contents outside read action
@@ -413,7 +413,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
 
           if (!localProcessor.process(psiRoot)) {
-            canceled.set(true);
+            stopped.set(true);
             break;
           }
         }
@@ -490,7 +490,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final StringSearcher searcher = new StringSearcher(qName, true, true, false);
 
     progress.pushState();
-    final Ref<Boolean> cancelled = Ref.create(Boolean.FALSE);
+    final Ref<Boolean> stopped = Ref.create(Boolean.FALSE);
     try {
       progress.setText(PsiBundle.message("psi.search.in.non.java.files.progress"));
 
@@ -510,13 +510,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             return referenceAt == null || useScope == null || !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile);
           });
           if (isReferenceOK && !processor.process(psiFile, index, index + patternLength)) {
-            cancelled.set(Boolean.TRUE);
+            stopped.set(Boolean.TRUE);
             return false;
           }
 
           return true;
         });
-        if (cancelled.get()) break;
+        if (stopped.get()) break;
         progress.setFraction((double)(i + 1) / files.length);
       }
     }
@@ -524,7 +524,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.popState();
     }
 
-    return !cancelled.get();
+    return !stopped.get();
   }
 
   @Override
@@ -589,7 +589,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     collectors.put(collector, processor);
 
     ProgressIndicator progress = getOrCreateIndicator();
-    if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.CANCELLED) {
+    if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
       return false;
     }
     do {
@@ -614,7 +614,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
       }
       final QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
-      if (result == QueryRequestsRunResult.CANCELLED) {
+      if (result == QueryRequestsRunResult.STOPPED) {
         return false;
       }
       else if (result == QueryRequestsRunResult.UNCHANGED) {
@@ -631,7 +631,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private enum QueryRequestsRunResult {
-    CANCELLED,
+    STOPPED,
     UNCHANGED,
     CHANGED,
   }
@@ -647,7 +647,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       for (QuerySearchRequest request : each.takeQueryRequests()) {
         progress.checkCanceled();
         if (!request.runQuery()) {
-          return QueryRequestsRunResult.CANCELLED;
+          return QueryRequestsRunResult.STOPPED;
         }
         assert !collectors.containsKey(request.collector) || collectors.get(request.collector) == request.processor;
         collectors.put(request.collector, request.processor);
