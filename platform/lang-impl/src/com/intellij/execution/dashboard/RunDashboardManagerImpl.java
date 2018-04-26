@@ -398,6 +398,15 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           myDashboardToToolWindowContents.clear();
           myToolWindowContentManager.removeAllContents(true);
           myToolWindowContentManager.addContent(myToolWindowContent);
+          Content content = myContentManager.getSelectedContent();
+          if (content != null) {
+            myToolWindowContent.setDisplayName(content.getDisplayName());
+            myToolWindowContent.setIcon(content.getIcon());
+          }
+          else {
+            myToolWindowContent.setDisplayName(null);
+            myToolWindowContent.setIcon(null);
+          }
         }
       }
       else {
@@ -537,6 +546,17 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     public void selectionChanged(ContentManagerEvent event) {
       if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
         contentAdded(event);
+      }
+
+      if (myToolWindowContentManager == null || myToolWindowContent == null || !myShowConfigurations) return;
+
+      if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
+        myToolWindowContent.setDisplayName(event.getContent().getDisplayName());
+        myToolWindowContent.setIcon(event.getContent().getIcon());
+      }
+      else {
+        myToolWindowContent.setDisplayName(null);
+        myToolWindowContent.setIcon(null);
       }
     }
   }
