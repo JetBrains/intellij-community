@@ -1013,6 +1013,3 @@ private inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(han
     }
   }
 }
-
-internal val ConfigurationType.isManaged: Boolean
-  get() = this !is UnknownConfigurationType
