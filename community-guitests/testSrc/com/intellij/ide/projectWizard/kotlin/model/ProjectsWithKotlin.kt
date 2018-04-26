@@ -888,11 +888,11 @@ fun KotlinGuiTestCase.checkInProjectStructureGradleExplicitModuleGroups(
     )
     checkFacetInOneModule(
       expectedFacet,
-      "$projectName(0)", "${projectName}_main", "Kotlin"
+      "$projectName", "${projectName}_main", "Kotlin"
     )
     checkFacetInOneModule(
       expectedFacet,
-      "$projectName(0)", "${projectName}_test", "Kotlin"
+      "$projectName", "${projectName}_test", "Kotlin"
     )
   }
 }
