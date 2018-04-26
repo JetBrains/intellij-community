@@ -130,12 +130,12 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
       val notFoundImagesIds = imagesWithSvgAndPng.toMutableSet().apply {
         filteredImages.forEach { this.remove(it.id) }
       }
-      log(WARNING, "This icon should have both SVG and PNG versions, but was not found - " +
+      log(WARNING, "This icon should have both SVG and PNG versions, but was not found\n" +
                    "see ImageSanityCheckerBase.IMAGES_WITH_BOTH_SVG_AND_PNG", module,
           notFoundImagesIds.map { ImagePaths(it, module.sourceRoots.first()) })
     }
 
-    process(filteredImages, WARNING, "This icon should have both SVG and PNG versions - " +
+    process(filteredImages, WARNING, "This icon should have both SVG and PNG versions\n" +
                                      "see ImageSanityCheckerBase.IMAGES_WITH_BOTH_SVG_AND_PNG", module) { image ->
       val svgFiles = image.files.filter { ImageExtension.fromFile(it) == SVG }
       val pngFiles = image.files.filter { ImageExtension.fromFile(it) == PNG }
