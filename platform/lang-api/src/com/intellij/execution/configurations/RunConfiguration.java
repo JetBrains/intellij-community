@@ -115,7 +115,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    * Used only for non-managed RC type.
    */
   @Nullable
-  default String getUniqueId() {
+  default String getId() {
     return null;
   }
 
