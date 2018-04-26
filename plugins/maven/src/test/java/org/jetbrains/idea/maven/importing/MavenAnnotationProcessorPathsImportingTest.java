@@ -98,6 +98,7 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
+                     "<packaging>pom</packaging>\n" +
 
                      "<modules>\n" +
                      "  <module>m1</module>\n" +

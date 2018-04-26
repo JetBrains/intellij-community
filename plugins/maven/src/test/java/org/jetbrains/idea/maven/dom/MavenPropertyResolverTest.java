@@ -93,6 +93,7 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<properties>" +
                      " <parentProp>parent.value</parentProp>" +

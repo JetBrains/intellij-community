@@ -151,6 +151,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m1</module>" +
@@ -572,7 +573,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                               "  </properties>" +
                               "</profile>");
 
-    importProject();
+    importProjectWithErrors(true); // structure warning, new style of profiles.xml expected
 
     List<MavenProject> roots = myProjectsTree.getRootProjects();
 
