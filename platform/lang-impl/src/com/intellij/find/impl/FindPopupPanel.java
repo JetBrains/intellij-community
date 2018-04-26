@@ -416,7 +416,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
       };
     myShowFilterPopupAction.registerCustomShortcutSet(myShowFilterPopupAction.getShortcutSet(), this);
-    ToggleAction pinAction = new ToggleAction(null, null, AllIcons.General.AutohideOff) {
+    ToggleAction pinAction = new ToggleAction(null, null, AllIcons.General.Pin_tab) {
       @Override
       public boolean isDumbAware() {
         return true;

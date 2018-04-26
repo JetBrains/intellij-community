@@ -599,9 +599,21 @@ public class AllIcons {
     public static final Icon AddJdk = IconLoader.getIcon("/general/addJdk.png"); // 16x16
     public static final Icon ArrowDown = IconLoader.getIcon("/general/arrowDown.png"); // 7x6
     public static final Icon ArrowDown_white = IconLoader.getIcon("/general/arrowDown_white.png"); // 7x6
-    public static final Icon AutohideOff = IconLoader.getIcon("/general/autohideOff.png"); // 14x14
-    public static final Icon AutohideOffInactive = IconLoader.getIcon("/general/autohideOffInactive.png"); // 14x14
-    public static final Icon AutohideOffPressed = IconLoader.getIcon("/general/autohideOffPressed.png"); // 22x20
+
+    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon AutohideOff = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon AutohideOffInactive = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon AutohideOffPressed = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
     public static final Icon AutoscrollFromSource = IconLoader.getIcon("/general/autoscrollFromSource.png"); // 16x16
     public static final Icon AutoscrollToSource = IconLoader.getIcon("/general/autoscrollToSource.png"); // 16x16
     public static final Icon Balloon = IconLoader.getIcon("/general/balloon.svg"); // 16x16

@@ -149,6 +149,13 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/locked.png", "AllIcons.Debugger.MuteBreakpoints");
     ourDeprecatedIconsReplacements.put("/debugger/threadStates/locked.svg", "AllIcons.Debugger.MuteBreakpoints");
 
+    ourDeprecatedIconsReplacements.put("/general/autohideOff.png", "AllIcons.General.Pin_tab");
+    ourDeprecatedIconsReplacements.put("/general/autohideOff.svg", "AllIcons.General.Pin_tab");
+    ourDeprecatedIconsReplacements.put("/general/autohideOffInactive.png", "AllIcons.General.Pin_tab");
+    ourDeprecatedIconsReplacements.put("/general/autohideOffInactive.svg", "AllIcons.General.Pin_tab");
+    ourDeprecatedIconsReplacements.put("/general/autohideOffPressed.png", "AllIcons.General.Pin_tab");
+    ourDeprecatedIconsReplacements.put("/general/autohideOffPressed.svg", "AllIcons.General.Pin_tab");
+
     ourDeprecatedIconsReplacements.put("/actions/exclude.png", "AllIcons.General.Remove");
     ourDeprecatedIconsReplacements.put("/actions/exclude.svg", "AllIcons.General.Remove");
     ourDeprecatedIconsReplacements.put("/toolbarDecorator/remove.png", "AllIcons.General.Remove");
