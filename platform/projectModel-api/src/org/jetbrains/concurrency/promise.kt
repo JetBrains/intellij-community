@@ -12,6 +12,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
 val Promise<*>.isRejected: Boolean
@@ -224,9 +225,11 @@ fun <T: Any?> Collection<Promise<*>>.all(totalResult: T, ignoreErrors: Boolean =
   return totalPromise
 }
 
-private class CountDownConsumer<T : Any?>(@Volatile private var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T) : Consumer<Any?> {
+private class CountDownConsumer<T : Any?>(countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T) : Consumer<Any?> {
+  private val countDown = AtomicInteger(countDown)
+
   override fun accept(t: Any?) {
-    if (--countDown == 0) {
+    if (countDown.decrementAndGet() == 0) {
       promise.setResult(totalResult)
     }
   }
@@ -243,10 +246,10 @@ fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
   val totalPromise = AsyncPromise<T>()
   val done = Consumer<T> { result -> totalPromise.setResult(result) }
   val rejected = object : Consumer<Throwable> {
-    @Volatile private var toConsume = promises.size
+    private val toConsume = AtomicInteger(promises.size)
 
     override fun accept(throwable: Throwable) {
-      if (--toConsume <= 0) {
+      if (toConsume.decrementAndGet() <= 0) {
         totalPromise.setError(totalError)
       }
     }
