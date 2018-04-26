@@ -90,11 +90,11 @@ inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Un
 inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = onSuccess { handler() }
 
 @Suppress("UNCHECKED_CAST")
-inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then({ handler() })
+inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then { handler() }
 
 @Suppress("UNCHECKED_CAST")
 inline fun Promise<*>.processedRun(crossinline handler: () -> Unit): Promise<*> {
-  return (this as Promise<Any?>).onProcessed({ handler() })
+  return (this as Promise<Any?>).onProcessed { handler() }
 }
 
 
