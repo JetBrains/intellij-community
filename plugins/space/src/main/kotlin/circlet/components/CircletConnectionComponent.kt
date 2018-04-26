@@ -1,11 +1,11 @@
 package circlet.components
 
 import circlet.app.*
+import circlet.bootstrap.*
 import circlet.client.api.*
 import circlet.platform.client.*
 import circlet.settings.*
 import circlet.utils.*
-import com.intellij.concurrency.*
 import com.intellij.notification.*
 import com.intellij.notification.Notification
 import com.intellij.openapi.components.*
@@ -18,7 +18,6 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.jetty.*
-import kotlinx.coroutines.experimental.*
 import runtime.reactive.*
 import java.awt.*
 import java.net.*
@@ -38,33 +37,29 @@ class CircletConnectionComponent(private val project: Project) :
 
             if (url.isNotEmpty()) {
                 loginModel = LoginModel(
-                    IdeaPersistence.substorage("$url-"), url,
-                    EmptyLoggedStateWatcher, { authCheckFailedNotification(urlLifetime) }, NotificationKind.Ide
+                    IdeaPersistence.substorage("$url-"),
+                    url,
+                    EmptyLoggedStateWatcher,
+                    { },
+                    NotificationKind.Ide
                 )
-
-                loginModel!!.client.connectionStatus.view(urlLifetime) { stateLifetime, state ->
-                    when (state) {
-                        ConnectionStatus.CONNECTED -> notifyConnected()
-                        ConnectionStatus.CONNECTING -> notifyReconnect(stateLifetime)
-                        ConnectionStatus.AUTH_FAILED -> authCheckFailedNotification(stateLifetime)
+                loginModel!!.meUser.view(urlLifetime) { userStatusLifetime, userStatus ->
+                    if (userStatus === UserStatus.NoUser) {
+                        authCheckFailedNotification(userStatusLifetime)
                     }
                 }
-
-                JobScheduler.getScheduler().schedule(
-                    {
-                        async {
-                            if (!urlLifetime.isTerminated) {
-                                if (loginModel?.token() == null) {
-                                    authCheckFailedNotification(urlLifetime)
-                                }
-                                else {
-                                    loginModel?.restart()
-                                }
+                loginModel!!.meSession.view(urlLifetime) { sessionStateLifetime, meSession ->
+                    if (meSession is MeSession.ClientReady) {
+                        meSession.clientSession.client.connectionStatus.view(sessionStateLifetime) {
+                            connectionStateLifetime, connectionState ->
+                            when (connectionState) {
+                                ConnectionStatus.CONNECTED -> notifyConnected()
+                                ConnectionStatus.CONNECTING -> notifyReconnect(connectionStateLifetime)
+                                ConnectionStatus.AUTH_FAILED -> Unit
                             }
                         }
-                    },
-                    100, TimeUnit.MILLISECONDS
-                )
+                    }
+                }
             }
             else {
                 notifyDisconnected(urlLifetime)
