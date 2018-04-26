@@ -607,12 +607,7 @@ public class ArtifactUtil {
     }
 
     final String baseName = configuration.getArtifactName();
-    String name = baseName;
-    int i = 2;
-    while (artifactModel.findArtifact(name) != null) {
-      name = baseName + i;
-      i++;
-    }
+    String name = generateUniqueName(baseName, artifactModel);
 
     ArtifactType actualType = configuration.getArtifactType();
     if (actualType == null) {
@@ -621,6 +616,17 @@ public class ArtifactUtil {
     final ModifiableArtifact artifact = artifactModel.addArtifact(name, actualType, configuration.getRootElement());
     artifactTemplate.setUpArtifact(artifact, configuration);
     return artifact;
+  }
+
+  @NotNull
+  public static String generateUniqueName(String baseName, @NotNull ModifiableArtifactModel artifactModel) {
+    String name = baseName;
+    int i = 2;
+    while (artifactModel.findArtifact(name) != null) {
+      name = baseName + i;
+      i++;
+    }
+    return name;
   }
 }
 
