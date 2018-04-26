@@ -252,6 +252,16 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     }
   }
 
+  public void selectInTree(UserDefinedJsonSchemaConfiguration configuration) {
+    final Enumeration children = myRoot.children();
+    while (children.hasMoreElements()) {
+      final MyNode node = (MyNode)children.nextElement();
+      if (((JsonSchemaConfigurable) node.getConfigurable()).getUiSchema() == configuration) {
+        selectNodeInTree(node);
+      }
+    }
+  }
+
   @NotNull
   private List<UserDefinedJsonSchemaConfiguration> getUiList(boolean applyChildren) throws ConfigurationException {
     final List<UserDefinedJsonSchemaConfiguration> uiList = new ArrayList<>();
