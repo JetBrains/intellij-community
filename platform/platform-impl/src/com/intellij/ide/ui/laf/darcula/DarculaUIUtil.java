@@ -60,7 +60,6 @@ public class DarculaUIUtil {
   public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
   public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
 
-  private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
   public enum Outline {
     error {
@@ -93,7 +92,7 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
-    g.setPaint(UIUtil.isGraphite() ? GRAPHITE_COLOR : JBUI.CurrentTheme.focusColor());
+    g.setPaint(JBUI.CurrentTheme.focusColor());
 
     float blw = BW.getFloat() + LW.getFloat();
     Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
@@ -117,7 +116,7 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    g.setPaint(UIUtil.isGraphite() ? GRAPHITE_COLOR : JBUI.CurrentTheme.focusColor());
+    g.setPaint(JBUI.CurrentTheme.focusColor());
     doPaint(g, width, height, arc, symmetric);
   }
 

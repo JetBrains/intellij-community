@@ -103,7 +103,9 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected Dimension updatePreferredSize(JComponent c, Dimension size) {
-    JBInsets.removeFrom(size, c.getInsets());
+    if (c.getBorder() instanceof DarculaCheckBoxBorder) {
+      JBInsets.removeFrom(size, c.getInsets());
+    }
     return size;
   }
 

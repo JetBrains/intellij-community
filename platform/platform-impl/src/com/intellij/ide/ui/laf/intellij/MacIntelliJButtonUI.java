@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.IconCache;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
@@ -49,7 +50,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
         float lw = LW(g2);
         float arc = ARC.getFloat();
-        Insets i = c.getInsets();
+        Insets i = isSmallComboButton(c) ? JBUI.insets(1) : c.getInsets();
 
         // Draw background
         Shape outerRect = new RoundRectangle2D.Float(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom), arc, arc);

@@ -97,7 +97,9 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   }
 
   protected Dimension updatePreferredSize(JComponent c, Dimension size) {
-    JBInsets.removeFrom(size, c.getInsets());
+    if (c.getBorder() instanceof DarculaRadioButtonBorder) {
+      JBInsets.removeFrom(size, c.getInsets());
+    }
     return size;
   }
 

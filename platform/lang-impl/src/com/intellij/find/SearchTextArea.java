@@ -434,7 +434,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   @NotNull
   private LafHelper createHelper() {
     return UIUtil.isUnderWin10LookAndFeel() ? new Win10LafHelper() :
-           SystemInfo.isMac && !UIUtil.isUnderDarcula() ? new MacLafHelper() : new DefaultLafHelper();
+           UIUtil.isUnderDefaultMacTheme() ? new MacLafHelper() :
+           new DefaultLafHelper();
   }
 
   private static abstract class LafHelper {
@@ -523,8 +524,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     String getLayoutConstraints() {
-      int i = (int)JBUI.scale(1.5f);
-      return "flowx, ins " + i + " " + i + " " + i + " " + i + ", gapx " + JBUI.scale(3);
+      Insets i = JBUI.insets(3);
+      return "flowx, ins " + i.top + " " + i.left + " " + i.bottom + " " + i.right + ", gapx " + JBUI.scale(3);
     }
 
     @Override
