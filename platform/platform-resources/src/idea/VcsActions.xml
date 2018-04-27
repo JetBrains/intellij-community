@@ -172,16 +172,17 @@
     </group>
 
     <group id="ShelvedChangesToolbar">
-      <reference ref="Diff.ShowDiff"/>
       <action id="ChangesView.UnshelveSilently" class="com.intellij.openapi.vcs.changes.actions.UnshelveSilentlyAction"
               text="Unshelve Silently" description="Unshelve changes to appropriate changelists" icon="AllIcons.Vcs.UnshelveSilent">
         <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
       </action>
-      <reference ref="ChangesView.CreatePatchFromChanges"/>
-      <reference ref="ShelvedChanges.ShowHideDeleted" />
+      <reference ref="Diff.ShowDiff"/>
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
-     <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"
-              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.GearPlain"/>
+      <separator/>
+      <reference ref="ShelvedChanges.ShowHideDeleted"/>
+      <separator/>
+      <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"
+              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.Settings"/>
     </group>
 
     <!--a group for plugins to add their actions-->
