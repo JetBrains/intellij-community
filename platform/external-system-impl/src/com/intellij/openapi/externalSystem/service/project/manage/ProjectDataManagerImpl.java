@@ -41,7 +41,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 
@@ -95,11 +98,6 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     if (project.isDisposed()) return;
 
     MultiMap<Key<?>, DataNode<?>> grouped = ExternalSystemApiUtil.recursiveGroup(nodes);
-    for (Key<?> key : myServices.getValue().keySet()) {
-      if (!grouped.containsKey(key)) {
-        grouped.put(key, Collections.emptyList());
-      }
-    }
 
     final Collection<DataNode<?>> projects = grouped.get(ProjectKeys.PROJECT);
     // only one project(can be multi-module project) expected for per single import
