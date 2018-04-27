@@ -1,13 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.VisualPaddingsProvider;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -20,7 +18,7 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPH
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJButtonBorder implements Border, UIResource, VisualPaddingsProvider {
+public class WinIntelliJButtonBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!(c instanceof AbstractButton) || UIUtil.isHelpButton(c)) return;
@@ -29,7 +27,7 @@ public class WinIntelliJButtonBorder implements Border, UIResource, VisualPaddin
     AbstractButton b = (AbstractButton)c;
     Rectangle outerRect = new Rectangle(x, y, width, height);
     try {
-      JBInsets.removeFrom(outerRect, getOuterInsets());
+      JBInsets.removeFrom(outerRect, b.getInsets());
 
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -52,12 +50,6 @@ public class WinIntelliJButtonBorder implements Border, UIResource, VisualPaddin
     }
   }
 
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets(1);
-  }
-
   private static Color getBorderColor(AbstractButton b) {
     ButtonModel bm = b.getModel();
 
@@ -72,11 +64,6 @@ public class WinIntelliJButtonBorder implements Border, UIResource, VisualPaddin
       Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
       return borderColor != null ? borderColor : UIManager.getColor("Button.intellij.native.borderColor");
     }
-  }
-
-  @NotNull
-  public JBInsets getOuterInsets() {
-    return JBUI.insets(1);
   }
 
   protected boolean isWideBorder(@NotNull AbstractButton b) {

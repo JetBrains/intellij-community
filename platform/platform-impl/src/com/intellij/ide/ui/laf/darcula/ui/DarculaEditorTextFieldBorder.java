@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.VisualPaddingsProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -24,6 +25,8 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +36,7 @@ import java.awt.geom.Rectangle2D;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaEditorTextFieldBorder extends DarculaTextBorder {
+public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements VisualPaddingsProvider {
   public DarculaEditorTextFieldBorder() {
     this(null, null);
   }
@@ -96,8 +99,7 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder {
       boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
       Object op = editorTextField.getClientProperty("JComponent.outline");
       if (op != null) {
-        DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus,
-                                         DarculaUIUtil.Outline.valueOf(op.toString()));
+        DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus, DarculaUIUtil.Outline.valueOf(op.toString()));
       } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
         DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, 0, true);
       }
@@ -109,7 +111,7 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(7, 12).asUIResource();
+    return isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(7, 8).asUIResource();
   }
 
   @Override
@@ -119,5 +121,11 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder {
 
   public static boolean isComboBoxEditor(Component c) {
     return UIUtil.getParentOfType(JComboBox.class, c) != null;
+  }
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(3);
   }
 }

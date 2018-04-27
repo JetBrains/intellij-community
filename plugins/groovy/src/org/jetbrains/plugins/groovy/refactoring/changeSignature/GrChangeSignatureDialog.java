@@ -75,8 +75,9 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     return GroovyFileType.GROOVY_FILE_TYPE;
   }
 
+  @NotNull
   @Override
-  protected GrParameterTableModel createParametersInfoModel(GrMethodDescriptor method) {
+  protected GrParameterTableModel createParametersInfoModel(@NotNull GrMethodDescriptor method) {
     final PsiParameterList parameterList = method.getMethod().getParameterList();
     return new GrParameterTableModel(parameterList, myDefaultValueContext, this);
   }

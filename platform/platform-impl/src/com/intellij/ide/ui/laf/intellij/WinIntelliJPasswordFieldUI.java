@@ -16,9 +16,6 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -89,16 +86,5 @@ public class WinIntelliJPasswordFieldUI extends BasicPasswordFieldUI {
     } finally {
       g2.dispose();
     }
-  }
-
-  @Override
-  public Dimension getMinimumSize(JComponent c) {
-    Dimension size = super.getMinimumSize(c);
-    if (size != null && JBUI.isUseCorrectInputHeight(c)) {
-      size.height = DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
-                    UIUtil.getParentOfType(JSpinner.class, c) != null ?
-                    JBUI.scale(18) : JBUI.scale(24);
-    }
-    return size;
   }
 }

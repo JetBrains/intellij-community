@@ -73,10 +73,7 @@ public abstract class RunLineMarkerContributor {
   protected static String getText(@NotNull AnAction action, @NotNull PsiElement element) {
     DataContext parent = DataManager.getInstance().getDataContext();
     DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element, parent);
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.STATUS_BAR_PLACE, dataContext);
-    action.update(event);
-    Presentation presentation = event.getPresentation();
-    return presentation.isEnabled() && presentation.isVisible() ? presentation.getText() : null;
+    return ((ExecutorAction)action).getActionName(dataContext);
   }
 
   protected static Icon getTestStateIcon(String url, Project project, boolean isClass) {

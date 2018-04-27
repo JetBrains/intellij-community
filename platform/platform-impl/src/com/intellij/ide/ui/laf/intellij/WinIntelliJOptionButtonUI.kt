@@ -12,7 +12,7 @@ import javax.swing.border.Border
 import javax.swing.event.ChangeListener
 
 class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
-  private val outerInsets get() = (mainButton.border as WinIntelliJButtonBorder).outerInsets
+  private val outerInsets get() = mainButton.insets
   private val lw get() = scale(1)
 
   private var mainButtonBorder: Border? = null

@@ -10,6 +10,9 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.COMPONENT_ARC;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -19,21 +22,12 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     return new DarculaTextFieldUI();
   }
 
-  // real height without visual paddings
-  protected int getMinimumHeightForTextField() {
-    return DarculaUIUtil.DARCULA_INPUT_HEIGHT;
-  }
-
   @Override
-  protected int getMinimumHeight() {
+  protected int getMinimumHeight(int textHeight) {
     Insets i = getComponent().getInsets();
     JComponent c = getComponent();
-    if (DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null) {
-      return JBUI.scale(JBUI.getInt("TextFieldUI.spinnerOrComboboxEditorHeight", 22));
-    }
-    else {
-      return JBUI.scale(JBUI.isUseCorrectInputHeight(c) ? getMinimumHeightForTextField() : 22) + i.top + i.bottom;
-    }
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null ?
+              textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
   }
 
   @Override
@@ -69,17 +63,10 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     }
   }
 
-  @Override
-  protected void updatePreferredSize(JComponent c, Dimension size) {
-    super.updatePreferredSize(c, size);
-    Insets i = c.getInsets();
-    size.width += i.left + i.right;
-  }
-
   protected void paintDarculaBackground(Graphics g, JTextComponent component) {
     Graphics2D g2 = (Graphics2D)g.create();
     Rectangle r = new Rectangle(component.getSize());
-    JBInsets.removeFrom(r, JBUI.insets(1));
+    JBInsets.removeFrom(r, DarculaUIUtil.paddings());
 
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -88,20 +75,24 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
       g2.translate(r.x, r.y);
 
-      float arc = isSearchField(component) ? JBUI.scale(6f) : 0.0f;
-      float bw = bw();
-
       if (component.isEnabled() && component.isEditable()) {
-        g2.setColor(component.getBackground());
-      }
+        float arc = isSearchField(component) ? COMPONENT_ARC.getFloat() : 0.0f;
+        float bw = bw();
 
-      g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
+        g2.setColor(component.getBackground());
+        g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
+      }
     } finally {
       g2.dispose();
     }
   }
 
+  @Override
+  protected Insets getDefaultMargins() {
+    return JBUI.insets(2, 5);
+  }
+
   protected float bw() {
-    return DarculaUIUtil.bw();
+    return DarculaUIUtil.BW.getFloat();
   }
 }

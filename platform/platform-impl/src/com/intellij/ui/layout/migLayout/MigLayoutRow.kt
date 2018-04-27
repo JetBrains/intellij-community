@@ -160,7 +160,15 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     // as soon as ComponentPanelBuilder will also compensate visual paddings (instead of compensating on LaF level),
     // this logic will be moved into computeCommentInsets
     val componentBorderVisualLeftPadding = when {
-      spacing.isCompensateVisualPaddings -> (component.border as? VisualPaddingsProvider)?.getVisualPaddings(component)?.left ?: 0
+      spacing.isCompensateVisualPaddings -> {
+        val border = component.border
+        if (border is VisualPaddingsProvider) {
+          border.getVisualPaddings(component)?.left ?: 0
+        }
+        else {
+          0
+        }
+      }
       else -> 0
     }
     val insets = ComponentPanelBuilder.computeCommentInsets(component, true)
@@ -266,7 +274,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       originalComponent
     }
 
-    val border = component.border
+    val border = component.border ?: return
     if (border is LineBorder) {
       if (labeled && components.size == 2) {
         componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
@@ -274,7 +282,17 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       return
     }
 
-    val paddings = (border as? VisualPaddingsProvider)?.getVisualPaddings(originalComponent) ?: return
+    val paddings = if (border is VisualPaddingsProvider) {
+      border.getVisualPaddings(originalComponent) ?: return
+    }
+    else {
+      border.getBorderInsets(component) ?: return
+    }
+
+    if (paddings.top == 0 && paddings.left == 0 && paddings.bottom == 0 && paddings.right == 0) {
+      return
+    }
+
     originalComponent.putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, intArrayOf(paddings.top, paddings.left, paddings.bottom, paddings.right))
   }
 

@@ -171,7 +171,10 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     }});
 
     Insets insets = getInsets();
+    Insets margins = getMargin();
+
     JBInsets.addTo(size, insets);
+    JBInsets.addTo(size, margins);
     JBInsets.addTo(size, pane.getInsets());
     if (size.width - MINIMAL_WIDTH < getWidth()) size.width = getWidth();
 
@@ -190,7 +193,10 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
       }
     }
     pane.setPreferredSize(size);
-    pane.setViewportBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
+    pane.setViewportBorder(BorderFactory.createEmptyBorder(insets.top + margins.top,
+                                                           insets.left + margins.left,
+                                                           insets.bottom + margins.bottom,
+                                                           insets.right + margins.right));
 
     popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(pane, area)
