@@ -236,8 +236,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           return refresh(state, filterRequest, moreCommitsRequests);
         }
         else if (!indexingRequests.isEmpty()) {
-          if (myVisiblePackBuilder.areFiltersAffectedByIndexing(state.getFilters(),
-                                                                ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
+          if (VcsLogFilterer.areFiltersAffectedByIndexing(state.getFilters(),
+                                                          ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
             return refresh(state, filterRequest, moreCommitsRequests);
           }
         }
