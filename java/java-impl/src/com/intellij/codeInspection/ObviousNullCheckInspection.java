@@ -88,11 +88,10 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       if (contracts.size() != 1) return null;
       StandardMethodContract contract = ObjectUtils.tryCast(contracts.get(0), StandardMethodContract.class);
       if (contract == null || !contract.getReturnValue().isFail()) return null;
-      ValueConstraint[] arguments = contract.arguments;
       Integer nullIndex = null;
       boolean isNull = false;
-      for (int i = 0; i < arguments.length; i++) {
-        ValueConstraint argument = arguments[i];
+      for (int i = 0; i < contract.getParameterCount(); i++) {
+        ValueConstraint argument = contract.getParameterConstraint(i);
         if (argument == ValueConstraint.NULL_VALUE || argument == ValueConstraint.NOT_NULL_VALUE) {
           if (nullIndex != null) return null;
           nullIndex = i;

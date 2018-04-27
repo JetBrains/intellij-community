@@ -101,7 +101,7 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
     is DelegationContract -> { out.writeByte(0); writeRange(
       out, contract.expression); out.writeBoolean(contract.negated) }
     is KnownContract -> { out.writeByte(1)
-      writeContractArguments(out, contract.contract.arguments.toList())
+      writeContractArguments(out, contract.contract.constraints)
       out.writeByte(contract.contract.returnValue.ordinal())
     }
     is MethodCallContract -> { out.writeByte(2)

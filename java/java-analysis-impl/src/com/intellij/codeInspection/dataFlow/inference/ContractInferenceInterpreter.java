@@ -262,7 +262,9 @@ class ContractInferenceInterpreter {
   }
 
   private static List<ValueConstraint[]> antecedentsReturning(List<PreContract> values, ContractReturnValue result) {
-    return ContainerUtil.mapNotNull(knownContracts(values), contract -> contract.getReturnValue().equals(result) ? contract.arguments : null);
+    return ContainerUtil.mapNotNull(knownContracts(values),
+                                    contract -> contract.getReturnValue().equals(result) ?
+                                                contract.getConstraints().toArray(new ValueConstraint[0]) : null);
   }
 
   private static class CodeBlockContracts {

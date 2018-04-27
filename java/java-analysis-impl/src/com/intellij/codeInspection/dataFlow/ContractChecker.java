@@ -47,8 +47,8 @@ class ContractChecker extends DataFlowRunner {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final DfaMemoryState initialState = checker.createMemoryState();
     final DfaValueFactory factory = checker.getFactory();
-    for (int i = 0; i < contract.arguments.length; i++) {
-      ValueConstraint constraint = contract.arguments[i];
+    for (int i = 0; i < contract.getParameterCount(); i++) {
+      ValueConstraint constraint = contract.getParameterConstraint(i);
       DfaConstValue comparisonValue = constraint.getComparisonValue(factory);
       if (comparisonValue != null) {
         boolean negated = constraint.shouldUseNonEqComparison();

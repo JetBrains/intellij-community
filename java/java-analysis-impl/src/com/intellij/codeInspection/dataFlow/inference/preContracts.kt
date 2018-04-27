@@ -54,9 +54,9 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
                                              varArgCall: Boolean,
                                              targetContract: StandardMethodContract): StandardMethodContract? {
     var answer: Array<StandardMethodContract.ValueConstraint>? = emptyConstraints(callerMethod)
-    for (i in targetContract.arguments.indices) {
+    for (i in 0 until targetContract.parameterCount) {
       if (i >= callArguments.size) return null
-      val argConstraint = targetContract.arguments[i]
+      val argConstraint = targetContract.getParameterConstraint(i)
       if (argConstraint != ANY_VALUE) {
         if (varArgCall && i >= targetParameters.size - 1) {
           if (argConstraint == NULL_VALUE) {
@@ -83,8 +83,9 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
   private fun emptyConstraints(method: PsiMethod) = StandardMethodContract.createConstraintArray(
     method.parameterList.parametersCount)
 
-  private fun returnNotNull(mc: StandardMethodContract) = if (mc.returnValue.isFail) mc else StandardMethodContract(
-    mc.arguments, ContractReturnValue.returnNotNull())
+  private fun returnNotNull(mc: StandardMethodContract): StandardMethodContract {
+    return if (mc.returnValue.isFail) mc else mc.withReturnValue(ContractReturnValue.returnNotNull())
+  }
 
   private fun getLiteralConstraint(argument: PsiExpression) = when (argument) {
     is PsiLiteralExpression -> ContractInferenceInterpreter.getLiteralConstraint(
@@ -117,7 +118,7 @@ internal data class NegatingContract(internal val negated: PreContract) : PreCon
 
 private fun negateContract(c: StandardMethodContract): StandardMethodContract? {
   val ret = c.returnValue
-  return if (ret is ContractReturnValue.BooleanReturnValue) StandardMethodContract(c.arguments, ret.negate())
+  return if (ret is ContractReturnValue.BooleanReturnValue) c.withReturnValue(ret.negate())
   else null
 }
 

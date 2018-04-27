@@ -316,9 +316,9 @@ public class BytecodeAnalysisConverter {
     StandardMethodContract soleContract = StreamEx.ofPairs(contractClauses, (c1, c2) -> {
       if (c1.getReturnValue() != c2.getReturnValue()) return null;
       int idx = -1;
-      for (int i = 0; i < c1.arguments.length; i++) {
-        ValueConstraint left = c1.arguments[i];
-        ValueConstraint right = c2.arguments[i];
+      for (int i = 0; i < c1.getParameterCount(); i++) {
+        ValueConstraint left = c1.getParameterConstraint(i);
+        ValueConstraint right = c2.getParameterConstraint(i);
         if (left == ValueConstraint.ANY_VALUE && right == ValueConstraint.ANY_VALUE) continue;
         if (idx >= 0 || !right.canBeNegated() || left != right.negate()) return null;
         idx = i;
@@ -326,8 +326,8 @@ public class BytecodeAnalysisConverter {
       return c1;
     }).nonNull().findFirst().orElse(null);
     if(soleContract != null) {
-      Arrays.fill(soleContract.arguments, ValueConstraint.ANY_VALUE);
-      contractClauses = Collections.singletonList(soleContract);
+      ValueConstraint[] constraints = StandardMethodContract.createConstraintArray(soleContract.getParameterCount());
+      contractClauses = Collections.singletonList(new StandardMethodContract(constraints, soleContract.getReturnValue()));
     }
     return contractClauses;
   }

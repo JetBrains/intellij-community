@@ -56,10 +56,6 @@ public class HardcodedContracts {
 
   private static final CallMatcher QUEUE_POLL = instanceCall("java.util.Queue", "poll").parameterCount(0);
 
-  private static StandardMethodContract standardContract(ContractReturnValue returnValue, ValueConstraint... args) {
-    return new StandardMethodContract(args, returnValue);
-  }
-
   @FunctionalInterface
   interface ContractProvider {
     List<MethodContract> getContracts(PsiMethodCallExpression call, int paramCount);
@@ -75,7 +71,7 @@ public class HardcodedContracts {
 
   private static final CallMapper<ContractProvider> HARDCODED_CONTRACTS = new CallMapper<ContractProvider>()
     .register(staticCall("java.lang.System", "exit").parameterCount(1),
-              ContractProvider.single(() -> standardContract(fail())))
+              ContractProvider.single(() -> new StandardMethodContract(new ValueConstraint[0], fail())))
     .register(anyOf(staticCall("com.google.common.base.Preconditions", "checkNotNull"),
                     staticCall(JAVA_UTIL_OBJECTS, "requireNonNull")),
               (call, cnt) -> cnt > 0 ? failIfNull(0, cnt) : null)
@@ -179,7 +175,7 @@ public class HardcodedContracts {
       }
     }
     else if (MethodUtils.isEquals(method)) {
-      return Collections.singletonList(standardContract(returnFalse(), NULL_VALUE));
+      return Collections.singletonList(new StandardMethodContract(new ValueConstraint[]{NULL_VALUE}, returnFalse()));
     }
 
     return Collections.emptyList();

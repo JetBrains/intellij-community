@@ -1719,7 +1719,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           try {
             final int paramCount = method.getParameterList().getParametersCount();
             List<StandardMethodContract> applicable = ContainerUtil.filter(StandardMethodContract.parseContract(text),
-                                                                           contract -> contract.arguments.length == paramCount);
+                                                                           contract -> contract.getParameterCount() == paramCount);
             return Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
           }
           catch (Exception ignored) {

@@ -270,14 +270,14 @@ public class PointlessNullCheckInspection extends BaseInspection {
       if (contracts.isEmpty()) return null;
       StandardMethodContract contract = tryCast(contracts.get(0), StandardMethodContract.class);
       if (contract == null || !contract.getReturnValue().equals(ContractReturnValue.returnFalse())) return null;
-      ValueConstraint[] arguments = contract.arguments;
       int idx = -1;
-      for (int i = 0; i < arguments.length; i++) {
-        if (arguments[i] == ValueConstraint.NULL_VALUE) {
+      for (int i = 0; i < contract.getParameterCount(); i++) {
+        ValueConstraint constraint = contract.getParameterConstraint(i);
+        if (constraint == ValueConstraint.NULL_VALUE) {
           if (idx != -1) return null;
           idx = i;
         }
-        else if (arguments[i] != ValueConstraint.ANY_VALUE) {
+        else if (constraint != ValueConstraint.ANY_VALUE) {
           return null;
         }
       }
