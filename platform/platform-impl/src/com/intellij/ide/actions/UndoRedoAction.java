@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
@@ -20,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -31,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
@@ -63,8 +51,12 @@ public abstract class UndoRedoAction extends DumbAwareAction {
   }
 
   private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
+    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    Editor e = dataContext.getData(CommonDataKeys.EDITOR);
+    if (component instanceof JTextComponent && (e == null || component != e.getContentComponent())) {
+      return SwingUndoManagerWrapper.fromContext(dataContext);
+    }
     if (editor == null) {
-      Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       JRootPane rootPane = UIUtil.getRootPane(component);
       JBPopup popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
       boolean modalPopup = popup != null && popup.isModalContext();
