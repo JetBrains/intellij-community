@@ -55,7 +55,7 @@ import com.intellij.vcs.log.impl.VcsLogRevisionFilterImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.CommitCountStage;
-import com.intellij.vcs.log.visible.VcsLogFilterer;
+import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +64,7 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-class FileHistoryFilterer extends VcsLogFilterer {
+class FileHistoryFilterer extends VcsLogFiltererImpl {
   private static final Logger LOG = Logger.getInstance(FileHistoryFilterer.class);
 
   @NotNull private final Project myProject;
@@ -85,10 +85,10 @@ class FileHistoryFilterer extends VcsLogFilterer {
 
   @NotNull
   @Override
-  protected Pair<VisiblePack, CommitCountStage> filter(@NotNull DataPack dataPack,
-                                                       @NotNull PermanentGraph.SortType sortType,
-                                                       @NotNull VcsLogFilterCollection filters,
-                                                       @NotNull CommitCountStage commitCount) {
+  public Pair<VisiblePack, CommitCountStage> filter(@NotNull DataPack dataPack,
+                                                    @NotNull PermanentGraph.SortType sortType,
+                                                    @NotNull VcsLogFilterCollection filters,
+                                                    @NotNull CommitCountStage commitCount) {
     long start = System.currentTimeMillis();
 
     checkDetailsFilter(filters);
@@ -136,7 +136,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
   }
 
   @Override
-  public boolean canBuildFromEmpty() {
+  public boolean canFilterEmptyPack() {
     return !myFilePath.isDirectory();
   }
 
