@@ -60,8 +60,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private static final String PIP_PRE_26_VERSION = "1.1";
   private static final String VIRTUALENV_PRE_26_VERSION = "1.7.2";
 
-  private static final String SETUPTOOLS_VERSION = "28.8.0";
-  private static final String PIP_VERSION = "9.0.1";
+  private static final String SETUPTOOLS_VERSION = "39.0.1";
+  private static final String SETUPTOOLS_VERSION_26 = "36.8.0";
+  private static final String PIP_VERSION = "9.0.3";
   private static final String VIRTUALENV_VERSION = "15.1.0";
 
   private static final int ERROR_NO_SETUPTOOLS = 3;
@@ -99,9 +100,13 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   public void installManagement() throws ExecutionException {
     final Sdk sdk = getSdk();
-    final boolean pre26 = PythonSdkType.getLanguageLevelForSdk(sdk).isOlderThan(LanguageLevel.PYTHON26);
+    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+    final boolean pre26 = languageLevel.isOlderThan(LanguageLevel.PYTHON26);
     if (!refreshAndCheckForSetuptools()) {
-      final String name = PyPackageUtil.SETUPTOOLS + "-" + (pre26 ? SETUPTOOLS_PRE_26_VERSION : SETUPTOOLS_VERSION);
+      final boolean py26 = languageLevel == LanguageLevel.PYTHON26;
+      final String name = PyPackageUtil.SETUPTOOLS + "-" + (pre26 ? SETUPTOOLS_PRE_26_VERSION :
+                                                            py26 ? SETUPTOOLS_VERSION_26 :
+                                                            SETUPTOOLS_VERSION);
       installManagement(name);
     }
     if (PyPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) == null) {
