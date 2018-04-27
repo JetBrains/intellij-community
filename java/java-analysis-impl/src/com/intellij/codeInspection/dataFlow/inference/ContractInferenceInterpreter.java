@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
-import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*;
 import static com.intellij.psi.impl.source.JavaLightTreeUtil.findExpressionChild;
 import static com.intellij.psi.impl.source.JavaLightTreeUtil.getExpressionChildren;
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;

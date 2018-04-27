@@ -2,9 +2,9 @@
 package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.codeInspection.dataFlow.ContractReturnValue
-import com.intellij.codeInspection.dataFlow.MethodContract
 import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.codeInspection.dataFlow.StandardMethodContract
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.*
 import java.io.DataInput
@@ -135,13 +135,13 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
       readSeq(input) { readContract(input) })
   }
 
-  private fun writeContractArguments(out: DataOutput, arguments: List<MethodContract.ValueConstraint>) =
+  private fun writeContractArguments(out: DataOutput, arguments: List<ValueConstraint>) =
       writeSeq(out, arguments) { out.writeByte(it.ordinal) }
   private fun readContractArguments(input: DataInput) = readSeq(input, {
     readValueConstraint(input)
   })
 
-  private fun readValueConstraint(input: DataInput) = MethodContract.ValueConstraint.values()[input.readByte().toInt()]
+  private fun readValueConstraint(input: DataInput) = ValueConstraint.values()[input.readByte().toInt()]
 
   private fun readReturnValue(input: DataInput) = ContractReturnValue.valueOf(input.readByte().toInt())
 

@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;

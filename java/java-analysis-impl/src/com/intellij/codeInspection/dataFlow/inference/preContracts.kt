@@ -4,10 +4,9 @@ package com.intellij.codeInspection.dataFlow.inference
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.ContractReturnValue
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
-import com.intellij.codeInspection.dataFlow.MethodContract
-import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.ANY_VALUE
-import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.NULL_VALUE
 import com.intellij.codeInspection.dataFlow.StandardMethodContract
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.ANY_VALUE
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE
 import com.intellij.codeInspection.dataFlow.inference.ContractInferenceInterpreter.withConstraint
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction
 import com.intellij.psi.*
@@ -54,7 +53,7 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
                                              callArguments: Array<PsiExpression>,
                                              varArgCall: Boolean,
                                              targetContract: StandardMethodContract): StandardMethodContract? {
-    var answer: Array<MethodContract.ValueConstraint>? = emptyConstraints(callerMethod)
+    var answer: Array<StandardMethodContract.ValueConstraint>? = emptyConstraints(callerMethod)
     for (i in targetContract.arguments.indices) {
       if (i >= callArguments.size) return null
       val argConstraint = targetContract.arguments[i]
@@ -123,7 +122,7 @@ private fun negateContract(c: StandardMethodContract): StandardMethodContract? {
 }
 
 @Suppress("EqualsOrHashCode")
-internal data class MethodCallContract(internal val call: ExpressionRange, internal val states: List<List<MethodContract.ValueConstraint>>) : PreContract {
+internal data class MethodCallContract(internal val call: ExpressionRange, internal val states: List<List<StandardMethodContract.ValueConstraint>>) : PreContract {
   override fun hashCode() = call.hashCode() * 31 + states.flatten().map { it.ordinal }.hashCode()
 
   override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract> {

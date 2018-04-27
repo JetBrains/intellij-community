@@ -25,8 +25,8 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.ANY_VALUE;
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.NULL_VALUE;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.ANY_VALUE;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
 
 /**
  * A facade for all inference algorithms which work on Java source code (Light AST) and cache results in the index.

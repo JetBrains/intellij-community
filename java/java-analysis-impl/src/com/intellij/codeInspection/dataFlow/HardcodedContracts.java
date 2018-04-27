@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.createConstraintArray;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
@@ -55,7 +56,7 @@ public class HardcodedContracts {
 
   private static final CallMatcher QUEUE_POLL = instanceCall("java.util.Queue", "poll").parameterCount(0);
 
-  private static StandardMethodContract standardContract(ContractReturnValue returnValue, MethodContract.ValueConstraint... args) {
+  private static StandardMethodContract standardContract(ContractReturnValue returnValue, ValueConstraint... args) {
     return new StandardMethodContract(args, returnValue);
   }
 
@@ -81,7 +82,7 @@ public class HardcodedContracts {
     .register(staticCall("com.google.common.base.Preconditions", "checkArgument", "checkState"),
               (call, cnt) -> {
                 if (cnt == 0) return null;
-                MethodContract.ValueConstraint[] constraints = createConstraintArray(cnt);
+                ValueConstraint[] constraints = createConstraintArray(cnt);
                 constraints[0] = FALSE_VALUE;
                 return Collections.singletonList(new StandardMethodContract(constraints, fail()));
               })
@@ -123,7 +124,7 @@ public class HardcodedContracts {
     .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
               (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
     .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
-              ContractProvider.single(() -> new StandardMethodContract(new MethodContract.ValueConstraint[]{ANY_VALUE}, returnAny())))
+              ContractProvider.single(() -> new StandardMethodContract(new ValueConstraint[]{ANY_VALUE}, returnAny())))
     .register(instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
               (call, paramCount) -> Arrays.asList(MethodContract.singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
@@ -153,12 +154,12 @@ public class HardcodedContracts {
         "org.apache.commons.lang3.Validate".equals(className) ||
         "org.springframework.util.Assert".equals(className)) {
       if (("isTrue".equals(methodName) || "state".equals(methodName)) && paramCount > 0) {
-        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+        ValueConstraint[] constraints = createConstraintArray(paramCount);
         constraints[0] = FALSE_VALUE;
         return Collections.singletonList(new StandardMethodContract(constraints, fail()));
       }
       if ("notNull".equals(methodName) && paramCount > 0) {
-        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+        ValueConstraint[] constraints = createConstraintArray(paramCount);
         constraints[0] = NULL_VALUE;
         return Collections.singletonList(new StandardMethodContract(constraints, fail()));
       }
@@ -245,7 +246,7 @@ public class HardcodedContracts {
     if (paramCount == 0) return Collections.emptyList();
 
     int checkedParam = testng || isJunit5(className) ? 0 : paramCount - 1;
-    MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+    ValueConstraint[] constraints = createConstraintArray(paramCount);
     if ("assertTrue".equals(methodName) || "assumeTrue".equals(methodName)) {
       constraints[checkedParam] = FALSE_VALUE;
       return Collections.singletonList(new StandardMethodContract(constraints, fail()));
@@ -265,7 +266,7 @@ public class HardcodedContracts {
   }
 
   @Nullable
-  private static MethodContract.ValueConstraint constraintFromMatcher(PsiExpression expr) {
+  private static ValueConstraint constraintFromMatcher(PsiExpression expr) {
     if (expr instanceof PsiMethodCallExpression) {
       String calledName = ((PsiMethodCallExpression)expr).getMethodExpression().getReferenceName();
       PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
@@ -282,7 +283,7 @@ public class HardcodedContracts {
           return null;
         case "not":
           if (args.length == 1) {
-            MethodContract.ValueConstraint constraint = constraintFromMatcher(args[0]);
+            ValueConstraint constraint = constraintFromMatcher(args[0]);
             if (constraint != null) {
               return constraint.negate();
             }
@@ -290,7 +291,7 @@ public class HardcodedContracts {
           return null;
         case "is":
           if (args.length == 1) {
-            MethodContract.ValueConstraint fromMatcher = constraintFromMatcher(args[0]);
+            ValueConstraint fromMatcher = constraintFromMatcher(args[0]);
             return fromMatcher == null ? constraintFromLiteral(args[0]) : fromMatcher;
           }
           return null;
@@ -300,7 +301,7 @@ public class HardcodedContracts {
   }
 
   @Nullable
-  private static MethodContract.ValueConstraint constraintFromLiteral(PsiExpression arg) {
+  private static ValueConstraint constraintFromLiteral(PsiExpression arg) {
     arg = PsiUtil.skipParenthesizedExprDown(arg);
     if (!(arg instanceof PsiLiteralExpression)) return null;
     Object value = ((PsiLiteralExpression)arg).getValue();
@@ -315,9 +316,9 @@ public class HardcodedContracts {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     if (args.length == paramCount) {
       for (int i = 1; i < args.length; i++) {
-        MethodContract.ValueConstraint constraint = constraintFromMatcher(args[i]);
+        ValueConstraint constraint = constraintFromMatcher(args[i]);
         if (constraint != null) {
-          MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+          ValueConstraint[] constraints = createConstraintArray(paramCount);
           constraints[i - 1] = constraint;
           return Collections.singletonList(new StandardMethodContract(constraints, fail()));
         }
@@ -343,7 +344,7 @@ public class HardcodedContracts {
 
   @NotNull
   private static List<MethodContract> failIfNull(int argIndex, int argCount) {
-    MethodContract.ValueConstraint[] constraints = createConstraintArray(argCount);
+    ValueConstraint[] constraints = createConstraintArray(argCount);
     constraints[argIndex] = NULL_VALUE;
     return Collections.singletonList(new StandardMethodContract(constraints, fail()));
   }
