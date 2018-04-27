@@ -1507,7 +1507,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void tooltipAvailable(@Nullable String toolTip, @NotNull MouseEvent e, @Nullable GutterIconRenderer renderer) {
     myCalculatingInBackground = null;
     TooltipController controller = TooltipController.getInstance();
-    if (toolTip == null || toolTip.isEmpty()) {
+    if (toolTip == null || toolTip.isEmpty() || myEditor.isDisposed()) {
       controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
     }
     else {
