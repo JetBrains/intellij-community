@@ -60,6 +60,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Argument;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
 import java.util.*;
 
@@ -912,13 +914,21 @@ public class ResolveUtil {
     List<Pair<PsiParameter, PsiType>> expectedParams = ContainerUtil.newArrayList();
 
     for (GroovyResolveResult variant : variants) {
-      final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil.mapArgumentsToParameters(
-        variant, place, true, true, namedArguments, expressionArguments, closureArguments
-      );
+      if (variant instanceof GroovyMethodResult && ((GroovyMethodResult)variant).getCandidate() != null) {
+        MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+        if (candidate != null) {
+          Pair<PsiParameter, PsiType> pair = candidate.completionMapArguments().get(new Argument(null, arg));
+          ContainerUtil.addIfNotNull(expectedParams, pair);
+        }
+      } else {
+        final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil.mapArgumentsToParameters(
+          variant, place, true, true, namedArguments, expressionArguments, closureArguments
+        );
 
-      if (map != null) {
-        final Pair<PsiParameter, PsiType> pair = map.get(arg);
-        ContainerUtil.addIfNotNull(expectedParams, pair);
+        if (map != null) {
+          final Pair<PsiParameter, PsiType> pair = map.get(arg);
+          ContainerUtil.addIfNotNull(expectedParams, pair);
+        }
       }
     }
     return expectedParams;

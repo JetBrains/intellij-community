@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -9,6 +7,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
 class GrLatestHighlightingTest extends GrHighlightingTestBase {
@@ -20,7 +19,7 @@ class GrLatestHighlightingTest extends GrHighlightingTestBase {
 
   @Override
   InspectionProfileEntry[] getCustomInspections() {
-    [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection(), new GroovyAccessibilityInspection()]
+    [new GroovyAssignabilityCheckInspection(), new GroovyAccessibilityInspection(), new GrUnresolvedAccessInspection()]
   }
 
   void 'test IDEA-184690'() {
@@ -55,5 +54,241 @@ def com() {
     new Thread[1] == new Object[1]
 }
 '''
+  }
+
+  void 'test IDEA-185371'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def com() {
+    Map<String, Integer> correct = [:].withDefault({ 0 })
+}
+'''
+  }
+
+  void 'test IDEA-185371-2'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+static <K,V> Map<K, V> getMap() {
+  return new HashMap<K,V>()
+}
+
+@CompileStatic
+def com() {
+    Map<String, Integer> correct = getMap().withDefault({ 0 })
+}
+'''
+  }
+
+  //works in 2.5.0
+  void '_ test IDEA-185371-3'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.FirstParam
+
+def <K,V> Map<K, V> getMap() {
+  new HashMap<K, V>()
+}
+
+static <K, V> Map<K, V> withDefault(Map<K, V> self, @ClosureParams(FirstParam.FirstGenericType.class) Closure<V> init) {
+  return null
+}
+
+@CompileStatic
+def m() {
+  withDefault(getMap()) { 'str '}.get(1).with {
+    print toUpperCase()
+  }
+}
+'''
+  }
+
+  void 'test IDEA-185371-4'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+def <K,V> Map<K, V> getMap() {
+    new HashMap<K, V>()
+}
+
+@CompileStatic
+def m() {
+    ''.with {
+        print toUpperCase()
+    }
+}
+'''
+  }
+
+  void 'test IDEA-185758-2'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+interface A {}
+
+class C implements A {}
+
+class Container<T> {
+
+    public <U extends T> void register(Class<U> clazz, Closure<Integer> closure) {
+
+    }
+}
+
+@CompileStatic
+def method(Container<A> box) {
+   box.register<error descr="'register' in 'Container<A>' cannot be applied to '(java.lang.Class<C>, groovy.lang.Closure<C>)'">(C)</error> { param -> new C() }
+}
+'''
+  }
+
+  void 'test IDEA-185758'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+interface A {}
+
+class B implements A {}
+
+class Box<T> {
+
+   public  <U extends T> void register(Class<U> clazz, Closure<? extends U> closure) {
+
+  }
+}
+
+@CompileStatic
+def method(Box<A> box) {
+    box.register(B) { param -> new B() }
+}
+
+'''
+  }
+
+  void testPerformanceLike() {
+    myFixture.enableInspections(new MissingReturnInspection())
+
+    testHighlighting '''
+    def <T> void foo(T t, Closure cl) {}
+    
+    foo(1) { println it }
+
+    '''
+  }
+
+  void testPerformanceLikeCS() {
+    myFixture.enableInspections(new MissingReturnInspection())
+
+    testHighlighting '''
+    import groovy.transform.CompileStatic
+
+    def <T> void foo(T t, Closure<T> cl) {}
+    
+    @CompileStatic
+    def m() {
+      foo(1) { 
+        println it 
+        1
+      }
+    }
+
+    '''
+  }
+
+  void testPerformanceLikeCS2() {
+    myFixture.enableInspections(new MissingReturnInspection())
+
+    testHighlighting '''
+    import groovy.transform.CompileStatic
+
+    def <T> void foo(T t, Closure<T> cl) {}
+    
+    @CompileStatic
+    def m() {
+     foo(1) { it.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>() }
+    }
+
+    '''
+  }
+
+
+  void _testPerformanceLikeCS3() {
+    myFixture.enableInspections(new MissingReturnInspection())
+
+    testHighlighting '''
+    import groovy.transform.CompileStatic
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.FirstParam
+
+def <T> void foo(T t, @ClosureParams(value = FirstParam.FirstGenericType) Closure<T> cl) {}
+
+@CompileStatic
+def m() {
+  foo('') { it.toUpperCase() }
+}
+    '''
+  }
+
+  void 'test IDEA-171738'() {
+    myFixture.enableInspections(new MissingReturnInspection())
+
+    testHighlighting '''
+    import groovy.transform.CompileStatic
+
+import java.util.stream.Collectors
+
+@CompileStatic
+void testAsItIs(Collection<Thread> existingPairs) {
+  Map<String, Thread> works = existingPairs.stream().collect(Collectors.toMap({ kv -> kv.toString().trim() }, { kv -> kv }))
+}
+
+    '''
+  }
+
+  void 'test IDEA-189792'() {
+    myFixture.enableInspections(new MissingReturnInspection())
+
+    testHighlighting '''
+    import groovy.transform.CompileStatic
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.stream.Stream
+
+@CompileStatic
+static Stream<String> topicStream(Path path) {
+    Files.list(path).map { it.toFile().name }
+}
+
+    '''
+  }
+
+  void '_test IDEA-189274'() {
+    myFixture.enableInspections(new MissingReturnInspection())
+
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+import java.time.LocalDateTime
+
+@CompileStatic
+class JustAModel {
+    LocalDateTime timeToEscalate
+}
+
+@CompileStatic
+class JustAClass {
+
+    List<JustAModel> events = []
+
+    LocalDateTime getTimeToEscalate() {
+        events.reverse().findResult(LocalDateTime.MAX) { it.timeToEscalate }
+    }
+}
+
+    '''
   }
 }

@@ -252,7 +252,7 @@ map['i'] += 2
   }
 
   void testAllTypeParamsAreSubstituted() {
-    assertTypeEquals('java.util.Map', 'a.groovy')
+    assertTypeEquals('java.util.Map<java.lang.Object,java.lang.Object>', 'a.groovy')
   }
 
   void testDiamond() {
