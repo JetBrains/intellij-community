@@ -5,7 +5,8 @@ package com.intellij.ide.errorTreeView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.*;
+import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.ide.actions.ExportToTextFileToolbarAction;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
 import com.intellij.openapi.actionSystem.*;
