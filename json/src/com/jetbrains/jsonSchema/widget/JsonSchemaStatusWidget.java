@@ -24,6 +24,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider;
+import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,6 +143,7 @@ public class JsonSchemaStatusWidget {
       VirtualFile schemaFile = schemaFiles.iterator().next();
       JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
       if (provider != null) {
+        schemaFile = ((JsonSchemaServiceImpl)myService).replaceHttpFileWithBuiltinIfNeeded(schemaFile);
         if (!isValidSchemaFile(schemaFile)) {
           MyWidgetState state = new MyWidgetState("File is not a schema", "JSON schema error", true);
           state.setWarning(true);
