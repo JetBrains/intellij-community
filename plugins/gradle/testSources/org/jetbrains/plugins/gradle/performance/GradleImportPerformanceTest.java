@@ -60,9 +60,9 @@ public class GradleImportPerformanceTest extends GradleImportingTestCase {
     final long resolverChainTrace = sumByPrefix(trace, "Resolver chain ");
     final long dataServiceTrace  = sumByPrefix(trace, "Data import ");
 
-    assertTiming("gradleModelsTrace = " + gradleModelsTrace, 30000, gradleModelsTrace);
-    assertTiming("resolverChainTrace = " + resolverChainTrace, 2000, resolverChainTrace);
-    assertTiming("dataServiceTrace = " + dataServiceTrace, 9000, dataServiceTrace);
+    assertAndReportTiming("gradleModelsTrace", 30000, gradleModelsTrace);
+    assertAndReportTiming("resolverChainTrace", 2000, resolverChainTrace);
+    assertAndReportTiming("dataServiceTrace", 9000, dataServiceTrace);
   }
 
   @Test
@@ -85,9 +85,16 @@ public class GradleImportPerformanceTest extends GradleImportingTestCase {
     final long resolverChainTrace = sumByPrefix(trace, "Resolver chain ");
     final long dataServiceTrace  = sumByPrefix(trace, "Data import ");
 
-    assertTiming("gradleModelsTrace = " + gradleModelsTrace, 70000, gradleModelsTrace);
-    assertTiming("resolverChainTrace = " + resolverChainTrace, 1200, resolverChainTrace);
-    assertTiming("dataServiceTrace = " + dataServiceTrace, 9000, dataServiceTrace);
+    assertAndReportTiming("gradleModelsTrace", 70000, gradleModelsTrace);
+    assertAndReportTiming("resolverChainTrace", 1200, resolverChainTrace);
+    assertAndReportTiming("dataServiceTrace", 9000, dataServiceTrace);
+  }
+
+  private void assertAndReportTiming(String traceName, int expectedBase, long actual) {
+    final String serviceMessage = String.format("##teamcity[buildStatisticValue key='trace.gradle-%s.%s.%s' value='%d']",
+                                                gradleVersion, name.getMethodName(), traceName, actual);
+    System.out.println(serviceMessage);
+    assertTiming(traceName, expectedBase, actual);
   }
 
   protected long sumByPrefix(Map<String, Long> trace, String prefix) {
