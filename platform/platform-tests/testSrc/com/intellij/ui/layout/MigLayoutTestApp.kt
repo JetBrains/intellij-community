@@ -50,8 +50,20 @@ private fun run(laf: LookAndFeel) {
     //      val panel = alignFieldsInTheNestedGrid()
     //      val panel = labelRowShouldNotGrow()
     //      val panel = cellPanel()
-    //      val panel = visualPaddingsPanel()
-    val panel = createLafTestPanel()
+          val panel = visualPaddingsPanel()
+//    val panel = createLafTestPanel()
+
+//    val jTextArea = JTextArea("wefwg w wgw")
+//    jTextArea.rows = 3
+//    val panel = UI.PanelFactory
+//      .panel(JBScrollPane(jTextArea))
+//      .withLabel("Foo")
+//      .createPanel()
+
+//    val panel = UI.PanelFactory
+//      .panel(JTextField("wfgw"))
+//      .withLabel("Foo")
+//      .createPanel()
 
     val editableCombobox = JComboBox<String>(arrayOf("one", "two"))
     editableCombobox.isEditable = true
