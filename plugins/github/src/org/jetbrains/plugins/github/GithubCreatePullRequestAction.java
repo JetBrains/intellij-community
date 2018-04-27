@@ -24,6 +24,7 @@ import git4idea.repo.GitRepository;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
 
@@ -45,8 +46,8 @@ public class GithubCreatePullRequestAction extends LegacySingleAccountActionGrou
 
   @Nullable
   @Override
-  protected Pair<GitRemote, String> getRemote(@NotNull GithubAccount account, @NotNull GitRepository repository) {
-    return GithubCreatePullRequestWorker.findGithubRemote(account, repository);
+  protected Pair<GitRemote, String> getRemote(@NotNull GithubServerPath server, @NotNull GitRepository repository) {
+    return GithubCreatePullRequestWorker.findGithubRemote(server, repository);
   }
 
   static void createPullRequest(@NotNull Project project,
