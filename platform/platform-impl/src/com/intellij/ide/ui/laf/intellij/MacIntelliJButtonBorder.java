@@ -5,7 +5,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
-import javafx.scene.shape.Path;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -41,7 +40,7 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
         border.append(new RoundRectangle2D.Float(0, 0, width, height, arc + lw, arc + lw), false);
         border.append(new RoundRectangle2D.Float(lw*2, lw*2, width - lw*4, height - lw*4, arc, arc), false);
 
-        g2.setColor(JBUI.CurrentTheme.focusColor());
+        g2.setColor(JBUI.CurrentTheme.focusBorderColor());
         g2.fill(border);
       } else {
         DarculaUIUtil.paintFocusBorder(g2, width, height, arc, true);

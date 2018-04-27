@@ -43,7 +43,7 @@ public class DarculaButtonPainter implements Border, UIResource {
       Rectangle r = new Rectangle(x, y, width, height);
       boolean paintComboFocus = isSmallComboButton && c.isFocusable() && c.hasFocus();
       if (paintComboFocus) { // a11y support
-        g2.setColor(JBUI.CurrentTheme.focusColor());
+        g2.setColor(JBUI.CurrentTheme.focusBorderColor());
 
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new RoundRectangle2D.Float(r.x, r.y, r.width, r.height, arc + lw, arc + lw), false);

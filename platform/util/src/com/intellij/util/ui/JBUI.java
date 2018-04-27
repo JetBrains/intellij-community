@@ -1551,8 +1551,8 @@ public class JBUI {
 
     private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
-    public static Color focusColor() {
-      return UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Focus.Color", new JBColor(0x8ab2eb, 0x395d82));
+    public static Color focusBorderColor() {
+      return UIUtil.isGraphite() ? GRAPHITE_COLOR : JBColor.namedColor("Focus.borderColor", new JBColor(0x8ab2eb, 0x395d82));
     }
   }
 

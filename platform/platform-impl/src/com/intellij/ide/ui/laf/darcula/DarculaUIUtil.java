@@ -92,7 +92,7 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
-    g.setPaint(JBUI.CurrentTheme.focusColor());
+    g.setPaint(JBUI.CurrentTheme.focusBorderColor());
 
     float blw = BW.getFloat() + LW.getFloat();
     Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
@@ -116,7 +116,7 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    g.setPaint(JBUI.CurrentTheme.focusColor());
+    g.setPaint(JBUI.CurrentTheme.focusBorderColor());
     doPaint(g, width, height, arc, symmetric);
   }
 
