@@ -201,10 +201,6 @@
 
     <group id="VcsHistoryInternalGroup.Toolbar">
       <reference ref="Diff.ShowDiff"/>
-      <reference ref="VcsHistoryActionsGroup"/>
-      <reference ref="ChangesView.CreatePatchFromChanges"/>
-      <reference ref="Vcs.GetVersion"/>
-      <reference ref="FileHistory.AnnotateRevision"/>
     </group>
 
     <group id="CommittedChangesToolbar">

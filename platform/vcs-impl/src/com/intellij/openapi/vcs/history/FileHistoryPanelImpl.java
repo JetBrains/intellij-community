@@ -399,6 +399,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @NotNull
   private DefaultActionGroup fillActionGroup(boolean popup, DefaultActionGroup result) {
+    result.add(new RefreshFileHistoryAction());
+
     if (popup) {
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
@@ -413,7 +415,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         }
       }
     }
-    result.add(new RefreshFileHistoryAction());
     if (!myIsStaticAndEmbedded) {
       result.add(new MyShowDetailsAction());
     }
