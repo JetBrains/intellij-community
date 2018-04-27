@@ -97,7 +97,7 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
 
     private fun isPsiElementClass(cls: PsiClass?): Boolean {
       if (cls == null) return false
-      return isPsiElementType(PsiType.getTypeByName(cls.qualifiedName, cls.project, cls.resolveScope))
+      return isPsiElementType(PsiType.getTypeByName(cls.qualifiedName!!, cls.project, cls.resolveScope))
     }
 
     private fun isUElementType(type: PsiType?) =
@@ -105,7 +105,7 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
   }
 
   private fun psiClassType(fqn: String, searchScope: GlobalSearchScope): PsiClassType? =
-    PsiType.getTypeByName(fqn, searchScope.project, searchScope).takeIf { it.resolve() != null }
+    PsiType.getTypeByName(fqn, searchScope.project!!, searchScope).takeIf { it.resolve() != null }
 
   private companion object {
     val ALLOWED_REDEFINITION = setOf(
