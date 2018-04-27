@@ -46,7 +46,7 @@ public class TestStateStorage implements Disposable {
   
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
 
-  private static final int CURRENT_VERSION = 4;
+  private static final int CURRENT_VERSION = 5;
   
   private final File myFile;
 
@@ -61,14 +61,16 @@ public class TestStateStorage implements Disposable {
     public int failedLine;
     public final String failedMethod;
     public final String errorMessage;
+    public final String topStacktraceLine;
 
-    public Record(int magnitude, Date date, long configurationHash, int failLine, String method, String errorMessage) {
+    public Record(int magnitude, Date date, long configurationHash, int failLine, String method, String errorMessage, String topStacktraceLine) {
       this.magnitude = magnitude;
       this.date = date;
       this.configurationHash = configurationHash;
       this.failedLine = failLine;
       failedMethod = method;
       this.errorMessage = errorMessage;
+      this.topStacktraceLine = topStacktraceLine;
     }
   }
 
@@ -115,11 +117,12 @@ public class TestStateStorage implements Disposable {
         out.writeInt(value.failedLine);
         out.writeUTF(StringUtil.notNullize(value.failedMethod));
         out.writeUTF(StringUtil.notNullize(value.errorMessage));
+        out.writeUTF(StringUtil.notNullize(value.topStacktraceLine));
       }
 
       @Override
       public Record read(@NotNull DataInput in) throws IOException {
-        return new Record(in.readInt(), new Date(in.readLong()), in.readLong(), in.readInt(), in.readUTF(), in.readUTF());
+        return new Record(in.readInt(), new Date(in.readLong()), in.readLong(), in.readInt(), in.readUTF(), in.readUTF(), in.readUTF());
       }
     }, 4096, CURRENT_VERSION);
   }

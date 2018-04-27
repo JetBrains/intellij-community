@@ -83,7 +83,7 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     String testUrl = "java:suite://Main$MainTest";
     try {
       stateStorage.writeState(testUrl, new TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_INDEX.getValue(), new Date(), 0, 0, "",
-                                                                   ""));
+                                                                   "", ""));
       myFixture.addClass("package junit.framework; public class TestCase {}");
       PsiFile file = myFixture.configureByText("MainTest.java", "public class Main {\n" +
                                                                 "  public class Main<caret>Test extends junit.framework.TestCase {\n" +

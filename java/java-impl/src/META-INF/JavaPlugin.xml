@@ -204,7 +204,7 @@
                      enabledByDefault="true" level="ERROR"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
                      displayName="Highlight problem line in test"
-                     implementationClass="com.intellij.testIntegration.TestFailedLineInspection"/>
+                     implementationClass="com.intellij.execution.testframework.TestFailedLineInspection"/>
     <testGenerator language="JAVA" implementationClass="com.intellij.testIntegration.createTest.JavaTestGenerator" />
     <testCreator language="JAVA" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
