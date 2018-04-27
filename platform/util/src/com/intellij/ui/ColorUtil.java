@@ -162,6 +162,10 @@ public class ColorUtil {
     return (R.length() < 2 ? "0" : "") + R + (G.length() < 2 ? "0" : "") + G + (B.length() < 2 ? "0" : "") + B;
   }
 
+  public static String toHtmlColor(@NotNull final Color c) {
+    return "#"+toHex(c);
+  }
+
   /**
    * Return Color object from string. The following formats are allowed:
    * {@code #abc123},
