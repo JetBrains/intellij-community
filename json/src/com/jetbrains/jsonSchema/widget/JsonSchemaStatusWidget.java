@@ -141,20 +141,8 @@ public class JsonSchemaStatusWidget {
       }
 
       VirtualFile schemaFile = schemaFiles.iterator().next();
-      JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
-      if (provider != null) {
-        schemaFile = ((JsonSchemaServiceImpl)myService).replaceHttpFileWithBuiltinIfNeeded(schemaFile);
-        if (!isValidSchemaFile(schemaFile)) {
-          MyWidgetState state = new MyWidgetState("File is not a schema", "JSON schema error", true);
-          state.setWarning(true);
-          return state;
-        }
-        String providerName = provider.getPresentableName();
-        String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
-        String name = shortName.startsWith("JSON Schema") ? shortName : (JSON_SCHEMA_BAR + shortName);
-        String kind = provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema ? " (bundled)" : "";
-        return new MyWidgetState(JSON_SCHEMA_TOOLTIP + providerName + kind, name, true);
-      }
+      schemaFile = ((JsonSchemaServiceImpl)myService).replaceHttpFileWithBuiltinIfNeeded(schemaFile);
+
       if (schemaFile instanceof HttpVirtualFile) {
         RemoteFileInfo info = ((HttpVirtualFile)schemaFile).getFileInfo();
         if (info == null) return getDownloadErrorState();
@@ -195,6 +183,15 @@ public class JsonSchemaStatusWidget {
         MyWidgetState state = new MyWidgetState("File is not a schema", "JSON schema error", true);
         state.setWarning(true);
         return state;
+      }
+
+      JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
+      if (provider != null) {
+        String providerName = provider.getPresentableName();
+        String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
+        String name = shortName.startsWith("JSON Schema") ? shortName : (JSON_SCHEMA_BAR + shortName);
+        String kind = provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema ? " (bundled)" : "";
+        return new MyWidgetState(JSON_SCHEMA_TOOLTIP + providerName + kind, name, true);
       }
 
       return new MyWidgetState(JSON_SCHEMA_TOOLTIP + getSchemaFileDesc(schemaFile), JSON_SCHEMA_BAR + getPresentableNameForFile(schemaFile), true);
