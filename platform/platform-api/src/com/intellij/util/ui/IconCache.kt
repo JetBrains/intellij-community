@@ -16,7 +16,7 @@ object IconCache {
   @JvmStatic
   @JvmOverloads
   @NotNull
-  fun getIcon(name: String, selected: Boolean = false, focused: Boolean = false, enabled: Boolean = true, editable: Boolean = false, pressed: Boolean = false, findIfNotInCache: Boolean = true): Icon? {
+  fun getIcon(name: String, selected: Boolean = false, focused: Boolean = false, enabled: Boolean = true, editable: Boolean = false, pressed: Boolean = false, findIfNotInCache: Boolean = true): Icon {
     var key = name
     if (editable) key += "Editable"
     if (selected) key += "Selected"
@@ -47,8 +47,8 @@ object IconCache {
   }
 
   @JvmStatic
-  fun getDisabledIcon(name: String) = getIcon(name, enabled = false)!!
+  fun getDisabledIcon(name: String) = getIcon(name, enabled = false)
 
   @JvmStatic
-  fun getSelectedIcon(name: String) = getIcon(name, selected = true)!!
+  fun getSelectedIcon(name: String) = getIcon(name, selected = true)
 }
