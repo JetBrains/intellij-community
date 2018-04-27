@@ -2,8 +2,18 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.SearchEverywhereClassifier;
+import com.intellij.ide.util.gotoByName.ChooseByNameModel;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.GotoClassModel2;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,5 +39,25 @@ public class ClassSearchEverywhereContributor implements SearchEverywhereContrib
   @Override
   public int getSortWeight() {
     return 100;
+  }
+
+  public SearchEverywhereContributor.ContributorSearchResult search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
+    ChooseByNameModel mdl = new GotoClassModel2(project);
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, mdl, (PsiElement)null);
+    List<Object> items = new ArrayList<>();
+    boolean[] hasMore = {false}; //todo builder for  ContributorSearchResult #UX-1
+    popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator, o -> {
+      if (SearchEverywhereClassifier.EP_Manager.isClass(o) && !items.contains(o)) {
+        if (elementsLimit >=0 && items.size() >= elementsLimit) {
+          hasMore[0] = true;
+          return false;
+        }
+        items.add(o);
+
+      }
+      return true;
+    });
+
+    return new SearchEverywhereContributor.ContributorSearchResult(items, hasMore[0]);
   }
 }

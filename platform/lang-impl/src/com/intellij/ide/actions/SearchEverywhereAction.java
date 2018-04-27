@@ -1317,7 +1317,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   enum WidgetID {CLASSES, FILES, ACTIONS, SETTINGS, SYMBOLS, RUN_CONFIGURATIONS}
 
-  @SuppressWarnings({"SSBasedInspection", "unchecked"})
+  @SuppressWarnings({"SSBasedInspection", "unchecked", "Duplicates"})
   private class CalcThread implements Runnable {
     private final Project project;
     private final String pattern;
@@ -2334,14 +2334,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  static class MoreIndex {
-    volatile int classes = -1;
-    volatile int files = -1;
-    volatile int actions = -1;
-    volatile int settings = -1;
-    volatile int symbols = -1;
-    volatile int runConfigurations = -1;
-    volatile int structure = -1;
+  public static class MoreIndex {
+    public volatile int classes = -1;
+    public volatile int files = -1;
+    public volatile int actions = -1;
+    public volatile int settings = -1;
+    public volatile int symbols = -1;
+    public volatile int runConfigurations = -1;
+    public volatile int structure = -1;
 
     public void shift(int index, int shift) {
       if (runConfigurations >= index) runConfigurations += shift;
@@ -2354,17 +2354,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  static class TitleIndex {
-    volatile int topHit = -1;
-    volatile int recentFiles = -1;
-    volatile int runConfigurations = -1;
-    volatile int classes = -1;
-    volatile int structure = -1;
-    volatile int files = -1;
-    volatile int actions = -1;
-    volatile int settings = -1;
-    volatile int toolWindows = -1;
-    volatile int symbols = -1;
+  public static class TitleIndex {
+    public volatile int topHit = -1;
+    public volatile int recentFiles = -1;
+    public volatile int runConfigurations = -1;
+    public volatile int classes = -1;
+    public volatile int structure = -1;
+    public volatile int files = -1;
+    public volatile int actions = -1;
+    public volatile int settings = -1;
+    public volatile int toolWindows = -1;
+    public volatile int symbols = -1;
 
     final String gotoClassTitle;
     final String gotoFileTitle;
@@ -2437,19 +2437,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  static class SearchResult extends ArrayList<Object> {
+  public static class SearchResult extends ArrayList<Object> {
     boolean needMore;
   }
 
   @SuppressWarnings("unchecked")
-  private static class SearchListModel extends DefaultListModel<Object> {
+  public static class SearchListModel extends DefaultListModel<Object> {
     @SuppressWarnings("UseOfObsoleteCollectionType")
     Vector myDelegate;
 
-    volatile TitleIndex titleIndex = new TitleIndex();
-    volatile MoreIndex moreIndex = new MoreIndex();
+    public volatile TitleIndex titleIndex = new TitleIndex();
+    public volatile MoreIndex moreIndex = new MoreIndex();
 
-    private SearchListModel() {
+    public SearchListModel() {
       super();
       myDelegate = ReflectionUtil.getField(DefaultListModel.class, this, Vector.class, "delegate");
     }
@@ -2504,7 +2504,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  static class More extends JPanel {
+  public static class More extends JPanel {
     static final More instance = new More();
     final JLabel label = new JLabel("    ... more   ");
 
@@ -2536,10 +2536,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .withBackground(UIUtil.getListBackground());
   }
 
-  private enum HistoryType {PSI, FILE, SETTING, ACTION, RUN_CONFIGURATION}
+  public enum HistoryType {PSI, FILE, SETTING, ACTION, RUN_CONFIGURATION}
 
   @Nullable
-  private static HistoryType parseHistoryType(@Nullable String name) {
+  public static HistoryType parseHistoryType(@Nullable String name) {
     try {
       return HistoryType.valueOf(name);
     } catch (Exception e) {
@@ -2547,7 +2547,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  private static class HistoryItem {
+  //todo history maybe unnecessary #UX-1
+  public static class HistoryItem {
     final String pattern, type, fqn;
 
     private HistoryItem(String pattern, String type, String fqn) {
