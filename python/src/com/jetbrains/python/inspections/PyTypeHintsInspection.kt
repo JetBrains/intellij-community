@@ -17,7 +17,6 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
-import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyGenericType
 import com.jetbrains.python.psi.types.PyTypeChecker
 
@@ -188,29 +187,30 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkInstanceAndClassChecksOnReference(base: PyExpression) {
       if (base is PyReferenceExpression) {
-        val resolvedBase = PyResolveUtil.fullMultiResolveLocally(base)
+        val resolvedBase = multiFollowAssignmentsChain(base)
 
         resolvedBase
           .asSequence()
-          .filterIsInstance<PyImportElement>()
-          .mapNotNull { PyResolveUtil.getImportedElementQName(it) }
+          .filterIsInstance<PyQualifiedNameOwner>()
+          .mapNotNull { it.qualifiedName }
           .forEach {
-            when (it.toString()) {
+            when (it) {
               PyTypingTypeProvider.ANY,
               PyTypingTypeProvider.UNION,
               PyTypingTypeProvider.GENERIC,
               PyTypingTypeProvider.OPTIONAL,
               PyTypingTypeProvider.CLASS_VAR,
-              PyTypingTypeProvider.NO_RETURN -> registerProblem(base,
-                                                                "'${it.lastComponent}' cannot be used with instance and class checks",
-                                                                ProblemHighlightType.GENERIC_ERROR)
+              PyTypingTypeProvider.NO_RETURN ->
+                registerProblem(base,
+                                "'${it.substringAfterLast('.')}' cannot be used with instance and class checks",
+                                ProblemHighlightType.GENERIC_ERROR)
             }
           }
 
         resolvedBase
           .asSequence()
-          .filterIsInstance<PyTargetExpression>()
-          .mapNotNull { it.findAssignedValue() as? PySubscriptionExpression }
+          .filterIsInstance<PySubscriptionExpression>()
+          .filter { myTypeEvalContext.maySwitchToAST(it) }
           .forEach { checkInstanceAndClassChecksOnSubscriptionOperand(base, it.operand) }
       }
     }
@@ -223,63 +223,47 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkInstanceAndClassChecksOnSubscriptionOperand(base: PyExpression, operand: PyExpression) {
       if (operand is PyReferenceExpression) {
-        PyResolveUtil
-          .fullMultiResolveLocally(operand)
+        multiFollowAssignmentsChain(operand)
           .forEach {
-            if (it == null) return@forEach
+            if (it is PyQualifiedNameOwner) {
+              val qName = it.qualifiedName
 
-            if (it is PyImportElement) {
-              val qName = PyResolveUtil.getImportedElementQName(it)
+              when (qName) {
+                PyTypingTypeProvider.GENERIC -> {
+                  registerProblem(base, "'Generic' cannot be used with instance and class checks", ProblemHighlightType.GENERIC_ERROR)
+                  return@forEach
+                }
 
-              if (qName == genericQName) {
-                registerProblem(base,
-                                "'Generic' cannot be used with instance and class checks",
-                                ProblemHighlightType.GENERIC_ERROR)
-
-                return@forEach
-              }
-
-              if (qName != null) {
-                val qNameAsString = qName.toString()
-
-                if (qNameAsString == PyTypingTypeProvider.UNION ||
-                    qNameAsString == PyTypingTypeProvider.OPTIONAL ||
-                    qNameAsString == PyTypingTypeProvider.CLASS_VAR) {
+                PyTypingTypeProvider.UNION,
+                PyTypingTypeProvider.OPTIONAL,
+                PyTypingTypeProvider.CLASS_VAR -> {
                   registerProblem(base,
-                                  "'${qName.lastComponent}' cannot be used with instance and class checks",
+                                  "'${qName.substringAfterLast('.')}' cannot be used with instance and class checks",
                                   ProblemHighlightType.GENERIC_ERROR)
+                  return@forEach
+                }
 
+                PyTypingTypeProvider.CALLABLE,
+                PyTypingTypeProvider.TYPE,
+                PyTypingTypeProvider.PROTOCOL,
+                PyTypingTypeProvider.PROTOCOL_EXT -> {
+                  registerProblem(base,
+                                  "Parameterized generics cannot be used with instance and class checks",
+                                  ProblemHighlightType.GENERIC_ERROR)
                   return@forEach
                 }
               }
             }
 
-            val resolved = if (it is PyImportElement) it.multiResolve() else listOf(RatedResolveResult(RatedResolveResult.RATE_NORMAL, it))
+            if (it is PyTypedElement) {
+              val type = myTypeEvalContext.getType(it)
 
-            resolved
-              .asSequence()
-              .filterNotNull()
-              .mapNotNull { it.element as? PyTypedElement }
-              .any {
-                if (it is PyQualifiedNameOwner) {
-                  val qName = it.qualifiedName
-
-                  if (qName == PyTypingTypeProvider.CALLABLE ||
-                      qName == PyTypingTypeProvider.TYPE ||
-                      qName == PyTypingTypeProvider.PROTOCOL ||
-                      qName == PyTypingTypeProvider.PROTOCOL_EXT) return@any true
-                }
-
-                val type = myTypeEvalContext.getType(it)
-                type is PyWithAncestors && PyTypingTypeProvider.isGeneric(type, myTypeEvalContext)
+              if (type is PyWithAncestors && PyTypingTypeProvider.isGeneric(type, myTypeEvalContext)) {
+                registerProblem(base,
+                                "Parameterized generics cannot be used with instance and class checks",
+                                ProblemHighlightType.GENERIC_ERROR)
               }
-              .let {
-                if (it) {
-                  registerProblem(base,
-                                  "Parameterized generics cannot be used with instance and class checks",
-                                  ProblemHighlightType.GENERIC_ERROR)
-                }
-              }
+            }
           }
       }
     }
@@ -296,12 +280,12 @@ class PyTypeHintsInspection : PyInspection() {
       superClassExpressions
         .asSequence()
         .filter {
-          val resolved = if (it is PyReferenceExpression) PyResolveUtil.fullMultiResolveLocally(it) else listOf(it)
+          val resolved = if (it is PyReferenceExpression) multiFollowAssignmentsChain(it) else listOf(it)
 
           resolved
             .asSequence()
-            .map { if (it is PyTargetExpression) it.findAssignedValue() else it }
             .filterIsInstance<PySubscriptionExpression>()
+            .filter { myTypeEvalContext.maySwitchToAST(it) }
             .mapNotNull { it.operand as? PyReferenceExpression }
             .any { genericQName in PyResolveUtil.resolveImportedElementQNameLocally(it) }
         }
@@ -346,7 +330,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun collectGenerics(superClassExpression: PyExpression): Pair<Set<PsiElement>?, Set<PsiElement>> {
       val resolvedSuperClass =
-        if (superClassExpression is PyReferenceExpression) PyResolveUtil.fullMultiResolveLocally(superClassExpression)
+        if (superClassExpression is PyReferenceExpression) multiFollowAssignmentsChain(superClassExpression)
         else listOf(superClassExpression)
 
       var seenGeneric = false
@@ -355,8 +339,8 @@ class PyTypeHintsInspection : PyInspection() {
 
       resolvedSuperClass
         .asSequence()
-        .map { if (it is PyTargetExpression) it.findAssignedValue() else it }
         .filterIsInstance<PySubscriptionExpression>()
+        .filter { myTypeEvalContext.maySwitchToAST(it) }
         .forEach {
           val operand = it.operand
           val generic =
@@ -368,7 +352,7 @@ class PyTypeHintsInspection : PyInspection() {
           val superClassTypeVars = parameters
             .asSequence()
             .filterIsInstance<PyReferenceExpression>()
-            .map { PyResolveUtil.fullMultiResolveLocally(it).toSet() }
+            .map { multiFollowAssignmentsChain(it, this::followNotTypeVar).toSet() }
             .fold(emptySet<PsiElement>(), { acc, typeVars -> acc.union(typeVars) })
 
           if (generic) genericTypeVars.addAll(superClassTypeVars) else nonGenericTypeVars.addAll(superClassTypeVars)
@@ -391,7 +375,7 @@ class PyTypeHintsInspection : PyInspection() {
 
           if (type != null) {
             if (type is PyGenericType) {
-              if (!typeVars.addAll(PyResolveUtil.fullMultiResolveLocally(it))) {
+              if (!typeVars.addAll(multiFollowAssignmentsChain(it))) {
                 registerProblem(it, "Parameters to 'Generic[...]' must all be unique", ProblemHighlightType.GENERIC_ERROR)
               }
             }
@@ -401,6 +385,20 @@ class PyTypeHintsInspection : PyInspection() {
           }
         }
       }
+    }
+
+    private fun followNotTypingOpaque(target: PyTargetExpression): Boolean {
+      return !PyTypingTypeProvider.OPAQUE_NAMES.contains(target.qualifiedName)
+    }
+
+    private fun followNotTypeVar(target: PyTargetExpression): Boolean {
+      return !myTypeEvalContext.maySwitchToAST(target) || target.findAssignedValue() !is PyCallExpression
+    }
+
+    private fun multiFollowAssignmentsChain(referenceExpression: PyReferenceExpression,
+                                            follow: (PyTargetExpression) -> Boolean = this::followNotTypingOpaque): List<PsiElement> {
+      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
+      return referenceExpression.multiFollowAssignmentsChain(resolveContext, follow).mapNotNull { it.element }
     }
   }
 }

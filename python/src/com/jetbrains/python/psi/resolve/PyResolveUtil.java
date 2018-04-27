@@ -163,7 +163,7 @@ public class PyResolveUtil {
     }
     else {
       return StreamEx
-        .of(fullMultiResolveLocally(expression))
+        .of(fullMultiResolveLocally(expression, new HashSet<>()))
         .select(PyImportElement.class)
         .map(PyResolveUtil::getImportedElementQName)
         .nonNull()
@@ -172,7 +172,7 @@ public class PyResolveUtil {
   }
 
   @Nullable
-  public static QualifiedName getImportedElementQName(@NotNull PyImportElement element) {
+  private static QualifiedName getImportedElementQName(@NotNull PyImportElement element) {
     final PyStatement importStatement = element.getContainingImportStatement();
 
     if (importStatement instanceof PyFromImportStatement) {
@@ -264,7 +264,6 @@ public class PyResolveUtil {
    *
    * @param referenceExpression expression to resolve
    * @return resolved assigned value.
-   * @see PyResolveUtil#fullMultiResolveLocally(PyReferenceExpression)
    */
   @Nullable
   public static PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
@@ -293,14 +292,10 @@ public class PyResolveUtil {
    * Runs DFS on assignment chains and returns all reached assigned values.
    *
    * @param referenceExpression expression to resolve
+   * @param visited             set to store visited references to prevent recursion
    * @return resolved assigned values.
    * <i>Note: the returned list could contain null values.</i>
    */
-  @NotNull
-  public static List<PsiElement> fullMultiResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
-    return fullMultiResolveLocally(referenceExpression, new HashSet<>());
-  }
-
   @NotNull
   private static List<PsiElement> fullMultiResolveLocally(@NotNull PyReferenceExpression referenceExpression,
                                                           @NotNull Set<PyReferenceExpression> visited) {

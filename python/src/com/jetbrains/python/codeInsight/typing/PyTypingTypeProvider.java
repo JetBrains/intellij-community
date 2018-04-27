@@ -129,7 +129,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
    * since they are not type aliases already and in typing.pyi are assigned to
    * some synthetic values.
    */
-  private static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
+  public static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
     .add(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD.name())
     .add(ANY)
     .add(TYPE_VAR)
