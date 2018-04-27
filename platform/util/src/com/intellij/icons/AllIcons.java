@@ -189,7 +189,7 @@ public class AllIcons {
     public static final Icon Search = IconLoader.getIcon("/actions/search.png"); // 16x16
     public static final Icon SearchNewLine = IconLoader.getIcon("/actions/searchNewLine.png"); // 16x16
     public static final Icon SearchNewLineHover = IconLoader.getIcon("/actions/searchNewLineHover.png"); // 16x16
-    public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.png"); // 16x16
+    public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.svg"); // 16x16
     public static final Icon Share = IconLoader.getIcon("/actions/share.png"); // 14x14
     public static final Icon ShortcutFilter = IconLoader.getIcon("/actions/shortcutFilter.png"); // 16x16
     public static final Icon Show = IconLoader.getIcon("/actions/show.svg"); // 16x16
