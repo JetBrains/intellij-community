@@ -5,8 +5,6 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +12,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -28,6 +27,7 @@ import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -137,10 +137,15 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   public void projectOpened() {
     ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), myProject);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    myContent = new MyChangeViewContent(createChangeViewComponent(), ChangesViewContentManager.LOCAL_CHANGES, false);
+
+    JComponent panel = createChangeViewComponent();
+    myContent = new MyChangeViewContent(panel, ChangesViewContentManager.LOCAL_CHANGES, false);
     myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
+
+    myContentManager.addToolWindowTitleAction(new MyExpandAllToolbarAction(panel));
+    myContentManager.addToolWindowTitleAction(new MyCollapseAllToolbarAction(panel));
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,
@@ -173,35 +178,30 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), panel);
     EmptyAction.registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), panel);
 
-    DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewToolbar");
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(ActionManager.getInstance().getAction("ChangesViewToolbar"));
+
+    group.addSeparator();
+    group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
+
+    DefaultActionGroup ignoreGroup = new DefaultActionGroup(null, true);
+    ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
+    ignoreGroup.add(new ToggleShowIgnoredAction());
+    ignoreGroup.add(new IgnoredSettingsAction());
+    group.add(ignoreGroup);
+
+    group.addSeparator();
+    group.add(new ToggleDetailsAction());
+
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
     toolbar.setTargetComponent(myView);
-    JComponent toolbarComponent = toolbar.getComponent();
-    JPanel toolbarPanel = new JPanel(new BorderLayout());
-    toolbarPanel.add(toolbarComponent, BorderLayout.WEST);
-
-    DefaultActionGroup visualActionsGroup = new DefaultActionGroup();
-    final Expander expander = new Expander();
-    visualActionsGroup.add(CommonActionsManager.getInstance().createExpandAllAction(expander, panel));
-    visualActionsGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(expander, panel));
-
-    visualActionsGroup.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
-    visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
-    visualActionsGroup.add(new ToggleShowIgnoredAction());
-    visualActionsGroup.add(new IgnoredSettingsAction());
-    visualActionsGroup.add(new ToggleDetailsAction());
-
-    ActionToolbar visualActionsToolbar =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, visualActionsGroup, false);
-    visualActionsToolbar.setTargetComponent(myView);
-    toolbarPanel.add(visualActionsToolbar.getComponent(), BorderLayout.CENTER);
 
     myView.setMenuActions((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
     myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
 
     myProgressLabel = new JPanel(new BorderLayout());
 
-    panel.setToolbar(toolbarPanel);
+    panel.setToolbar(toolbar.getComponent());
 
     final JPanel content = new JPanel(new BorderLayout());
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
@@ -442,27 +442,46 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
-  private class Expander implements TreeExpander {
-    @Override
-    public void expandAll() {
+  private class MyExpandAllToolbarAction extends DumbAwareAction {
+    public MyExpandAllToolbarAction(@NotNull JComponent panel) {
+      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
+      getTemplatePresentation().setIcon(AllIcons.General.ExpandAll);
+      getTemplatePresentation().setHoveredIcon(AllIcons.General.ExpandAllHover);
+      registerCustomShortcutSet(panel, null);
+    }
+
+    public final void actionPerformed(AnActionEvent e) {
       TreeUtil.expandAll(myView);
     }
 
-    @Override
-    public boolean canExpand() {
-      return true;
+    public final void update(AnActionEvent event) {
+      boolean isEnabled = areExpandCollapseActionsEnabled(event);
+      event.getPresentation().setEnabledAndVisible(isEnabled);
+    }
+  }
+
+  private class MyCollapseAllToolbarAction extends DumbAwareAction {
+    public MyCollapseAllToolbarAction(@NotNull JComponent panel) {
+      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
+      getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
+      getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
+      registerCustomShortcutSet(getShortcutSet(), panel);
     }
 
-    @Override
-    public void collapseAll() {
+    public final void update(AnActionEvent event) {
+      boolean isEnabled = areExpandCollapseActionsEnabled(event);
+      event.getPresentation().setEnabledAndVisible(isEnabled);
+    }
+
+    public final void actionPerformed(AnActionEvent e) {
       TreeUtil.collapseAll(myView, 2);
       TreeUtil.expand(myView, 1);
     }
+  }
 
-    @Override
-    public boolean canCollapse() {
-      return true;
-    }
+  private boolean areExpandCollapseActionsEnabled(AnActionEvent event) {
+    ToolWindow toolWindow = event.getData(PlatformDataKeys.TOOL_WINDOW);
+    return toolWindow != null && toolWindow.getContentManager().getSelectedContent() == myContent;
   }
 
   private class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
