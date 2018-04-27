@@ -91,8 +91,10 @@ public class GradleImportPerformanceTest extends GradleImportingTestCase {
   }
 
   private void assertAndReportTiming(String traceName, int expectedBase, long actual) {
-    final String serviceMessage = String.format("##teamcity[buildStatisticValue key='trace.gradle-%s.%s.%s' value='%d']",
-                                                gradleVersion, name.getMethodName(), traceName, actual);
+    int indexOfBrace = name.getMethodName().indexOf("[");
+    final String methodName = indexOfBrace > -1 ? name.getMethodName().substring(0, indexOfBrace) : name.getMethodName();
+    final String serviceMessage = String.format("##teamcity[buildStatisticValue key='trace.%s.%s.gradle-%s' value='%d']",
+                                                methodName, traceName, gradleVersion, actual);
     System.out.println(serviceMessage);
     assertTiming(traceName, expectedBase, actual);
   }
