@@ -25,10 +25,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
 import com.intellij.util.SVGLoader;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
 import org.apache.commons.imaging.formats.ico.IcoImageParser;
@@ -42,8 +43,11 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Iterator;
 
 /**
@@ -85,19 +89,20 @@ public final class IfsUtil {
         }
 
         if (isScalableImage(file)) {
-          // ensure that image can be displayed (or throw exception otherwise)
-          SVGLoader.load(null, new ByteArrayInputStream(content), 1.0f);
+          try {
+            URL url = new File(file.getPath()).toURI().toURL();
 
-          file.putUserData(FORMAT_KEY, SVG_FORMAT);
-          file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> {
-            try {
-              return (BufferedImage)SVGLoader.load(null, new ByteArrayInputStream(content), zoom.floatValue());
-            }
-            catch (IOException e) {
-              return UIUtil.createImage(0, 0, BufferedImage.TYPE_INT_ARGB);
-            }
-          }));
-          return true;
+            // ensure that image can be displayed (or throw exception otherwise)
+            SVGLoader.load(url, new ByteArrayInputStream(content), 1.0f);
+
+            file.putUserData(FORMAT_KEY, SVG_FORMAT);
+            file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> {
+              ScaleContext ctx = ScaleContext.create(); // todo: lack component, defaults to main monitor
+              return (BufferedImage)ImageLoader.loadFromUrl(url, true, false, null, ctx);
+            }));
+            return true;
+          }
+          catch (MalformedURLException ignored) {}
         }
 
         InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
