@@ -1025,7 +1025,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private class MyShowDetailsAction extends ToggleAction implements DumbAware {
 
     public MyShowDetailsAction() {
-      super("Show Details", "Display details panel", AllIcons.Actions.Preview);
+      super("Show Details", "Display details panel", AllIcons.Actions.PreviewDetailsVertically);
     }
 
     @Override

@@ -155,6 +155,7 @@ public class AllIcons {
     public static final Icon Prevfile = IconLoader.getIcon("/actions/back.svg"); // 16x16
     public static final Icon Preview = IconLoader.getIcon("/actions/preview.png"); // 16x16
     public static final Icon PreviewDetails = IconLoader.getIcon("/actions/previewDetails.svg"); // 16x16
+    public static final Icon PreviewDetailsVertically = IconLoader.getIcon("/actions/previewDetailsVertically.svg"); // 16x16
     public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.svg"); // 16x16
     public static final Icon Profile = IconLoader.getIcon("/actions/profile.svg"); // 16x16
     public static final Icon ProfileCPU = IconLoader.getIcon("/actions/profileCPU.png"); // 16x16
