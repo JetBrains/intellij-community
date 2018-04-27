@@ -135,8 +135,16 @@ public class PluginManagerConfigurableNew
         return size;
       }
     };
-    mySearchTextField.getTextEditor().putClientProperty("JTextField.Search.Gap", JBUI.scale(8));
-    mySearchTextField.getTextEditor().setBackground(MAIN_BG_COLOR);
+    mySearchTextField.setBorder(JBUI.Borders.customLine(new JBColor(0xC5C5C5, 0x515151)));
+
+    JBTextField editor = mySearchTextField.getTextEditor();
+    editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(8 - 25));
+    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(8));
+    editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
+    editor.setBorder(JBUI.Borders.empty(0, 25));
+    editor.getEmptyText().appendText("Search plugins");
+    editor.setOpaque(true);
+    editor.setBackground(MAIN_BG_COLOR);
   }
 
   @NotNull
@@ -184,12 +192,6 @@ public class PluginManagerConfigurableNew
       }
     });
 
-    JBTextField editor = mySearchTextField.getTextEditor();
-    editor.getEmptyText().appendText("Search plugins");
-    editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
-    editor.setOpaque(true);
-    editor.setBorder(JBUI.Borders.empty(0, 25));
-    mySearchTextField.setBorder(JBUI.Borders.customLine(new JBColor(0xC5C5C5, 0x515151)));
     panel.add(mySearchTextField, BorderLayout.NORTH);
 
     myNameListener = (aSource, data) -> {
@@ -954,12 +956,19 @@ public class PluginManagerConfigurableNew
         @Override
         public void mouseClicked(MouseEvent event) {
           if (SwingUtilities.isLeftMouseButton(event)) {
+            CellPluginComponent component = CellPluginComponent.get(event);
+            int index = getIndex(component);
+
             if (event.isShiftDown()) {
+              int end = mySelectionIndex + mySelectionLength + (mySelectionLength > 0 ? -1 : 1);
+              if (index != end) {
+                moveOrResizeSelection(index < end, false, Math.abs(end - index));
+              }
+            }
+            else if (event.isMetaDown()) {
               // XXX
             }
             else {
-              CellPluginComponent component = CellPluginComponent.get(event);
-              int index = getIndex(component);
               clearSelectionWithout(index);
               singleSelection(component, index);
             }
@@ -990,23 +999,25 @@ public class PluginManagerConfigurableNew
 
         @Override
         public void mouseExited(MouseEvent event) {
-          if (myHoverComponent != null) {
-            myHoverComponent.setSelection(SelectionType.NONE);
+          /*if (myHoverComponent != null) {
+            if (myHoverComponent.getSelection() == SelectionType.HOVER) {
+              myHoverComponent.setSelection(SelectionType.NONE);
+            }
             myHoverComponent = null;
             myHoverIndex = -1;
-          }
+          }*/
         }
 
         @Override
         public void mouseMoved(MouseEvent event) {
-          if (myHoverComponent == null) {
+          /*if (myHoverComponent == null) {
             CellPluginComponent component = CellPluginComponent.get(event);
             if (component.getSelection() == SelectionType.NONE) {
               myHoverComponent = component;
               myHoverIndex = getIndex(component);
               component.setSelection(SelectionType.HOVER);
             }
-          }
+          }*/
         }
       };
 
@@ -1177,7 +1188,7 @@ public class PluginManagerConfigurableNew
             for (int i = 0; i < count && mySelectionIndex + mySelectionLength - 1 > 0; i++) {
               mySelectionLength--;
               if (mySelectionLength > 0) {
-                myComponents.get(mySelectionIndex + mySelectionLength).setSelection(SelectionType.NONE);
+                myComponents.get(mySelectionIndex + mySelectionLength).setSelection(SelectionType.NONE, true);
               }
               if (mySelectionLength == 0) {
                 myComponents.get(mySelectionIndex - 1).setSelection(SelectionType.SELECTION);
@@ -1215,7 +1226,7 @@ public class PluginManagerConfigurableNew
         clearAllSelection();
         for (int i = 0; i < count; i++) {
           mySelectionLength++;
-          myComponents.get(mySelectionIndex + mySelectionLength).setSelection(SelectionType.NONE);
+          myComponents.get(mySelectionIndex + mySelectionLength).setSelection(SelectionType.NONE, true);
           if (mySelectionLength == -1) {
             mySelectionLength = 1;
             int newCount = count - i - 1;
@@ -1613,13 +1624,15 @@ public class PluginManagerConfigurableNew
 
       if (scrollAndFocus) {
         JComponent parent = (JComponent)getParent();
-        if (parent != null && type == SelectionType.SELECTION) {
+        if (parent != null) {
           Rectangle bounds = getBounds();
           if (!parent.getVisibleRect().contains(bounds)) {
             parent.scrollRectToVisible(bounds);
           }
 
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
+          if (type == SelectionType.SELECTION) {
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
+          }
         }
       }
 
@@ -2401,7 +2414,7 @@ public class PluginManagerConfigurableNew
     private JBOptionButton myEnableDisableUninstallButton;
 
     public DetailsPagePluginComponent(@NotNull IdeaPluginDescriptor plugin, boolean update) {
-      super(new BorderLayout(0, JBUI.scale(32)), mySearchTextField.getTextEditor().getBackground());
+      super(new BorderLayout(0, JBUI.scale(32)), MAIN_BG_COLOR);
       myPlugin = plugin;
 
       setBorder(JBUI.Borders.empty(15, 20, 0, 0));
