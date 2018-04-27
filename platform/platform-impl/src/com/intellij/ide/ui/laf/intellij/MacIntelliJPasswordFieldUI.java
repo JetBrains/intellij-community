@@ -2,8 +2,8 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaPasswordFieldUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -31,33 +31,23 @@ public class MacIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
     }
 
     if (c.getBorder() instanceof MacIntelliJTextBorder) {
-      g.setColor(c.getBackground());
-      if (JBUI.isCompensateVisualPaddingOnComponentLevel(parent)) {
-        g.fillRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
-      }
-      else {
-        g.fillRect(5, 5, c.getWidth() - 6 - MacIntelliJTextFieldUI.BW, c.getHeight() - 6 - MacIntelliJTextFieldUI.BW);
+      if (c.isEnabled() && c.isEditable()) {
+        g.setColor(c.getBackground());
+
+        Rectangle r = new Rectangle(c.getSize());
+        JBInsets.removeFrom(r, c.getInsets());
+
+        g.fillRect(r.x, r.y, r.width, r.height);
       }
     } else {
       super.paintBackground(g);
     }
   }
 
-  @NotNull
-  @Override
-  public Dimension getPreferredSize(JComponent c) {
-    Dimension size = super.getPreferredSize(c);
-    if (JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent())) {
-      return new Dimension(size.width, Math.max(26, size.height));
-    }
-    else {
-      return new Dimension(size.width, JBUI.scale(MacIntelliJTextFieldUI.MACOS_LIGHT_INPUT_HEIGHT_TOTAL));
-    }
-  }
-
-  @Override
-  public Dimension getMinimumSize(JComponent c) {
-    Dimension size = super.getMinimumSize(c);
-    return JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? size : new Dimension(size.width, JBUI.scale(MacIntelliJTextFieldUI.MACOS_LIGHT_INPUT_HEIGHT_TOTAL));
+  protected Dimension updatePreferredSize(Dimension size) {
+    Insets i = getComponent().getInsets();
+    size.height = Math.max(size.height, JBUI.scale(21) + i.top + i.bottom);
+    JBInsets.addTo(size, getComponent().getMargin());
+    return size;
   }
 }

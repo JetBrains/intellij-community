@@ -180,6 +180,7 @@ public abstract class PluginManagerMain implements Disposable {
     myToolbarPanel.setLayout(new BorderLayout());
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManager", getActionGroup(true), true);
     JComponent component = myActionToolbar.getComponent();
+    component.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
     myToolbarPanel.add(component, BorderLayout.CENTER);
     myToolbarPanel.add(myFilter, BorderLayout.WEST);
     new ClickListener() {

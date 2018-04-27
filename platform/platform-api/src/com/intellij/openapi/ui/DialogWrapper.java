@@ -141,7 +141,6 @@ public abstract class DialogWrapper {
    */
   private int myButtonAlignment = SwingConstants.RIGHT;
   private boolean myCrossClosesWindow = true;
-  private Insets myButtonMargins = JBUI.insets(2, 16);
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -749,7 +748,6 @@ public abstract class DialogWrapper {
       myNoAction = action;
     }
 
-    setMargin(button);
     if (action.getValue(DEFAULT_ACTION) != null) {
       if (!myPeer.isHeadless()) {
         getRootPane().setDefaultButton(button);
@@ -800,17 +798,6 @@ public abstract class DialogWrapper {
       plainText.append(ch);
     }
     return Pair.create(mnemonic, plainText.toString());
-  }
-
-  private void setMargin(@NotNull JButton button) {
-    // Aqua LnF does a good job of setting proper margin between buttons. Setting them specifically causes them be 'square' style instead of
-    // 'rounded', which is expected by apple users.
-    if (!SystemInfo.isMac) {
-      if (myButtonMargins == null) {
-        return;
-      }
-      button.setMargin(myButtonMargins);
-    }
   }
 
   @NotNull
@@ -1301,20 +1288,16 @@ public abstract class DialogWrapper {
     JComponent centerSection = new JPanel(new BorderLayout());
     root.add(centerSection, BorderLayout.CENTER);
 
+    root.setBorder(createContentPaneBorder());
+
     final JComponent n = createNorthPanel();
     if (n != null) {
       centerSection.add(n, BorderLayout.NORTH);
     }
 
-    final JComponent centerPanel = createCenterPanel();
-    if (centerPanel != null) {
-      centerSection.add(centerPanel, BorderLayout.CENTER);
-    }
-
-    boolean isVisualPaddingCompensatedOnComponentLevel = JBUI.isCompensateVisualPaddingOnComponentLevel(centerPanel);
-    if (isVisualPaddingCompensatedOnComponentLevel) {
-      // see comment about visual paddings in the MigLayoutBuilder.build
-      root.setBorder(createContentPaneBorder());
+    final JComponent c = createCenterPanel();
+    if (c != null) {
+      centerSection.add(c, BorderLayout.CENTER);
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
@@ -1323,9 +1306,6 @@ public abstract class DialogWrapper {
     southSection.add(myErrorText, BorderLayout.CENTER);
     final JComponent south = createSouthPanel();
     if (south != null) {
-      if (!isVisualPaddingCompensatedOnComponentLevel) {
-        south.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
-      }
       southSection.add(south, BorderLayout.SOUTH);
     }
 
@@ -1460,11 +1440,11 @@ public abstract class DialogWrapper {
   /**
    * Sets margin for command buttons ("OK", "Cancel", "Help").
    *
+   * @Deprecated Button margins aren't used anymore. Button style is standardized.
    * @param insets buttons margin
    */
-  public final void setButtonsMargin(@Nullable Insets insets) {
-    myButtonMargins = insets;
-  }
+  @Deprecated
+  public final void setButtonsMargin(@Nullable Insets insets) {}
 
   public final void setCrossClosesWindow(boolean crossClosesWindow) {
     myCrossClosesWindow = crossClosesWindow;

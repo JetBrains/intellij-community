@@ -81,11 +81,11 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
   }
 
   protected open fun paintSeparator(g: Graphics2D, c: JComponent) {
-    val yOffset = bw() + lw(g) + scale(1)
+    val yOffset = BW.getFloat() + LW.getFloat() + scale(1)
     val x = mainButton.width.toFloat()
 
     g.color = (mainButton.border as DarculaButtonPainter).getBorderColor(c)
-    g.fill(Rectangle2D.Float(x, yOffset, lw(g), mainButton.height - yOffset * 2))
+    g.fill(Rectangle2D.Float(x, yOffset, LW.getFloat(), mainButton.height - yOffset * 2))
   }
 
   override fun updateOptions() = super.updateOptions().also {

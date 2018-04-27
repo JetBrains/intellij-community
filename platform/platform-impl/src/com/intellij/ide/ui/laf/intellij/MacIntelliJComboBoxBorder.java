@@ -4,9 +4,6 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,10 +15,7 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacComboBoxBorder extends MacIntelliJTextBorder {
-
-  private static final int VALUE_OFFSET = 5;
-
+public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!(c instanceof JComponent)) return;
@@ -38,46 +32,14 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
       area.intersect(new Area(clip));
       g2.setClip(area);
 
-      float arc = isRound(c) ? JBUI.scale(6f) : 0;
-      Insets i = ((JComponent)c).getInsets();
-
-      if (c instanceof JComboBox) {
-        JComboBox comboBox = (JComboBox)c;
-        ComboBoxEditor cbe = comboBox.getEditor();
-        Color background = comboBox.isEditable() ? cbe.getEditorComponent().getBackground() :
-                           UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground");
-
-        g2.setColor(background);
-        if (comboBox.isEditable()) {
-            Shape shape = new Rectangle2D.Double(i.left, i.top,
-                                   width - (i.left + i.right),
-                                   height - (i.top + i.bottom));
-            g2.fill(shape);
-        } else {
-          int vo = JBUI.scale(VALUE_OFFSET);
-          Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-          path.moveTo(i.left + vo, i.top);
-          path.lineTo(i.left + vo, height - i.bottom);
-          path.lineTo(i.left + arc, height - i.bottom);
-          path.quadTo(i.left, height - i.bottom, i.left, height - arc - i.bottom);
-          path.lineTo(i.left, arc + i.top);
-          path.quadTo(i.left, i.top, arc + i.left, i.top);
-          path.closePath();
-          g2.fill(path);
-        }
-      }
+      float arc = isRound(c) ? ARC.getFloat() : 0;
+      float bw = BW.getFloat();
+      float lw = LW(g2);
 
       Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-      float lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
-      border.append(new RoundRectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
-                                           width - JBUI.scale(3)*2,
-                                           height - JBUI.scale(3)*2,
-                                                arc, arc), false);
-      float innerArc = JBUI.scale(arc > 0 ? arc - lw : 0.0f);
-      border.append(new RoundRectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                           width - (JBUI.scale(3) + lw) * 2,
-                                           height - (JBUI.scale(3) + lw) * 2,
-                                                innerArc, innerArc), false);
+      border.append(new RoundRectangle2D.Double(bw, bw, width - bw * 2, height - bw * 2, arc, arc), false);
+      border.append(new RoundRectangle2D.Double(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2, arc - lw, arc - lw), false);
+
       g2.setColor(Gray.xBC);
       g2.fill(border);
 
@@ -130,16 +92,12 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
 
   @Override
   protected void clipForBorder(Component c, Graphics2D g2, int width, int height) {
-    float lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
+    float lw = LW(g2);
+    float bw = BW.getFloat();
     Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
     Shape innerShape = isRound(c) ?
-           new RoundRectangle2D.Float(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                       width - (JBUI.scale(3) + lw) * 2,
-                                       height - (JBUI.scale(3) + lw) * 2,
-                                       JBUI.scale(3) + lw, JBUI.scale(3) + lw) :
-           new Rectangle2D.Float(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                  width - (JBUI.scale(3) + lw) * 2,
-                                  height - (JBUI.scale(3) + lw) * 2);
+           new RoundRectangle2D.Float(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2, bw + lw, bw + lw) :
+           new Rectangle2D.Float(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2);
 
     area.subtract(new Area(innerShape));
     area.add(getButtonBounds(c));
@@ -152,12 +110,5 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
   @Override
   protected boolean isSymmetric() {
     return false;
-  }
-
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    int right = (component instanceof JComboBox<?> && !((JComboBox)component).isEditable()) ? 4 : 3;
-    return JBUI.insets(3, 3, 3, right);
   }
 }
