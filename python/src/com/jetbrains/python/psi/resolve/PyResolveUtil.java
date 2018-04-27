@@ -162,8 +162,7 @@ public class PyResolveUtil {
              : ContainerUtil.map(resolveImportedElementQNameLocally((PyReferenceExpression)qualifier), qn -> qn.append(name));
     }
     else {
-      return StreamEx
-        .of(fullMultiResolveLocally(expression, new HashSet<>()))
+      return fullMultiResolveLocally(expression, new HashSet<>())
         .select(PyImportElement.class)
         .map(PyResolveUtil::getImportedElementQName)
         .nonNull()
@@ -267,25 +266,7 @@ public class PyResolveUtil {
    */
   @Nullable
   public static PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
-    return fullResolveLocally(referenceExpression, new HashSet<>());
-  }
-
-  @Nullable
-  private static PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression,
-                                                 @NotNull Set<PyReferenceExpression> visited) {
-    for (PsiElement element : resolveLocally(referenceExpression)) {
-      if (element instanceof PyTargetExpression) {
-        final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
-
-        if (assignedValue instanceof PyReferenceExpression && visited.add((PyReferenceExpression)assignedValue)) {
-          return fullResolveLocally((PyReferenceExpression)assignedValue, visited);
-        }
-
-        return assignedValue;
-      }
-    }
-
-    return null;
+    return fullMultiResolveLocally(referenceExpression, new HashSet<>()).select(PyExpression.class).findFirst().orElse(null);
   }
 
   /**
@@ -294,27 +275,28 @@ public class PyResolveUtil {
    * @param referenceExpression expression to resolve
    * @param visited             set to store visited references to prevent recursion
    * @return resolved assigned values.
-   * <i>Note: the returned list could contain null values.</i>
+   * <i>Note: the returned stream could contain null values.</i>
    */
   @NotNull
-  private static List<PsiElement> fullMultiResolveLocally(@NotNull PyReferenceExpression referenceExpression,
-                                                          @NotNull Set<PyReferenceExpression> visited) {
-    final List<PsiElement> result = new ArrayList<>();
+  private static StreamEx<PsiElement> fullMultiResolveLocally(@NotNull PyReferenceExpression referenceExpression,
+                                                              @NotNull Set<PyReferenceExpression> visited) {
+    return StreamEx
+      .of(resolveLocally(referenceExpression))
+      .flatMap(
+        element -> {
+          if (element instanceof PyTargetExpression) {
+            final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
 
-    for (PsiElement element : resolveLocally(referenceExpression)) {
-      if (element instanceof PyTargetExpression) {
-        final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
+            if (assignedValue instanceof PyReferenceExpression && visited.add((PyReferenceExpression)assignedValue)) {
+              return fullMultiResolveLocally((PyReferenceExpression)assignedValue, visited);
+            }
 
-        if (assignedValue instanceof PyReferenceExpression && visited.add((PyReferenceExpression)assignedValue)) {
-          result.addAll(fullMultiResolveLocally((PyReferenceExpression)assignedValue, visited));
-          continue;
+            return StreamEx.of(assignedValue);
+          }
+
+          return StreamEx.of(element);
         }
-      }
-
-      result.add(element);
-    }
-
-    return result;
+      );
   }
 
   /**
