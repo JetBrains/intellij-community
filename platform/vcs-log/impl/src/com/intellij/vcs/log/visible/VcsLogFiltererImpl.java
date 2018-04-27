@@ -82,10 +82,10 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   @NotNull
-  protected VisibleGraph<Integer> createVisibleGraph(@NotNull DataPack dataPack,
-                                                     @NotNull PermanentGraph.SortType sortType,
-                                                     @Nullable Set<Integer> matchingHeads,
-                                                     @Nullable Set<Integer> matchingCommits) {
+  public VisibleGraph<Integer> createVisibleGraph(@NotNull DataPack dataPack,
+                                                  @NotNull PermanentGraph.SortType sortType,
+                                                  @Nullable Set<Integer> matchingHeads,
+                                                  @Nullable Set<Integer> matchingCommits) {
     if (matchesNothing(matchingHeads) || matchesNothing(matchingCommits)) {
       return EmptyVisibleGraph.getInstance();
     }
@@ -159,7 +159,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     return new FilterByDetailsResult(matchingCommits, matchingCommits.size() >= commitCount.getCount(), commitCount);
   }
 
-  public boolean canFilterEmptyPack() {
+  @Override
+  public boolean canFilterEmptyPack(@NotNull VcsLogFilterCollection filters) {
     return false;
   }
 
@@ -181,9 +182,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   @Nullable
-  protected Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs,
-                                          @NotNull Collection<VirtualFile> roots,
-                                          @NotNull VcsLogFilterCollection filters) {
+  public Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs,
+                                       @NotNull Collection<VirtualFile> roots,
+                                       @NotNull VcsLogFilterCollection filters) {
     VcsLogBranchFilter branchFilter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
     VcsLogRevisionFilter revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER);
 

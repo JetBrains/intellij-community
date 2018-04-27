@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface VcsLogFilterer {
 
-  boolean canFilterEmptyPack();
+  boolean canFilterEmptyPack(@NotNull VcsLogFilterCollection filters);
 
   @NotNull
   Pair<VisiblePack, CommitCountStage> filter(@NotNull DataPack pack,

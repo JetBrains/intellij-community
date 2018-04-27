@@ -251,7 +251,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                           @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
       DataPack dataPack = myLogData.getDataPack();
 
-      if (dataPack == DataPack.EMPTY && !myVcsLogFilterer.canFilterEmptyPack()) {
+      if (dataPack == DataPack.EMPTY && !myVcsLogFilterer.canFilterEmptyPack(state.getFilters())) {
         // when filter is set during initialization, just remember filters
         // unless our builder can do something with an empty pack, for example in file history
         return state;
