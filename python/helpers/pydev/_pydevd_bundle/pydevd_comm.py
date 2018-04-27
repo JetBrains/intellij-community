@@ -58,14 +58,12 @@ each command has a format:
     * PYDB - pydevd, the python end
 '''
 
-import os
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR
 
 from _pydev_bundle.pydev_imports import _queue
-from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
-from _pydev_imps._pydev_saved_modules import socket
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
+from _pydev_imps._pydev_saved_modules import time
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
     IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON
 
@@ -82,9 +80,10 @@ if IS_IRONPYTHON:
 import pydevconsole
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
+from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_tracing
 from _pydevd_bundle import pydevd_vm_type
-from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
@@ -1546,6 +1545,42 @@ class GetValueAsyncThreadConsole(AbstractGetValueAsyncThread):
     def send_result(self, xml):
         if self.frame_accessor is not None:
             self.frame_accessor.ReturnFullValue(self.seq, xml.getvalue())
+
+
+class ThriftAbstractGetValueAsyncThread(PyDBDaemonThread):
+    """
+    Abstract class for a thread, which evaluates values for async variables
+    """
+    def __init__(self, server, seq, var_objects):
+        PyDBDaemonThread.__init__(self)
+        self.server = server
+        self.seq = seq
+        self.var_objs = var_objects
+        self.cancel_event = threading.Event()
+
+    def send_result(self, xml):
+        raise NotImplementedError()
+
+    def _on_run(self):
+        start = time.time()
+        values = []
+        for (var_obj, name) in self.var_objs:
+            current_time = time.time()
+            if current_time - start > ASYNC_EVAL_TIMEOUT_SEC or self.cancel_event.is_set():
+                break
+            # pydev_console_thrift.DebugValue()
+            values.append(pydevd_thrift.var_to_struct(var_obj, name, evaluate_full_value=True))
+        self.send_result(values)
+
+
+class ThriftGetValueAsyncThreadConsole(ThriftAbstractGetValueAsyncThread):
+    """
+    A thread for evaluation async values, which returns result for Console
+    Send result directly to Console's server
+    """
+    def send_result(self, values):
+        if self.server is not None:
+            self.server.returnFullValue(self.seq, values)
 
 
 #=======================================================================================================================

@@ -258,19 +258,23 @@ def start_console_server(host, port, interpreter):
         from _pydev_bundle.pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
 
         try:
+            # @alexander todo initialize transport and thrift server here
             if IS_PY24:
                 server = XMLRPCServer((host, port), logRequests=False)
             else:
                 server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
         except:
+            # @alexander keep `except` block
             sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))
             sys.stderr.flush()
             raise
 
+        # @alexander keep
         # Tell UMD the proper default namespace
         _set_globals_function(interpreter.get_namespace)
 
+        # @alexander todo `server.register_function(...)` should all gone
         server.register_function(interpreter.execLine)
         server.register_function(interpreter.execMultipleLines)
         server.register_function(interpreter.getCompletions)
@@ -291,11 +295,12 @@ def start_console_server(host, port, interpreter):
         # Functions for GUI main loop integration
         server.register_function(interpreter.enableGui)
 
-        if port == 0:
-            (h, port) = server.socket.getsockname()
-
-            print(port)
-            print(interpreter.client_port)
+        # @alexander commented out because it is not necessary now
+        # if port == 0:
+        #     (h, port) = server.socket.getsockname()
+        #
+        #     print(port)
+        #     print(interpreter.client_port)
 
         while True:
             try:
